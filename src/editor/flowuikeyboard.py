@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -22,7 +21,7 @@
 
 from sys import maxsize
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QGraphicsScene
+from PyQt5.QtWidgets import QGraphicsScene
 from flowui.items import CellElement
 from flowui.scopeitems import ScopeCellElement
 

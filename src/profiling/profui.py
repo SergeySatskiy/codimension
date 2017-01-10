@@ -26,15 +26,16 @@ import logging
 import errno
 import os
 from subprocess import Popen
-from profwidget import ProfileResultsWidget
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
+                             QApplication)
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.run import getCwdCmdEnv, CMD_TYPE_PROFILE
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.misc import getLocaleDateTime
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import (QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
-                         QApplication, QCursor)
+from .profwidget import ProfileResultsWidget
 
 POLL_INTERVAL = 0.1
 HANDSHAKE_TIMEOUT = 15

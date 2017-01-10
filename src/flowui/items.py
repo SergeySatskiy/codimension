@@ -29,8 +29,8 @@ from PyQt5.QtSvg import QGraphicsSvgItem
 from PyQt5.QtWidgets import (QGraphicsRectItem, QGraphicsPathItem,
                              QGraphicsItem, QGraphicsSimpleTextItem,
                              QStyleOptionGraphicsItem, QStyle)
-from auxitems import SVGItem, Connector, Text, CMLLabel
-from cml import CMLVersion, CMLsw, CMLcc, CMLrt
+from .auxitems import SVGItem, Connector, Text, CMLLabel
+from .cml import CMLVersion, CMLsw, CMLcc, CMLrt
 
 
 def getBorderColor(color):

@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -24,19 +23,21 @@ import os.path
 import logging
 from PyQt5.QtCore import (Qt, QSize, QTimer, QDir, QUrl,
                           QSizeF, QRectF, QPoint)
-from PyQt5.QtGui import (QToolBar, QWidget, QGraphicsView, QPainter,
-                         QApplication, QGraphicsScene, QHBoxLayout,
-                         QLabel, QTransform, QVBoxLayout, QFrame,
-                         QSizePolicy, QFileDialog, QDialog,
-                         QMenu, QToolButton, QImage, QMessageBox, QPrinter)
+from PyQt5.QtGui import QPainter, QTransform, QImage
+from PyQt5.QtWidgets import (QToolBar, QWidget, QGraphicsView,
+                             QApplication, QGraphicsScene, QHBoxLayout,
+                             QLabel, QVBoxLayout, QFrame,
+                             QSizePolicy, QFileDialog, QDialog,
+                             QMenu, QToolButton, QMessageBox)
 from PyQt5.QtSvg import QSvgGenerator
+from PyQt5.QtPrintSupport import QPrinter
 from cdmcf import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas
 from flowui.cflowsettings import getDefaultCflowSettings
 from flowui.cml import CMLVersion
 from utils.pixmapcache import getPixmap, getIcon
 from utils.globals import GlobalData
-from utils.fileutils import Python3FileType, PythonFileType
+from utils.fileutils import isPythonMime
 from utils.settings import Settings
 from .flowuicontextmenus import CFSceneContextMenuMixin
 from .flowuimouse import CFSceneMouseMixin
@@ -502,7 +503,7 @@ class FlowUIWidget(QWidget):
         if self.__parentWidget.getUUID() != uuid:
             return
 
-        if newFileType not in [Python3FileType, PythonFileType]:
+        if not isPythonMime(newFileType):
             self.__disconnectEditorSignals()
             self.__updateTimer.stop()
             self.__cf = None

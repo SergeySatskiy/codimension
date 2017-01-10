@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -22,7 +21,8 @@
 
 
 from PyQt5.QtCore import Qt, QEventLoop
-from PyQt5.QtGui import QSizePolicy, QFrame, QLabel, QApplication, QGridLayout
+from PyQt5.QtWidgets import (QSizePolicy, QFrame, QLabel, QApplication,
+                             QGridLayout)
 from utils.globals import GlobalData
 
 

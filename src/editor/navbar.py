@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QLabel, QWidget, QSizePolicy,
                              QComboBox)
 from utils.globals import GlobalData
 from utils.settings import Settings
-from utils.fileutils import Python3FileType, PythonFileType
+from utils.fileutils import isPythonMime
 from utils.pixmapcache import getPixmap, getIcon
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from autocomplete.bufferutils import getContext

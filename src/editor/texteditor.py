@@ -55,7 +55,7 @@ from profiling.profui import ProfilingProgressDialog
 from debugger.bputils import getBreakpointLines
 from debugger.breakpoint import Breakpoint
 from ui.calltip import Calltip
-from flowuiwidget import FlowUIWidget
+from .flowuiwidget import FlowUIWidget
 from .navbar import NavigationBar
 
 

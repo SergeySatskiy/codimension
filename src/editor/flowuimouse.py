@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -23,7 +22,7 @@
 from sys import maxsize
 from flowui.scopeitems import ScopeCellElement
 from flowui.items import CellElement
-from PyQt4.QtCore import Qt
+from PyQt5.QtCore import Qt
 
 
 class CFSceneMouseMixin:

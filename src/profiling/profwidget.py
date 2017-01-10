@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -22,7 +21,7 @@
 
 import pstats
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
-from PyQt5.QtGui import QWidget, QToolBar, QHBoxLayout, QAction
+from PyQt5.QtWidgets import QWidget, QToolBar, QHBoxLayout, QAction
 from utils.pixmapcache import getIcon
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .proftable import ProfileTableViewer

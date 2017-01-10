@@ -32,7 +32,7 @@ import shutil
 import datetime
 from optparse import OptionParser
 from PyQt5.QtCore import QTimer, QDir
-from PyQt5 import QtGui
+from PyQt5.QtWidgets import QMessageBox
 
 
 # Workaround if link is used
@@ -413,8 +413,7 @@ def exceptionHook(excType, excValue, tracebackObj):
             message += "Stack trace:" + \
                        "<pre>" + stackTraceString + "</pre>"
         message += "</body></html>"
-        QtGui.QMessageBox.critical(None, "Unhandled exception: " + error,
-                                   message)
+        QMessageBox.critical(None, "Unhandled exception: " + error, message)
         globalData.application.exit(1)
 
 

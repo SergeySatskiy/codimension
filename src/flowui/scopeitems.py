@@ -24,9 +24,9 @@ import os.path
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPen, QBrush
 from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsItem
-from auxitems import BadgeItem, Connector, CMLLabel
-from items import CellElement, getBorderColor, getNoCellCommentBoxPath, distance
-from cml import CMLVersion, CMLcc
+from .auxitems import BadgeItem, Connector, CMLLabel
+from .items import CellElement, getBorderColor, getNoCellCommentBoxPath, distance
+from .cml import CMLVersion, CMLcc
 
 
 class ScopeCellElement(CellElement):

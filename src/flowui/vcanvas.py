@@ -31,22 +31,22 @@ does not affect all the other sections.
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPen, QColor
-from items import (CellElement, VacantCell, CodeBlockCell,
-                   BreakCell, ContinueCell, ReturnCell, RaiseCell,
-                   AssertCell, SysexitCell, ImportCell, IndependentCommentCell,
-                   LeadingCommentCell, SideCommentCell, ConnectorCell, IfCell,
-                   VSpacerCell, HSpacerCell, AboveCommentCell)
-from scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
-                        ClassScopeCell, ForScopeCell, WhileScopeCell,
-                        TryScopeCell, WithScopeCell, DecoratorScopeCell,
-                        ElseScopeCell, ExceptScopeCell, FinallyScopeCell)
 from cdmcf import (CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                    BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
                    RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,
                    IMPORT_FRAGMENT, COMMENT_FRAGMENT,
                    WHILE_FRAGMENT, FOR_FRAGMENT, IF_FRAGMENT,
                    WITH_FRAGMENT, TRY_FRAGMENT, CML_COMMENT_FRAGMENT)
-from cml import CMLVersion, CMLsw
+from .cml import CMLVersion, CMLsw
+from .items import (CellElement, VacantCell, CodeBlockCell,
+                    BreakCell, ContinueCell, ReturnCell, RaiseCell,
+                    AssertCell, SysexitCell, ImportCell, AboveCommentCell,
+                    LeadingCommentCell, SideCommentCell, ConnectorCell, IfCell,
+                    VSpacerCell, HSpacerCell, IndependentCommentCell)
+from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
+                        ClassScopeCell, ForScopeCell, WhileScopeCell,
+                        TryScopeCell, WithScopeCell, DecoratorScopeCell,
+                        ElseScopeCell, ExceptScopeCell, FinallyScopeCell)
 
 
 CONN_N_S = [(ConnectorCell.NORTH, ConnectorCell.SOUTH)]

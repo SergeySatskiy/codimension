@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,7 +20,7 @@
 """Sets up and handles the flow UI context menus"""
 
 
-from PyQt5.QtGui import QMenu, QAction
+from PyQt5.QtWidgets import QMenu, QAction
 from flowui.items import CellElement, IfCell
 from utils.pixmapcache import getIcon
 

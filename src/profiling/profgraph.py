@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -24,13 +23,13 @@ import os
 import os.path
 import math
 from PyQt5.QtCore import Qt, QPointF, pyqtSignal
-from PyQt5.QtGui import (QWidget, QLabel, QFrame, QPalette, QVBoxLayout,
-                         QGraphicsScene, QGraphicsPathItem, QPainterPath,
-                         QPen, QColor, QPainter, QGraphicsTextItem,
-                         QFont, QFontMetrics, QStyleOptionGraphicsItem,
-                         QStyle, QGraphicsItem, QGraphicsRectItem, QSizePolicy)
-from utils.misc import safeRun
-from utils.settings import Settings, thirdpartyDir
+from PyQt5.QtGui import (QPalette, QFont, QPen, QColor, QFontMetrics,
+                         QPainterPath, QPainter)
+from PyQt5.QtWidgets import (QWidget, QLabel, QFrame, QVBoxLayout,
+                             QGraphicsScene, QGraphicsPathItem, QStyle,
+                             QGraphicsTextItem, QStyleOptionGraphicsItem,
+                             QGraphicsItem, QGraphicsRectItem, QSizePolicy)
+from utils.settings import Settings, THIRDPARTY_DIR
 from utils.globals import GlobalData
 from utils.pixmapcache import PixmapCache
 from diagram.plaindotparser import getGraphFromPlainDotData
@@ -319,7 +318,7 @@ class ProfileGraphViewer(QWidget):
             index += 1
 
         # First step is to run grpof2dot
-        gprof2dot = thirdpartyDir + "gprof2dot" + os.path.sep + "gprof2dot.py"
+        gprof2dot = THIRDPARTY_DIR + "gprof2dot" + os.path.sep + "gprof2dot.py"
         outputFile = self.__dataFile + ".dot"
         nodeLimit = Settings().profileNodeLimit
         edgeLimit = Settings().profileEdgeLimit
