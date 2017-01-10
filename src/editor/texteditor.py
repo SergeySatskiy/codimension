@@ -20,18 +20,15 @@
 """Text editor implementation"""
 
 
-import os.path, logging, urllib2, socket
+import os.path, logging, urllib, socket
 from PyQt5.QtCore import ( Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal,
                            QVariant, QRect, QEvent, QPoint, QModelIndex )
-from PyQt5.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
+from PyQt5.QtGui import QCursor, QFontMetrics, QDesktopServices, QFont
+from PyQt5.QtWidgets import ( QApplication, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                           QSizePolicy, QToolButton, QDialog, QToolTip,
-                          QDesktopServices, QFont, QVBoxLayout, QSplitter )
+                          QVBoxLayout, QSplitter )
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from utils.fileutils import ( detectFileType, DesignerFileType,
-                              LinguistFileType, MakefileType, getFileLanguage,
-                              UnknownFileType, PythonFileType, Python3FileType )
-from utils.encoding import decode, encode, CodingError, supportedCodecs
 from utils.pixmapcache import getIcon, getPixmap
 from utils.globals import GlobalData
 from utils.settings import Settings

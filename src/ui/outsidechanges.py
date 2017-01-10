@@ -22,8 +22,9 @@
 
 
 from PyQt5.QtCore import Qt, QEventLoop, pyqtSignal
-from PyQt5.QtGui import (QSizePolicy, QFrame, QLabel, QPushButton, QColor,
-                         QApplication, QGridLayout, QFontMetrics)
+from PyQt5.QtGui import QColor, QFontMetrics
+from PyQt5.QtWidgets import (QSizePolicy, QFrame, QLabel, QPushButton,
+                             QApplication, QGridLayout)
 from utils.globals import GlobalData
 
 

@@ -24,12 +24,14 @@ import os
 import os.path
 import copy
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import (QDialog, QDialogButtonBox, QVBoxLayout,
-                         QSizePolicy, QLabel, QGridLayout, QHBoxLayout,
-                         QRadioButton, QGroupBox, QPushButton, QFileDialog,
-                         QLineEdit, QTreeWidget, QAbstractItemView,
-                         QTreeWidgetItem, QCheckBox, QDoubleValidator)
-from utils.run import (RunParameters, parseCommandLineArguments,
+from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QVBoxLayout,
+                             QSizePolicy, QLabel, QGridLayout, QHBoxLayout,
+                             QRadioButton, QGroupBox, QPushButton, QFileDialog,
+                             QLineEdit, QTreeWidget, QAbstractItemView,
+                             QTreeWidgetItem, QCheckBox)
+from utils.runparams import RunParameters
+from utils.run import (parseCommandLineArguments,
                        TERM_AUTO, TERM_GNOME, TERM_KONSOLE, TERM_XTERM,
                        TERM_REDIRECT)
 from .itemdelegates import NoOutlineHeightDelegate

@@ -22,9 +22,9 @@
 
 import os.path
 from PyQt5.QtCore import Qt, QEventLoop
-from PyQt5.QtGui import (QSizePolicy, QFrame, QTreeWidget, QApplication,
-                         QTreeWidgetItem, QHeaderView, QVBoxLayout,
-                         QAbstractItemView)
+from PyQt5.QtWidgets import (QSizePolicy, QFrame, QTreeWidget, QApplication,
+                             QTreeWidgetItem, QHeaderView, QVBoxLayout,
+                             QAbstractItemView)
 from utils.globals import GlobalData
 from .itemdelegates import NoOutlineHeightDelegate
 

@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,9 +20,8 @@
 """completer selection widget"""
 
 
-from PyQt5.QtCore import Qt, QEvent, QModelIndex
-from PyQt5.QtGui import (QAction, QStringListModel,
-                         QAbstractItemView, QCompleter, QListView)
+from PyQt5.QtCore import Qt, QEvent, QModelIndex, QStringListModel
+from PyQt5.QtWidgets import (QAction, QAbstractItemView, QCompleter, QListView)
 from .itemdelegates import NoOutlineHeightDelegate
 
 
