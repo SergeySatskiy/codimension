@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -26,7 +25,7 @@
 
 """Helper redirector class"""
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from .qt import QObject, pyqtSignal
 
 
 class Redirector(QObject):

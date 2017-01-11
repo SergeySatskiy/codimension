@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -27,10 +26,8 @@
 
 """Splash screen implementation"""
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QApplication, QSplashScreen
 from utils.pixmapcache import getPixmap
+from .qt import (Qt, QColor, QApplication, QSplashScreen)
 
 
 class SplashScreen(QSplashScreen):

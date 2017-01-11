@@ -21,7 +21,7 @@
 
 import os
 import os.path
-from PyQt5.QtWidgets import QApplication
+from ui.qt import QApplication
 from cdmbriefparser import (getBriefModuleInfoFromMemory,
                             getBriefModuleInfoFromFile)
 from autocomplete.completelists import (getSystemWideModules,

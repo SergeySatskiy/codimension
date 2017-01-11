@@ -23,7 +23,7 @@ import logging
 import os
 import json
 from copy import deepcopy
-from PyQt5.QtGui import QColor, QFont
+from ui.qt import QColor, QFont
 from .colorfont import buildFont, toJSON, fromJSON
 from .fileutils import saveToFile, getFileContent
 from .config import DEFAULT_ENCODING

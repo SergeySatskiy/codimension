@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,8 +20,7 @@
 """Text viewer tab widget"""
 
 import os.path
-from PyQt5.QtGui import QTextBrowser, QHBoxLayout, QWidget
-from PyQt5.QtCore import Qt, pyqtSignal
+from .qt import (QTextBrowser, QHBoxLayout, QWidget, Qt, pyqtSignal)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 

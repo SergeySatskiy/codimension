@@ -19,13 +19,11 @@
 
 """The tag help viewer implementation"""
 
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtWidgets import (QPlainTextEdit, QMenu, QApplication,
-                             QHBoxLayout, QWidget, QAction, QToolBar,
-                             QSizePolicy, QLabel, QVBoxLayout, QFrame)
-from PyQt5.QtGui import QPalette, QCursor, QFont
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
+from .qt import (Qt, QSize, QPlainTextEdit, QMenu, QApplication, QHBoxLayout,
+                 QWidget, QAction, QToolBar, QSizePolicy, QLabel, QVBoxLayout,
+                 QFrame, QPalette, QCursor, QFont)
 
 
 class TagHelpViewer(QWidget):

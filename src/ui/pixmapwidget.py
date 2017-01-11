@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,11 +20,10 @@
 """Pixmap widget"""
 
 import os.path
-from PyQt5.QtGui import (QPalette, QSizePolicy, QScrollArea, QImage, QPixmap,
-                         QAction, QLabel, QToolBar, QWidget, QHBoxLayout,
-                         QApplication, QMenu, QCursor, QShortcut)
-from PyQt5.QtCore import Qt, QSize, pyqtSignal
 from utils.pixmapcache import getIcon
+from .qt import (QPalette, QSizePolicy, QScrollArea, QImage, QPixmap, QAction,
+                 QLabel, QToolBar, QWidget, QHBoxLayout, QApplication, QMenu,
+                 QCursor, QShortcut, Qt, QSize, pyqtSignal)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .outsidechanges import OutsideChangeWidget
 

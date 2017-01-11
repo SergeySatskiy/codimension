@@ -21,15 +21,13 @@
 
 import os.path
 import logging
-from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtGui import QCursor, QPalette
-from PyQt5.QtWidgets import (QMenu, QWidget, QAction, QVBoxLayout, QToolBar,
-                             QFrame, QLabel)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import isPythonMime, isPythonFile
 from cdmbriefparser import getBriefModuleInfoFromMemory
+from .qt import (Qt, QSize, QTimer, QCursor, QPalette, QMenu, QWidget, QAction,
+                 QVBoxLayout, QToolBar, QFrame, QLabel)
 from .outlinebrowser import OutlineBrowser
 from .viewitems import (FunctionItemType, ClassItemType, AttributeItemType,
                         GlobalItemType)

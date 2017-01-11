@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -23,9 +22,6 @@
 import os
 import logging
 import time
-from PyQt5.QtCore import QObject, Qt, QTimer
-from PyQt5.QtGui import QDialog, QApplication, QCursor
-from PyQt5.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 from subprocess import Popen
 from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
 from utils.procfeedback import killProcess
@@ -38,6 +34,8 @@ from debugger.client.protocol_cdm_dbg import (EOT, RequestContinue,
                                               ResponseExit, ResponseStdout,
                                               ResponseStderr, RequestExit,
                                               ResponseProcID)
+from .qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
+                 QTcpServer, QHostAddress, QAbstractSocket)
 
 
 # Finish codes in addition to the normal exit code

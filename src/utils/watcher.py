@@ -27,7 +27,7 @@ The watcher will ignore the directories which do not exist.
 import os
 import os.path
 import re
-from PyQt5.QtCore import QObject, QFileSystemWatcher, pyqtSignal
+from ui.qt import QObject, QFileSystemWatcher, pyqtSignal
 
 
 class Watcher(QObject):

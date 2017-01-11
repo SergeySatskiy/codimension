@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -25,7 +24,7 @@ from os.path import islink, exists, split, join, sep, basename, realpath
 import logging
 import json
 import magic
-from PyQt5.QtGui import QImageReader
+from ui.qt import QImageReader
 
 # Qutepart has a few maps which halp to map a file to a syntax.
 from qutepart import Qutepart

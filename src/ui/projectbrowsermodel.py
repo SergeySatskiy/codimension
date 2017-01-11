@@ -25,10 +25,10 @@
 
 """Project browser model"""
 
-from PyQt5.QtCore import Qt, QVariant
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.settings import Settings
+from .qt import Qt, QVariant
 from .viewitems import TreeViewDirectoryItem
 from .browsermodelbase import BrowserModelBase
 

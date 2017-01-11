@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -33,10 +32,11 @@
 
 import os
 import os.path
-from PyQt5.QtCore import Qt
 from utils.pixmapcache import getIcon
 from utils.fileutils import getFileProperties, isPythonMime, isCDMProjectMime
 from utils.project import getProjectFileTooltip
+from .qt import Qt
+
 
 NoItemType = -1
 
@@ -59,10 +59,10 @@ DecoratorItemType = 25
 AttributeItemType = 26
 GlobalItemType = 27
 
-
 EMPTY_ICON = getIcon('empty.png')
 
-class TreeViewItem(object):
+
+class TreeViewItem():
 
     """Common data structures for tree views items"""
 

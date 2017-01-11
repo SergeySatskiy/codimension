@@ -28,7 +28,7 @@ import json
 import shutil
 import os
 from os.path import realpath, islink, isdir, sep, exists, dirname, isabs, join
-from PyQt5.QtCore import QObject, pyqtSignal
+from ui.qt import QObject, pyqtSignal
 from .settings import Settings, SETTINGS_DIR
 from .watcher import Watcher
 from .config import DEFAULT_ENCODING

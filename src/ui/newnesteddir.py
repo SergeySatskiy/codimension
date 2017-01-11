@@ -20,9 +20,8 @@
 """New nested project directory dialog"""
 
 import os
-from PyQt5.QtCore import Qt, QEvent, QObject
-from PyQt5.QtWidgets import (QDialog, QLineEdit, QLabel, QDialogButtonBox,
-                             QVBoxLayout)
+from .qt import (Qt, QEvent, QObject, QDialog, QLineEdit, QLabel,
+                 QDialogButtonBox, QVBoxLayout)
 
 
 class NewProjectDirDialog(QDialog):

@@ -25,8 +25,8 @@
 
 """Sidebar implementation"""
 
-from PyQt5.QtCore import QEvent, QSize, Qt, QVariant
-from PyQt5.QtWidgets import QTabBar, QWidget, QStackedWidget, QBoxLayout
+from .qt import (QEvent, QSize, Qt, QVariant, QTabBar, QWidget, QStackedWidget,
+                 QBoxLayout)
 
 
 class SideBar(QWidget):

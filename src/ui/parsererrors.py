@@ -21,11 +21,10 @@
 
 
 from os.path import exists, basename
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QDialog, QTextEdit, QDialogButtonBox,
-                             QVBoxLayout, QSizePolicy)
 from utils.globals import GlobalData
 from utils.fileutils import isPythonFile
+from .qt import (Qt, QDialog, QTextEdit, QDialogButtonBox, QVBoxLayout,
+                 QSizePolicy)
 from .fitlabel import FitLabel
 
 

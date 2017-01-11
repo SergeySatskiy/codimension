@@ -23,16 +23,17 @@ import os.path
 import sys
 import logging
 import gc
-from PyQt5.QtCore import Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal
-from PyQt5.QtWidgets import QLabel, QToolBar, QWidget, QMessageBox, QVBoxLayout, QSplitter, \
-                            QSizePolicy, QAction, QMainWindow, QShortcut, QFrame, QApplication, \
-                            QMenu, QToolButton, QToolTip, QFileDialog, QDialog, QStyleFactory, QActionGroup
-from PyQt5.QtGui import (QFont, QCursor, QPalette, QColor, QDesktopServices)
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.misc import (getDefaultTemplate, getIDETemplateFile,
                         getProjectTemplateFile)
 from utils.pixmapcache import getIcon
+from .qt import (Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal, QLabel,
+                 QToolBar, QWidget, QMessageBox, QVBoxLayout, QSplitter,
+                 QSizePolicy, QAction, QMainWindow, QShortcut, QFrame,
+                 QApplication, QMenu, QToolButton, QToolTip, QFileDialog,
+                 QDialog, QStyleFactory, QActionGroup, QFont, QCursor,
+                 QPalette, QColor, QDesktopServices)
 from .fitlabel import FitPathLabel
 from .sidebar import SideBar
 from .logviewer import LogViewer

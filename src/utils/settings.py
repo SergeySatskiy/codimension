@@ -26,7 +26,7 @@ import datetime
 import json
 import logging
 from copy import deepcopy
-from PyQt5.QtCore import QObject, QDir, pyqtSignal
+from ui.qt import QObject, QDir, pyqtSignal
 from .run import TERM_REDIRECT
 from .config import SETTINGS_ENCODING, CONFIG_DIR
 from .runparamscache import RunParametersCache

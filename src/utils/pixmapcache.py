@@ -21,7 +21,7 @@
 
 from os.path import dirname, realpath, sep, isabs, exists
 import sys
-from PyQt5.QtGui import QPixmap, QIcon
+from ui.qt import QPixmap, QIcon
 
 
 class PixmapCache():

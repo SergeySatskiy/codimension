@@ -24,12 +24,6 @@ import os
 import os.path
 import logging
 import shutil
-from PyQt5.QtCore import QSize, Qt, QVariant
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QSplitter, QToolBar, QAction,
-                             QToolButton, QHBoxLayout, QLabel, QSpacerItem,
-                             QSizePolicy, QDialog, QMenu, QFrame,
-                             QApplication, QMessageBox)
-from PyQt5.QtGui import QCursor, QPalette
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
@@ -37,6 +31,10 @@ from utils.project import CodimensionProject
 from utils.fileutils import isPythonMime, isPythonFile
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
+from .qt import (QSize, Qt, QVariant, QWidget, QVBoxLayout, QSplitter,
+                 QToolBar, QAction, QToolButton, QHBoxLayout, QLabel,
+                 QSpacerItem, QSizePolicy, QDialog, QMenu, QFrame,
+                 QApplication, QMessageBox, QCursor, QPalette)
 from .projectproperties import ProjectPropertiesDialog
 from .filesystembrowser import FileSystemBrowser
 from .projectbrowser import ProjectBrowser

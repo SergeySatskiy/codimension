@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,11 +20,9 @@
 """UI support for detected outside changes of files"""
 
 
-from PyQt5.QtCore import Qt, QEventLoop, pyqtSignal
-from PyQt5.QtGui import QColor, QFontMetrics
-from PyQt5.QtWidgets import (QSizePolicy, QFrame, QLabel, QPushButton,
-                             QApplication, QGridLayout)
 from utils.globals import GlobalData
+from .qt import (Qt, QEventLoop, pyqtSignal, QColor, QFontMetrics, QSizePolicy,
+                 QFrame, QLabel, QPushButton, QApplication, QGridLayout)
 
 
 class OutsideChangeWidget(QFrame):

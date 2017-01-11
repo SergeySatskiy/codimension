@@ -19,13 +19,11 @@
 
 """File outline browser and its model"""
 
-from PyQt5.QtGui import QPalette
-from PyQt5.QtWidgets import QTreeView
-from PyQt5.QtCore import QVariant
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from autocomplete.bufferutils import getItemForDisplayPath
+from .qt import QPalette, QTreeView, QVariant
 from .browsermodelbase import BrowserModelBase
 from .filesbrowserbase import FilesBrowser
 from .viewitems import (DirectoryItemType, SysPathItemType, GlobalsItemType,

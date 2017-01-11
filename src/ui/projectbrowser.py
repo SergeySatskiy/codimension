@@ -26,10 +26,10 @@
 """Project browser with module browsing capabilities"""
 
 import copy
-from PyQt5.QtWidgets import QApplication
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
+from .qt import QApplication
 from .projectbrowsermodel import ProjectBrowserModel
 from .filesbrowserbase import FilesBrowser
 from .viewitems import DirectoryItemType

@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -26,14 +25,13 @@ import pwd
 import socket
 import datetime
 import logging
-from PyQt5.QtCore import Qt, QEvent, QObject
-from PyQt5.QtWidgets import (QDialog, QLineEdit, QGridLayout, QLabel, QTextEdit,
-                             QDialogButtonBox, QVBoxLayout, QPushButton,
-                             QFileDialog, QMessageBox, QListWidget,
-                             QAbstractItemView, QApplication)
 from utils.project import getProjectProperties
 from utils.misc import getLocaleDate
 from utils.settings import SETTINGS_DIR
+from .qt import (Qt, QEvent, QObject, QDialog, QLineEdit, QGridLayout, QLabel,
+                 QTextEdit, QDialogButtonBox, QVBoxLayout, QPushButton,
+                 QFileDialog, QMessageBox, QListWidget, QAbstractItemView,
+                 QApplication)
 from .fitlabel import FramedLabelWithDoubleClick
 from .itemdelegates import NoOutlineHeightDelegate
 from .completers import DirCompleter, FileCompleter

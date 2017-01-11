@@ -21,17 +21,15 @@
 
 import os.path
 import logging
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
-                             QToolButton, QWidget, QAction, QDialog,
-                             QSpacerItem, QVBoxLayout, QSizePolicy, QToolBar,
-                             QApplication, QFrame, QLabel, QHBoxLayout, QSplitter)
-from PyQt5.QtGui import QCursor, QPalette
 from utils.pixmapcache import getIcon
 from utils.settings import Settings
 from utils.project import CodimensionProject, getProjectFileTooltip
 from utils.globals import GlobalData
 from utils.fileutils import getFileProperties, isPythonMime, isCDMProjectMime
+from .qt import (Qt, QSize, QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
+                 QToolButton, QWidget, QAction, QDialog, QSpacerItem,
+                 QVBoxLayout, QSizePolicy, QToolBar, QApplication, QFrame,
+                 QLabel, QHBoxLayout, QSplitter, QCursor, QPalette)
 from .projectproperties import ProjectPropertiesDialog
 from .itemdelegates import NoOutlineHeightDelegate
 

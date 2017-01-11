@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,7 +20,7 @@
 """Tabs history support implementation"""
 
 import os.path
-from PyQt5.QtCore import QObject, pyqtSignal
+from .qt import QObject, pyqtSignal
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 

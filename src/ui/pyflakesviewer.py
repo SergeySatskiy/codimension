@@ -20,11 +20,10 @@
 """Pyflakes results viewer"""
  
 import cgi
-from PyQt5.QtCore import QTimer, QObject, Qt, QVariant
-from PyQt5.QtWidgets import QMenu
 from utils.pixmapcache import getIcon, getPixmap
 from utils.fileutils import isPythonMime, isPythonFile
 from analysis.ierrors import getFileErrors
+from .qt import QTimer, QObject, Qt, QVariant, QMenu
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
