@@ -20,7 +20,7 @@
 """CML utilities"""
 
 from sys import maxsize
-from PyQt5.QtGui import QColor
+from ui.qt import QColor
 from cdmcf import (IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT, TRY_FRAGMENT,
                    CONTROL_FLOW_FRAGMENT, CLASS_FRAGMENT, FUNCTION_FRAGMENT)
 from utils.colorfont import buildColor

@@ -22,7 +22,7 @@
 from sys import maxsize
 from flowui.scopeitems import ScopeCellElement
 from flowui.items import CellElement
-from PyQt5.QtCore import Qt
+from ui.qt import Qt
 
 
 class CFSceneMouseMixin:

@@ -19,9 +19,8 @@
 
 """Navigation bar implementation"""
 
-from PyQt5.QtCore import QTimer, Qt, QEvent, pyqtSignal
-from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QLabel, QWidget, QSizePolicy,
-                             QComboBox)
+from ui.qt import (QTimer, Qt, QEvent, pyqtSignal, QFrame, QHBoxLayout, QLabel,
+                   QWidget, QSizePolicy, QComboBox)
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import isPythonMime

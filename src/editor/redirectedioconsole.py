@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,26 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 " Redirected IO console implementation "
 
 
 from texteditor import TextEditor
-from PyQt4.QtCore import Qt, SIGNAL, QSize, QPoint, QEvent, pyqtSignal
-from PyQt4.QtGui import ( QToolBar, QFont, QFontMetrics, QHBoxLayout, QWidget,
-                          QAction, QSizePolicy, QToolTip, QMenu, QToolButton,
-                          QActionGroup, QApplication )
-from PyQt4.Qsci import QsciScintilla
+from ui.qt import (Qt, QSize, QPoint, QEvent, pyqtSignal, QToolBar, QFont,
+                   QFontMetrics, QHBoxLayout, QWidget, QAction, QSizePolicy,
+                   QToolTip, QMenu, QToolButton, QActionGroup, QApplication)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import TexFileType
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from redirectedmsg import IOConsoleMessages, IOConsoleMsg
-from scintillawrap import ScintillaWrapper
-
 
 
 class RedirectedIOConsole( TextEditor ):
@@ -458,37 +451,37 @@ class RedirectedIOConsole( TextEditor ):
         " Called to initialize a context menu "
         self._menu = QMenu( self )
         self.__menuUndo = self._menu.addAction(
-                                    PixmapCache().getIcon( 'undo.png' ),
+                                    getIcon( 'undo.png' ),
                                     '&Undo', self.onUndo, "Ctrl+Z" )
         self.__menuRedo = self._menu.addAction(
-                                    PixmapCache().getIcon( 'redo.png' ),
+                                    getIcon( 'redo.png' ),
                                     '&Redo', self.onRedo, "Ctrl+Y" )
         self._menu.addSeparator()
         self.__menuCut = self._menu.addAction(
-                                    PixmapCache().getIcon( 'cutmenu.png' ),
+                                    getIcon( 'cutmenu.png' ),
                                     'Cu&t', self.onShiftDel, "Ctrl+X" )
         self.__menuCopy = self._menu.addAction(
-                                    PixmapCache().getIcon( 'copymenu.png' ),
+                                    getIcon( 'copymenu.png' ),
                                     '&Copy', self.onCtrlC, "Ctrl+C" )
         self.__menucopyTimestamp = self._menu.addAction(
-                                    PixmapCache().getIcon( 'copymenu.png' ),
+                                    getIcon( 'copymenu.png' ),
                                     '&Copy all with timestamps',
                                     self.onCtrlShiftC, "Ctrl+Shift+C" )
         self.__menuPaste = self._menu.addAction(
-                                    PixmapCache().getIcon( 'pastemenu.png' ),
+                                    getIcon( 'pastemenu.png' ),
                                     '&Paste', self.insertText, "Ctrl+V" )
         self.__menuSelectAll = self._menu.addAction(
-                                PixmapCache().getIcon( 'selectallmenu.png' ),
+                                getIcon( 'selectallmenu.png' ),
                                 'Select &all', self.selectAll, "Ctrl+A" )
         self._menu.addSeparator()
         self.__menuOpenAsFile = self._menu.addAction(
-                                PixmapCache().getIcon( 'filemenu.png' ),
+                                getIcon( 'filemenu.png' ),
                                 'O&pen as file', self.openAsFile )
         self.__menuDownloadAndShow = self._menu.addAction(
-                                PixmapCache().getIcon( 'filemenu.png' ),
+                                getIcon( 'filemenu.png' ),
                                 'Do&wnload and show', self.downloadAndShow )
         self.__menuOpenInBrowser = self._menu.addAction(
-                                PixmapCache().getIcon( 'homepagemenu.png' ),
+                                getIcon( 'homepagemenu.png' ),
                                 'Open in browser', self.openInBrowser )
         self._menu.addSeparator()
 
@@ -748,20 +741,20 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Creates the toolbar and layout "
 
         # Buttons
-        self.__printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
+        self.__printButton = QAction( getIcon( 'printer.png' ),
                                       'Print', self )
         self.__printButton.triggered.connect( self.__onPrint )
         self.__printButton.setEnabled( False )
         self.__printButton.setVisible( False )
 
         self.__printPreviewButton = QAction(
-                                PixmapCache().getIcon( 'printpreview.png' ),
+                                getIcon( 'printpreview.png' ),
                                 'Print preview', self )
         self.__printPreviewButton.triggered.connect( self.__onPrintPreview )
         self.__printPreviewButton.setEnabled( False )
         self.__printPreviewButton.setVisible( False )
 
-        # self.__sendUpButton = QAction( PixmapCache().getIcon('sendioup.png'),
+        # self.__sendUpButton = QAction( getIcon('sendioup.png'),
         #                                'Send to Main Editing Area', self )
         # self.__sendUpButton.triggered.connect( self.__sendUp )
 
@@ -783,7 +776,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__filterShowStderrAct.setActionGroup( self.__filterGroup )
         self.__filterShowStderrAct.triggered.connect( self.__onFilterShowStderr )
         self.__filterButton = QToolButton( self )
-        self.__filterButton.setIcon( PixmapCache().getIcon( 'iofilter.png' ) )
+        self.__filterButton.setIcon( getIcon( 'iofilter.png' ) )
         self.__filterButton.setToolTip( 'Filtering settings' )
         self.__filterButton.setPopupMode( QToolButton.InstantPopup )
         self.__filterButton.setMenu( self.__filterMenu )
@@ -812,7 +805,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.__settingsButton = QToolButton( self )
         self.__settingsButton.setIcon(
-                            PixmapCache().getIcon( 'iosettings.png' ) )
+                            getIcon( 'iosettings.png' ) )
         self.__settingsButton.setToolTip( 'View settings' )
         self.__settingsButton.setPopupMode( QToolButton.InstantPopup )
         self.__settingsButton.setMenu( self.__settingsMenu )
@@ -820,7 +813,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.__clearButton = QAction( PixmapCache().getIcon( 'trash.png' ),
+        self.__clearButton = QAction( getIcon( 'trash.png' ),
                                       'Clear', self )
         self.__clearButton.triggered.connect( self.clear )
 

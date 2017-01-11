@@ -21,14 +21,15 @@
 
 
 from PyQt5.QtCore import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal,
-                          QEventLoop, QVariant, QRect, QEvent, QPoint,
+                          QEventLoop, QVariant, QRect, QEvent, QPoint, QRectF,
                           QModelIndex, QAbstractItemModel, QItemSelectionModel,
-                          QStringListModel, QDir, QRegExp,
+                          QStringListModel, QDir, QRegExp, QPointF, QSizeF,
                           QSortFilterProxyModel, QObject, QFileSystemWatcher)
 from PyQt5.QtGui import (QCursor, QFontMetrics, QDesktopServices, QFont, QIcon,
                          QPalette, QColor, QBrush, QKeySequence, QIntValidator,
-                         QPainter, QTextCursor, QScrollArea, QImage, QPixmap,
-                         QDoubleValidator, QImageReader)
+                         QPainter, QTextCursor, QImage, QPixmap, QPen,
+                         QDoubleValidator, QImageReader, QPainterPath,
+                         QTransform)
 from PyQt5.QtWidgets import (QApplication, QToolBar, QMenuBar, QLabel,
                              QTabWidget, QActionGroup, QHBoxLayout, QWidget,
                              QAction, QMenu, QSizePolicy, QToolButton, QDialog,
@@ -40,8 +41,14 @@ from PyQt5.QtWidgets import (QApplication, QToolBar, QMenuBar, QLabel,
                              QCheckBox, QRadioButton, QGroupBox, QPushButton,
                              QTreeWidget, QTreeWidgetItem, QLineEdit, QStyle,
                              QListWidget, QStyleOptionFrame, QItemDelegate,
-                             QStyleFactory, QStyledItemDelegate,
+                             QStyleFactory, QStyledItemDelegate, QBoxLayout,
                              QStyleOptionViewItem, QPlainTextEdit, QTextEdit,
                              QMainWindow, QSpacerItem, QStackedWidget,
-                             QSplashScreen, QFontComboBox)
+                             QSplashScreen, QFontComboBox, QScrollArea,
+                             QGraphicsScene, QGraphicsSimpleTextItem,
+                             QGraphicsRectItem, QGraphicsPathItem,
+                             QGraphicsItem, QStyleOptionGraphicsItem,
+                             QGraphicsView)
 from PyQt5.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
+from PyQt5.QtSvg import QSvgGenerator, QGraphicsSvgItem
+from PyQt5.QtPrintSupport import QPrinter

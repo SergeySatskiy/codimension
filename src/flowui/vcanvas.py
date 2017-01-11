@@ -29,8 +29,7 @@ The whole canvas is split into independent sections. The growing in one section
 does not affect all the other sections.
 """
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPen, QColor
+from ui.qt import Qt, QPen, QColor
 from cdmcf import (CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                    BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
                    RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,

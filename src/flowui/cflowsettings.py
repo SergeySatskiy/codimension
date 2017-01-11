@@ -25,7 +25,7 @@
 # accordingly.
 
 
-from PyQt5.QtGui import QColor, QFont, QFontMetrics
+from ui.qt import QColor, QFont, QFontMetrics
 
 
 def buildFont(fontAsString):

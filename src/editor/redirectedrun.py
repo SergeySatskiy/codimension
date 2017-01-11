@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,18 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-""" Redirected IO console widget for running and profiling scripts """
+"""Redirected IO console widget for running and profiling scripts"""
 
 from redirectedioconsole import RedirectedIOConsole
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt4.QtCore import Qt, SIGNAL, QSize, pyqtSignal
-from PyQt4.QtGui import ( QToolBar, QHBoxLayout, QWidget,
-                          QAction, QSizePolicy, QMenu, QToolButton,
-                          QActionGroup )
-from utils.pixmapcache import PixmapCache
+from ui.qt import (Qt, QSize, pyqtSignal, QToolBar, QHBoxLayout, QWidget,
+                   QAction, QSizePolicy, QMenu, QToolButton, QActionGroup)
+from utils.pixmapcache import getIcon
 from utils.settings import Settings
 from PyQt4.Qsci import QsciScintilla
 from utils.fileutils import TexFileType
@@ -72,20 +67,20 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Creates the toolbar and layout "
 
         # Buttons
-        self.__printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
+        self.__printButton = QAction( getIcon( 'printer.png' ),
                                       'Print', self )
         self.__printButton.triggered.connect( self.__onPrint )
         self.__printButton.setEnabled( False )
         self.__printButton.setVisible( False )
 
         self.__printPreviewButton = QAction(
-                                PixmapCache().getIcon( 'printpreview.png' ),
+                                getIcon( 'printpreview.png' ),
                                 'Print preview', self )
         self.__printPreviewButton.triggered.connect( self.__onPrintPreview )
         self.__printPreviewButton.setEnabled( False )
         self.__printPreviewButton.setVisible( False )
 
-        # self.__sendUpButton = QAction( PixmapCache().getIcon('sendioup.png'),
+        # self.__sendUpButton = QAction( getIcon('sendioup.png'),
         #                                'Send to Main Editing Area', self )
         # self.__sendUpButton.triggered.connect( self.__sendUp )
 
@@ -107,7 +102,7 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__filterShowStderrAct.setActionGroup( self.__filterGroup )
         self.__filterShowStderrAct.triggered.connect( self.__onFilterShowStderr )
         self.__filterButton = QToolButton( self )
-        self.__filterButton.setIcon( PixmapCache().getIcon( 'iofilter.png' ) )
+        self.__filterButton.setIcon( getIcon( 'iofilter.png' ) )
         self.__filterButton.setToolTip( 'Filtering settings' )
         self.__filterButton.setPopupMode( QToolButton.InstantPopup )
         self.__filterButton.setMenu( self.__filterMenu )
@@ -136,7 +131,7 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.__settingsButton = QToolButton( self )
         self.__settingsButton.setIcon(
-                            PixmapCache().getIcon( 'iosettings.png' ) )
+                            getIcon( 'iosettings.png' ) )
         self.__settingsButton.setToolTip( 'View settings' )
         self.__settingsButton.setPopupMode( QToolButton.InstantPopup )
         self.__settingsButton.setMenu( self.__settingsMenu )
@@ -145,17 +140,17 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         fixedSpacer = QWidget()
         fixedSpacer.setFixedHeight( 8 )
 
-        self.__stopButton = QAction( PixmapCache().getIcon( 'runconsolestop.png' ),
+        self.__stopButton = QAction( getIcon( 'runconsolestop.png' ),
                                      'Stop process', self )
         self.__stopButton.triggered.connect( self.stop )
 
-        self.__stopAndCloseButton = QAction( PixmapCache().getIcon( 'runconsolestopclose.png' ),
+        self.__stopAndCloseButton = QAction( getIcon( 'runconsolestopclose.png' ),
                                              'Stop process and close tab', self )
         self.__stopAndCloseButton.triggered.connect( self.stopAndClose )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.__clearButton = QAction( PixmapCache().getIcon( 'trash.png' ),
+        self.__clearButton = QAction( getIcon( 'trash.png' ),
                                       'Clear', self )
         self.__clearButton.triggered.connect( self.clear )
 

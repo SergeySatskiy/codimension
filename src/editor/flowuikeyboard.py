@@ -20,8 +20,7 @@
 """Control flow UI widget: handling keyboard events"""
 
 from sys import maxsize
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QGraphicsScene
+from ui.qt import Qt, QGraphicsScene
 from flowui.items import CellElement
 from flowui.scopeitems import ScopeCellElement
 

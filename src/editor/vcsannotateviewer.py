@@ -25,10 +25,9 @@
 
 from texteditor import TextEditor
 import os.path
-from PyQt4.QtCore import Qt, QSize, QPoint, pyqtSignal
-from PyQt4.QtGui import ( QToolBar, QFont, QFontMetrics, QHBoxLayout, QWidget,
-                          QAction, QSizePolicy, QToolTip )
-from PyQt4.Qsci import QsciScintilla
+from ui.qt import (Qt, QSize, QPoint, pyqtSignal, QToolBar, QFont,
+                   QFontMetrics, QHBoxLayout, QWidget, QAction, QSizePolicy,
+                   QToolTip)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import ( detectFileType, getFileLanguage, DesignerFileType,
                               UnknownFileType, PythonFileType, Python3FileType,
@@ -42,8 +41,6 @@ from ui.importlist import ImportListWidget
 from ui.linecounter import LineCounterDialog
 from utils.encoding import decode
 from autocomplete.bufferutils import isImportLine
-from PyQt4.Qsci import QsciStyle
-
 
 
 class VCSAnnotateViewer( TextEditor ):

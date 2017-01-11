@@ -22,11 +22,9 @@
 
 from sys import maxsize
 import os.path
-from PyQt5.QtGui import QPen, QBrush, QPainterPath
-from PyQt5.QtCore import Qt
-from PyQt5.QtSvg import QGraphicsSvgItem
-from PyQt5.QtWidgets import (QGraphicsSimpleTextItem, QGraphicsRectItem,
-                             QGraphicsPathItem)
+from ui.qt import (QPen, QBrush, QPainterPath, Qt, QGraphicsSvgItem,
+                   QGraphicsSimpleTextItem, QGraphicsRectItem,
+                   QGraphicsPathItem)
 
 
 class SVGItem(QGraphicsSvgItem):
