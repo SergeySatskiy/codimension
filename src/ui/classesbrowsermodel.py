@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -22,10 +21,10 @@
 
 import os.path
 from os.path import basename
-from PyQt5.QtCore import QVariant
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.settings import Settings
 from utils.project import CodimensionProject
+from .qt import QVariant
 from .viewitems import TreeViewClassItem
 from .browsermodelbase import BrowserModelBase
 

@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -20,15 +19,14 @@
 
 """Find in files viewer implementation"""
 
-from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtGui import (QToolBar, QCursor, QBrush, QHBoxLayout, QWidget,
-                         QAction, QLabel, QSizePolicy, QFrame,
-                         QTreeWidget, QApplication, QTreeWidgetItem,
-                         QHeaderView, QToolTip, QPalette, QColor, QVBoxLayout)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.fileutils import getFileProperties
 from utils.project import CodimensionProject
+from .qt import (Qt, QSize, QTimer, QToolBar, QCursor, QBrush, QHBoxLayout,
+                 QWidget, QAction, QLabel, QSizePolicy, QFrame,
+                 QTreeWidget, QApplication, QTreeWidgetItem,
+                 QHeaderView, QToolTip, QPalette, QColor, QVBoxLayout)
 from .itemdelegates import NoOutlineHeightDelegate
 
 

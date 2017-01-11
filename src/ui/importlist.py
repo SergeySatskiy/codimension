@@ -21,11 +21,10 @@
 """imports list selection widget"""
 
 import os.path
-from PyQt5.QtCore import Qt, QEventLoop
-from PyQt5.QtWidgets import (QSizePolicy, QFrame, QTreeWidget, QApplication,
-                             QTreeWidgetItem, QHeaderView, QVBoxLayout,
-                             QAbstractItemView)
 from utils.globals import GlobalData
+from .qt import (Qt, QEventLoop, QSizePolicy, QFrame, QTreeWidget,
+                 QApplication, QTreeWidgetItem, QHeaderView, QVBoxLayout,
+                 QAbstractItemView)
 from .itemdelegates import NoOutlineHeightDelegate
 
 

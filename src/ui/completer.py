@@ -20,8 +20,8 @@
 """completer selection widget"""
 
 
-from PyQt5.QtCore import Qt, QEvent, QModelIndex, QStringListModel
-from PyQt5.QtWidgets import (QAction, QAbstractItemView, QCompleter, QListView)
+from .qt import (Qt, QEvent, QModelIndex, QStringListModel, QAction,
+                 QAbstractItemView, QCompleter, QListView)
 from .itemdelegates import NoOutlineHeightDelegate
 
 

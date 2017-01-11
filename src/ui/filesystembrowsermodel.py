@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -26,10 +25,10 @@
 
 """File system browser model"""
 
-from PyQt5.QtCore import QVariant, QModelIndex, QDir
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.settings import Settings
+from .qt import QVariant, QModelIndex, QDir
 from .viewitems import TreeViewDirectoryItem, TreeViewSysPathItem
 from .browsermodelbase import BrowserModelBase
 

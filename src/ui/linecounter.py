@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -22,14 +21,13 @@
 
 import os
 import os.path
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QFontMetrics, QCursor
-from PyQt5.QtWidgets import (QDialog, QTextEdit, QDialogButtonBox, QVBoxLayout,
-                             QSizePolicy, QProgressBar, QApplication)
 from utils.linescounter import LinesCounter
 from utils.globals import GlobalData
 from utils.misc import splitThousands
 from utils.fileutils import isPythonFile
+from .qt import (Qt, QTimer, QFontMetrics, QCursor, QDialog, QTextEdit,
+                 QDialogButtonBox, QVBoxLayout, QSizePolicy, QProgressBar,
+                 QApplication)
 from .fitlabel import FitPathLabel
 
 

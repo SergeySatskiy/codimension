@@ -26,19 +26,17 @@ import time
 import logging
 from cgi import escape
 from os.path import sep, isabs, exists, isdir, normpath, isfile, realpath
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QVBoxLayout, QSizePolicy,
-                             QLabel, QProgressBar, QApplication, QComboBox,
-                             QGridLayout, QHBoxLayout, QCheckBox, QRadioButton,
-                             QGroupBox, QPushButton, QFileDialog)
-from PyQt5.QtGui import QCursor
-from .fitlabel import FitPathLabel
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import isFileSearchable
-from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from autocomplete.listmodules import resolveLink
+from .qt import (QCursor, Qt, QDialog, QDialogButtonBox, QVBoxLayout,
+                 QSizePolicy, QLabel, QProgressBar, QApplication, QComboBox,
+                 QGridLayout, QHBoxLayout, QCheckBox, QRadioButton,
+                 QGroupBox, QPushButton, QFileDialog)
+from .fitlabel import FitPathLabel
+from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
 class Match:

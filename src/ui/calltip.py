@@ -20,10 +20,9 @@
 """Custom calltips"""
 
 
-from PyQt5.QtCore import Qt, QEventLoop
-from PyQt5.QtWidgets import (QSizePolicy, QFrame, QLabel, QApplication,
-                             QGridLayout)
 from utils.globals import GlobalData
+from .qt import (Qt, QEventLoop, QSizePolicy, QFrame, QLabel, QApplication,
+                 QGridLayout)
 
 
 class Calltip(QFrame):

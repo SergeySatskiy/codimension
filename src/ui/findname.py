@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,21 +20,19 @@
 """Find name feature implementation"""
 
 
-from PyQt5.QtCore import (Qt, QAbstractItemModel, QRegExp, QModelIndex,
-                          QVariant)
-from PyQt5.QtGui import (QTreeView, QAbstractItemView, QDialog, QVBoxLayout,
-                         QCursor, QComboBox, QSizePolicy,
-                         QSortFilterProxyModel, QApplication)
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from utils.settings import Settings
 from utils.fileutils import isPythonFile
+from .qt import (Qt, QAbstractItemModel, QRegExp, QModelIndex, QVariant,
+                 QTreeView, QAbstractItemView, QDialog, QVBoxLayout, QCursor,
+                 QComboBox, QSizePolicy, QSortFilterProxyModel, QApplication)
 from .combobox import EnterSensitiveComboBox
 from .itemdelegates import NoOutlineHeightDelegate
 
 
-class NameItem(object):
+class NameItem():
 
     """Names list item"""
 

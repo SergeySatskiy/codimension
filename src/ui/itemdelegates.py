@@ -20,8 +20,8 @@
 """ItemDelegate which helps changing the standard row height"""
 
 
-from PyQt5.QtWidgets import (QItemDelegate, QStyledItemDelegate,
-                             QStyleOptionViewItem, QStyle)
+from .qt import (QItemDelegate, QStyledItemDelegate, QStyleOptionViewItem,
+                 QStyle)
 
 
 class ChangingHeightItemDelegate(QItemDelegate):

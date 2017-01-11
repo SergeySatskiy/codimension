@@ -20,10 +20,9 @@
 """HTML viewer tab widget"""
 
 import os.path
-from PyQt5.QtGui import (QFrame, QHBoxLayout, QDesktopServices, QFont,
-                         QTextBrowser)
-from PyQt5.QtCore import Qt, pyqtSignal
 from utils.fileutils import getFileContent
+from .qt import (QFrame, QHBoxLayout, QDesktopServices, QFont, QTextBrowser,
+                 Qt, pyqtSignal)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 

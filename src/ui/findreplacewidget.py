@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -26,13 +25,12 @@
 
 """Find and replace widgets implementation"""
 
-from PyQt5.QtGui import (QHBoxLayout, QToolButton, QLabel, QSizePolicy,
-                         QComboBox, QGridLayout, QWidget, QCheckBox,
-                         QKeySequence)
-from PyQt5.QtCore import Qt, QSize, QEvent, pyqtSignal
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
+from .qt import (QHBoxLayout, QToolButton, QLabel, QSizePolicy, QComboBox,
+                 QGridLayout, QWidget, QCheckBox, QKeySequence, Qt, QSize,
+                 QEvent, pyqtSignal)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 

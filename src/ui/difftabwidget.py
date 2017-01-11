@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -20,11 +19,10 @@
 
 """Diff viewer tab widget"""
 
-from PyQt5.QtCore import Qt, QEvent, pyqtSignal
-from PyQt5.QtGui import QApplication
+from utils.settings import Settings
+from .qt import Qt, QEvent, pyqtSignal, QApplication
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .htmltabwidget import HTMLTabWidget
-from utils.settings import Settings
 
 
 class DiffTabWidget(HTMLTabWidget):

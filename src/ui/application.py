@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -20,11 +19,10 @@
 
 """definition of the codimension QT based application class"""
 
-from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtWidgets import QApplication, QMenuBar
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from .garbagecollector import GarbageCollector
+from .qt import Qt, QEvent, QApplication, QMenuBar
 
 
 KEY_PRESS = QEvent.KeyPress

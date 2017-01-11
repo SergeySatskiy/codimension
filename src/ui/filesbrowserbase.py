@@ -21,12 +21,12 @@
 
 import os.path
 import logging
-from PyQt5.QtCore import Qt, QModelIndex, QSortFilterProxyModel
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QTreeView
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
 from utils.fileutils import isPythonMime, isCDMProjectMime, getFileProperties
 from utils.project import getProjectFileTooltip
+from .qt import (Qt, QModelIndex, QSortFilterProxyModel, QAbstractItemView,
+                 QApplication, QTreeView)
 from .viewitems import (DirectoryItemType, SysPathItemType, GlobalsItemType,
                         ImportsItemType, FunctionsItemType, ClassesItemType,
                         StaticAttributesItemType, InstanceAttributesItemType,

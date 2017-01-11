@@ -28,11 +28,6 @@
 import logging
 import os
 import os.path
-from PyQt5.QtCore import Qt, QVariant, QDir, QUrl, pyqtSignal
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import (QTabWidget, QDialog, QMessageBox, QWidget,
-                             QHBoxLayout, QMenu, QToolButton, QShortcut,
-                             QFileDialog, QApplication, QTabBar)
 from utils.pixmapcache import getIcon
 from editor.texteditor import TextEditorTabWidget
 from utils.misc import getNewFileTemplate, getLocaleDateTime
@@ -43,6 +38,9 @@ from utils.fileutils import (getFileProperties, isImageViewable,
 from diagram.importsdgmgraphics import ImportDgmTabWidget
 from profiling.disasmwidget import DisassemblerResultsWidget
 from editor.vcsannotateviewer import VCSAnnotateViewerTabWidget
+from .qt import (Qt, QVariant, QDir, QUrl, pyqtSignal, QIcon, QTabWidget,
+                 QDialog, QMessageBox, QWidget, QHBoxLayout, QMenu,
+                 QToolButton, QShortcut, QFileDialog, QApplication, QTabBar)
 from .welcomewidget import WelcomeWidget
 from .helpwidget import QuickHelpWidget
 from .pixmapwidget import PixmapTabWidget

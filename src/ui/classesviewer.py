@@ -19,13 +19,12 @@
 
 """The classes viewer implementation"""
 
-from PyQt5.QtCore import Qt, QSize, QRect, QItemSelectionModel
-from PyQt5.QtWidgets import (QMenu, QWidget, QAction, QVBoxLayout, QToolBar,
-                             QLabel, QSizePolicy)
-from PyQt5.QtGui import QCursor
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
+from .qt import (Qt, QSize, QRect, QItemSelectionModel, QMenu, QWidget,
+                 QAction, QVBoxLayout, QToolBar, QLabel, QSizePolicy,
+                 QCursor)
 from .combobox import CDMComboBox
 from .classesbrowser import ClassesBrowser
 from .viewitems import (DecoratorItemType, FunctionItemType, ClassItemType,

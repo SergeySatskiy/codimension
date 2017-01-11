@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -28,9 +27,7 @@
 """Line edit which shows specific text when inactive"""
 
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import (QLineEdit, QStyleOptionFrameV2,
-                         QStyle, QPainter, QPalette)
+from .qt import Qt, QLineEdit, QStyleOptionFrame, QStyle, QPainter, QPalette
 
 
 class InactiveLineEdit(QLineEdit):
@@ -55,7 +52,7 @@ class InactiveLineEdit(QLineEdit):
         QLineEdit.paintEvent(self, evt)
         if self.text() == "" and self.__inactiveText != "" and \
            not self.hasFocus():
-            panel = QStyleOptionFrameV2()
+            panel = QStyleOptionFrame()
             self.initStyleOption(panel)
             textRect = self.style().subElementRect(QStyle.SE_LineEditContents,
                                                    panel, self)

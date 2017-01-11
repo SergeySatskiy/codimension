@@ -25,9 +25,8 @@
 
 """Labels which can change its content to fit the label size"""
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QLabel, QApplication, QFrame
 from utils.fileutils import compactPath
+from .qt import Qt, pyqtSignal, QLabel, QApplication, QFrame
 
 
 class FitLabel(QLabel):

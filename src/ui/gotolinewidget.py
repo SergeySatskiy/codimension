@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -20,10 +19,9 @@
 
 """Goto line widget implementation"""
 
-from PyQt5.QtGui import (QHBoxLayout, QToolButton, QLabel, QSizePolicy,
-                         QComboBox, QWidget, QIntValidator)
-from PyQt5.QtCore import Qt
 from utils.pixmapcache import getIcon
+from .qt import (QHBoxLayout, QToolButton, QLabel, QSizePolicy, QComboBox,
+                 QWidget, QIntValidator, Qt)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 

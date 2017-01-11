@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -20,13 +19,12 @@
 
 """About dialog implementation"""
 
-from PyQt5.QtGui import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QTabWidget,
-                         QTextBrowser, QDialogButtonBox, QSizePolicy)
-from PyQt5.QtCore import Qt
 from utils.pixmapcache import getPixmap
 from utils.globals import GlobalData
 from utils.versions import getComponentInfo
 from flowui.cml import CMLVersion
+from .qt import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QTabWidget,
+                 QTextBrowser, QDialogButtonBox, QSizePolicy, Qt)
 
 
 class AboutDialog(QDialog):

@@ -21,13 +21,12 @@
 
 
 import os.path, logging, urllib, socket
-from PyQt5.QtCore import ( Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal,
-                           QVariant, QRect, QEvent, QPoint, QModelIndex )
-from PyQt5.QtGui import QCursor, QFontMetrics, QDesktopServices, QFont
-from PyQt5.QtWidgets import ( QApplication, QToolBar,
-                          QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
-                          QSizePolicy, QToolButton, QDialog, QToolTip,
-                          QVBoxLayout, QSplitter )
+from ui.qt import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal, QVariant,
+                   QRect, QEvent, QPoint, QModelIndex, QCursor, QFontMetrics,
+                   QDesktopServices, QFont, QApplication, QToolBar,
+                   QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
+                   QSizePolicy, QToolButton, QDialog, QToolTip,
+                   QVBoxLayout, QSplitter)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache import getIcon, getPixmap
 from utils.globals import GlobalData

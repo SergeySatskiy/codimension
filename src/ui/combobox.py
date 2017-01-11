@@ -25,8 +25,7 @@
    - inserts items at top
 """
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QComboBox
+from .qt import Qt, pyqtSignal, QComboBox
 
 
 class EnterSensitiveComboBox(QComboBox):

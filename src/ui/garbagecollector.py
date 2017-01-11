@@ -27,10 +27,11 @@
 
 import gc
 import logging
-from PyQt5.QtCore import QObject, QTimer
+from .qt import QObject, QTimer
 
 
 class GarbageCollector(QObject):
+
     '''Disable automatic garbage collection and instead collect manually
        every INTERVAL milliseconds.
 

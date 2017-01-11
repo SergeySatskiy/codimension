@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -27,10 +26,10 @@
 """Functions browser model"""
 
 from os.path import basename, realpath
-from PyQt5.QtCore import QVariant
 from utils.project import CodimensionProject
 from utils.fileutils import isPythonFile
 from utils.settings import Settings
+from .qt import QVariant
 from .viewitems import TreeViewFunctionItem
 from .browsermodelbase import BrowserModelBase
 

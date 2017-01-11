@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -27,9 +26,9 @@
 """Globals browser model"""
 
 from os.path import basename, realpath
-from PyQt5.QtCore import QVariant
 from utils.project import CodimensionProject
 from utils.fileutils import isPythonFile
+from .qt import QVariant
 from .viewitems import TreeViewGlobalItem
 from .browsermodelbase import BrowserModelBase
 

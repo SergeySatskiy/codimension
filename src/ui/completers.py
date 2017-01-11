@@ -25,8 +25,8 @@
 
 """Various kinds of completers"""
 
-from PyQt5.QtCore import QDir, QStringListModel
-from PyQt5.QtWidgets import QCompleter, QDirModel
+
+from .qt import QDir, QStringListModel, QCompleter, QDirModel
 
 
 class FileCompleter(QCompleter):

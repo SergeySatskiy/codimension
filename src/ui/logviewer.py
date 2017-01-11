@@ -25,12 +25,11 @@
 
 """The log viewer implementation"""
 
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QColor, QBrush, QTextCursor, QCursor, QFont
-from PyQt5.QtWidgets import (QPlainTextEdit, QMenu, QHBoxLayout, QWidget,
-                             QAction, QToolBar, QSizePolicy)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
+from .qt import (Qt, QSize, QColor, QBrush, QTextCursor, QCursor, QFont,
+                 QPlainTextEdit, QMenu, QHBoxLayout, QWidget, QAction,
+                 QToolBar, QSizePolicy)
 
 
 MAX_LINES = 10000

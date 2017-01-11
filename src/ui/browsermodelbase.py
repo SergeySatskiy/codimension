@@ -28,12 +28,11 @@
 import sys
 import os
 import logging
-from PyQt5.QtCore import Qt, QAbstractItemModel, QVariant, QModelIndex
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QCursor
 from utils.fileutils import isPythonFile, isPythonMime
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
+from .qt import (Qt, QAbstractItemModel, QVariant, QModelIndex, QApplication,
+                 QCursor)
 from .viewitems import (TreeViewItem, TreeViewDirectoryItem, TreeViewFileItem,
                         TreeViewGlobalsItem, TreeViewImportsItem,
                         TreeViewFunctionsItem, TreeViewClassesItem,

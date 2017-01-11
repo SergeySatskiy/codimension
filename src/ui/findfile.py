@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -22,15 +21,14 @@
 
 import os
 import os.path
-from PyQt5.QtCore import (Qt, QAbstractItemModel, QRegExp, QModelIndex,
-                          QVariant)
-from PyQt5.QtGui import (QTreeView, QAbstractItemView, QDialog, QVBoxLayout,
-                         QCursor, QSizePolicy, QHeaderView, QComboBox,
-                         QSortFilterProxyModel, QApplication)
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from utils.globals import GlobalData
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.settings import Settings
+from .qt import (Qt, QAbstractItemModel, QRegExp, QModelIndex, QVariant,
+                 QTreeView, QAbstractItemView, QDialog, QVBoxLayout,
+                 QCursor, QSizePolicy, QHeaderView, QComboBox,
+                 QSortFilterProxyModel, QApplication)
 from .itemdelegates import NoOutlineHeightDelegate
 from .combobox import EnterSensitiveComboBox
 

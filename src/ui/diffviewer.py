@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -20,12 +19,11 @@
 
 """The diff viewer implementation"""
 
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import (QHBoxLayout, QWidget, QAction, QToolBar,
-                         QSizePolicy, QVBoxLayout)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
+from .qt import (Qt, QSize, QHBoxLayout, QWidget, QAction, QToolBar,
+                 QSizePolicy, QVBoxLayout)
 from .htmltabwidget import HTMLTabWidget
 
 
