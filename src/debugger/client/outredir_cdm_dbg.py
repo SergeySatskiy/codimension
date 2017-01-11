@@ -27,7 +27,7 @@ from protocol_cdm_dbg import (StdoutStderrEOT, ResponseStdout,
 MAX_TRIES = 3
 
 
-class OutStreamRedirector(object):
+class OutStreamRedirector():
 
     """Wraps a socket object with a file interface"""
 
@@ -118,7 +118,7 @@ class OutStreamRedirector(object):
         self.write(''.join(lines))
 
 
-class OutStreamCollector(object):
+class OutStreamCollector():
 
     """Collects output with a file interface"""
 

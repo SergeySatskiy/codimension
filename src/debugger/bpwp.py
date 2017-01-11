@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,60 +16,50 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Debugger break and watch point viewer "
+"""Debugger break and watch point viewer"""
 
-
-from bpointviewer import BreakPointViewer
-from wpointviewer import WatchPointViewer
-
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QVBoxLayout, QWidget, QSplitter
+from ui.qt import Qt, QVBoxLayout, QWidget, QSplitter
+from .bpointviewer import BreakPointViewer
+from .wpointviewer import WatchPointViewer
 
 
-class DebuggerBreakWatchPoints( QWidget ):
-    " Implements the debugger break and watch point viewer "
+class DebuggerBreakWatchPoints(QWidget):
 
-    def __init__( self, parent, debugger ):
-        QWidget.__init__( self, parent )
+    """Implements the debugger break and watch point viewer"""
+
+    def __init__(self, parent, debugger):
+        QWidget.__init__(self, parent)
 
         self.__debugger = debugger
         self.__createLayout()
-        return
 
-    def __createLayout( self ):
-        " Creates the widget layout "
+    def __createLayout(self):
+        """Creates the widget layout"""
+        verticalLayout = QVBoxLayout(self)
+        verticalLayout.setContentsMargins(1, 1, 1, 1)
 
-        verticalLayout = QVBoxLayout( self )
-        verticalLayout.setContentsMargins( 1, 1, 1, 1 )
-
-        self.splitter = QSplitter( Qt.Vertical )
-
-        self.breakPointViewer = BreakPointViewer( self.splitter,
-                                                    self.__debugger.getBreakPointModel() )
-        self.__watchPointViewer = WatchPointViewer( self.splitter,
-                                                    self.__debugger.getWatchPointModel() )
+        self.splitter = QSplitter(Qt.Vertical)
+        self.breakPointViewer = BreakPointViewer(
+            self.splitter, self.__debugger.getBreakPointModel())
+        self.__watchPointViewer = WatchPointViewer(
+            self.splitter, self.__debugger.getWatchPointModel())
         # TODO: temporary
-        self.__watchPointViewer.setVisible( False )
+        self.__watchPointViewer.setVisible(False)
 
-        self.splitter.addWidget( self.breakPointViewer )
-        self.splitter.addWidget( self.__watchPointViewer )
+        self.splitter.addWidget(self.breakPointViewer)
+        self.splitter.addWidget(self.__watchPointViewer)
 
-        self.splitter.setCollapsible( 0, False )
-        self.splitter.setCollapsible( 1, False )
+        self.splitter.setCollapsible(0, False)
+        self.splitter.setCollapsible(1, False)
 
-        verticalLayout.addWidget( self.splitter )
-        return
+        verticalLayout.addWidget(self.splitter)
 
-    def clear( self ):
-        " Clears everything "
+    def clear(self):
+        """Clears everything"""
         self.breakPointViewer.clear()
         self.__watchPointViewer.clear()
-        return
 
-    def setFocus( self ):
-        " Sets the focus to the break points window "
+    def setFocus(self):
+        """Sets the focus to the break points window"""
         self.breakPointViewer.setFocus()
-        return

@@ -21,10 +21,9 @@
 """Disassembler widget"""
 
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt5.QtCore import Qt, QSize, QEvent, pyqtSignal
-from PyQt5.QtGui import (QWidget, QToolBar, QHBoxLayout, QAction,
-                         QLabel, QFrame, QPalette, QVBoxLayout,
-                         QTextEdit, QSizePolicy, QApplication, QFont)
+from ui.qt import (Qt, QSize, QEvent, pyqtSignal, QWidget, QToolBar,
+                   QHBoxLayout, QAction, QLabel, QFrame, QPalette, QVBoxLayout,
+                   QTextEdit, QSizePolicy, QApplication, QFont)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings

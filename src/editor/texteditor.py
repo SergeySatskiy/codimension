@@ -56,6 +56,7 @@ from debugger.breakpoint import Breakpoint
 from ui.calltip import Calltip
 from .flowuiwidget import FlowUIWidget
 from .navbar import NavigationBar
+from .qpartwrap import QutepartWrapper
 
 
 CTRL_SHIFT = int(Qt.ShiftModifier | Qt.ControlModifier)
@@ -66,27 +67,18 @@ CTRL_KEYPAD = int(Qt.KeypadModifier | Qt.ControlModifier)
 NO_MODIFIER = int(Qt.NoModifier)
 
 
-class TextEditor(ScintillaWrapper):
+class TextEditor(QutepartWrapper):
 
     """Text editor implementation"""
 
-    matchIndicator = ScintillaWrapper.INDIC_CONTAINER
-    searchIndicator = ScintillaWrapper.INDIC_CONTAINER + 1
-    spellingIndicator = ScintillaWrapper.INDIC_CONTAINER + 2
-
     textToIterate = ""
-
-    LINENUM_MARGIN = 0
-    BPOINT_MARGIN = 1
-    FOLDING_MARGIN = 2
-    MESSAGES_MARGIN = 3
 
     escapePressed = pyqtSignal()
     cflowSyncRequested = pyqtSignal(int, int, int)
 
     def __init__(self, parent, debugger):
         self._parent = parent
-        ScintillaWrapper.__init__(self, GlobalData().mainWindow)
+        QutepartWrapper.__init__(self, parent)
         self.setAttribute(Qt.WA_KeyCompression)
 
         self.__debugger = debugger
@@ -233,7 +225,6 @@ class TextEditor(ScintillaWrapper):
                         return True
             except Exception as exc:
                 pass
-        # Scintilla does not define an event filter so there is no need
         return False
 
     def wheelEvent(self, event):
@@ -244,7 +235,7 @@ class TextEditor(ScintillaWrapper):
             else:
                 self._parent.onZoomOut()
         else:
-            ScintillaWrapper.wheelEvent(self, event)
+            QutepartWrapper.wheelEvent(self, event)
 
     def _initContextMenu(self):
         """Initializes the context menu"""
@@ -455,7 +446,7 @@ class TextEditor(ScintillaWrapper):
     def focusInEvent(self, event):
         """Enable Shift+Tab when the focus is received"""
         if self._parent.shouldAcceptFocus():
-            ScintillaWrapper.focusInEvent(self, event)
+            QutepartWrapper.focusInEvent(self, event)
         else:
             self._parent.setFocus()
 
@@ -464,7 +455,7 @@ class TextEditor(ScintillaWrapper):
         self.__completer.hide()
         if not self.__inCompletion:
             self.__resetCalltip()
-        ScintillaWrapper.focusOutEvent(self, event)
+        QutepartWrapper.focusOutEvent(self, event)
 
     def updateSettings(self):
         """Updates the editor settings"""
@@ -531,76 +522,11 @@ class TextEditor(ScintillaWrapper):
 
     def __initMargins(self):
         """Initializes the editor margins"""
-        # The supported margins: line numbers (4 digits), bookmarks, folding
-
-        # reset standard margins settings
-        for margin in range(5):
-            self.setMarginLineNumbers(margin, False)
-            self.setMarginMarkerMask(margin, 0)
-            self.setMarginWidth(margin, 0)
-            self.setMarginSensitivity(margin, False)
-
-        skin = GlobalData().skin
-        self.setMarginsBackgroundColor(skin.marginPaper)
-        self.setMarginsForegroundColor(skin.marginColor)
-
-        # Set margin 0 for line numbers
-        self.setMarginsFont(skin.lineNumFont)
-        self.setMarginLineNumbers(self.LINENUM_MARGIN, True)
-
-        # Setup break point margin
-        self.setMarginWidth(self.BPOINT_MARGIN, 16)
-
-        # Setup messages margin
-        self.setMarginWidth(self.MESSAGES_MARGIN, 16)
-
-        # Setup folding margin
-        self.setMarginWidth(self.FOLDING_MARGIN, 16)
-        self.setFolding(QsciScintilla.PlainFoldStyle, self.FOLDING_MARGIN)
-        self.setFoldMarginColors(skin.foldingColor,
-                                 skin.foldingPaper)
-
-        # Setup margin markers
-        self.__pyflakesMsgMarker = self.markerDefine(
-            getPixmap('pyflakesmsgmarker.png'))
-        self.__dbgMarker = self.markerDefine(getPixmap('dbgcurrentmarker.png'))
-        self.__excptMarker = self.markerDefine(
-            getPixmap('dbgexcptmarker.png'))
-        self.__bpointMarker = self.markerDefine(
-            getPixmap('dbgbpointmarker.png'))
-        self.__tempbpointMarker = self.markerDefine(
-            getPixmap('dbgtmpbpointmarker.png'))
-        self.__disbpointMarker = self.markerDefine(
-            getPixmap('dbgdisbpointmarker.png'))
-
-        marginMask = (1 << self.__pyflakesMsgMarker |
-                      1 << self.__dbgMarker |
-                      1 << self.__excptMarker)
-        self.setMarginMarkerMask(self.MESSAGES_MARGIN, marginMask)
-        self.setMarginSensitivity(self.MESSAGES_MARGIN, True)
-
-        self.__bpointMarginMask = (1 << self.__bpointMarker |
-                                   1 << self.__tempbpointMarker |
-                                   1 << self.__disbpointMarker)
-        self.setMarginMarkerMask(self.BPOINT_MARGIN, self.__bpointMarginMask)
-        self.setMarginSensitivity(self.BPOINT_MARGIN, True)
+        # The supported margins: line numbers, break points, flakes messages
 
     def __initDebuggerMarkers(self):
         """Initializes debugger related markers"""
         skin = GlobalData().skin
-        self.__currentDebuggerLineMarker = self.markerDefine(
-            QsciScintilla.Background)
-        self.setMarkerForegroundColor(skin.debugCurrentLineMarkerColor,
-                                      self.__currentDebuggerLineMarker)
-        self.setMarkerBackgroundColor(skin.debugCurrentLineMarkerPaper,
-                                      self.__currentDebuggerLineMarker)
-
-        self.__exceptionLineMarker = self.markerDefine(
-            QsciScintilla.Background)
-        self.setMarkerForegroundColor(skin.debugExcptLineMarkerColor,
-                                      self.__exceptionLineMarker)
-        self.setMarkerBackgroundColor(skin.debugExcptLineMarkerPaper,
-                                      self.__exceptionLineMarker)
 
     def highlightCurrentDebuggerLine(self, line, asException):
         """Highlights the current debugger line"""
@@ -622,73 +548,6 @@ class TextEditor(ScintillaWrapper):
         """Converts an indicator style from a config file
            to the scintilla constant
         """
-        indicatorStyles = {0: self.INDIC_PLAIN,
-                           1: self.INDIC_SQUIGGLE,
-                           2: self.INDIC_TT,
-                           3: self.INDIC_DIAGONAL,
-                           4: self.INDIC_STRIKE,
-                           5: self.INDIC_HIDDEN,
-                           6: self.INDIC_BOX,
-                           7: self.INDIC_ROUNDBOX}
-        # Sick! Some scintilla versions are so old that they don't have the
-        # indicators below...
-        if hasattr(self, "INDIC_STRAIGHTBOX"):
-            indicatorStyles[8] = self.INDIC_STRAIGHTBOX
-        if hasattr(self, "INDIC_DASH"):
-            indicatorStyles[9] = self.INDIC_DASH
-        if hasattr(self, "INDIC_DOTS"):
-            indicatorStyles[10] = self.INDIC_DOTS
-        if hasattr(self, "INDIC_SQUIGGLELOW"):
-            indicatorStyles[11] = self.INDIC_SQUIGGLELOW
-        if hasattr(self, "INDIC_DOTBOX"):
-            indicatorStyles[12] = self.INDIC_DOTBOX
-        if hasattr(self, "INDIC_SQUIGGLEPIXMAP"):
-            indicatorStyles[13] = self.INDIC_SQUIGGLEPIXMAP
-        if hasattr(self, "INDIC_COMPOSITIONTHICK"):
-            indicatorStyles[14] = self.INDIC_COMPOSITIONTHICK
-
-        if value in indicatorStyles:
-            return indicatorStyles[value]
-        return self.INDIC_ROUNDBOX
-
-    def __initIndicators(self):
-        """Initialises indicators"""
-        skin = GlobalData().skin
-
-        # Search indicator
-        self.SendScintilla(self.SCI_INDICSETSTYLE, self.searchIndicator,
-                           self._convertIndicator(skin.searchMarkStyle))
-        self.SendScintilla(self.SCI_INDICSETALPHA, self.searchIndicator,
-                           skin.searchMarkAlpha)
-        if hasattr(self, "SCI_INDICSETOUTLINEALPHA"):
-            self.SendScintilla(self.SCI_INDICSETOUTLINEALPHA,
-                               self.searchIndicator,
-                               skin.searchMarkOutlineAlpha)
-        self.SendScintilla(self.SCI_INDICSETUNDER, self.searchIndicator, True)
-        self.SendScintilla(self.SCI_INDICSETFORE, self.searchIndicator,
-                           skin.searchMarkColor)
-
-        # Match indicator
-        self.SendScintilla(self.SCI_INDICSETSTYLE, self.matchIndicator,
-                           self._convertIndicator(skin.matchMarkStyle))
-        self.SendScintilla(self.SCI_INDICSETALPHA, self.matchIndicator,
-                           skin.matchMarkAlpha)
-        if hasattr(self, "SCI_INDICSETOUTLINEALPHA"):
-            self.SendScintilla(self.SCI_INDICSETOUTLINEALPHA,
-                               self.matchIndicator, skin.matchMarkOutlineAlpha)
-        self.SendScintilla(self.SCI_INDICSETUNDER, self.matchIndicator, True)
-        self.SendScintilla(self.SCI_INDICSETFORE, self.matchIndicator,
-                           skin.matchMarkColor)
-
-        # Spelling indicator
-        self.SendScintilla(self.SCI_INDICSETSTYLE, self.spellingIndicator,
-                           self.INDIC_SQUIGGLE)
-        self.SendScintilla(self.SCI_INDICSETALPHA, self.spellingIndicator,
-                           skin.spellingMarkAlpha)
-        self.SendScintilla(self.SCI_INDICSETUNDER, self.spellingIndicator,
-                           True)
-        self.SendScintilla(self.SCI_INDICSETFORE, self.spellingIndicator,
-                           skin.spellingMarkColor)
 
     def __alterKeyBinding(self):
         """Disable some unwanted key bindings"""
@@ -696,51 +555,9 @@ class TextEditor(ScintillaWrapper):
         shift = self.SCMOD_SHIFT << 16
         alt = self.SCMOD_ALT << 16
 
-        # Disable default Ctrl+L (line deletion)
-        self.SendScintilla(self.SCI_CLEARCMDKEY, ord('L') + ctrl)
-        # Set Alt+Shift+HOME to select till position 0
-        altshift = alt + shift
-        self.SendScintilla(self.SCI_ASSIGNCMDKEY,
-                           self.SCK_HOME  + altshift, self.SCI_HOMERECTEXTEND)
-        self.SendScintilla(self.SCI_CLEARCMDKEY, ord('B') + ctrl + shift)
 
     def bindLexer(self, fileName, fileType):
         """Sets the correct lexer depending on language"""
-        if self.lexer_ is not None and \
-           (self.lexer_.lexer() == "container" or self.lexer_.lexer() is None):
-            try:
-                self.SCN_STYLENEEDED.disconnect(self._styleNeeded)
-            except:
-                pass
-
-        self.lexer_ = lexer.getLexerByType(fileType, fileName, self)
-        skin = GlobalData().skin
-        if self.lexer_ is not None:
-            self.lexer_.setDefaultPaper(skin.nolexerPaper)
-            self.lexer_.setDefaultColor(skin.nolexerColor)
-            self.lexer_.setDefaultFont(skin.nolexerFont)
-            self.setLexer(self.lexer_)
-
-            if self.lexer_.lexer() == "container" or \
-               self.lexer_.lexer() is None:
-                self.setStyleBits(self.lexer_.styleBitsNeeded())
-                self.SCN_STYLENEEDED.connect(self._styleNeeded)
-
-            # now set the lexer properties
-            self.lexer_.initProperties()
-
-            # initialize the auto indent style of the lexer
-            # ais =
-            self.lexer_.autoIndentStyle()
-
-        self.setIndentationsUseTabs(fileType == MakefileType)
-
-        # Scintilla bug? workaround
-        # If a lexer is switched to text-only, the font on margin is lost
-        # Set it again
-        self.setMarginsBackgroundColor(skin.marginPaper)
-        self.setMarginsForegroundColor(skin.marginColor)
-        self.setMarginsFont(skin.lineNumFont)
 
     def _styleNeeded(self, position):
         """Handles the need for more styling"""
@@ -866,146 +683,12 @@ class TextEditor(ScintillaWrapper):
 
     def clearSearchIndicators(self):
         """Hides the search indicator"""
-        self.clearAllIndicators(self.searchIndicator)
-        self.clearAllIndicators(self.matchIndicator)
-
         # Removes the 'highlighted occurrences: ...' if so
         GlobalData().mainWindow.clearStatusBarMessage(1)
 
     def setSearchIndicator(self, startPos, indicLength):
         """Sets a single search indicator"""
         self.setIndicatorRange(self.searchIndicator, startPos, indicLength)
-
-    def markOccurrences(self, indicator, txt,
-                        selectionOnly, isRegexp, caseSensitive, wholeWord):
-        """Marks all occurrences of the text with the given indicator"""
-        lineFrom = 0
-        indexFrom = 0
-        lineTo = -1
-        indexTo = -1
-
-        if selectionOnly:
-            lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
-
-        self.clearAllIndicators(indicator)
-        found = self.findFirstTarget(txt, isRegexp, caseSensitive, wholeWord,
-                                     lineFrom, indexFrom, lineTo, indexTo)
-        foundTargets = []
-        while found:
-            tgtPos, tgtLen = self.getFoundTarget()
-            if tgtLen == 0:
-                # Strange, the target must not be of zero length
-                break
-            line, pos = self.lineIndexFromPosition(tgtPos)
-            foundTargets.append([line, pos, tgtLen])
-            self.setIndicatorRange(indicator, tgtPos, tgtLen)
-            found = self.findNextTarget()
-
-        # Show it for 5 seconds
-        GlobalData().mainWindow.showStatusBarMessage(
-            "Highlighted occurrences: " + str(len(foundTargets)) + ".")
-        return foundTargets
-
-    def getTargets(self, txt,
-                   isRegexp, caseSensitive, wholeWord,
-                   lineFrom, indexFrom, lineTo, indexTo):
-        " Provides a list of the targets start points and the target length "
-        found = self.findFirstTarget(txt, isRegexp, caseSensitive, wholeWord,
-                                     lineFrom, indexFrom, lineTo, indexTo)
-        foundTargets = []
-        while found:
-            tgtPos, tgtLen = self.getFoundTarget()
-            if tgtLen == 0:
-                # Strange, the target must not be of zero length
-                break
-            line, pos = self.lineIndexFromPosition(tgtPos)
-            foundTargets.append([line, pos, tgtLen])
-            found = self.findNextTarget()
-        return foundTargets
-
-    def highlightMatch(self, text,
-                       originLine, originPos,
-                       isRegexp, caseSensitive, wholeWord,
-                       respectSelection=False, highlightFirst=True):
-        """- Highlight all the matches
-           - The first one is highlighted special way if requested
-           - Provides the found target position if so
-        """
-        self.clearSearchIndicators()
-
-        status = self.hasSelectedText() and respectSelection
-        if status:
-            line1, index1, line2, index2 = self.getSelection()
-            if line1 == line2:
-                status = False
-        if status:
-            # Search within the selection
-            targets = self.markOccurrences(self.searchIndicator,
-                                           text, True,
-                                           isRegexp, caseSensitive, wholeWord)
-            if len(targets) == 0:
-                return [-1, -1, -1]
-
-            # Highlight the first target in a special way
-            if highlightFirst:
-                tgtPos = self.positionFromLineIndex(targets[0][0],
-                                                    targets[0][1])
-                self.clearIndicatorRange(self.searchIndicator,
-                                         tgtPos, targets[0][2])
-                self.setIndicatorRange(self.matchIndicator, tgtPos,
-                                       targets[0][2])
-            return [targets[0][0], targets[0][1], targets[0][2]]
-
-        # There is no selected text, deal with the whole document
-        targets = self.markOccurrences(self.searchIndicator,
-                                       text, False,
-                                       isRegexp, caseSensitive, wholeWord)
-        if len(targets) == 0:
-            return [-1, -1, -1]
-
-        # Now, check if the origin pos within a target
-        for item in targets:
-            if originLine == item[0]:
-                if originPos >= item[1] and \
-                   originPos <= item[1] + item[2]:
-                    # This is the target to highlight - cursor within the
-                    # target
-                    if highlightFirst:
-                        tgtPos = self.positionFromLineIndex(item[0], item[1])
-                        self.clearIndicatorRange(self.searchIndicator,
-                                                 tgtPos, item[2])
-                        self.setIndicatorRange(self.matchIndicator, tgtPos,
-                                               item[2])
-                    return [item[0], item[1], item[2]]
-                if originPos < item[1]:
-                    # This is the target to highlight - cursor is before the
-                    # target
-                    if highlightFirst:
-                        tgtPos = self.positionFromLineIndex(item[0], item[1])
-                        self.clearIndicatorRange(self.searchIndicator,
-                                                 tgtPos, item[2])
-                        self.setIndicatorRange(self.matchIndicator, tgtPos,
-                                               item[2])
-                    return [item[0], item[1], item[2]]
-            if originLine < item[0]:
-                if highlightFirst:
-                    tgtPos = self.positionFromLineIndex(item[0], item[1])
-                    self.clearIndicatorRange(self.searchIndicator,
-                                             tgtPos, item[2])
-                    self.setIndicatorRange(self.matchIndicator, tgtPos,
-                                           item[2])
-                return [item[0], item[1], item[2]]
-
-        # Here - nothing is found till the end of the document
-        # Take the first from the beginning
-        if highlightFirst:
-            tgtPos = self.positionFromLineIndex(targets[0][0],
-                                                targets[0][1])
-            self.setIndicatorRange(self.matchIndicator, tgtPos,
-                                   targets[0][2])
-            self.setIndicatorRange(self.matchIndicator, tgtPos,
-                                   targets[0][2])
-        return [targets[0][0], targets[0][1], targets[0][2]]
 
     def keyPressEvent(self, event):
         """Handles the key press events"""
@@ -1018,7 +701,7 @@ class TextEditor(ScintillaWrapper):
                 self.setFocus()
                 return
             # There could be backspace or printed characters only
-            ScintillaWrapper.keyPressEvent(self, event)
+            QutepartWrapper.keyPressEvent(self, event)
             QApplication.processEvents()
             if key == Qt.Key_Backspace:
                 if self.__completionPrefix == "":
@@ -1038,7 +721,7 @@ class TextEditor(ScintillaWrapper):
             line, pos = self.getCursorPosition()
 
             self.beginUndoAction()
-            ScintillaWrapper.keyPressEvent(self, event)
+            QutepartWrapper.keyPressEvent(self, event)
             QApplication.processEvents()
 
             if line == self.__openedLine:
@@ -1061,7 +744,7 @@ class TextEditor(ScintillaWrapper):
                 lineToTrim = line
 
             self.beginUndoAction()
-            ScintillaWrapper.keyPressEvent(self, event)
+            QutepartWrapper.keyPressEvent(self, event)
             QApplication.processEvents()
 
             if lineToTrim != -1:
@@ -1088,9 +771,9 @@ class TextEditor(ScintillaWrapper):
                     self.onAutoComplete()
                     event.accept()
                 else:
-                    ScintillaWrapper.keyPressEvent(self, event)
+                    QutepartWrapper.keyPressEvent(self, event)
             else:
-                ScintillaWrapper.keyPressEvent(self, event)
+                QutepartWrapper.keyPressEvent(self, event)
             self.__lastTabPosition = currentPosition
         elif key == Qt.Key_Z and \
             int(event.modifiers()) == (Qt.ControlModifier + Qt.ShiftModifier):
@@ -1098,15 +781,15 @@ class TextEditor(ScintillaWrapper):
 
         elif key == Qt.Key_ParenLeft:
             if Settings().editorCalltips:
-                ScintillaWrapper.keyPressEvent(self, event)
+                QutepartWrapper.keyPressEvent(self, event)
                 self.onShowCalltip(False, False)
             else:
-                ScintillaWrapper.keyPressEvent(self, event)
+                QutepartWrapper.keyPressEvent(self, event)
         else:
             # Special keyboard keys are delivered as 0 values
             if key != 0:
                 self.__openedLine = -1
-                ScintillaWrapper.keyPressEvent(self, event)
+                QutepartWrapper.keyPressEvent(self, event)
 
         self.__skipChangeCursor = False
 
@@ -1165,44 +848,6 @@ class TextEditor(ScintillaWrapper):
         else:
             TextEditor.textToIterate = text
         self.highlightWord(text)
-
-    def _onDwellStart(self, position, x, y):
-        """Triggered when mouse started to dwell"""
-        if not self.underMouse():
-            return
-        marginNumber = self._marginNumber(x)
-        if marginNumber != self.MESSAGES_MARGIN:
-            return
-        if not self.__pyflakesMessages:
-            return
-
-        # Calculate the line
-        pos = self.SendScintilla(self.SCI_POSITIONFROMPOINT, x, y)
-        line, posInLine = self.lineIndexFromPosition(pos)
-
-        if self.markersAtLine(line) & (1 << self.__pyflakesMsgMarker) == 0:
-            return
-
-        handle = self.__markerHandleByLine(line)
-        if handle == -1:
-            return
-
-        message = self.__pyflakesMessages[handle]
-        QToolTip.showText(self.mapToGlobal(QPoint(x, y)), message)
-        self.__pyflakesTooltipShown = True
-
-    def __markerHandleByLine(self, line):
-        for handle in self.__pyflakesMessages.keys():
-            if self.SendScintilla(self.SCI_MARKERLINEFROMHANDLE,
-                                  handle) == line:
-                return handle
-        return -1
-
-    def _onDwellEnd(self, position, x, y):
-        """Triggered when mouse ended to dwell"""
-        if self.__pyflakesTooltipShown:
-            self.__pyflakesTooltipShown = False
-            QToolTip.hideText()
 
     def onFirstChar(self):
         """Jump to the first character in the buffer"""
@@ -1949,14 +1594,6 @@ class TextEditor(ScintillaWrapper):
         absPos = self.positionFromLineIndex(line, pos)
         self.cflowSyncRequested.emit(absPos, line + 1, pos + 1)
         return True
-
-    def _updateDwellingTime(self):
-        """Updates the dwelling time as necessary"""
-        if self.__pyflakesMessages:
-            self.SendScintilla(self.SCI_SETMOUSEDWELLTIME, 250)
-        else:
-            self.SendScintilla(self.SCI_SETMOUSEDWELLTIME,
-                               self.SC_TIME_FOREVER)
 
     def gotoLine(self, line, pos=None, firstVisible=None):
         """Jumps to the given position and scrolls if needed.

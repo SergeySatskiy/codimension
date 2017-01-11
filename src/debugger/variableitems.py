@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,18 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 # The implementation vastly derived from eric4. Here is the original copyright:
 # Copyright (c) 2002 - 2013 Detlev Offenbach <detlev@die-offenbachs.de>
 #
 
 
-" Debugger variable browser items "
+"""Debugger variable browser items"""
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QTreeWidgetItem
-from utils.pixmapcache import PixmapCache
+from ui.qt import Qt, QTreeWidgetItem
+from utils.pixmapcache import getIcon
 
 
 def getDisplayValue( displayValue ):
@@ -161,7 +157,7 @@ class VariableItem( QTreeWidgetItem ):
                         fileName = 'globvar.png'
                     else:
                         fileName = 'locvar.png'
-                    return PixmapCache().getIcon( fileName )
+                    return getIcon( fileName )
         return QTreeWidgetItem.data( self, column, role )
 
     def attachDummy( self ):

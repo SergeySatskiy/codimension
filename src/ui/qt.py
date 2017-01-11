@@ -46,9 +46,9 @@ from PyQt5.QtWidgets import (QApplication, QToolBar, QMenuBar, QLabel,
                              QMainWindow, QSpacerItem, QStackedWidget,
                              QSplashScreen, QFontComboBox, QScrollArea,
                              QGraphicsScene, QGraphicsSimpleTextItem,
-                             QGraphicsRectItem, QGraphicsPathItem,
+                             QGraphicsRectItem, QGraphicsPathItem, QSpinBox,
                              QGraphicsItem, QStyleOptionGraphicsItem,
-                             QGraphicsView)
+                             QGraphicsView, QGraphicsTextItem)
 from PyQt5.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 from PyQt5.QtSvg import QSvgGenerator, QGraphicsSvgItem
 from PyQt5.QtPrintSupport import QPrinter

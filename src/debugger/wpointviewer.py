@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,28 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Watch points viewer "
+"""Watch points viewer"""
 
-
-from PyQt4.QtCore import Qt, SIGNAL, QModelIndex
-from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeView, QToolButton,
-                          QHeaderView, QVBoxLayout, QItemSelectionModel,
-                          QLabel, QWidget, QAbstractItemView, QMenu,
-                          QSpacerItem, QHBoxLayout, QPalette,
-                          QSortFilterProxyModel )
+from ui.qt import (Qt, pyqtSignal, QModelIndex, QSizePolicy, QFrame, QTreeView,
+                   QToolButton, QHeaderView, QVBoxLayout, QItemSelectionModel,
+                   QLabel, QWidget, QAbstractItemView, QMenu, QSpacerItem,
+                   QHBoxLayout, QPalette, QSortFilterProxyModel)
 from ui.itemdelegates import NoOutlineHeightDelegate
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.settings import Settings
 
 
+class WatchPointView(QTreeView):
 
-class WatchPointView( QTreeView ):
-    " Watch expression viewer widget "
+    """Watch expression viewer widget"""
+
     def __init__( self, parent, wpointsModel ):
         QTreeView.__init__( self, parent )
 
@@ -414,7 +409,7 @@ class WatchPointViewer( QWidget ):
 
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise( True )
-        self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+        self.__showHideButton.setIcon( getIcon( 'less.png' ) )
         self.__showHideButton.setFixedSize( 20, 20 )
         self.__showHideButton.setToolTip( "Hide ignored exceptions list" )
         self.__showHideButton.setFocusPolicy( Qt.NoFocus )
@@ -431,7 +426,7 @@ class WatchPointViewer( QWidget ):
         self.__wpointsList = WatchPointView( self, wpointModel )
 
         self.__enableButton = QToolButton()
-        self.__enableButton.setIcon( PixmapCache().getIcon( 'add.png' ) )
+        self.__enableButton.setIcon( getIcon( 'add.png' ) )
         self.__enableButton.setFixedSize( 24, 24 )
         self.__enableButton.setToolTip( "Enable/disable the watchpoint" )
         self.__enableButton.setFocusPolicy( Qt.NoFocus )
@@ -441,7 +436,7 @@ class WatchPointViewer( QWidget ):
         expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
 
         self.__jumpToCodeButton = QToolButton()
-        self.__jumpToCodeButton.setIcon( PixmapCache().getIcon( 'gotoline.png' ) )
+        self.__jumpToCodeButton.setIcon( getIcon( 'gotoline.png' ) )
         self.__jumpToCodeButton.setFixedSize( 24, 24 )
         self.__jumpToCodeButton.setToolTip( "Jump to the code" )
         self.__jumpToCodeButton.setFocusPolicy( Qt.NoFocus )
@@ -479,7 +474,7 @@ class WatchPointViewer( QWidget ):
             self.__wpointsList.setVisible( False )
             self.__enableButton.setVisible( False )
             self.__jumpToCodeButton.setVisible( False )
-            self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
+            self.__showHideButton.setIcon( getIcon( 'more.png' ) )
             self.__showHideButton.setToolTip( "Show watchpoints list" )
 
             self.__minH = self.minimumHeight()
@@ -493,7 +488,7 @@ class WatchPointViewer( QWidget ):
             self.__wpointsList.setVisible( True )
             self.__enableButton.setVisible( True )
             self.__jumpToCodeButton.setVisible( True )
-            self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+            self.__showHideButton.setIcon( getIcon( 'less.png' ) )
             self.__showHideButton.setToolTip( "Hide watchpoints list" )
 
             self.setMinimumHeight( self.__minH )

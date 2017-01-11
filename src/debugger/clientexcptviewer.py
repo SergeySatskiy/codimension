@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,31 +16,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Client exceptions viewer "
+"""Client exceptions viewer"""
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QSize
-from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget,
-                          QTreeWidgetItem, QVBoxLayout,
-                          QLabel, QWidget, QAbstractItemView, QMenu,
-                          QSpacerItem, QHBoxLayout, QPalette, QCursor,
-                          QAction, QToolBar )
+from ui.qt import (Qt, pyqtSignal, QSize, QSizePolicy, QFrame, QTreeWidget,
+                   QTreeWidgetItem, QVBoxLayout, QLabel, QWidget,
+                   QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
+                   QPalette, QCursor, QAction, QToolBar)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 import os.path
-from variableitems import getDisplayValue, getTooltipValue
 from utils.project import CodimensionProject
+from .variableitems import getDisplayValue, getTooltipValue
 
 
 STACK_FRAME_ITEM = 0
 EXCEPTION_ITEM = 1
 
-class StackFrameItem( QTreeWidgetItem ):
-    " One stack trace frame "
+class StackFrameItem(QTreeWidgetItem):
+
+    """One stack trace frame"""
 
     def __init__( self, parentItem, fileName, lineNumber ):
         QTreeWidgetItem.__init__( self, parentItem )

@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,18 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 " debugger context viewer "
 
 
-from stackviewer import StackViewer
-from threadsviewer import ThreadsViewer
-from variablesviewer import VariablesViewer
-
-from PyQt4.QtCore import Qt, SIGNAL
-from PyQt4.QtGui import QVBoxLayout, QWidget, QSplitter
+from .stackviewer import StackViewer
+from .threadsviewer import ThreadsViewer
+from .variablesviewer import VariablesViewer
+from ui.qt import Qt, pyqtSignal,QVBoxLayout, QWidget, QSplitter
 
 
 class DebuggerContext( QWidget ):

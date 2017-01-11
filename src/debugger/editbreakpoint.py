@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,20 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
+
+"""Dialog to edit a single breakpoint"""
 
 
-""" Dialog to edit a single breakpoint """
-
-
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
-                          QLabel, QGridLayout, QSpinBox, QCheckBox )
-from utils.pixmapcache import PixmapCache
+from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout,
+                   QLabel, QGridLayout, QSpinBox, QCheckBox)
+from utils.pixmapcache import getIcon
 from ui.combobox import CDMComboBox
-from breakpoint import Breakpoint
-
+from .breakpoint import Breakpoint
 
 
 class BreakpointEditDialog( QDialog ):
@@ -42,7 +36,7 @@ class BreakpointEditDialog( QDialog ):
 
         self.__origBpoint = bpoint
         self.setWindowTitle( "Edit breakpoint properties" )
-        self.setWindowIcon( PixmapCache().getIcon( 'bpprops.png' ) )
+        self.setWindowIcon( getIcon( 'bpprops.png' ) )
         self.__createLayout( bpoint )
         self.__OKButton.setEnabled( False )
 

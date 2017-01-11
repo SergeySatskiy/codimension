@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,22 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Stack viewer "
+"""Stack viewer"""
 
-
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
-                          QTreeWidgetItem, QHeaderView, QVBoxLayout,
-                          QLabel, QWidget, QAbstractItemView, QMenu,
-                          QSpacerItem, QHBoxLayout, QPalette, QCursor )
+import os.path
+from ui.qt import (Qt, QSizePolicy, QFrame, QTreeWidget, QToolButton,
+                   QTreeWidgetItem, QHeaderView, QVBoxLayout, QLabel, QWidget,
+                   QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
+                   QPalette, QCursor)
 from ui.itemdelegates import NoOutlineHeightDelegate
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
-import os.path
 
 
 class StackFrameItem( QTreeWidgetItem ):
@@ -57,9 +52,9 @@ class StackFrameItem( QTreeWidgetItem ):
         """ Mark the current stack frame with an icon if so """
         self.__isCurrent = value
         if value:
-            self.setIcon( 0, PixmapCache().getIcon( 'currentframe.png' ) )
+            self.setIcon( 0, getIcon( 'currentframe.png' ) )
         else:
-            self.setIcon( 0, PixmapCache().getIcon( 'empty.png' ) )
+            self.setIcon( 0, getIcon( 'empty.png' ) )
         return
 
     def getFrameNumber( self ):
@@ -133,7 +128,7 @@ class StackViewer( QWidget ):
 
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise( True )
-        self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+        self.__showHideButton.setIcon( getIcon( 'less.png' ) )
         self.__showHideButton.setFixedSize( 20, 20 )
         self.__showHideButton.setToolTip( "Hide frames list" )
         self.__showHideButton.setFocusPolicy( Qt.NoFocus )
@@ -177,7 +172,7 @@ class StackViewer( QWidget ):
         " Triggered when show/hide button is clicked "
         if startup or self.__framesList.isVisible():
             self.__framesList.setVisible( False )
-            self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
+            self.__showHideButton.setIcon( getIcon( 'more.png' ) )
             self.__showHideButton.setToolTip( "Show frames list" )
 
             self.__minH = self.minimumHeight()
@@ -189,7 +184,7 @@ class StackViewer( QWidget ):
             Settings().showStackViewer = False
         else:
             self.__framesList.setVisible( True )
-            self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+            self.__showHideButton.setIcon( getIcon( 'less.png' ) )
             self.__showHideButton.setToolTip( "Hide frames list" )
 
             self.setMinimumHeight( self.__minH )

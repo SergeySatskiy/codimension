@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,21 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Variables viewer "
+"""Variables viewer"""
 
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import ( QFrame, QVBoxLayout, QLabel, QWidget,
-                          QSizePolicy, QSpacerItem, QGridLayout,
-                          QHBoxLayout, QToolButton, QPalette, QPushButton )
-from utils.pixmapcache import PixmapCache
+from ui.qt import (Qt, QFrame, QVBoxLayout, QLabel, QWidget, QSizePolicy,
+                   QSpacerItem, QGridLayout, QHBoxLayout, QToolButton,
+                   QPalette, QPushButton)
+from utils.pixmapcache import getIcon
 from utils.settings import Settings
 from ui.combobox import CDMComboBox
-from variablesbrowser import VariablesBrowser
 from utils.globals import GlobalData
+from .variablesbrowser import VariablesBrowser
 
 
 class VariablesViewer( QWidget ):
@@ -87,7 +83,7 @@ class VariablesViewer( QWidget ):
         self.__mcfButton = QToolButton()
         self.__mcfButton.setCheckable( True )
         self.__mcfButton.setChecked( self.__hideMCFFilter )
-        self.__mcfButton.setIcon( PixmapCache().getIcon( 'dbgfltmcf.png' ) )
+        self.__mcfButton.setIcon( getIcon( 'dbgfltmcf.png' ) )
         self.__mcfButton.setFixedSize( 20, 20 )
         self.__mcfButton.setToolTip( "Show/hide modules, classes and functions" )
         self.__mcfButton.setFocusPolicy( Qt.NoFocus )
@@ -96,7 +92,7 @@ class VariablesViewer( QWidget ):
         self.__globalAndLocalButton = QToolButton()
         self.__globalAndLocalButton.setCheckable( True )
         self.__globalAndLocalButton.setChecked( self.__filter == VariablesViewer.FilterGlobalAndLocal )
-        self.__globalAndLocalButton.setIcon( PixmapCache().getIcon( 'dbgfltgl.png' ) )
+        self.__globalAndLocalButton.setIcon( getIcon( 'dbgfltgl.png' ) )
         self.__globalAndLocalButton.setFixedSize( 20, 20 )
         self.__globalAndLocalButton.setToolTip( "Do not filter out global or local variables" )
         self.__globalAndLocalButton.setFocusPolicy( Qt.NoFocus )
@@ -105,7 +101,7 @@ class VariablesViewer( QWidget ):
         self.__localOnlyButton = QToolButton()
         self.__localOnlyButton.setCheckable( True )
         self.__localOnlyButton.setChecked( self.__filter == VariablesViewer.FilterLocalOnly )
-        self.__localOnlyButton.setIcon( PixmapCache().getIcon( 'dbgfltlo.png' ) )
+        self.__localOnlyButton.setIcon( getIcon( 'dbgfltlo.png' ) )
         self.__localOnlyButton.setFixedSize( 20, 20 )
         self.__localOnlyButton.setToolTip( "Filter out global variables" )
         self.__localOnlyButton.setFocusPolicy( Qt.NoFocus )
@@ -114,7 +110,7 @@ class VariablesViewer( QWidget ):
         self.__globalOnlyButton = QToolButton()
         self.__globalOnlyButton.setCheckable( True )
         self.__globalOnlyButton.setChecked( self.__filter == VariablesViewer.FilterGlobalOnly )
-        self.__globalOnlyButton.setIcon( PixmapCache().getIcon( 'dbgfltgo.png' ) )
+        self.__globalOnlyButton.setIcon( getIcon( 'dbgfltgo.png' ) )
         self.__globalOnlyButton.setFixedSize( 20, 20 )
         self.__globalOnlyButton.setToolTip( "Filter out local variables" )
         self.__globalOnlyButton.setFocusPolicy( Qt.NoFocus )

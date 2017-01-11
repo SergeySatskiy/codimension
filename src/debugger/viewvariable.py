@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,24 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
+
+"""Dialog to show a single variable"""
 
 
-""" Dialog to show a single variable """
-
-
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
-                          QLabel, QGridLayout, QTextEdit )
-from utils.pixmapcache import PixmapCache
+from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
+                   QGridLayout, QTextEdit)
+from utils.pixmapcache import getIcon
 from ui.fitlabel import FramedLabelWithDoubleClick
 from utils.globals import GlobalData
 
 
+class ViewVariableDialog(QDialog):
 
-class ViewVariableDialog( QDialog ):
-    " Dialog all the properties of a variable "
+    """Dialog all the properties of a variable"""
 
     def __init__( self, varName,
                         varType, varValue, isGlobal, parent = None ):
@@ -45,10 +40,10 @@ class ViewVariableDialog( QDialog ):
 
         if isGlobal:
             self.setWindowTitle( "Global variable '" + varName + "'" )
-            self.setWindowIcon( PixmapCache().getIcon( "globvar.png" ) )
+            self.setWindowIcon( getIcon( "globvar.png" ) )
         else:
             self.setWindowTitle( "Local variable '" + varName + "'" )
-            self.setWindowIcon( PixmapCache().getIcon( "locvar.png" ) )
+            self.setWindowIcon( getIcon( "locvar.png" ) )
         self.__createLayout( varName, varType, varValue, isGlobal )
         return
 

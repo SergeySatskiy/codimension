@@ -22,13 +22,11 @@
 import os
 import os.path
 import math
-from PyQt5.QtCore import Qt, QPointF, pyqtSignal
-from PyQt5.QtGui import (QPalette, QFont, QPen, QColor, QFontMetrics,
-                         QPainterPath, QPainter)
-from PyQt5.QtWidgets import (QWidget, QLabel, QFrame, QVBoxLayout,
-                             QGraphicsScene, QGraphicsPathItem, QStyle,
-                             QGraphicsTextItem, QStyleOptionGraphicsItem,
-                             QGraphicsItem, QGraphicsRectItem, QSizePolicy)
+from ui.qt import (Qt, QPointF, pyqtSignal, QPalette, QFont, QPen, QColor,
+                   QFontMetrics, QPainterPath, QPainter, QWidget, QLabel,
+                   QFrame, QVBoxLayout, QGraphicsScene, QGraphicsPathItem,
+                   QStyle, QGraphicsTextItem, QStyleOptionGraphicsItem,
+                   QGraphicsItem, QGraphicsRectItem, QSizePolicy)
 from utils.settings import Settings, THIRDPARTY_DIR
 from utils.globals import GlobalData
 from utils.pixmapcache import PixmapCache

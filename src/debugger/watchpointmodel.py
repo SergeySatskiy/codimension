@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 #
 # The file was taken from eric 4 and adopted for codimension.
@@ -26,17 +23,15 @@
 # Copyright (c) 2007 - 2013 Detlev Offenbach <detlev@die-offenbachs.de>
 #
 
-"""
-Module implementing the Watch expression model
-"""
+"""Module implementing the Watch expression model"""
 
-from PyQt4.QtCore import ( QAbstractItemModel, QVariant, Qt, QModelIndex,
-                           SIGNAL )
+from ui.qt import pyqtSignal, QAbstractItemModel, QVariant, Qt, QModelIndex
 
 
+class WatchPointModel(QAbstractItemModel):
 
-class WatchPointModel( QAbstractItemModel ):
-    " Class implementing a custom model for watch expressions "
+    """Class implementing a custom model for watch expressions"""
+
     def __init__( self, parent = None ):
         QAbstractItemModel.__init__( self, parent )
 

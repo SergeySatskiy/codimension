@@ -136,7 +136,7 @@ if 'setrecursionlimit' in dir(sys):
     debugClientSetRecursionLimit(sys.getrecursionlimit())
 
 
-class DebugClientBase(object):
+class DebugClientBase():
     """Class implementing the client side of the debugger.
 
        It provides access to the Python interpeter from a debugger running in

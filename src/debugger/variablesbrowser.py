@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,8 +20,7 @@
 """The debugger namespace viewer implementation"""
 
 
-from PyQt5.QtCore import Qt, QRegExp
-from PyQt5.QtGui import QAbstractItemView, QHeaderView, QTreeWidget
+from ui.qt import (Qt, QRegExp, QAbstractItemView, QHeaderView, QTreeWidget)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from .variableitems import (VariableItem, SpecialVariableItem,
                             ArrayElementVariableItem,

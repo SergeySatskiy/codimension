@@ -217,7 +217,7 @@ class ItemToSearchIn:
         return totalLines - ItemToSearchIn.contextLines, totalLines
 
 
-class FindInFilesDialog(QDialog, object):
+class FindInFilesDialog(QDialog):
 
     """find in files dialog implementation"""
 

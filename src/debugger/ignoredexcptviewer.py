@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,25 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Ignored exceptions viewer "
+"""Ignored exceptions viewer"""
 
-
-from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
-                          QTreeWidgetItem, QVBoxLayout, QToolBar,
-                          QLabel, QWidget, QAbstractItemView, QMenu,
-                          QSpacerItem, QHBoxLayout, QPalette, QCursor,
-                          QLineEdit, QPushButton, QAction )
+from ui.qt import (Qt, QSize, QSizePolicy, QFrame, QTreeWidget, QToolButton,
+                   QTreeWidgetItem, QVBoxLayout, QToolBar, QLabel, QWidget,
+                   QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
+                   QPalette, QCursor, QLineEdit, QPushButton, QAction)
 from ui.itemdelegates import NoOutlineHeightDelegate
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.settings import Settings
-
-
 
 
 class IgnoredExceptionsViewer( QWidget ):
@@ -59,7 +51,7 @@ class IgnoredExceptionsViewer( QWidget ):
         " Creates the popup menu "
         self.__excptMenu = QMenu()
         self.__removeMenuItem = self.__excptMenu.addAction(
-                    PixmapCache().getIcon( 'ignexcptdel.png' ),
+                    getIcon( 'ignexcptdel.png' ),
                     "Remove from ignore list", self.__onRemoveFromIgnore )
         return
 
@@ -89,7 +81,7 @@ class IgnoredExceptionsViewer( QWidget ):
 
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise( True )
-        self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+        self.__showHideButton.setIcon( getIcon( 'less.png' ) )
         self.__showHideButton.setFixedSize( 20, 20 )
         self.__showHideButton.setToolTip( "Hide ignored exceptions list" )
         self.__showHideButton.setFocusPolicy( Qt.NoFocus )
@@ -131,7 +123,7 @@ class IgnoredExceptionsViewer( QWidget ):
         expandingSpacer2.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
         self.__removeButton = QAction(
-            PixmapCache().getIcon( 'delitem.png' ),
+            getIcon( 'delitem.png' ),
             "Remove selected exception type", self )
         self.__removeButton.triggered.connect( self.__onRemoveFromIgnore )
         self.__removeButton.setEnabled( False )
@@ -140,7 +132,7 @@ class IgnoredExceptionsViewer( QWidget ):
         fixedSpacer1.setFixedWidth( 5 )
 
         self.__removeAllButton = QAction(
-            PixmapCache().getIcon( 'ignexcptdelall.png' ),
+            getIcon( 'ignexcptdelall.png' ),
             "Remove all the exception types", self )
         self.__removeAllButton.triggered.connect( self.__onRemoveAllFromIgnore )
         self.__removeAllButton.setEnabled( False )
@@ -188,7 +180,7 @@ class IgnoredExceptionsViewer( QWidget ):
             self.__addButton.setVisible( False )
             self.__removeButton.setVisible( False )
             self.__removeAllButton.setVisible( False )
-            self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
+            self.__showHideButton.setIcon( getIcon( 'more.png' ) )
             self.__showHideButton.setToolTip( "Show ignored exceptions list" )
 
             self.__minH = self.minimumHeight()
@@ -204,7 +196,7 @@ class IgnoredExceptionsViewer( QWidget ):
             self.__addButton.setVisible( True )
             self.__removeButton.setVisible( True )
             self.__removeAllButton.setVisible( True )
-            self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+            self.__showHideButton.setIcon( getIcon( 'less.png' ) )
             self.__showHideButton.setToolTip( "Hide ignored exceptions list" )
 
             self.setMinimumHeight( self.__minH )

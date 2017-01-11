@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,21 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 " Annotated VCS viewer implementation "
 
 
-from texteditor import TextEditor
 import os.path
 from ui.qt import (Qt, QSize, QPoint, pyqtSignal, QToolBar, QFont,
                    QFontMetrics, QHBoxLayout, QWidget, QAction, QSizePolicy,
                    QToolTip)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from utils.fileutils import ( detectFileType, getFileLanguage, DesignerFileType,
-                              UnknownFileType, PythonFileType, Python3FileType,
-                              LinguistFileType )
+from utils.fileutils import getFileProperties 
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.settings import Settings
@@ -39,11 +33,11 @@ from utils.importutils import ( getImportsList, getImportsInLine, resolveImport,
                                 getImportedNameDefinitionLine, resolveImports )
 from ui.importlist import ImportListWidget
 from ui.linecounter import LineCounterDialog
-from utils.encoding import decode
 from autocomplete.bufferutils import isImportLine
+from .texteditor import TextEditor
 
 
-class VCSAnnotateViewer( TextEditor ):
+class VCSAnnotateViewer(TextEditor):
 
     LINENUM_MARGIN = 0      # Matches the text editor
     REVISION_MARGIN = 1     # Introduced here

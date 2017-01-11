@@ -20,8 +20,8 @@
 """Profiling results widget"""
 
 import pstats
-from PyQt5.QtCore import Qt, QSize, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QToolBar, QHBoxLayout, QAction
+from ui.qt import (Qt, QSize, pyqtSignal, QWidget, QToolBar, QHBoxLayout,
+                   QAction)
 from utils.pixmapcache import getIcon
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .proftable import ProfileTableViewer

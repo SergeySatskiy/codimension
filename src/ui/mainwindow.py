@@ -28,6 +28,34 @@ from utils.project import CodimensionProject
 from utils.misc import (getDefaultTemplate, getIDETemplateFile,
                         getProjectTemplateFile)
 from utils.pixmapcache import getIcon
+from utils.settings import THIRDPARTY_DIR
+from utils.fileutils import getFileProperties
+from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
+                                ImportDiagramOptions)
+from utils.run import (getWorkingDir,
+                       parseCommandLineArguments, getNoArgsEnvironment,
+                       TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM,
+                       TERM_REDIRECT)
+from debugger.context import DebuggerContext
+from debugger.modifiedunsaved import ModifiedUnsavedDialog
+from debugger.server import CodimensionDebugger
+from debugger.excpt import DebuggerExceptions
+from debugger.bpwp import DebuggerBreakWatchPoints
+from thirdparty.diff2html.diff2html import parse_from_memory
+from analysis.notused import NotUsedAnalysisProgress
+from autocomplete.completelists import getOccurrences
+from findinfiles import ItemToSearchIn, getSearchItemIndex
+from profiling.profui import ProfilingProgressDialog
+from profiling.disasm import getDisassembled
+from debugger.bputils import clearValidBreakpointLinesCache
+from about import AboutDialog
+from utils.skin import getMonospaceFontList
+from plugins.manager.pluginmanagerdlg import PluginsDialog
+from plugins.vcssupport.vcsmanager import VCSManager
+from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
+from statusbarslots import StatusBarSlots
+from editor.redirectedioconsole import IOConsoleTabWidget
+from runmanager import RunManager
 from .qt import (Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal, QLabel,
                  QToolBar, QWidget, QMessageBox, QVBoxLayout, QSplitter,
                  QSizePolicy, QAction, QMainWindow, QShortcut, QFrame,
@@ -49,45 +77,15 @@ from .pyflakesviewer import PyflakesViewer
 from .editorsmanager import EditorsManager
 from .linecounter import LineCounterDialog
 from .projectproperties import ProjectPropertiesDialog
-from utils.settings import thirdpartyDir
 from .findreplacewidget import FindWidget, ReplaceWidget
 from .gotolinewidget import GotoLineWidget
-from utils.fileutils import (PythonFileType, Python3FileType, detectFileType,
-                             PixmapFileType, CodimensionProjectFileType,
-                             isFileTypeSearchable)
+from .diffviewer import DiffViewer
 from .findinfiles import FindInFilesDialog
 from .findinfilesviewer import FindInFilesViewer, hideSearchTooltip
 from .findname import FindNameDialog
 from .findfile import FindFileDialog
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
-                                ImportDiagramOptions)
 from .runparams import RunDialog
-from utils.run import (getWorkingDir,
-                       parseCommandLineArguments, getNoArgsEnvironment,
-                       TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM,
-                       TERM_REDIRECT)
-from debugger.context import DebuggerContext
-from debugger.modifiedunsaved import ModifiedUnsavedDialog
-from debugger.server import CodimensionDebugger
-from debugger.excpt import DebuggerExceptions
-from debugger.bpwp import DebuggerBreakWatchPoints
-from diffviewer import DiffViewer
-from thirdparty.diff2html.diff2html import parse_from_memory
-from analysis.notused import NotUsedAnalysisProgress
-from autocomplete.completelists import getOccurrences
-from findinfiles import ItemToSearchIn, getSearchItemIndex
-from profiling.profui import ProfilingProgressDialog
-from profiling.disasm import getDisassembled
-from debugger.bputils import clearValidBreakpointLinesCache
-from about import AboutDialog
-from utils.skin import getMonospaceFontList
-from plugins.manager.pluginmanagerdlg import PluginsDialog
-from plugins.vcssupport.vcsmanager import VCSManager
-from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
-from statusbarslots import StatusBarSlots
-from editor.redirectedioconsole import IOConsoleTabWidget
-from runmanager import RunManager
 
 
 class EditorsManagerWidget(QWidget):

@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,19 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Thread viewer "
+"""Thread viewer"""
 
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import ( QFrame, QTreeWidget, QToolButton, QTreeWidgetItem,
-                          QHeaderView, QVBoxLayout, QLabel, QWidget,
-                          QAbstractItemView, QSizePolicy, QSpacerItem,
-                          QHBoxLayout, QPalette )
+from ui.qt import (Qt, QFrame, QTreeWidget, QToolButton, QTreeWidgetItem,
+                   QHeaderView, QVBoxLayout, QLabel, QWidget,
+                   QAbstractItemView, QSizePolicy, QSpacerItem,
+                   QHBoxLayout, QPalette)
 from ui.itemdelegates import NoOutlineHeightDelegate
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from utils.settings import Settings
 
 
@@ -60,9 +56,9 @@ class ThreadItem( QTreeWidgetItem ):
 
         self.__isCurrent = value
         if value:
-            self.setIcon( 0, PixmapCache().getIcon( 'currentthread.png' ) )
+            self.setIcon( 0, getIcon( 'currentthread.png' ) )
         else:
-            self.setIcon( 0, PixmapCache().getIcon( 'empty.png' ) )
+            self.setIcon( 0, getIcon( 'empty.png' ) )
         self.__setTooltip()
         return
 
@@ -123,7 +119,7 @@ class ThreadsViewer( QWidget ):
 
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise( True )
-        self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+        self.__showHideButton.setIcon( getIcon( 'less.png' ) )
         self.__showHideButton.setFixedSize( 20, 20 )
         self.__showHideButton.setToolTip( "Hide threads list" )
         self.__showHideButton.setFocusPolicy( Qt.NoFocus )
@@ -162,7 +158,7 @@ class ThreadsViewer( QWidget ):
         " Triggered when show/hide button is clicked "
         if startup or self.__threadsList.isVisible():
             self.__threadsList.setVisible( False )
-            self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
+            self.__showHideButton.setIcon( getIcon( 'more.png' ) )
             self.__showHideButton.setToolTip( "Show threads list" )
 
             self.__minH = self.minimumHeight()
@@ -174,7 +170,7 @@ class ThreadsViewer( QWidget ):
             Settings().showThreadViewer = False
         else:
             self.__threadsList.setVisible( True )
-            self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+            self.__showHideButton.setIcon( getIcon( 'less.png' ) )
             self.__showHideButton.setToolTip( "Hide threads list" )
 
             self.setMinimumHeight( self.__minH )

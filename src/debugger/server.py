@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,10 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Debugger server "
+"""Debugger server"""
 
 import socket
 import logging
@@ -28,16 +25,15 @@ import errno
 import time
 import os.path
 from subprocess import Popen
-from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QModelIndex, pyqtSignal
-from PyQt4.QtGui import QApplication, QCursor, QMessageBox, QDialog
-from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
-
+from ui.qt import (pyqtSignal, QTimer, QObject, Qt, QModelIndex, QApplication,
+                   QCursor, QMessageBox, QDialog, QTcpServer, QHostAddress,
+                   QAbstractSocket)
 from utils.globals import GlobalData
 from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG, getUserShell, TERM_REDIRECT
 from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
-from utils.pixmapcache import PixmapCache
-from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
+from utils.pixmapcache import getIcon
+from .client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                                       RequestShutdown, ResponseLine, ResponseStack,
                                       RequestContinue, RequestThreadList,
                                       RequestVariables, ResponseThreadList,
@@ -54,10 +50,10 @@ from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, Request
                                       ResponseRaw, StdoutStderrEOT,
                                       ResponseStdout, ResponseStderr, ResponseExecOK )
 
-from bputils import getBreakpointLines
-from breakpointmodel import BreakPointModel
-from watchpointmodel import WatchPointModel
-from editbreakpoint import BreakpointEditDialog
+from .bputils import getBreakpointLines
+from .breakpointmodel import BreakPointModel
+from .watchpointmodel import WatchPointModel
+from .editbreakpoint import BreakpointEditDialog
 
 POLL_INTERVAL = 0.1
 HANDSHAKE_TIMEOUT = 15
@@ -732,11 +728,11 @@ class CodimensionDebugger( QObject ):
 
         btn1 = dlg.button( QMessageBox.Ok )
         btn1.setText( "&Child process" )
-        btn1.setIcon( PixmapCache().getIcon( '' ) )
+        btn1.setIcon( getIcon( '' ) )
 
         btn2 = dlg.button( QMessageBox.Cancel )
         btn2.setText( "&Parent process" )
-        btn2.setIcon( PixmapCache().getIcon( '' ) )
+        btn2.setIcon( getIcon( '' ) )
 
         dlg.setDefaultButton( QMessageBox.Cancel )
         res = dlg.exec_()

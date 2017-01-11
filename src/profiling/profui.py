@@ -26,10 +26,8 @@ import logging
 import errno
 import os
 from subprocess import Popen
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
-                             QApplication)
+from ui.qt import (Qt, QTimer, QCursor, QDialog, QDialogButtonBox, QVBoxLayout,
+                   QLabel, QApplication)
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.run import getCwdCmdEnv, CMD_TYPE_PROFILE

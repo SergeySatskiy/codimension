@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,21 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Debugger exceptions viewer "
+"""Debugger exceptions viewer"""
 
-
-from clientexcptviewer import ClientExceptionsViewer
-from ignoredexcptviewer import IgnoredExceptionsViewer
-
-from PyQt4.QtCore import Qt, SIGNAL
-from PyQt4.QtGui import QVBoxLayout, QWidget, QSplitter
+from ui.qt import (Qt, pyqtSignal, QVBoxLayout, QWidget, QSplitter)
+from .clientexcptviewer import ClientExceptionsViewer
+from .ignoredexcptviewer import IgnoredExceptionsViewer
 
 
-class DebuggerExceptions( QWidget ):
-    " Implements the debugger context viewer "
+class DebuggerExceptions(QWidget):
+
+    """Implements the debugger context viewer"""
 
     def __init__( self, parent = None ):
         QWidget.__init__( self, parent )

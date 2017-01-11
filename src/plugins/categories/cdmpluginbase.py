@@ -77,7 +77,7 @@ class SidePanel():
         self.views = {}       # view name (string) -> ViewAndToolbar instance
 
 
-class IDEAccess(object):
+class IDEAccess():
 
     """Incapsulates access to the various IDE parts"""
 

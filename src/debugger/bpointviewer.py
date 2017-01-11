@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,30 +16,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Break points viewer "
+"""Break points viewer"""
 
 import logging
-from PyQt4.QtCore import Qt, SIGNAL, QSize
-from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeView,
-                          QHeaderView, QVBoxLayout, QSortFilterProxyModel,
-                          QLabel, QWidget, QAbstractItemView, QMenu,
-                          QSpacerItem, QHBoxLayout, QPalette, QCursor,
-                          QItemSelectionModel, QDialog, QToolBar, QAction )
+from ui.qt import (Qt, pyqtSignal, QSize, QSizePolicy, QFrame, QTreeView,
+                   QHeaderView, QVBoxLayout, QSortFilterProxyModel, QLabel,
+                   QWidget, QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
+                   QPalette, QCursor, QItemSelectionModel, QDialog, QToolBar,
+                   QAction)
 from ui.itemdelegates import NoOutlineHeightDelegate
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
-from editbreakpoint import BreakpointEditDialog
-from breakpoint import Breakpoint
-from bputils import getBreakpointLines
+from .editbreakpoint import BreakpointEditDialog
+from .breakpoint import Breakpoint
+from .bputils import getBreakpointLines
 
 
-class BreakPointView( QTreeView ):
-    " Breakpoint viewer widget "
+class BreakPointView(QTreeView):
+
+    """Breakpoint viewer widget"""
 
     def __init__( self, parent, bpointsModel ):
         QTreeView.__init__( self, parent )
@@ -124,31 +121,31 @@ class BreakPointView( QTreeView ):
         " Generate the popup menu "
         self.menu = QMenu()
         self.__editAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'bpprops.png' ),
+                                getIcon( 'bpprops.png' ),
                                 "Edit...", self.__editBreak )
         self.__jumpToCodeAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'gotoline.png' ),
+                                getIcon( 'gotoline.png' ),
                                 "Jump to code", self.__showSource )
         self.menu.addSeparator()
         self.__enableAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'bpenable.png' ),
+                                getIcon( 'bpenable.png' ),
                                 "Enable", self.enableBreak )
         self.__enableAllAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'bpenableall.png' ),
+                                getIcon( 'bpenableall.png' ),
                                 "Enable all", self.enableAllBreaks )
         self.menu.addSeparator()
         self.__disableAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'bpdisable.png' ),
+                                getIcon( 'bpdisable.png' ),
                                 "Disable", self.disableBreak )
         self.__disableAllAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'bpdisableall.png' ),
+                                getIcon( 'bpdisableall.png' ),
                                 "Disable all", self.disableAllBreaks )
         self.menu.addSeparator()
         self.__delAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'bpdel.png' ),
+                                getIcon( 'bpdel.png' ),
                                 "Delete", self.deleteBreak )
         self.__delAllAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'bpdelall.png' ),
+                                getIcon( 'bpdelall.png' ),
                                 "Delete all", self.deleteAllBreaks )
         return
 
@@ -376,49 +373,49 @@ class BreakPointViewer( QWidget ):
         self.bpointsList = BreakPointView( self, bpointsModel )
 
         self.__editButton = QAction(
-            PixmapCache().getIcon( 'bpprops.png' ),
+            getIcon( 'bpprops.png' ),
             "Edit breakpoint properties", self )
         self.__editButton.triggered.connect( self.__onEdit )
         self.__editButton.setEnabled( False )
 
         self.__jumpToCodeButton = QAction(
-            PixmapCache().getIcon( 'gotoline.png' ),
+            getIcon( 'gotoline.png' ),
             "Jump to the code", self )
         self.__jumpToCodeButton.triggered.connect( self.__onJumpToCode )
         self.__jumpToCodeButton.setEnabled( False )
 
         self.__enableButton = QAction(
-            PixmapCache().getIcon( 'bpenable.png' ),
+            getIcon( 'bpenable.png' ),
             "Enable selected breakpoint", self )
         self.__enableButton.triggered.connect( self.__onEnableDisable )
         self.__enableButton.setEnabled( False )
 
         self.__disableButton = QAction(
-            PixmapCache().getIcon( 'bpdisable.png' ),
+            getIcon( 'bpdisable.png' ),
             "Disable selected breakpoint", self )
         self.__disableButton.triggered.connect( self.__onEnableDisable )
         self.__disableButton.setEnabled( False )
 
         self.__enableAllButton = QAction(
-            PixmapCache().getIcon( 'bpenableall.png' ),
+            getIcon( 'bpenableall.png' ),
             "Enable all the breakpoint", self )
         self.__enableAllButton.triggered.connect( self.__onEnableAll )
         self.__enableAllButton.setEnabled( False )
 
         self.__disableAllButton = QAction(
-            PixmapCache().getIcon( 'bpdisableall.png' ),
+            getIcon( 'bpdisableall.png' ),
             "Disable all the breakpoint", self )
         self.__disableAllButton.triggered.connect( self.__onDisableAll )
         self.__disableAllButton.setEnabled( False )
 
         self.__delButton = QAction(
-            PixmapCache().getIcon( 'delitem.png' ),
+            getIcon( 'delitem.png' ),
             "Delete selected breakpoint", self )
         self.__delButton.triggered.connect( self.__onDel )
         self.__delButton.setEnabled( False )
 
         self.__delAllButton = QAction(
-            PixmapCache().getIcon( 'bpdelall.png' ),
+            getIcon( 'bpdelall.png' ),
             "Delete all the breakpoint", self )
         self.__delAllButton.triggered.connect( self.__onDelAll )
         self.__delAllButton.setEnabled( False )

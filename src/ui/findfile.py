@@ -33,7 +33,7 @@ from .itemdelegates import NoOutlineHeightDelegate
 from .combobox import EnterSensitiveComboBox
 
 
-class FileItemRoot(object):
+class FileItemRoot():
 
     """Files list root item"""
 
@@ -83,7 +83,7 @@ class FileItemRoot(object):
             return False
 
 
-class FileItem(object):
+class FileItem():
 
     """Files list item"""
 
