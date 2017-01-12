@@ -29,9 +29,12 @@
 # Inspired by diff2html.rb from Dave Burt <dave (at) burt.id.au>
 # (mainly for html theme)
 
-import sys, re, htmlentitydefs, codecs, datetime, contextlib, optparse, StringIO
+import sys, re, codecs, datetime, contextlib, optparse
+from io import StringIO
 from xml.sax.saxutils import quoteattr
 from utils.globals import GlobalData
+from html.entities import entitydefs
+
 try:
     from simplediff import diff
 except ImportError:
@@ -58,17 +61,17 @@ def toCSSColor( color ):
 skin = GlobalData().skin
 
 CSS_RULES = {
-    u'span.diffchanged2' : u'background:' + toCSSColor( skin.diffchanged2Paper ) + u';color:' + toCSSColor( skin.diffchanged2Color ),
-    u'span.diffponct'    : u'color:' + toCSSColor( skin.diffponctColor ),
-    u'table'             : u'border:0px;border-collapse:collapse;width:98%;font-size:' + str( skin.nolexerFont.pointSize() ) + 'pt; font-family:"' + skin.nolexerFont.family() + '";',
-    u'td.diffline'       : u'vertical-align:top;color:' + toCSSColor( skin.difflineColor ),
-    u'th'                : u'background:' + toCSSColor( skin.diffthPaper ) + u';color:' + toCSSColor( skin.diffthColor ),
-    u'tr.diffadded'      : u'vertical-align:top;background:' + toCSSColor( skin.diffaddedPaper ),
-    u'tr.diffchanged'    : u'vertical-align:top;background:' + toCSSColor( skin.diffchangedPaper ) + u';color:' + toCSSColor( skin.diffchangedColor ),
+    u'span.diffchanged2' : u'background:' + toCSSColor( skin['diffchanged2Paper'] ) + u';color:' + toCSSColor( skin['diffchanged2Color'] ),
+    u'span.diffponct'    : u'color:' + toCSSColor( skin['diffponctColor'] ),
+    u'table'             : u'border:0px;border-collapse:collapse;width:98%;font-size:' + str( skin['nolexerFont'].pointSize() ) + 'pt; font-family:"' + skin['nolexerFont'].family() + '";',
+    u'td.diffline'       : u'vertical-align:top;color:' + toCSSColor( skin['difflineColor'] ),
+    u'th'                : u'background:' + toCSSColor( skin['diffthPaper'] ) + u';color:' + toCSSColor( skin['diffthColor'] ),
+    u'tr.diffadded'      : u'vertical-align:top;background:' + toCSSColor( skin['diffaddedPaper'] ),
+    u'tr.diffchanged'    : u'vertical-align:top;background:' + toCSSColor( skin['diffchangedPaper'] ) + u';color:' + toCSSColor( skin['diffchangedColor'] ),
     u'tr.diffcomment'    : u'font-style:italic',
-    u'tr.diffdeleted'    : u'vertical-align:top;background:' + toCSSColor( skin.diffdeletedPaper ),
-    u'tr.diffhunkinfo'   : u'vertical-align:top;text-align:center;background:' + toCSSColor( skin.diffhunkinfoPaper ) + u';color:' + toCSSColor( skin.diffhunkinfoColor ),
-    u'tr.diffunmodified' : u'vertical-align:top;background:' + toCSSColor( skin.diffunmodifiedPaper ) + u';color:' + toCSSColor( skin.diffunmodifiedColor )
+    u'tr.diffdeleted'    : u'vertical-align:top;background:' + toCSSColor( skin['diffdeletedPaper'] ),
+    u'tr.diffhunkinfo'   : u'vertical-align:top;text-align:center;background:' + toCSSColor( skin['diffhunkinfoPaper'] ) + u';color:' + toCSSColor( skin['diffhunkinfoColor'] ),
+    u'tr.diffunmodified' : u'vertical-align:top;background:' + toCSSColor( skin['diffunmodifiedPaper'] ) + u';color:' + toCSSColor( skin['diffunmodifiedColor'] )
 }
 # Color scheme:  http://colorschemedesigner.com/#2m61L9FWqCkzc
 
@@ -103,7 +106,7 @@ HTML_HEADER_FORMAT = """<!DOCTYPE html>
     <meta property="dc:abstract" content="{desc}">
     {style_section}
 </head>
-<body bgcolor='""" + toCSSColor( skin.nolexerPaper ) + """'>
+<body bgcolor='""" + toCSSColor( skin['nolexerPaper'] ) + """'>
 """
 
 #HTML_FOOTER_FORMAT = """
@@ -366,7 +369,7 @@ class Document(object):
             elif char == DIFFOFF:  # used by diffs
                 line_in_progress.set_in_change(False)
             elif char in u'&<>':  # make it HTML-safe
-                line_in_progress.write("&" + htmlentitydefs.codepoint2name[ord(char)] + ";")
+                line_in_progress.write("&" + entitydefs.codepoint2name[ord(char)] + ";")
             elif char == "\t" and ponct == 1:  # make tab characters visible
                 cols_left_in_this_tab_stop = self._tab_size-(num_chars_in_current_word%self._tab_size)
                 if cols_left_in_this_tab_stop == 0:
@@ -460,7 +463,7 @@ class OutFile(object):
 
         # See which of the HTML entities of interest are supported by this encoding.
         self._char_replacements = {}
-        for code_point,html_enity_name in htmlentitydefs.codepoint2name.iteritems():
+        for code_point,html_enity_name in entitydefs.codepoint2name.iteritems():
             char = unichr(code_point)
             try:
                 char.encode(encoding)
