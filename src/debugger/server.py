@@ -33,22 +33,26 @@ from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG, getUserShell, TERM_REDIRECT
 from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.pixmapcache import getIcon
-from .client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
-                                      RequestShutdown, ResponseLine, ResponseStack,
+from .client.protocol_cdm_dbg import (EOT, RequestStep, RequestStepOver,
+                                      RequestStepOut, RequestShutdown,
+                                      ResponseLine, ResponseStack,
                                       RequestContinue, RequestThreadList,
                                       RequestVariables, ResponseThreadList,
                                       ResponseVariables, RequestVariable,
-                                      ResponseVariable, RequestExec, RequestEval,
-                                      RequestBreak, ResponseException, RequestForkTo,
-                                      ResponseForkTo, RequestStack, ResponseSyntax,
-                                      ResponseExit, PassiveStartup, RequestBreakEnable,
+                                      ResponseVariable, RequestExec,
+                                      RequestEval, RequestBreak,
+                                      ResponseException, RequestForkTo,
+                                      ResponseForkTo, RequestStack,
+                                      ResponseSyntax, ResponseExit,
+                                      PassiveStartup, RequestBreakEnable,
                                       RequestBreakIgnore, ResponseClearBreak,
                                       ResponseBPConditionError, ResponseEval,
                                       ResponseEvalOK, ResponseEvalError,
                                       ResponseExec, ResponseExecError,
                                       RequestThreadSet, ResponseThreadSet,
                                       ResponseRaw, StdoutStderrEOT,
-                                      ResponseStdout, ResponseStderr, ResponseExecOK )
+                                      ResponseStdout, ResponseStderr,
+                                      ResponseExecOK)
 
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
@@ -61,8 +65,9 @@ BRUTAL_SHUTDOWN_TIMEOUT = 0.2
 GRACEFUL_SHUTDOWN_TIMEOUT = 5
 
 
-class CodimensionDebugger( QObject ):
-    " Debugger server implementation "
+class CodimensionDebugger(QObject):
+
+    """Debugger server implementation"""
 
     STATE_STOPPED = 0
     STATE_PROLOGUE = 1
@@ -76,12 +81,12 @@ class CodimensionDebugger( QObject ):
     PROTOCOL_STDOUT = 2
     PROTOCOL_STDERR = 3
 
-    clientClearBreak = pyqtSignal( str, int )
-    clientBreakConditionError = pyqtSignal( str, int )
-    clientIDEMessage = pyqtSignal( str )
+    clientClearBreak = pyqtSignal(str, int)
+    clientBreakConditionError = pyqtSignal(str, int)
+    clientIDEMessage = pyqtSignal(str)
 
-    def __init__( self, mainWindow ):
-        QObject.__init__( self )
+    def __init__(self, mainWindow):
+        QObject.__init__(self)
 
         # To control the user interface elements
         self.__mainWindow = mainWindow
@@ -105,54 +110,45 @@ class CodimensionDebugger( QObject ):
         self.__runParameters = None
         self.__debugSettings = None
 
-        self.__codec = QTextCodec.codecForName( "utf-8" )
+        self.__breakpointModel = BreakPointModel(self)
+        self.__watchpointModel = WatchPointModel(self)
 
-        self.__breakpointModel = BreakPointModel( self )
-        self.__watchpointModel = WatchPointModel( self )
+        self.__breakpointModel.rowsAboutToBeRemoved.connect(
+            self.__deleteBreakPoints)
+        self.__breakpointModel.dataAboutToBeChanged.connect(
+            self.__breakPointDataAboutToBeChanged)
+        self.__breakpointModel.dataChanged.connect(self.__changeBreakPoints)
+        self.__breakpointModel.rowsInserted.connect(self.__addBreakPoints)
+        self.clientClearBreak.connect(self.__clientClearBreakPoint)
+        self.clientBreakConditionError.connect(
+            self.__clientBreakConditionError)
 
-        self.connect( self.__breakpointModel,
-                      SIGNAL( "rowsAboutToBeRemoved(const QModelIndex &, int, int)" ),
-                      self.__deleteBreakPoints )
-        self.connect( self.__breakpointModel,
-                      SIGNAL( "dataAboutToBeChanged(const QModelIndex &, const QModelIndex &)" ),
-                      self.__breakPointDataAboutToBeChanged )
-        self.connect( self.__breakpointModel,
-                      SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
-                      self.__changeBreakPoints )
-        self.connect( self.__breakpointModel,
-                      SIGNAL( "rowsInserted(const QModelIndex &, int, int)" ),
-                      self.__addBreakPoints )
-        self.clientClearBreak.connect( self.__clientClearBreakPoint )
-        self.clientBreakConditionError.connect( self.__clientBreakConditionError )
-        return
-
-    def getScriptPath( self ):
-        " Provides the path to the debugged script "
+    def getScriptPath(self):
+        """Provides the path to the debugged script"""
         return self.__fileName
 
-    def getRunDebugParameters( self ):
-        " Provides the running and debugging parameters "
+    def getRunDebugParameters(self):
+        """Provides the running and debugging parameters"""
         return self.__runParameters, self.__debugSettings
 
-    def getBreakPointModel( self ):
-        " Provides a reference to the breakpoints model "
+    def getBreakPointModel(self):
+        """Provides a reference to the breakpoints model"""
         return self.__breakpointModel
 
-    def getWatchPointModel( self ):
-        " Provides a reference to the watch points model "
+    def getWatchPointModel(self):
+        """Provides a reference to the watch points model"""
         return self.__watchpointModel
 
-    def __changeDebuggerState( self, newState ):
-        " Changes the debugger state "
+    def __changeDebuggerState(self, newState):
+        """Changes the debugger state"""
         self.__state = newState
-        self.emit( SIGNAL( "DebuggerStateChanged" ), newState )
-        return
+        self.DebuggerStateChanged.emit(newState)
 
-    def startDebugging( self, fileName ):
-        " Starts debugging a script "
+    def startDebugging(self, fileName):
+        """Starts debugging a script"""
         if self.__state != self.STATE_STOPPED:
-            logging.error( "Cannot start debug session. "
-                           "The previous one has not finished yet." )
+            logging.error("Cannot start debug session. "
+                          "The previous one has not finished yet.")
             return
 
         self.__protocolState = self.PROTOCOL_CONTROL
@@ -163,52 +159,46 @@ class CodimensionDebugger( QObject ):
         self.__debugSettings = None
 
         try:
-            QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-            self.__initiatePrologue( fileName )
+            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+            self.__initiatePrologue(fileName)
             QApplication.restoreOverrideCursor()
 
-            self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-                          self.__parseClientLine )
+            self.__clientSocket.readyRead.connect(self.__parseClientLine)
             self.__parseClientLine()
         except Exception as exc:
             QApplication.restoreOverrideCursor()
-            logging.error( str( exc ) )
+            logging.error(str(exc))
             self.stopDebugging()
-        return
 
-    def __initiatePrologue( self, fileName ):
-        " Prologue is starting here "
-        self.__fileName = fileName 
-        self.__changeDebuggerState( self.STATE_PROLOGUE )
+    def __initiatePrologue(self, fileName):
+        """Prologue is starting here"""
+        self.__fileName = fileName
+        self.__changeDebuggerState(self.STATE_PROLOGUE)
         self.__disconnectReceived = False
 
         # For the time being there is no path translation
         self.__translatePath = self.__noPathTranslation
 
-        self.__mainWindow.switchDebugMode( True )
+        self.__mainWindow.switchDebugMode(True)
         terminalType = Settings().terminalType
 
         if terminalType == TERM_REDIRECT and Settings().clearDebugIO:
             self.__mainWindow.clearDebugIOConsole()
 
-        self.clientIDEMessage.emit( "Start debugging session for " + fileName )
+        self.clientIDEMessage.emit("Start debugging session for " + fileName)
         self.__createProcfeedbackSocket()
         self.__createTCPServer()
 
-        self.__runParameters = GlobalData().getRunParameters( fileName )
+        self.__runParameters = GlobalData().getRunParameters(fileName)
         workingDir, cmd, environment = getCwdCmdEnv(
-                                            CMD_TYPE_DEBUG,
-                                            fileName, self.__runParameters,
-                                            terminalType,
-                                            self.__procFeedbackPort,
-                                            self.__tcpServer.serverPort() )
+            CMD_TYPE_DEBUG, fileName, self.__runParameters, terminalType,
+            self.__procFeedbackPort, self.__tcpServer.serverPort())
 
         self.__debugSettings = Settings().getDebuggerSettings()
         self.__stopAtFirstLine = self.__debugSettings.stopAtFirstLine
 
         # Run the client -  exception is processed in the outer scope
-        self.__proc = Popen( cmd, shell = True, cwd = workingDir,
-                             env = environment )
+        self.__proc = Popen(cmd, shell=True, cwd=workingDir, env=environment)
 
         # Wait for the child PID
         self.__waitChildPID()
@@ -216,13 +206,12 @@ class CodimensionDebugger( QObject ):
 
         # Wait till the client incoming connection
         self.__waitIncomingConnection()
-        return
 
-    def __waitIncomingConnection( self ):
-        " Waits till the debugged program comes up "
+    def __waitIncomingConnection(self):
+        """Waits till the debugged program comes up"""
         startTime = time.time()
         while True:
-            time.sleep( POLL_INTERVAL )
+            time.sleep(POLL_INTERVAL)
             QApplication.processEvents()
 
             # It does not matter how the state was changed - the user has
@@ -230,47 +219,44 @@ class CodimensionDebugger( QObject ):
             if self.__state != self.STATE_PROLOGUE:
                 break
 
-            if not isProcessAlive( self.__procPID ):
+            if not isProcessAlive(self.__procPID):
                 # Stop it brutally
-                self.stopDebugging( True )
+                self.stopDebugging(True)
                 break
 
             if time.time() - startTime > HANDSHAKE_TIMEOUT:
-                raise Exception( "Handshake timeout: debugged "
-                                 "program did not come up." )
-        return
+                raise Exception("Handshake timeout: debugged "
+                                "program did not come up.")
 
-    def __waitChildPID( self ):
-        " Waits for the child PID on the feedback socket "
+    def __waitChildPID(self):
+        """Waits for the child PID on the feedback socket"""
         startTime = time.time()
         while True:
-            time.sleep( POLL_INTERVAL )
+            time.sleep(POLL_INTERVAL)
             QApplication.processEvents()
 
             data = self.__getProcfeedbackData()
             if data != "":
                 # We've got the message, extract the PID to watch
-                msgParts = decodeMessage( data )
-                if len( msgParts ) != 1:
-                    raise Exception( "Unexpected handshake message: '" +
-                                     data + "'. Expected debuggee child "
-                                     "process PID." )
+                msgParts = decodeMessage(data)
+                if len(msgParts) != 1:
+                    raise Exception("Unexpected handshake message: '" +
+                                    data + "'. Expected debuggee child "
+                                    "process PID.")
                 try:
-                    self.__procPID = int( msgParts[ 0 ] )
+                    self.__procPID = int(msgParts[0])
                     break   # Move to stage 2
                 except:
-                    raise Exception( "Broken handshake message: '" +
-                                     data + ". Cannot convert debuggee "
-                                     "child process PID to integer." )
+                    raise Exception("Broken handshake message: '" +
+                                    data + ". Cannot convert debuggee "
+                                    "child process PID to integer.")
 
             if time.time() - startTime > HANDSHAKE_TIMEOUT:
-                raise Exception( "Handshake timeout: "
-                                 "error spawning process to debug" )
-        return
+                raise Exception("Handshake timeout: "
+                                "error spawning process to debug")
 
-    def __adjustChildPID( self ):
-        " Detects the debugged process shell reliable "
-
+    def __adjustChildPID(self):
+        """Detects the debugged process shell reliable"""
         # On some systems, e.g. recent Fedora, the way shells are spawned
         # differs to the usual scheme. These systems have a single server which
         # brings children up. This server fools $PPID and thus a child process
@@ -278,55 +264,50 @@ class CodimensionDebugger( QObject ):
         # After a feedback message with a PID is received, we check again in
         # /proc what is the child PID is.
         # Later on, the feedback step can be removed completely.
-
-        for item in os.listdir( "/proc" ):
+        for item in os.listdir("/proc"):
             if item.isdigit():
                 try:
-                    f = open( "/proc/" + item + "/cmdline", "r" )
+                    f = open("/proc/" + item + "/cmdline", "r")
                     content = f.read()
                     f.close()
 
                     if "client/client_cdm_dbg.py" in content:
-                        if str( self.__tcpServer.serverPort() ) in content:
-                            if content.startswith( getUserShell() ):
-                                self.__procPID = int( item )
+                        if str(self.__tcpServer.serverPort()) in content:
+                            if content.startswith(getUserShell()):
+                                self.__procPID = int(item)
                                 return
                 except:
                     pass
-        return
 
-    def __createProcfeedbackSocket( self ):
-        " Creates the process feedback socket "
-        self.__procFeedbackSocket = socket.socket( socket.AF_INET,
-                                                   socket.SOCK_DGRAM )
+    def __createProcfeedbackSocket(self):
+        """Creates the process feedback socket"""
+        self.__procFeedbackSocket = socket.socket(socket.AF_INET,
+                                                  socket.SOCK_DGRAM)
 
         # Zero port allows the system to pick any available port
-        self.__procFeedbackSocket.bind( ( "127.0.0.1", 0 ) )
-        self.__procFeedbackPort = self.__procFeedbackSocket.getsockname()[ 1 ]
-        return
+        self.__procFeedbackSocket.bind(("127.0.0.1", 0))
+        self.__procFeedbackPort = self.__procFeedbackSocket.getsockname()[1]
 
-    def __createTCPServer( self ):
-        " Creates the TCP server for the commands exchange "
+    def __createTCPServer(self):
+        """Creates the TCP server for the commands exchange"""
         self.__tcpServer = QTcpServer()
-        self.connect( self.__tcpServer, SIGNAL( "newConnection()" ),
-                      self.__newConnection )
+        self.__tcpServer.newConnection.connect(self.__newConnection)
 
         # Port will be assigned automatically
-        self.__tcpServer.listen( QHostAddress.LocalHost )
-        return
+        self.__tcpServer.listen(QHostAddress.LocalHost)
 
-    def __getProcfeedbackData( self ):
-        " Checks if data avalable in the socket and reads it if so "
+    def __getProcfeedbackData(self):
+        """Checks if data avalable in the socket and reads it if so"""
         try:
-            data = self.__procFeedbackSocket.recv( 1024, socket.MSG_DONTWAIT )
+            data = self.__procFeedbackSocket.recv(1024, socket.MSG_DONTWAIT)
         except socket.error as excpt:
-            if excpt[ 0 ] == errno.EWOULDBLOCK:
+            if excpt[0] == errno.EWOULDBLOCK:
                 return ""
             raise
         return data
 
-    def __newConnection( self ):
-        " Handles new incoming connections "
+    def __newConnection(self):
+        """Handles new incoming connections"""
         sock = self.__tcpServer.nextPendingConnection()
         if self.__state != self.STATE_PROLOGUE or \
            self.__clientSocket is not None:
@@ -334,10 +315,8 @@ class CodimensionDebugger( QObject ):
             return
 
         self.__clientSocket = sock
-        self.__clientSocket.setSocketOption( QAbstractSocket.KeepAliveOption,
-                                             1 )
-        self.connect( self.__clientSocket, SIGNAL( 'disconnected()' ),
-                      self.__disconnected )
+        self.__clientSocket.setSocketOption(QAbstractSocket.KeepAliveOption, 1)
+        self.__clientSocket.disconnected.connect(self.__disconnected)
 
         # The readyRead() signal should not be connected here. Sometimes
         # e.g. in case of syntax errors, a message from the remote side comes
@@ -348,36 +327,34 @@ class CodimensionDebugger( QObject ):
         #               self.__parseClientLine )
 
         self.__changeStateWhenReady()
-        return
 
-    def __changeStateWhenReady( self ):
-        """ Changes the debugger state from prologue to in client when
-            all the required connections are ready """
+    def __changeStateWhenReady(self):
+        """Changes the debugger state from prologue to in client when
+           all the required connections are ready
+        """
         if self.__clientSocket is None:
             return
 
         # All the conditions are met, the state can be changed
-        self.__changeDebuggerState( self.STATE_IN_CLIENT )
-        return
+        self.__changeDebuggerState(self.STATE_IN_CLIENT)
 
-    def __sendCommand( self, command ):
-        " Sends a command to the debuggee "
+    def __sendCommand(self, command):
+        """Sends a command to the debuggee"""
         if self.__clientSocket:
-            self.__clientSocket.write( command.encode( 'utf8' ) )
+            self.__clientSocket.write(command.encode('utf8'))
             self.__clientSocket.flush()
             return
 
-        raise Exception( "Cannot send command to debuggee - "
-                         "no connection established. Command: " + command )
+        raise Exception("Cannot send command to debuggee - "
+                        "no connection established. Command: " + command)
 
-    def __parseClientLine( self ):
-        " Triggered when something has been received from the client "
+    def __parseClientLine(self):
+        """Triggered when something has been received from the client"""
         while self.__clientSocket and self.__clientSocket.bytesAvailable() > 0:
             qs = self.__clientSocket.readAll()
-            us = self.__codec.fromUnicode( str( qs ) )
-            self.__buffer += str( us )
+            self.__buffer += qs
 
-            # print "Received: '" + str( us ) + "'"
+            # print "Received: '" + str( qs ) + "'"
 
             tryAgain = True
             while tryAgain:
@@ -386,111 +363,106 @@ class CodimensionDebugger( QObject ):
                 elif self.__protocolState == self.PROTOCOL_EVALEXEC:
                     tryAgain = self.__processEvalexecState()
                 elif self.__protocolState == self.PROTOCOL_STDOUT:
-                    tryAgain = self.__processStdoutStderrState( True )
+                    tryAgain = self.__processStdoutStderrState(True)
                 elif self.__protocolState == self.PROTOCOL_STDERR:
-                    tryAgain = self.__processStdoutStderrState( False )
+                    tryAgain = self.__processStdoutStderrState(False)
                 else:
-                    raise Exception( "Unexpected protocol state" )
-        return
+                    raise Exception("Unexpected protocol state")
 
-    def __processControlState( self ):
-        " Analyzes receiving buffer in the CONTROL state "
+    def __processControlState(self):
+        """Analyzes receiving buffer in the CONTROL state"""
         # Buffer is going to start with >ZZZ< message and ends with EOT
-        index = self.__buffer.find( EOT )
+        index = self.__buffer.find(EOT)
         if index == -1:
             return False
 
-        line = self.__buffer[ 0 : index ]
-        self.__buffer = self.__buffer[ index + len( EOT ) : ]
+        line = self.__buffer[0:index]
+        self.__buffer = self.__buffer[index + len(EOT):]
 
-        if not line.startswith( '>' ):
+        if not line.startswith('>'):
             print("Unexpected message received (no '>' at the beginning): '" +
                   line + "'")
             return self.__buffer != ""
 
-        cmdIndex = line.find( '<' )
+        cmdIndex = line.find('<')
         if cmdIndex == -1:
             print("Unexpected message received (no '<' found): '" + line + "'")
             return self.__buffer != ""
 
-        cmd = line[ 0 : cmdIndex + 1 ]
-        content = line[ cmdIndex + 1 : ]
+        cmd = line[0:cmdIndex + 1]
+        content = line[cmdIndex + 1:]
         if cmd == ResponseLine or cmd == ResponseStack:
-            stack = eval( content )
+            stack = eval(content)
             for s in stack:
-                s[ 0 ] = self.__translatePath( s[ 0 ], True )
+                s[0] = self.__translatePath(s[0], True)
 
             if self.__stopAtFirstLine:
-                cf = stack[ 0 ]
-                self.emit( SIGNAL( 'ClientLine' ), cf[ 0 ], int( cf[ 1 ] ),
-                           cmd == ResponseStack )
-                self.emit( SIGNAL( 'ClientStack' ), stack )
+                cf = stack[0]
+                self.ClientLine.emit(cf[0], int(cf[1]), cmd==ResponseStack)
+                self.ClientStack.emit(stack)
             else:
                 self.__stopAtFirstLine = True
-                QTimer.singleShot( 0, self.remoteContinue )
+                QTimer.singleShot(0, self.remoteContinue)
 
             if cmd == ResponseLine:
-                self.__changeDebuggerState( self.STATE_IN_IDE )
+                self.__changeDebuggerState(self.STATE_IN_IDE)
             return self.__buffer != ""
 
         if cmd == ResponseThreadList:
-            currentThreadID, threadList = eval( content )
-            self.emit( SIGNAL( 'ClientThreadList' ),
-                       currentThreadID, threadList )
+            currentThreadID, threadList = eval(content)
+            self.ClientThreadList.emit(currentThreadID, threadList)
             return self.__buffer != ""
 
         if cmd == ResponseVariables:
-            vlist = eval( content )
-            scope = vlist[ 0 ]
+            vlist = eval(content)
+            scope = vlist[0]
             try:
-                variables = vlist[ 1 : ]
+                variables = vlist[1:]
             except IndexError:
                 variables = []
-            self.emit( SIGNAL( 'ClientVariables' ), scope, variables )
+            self.ClientVariables.emit(scope, variables)
             return self.__buffer != ""
 
         if cmd == ResponseVariable:
-            vlist = eval( content )
-            scope = vlist[ 0 ]
+            vlist = eval(content)
+            scope = vlist[0]
             try:
-                variables = vlist[ 1 : ]
+                variables = vlist[1:]
             except IndexError:
                 variables = []
-            self.emit( SIGNAL( 'ClientVariable' ), scope, variables )
+            self.ClientVariable.emit(scope, variables)
             return self.__buffer != ""
 
         if cmd == ResponseException:
-            self.__changeDebuggerState( self.STATE_IN_IDE )
+            self.__changeDebuggerState(self.STATE_IN_IDE)
             try:
-                excList = eval( content )
-                excType = excList[ 0 ]
-                excMessage = excList[ 1 ]
-                stackTrace = excList[ 2 : ]
-                if stackTrace and stackTrace[ 0 ] and \
-                   stackTrace[ 0 ][ 0 ] == "<string>":
+                excList = eval(content)
+                excType = excList[0]
+                excMessage = excList[1]
+                stackTrace = excList[2:]
+                if stackTrace and stackTrace[0] and \
+                   stackTrace[0][0] == "<string>":
                     stackTrace = []
             except (IndexError, ValueError, SyntaxError):
                 excType = None
                 excMessage = ""
                 stackTrace = []
-            self.emit( SIGNAL( 'ClientException' ),
-                       excType, excMessage, stackTrace )
+            self.ClientExceptionemit(excType, excMessage, stackTrace)
             return self.__buffer != ""
 
         if cmd == ResponseSyntax:
             try:
-                message, ( fileName, lineNo, charNo ) = eval( content )
+                message, (fileName, lineNo, charNo) = eval(content)
                 if fileName is None:
                     fileName = ""
-            except ( IndexError, ValueError ):
+            except (IndexError, ValueError):
                 message = None
                 fileName = ''
                 lineNo = 0
                 charNo = 0
             if charNo is None:
                 charNo = 0
-            self.emit( SIGNAL( 'ClientSyntaxError' ),
-                       message, fileName, lineNo, charNo )
+            self.ClientSyntaxError.emit(message, fileName, lineNo, charNo)
             return self.__buffer != ""
 
         if cmd == RequestForkTo:
@@ -503,31 +475,31 @@ class CodimensionDebugger( QObject ):
             return self.__buffer != ""
 
         if cmd == ResponseThreadSet:
-            self.emit( SIGNAL( 'ClientThreadSet' ) )
+            self.ClientThreadSet.emit()
             return self.__buffer != ""
 
         if cmd == ResponseClearBreak:
-            fileName, lineNo = content.split( ',' )
-            lineNo = int( lineNo )
-            self.clientClearBreak.emit( fileName, lineNo )
+            fileName, lineNo = content.split(',')
+            lineNo = int(lineNo)
+            self.clientClearBreak.emit(fileName, lineNo)
             return self.__buffer != ""
 
         if cmd == ResponseBPConditionError:
-            fileName, lineNo = content.split( ',' )
-            lineNo = int( lineNo )
-            self.clientBreakConditionError.emit( fileName, lineNo )
+            fileName, lineNo = content.split(',')
+            lineNo = int(lineNo)
+            self.clientBreakConditionError.emit(fileName, lineNo)
             return self.__buffer != ""
 
         if cmd == ResponseRaw:
-            prompt, echo = eval( content )
-            self.emit( SIGNAL( 'ClientRawInput' ), prompt, echo )
+            prompt, echo = eval(content)
+            self.ClientRawInput.emit(prompt, echo)
             return self.__buffer != ""
 
         if cmd == ResponseExit:
             message = "Debugged script finished with exit code " + content
-            self.clientIDEMessage.emit( message )
+            self.clientIDEMessage.emit(message)
             try:
-                self.__exitCode = int( content )
+                self.__exitCode = int(content)
             except:
                 pass
             return self.__buffer != ""
@@ -551,93 +523,90 @@ class CodimensionDebugger( QObject ):
         print("Unexpected message received (no control match): '" + line + "'")
         return self.__buffer != ""
 
-    def __processEvalexecState( self ):
-        " Analyzes receiving buffer in the EVALEXEC state "
+    def __processEvalexecState(self):
+        """Analyzes receiving buffer in the EVALEXEC state"""
         # Collect till ResponseEvalOK, ResponseEvalError,
         #              ResponseExecOK, ResponseExecError
 
-        index = self.__buffer.find( ResponseEvalOK + EOT )
+        index = self.__buffer.find(ResponseEvalOK + EOT)
         if index != -1:
-            self.emit( SIGNAL( 'EvalOK' ),
-                       self.__buffer[ 0 : index ].replace( EOT, "" ) )
+            self.EvalOK.emit(self.__buffer[0:index].replace(EOT, ""))
             self.__protocolState = self.PROTOCOL_CONTROL
-            self.__buffer = self.__buffer[ index + len( ResponseEvalOK ) + len( EOT ) : ]
+            self.__buffer = self.__buffer[index +
+                                          len(ResponseEvalOK) + len(EOT):]
             return self.__buffer != ""
 
-        index = self.__buffer.find( ResponseEvalError + EOT )
+        index = self.__buffer.find(ResponseEvalError + EOT)
         if index != -1:
-            self.emit( SIGNAL( 'EvalError' ),
-                       self.__buffer[ 0 : index ].replace( EOT, "" ) )
+            self.EvalError.emit(self.__buffer[0:index].replace(EOT, ""))
             self.__protocolState = self.PROTOCOL_CONTROL
-            self.__buffer = self.__buffer[ index + len( ResponseEvalError ) + len( EOT ) : ]
+            self.__buffer = self.__buffer[index +
+                                          len(ResponseEvalError) + len(EOT):]
             return self.__buffer != ""
 
-        index = self.__buffer.find( ResponseExecOK + EOT )
+        index = self.__buffer.find(ResponseExecOK + EOT)
         if index != -1:
-            self.emit( SIGNAL( 'ExecOK' ),
-                       self.__buffer[ 0 : index ].replace( EOT, "" ) )
+            self.ExecOK.emit(self.__buffer[0:index].replace(EOT, ""))
             self.__protocolState = self.PROTOCOL_CONTROL
-            self.__buffer = self.__buffer[ index + len( ResponseExecOK ) + len( EOT ) : ]
+            self.__buffer = self.__buffer[index +
+                                          len(ResponseExecOK) + len(EOT):]
             return self.__buffer != ""
 
-        index = self.__buffer.find( ResponseExecError + EOT )
+        index = self.__buffer.find(ResponseExecError + EOT)
         if index != -1:
-            self.emit( SIGNAL( 'ExecError' ),
-                       self.__buffer[ 0 : index ].replace( EOT, "" ) )
+            self.ExecError.emit(self.__buffer[0:index].replace(EOT, ""))
             self.__protocolState = self.PROTOCOL_CONTROL
-            self.__buffer = self.__buffer[ index + len( ResponseExecError ) + len( EOT ) : ]
+            self.__buffer = self.__buffer[index +
+                                          len(ResponseExecError) + len(EOT):]
             return self.__buffer != ""
-
         return False
 
-    def __processStdoutStderrState( self, isStdout ):
-        " Analyzes receiving buffer in the STDOUT/STDERR state "
+    def __processStdoutStderrState(self, isStdout):
+        """Analyzes receiving buffer in the STDOUT/STDERR state"""
         # Collect till "\x04\x04"
-        index = self.__buffer.find( StdoutStderrEOT )
+        index = self.__buffer.find(StdoutStderrEOT)
         if index == -1:
             # End has not been found
-            if self.__buffer.endswith( '\x04' ):
+            if self.__buffer.endswith('\x04'):
                 if isStdout:
-                    self.emit( SIGNAL( 'ClientStdout' ), self.__buffer[ : -1 ] )
+                    self.ClientStdout.emit(self.__buffer[:-1])
                 else:
-                    self.emit( SIGNAL( 'ClientStderr' ), self.__buffer[ : -1 ] )
+                    self.ClientStderr.emit(self.__buffer[:-1])
                 self.__buffer = '\x04'
                 return False
-            else:
-                if isStdout:
-                    self.emit( SIGNAL( 'ClientStdout' ), self.__buffer )
-                else:
-                    self.emit( SIGNAL( 'ClientStderr' ), self.__buffer )
-                self.__buffer = ""
-                return False
-        else:
             if isStdout:
-                self.emit( SIGNAL( 'ClientStdout' ), self.__buffer[ 0 : index ] )
+                self.ClientStdout.emit(self.__buffer)
             else:
-                self.emit( SIGNAL( 'ClientStderr' ), self.__buffer[ 0 : index ] )
-            self.__buffer = self.__buffer[ index + 2 : ]
-            self.__protocolState = self.PROTOCOL_CONTROL
-            return True
+                self.ClientStderr.emit(self.__buffer)
+            self.__buffer = ""
+            return False
 
-    def __disconnected( self ):
-        " Triggered when the client closed the connection "
+        if isStdout:
+            self.ClientStdout.emit(self.__buffer[0:index])
+        else:
+            self.ClientStderr.emit(self.__buffer[0:index])
+        self.__buffer = self.__buffer[index + 2:]
+        self.__protocolState = self.PROTOCOL_CONTROL
+        return True
+
+    def __disconnected(self):
+        """Triggered when the client closed the connection"""
         # Note: if the stopDebugging call is done synchronously - you've got
         #       a core dump!
         self.__disconnectReceived = True
-        QTimer.singleShot( 1, self.stopDebugging )
-        return
+        QTimer.singleShot(1, self.stopDebugging)
 
-    def stopDebugging( self, brutal = False ):
-        " Stops debugging "
-        if self.__state in [ self.STATE_STOPPED, self.STATE_BRUTAL_FINISHING ]:
+    def stopDebugging(self, brutal=False):
+        """Stops debugging"""
+        if self.__state in [self.STATE_STOPPED, self.STATE_BRUTAL_FINISHING]:
             return
         if not brutal and self.__state == self.STATE_FINISHING:
             return
 
         if brutal:
-            self.__changeDebuggerState( self.STATE_BRUTAL_FINISHING )
+            self.__changeDebuggerState(self.STATE_BRUTAL_FINISHING)
         else:
-            self.__changeDebuggerState( self.STATE_FINISHING )
+            self.__changeDebuggerState(self.STATE_FINISHING)
         QApplication.processEvents()
 
         # Close the process feedback socket if so
@@ -648,9 +617,8 @@ class CodimensionDebugger( QObject ):
 
         # Close the opened socket if so
         if self.__clientSocket is not None:
-            self.disconnect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-                             self.__parseClientLine )
-            self.__sendCommand( RequestShutdown + "\n" )
+            self.__clientSocket.readyRead.disconnect(self.__parseClientLine)
+            self.__sendCommand(RequestShutdown + "\n")
 
             # Give the client a chance to shutdown itself
             if brutal:
@@ -659,7 +627,7 @@ class CodimensionDebugger( QObject ):
                 timeout = GRACEFUL_SHUTDOWN_TIMEOUT
             start = time.time()
             while True:
-                time.sleep( POLL_INTERVAL )
+                time.sleep(POLL_INTERVAL)
                 QApplication.processEvents()
                 if self.__disconnectReceived:
                     # The client has shut itself down
@@ -667,15 +635,13 @@ class CodimensionDebugger( QObject ):
                 if time.time() - start > timeout:
                     # Timeout is over, don't wait any more
                     break
-            self.disconnect( self.__clientSocket, SIGNAL( 'disconnected()' ),
-                             self.__disconnected )
+            self.__clientSocket.disconnected.disconnect(self.__disconnected)
             self.__clientSocket.close()
         self.__clientSocket = None
 
         # Close the TCP server if so
         if self.__tcpServer is not None:
-            self.disconnect( self.__tcpServer, SIGNAL( "newConnection()" ),
-                             self.__newConnection )
+            self.__tcpServer.newConnection.disconnect(self.__newConnection)
             self.__tcpServer.close()
         self.__tcpServer = None
 
@@ -691,7 +657,7 @@ class CodimensionDebugger( QObject ):
                 if brutal or killOnSuccess:
                     try:
                         # Throws exceptions if cannot kill the process
-                        killProcess( self.__procPID )
+                        killProcess(self.__procPID)
                     except:
                         pass
         self.__procPID = None
@@ -702,8 +668,8 @@ class CodimensionDebugger( QObject ):
                 pass
             self.__proc = None
 
-        self.__mainWindow.switchDebugMode( False )
-        self.__changeDebuggerState( self.STATE_STOPPED )
+        self.__mainWindow.switchDebugMode(False)
+        self.__changeDebuggerState(self.STATE_STOPPED)
 
         self.__fileName = None
         self.__runParameters = None
@@ -712,267 +678,244 @@ class CodimensionDebugger( QObject ):
         message = "Debugging session has been stopped"
         if brutal and Settings().terminalType != TERM_REDIRECT:
             message += " and the console has been closed"
-        self.clientIDEMessage.emit( message )
-        return
+        self.clientIDEMessage.emit(message)
 
-    def __noPathTranslation( self, fname, remote2local = True ):
+    def __noPathTranslation(self, fname, remote2local=True):
         """ Dump to support later path translations """
-        return unicode( fname )
+        return fname
 
-    def __askForkTo( self ):
+    def __askForkTo(self):
         " Asks what to follow, a parent or a child "
-        dlg = QMessageBox( QMessageBox.Question, "Client forking",
-                           "Select the fork branch to follow" )
-        dlg.addButton( QMessageBox.Ok )
-        dlg.addButton( QMessageBox.Cancel )
+        dlg = QMessageBox(QMessageBox.Question, "Client forking",
+                          "Select the fork branch to follow")
+        dlg.addButton(QMessageBox.Ok)
+        dlg.addButton(QMessageBox.Cancel)
 
-        btn1 = dlg.button( QMessageBox.Ok )
-        btn1.setText( "&Child process" )
-        btn1.setIcon( getIcon( '' ) )
+        btn1 = dlg.button(QMessageBox.Ok)
+        btn1.setText("&Child process")
+        btn1.setIcon(getIcon(''))
 
-        btn2 = dlg.button( QMessageBox.Cancel )
-        btn2.setText( "&Parent process" )
-        btn2.setIcon( getIcon( '' ) )
+        btn2 = dlg.button(QMessageBox.Cancel)
+        btn2.setText("&Parent process")
+        btn2.setIcon(getIcon(''))
 
-        dlg.setDefaultButton( QMessageBox.Cancel )
+        dlg.setDefaultButton(QMessageBox.Cancel)
         res = dlg.exec_()
 
         if res == QMessageBox.Cancel:
-            self.__sendCommand( ResponseForkTo + 'parent\n' )
+            self.__sendCommand(ResponseForkTo + 'parent\n')
         else:
-            self.__sendCommand( ResponseForkTo + 'child\n' )
-        return
+            self.__sendCommand(ResponseForkTo + 'child\n')
 
-    def __validateBreakpoints( self ):
-        " Checks all the breakpoints validity and deletes invalid "
+    def __validateBreakpoints(self):
+        """Checks all the breakpoints validity and deletes invalid"""
         # It is excepted that the method is called when all the files are
         # saved, e.g. when a new debugging session is started.
-        for row in range( 0, self.__breakpointModel.rowCount() ):
-            index = self.__breakpointModel.index( row, 0, QModelIndex() )
-            bpoint = self.__breakpointModel.getBreakPointByIndex( index )
+        for row in range(0, self.__breakpointModel.rowCount()):
+            index = self.__breakpointModel.index(row, 0, QModelIndex())
+            bpoint = self.__breakpointModel.getBreakPointByIndex(index)
             fileName = bpoint.getAbsoluteFileName()
             line = bpoint.getLineNumber()
 
-            if not os.path.exists( fileName ):
-                logging.warning( "Breakpoint at " + fileName + ":" +
-                                 str( line ) + " is invalid (the file "
-                                 "disappeared from the filesystem). "
-                                 "The breakpoint is deleted." )
-                self.__breakpointModel.deleteBreakPointByIndex( index )
+            if not os.path.exists(fileName):
+                logging.warning("Breakpoint at " + fileName + ":" +
+                                str(line) + " is invalid (the file "
+                                "disappeared from the filesystem). "
+                                "The breakpoint is deleted.")
+                self.__breakpointModel.deleteBreakPointByIndex(index)
                 continue
 
-            breakableLines = getBreakpointLines( fileName, None, True )
+            breakableLines = getBreakpointLines(fileName, None, True)
             if breakableLines is None:
-                logging.warning( "Breakpoint at " + fileName + ":" +
-                                 str( line ) + " does not point to a breakable "
-                                 "line (the file could not be compiled). "
-                                 "The breakpoint is deleted." )
-                self.__breakpointModel.deleteBreakPointByIndex( index )
+                logging.warning("Breakpoint at " + fileName + ":" +
+                                str(line) + " does not point to a breakable "
+                                "line (the file could not be compiled). "
+                                "The breakpoint is deleted.")
+                self.__breakpointModel.deleteBreakPointByIndex(index)
                 continue
             if line not in breakableLines:
-                logging.warning( "Breakpoint at " + fileName + ":" +
-                                 str( line ) + " does not point to a breakable "
-                                 "line (the file was modified). "
-                                 "The breakpoint is deleted." )
-                self.__breakpointModel.deleteBreakPointByIndex( index )
+                logging.warning("Breakpoint at " + fileName + ":" +
+                                str(line) + " does not point to a breakable "
+                                "line (the file was modified). "
+                                "The breakpoint is deleted.")
+                self.__breakpointModel.deleteBreakPointByIndex(index)
                 continue
 
             # The breakpoint is OK, keep it
         return
 
-    def __sendBreakpoints( self ):
-        " Sends the breakpoints to the debugged program "
+    def __sendBreakpoints(self):
+        """Sends the breakpoints to the debugged program"""
         self.__validateBreakpoints()
-        self.__addBreakPoints( QModelIndex(), 0,
-                               self.__breakpointModel.rowCount() - 1 )
-        return
+        self.__addBreakPoints(QModelIndex(), 0,
+                              self.__breakpointModel.rowCount() - 1)
 
-    def __addBreakPoints( self, parentIndex, start, end ):
-        " Adds breakpoints "
-        if self.__state in [ self.STATE_PROLOGUE,
-                             self.STATE_STOPPED,
-                             self.STATE_FINISHING,
-                             self.STATE_BRUTAL_FINISHING ]:
+    def __addBreakPoints(self, parentIndex, start, end):
+        """Adds breakpoints"""
+        if self.__state in [self.STATE_PROLOGUE,
+                            self.STATE_STOPPED,
+                            self.STATE_FINISHING,
+                            self.STATE_BRUTAL_FINISHING]:
             return
 
-        for row in range( start, end + 1 ):
-            index = self.__breakpointModel.index( row, 0, parentIndex )
-            bpoint = self.__breakpointModel.getBreakPointByIndex( index )
+        for row in range(start, end + 1):
+            index = self.__breakpointModel.index(row, 0, parentIndex)
+            bpoint = self.__breakpointModel.getBreakPointByIndex(index)
             fileName = bpoint.getAbsoluteFileName()
             line = bpoint.getLineNumber()
-            self.remoteBreakpoint( fileName, line, True,
-                                   bpoint.getCondition(),
-                                   bpoint.isTemporary() )
+            self.remoteBreakpoint(fileName, line, True,
+                                  bpoint.getCondition(),
+                                  bpoint.isTemporary())
             if not bpoint.isEnabled():
-                self.__remoteBreakpointEnable( fileName, line, False )
+                self.__remoteBreakpointEnable(fileName, line, False)
             ignoreCount = bpoint.getIgnoreCount()
             if ignoreCount > 0:
-                self.__remoteBreakpointIgnore( fileName, line,
-                                               ignoreCount )
-        return
+                self.__remoteBreakpointIgnore(fileName, line,
+                                              ignoreCount)
 
-    def __deleteBreakPoints( self, parentIndex, start, end ):
-        " Deletes breakpoints "
-        if self.__state in [ self.STATE_PROLOGUE,
-                             self.STATE_STOPPED,
-                             self.STATE_FINISHING,
-                             self.STATE_BRUTAL_FINISHING ]:
+    def __deleteBreakPoints(self, parentIndex, start, end):
+        """Deletes breakpoints"""
+        if self.__state in [self.STATE_PROLOGUE,
+                            self.STATE_STOPPED,
+                            self.STATE_FINISHING,
+                            self.STATE_BRUTAL_FINISHING]:
             return
 
-        for row in range( start, end + 1 ):
-            index = self.__breakpointModel.index( row, 0, parentIndex )
-            bpoint = self.__breakpointModel.getBreakPointByIndex( index )
+        for row in range(start, end + 1):
+            index = self.__breakpointModel.index(row, 0, parentIndex)
+            bpoint = self.__breakpointModel.getBreakPointByIndex(index)
             fileName = bpoint.getAbsoluteFileName()
             line = bpoint.getLineNumber()
-            self.remoteBreakpoint( fileName, line, False )
-        return
+            self.remoteBreakpoint(fileName, line, False)
 
-    def __breakPointDataAboutToBeChanged( self, startIndex, endIndex ):
-        " Handles the dataAboutToBeChanged signal of the breakpoint model "
-        self.__deleteBreakPoints( QModelIndex(),
-                                  startIndex.row(), endIndex.row() )
-        return
+    def __breakPointDataAboutToBeChanged(self, startIndex, endIndex):
+        """Handles the dataAboutToBeChanged signal of the breakpoint model"""
+        self.__deleteBreakPoints(QModelIndex(),
+                                 startIndex.row(), endIndex.row())
 
-    def __changeBreakPoints( self, startIndex, endIndex ):
-        " Sets changed breakpoints "
-        self.__addBreakPoints( QModelIndex(), startIndex.row(), endIndex.row() )
-        return
+    def __changeBreakPoints(self, startIndex, endIndex):
+        """Sets changed breakpoints"""
+        self.__addBreakPoints(QModelIndex(), startIndex.row(), endIndex.row())
 
+    def __sendWatchpoints(self):
+        """Sends the watchpoints to the debugged program"""
+        pass
 
-    def __sendWatchpoints( self ):
-        " Sends the watchpoints to the debugged program "
-        return
-
-    def __remoteBreakpointEnable( self, fileName, line, enable ):
-        " Sends the breakpoint enability "
+    def __remoteBreakpointEnable(self, fileName, line, enable):
+        """Sends the breakpoint enability"""
         if enable:
             enable = 1
         else:
             enable = 0
-        self.__sendCommand( RequestBreakEnable + fileName + ',' +
-                            str( line ) + ',' + str( enable ) + '\n' )
-        return
+        self.__sendCommand(RequestBreakEnable + fileName + ',' +
+                           str(line) + ',' + str(enable) + '\n')
 
-    def __remoteBreakpointIgnore( self, fileName, line, ignoreCount ):
-        " Sends the breakpoint ignore count "
-        self.__sendCommand( RequestBreakIgnore + fileName + ',' +
-                            str( line ) + ',' + str( ignoreCount ) + '\n' )
-        return
+    def __remoteBreakpointIgnore(self, fileName, line, ignoreCount):
+        """Sends the breakpoint ignore count"""
+        self.__sendCommand(RequestBreakIgnore + fileName + ',' +
+                           str(line) + ',' + str(ignoreCount) + '\n')
 
-    def __clientClearBreakPoint( self, fileName, line ):
-        " Handles the clientClearBreak signal "
-        if self.__state in [ self.STATE_PROLOGUE,
-                             self.STATE_STOPPED,
-                             self.STATE_FINISHING,
-                             self.STATE_BRUTAL_FINISHING ]:
+    def __clientClearBreakPoint(self, fileName, line):
+        """Handles the clientClearBreak signal"""
+        if self.__state in [self.STATE_PROLOGUE,
+                            self.STATE_STOPPED,
+                            self.STATE_FINISHING,
+                            self.STATE_BRUTAL_FINISHING]:
             return
 
-        index = self.__breakpointModel.getBreakPointIndex( fileName, line )
+        index = self.__breakpointModel.getBreakPointIndex(fileName, line)
         if index.isValid():
-            self.__breakpointModel.deleteBreakPointByIndex( index )
-        return
+            self.__breakpointModel.deleteBreakPointByIndex(index)
 
-    def __clientBreakConditionError( self, fileName, line ):
-        " Handles the condition error "
-        logging.error( "The condition of the breakpoint at " +
-                       fileName + ":" + str( line ) +
-                       " contains a syntax error." )
-        index = self.__breakpointModel.getBreakPointIndex( fileName, line )
+    def __clientBreakConditionError(self, fileName, line):
+        """Handles the condition error"""
+        logging.error("The condition of the breakpoint at " +
+                      fileName + ":" + str(line) +
+                      " contains a syntax error.")
+        index = self.__breakpointModel.getBreakPointIndex(fileName, line)
         if not index.isValid():
             return
-        bpoint = self.__breakpointModel.getBreakPointByIndex( index )
+        bpoint = self.__breakpointModel.getBreakPointByIndex(index)
         if not bpoint:
             return
 
-        dlg = BreakpointEditDialog( bpoint )
+        dlg = BreakpointEditDialog(bpoint)
         if dlg.exec_() == QDialog.Accepted:
             newBpoint = dlg.getData()
             if newBpoint == bpoint:
                 return
-            self.__breakpointModel.setBreakPointByIndex( index, newBpoint )
-        return
+            self.__breakpointModel.setBreakPointByIndex(index, newBpoint)
 
-    def remoteStep( self ):
-        " Single step in the debugged program "
-        self.__changeDebuggerState( self.STATE_IN_CLIENT )
-        self.__sendCommand( RequestStep + '\n' )
-        return
+    def remoteStep(self):
+        """Single step in the debugged program"""
+        self.__changeDebuggerState(self.STATE_IN_CLIENT)
+        self.__sendCommand(RequestStep + '\n')
 
-    def remoteStepOver( self ):
-        " Step over the debugged program "
-        self.__changeDebuggerState( self.STATE_IN_CLIENT )
-        self.__sendCommand( RequestStepOver + '\n' )
-        return
+    def remoteStepOver(self):
+        """Step over the debugged program"""
+        self.__changeDebuggerState(self.STATE_IN_CLIENT)
+        self.__sendCommand(RequestStepOver + '\n')
 
-    def remoteStepOut( self ):
-        " Step out the debugged program "
-        self.__changeDebuggerState( self.STATE_IN_CLIENT )
-        self.__sendCommand( RequestStepOut + '\n' )
-        return
+    def remoteStepOut(self):
+        """Step out the debugged program"""
+        self.__changeDebuggerState(self.STATE_IN_CLIENT)
+        self.__sendCommand(RequestStepOut + '\n')
 
-    def remoteContinue( self, special = False ):
-        " Continues the debugged program "
-        self.__changeDebuggerState( self.STATE_IN_CLIENT )
+    def remoteContinue(self, special=False):
+        """Continues the debugged program"""
+        self.__changeDebuggerState(self.STATE_IN_CLIENT)
         if special:
-            self.__sendCommand( RequestContinue + '1\n' )
+            self.__sendCommand(RequestContinue + '1\n')
         else:
-            self.__sendCommand( RequestContinue + '0\n' )
-        return
+            self.__sendCommand(RequestContinue + '0\n')
 
-    def remoteThreadList( self ):
-        " Provides the threads list "
-        self.__sendCommand( RequestThreadList + "\n" )
-        return
+    def remoteThreadList(self):
+        """Provides the threads list"""
+        self.__sendCommand(RequestThreadList + "\n")
 
-    def remoteStack( self ):
-        " Provides the current thread stack "
-        self.__sendCommand( RequestStack + "\n" )
-        return
+    def remoteStack(self):
+        """Provides the current thread stack"""
+        self.__sendCommand(RequestStack + "\n")
 
-    def remoteClientVariables( self, scope, framenr = 0 ):
-        """ Provides the client variables.
-            scope - 0 => local, 1 => global """
-        scope = int( scope )
-        self.__sendCommand( RequestVariables +
-                            str( framenr ) + ", " + str( scope ) + "\n" )
-        return
+    def remoteClientVariables(self, scope, framenr=0):
+        """Provides the client variables.
+           scope - 0 => local, 1 => global
+        """
+        scope = int(scope)
+        self.__sendCommand(RequestVariables +
+                           str(framenr) + ", " + str(scope) + "\n")
 
-    def remoteClientVariable( self, scope, var, framenr = 0 ):
-        """ Provides the client variable.
-            scope - 0 => local, 1 => global """
-        scope = int( scope )
-        self.__sendCommand( RequestVariable +
-                            unicode( var ) + ", " +
-                            str( framenr ) + ", " + str( scope ) + "\n" )
-        return
+    def remoteClientVariable(self, scope, var, framenr=0):
+        """Provides the client variable.
+           scope - 0 => local, 1 => global
+        """
+        scope = int(scope)
+        self.__sendCommand(RequestVariable +
+                           var + ", " +
+                           str(framenr) + ", " + str(scope) + "\n")
 
-    def remoteEval( self, expression, framenr ):
-        " Evaluates the expression in the current context of the debuggee "
-        self.__sendCommand( RequestEval +
-                            str( framenr ) + ", " + expression + "\n" )
-        return
+    def remoteEval(self, expression, framenr):
+        """Evaluates the expression in the current context of the debuggee"""
+        self.__sendCommand(RequestEval +
+                           str(framenr) + ", " + expression + "\n")
 
-    def remoteExec( self, statement, framenr ):
-        " Executes the expression in the current context of the debuggee "
-        self.__sendCommand( RequestExec +
-                            str( framenr ) + ", " + statement + "\n" )
-        return
+    def remoteExec(self, statement, framenr):
+        """Executes the expression in the current context of the debuggee"""
+        self.__sendCommand(RequestExec +
+                           str(framenr) + ", " + statement + "\n")
 
-    def remoteBreakpoint( self, fileName, line,
-                          isSetting, condition = None, temporary = False ):
-        " Sets or clears a breakpoint "
-        self.__sendCommand( RequestBreak + fileName + "@@" + str( line ) +
-                            "@@" + str( int( temporary ) ) + "@@" +
-                            str( int( isSetting ) ) + "@@" +
-                            str( condition ) + "\n" )
-        return
+    def remoteBreakpoint(self, fileName, line,
+                         isSetting, condition=None, temporary=False):
+        """Sets or clears a breakpoint"""
+        self.__sendCommand(RequestBreak + fileName + "@@" + str(line) +
+                           "@@" + str(int(temporary)) + "@@" +
+                           str(int(isSetting)) + "@@" +
+                           str(condition) + "\n" )
 
-    def remoteSetThread( self, tid ):
-        " Sets the given thread as the current "
-        self.__sendCommand( RequestThreadSet + str( tid ) + "\n" )
-        return
+    def remoteSetThread(self, tid):
+        """Sets the given thread as the current"""
+        self.__sendCommand(RequestThreadSet + str(tid) + "\n")
 
-    def remoteRawInput( self, userInput ):
-        " Sends the remote user input "
-        self.__sendCommand( userInput + "\n" )
-        return
+    def remoteRawInput(self, userInput):
+        """Sends the remote user input"""
+        self.__sendCommand(userInput + "\n")
