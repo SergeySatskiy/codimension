@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,48 +32,44 @@ class BreakPointModel(QAbstractItemModel):
 
     """Class implementing a custom model for breakpoints"""
 
-    def __init__(self, parent = None):
-        QAbstractItemModel.__init__( self, parent )
+    def __init__(self, parent=None):
+        QAbstractItemModel.__init__(self, parent)
 
         self.breakpoints = []
         self.header = [
-            QVariant( 'File:line' ),
-            QVariant( 'Condition' ),
-            QVariant( 'Temporary' ),
-            QVariant( 'Enabled' ),
-            QVariant( 'Ignore Count' ),
-                      ]
+            QVariant('File:line'),
+            QVariant('Condition'),
+            QVariant('Temporary'),
+            QVariant('Enabled'),
+            QVariant('Ignore Count')]
         self.alignments = [
-            QVariant( Qt.Alignment( Qt.AlignLeft ) ),
-            QVariant( Qt.Alignment( Qt.AlignLeft ) ),
-            QVariant( Qt.Alignment( Qt.AlignHCenter ) ),
-            QVariant( Qt.Alignment( Qt.AlignHCenter ) ),
-            QVariant( Qt.Alignment( Qt.AlignRight ) ),
-                          ]
-        self.__columnCount = len( self.header )
-        return
+            QVariant(Qt.Alignment(Qt.AlignLeft)),
+            QVariant(Qt.Alignment(Qt.AlignLeft)),
+            QVariant(Qt.Alignment(Qt.AlignHCenter)),
+            QVariant(Qt.Alignment(Qt.AlignHCenter)),
+            QVariant(Qt.Alignment(Qt.AlignRight))]
+        self.__columnCount = len(self.header)
 
-    def columnCount( self, parent = QModelIndex() ):
-        " Provides the current column count "
+    def columnCount(self, parent=QModelIndex()):
+        """Provides the current column count"""
         return self.__columnCount
 
-    def rowCount( self, parent = QModelIndex() ):
-        " Provides the current row count "
-
+    def rowCount(self, parent=QModelIndex()):
+        """Provides the current row count"""
         # we do not have a tree, parent should always be invalid
         if not parent.isValid():
-            return len( self.breakpoints )
+            return len(self.breakpoints)
         return 0
 
-    def data( self, index, role ):
-        " Provides the requested data "
+    def data(self, index, role):
+        """Provides the requested data"""
         if not index.isValid():
             return QVariant()
 
         if role == Qt.DisplayRole:
             column = index.column()
             if column < self.__columnCount:
-                bpoint = self.breakpoints[ index.row() ]
+                bpoint = self.breakpoints[index.row()]
                 if column == 0:
                     value = bpoint.getLocation()
                 elif column == 1:
@@ -84,206 +80,154 @@ class BreakPointModel(QAbstractItemModel):
                     value = bpoint.isEnabled()
                 else:
                     value = bpoint.getIgnoreCount()
-                return QVariant( value )
+                return QVariant(value)
         if role == Qt.ToolTipRole:
             column = index.column()
             if column < self.__columnCount:
-                return QVariant( self.breakpoints[ index.row() ].getTooltip() )
+                return QVariant(self.breakpoints[index.row()].getTooltip())
             else:
                 return QVariant()
 
         if role == Qt.TextAlignmentRole:
             if index.column() < self.__columnCount:
-                return self.alignments[ index.column() ]
+                return self.alignments[index.column()]
 
         return QVariant()
 
-    def flags( self, index ):
-        """
-        Public method to get item flags.
-
-        @param index index of the requested flags (QModelIndex)
-        @return item flags for the given index (Qt.ItemFlags)
-        """
+    def flags(self, index):
+        """Provides the item flags"""
         if not index.isValid():
             return Qt.ItemIsEnabled
-
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-    def headerData( self, section, orientation, role = Qt.DisplayRole ):
-        " Provides header data "
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        """Provides header data"""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             if section < self.__columnCount:
-                return self.header[ section ]
-            return QVariant( "" )
-
+                return self.header[section]
+            return QVariant("")
         return QVariant()
 
-    def index( self, row, column, parent = QModelIndex() ):
-        " Creates an index "
+    def index(self, row, column, parent=QModelIndex()):
+        """Creates an index"""
         if parent.isValid() or \
-           row < 0 or row >= len( self.breakpoints ) or \
-           column < 0 or column >= len( self.header ):
+           row < 0 or row >= len(self.breakpoints) or \
+           column < 0 or column >= len(self.header):
             return QModelIndex()
 
-        return self.createIndex( row, column, self.breakpoints[ row ] )
+        return self.createIndex(row, column, self.breakpoints[row])
 
-    def parent( self, index ):
-        " Provides the parent index "
+    def parent(self, index):
+        """Provides the parent index"""
         return QModelIndex()
 
-    def hasChildren( self, parent = QModelIndex() ):
-        " Checks if there are child items "
+    def hasChildren(self, parent=QModelIndex()):
+        """Checks if there are child items"""
         if not parent.isValid():
-            return len( self.breakpoints ) > 0
+            return len(self.breakpoints) > 0
         return False
 
-    def addBreakpoint( self, bpoint ):
-        " Adds a new breakpoint to the list "
-        cnt = len( self.breakpoints )
-        self.beginInsertRows( QModelIndex(), cnt, cnt )
-        self.breakpoints.append( bpoint )
+    def addBreakpoint(self, bpoint):
+        """Adds a new breakpoint to the list"""
+        cnt = len(self.breakpoints)
+        self.beginInsertRows(QModelIndex(), cnt, cnt)
+        self.breakpoints.append(bpoint)
         self.endInsertRows()
-        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
-        return
+        self.BreakpoinsChanged.emit()
 
-    def setBreakPointByIndex( self, index, bpoint ):
-        " Set the values of a breakpoint given by index "
-
+    def setBreakPointByIndex(self, index, bpoint):
+        """Set the values of a breakpoint given by index"""
         if index.isValid():
             row = index.row()
-            index1 = self.createIndex( row, 0, self.breakpoints[ row ] )
-            index2 = self.createIndex( row, self.__columnCount - 1,
-                                       self.breakpoints[ row ] )
-            self.emit(
-                SIGNAL( "dataAboutToBeChanged(const QModelIndex&, const QModelIndex&)" ),
-                index1, index2 )
+            index1 = self.createIndex(row, 0, self.breakpoints[row])
+            index2 = self.createIndex(row, self.__columnCount - 1,
+                                      self.breakpoints[row])
 
-            self.breakpoints[ row ].update( bpoint )
+            self.dataAboutToBeChanged.emit(index1, index2)
+            self.breakpoints[row].update(bpoint)
+            self.dataChanged.emit(index1, index2)
+        self.BreakpoinsChanged.emit()
 
-            self.emit(
-                SIGNAL( "dataChanged(const QModelIndex&, const QModelIndex&)" ),
-                        index1, index2 )
-        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
-        return
-
-    def updateLineNumberByIndex( self, index, newLineNumber ):
-        " Update the line number by index "
-
+    def updateLineNumberByIndex(self, index, newLineNumber):
+        """Update the line number by index"""
         if index.isValid():
             row = index.row()
-            index1 = self.createIndex( row, 0, self.breakpoints[ row ] )
-            index2 = self.createIndex( row, self.__columnCount - 1,
-                                       self.breakpoints[ row ] )
-            self.emit(
-                SIGNAL( "dataAboutToBeChanged(const QModelIndex&, const QModelIndex&)" ),
-                index1, index2 )
+            index1 = self.createIndex(row, 0, self.breakpoints[row])
+            index2 = self.createIndex(row, self.__columnCount - 1,
+                                      self.breakpoints[row])
 
-            self.breakpoints[ row ].updateLineNumber( newLineNumber )
+            self.dataAboutToBeChanged.emit(index1, index2)
+            self.breakpoints[row].updateLineNumber(newLineNumber)
+            self.dataChanged.emit(index1, index2)
+        self.BreakpoinsChanged.emit()
 
-            self.emit(
-                SIGNAL( "dataChanged(const QModelIndex&, const QModelIndex&)" ),
-                        index1, index2 )
-        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
-        return
-
-    def setBreakPointEnabledByIndex( self, index, enabled ):
-        """
-        Public method to set the enabled state of a breakpoint given by index.
-
-        @param index index of the breakpoint (QModelIndex)
-        @param enabled flag giving the enabled state (boolean)
-        """
+    def setBreakPointEnabledByIndex(self, index, enabled):
+        """Sets the enable state"""
         if index.isValid():
             row = index.row()
-            index1 = self.createIndex( row, 0, self.breakpoints[ row ] )
-            index2 = self.createIndex( row, self.__columnCount - 1,
-                                       self.breakpoints[ row ] )
-            self.emit(
-                SIGNAL( "dataAboutToBeChanged(const QModelIndex &, const QModelIndex &)" ),
-                index1, index2 )
-            self.breakpoints[ row ].setEnabled( enabled )
-            self.emit(
-                SIGNAL( "dataChanged(const QModelIndex&, const QModelIndex&)" ),
-                        index1, index2 )
-        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
-        return
+            index1 = self.createIndex(row, 0, self.breakpoints[row])
+            index2 = self.createIndex(row, self.__columnCount - 1,
+                                      self.breakpoints[row])
 
-    def deleteBreakPointByIndex( self, index ):
-        " Deletes the breakpoint by its index "
+            self.dataAboutToBeChanged.emit(index1, index2)
+            self.breakpoints[row].setEnabled(enabled)
+            self.dataChanged.emit(index1, index2)
+        self.BreakpoinsChanged.emit()
+
+    def deleteBreakPointByIndex(self, index):
+        """Deletes the breakpoint by its index"""
         if index.isValid():
             row = index.row()
-            self.beginRemoveRows( QModelIndex(), row, row )
-            del self.breakpoints[ row ]
+            self.beginRemoveRows(QModelIndex(), row, row)
+            del self.breakpoints[row]
             self.endRemoveRows()
-        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
-        return
+        self.BreakpoinsChanged.emit()
 
-    def deleteBreakPoints( self, idxList ):
-        """
-        Public method to delete a list of breakpoints given by their indexes.
-
-        @param idxList list of breakpoint indexes (list of QModelIndex)
-        """
+    def deleteBreakPoints(self, idxList):
+        """Deletes a list of breakpoints"""
         rows = []
         for index in idxList:
             if index.isValid():
-                rows.append( index.row() )
-        rows.sort( reverse = True )
+                rows.append(index.row())
+        rows.sort(reverse=True)
         for row in rows:
-            self.beginRemoveRows( QModelIndex(), row, row )
-            del self.breakpoints[ row ]
+            self.beginRemoveRows(QModelIndex(), row, row)
+            del self.breakpoints[row]
             self.endRemoveRows()
-        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
-        return
+        self.BreakpoinsChanged.emit()
 
-    def deleteAll( self ):
-        " Deletes all breakpoints "
+    def deleteAll(self):
+        """Deletes all breakpoints"""
         if self.breakpoints:
-            self.beginRemoveRows( QModelIndex(), 0,
-                                  len( self.breakpoints ) - 1 )
+            self.beginRemoveRows(QModelIndex(), 0,
+                                 len(self.breakpoints) - 1)
             self.breakpoints = []
             self.endRemoveRows()
-        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
-        return
+        self.BreakpoinsChanged.emit()
 
-    def getBreakPointByIndex( self, index ):
-        " Provides a breakpoint by index "
+    def getBreakPointByIndex(self, index):
+        """Provides a breakpoint by index"""
         if index.isValid():
-            return self.breakpoints[ index.row() ]
+            return self.breakpoints[index.row()]
         return None
 
-    def getBreakPointIndex( self, fname, lineno ):
-        """
-        Public method to get the index of a breakpoint
-        given by filename and line number.
-
-        @param fname filename of the breakpoint (string)
-        @param line line number of the breakpoint (integer)
-        @return index (QModelIndex)
-        """
-        fname = unicode( fname )
-        for row in xrange( len( self.breakpoints ) ):
-            bpoint = self.breakpoints[ row ]
-            if unicode( bpoint.getAbsoluteFileName() ) == fname and \
+    def getBreakPointIndex(self, fname, lineno):
+        """Provides an index of a breakpoint"""
+        for row in range(len(self.breakpoints)):
+            bpoint = self.breakpoints[row]
+            if bpoint.getAbsoluteFileName() == fname and \
                bpoint.getLineNumber() == lineno:
-                return self.createIndex( row, 0, self.breakpoints[ row ] )
-
+                return self.createIndex(row, 0, self.breakpoints[row])
         return QModelIndex()
 
-    def isBreakPointTemporaryByIndex( self, index ):
-        """
-        Public method to test, if a breakpoint given by it's index is temporary.
-
-        @param index index of the breakpoint to test (QModelIndex)
-        @return flag indicating a temporary breakpoint (boolean)
-        """
+    def isBreakPointTemporaryByIndex(self, index):
+        """Checks if a breakpoint given by it's index is temporary"""
         if index.isValid():
-            return self.breakpoints[ index.row() ].isTemporary()
+            return self.breakpoints[index.row()].isTemporary()
         return False
 
-    def getCounts( self ):
-        " Provides enable/disable counters "
+    def getCounts(self):
+        """Provides enable/disable counters"""
         enableCount = 0
         disableCount = 0
         for bp in self.breakpoints:
@@ -293,10 +237,9 @@ class BreakPointModel(QAbstractItemModel):
                 disableCount += 1
         return enableCount, disableCount
 
-    def serialize( self ):
-        " Provides a list of serialized breakpoints "
+    def serialize(self):
+        """Provides a list of serialized breakpoints"""
         result = []
         for bp in self.breakpoints:
-            result.append( bp.serialize() )
+            result.append(bp.serialize())
         return result
-
