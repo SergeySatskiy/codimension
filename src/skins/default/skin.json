@@ -27,7 +27,7 @@
     "ioconsoleStdinItalic": false,
     "nolexerFont": {
         "__value__": "Monospace,12,-1,5,50,0,0,0,0,0",
-        "__Class__": "QFont"
+        "__class__": "QFont"
     },
     "diffunmodifiedPaper": {
         "__value__": "238,238,238,255",
@@ -180,7 +180,7 @@
     },
     "ioconsolemarginFont": {
         "__value__": "Monospace,12,-1,5,50,0,0,0,0,0",
-        "__Class__": "QFont"
+        "__class__": "QFont"
     },
     "outdatedOutlineColor": {
         "__value__": "255,154,154,255",
@@ -233,7 +233,7 @@
     },
     "lineNumFont": {
         "__value__": "Monospace,12,-1,5,50,0,0,0,0,0",
-        "__Class__": "QFont"
+        "__class__": "QFont"
     },
     "debugExcptLineMarkerPaper": {
         "__value__": "255,64,64,255",
