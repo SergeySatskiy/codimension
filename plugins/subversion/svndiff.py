@@ -23,25 +23,24 @@ import logging
 import difflib
 import os.path
 import pysvn
-from ui.qt import QApplication, QCursor Qt
+from ui.qt import QApplication, QCursor, Qt
 from svnindicators import IND_UPTODATE
 
 
-def getLocalRevisionNumber( client, path ):
-    " Provides the local revision number "
-    info = client.info2( path, recurse = False )
-    return int( info[ 0 ][ 1 ][ "rev" ].number )
+def getLocalRevisionNumber(client, path):
+    """Provides the local revision number"""
+    info = client.info2(path, recurse=False)
+    return int(info[0][1]["rev"].number)
 
 
-def getReposRevisionNumber( client, path ):
-    " Provides the repository revision number "
-    log  = client.log( path,
-               revision_start = pysvn.Revision( pysvn.opt_revision_kind.head ),
-               limit = 1 )
+def getReposRevisionNumber(client, path):
+    """Provides the repository revision number"""
+    log = client.log(
+        path, revision_start=pysvn.Revision(pysvn.opt_revision_kind.head),
+        limit=1)
     if log:
-        return int( log[ 0 ][ "revision" ].number )
+        return int(log[0]["revision"].number)
     return None
-
 
 
 class SVNDiffMixin:

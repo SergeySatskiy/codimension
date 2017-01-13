@@ -22,6 +22,7 @@
 import os.path
 import sys
 from ui.qt import QColor, QPixmap, QFrame, QLabel, QPalette, QSize, Qt
+from utils.pixmapcache import getPixmapPath
 
 
 MAX_TEXT_INDICATOR_LENGTH = 2
@@ -64,12 +65,7 @@ class VCSIndicator:
 
     def __parseConfigLine(self, configLine):
         """Fills the members"""
-        if type(configLine) == tuple or type(configLine) == list:
-            # Came from a plugin
-            self.__parsePluginProvidedTuple(configLine)
-        else:
-            # Came from a config file
-            self.__parseConfigFileProvidedString(configLine)
+        self.__parseConfigTuple(configLine)
         self.__scalePixmap()
 
     def __setBrokenIndicator(self, msg):
@@ -79,59 +75,7 @@ class VCSIndicator:
         self.foregroundColor = QColor(255, 0, 0)
         self.defaultTooltip = msg
 
-    def __parseConfigFileProvidedString(self, configLine):
-        """Parses config file provided values"""
-        parts = configLine.split(":::")
-        if len(parts) != 5:
-            raise Exception("Unexpected format of an indicator "
-                            "description. Expected 5 values.")
-        # ID field
-        self.identifier = int(parts[0])
-
-        # path or text field
-        if os.path.isabs(parts[1]):
-            # That must be a path to the pixmap
-            try:
-                self.pixmap = QPixmap(parts[1])
-            except:
-                self.__setBrokenIndicator("Failed to load pixmap from " +
-                                          parts[1])
-                return
-        else:
-            # Try to find the pixmap in the standard pixmap directory
-            candidate = parts[1].strip()
-            searchPath = os.path.dirname(os.path.abspath(sys.argv[0])) + \
-                os.path.sep + 'pixmaps' + os.path.sep + candidate
-            if candidate != "" and os.path.exists(searchPath):
-                try:
-                    self.pixmap = QPixmap(searchPath)
-                except:
-                    self.__setBrokenIndicator("Failed to load pixmap from " +
-                                              parts[1])
-                    return
-            else:
-                # It is just a text. Cut it to up to 2 letters
-                self.__setText(parts[1])
-
-        # Foreground color
-        if parts[2].lower() == "none":
-            self.foregroundColor = None
-        else:
-            self.foregroundColor = buildColor(parts[2])
-
-        # Background color
-        if parts[3].lower() == "none":
-            self.backgroundColor = None
-        else:
-            self.backgroundColor = buildColor(parts[3])
-
-        # Default tooltip
-        if parts[4].lower() == "none":
-            self.defaultTooltip = ""
-        else:
-            self.defaultTooltip = str(parts[4]).strip()
-
-    def __parsePluginProvidedTuple(self, pluginIndicator):
+    def __parseConfigTuple(self, pluginIndicator):
         """Checks what plugin provided"""
         if len(pluginIndicator) != 5:
             raise Exception("Unexpected format of an indicator "
@@ -140,16 +84,20 @@ class VCSIndicator:
         self.identifier = int(pluginIndicator[0])
 
         # Pixmap/text field
-        if type(pluginIndicator[1]) == str:
-            self.__setText(pluginIndicator[1])
-        else:
-            try:
+        try:
+            if isinstance(pluginIndicator[1], QPixmap):
                 self.pixmap = QPixmap(pluginIndicator[1])
-            except:
-                self.__setBrokenIndicator("Failed to get plugin indicator "
-                                          "pixmap. Indicator id: " +
-                                          str(self.identifier))
-                return
+            elif os.path.exists(pluginIndicator[1]):
+                self.pixmap = QPixmap(pluginIndicator[1])
+            elif os.path.exists(getPixmapPath() + pluginIndicator[1]):
+                self.pixmap = QPixmap(getPixmapPath() + pluginIndicator[1])
+            else:
+                self.__setText(pluginIndicator[1])
+        except:
+            self.__setBrokenIndicator("Failed to get plugin indicator "
+                                      "pixmap. Indicator id: " +
+                                      str(self.identifier))
+            return
 
         # Foreground color
         if pluginIndicator[2] is None:

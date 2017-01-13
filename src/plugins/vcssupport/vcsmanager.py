@@ -145,7 +145,7 @@ class VCSManager(QObject):
 
     def __readSettingsIndicators(self):
         """Reads the system indicators"""
-        for indicLine in Settings().vcsindicators:
+        for indicLine in Settings()['vcsindicators']:
             indicator = VCSIndicator(indicLine)
             self.systemIndicators[indicator.identifier] = indicator
 
