@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy sergey.satskiy@gmail.com
+# Copyright (C) 2010-2017  Sergey Satskiy sergey.satskiy@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,19 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" SVN Status functionality "
+"""SVN Status functionality"""
 
 import os.path
 import pysvn
 import logging
 from svnindicators import IND_ERROR, IND_IGNORED, getIndicatorPixmap
-from PyQt4.QtCore import Qt, QTimer
-from PyQt4.QtGui import ( QDialog, QApplication, QVBoxLayout, QLabel,
-                          QDialogButtonBox, QCursor, QTreeWidget,
-                          QTreeWidgetItem, QHeaderView, QIcon )
+from ui.qt import (Qt, QTimer, QDialog, QApplication, QVBoxLayout, QLabel,
+                   QDialogButtonBox, QCursor, QTreeWidget, QTreeWidgetItem,
+                   QHeaderView, QIcon)
 from svnstrconvert import notifyActionToString
 from ui.itemdelegates import NoOutlineHeightDelegate
 from svnstrconvert import STATUS

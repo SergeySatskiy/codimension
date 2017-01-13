@@ -22,9 +22,8 @@
 import os
 import os.path
 import logging
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QVBoxLayout, QCheckBox,
-                             QLabel, QProgressBar, QApplication, QGraphicsScene)
+from ui.qt import (Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
+                   QCheckBox, QProgressBar, QApplication, QGraphicsScene)
 from utils.globals import GlobalData
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from autocomplete.completelists import getSystemWideModules

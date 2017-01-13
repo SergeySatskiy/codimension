@@ -19,11 +19,9 @@
 
 """Dialog with a list of modified but unsaved files"""
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QVBoxLayout,
-                             QSizePolicy, QLabel, QHBoxLayout,
-                             QTreeWidget, QAbstractItemView,
-                             QTreeWidgetItem, QWidget)
+from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QSizePolicy,
+                   QLabel, QHBoxLayout, QTreeWidget, QAbstractItemView,
+                   QTreeWidgetItem, QWidget)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import getIcon, getPixmap
 from utils.fileutils import getFileProperties, isPythonMime

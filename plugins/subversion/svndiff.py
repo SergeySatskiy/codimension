@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,17 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" SVN diff functionality "
+"""SVN diff functionality"""
 
 import logging
 import difflib
 import os.path
 import pysvn
-from PyQt4.QtGui import QApplication, QCursor
-from PyQt4.QtCore import Qt
+from ui.qt import QApplication, QCursor Qt
 from svnindicators import IND_UPTODATE
 
 

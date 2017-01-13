@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,20 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Codimension SVN plugin LOG command implementation "
+"""Codimension SVN plugin LOG command implementation"""
 
 import logging
 import os.path
 import difflib
-from PyQt4.QtCore import Qt, SIGNAL, QTimer
-from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
-                          QApplication, QCursor, QFrame, QSpacerItem,
-                          QSizePolicy, QToolButton, QHBoxLayout, QGroupBox,
-                          QPalette, QTreeWidget, QTreeWidgetItem,
-                          QHeaderView, QPushButton )
+from ui.qt import (Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
+                   QApplication, QCursor, QFrame, QSpacerItem, QSizePolicy,
+                   QToolButton, QHBoxLayout, QGroupBox, QPalette, QTreeWidget,
+                   QTreeWidgetItem, QHeaderView, QPushButton)
 from utils.pixmapcache import PixmapCache
 from ui.difftabwidget import DiffTabWidget
 from svnindicators import pluginHomeDir

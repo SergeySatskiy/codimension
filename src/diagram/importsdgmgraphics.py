@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,13 +21,12 @@
 """imports diagram graphics objects"""
 
 import math
-from PyQt5.QtGui import (QFont, QPen, QColor, QPainterPath, QFontMetrics,
-                         QPainter, QImage)
-from PyQt5.QtWidgets import (QGraphicsRectItem, QGraphicsPathItem, QWidget,
-                             QGraphicsView, QToolBar, QHBoxLayout,
-                             QAction, QGraphicsItem, QGraphicsTextItem,
-                             QApplication, QStyleOptionGraphicsItem, QStyle)
-from PyQt5.QtCore import Qt, QSize, QPointF, QRectF, pyqtSignal
+from ui.qt import (QFont, QPen, QColor, QPainterPath, QFontMetrics, QPainter,
+                   QImage, QGraphicsRectItem, QGraphicsPathItem, QWidget,
+                   QGraphicsView, QToolBar, QHBoxLayout, QAction,
+                   QGraphicsItem, QGraphicsTextItem, QApplication,
+                   QStyleOptionGraphicsItem, QStyle, Qt, QSize, QPointF,
+                   QRectF, pyqtSignal)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache import getPixmap, getIcon
 from utils.globals import GlobalData

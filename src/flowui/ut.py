@@ -24,10 +24,8 @@ import importlib
 from optparse import OptionParser
 from subprocess import Popen, PIPE
 from cdmcf import getControlFlowFromFile, VERSION
-from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QApplication, QGraphicsView, QMainWindow, QAction,
-                             QTextEdit, QDockWidget, QGraphicsScene)
+from ui.qt import (Qt, QApplication, QGraphicsView, QMainWindow, QAction,
+                   QTextEdit, QDockWidget, QGraphicsScene)
 from items import CellElement
 import vcanvas
 import cflowsettings

@@ -31,8 +31,7 @@ import logging
 import shutil
 import datetime
 from optparse import OptionParser
-from PyQt5.QtCore import QTimer, QDir
-from PyQt5.QtWidgets import QMessageBox
+from ui.qt import QTimer, QDir, QMessageBox
 
 
 # Workaround if link is used

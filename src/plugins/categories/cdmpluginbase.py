@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy sergey.satskiy@gmail.com
+# Copyright (C) 2010-2017  Sergey Satskiy sergey.satskiy@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 import logging
 from yapsy.IPlugin import IPlugin
-from PyQt5.QtCore import QObject, pyqtSignal
+from ui.qt import QObject, pyqtSignal
 from utils.settings import SETTINGS_DIR
 
 

@@ -58,8 +58,8 @@ def getPyQtVersion():
 
 def getQtVersion():
     """Provides the Qt version"""
-    import PyQt5.QtCore
-    return str(PyQt5.QtCore.QT_VERSION_STR)
+    from ui.qt import QT_VERSION_STR
+    return QT_VERSION_STR
 
 
 def getPyFlakesVersion():

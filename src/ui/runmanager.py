@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2014-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2014-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
 from utils.procfeedback import killProcess
 from utils.globals import GlobalData
 from utils.settings import Settings
-from runparams import RunDialog
 from editor.redirectedrun import RunConsoleTabWidget
 from debugger.client.protocol_cdm_dbg import (EOT, RequestContinue,
                                               StdoutStderrEOT, ResponseRaw,
@@ -36,6 +35,7 @@ from debugger.client.protocol_cdm_dbg import (EOT, RequestContinue,
                                               ResponseProcID)
 from .qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
                  QTcpServer, QHostAddress, QAbstractSocket)
+from .runparams import RunDialog
 
 
 # Finish codes in addition to the normal exit code

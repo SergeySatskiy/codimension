@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy sergey.satskiy@gmail.com
+# Copyright (C) 2010-2017  Sergey Satskiy sergey.satskiy@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,20 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-""" Does SVN commit """
+"""Does SVN commit"""
 
 import os.path
 import pysvn
 import logging
 from svncommitdlg import SVNPluginCommitDialog
-from svnindicators import ( IND_ADDED, IND_DELETED, IND_MERGED,
-                            IND_MODIFIED_LR, IND_MODIFIED_L,
-                            IND_REPLACED, IND_CONFLICTED, IND_IGNORED )
-from PyQt4.QtGui import QDialog, QApplication, QCursor
-from PyQt4.QtCore import Qt
+from svnindicators import (IND_ADDED, IND_DELETED, IND_MERGED,
+                           IND_MODIFIED_LR, IND_MODIFIED_L,
+                           IND_REPLACED, IND_CONFLICTED, IND_IGNORED)
+from ui.qt import (QDialog, QApplication, QCursor, Qt)
 from svnstrconvert import notifyActionToString
 
 

@@ -44,24 +44,22 @@ from debugger.bpwp import DebuggerBreakWatchPoints
 from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
-from findinfiles import ItemToSearchIn, getSearchItemIndex
 from profiling.profui import ProfilingProgressDialog
 from profiling.disasm import getDisassembled
 from debugger.bputils import clearValidBreakpointLinesCache
-from about import AboutDialog
-from utils.skin import getMonospaceFontList
+from utils.colorfont import getMonospaceFontList
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
 from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
-from statusbarslots import StatusBarSlots
 from editor.redirectedioconsole import IOConsoleTabWidget
-from runmanager import RunManager
 from .qt import (Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal, QLabel,
                  QToolBar, QWidget, QMessageBox, QVBoxLayout, QSplitter,
                  QSizePolicy, QAction, QMainWindow, QShortcut, QFrame,
                  QApplication, QMenu, QToolButton, QToolTip, QFileDialog,
                  QDialog, QStyleFactory, QActionGroup, QFont, QCursor,
                  QPalette, QColor, QDesktopServices)
+from .about import AboutDialog
+from .runmanager import RunManager
 from .fitlabel import FitPathLabel
 from .sidebar import SideBar
 from .logviewer import LogViewer
@@ -80,7 +78,7 @@ from .projectproperties import ProjectPropertiesDialog
 from .findreplacewidget import FindWidget, ReplaceWidget
 from .gotolinewidget import GotoLineWidget
 from .diffviewer import DiffViewer
-from .findinfiles import FindInFilesDialog
+from .findinfiles import FindInFilesDialog, ItemToSearchIn, getSearchItemIndex
 from .findinfilesviewer import FindInFilesViewer, hideSearchTooltip
 from .findname import FindNameDialog
 from .findfile import FindFileDialog

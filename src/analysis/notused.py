@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2012  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2012-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,14 +18,12 @@
 #
 
 
-""" not used globals, functions, classes analysis """
+"""not used globals, functions, classes analysis"""
 
 
 import os, os.path, logging
-from PyQt5.QtGui import QCursor
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
-                             QProgressBar, QApplication)
+from ui.qt import (QCursor, Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout,
+                   QLabel, QProgressBar, QApplication)
 from autocomplete.completelists import getOccurrences
 from utils.globals import GlobalData
 from ui.findinfiles import ItemToSearchIn, getSearchItemIndex

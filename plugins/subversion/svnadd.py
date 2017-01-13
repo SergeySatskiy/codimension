@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy sergey.satskiy@gmail.com
+# Copyright (C) 2010-2017  Sergey Satskiy sergey.satskiy@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,11 +19,9 @@
 
 """Performs SVN add command"""
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import (QDialog, QVBoxLayout, QDialogButtonBox,
-                         QLabel, QTreeWidget,
-                         QTreeWidgetItem, QHeaderView,
-                         QApplication, QCursor)
+from ui.qt import (Qt, QDialog, QVBoxLayout, QDialogButtonBox, QLabel,
+                   QTreeWidget, QTreeWidgetItem, QHeaderView, QApplication,
+                   QCursor)
 from ui.itemdelegates import NoOutlineHeightDelegate
 import logging
 import pysvn

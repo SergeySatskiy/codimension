@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,18 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Codimension SVN plugin config dialog "
+"""Codimension SVN plugin config dialog"""
 
 
 import os.path, logging, ConfigParser, string, copy, stat
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import ( QDialog, QVBoxLayout, QGroupBox, QSizePolicy,
-                          QRadioButton, QDialogButtonBox, QPixmap,
-                          QHBoxLayout, QLabel, QTabWidget, QWidget, QGridLayout,
-                          QLineEdit, QTextBrowser )
+from ui.qt import (Qt, QDialog, QVBoxLayout, QGroupBox, QSizePolicy,
+                   QRadioButton, QDialogButtonBox, QPixmap, QHBoxLayout,
+                   QLabel, QTabWidget, QWidget, QGridLayout, QLineEdit,
+                   QTextBrowser)
 import pysvn
 
 
@@ -37,7 +33,6 @@ AUTH_PASSWD = 1                 # The user name and password are used
 
 STATUS_LOCAL_ONLY = 0           # Checks only the local status
 STATUS_REPOSITORY = 1           # Checks both local status and the repository
-
 
 
 class SVNSettings:

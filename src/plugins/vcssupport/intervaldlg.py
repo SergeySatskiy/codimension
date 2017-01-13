@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +19,8 @@
 
 """Update interval settings dialog"""
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import (QDialog, QVBoxLayout, QDialogButtonBox,
-                         QHBoxLayout, QLabel, QLineEdit, QIntValidator)
+from ui.qt import (Qt, QDialog, QVBoxLayout, QDialogButtonBox, QHBoxLayout,
+                   QLabel, QLineEdit, QIntValidator)
 
 
 class VCSUpdateIntervalConfigDialog(QDialog):

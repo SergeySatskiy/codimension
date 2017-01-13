@@ -21,10 +21,9 @@
 
 import os.path
 import logging
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import (QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
-                         QTextEdit, QDialogButtonBox, QLabel, QFontMetrics,
-                         QHeaderView, QPushButton)
+from ui.qt import (Qt, pyqtSignal, QDialog, QTreeWidgetItem, QTreeWidget,
+                   QVBoxLayout, QTextEdit, QDialogButtonBox, QLabel,
+                   QFontMetrics, QHeaderView, QPushButton)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import getIcon
 

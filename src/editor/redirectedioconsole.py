@@ -20,16 +20,15 @@
 " Redirected IO console implementation "
 
 
-from texteditor import TextEditor
 from ui.qt import (Qt, QSize, QPoint, QEvent, pyqtSignal, QToolBar, QFont,
                    QFontMetrics, QHBoxLayout, QWidget, QAction, QSizePolicy,
                    QToolTip, QMenu, QToolButton, QActionGroup, QApplication)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from utils.fileutils import TexFileType
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
-from redirectedmsg import IOConsoleMessages, IOConsoleMsg
+from .texteditor import TextEditor
+from .redirectedmsg import IOConsoleMessages, IOConsoleMsg
 
 
 class RedirectedIOConsole( TextEditor ):
@@ -267,12 +266,6 @@ class RedirectedIOConsole( TextEditor ):
 
         self.setModified( False )
         self.setReadOnly( True )
-
-        # If a lexer id bind then unnecessery visual effects appear like
-        # disappearing assingned text style. As the lexer actually not required
-        # at all I prefer not to struggle with styling but just not to use any
-        # lexers
-        # self.bindLexer( "", TexFileType )
 
         self.setCurrentLineHighlight( False, None )
         self.setEdgeMode( QsciScintilla.EdgeNone )
@@ -1092,7 +1085,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def getFileType( self ):
         " Provides the file type "
-        return TexFileType
+        return ""
 
     def setFileType( self, typeToSet ):
         """ Sets the file type explicitly.

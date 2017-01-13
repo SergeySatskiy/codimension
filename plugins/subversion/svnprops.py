@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,21 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Codimension SVN plugin properties functionality implementation "
+"""Codimension SVN plugin properties functionality implementation"""
 
 import os.path, logging, pysvn
 from svnindicators import IND_ERROR
-from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
-                          QTextEdit, QDialogButtonBox, QLabel, QFontMetrics,
-                          QHeaderView, QApplication, QCursor,
-                          QHBoxLayout, QToolButton, QGroupBox,
-                          QGridLayout, QSizePolicy, QLineEdit, QMessageBox )
-from PyQt4.QtCore import Qt
+from ui.qt import (QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
+                   QTextEdit, QDialogButtonBox, QLabel, QFontMetrics,
+                   QHeaderView, QApplication, QCursor, QHBoxLayout,
+                   QToolButton, QGroupBox, QGridLayout, QSizePolicy, QLineEdit,
+                   QMessageBox, Qt)
 from ui.itemdelegates import NoOutlineHeightDelegate
-
 
 
 class SVNPropsMixin:
