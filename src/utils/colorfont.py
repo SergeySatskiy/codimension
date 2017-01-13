@@ -130,7 +130,7 @@ def toJSON(pythonObj):
         return {'__class__': 'QColor',
                 '__value__': colorAsString(pythonObj)}
     if isinstance(pythonObj, QFont):
-        return {'__Class__': 'QFont',
+        return {'__class__': 'QFont',
                 '__value__': fontAsString(pythonObj)}
     raise TypeError(repr(pythonObj) + ' is not JSON serializable')
 
