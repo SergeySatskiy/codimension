@@ -145,7 +145,7 @@ class WatchPointView(QTreeView):
                                  self.__disableSelectedWatchPoints)
         self.multiMenu.addAction("Disable all", self.__disableAllWatchPoints)
         self.multiMenu.addSeparator()
-        self.multiMenu.addAction("Delete selected"),
+        self.multiMenu.addAction("Delete selected",
                                  self.__deleteSelectedWatchPoints)
         self.multiMenu.addAction("Delete all", self.__deleteAllWatchPoints)
 
