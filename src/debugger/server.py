@@ -69,6 +69,19 @@ class CodimensionDebugger(QObject):
 
     """Debugger server implementation"""
 
+    sigDebuggerStateChanged = pyqtSignal(int)
+    sigClientLine = pyqtSignal(str, int, bool)
+    sigClientException = pyqtSignal(str, str, list)
+    sigClientSyntaxError = pyqtSignal(str, str, int, int)
+    sigClientIDEMessage = pyqtSignal(str)
+    sigEvalOK = pyqtSignal(str)
+    sigEvalError = pyqtSignal(str)
+    sigExecOK = pyqtSignal(str)
+    sigExecError = pyqtSignal(str)
+    sigClientStdout = pyqtSignal(str)
+    sigClientStderr = pyqtSignal(str)
+    sigClientRawInput = pyqtSignal(str, str)
+
     STATE_STOPPED = 0
     STATE_PROLOGUE = 1
     STATE_IN_CLIENT = 2
@@ -83,7 +96,6 @@ class CodimensionDebugger(QObject):
 
     clientClearBreak = pyqtSignal(str, int)
     clientBreakConditionError = pyqtSignal(str, int)
-    clientIDEMessage = pyqtSignal(str)
 
     def __init__(self, mainWindow):
         QObject.__init__(self)
@@ -115,7 +127,7 @@ class CodimensionDebugger(QObject):
 
         self.__breakpointModel.rowsAboutToBeRemoved.connect(
             self.__deleteBreakPoints)
-        self.__breakpointModel.dataAboutToBeChanged.connect(
+        self.__breakpointModel.sigDataAboutToBeChanged.connect(
             self.__breakPointDataAboutToBeChanged)
         self.__breakpointModel.dataChanged.connect(self.__changeBreakPoints)
         self.__breakpointModel.rowsInserted.connect(self.__addBreakPoints)
@@ -142,7 +154,7 @@ class CodimensionDebugger(QObject):
     def __changeDebuggerState(self, newState):
         """Changes the debugger state"""
         self.__state = newState
-        self.DebuggerStateChanged.emit(newState)
+        self.sigDebuggerStateChanged.emit(newState)
 
     def startDebugging(self, fileName):
         """Starts debugging a script"""
@@ -185,7 +197,8 @@ class CodimensionDebugger(QObject):
         if terminalType == TERM_REDIRECT and Settings().clearDebugIO:
             self.__mainWindow.clearDebugIOConsole()
 
-        self.clientIDEMessage.emit("Start debugging session for " + fileName)
+        self.sigClientIDEMessage.emit("Start debugging session for " +
+                                      fileName)
         self.__createProcfeedbackSocket()
         self.__createTCPServer()
 
@@ -398,7 +411,7 @@ class CodimensionDebugger(QObject):
 
             if self.__stopAtFirstLine:
                 cf = stack[0]
-                self.ClientLine.emit(cf[0], int(cf[1]), cmd==ResponseStack)
+                self.sigClientLine.emit(cf[0], int(cf[1]), cmd==ResponseStack)
                 self.ClientStack.emit(stack)
             else:
                 self.__stopAtFirstLine = True
@@ -447,7 +460,7 @@ class CodimensionDebugger(QObject):
                 excType = None
                 excMessage = ""
                 stackTrace = []
-            self.ClientExceptionemit(excType, excMessage, stackTrace)
+            self.sigClientException.emit(excType, excMessage, stackTrace)
             return self.__buffer != ""
 
         if cmd == ResponseSyntax:
@@ -462,7 +475,7 @@ class CodimensionDebugger(QObject):
                 charNo = 0
             if charNo is None:
                 charNo = 0
-            self.ClientSyntaxError.emit(message, fileName, lineNo, charNo)
+            self.sigClientSyntaxError.emit(message, fileName, lineNo, charNo)
             return self.__buffer != ""
 
         if cmd == RequestForkTo:
@@ -492,12 +505,12 @@ class CodimensionDebugger(QObject):
 
         if cmd == ResponseRaw:
             prompt, echo = eval(content)
-            self.ClientRawInput.emit(prompt, echo)
+            self.sigClientRawInput.emit(prompt, echo)
             return self.__buffer != ""
 
         if cmd == ResponseExit:
             message = "Debugged script finished with exit code " + content
-            self.clientIDEMessage.emit(message)
+            self.sigClientIDEMessage.emit(message)
             try:
                 self.__exitCode = int(content)
             except:
@@ -530,7 +543,7 @@ class CodimensionDebugger(QObject):
 
         index = self.__buffer.find(ResponseEvalOK + EOT)
         if index != -1:
-            self.EvalOK.emit(self.__buffer[0:index].replace(EOT, ""))
+            self.sigEvalOK.emit(self.__buffer[0:index].replace(EOT, ""))
             self.__protocolState = self.PROTOCOL_CONTROL
             self.__buffer = self.__buffer[index +
                                           len(ResponseEvalOK) + len(EOT):]
@@ -538,7 +551,7 @@ class CodimensionDebugger(QObject):
 
         index = self.__buffer.find(ResponseEvalError + EOT)
         if index != -1:
-            self.EvalError.emit(self.__buffer[0:index].replace(EOT, ""))
+            self.sigEvalError.emit(self.__buffer[0:index].replace(EOT, ""))
             self.__protocolState = self.PROTOCOL_CONTROL
             self.__buffer = self.__buffer[index +
                                           len(ResponseEvalError) + len(EOT):]
@@ -546,7 +559,7 @@ class CodimensionDebugger(QObject):
 
         index = self.__buffer.find(ResponseExecOK + EOT)
         if index != -1:
-            self.ExecOK.emit(self.__buffer[0:index].replace(EOT, ""))
+            self.sigExecOK.emit(self.__buffer[0:index].replace(EOT, ""))
             self.__protocolState = self.PROTOCOL_CONTROL
             self.__buffer = self.__buffer[index +
                                           len(ResponseExecOK) + len(EOT):]
@@ -554,7 +567,7 @@ class CodimensionDebugger(QObject):
 
         index = self.__buffer.find(ResponseExecError + EOT)
         if index != -1:
-            self.ExecError.emit(self.__buffer[0:index].replace(EOT, ""))
+            self.sigExecError.emit(self.__buffer[0:index].replace(EOT, ""))
             self.__protocolState = self.PROTOCOL_CONTROL
             self.__buffer = self.__buffer[index +
                                           len(ResponseExecError) + len(EOT):]
@@ -569,20 +582,20 @@ class CodimensionDebugger(QObject):
             # End has not been found
             if self.__buffer.endswith('\x04'):
                 if isStdout:
-                    self.ClientStdout.emit(self.__buffer[:-1])
+                    self.sigClientStdout.emit(self.__buffer[:-1])
                 else:
                     self.ClientStderr.emit(self.__buffer[:-1])
                 self.__buffer = '\x04'
                 return False
             if isStdout:
-                self.ClientStdout.emit(self.__buffer)
+                self.sigClientStdout.emit(self.__buffer)
             else:
                 self.ClientStderr.emit(self.__buffer)
             self.__buffer = ""
             return False
 
         if isStdout:
-            self.ClientStdout.emit(self.__buffer[0:index])
+            self.sigClientStdout.emit(self.__buffer[0:index])
         else:
             self.ClientStderr.emit(self.__buffer[0:index])
         self.__buffer = self.__buffer[index + 2:]
@@ -678,7 +691,7 @@ class CodimensionDebugger(QObject):
         message = "Debugging session has been stopped"
         if brutal and Settings().terminalType != TERM_REDIRECT:
             message += " and the console has been closed"
-        self.clientIDEMessage.emit(message)
+        self.sigClientIDEMessage.emit(message)
 
     def __noPathTranslation(self, fname, remote2local=True):
         """ Dump to support later path translations """
@@ -789,7 +802,7 @@ class CodimensionDebugger(QObject):
             self.remoteBreakpoint(fileName, line, False)
 
     def __breakPointDataAboutToBeChanged(self, startIndex, endIndex):
-        """Handles the dataAboutToBeChanged signal of the breakpoint model"""
+        """Handles the sigDataAboutToBeChanged signal of the bpoint model"""
         self.__deleteBreakPoints(QModelIndex(),
                                  startIndex.row(), endIndex.row())
 

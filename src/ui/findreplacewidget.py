@@ -119,7 +119,7 @@ class FindReplaceBase(QWidget):
 
         # Incremental search support
         self._searchSupport = SearchSupport()
-        editorsManager.tabClosed.connect(self.__onTabClosed)
+        editorsManager.sigTabClosed.connect(self.__onTabClosed)
 
         # Common graphics items
         self.closeButton = QToolButton(self)
@@ -139,7 +139,7 @@ class FindReplaceBase(QWidget):
         self.findtextCombo.setSizePolicy(sizePolicy)
         self.findtextCombo.setEditable(True)
         self.findtextCombo.setInsertPolicy(QComboBox.InsertAtTop)
-        self.findtextCombo.setAutoCompletion(False)
+        self.findtextCombo.setCompleter(None)
         self.findtextCombo.setDuplicatesEnabled(False)
         self.findtextCombo.setEnabled(False)
         self.findtextCombo.editTextChanged.connect(self._onEditTextChanged)
@@ -626,7 +626,7 @@ class FindWidget(FindReplaceBase):
         FindReplaceBase.__init__(self, editorsManager, parent)
 
         self.horizontalLayout = QHBoxLayout(self)
-        self.horizontalLayout.setMargin(0)
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
 
         self.horizontalLayout.addWidget(self.closeButton)
         self.horizontalLayout.addWidget(self.findLabel)
@@ -707,7 +707,7 @@ class ReplaceWidget(FindReplaceBase):
         self.replaceCombo.setSizePolicy(sizePolicy)
         self.replaceCombo.setEditable(True)
         self.replaceCombo.setInsertPolicy(QComboBox.InsertAtTop)
-        self.replaceCombo.setAutoCompletion(False)
+        self.replaceCombo.setCompleter(None)
         self.replaceCombo.setDuplicatesEnabled(False)
         self.replaceCombo.setEnabled(False)
 
@@ -734,7 +734,7 @@ class ReplaceWidget(FindReplaceBase):
         self.replaceAndMoveButton.clicked.connect(self.__onReplaceAndMove)
 
         self.gridLayout = QGridLayout(self)
-        self.gridLayout.setMargin(0)
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
 
         self.gridLayout.addWidget(self.closeButton, 0, 0, 1, 1)
         self.gridLayout.addWidget(self.findLabel, 0, 1, 1, 1)

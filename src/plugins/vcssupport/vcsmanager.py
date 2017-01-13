@@ -26,7 +26,7 @@ import datetime
 from utils.settings import Settings
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
-from ui.qt import QObject, QTimer
+from ui.qt import QObject, QTimer, pyqtSignal
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from .statuscache import VCSStatusCache, VCSStatus
 from .indicator import VCSIndicator
@@ -107,11 +107,9 @@ class VCSPluginDescriptor(QObject):
 
 class VCSManager(QObject):
 
-    """ Manages the VCS plugins.
-        It sends two signals:
-        VCSFileStatus -> path, pluginID, indicatorID, message
-        VCSDirStatus -> path, pluginID, indicatorID, message
-            The pluginID, indicatorID, message could be None"""
+    """Manages the VCS plugins"""
+
+    sigVCSFileStatus = pyqtSignal(str, object)
 
     def __init__(self):
         QObject.__init__(self)
@@ -131,7 +129,7 @@ class VCSManager(QObject):
 
         GlobalData().project.projectChanged.connect(self.__onProjectChanged)
         GlobalData().project.fsChanged.connect(self.__onFSChanged)
-        GlobalData().pluginManager.PluginActivated.connect(
+        GlobalData().pluginManager.sigPluginActivated.connect(
             self.__onPluginActivated)
 
         # Plugin deactivation must be done via dismissPlugin(...)
@@ -357,7 +355,7 @@ class VCSManager(QObject):
 
     def sendFileStatusNotification(self, path, status):
         """Sends a signal that a status of the file is changed"""
-        self.VCSFileStatus.emit(path, status)
+        self.sigVCSFileStatus.emit(path, status)
 
     def updateStatus(self, path, pluginID, indicatorID, message):
         """Called when a plugin thread reports a status"""

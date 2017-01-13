@@ -21,7 +21,7 @@
 
 import logging
 import os.path
-from ui.qt import QObject
+from ui.qt import QObject, pyqtSignal
 from yapsy.PluginManager import PluginManager
 from utils.settings import SETTINGS_DIR, Settings
 from distutils.version import StrictVersion
@@ -35,6 +35,9 @@ CATEGORIES = ["VersionControlSystemInterface",
 class CDMPluginManager(PluginManager, QObject):
 
     """Implements the codimension plugin manager"""
+
+    sigPluginActivated = pyqtSignal(object)
+    sigPluginDeactivated = pyqtSignal(object)
 
     NO_CONFLICT = 0
     # Same name plugin in system and user locations
@@ -382,14 +385,14 @@ class CDMPluginManager(PluginManager, QObject):
 
     def sendPluginActivated(self, plugin):
         """Emits the signal with the corresponding plugin"""
-        self.PluginActivated.emit(plugin)
+        self.sigPluginActivated.emit(plugin)
         plugin.getObject().pluginLogMessage.connect(self.__onPluginLogMessage)
 
     def sendPluginDeactivated(self, plugin):
         """Emits the signal with the corresponding plugin"""
         plugin.getObject().pluginLogMessage.disconnect(
             self.__onPluginLogMessage)
-        self.PluginDeactivated.emit(plugin)
+        self.sigPluginDeactivated.emit(plugin)
 
     def __onPluginLogMessage(self, logLevel, message):
         """Triggered when a plugin message is received"""

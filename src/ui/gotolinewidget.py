@@ -50,7 +50,7 @@ class GotoLineWidget(QWidget):
         self.linenumberEdit = QComboBox(self)
         self.linenumberEdit.setEditable(True)
         self.linenumberEdit.setInsertPolicy(QComboBox.InsertAtTop)
-        self.linenumberEdit.setAutoCompletion(False)
+        self.linenumberEdit.setCompleter(None)
         self.linenumberEdit.setDuplicatesEnabled(False)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -74,7 +74,7 @@ class GotoLineWidget(QWidget):
         spacer.setFixedWidth(1)
 
         horizontalLayout = QHBoxLayout(self)
-        horizontalLayout.setMargin(0)
+        horizontalLayout.setContentsMargins(0, 0, 0, 0)
 
         horizontalLayout.addWidget(closeButton)
         horizontalLayout.addWidget(lineLabel)

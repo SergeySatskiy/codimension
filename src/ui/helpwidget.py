@@ -289,7 +289,7 @@ class QuickHelpWidget(TextTabWidget):
         cmlHelpHeader = """<h3 align="center">CML Comments Reference<br>
                         (CML version """ + str(CMLVersion.VERSION) + ")</h3>"
 
-        cmlCodes = CMLVersion.COMMENT_TYPES.keys()
+        cmlCodes = list(CMLVersion.COMMENT_TYPES.keys())
         cmlCodes.sort()
 
         rows = []

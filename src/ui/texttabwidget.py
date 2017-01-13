@@ -64,7 +64,7 @@ class TextTabWidget(QWidget, MainWindowTabWidgetBase):
         MainWindowTabWidgetBase.__init__(self)
 
         layout = QHBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.__editor = TextViewer(self)
         self.__editor.escapePressed.connect(self.__onEsc)

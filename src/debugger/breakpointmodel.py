@@ -32,6 +32,9 @@ class BreakPointModel(QAbstractItemModel):
 
     """Class implementing a custom model for breakpoints"""
 
+    sigDataAboutToBeChanged = pyqtSignal(QModelIndex, QModelIndex)
+    sigBreakpoinsChanged = pyqtSignal()
+
     def __init__(self, parent=None):
         QAbstractItemModel.__init__(self, parent)
 
@@ -133,7 +136,7 @@ class BreakPointModel(QAbstractItemModel):
         self.beginInsertRows(QModelIndex(), cnt, cnt)
         self.breakpoints.append(bpoint)
         self.endInsertRows()
-        self.BreakpoinsChanged.emit()
+        self.sigBreakpoinsChanged.emit()
 
     def setBreakPointByIndex(self, index, bpoint):
         """Set the values of a breakpoint given by index"""
@@ -143,10 +146,10 @@ class BreakPointModel(QAbstractItemModel):
             index2 = self.createIndex(row, self.__columnCount - 1,
                                       self.breakpoints[row])
 
-            self.dataAboutToBeChanged.emit(index1, index2)
+            self.sigDataAboutToBeChanged.emit(index1, index2)
             self.breakpoints[row].update(bpoint)
             self.dataChanged.emit(index1, index2)
-        self.BreakpoinsChanged.emit()
+        self.sigBreakpoinsChanged.emit()
 
     def updateLineNumberByIndex(self, index, newLineNumber):
         """Update the line number by index"""
@@ -156,10 +159,10 @@ class BreakPointModel(QAbstractItemModel):
             index2 = self.createIndex(row, self.__columnCount - 1,
                                       self.breakpoints[row])
 
-            self.dataAboutToBeChanged.emit(index1, index2)
+            self.sigDataAboutToBeChanged.emit(index1, index2)
             self.breakpoints[row].updateLineNumber(newLineNumber)
             self.dataChanged.emit(index1, index2)
-        self.BreakpoinsChanged.emit()
+        self.sigBreakpoinsChanged.emit()
 
     def setBreakPointEnabledByIndex(self, index, enabled):
         """Sets the enable state"""
@@ -169,10 +172,10 @@ class BreakPointModel(QAbstractItemModel):
             index2 = self.createIndex(row, self.__columnCount - 1,
                                       self.breakpoints[row])
 
-            self.dataAboutToBeChanged.emit(index1, index2)
+            self.sigDataAboutToBeChanged.emit(index1, index2)
             self.breakpoints[row].setEnabled(enabled)
             self.dataChanged.emit(index1, index2)
-        self.BreakpoinsChanged.emit()
+        self.sigBreakpoinsChanged.emit()
 
     def deleteBreakPointByIndex(self, index):
         """Deletes the breakpoint by its index"""
@@ -181,7 +184,7 @@ class BreakPointModel(QAbstractItemModel):
             self.beginRemoveRows(QModelIndex(), row, row)
             del self.breakpoints[row]
             self.endRemoveRows()
-        self.BreakpoinsChanged.emit()
+        self.sigBreakpoinsChanged.emit()
 
     def deleteBreakPoints(self, idxList):
         """Deletes a list of breakpoints"""
@@ -194,7 +197,7 @@ class BreakPointModel(QAbstractItemModel):
             self.beginRemoveRows(QModelIndex(), row, row)
             del self.breakpoints[row]
             self.endRemoveRows()
-        self.BreakpoinsChanged.emit()
+        self.sigBreakpoinsChanged.emit()
 
     def deleteAll(self):
         """Deletes all breakpoints"""
@@ -203,7 +206,7 @@ class BreakPointModel(QAbstractItemModel):
                                  len(self.breakpoints) - 1)
             self.breakpoints = []
             self.endRemoveRows()
-        self.BreakpoinsChanged.emit()
+        self.sigBreakpoinsChanged.emit()
 
     def getBreakPointByIndex(self, index):
         """Provides a breakpoint by index"""

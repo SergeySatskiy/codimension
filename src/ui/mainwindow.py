@@ -142,54 +142,49 @@ class CodimensionMainWindow(QMainWindow):
         self.vcsManager = VCSManager()
 
         self.__debugger = CodimensionDebugger(self)
-        self.__debugger.DebuggerStateChanged.connect(self.__onDebuggerStateChanged)
-        self.__debugger.ClientLine.connect(self.__onDebuggerCurrentLine)
-        self.__debugger.ClientException.connect(self.__onDebuggerClientException)
-        self.connect( self.__debugger, SIGNAL( 'ClientSyntaxError' ),
-                      self.__onDebuggerClientSyntaxError )
-        self.__debugger.clientIDEMessage.connect( self.__onDebuggerClientIDEMessage )
-        self.connect( self.__debugger.getBreakPointModel(),
-                      SIGNAL( 'BreakpoinsChanged' ),
-                      self.__onBreakpointsModelChanged )
-        self.connect( self.__debugger, SIGNAL( 'EvalOK' ),
-                      self.__onEvalOK )
-        self.connect( self.__debugger, SIGNAL( 'EvalError' ),
-                      self.__onEvalError )
-        self.connect( self.__debugger, SIGNAL( 'ExecOK' ),
-                      self.__onExecOK )
-        self.connect( self.__debugger, SIGNAL( 'ExecError' ),
-                      self.__onExecError )
-        self.connect( self.__debugger, SIGNAL( 'ClientStdout' ),
-                      self.__onClientStdout )
-        self.connect( self.__debugger, SIGNAL( 'ClientStderr' ),
-                      self.__onClientStderr )
-        self.connect( self.__debugger, SIGNAL( 'ClientRawInput' ),
-                      self.__onClientRawInput )
+        self.__debugger.sigDebuggerStateChanged.connect(
+            self.__onDebuggerStateChanged)
+        self.__debugger.sigClientLine.connect(self.__onDebuggerCurrentLine)
+        self.__debugger.sigClientException.connect(
+            self.__onDebuggerClientException)
+        self.__debugger.sigClientSyntaxError.connect(
+            self.__onDebuggerClientSyntaxError)
+        self.__debugger.sigClientIDEMessage.connect(
+            self.__onDebuggerClientIDEMessage)
+        self.__debugger.sigEvalOK.connect(self.__onEvalOK)
+        self.__debugger.sigEvalError.connect(self.__onEvalError)
+        self.__debugger.sigExecOK.connect(self.__onExecOK)
+        self.__debugger.sigExecError.connect(self.__onExecError)
+        self.__debugger.sigClientStdout.connect(self.__onClientStdout)
+        self.__debugger.sigClientStderr.connect(self.__onClientStderr)
+        self.__debugger.sigClientRawInput.connect(self.__onClientRawInput)
+        self.__debugger.getBreakPointModel().sigBreakpoinsChanged.connect(
+            self.__onBreakpointsModelChanged)
 
         self.settings = settings
         self.__initialisation = True
 
         # This prevents context menu on the main window toolbar.
         # I don't really know why but it is what I need
-        self.setContextMenuPolicy( Qt.NoContextMenu )
+        self.setContextMenuPolicy(Qt.NoContextMenu)
 
         # The size restore is done twice to avoid huge flickering
         # This one is approximate, the one in restoreWindowPosition() is precise
         screenSize = GlobalData().application.desktop().screenGeometry()
-        if screenSize.width() != settings.screenwidth or \
-           screenSize.height() != settings.screenheight:
+        if screenSize.width() != settings['screenwidth'] or \
+           screenSize.height() != settings['screenheight']:
             # The screen resolution has been changed, use the default pos
             defXPos, defYpos, \
             defWidth, defHeight = settings.getDefaultGeometry()
-            self.resize( defWidth, defHeight )
-            self.move( defXPos, defYpos )
+            self.resize(defWidth, defHeight)
+            self.move(defXPos, defYpos)
         else:
             # No changes in the screen resolution
-            self.resize( settings.width, settings.height )
-            self.move( settings.xpos + settings.xdelta,
-                       settings.ypos + settings.ydelta )
+            self.resize(settings['width'], settings['height'])
+            self.move(settings['xpos'] + settings['xdelta'],
+                      settings['ypos'] + settings['ydelta'])
 
-        splash.showMessage( "Initializing status bar..." )
+        splash.showMessage("Initializing status bar...")
         self.__statusBar = None
         self.sbLanguage = None
         self.sbFile = None
@@ -200,28 +195,28 @@ class CodimensionMainWindow(QMainWindow):
         self.sbEncoding = None
         self.__createStatusBar()
 
-        splash.showMessage( "Creating toolbar..." )
+        splash.showMessage("Creating toolbar...")
         self.__createToolBar()
 
-        splash.showMessage( "Creating layout..." )
+        splash.showMessage("Creating layout...")
         self.__leftSideBar = None
         self.__bottomSideBar = None
         self.__rightSideBar = None
 
         # Setup output redirectors
-        sys.stdout = Redirector( True )
-        sys.stderr = Redirector( False )
+        sys.stdout = Redirector(True)
+        sys.stderr = Redirector(False)
 
         self.__horizontalSplitter = None
         self.__verticalSplitter = None
-        self.__horizontalSplitterSizes = list( settings.hSplitterSizes )
-        self.__verticalSplitterSizes = list( settings.vSplitterSizes )
+        self.__horizontalSplitterSizes = settings['hSplitterSizes']
+        self.__verticalSplitterSizes = settings['vSplitterSizes']
 
         self.logViewer = None
         self.redirectedIOConsole = None
         self.__createLayout()
 
-        splash.showMessage( "Initializing main menu bar..." )
+        splash.showMessage("Initializing main menu bar...")
         self.__initPluginSupport()
         self.__initMainMenu()
 
@@ -271,9 +266,9 @@ class CodimensionMainWindow(QMainWindow):
 
     def __createLayout(self):
         """Creates the UI layout"""
-
-        self.editorsManagerWidget = EditorsManagerWidget( self, self.__debugger )
-        self.editorsManagerWidget.editorsManager.tabRunChanged.connect( self.setDebugTabAvailable )
+        self.editorsManagerWidget = EditorsManagerWidget(self, self.__debugger)
+        self.editorsManagerWidget.editorsManager.sigTabRunChanged.connect(
+            self.setDebugTabAvailable)
 
         self.editorsManagerWidget.findWidget.hide()
         self.editorsManagerWidget.replaceWidget.hide()
@@ -479,7 +474,6 @@ class CodimensionMainWindow(QMainWindow):
         """Creates status bar"""
 
         self.__statusBar = self.statusBar()
-        self.statusBarSlots = StatusBarSlots(self.__statusBar)
         self.__statusBar.setSizeGripEnabled(True)
 
         sbPalette = QPalette(self.__statusBar.palette())
@@ -1328,6 +1322,19 @@ class CodimensionMainWindow(QMainWindow):
         neverUsedButton.setEnabled( False )
         neverUsedButton.setVisible( False )
 
+        self.linecounterButton = QAction(getIcon('linecounter.png'),
+                                         'Project line counter', self)
+        self.linecounterButton.triggered.connect(self.linecounterButtonClicked)
+        self.__findInFilesButton = QAction(
+            getIcon('findindir.png'), 'Find in files (Ctrl+Shift+F)', self)
+        self.__findInFilesButton.triggered.connect(self.findInFilesClicked)
+        self.__findNameButton = QAction(
+            getIcon('findname.png'), 'Find name in project (Alt+Shift+S)', self)
+        self.__findNameButton.triggered.connect(self.findNameClicked)
+        self.__findFileButton = QAction(
+            getIcon('findfile.png'), 'Find project file (Alt+Shift+O)', self)
+        self.__findFileButton.triggered.connect(self.findFileClicked)
+
         # Debugger buttons
         self.__dbgStopBrutal = QAction( getIcon( 'dbgstopbrutal.png' ),
                                        'Stop debugging session and '
@@ -1580,9 +1587,8 @@ class CodimensionMainWindow(QMainWindow):
 
     @staticmethod
     def linecounterButtonClicked():
-        " Triggered when the line counter button is clicked "
+        """Triggered when the line counter button is clicked"""
         LineCounterDialog().exec_()
-        return
 
     def findInFilesClicked( self ):
         " Triggered when the find in files button is clicked "
@@ -2421,21 +2427,18 @@ class CodimensionMainWindow(QMainWindow):
         logging.info( "Please restart codimension to apply the new font" )
         return
 
-    def showStatusBarMessage( self, msg, slot, timeout = 10000 ):
-        " Shows a temporary status bar message, default 10sec "
-        self.statusBarSlots.showMessage( msg, slot, timeout )
-        return
+    def showStatusBarMessage(self, msg, timeout=10000):
+        """Shows a temporary status bar message, default 10sec"""
+        self.__statusBar.showMessage(msg, timeout)
 
-    def clearStatusBarMessage( self, slot ):
-        " Clears the status bar message in the given slot "
-        self.statusBarSlots.clearMessage( slot )
-        return
+    def clearStatusBarMessage(self):
+        """Clears the status bar message in the given slot"""
+        self.__statusBar.clearMessage()
 
-    def checkOutsideFileChanges( self ):
-        """ Checks if there are changes in the files
-            currently loaded by codimension """
+    def checkOutsideFileChanges(self):
+        """Checks if there are changes in the files
+           currently loaded by codimension"""
         self.editorsManagerWidget.editorsManager.checkOutsideFileChanges()
-        return
 
     def __getPathLabelFilePath( self ):
         " Provides undecorated path label content "

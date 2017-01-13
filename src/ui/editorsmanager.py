@@ -76,10 +76,11 @@ class EditorsManager(QTabWidget):
 
     """Tab bar with editors"""
 
-    bufferModified = pyqtSignal(str, str)
-    tabRunChanged = pyqtSignal(bool)
-    pluginContextMenuAdded = pyqtSignal(QMenu, int)
-    pluginContextMenuRemoved = pyqtSignal(QMenu, int)
+    sigBufferModified = pyqtSignal(str, str)
+    sigTabRunChanged = pyqtSignal(bool)
+    sigPluginContextMenuAdded = pyqtSignal(QMenu, int)
+    sigPluginContextMenuRemoved = pyqtSignal(QMenu, int)
+    sigTabClosed = pyqtSignal(str)
 
     def __init__(self, parent, debugger):
         QTabWidget.__init__(self, parent)
@@ -168,12 +169,13 @@ class EditorsManager(QTabWidget):
 
         # Plugins context menus support
         self.__pluginMenus = {}
-        GlobalData().pluginManager.PluginActivated.connect(
+        GlobalData().pluginManager.sigPluginActivated.connect(
             self.__onPluginActivated)
-        GlobalData().pluginManager.PluginDeactivated.connect(
+        GlobalData().pluginManager.sigPluginDeactivated.connect(
             self.__onPluginDeactivated)
 
-        self.__mainWindow.vcsManager.VCSFileStatus.connect( self.__onVCSStatus)
+        self.__mainWindow.vcsManager.sigVCSFileStatus.connect(
+            self.__onVCSStatus)
 
     def __currentTabClicked(self):
         """Triggered when the currently active tab is clicked"""
@@ -454,7 +456,7 @@ class EditorsManager(QTabWidget):
         newWidget.reloadRequest.connect(self.onReload)
         newWidget.reloadAllNonModifiedRequest.connect(
             self.onReloadAllNonModified)
-        newWidget.tabRunChanged.connect(self.onTabRunChanged)
+        newWidget.sigTabRunChanged.connect(self.onTabRunChanged)
         editor = newWidget.getEditor()
         if shortName is None:
             newWidget.setShortName(self.getNewName())
@@ -612,7 +614,7 @@ class EditorsManager(QTabWidget):
         self.__skipHistoryUpdate = False
         self.__updateControls()
         self.saveTabsStatus()
-        self.tabClosed.emit(closingUUID)
+        self.sigTabClosed.emit(closingUUID)
 
     def __updateFilePosition(self, index):
         """Updates the file position of a file which is loaded to the given tab"""
@@ -636,7 +638,7 @@ class EditorsManager(QTabWidget):
         """Creates widgets navigation button at the top corners"""
         rightCornerWidget = QWidget(self)
         rightCornerWidgetLayout = QHBoxLayout(rightCornerWidget)
-        rightCornerWidgetLayout.setMargin(0)
+        rightCornerWidgetLayout.setContentsMargins(0, 0, 0, 0)
         rightCornerWidgetLayout.setSpacing(0)
 
         self.__navigationMenu = QMenu(self)
@@ -669,7 +671,7 @@ class EditorsManager(QTabWidget):
 
         leftCornerWidget = QWidget(self)
         leftCornerWidgetLayout = QHBoxLayout(leftCornerWidget)
-        leftCornerWidgetLayout.setMargin(0)
+        leftCornerWidgetLayout.setContentsMargins(0, 0, 0, 0)
         leftCornerWidgetLayout.setSpacing(0)
         self.historyBackButton = QToolButton(self)
         self.historyBackButton.setIcon(getIcon("1leftarrow.png"))
@@ -742,7 +744,7 @@ class EditorsManager(QTabWidget):
     def __currentChanged(self, index):
         """Handles the currentChanged signal"""
         if index == -1:
-            self.tabRunChanged.emit(False)
+            self.sigTabRunChanged.emit(False)
             return
 
         self._updateIconAndTooltip(self.currentIndex())
@@ -771,9 +773,9 @@ class EditorsManager(QTabWidget):
                     self.checkOutsideFileChanges()
 
         if widget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
-            self.tabRunChanged.emit(False)
+            self.sigTabRunChanged.emit(False)
         else:
-            self.tabRunChanged.emit(widget.isTabRunEnabled())
+            self.sigTabRunChanged.emit(widget.isTabRunEnabled())
 
     def onHelp(self):
         """Triggered when F1 is received"""
@@ -1065,7 +1067,7 @@ class EditorsManager(QTabWidget):
             newWidget = TextEditorTabWidget(self, self.__debugger)
             newWidget.reloadRequest.connect(self.onReload)
             newWidget.reloadAllNonModifiedRequest.connect(self.onReloadAllNonModified)
-            newWidget.tabRunChanged.connect(self.onTabRunChanged)
+            newWidget.sigTabRunChanged.connect(self.onTabRunChanged)
             editor = newWidget.getEditor()
             newWidget.readFile(fileName)
 
@@ -1724,8 +1726,8 @@ class EditorsManager(QTabWidget):
     def __contentChanged(self):
         """Triggered when a buffer content is changed"""
         currentWidget = self.currentWidget()
-        self.bufferModified.emit(currentWidget.getFileName(),
-                                 str(currentWidget.getUUID()))
+        self.sigBufferModified.emit(currentWidget.getFileName(),
+                                    currentWidget.getUUID())
 
     def __onESC(self):
         """The editor detected ESC pressed"""
@@ -2116,7 +2118,7 @@ class EditorsManager(QTabWidget):
 
     def onTabRunChanged(self, enabled):
         """Triggered when an editor informs about changes of the run buttons"""
-        self.tabRunChanged.emit(enabled)
+        self.sigTabRunChanged.emit(enabled)
 
     def reloadTab(self, index):
         """Reloads a single tab"""
@@ -2320,7 +2322,7 @@ class EditorsManager(QTabWidget):
                 menu = None
                 return
             self.__pluginMenus[plugin.getPath()] = menu
-            self.pluginContextMenuAdded.emit(menu, len(self.__pluginMenus))
+            self.sigPluginContextMenuAdded.emit(menu, len(self.__pluginMenus))
         except Exception as exc:
             logging.error("Error populating " + pluginName + " plugin buffer context menu: " +
                           str(exc) + ". Ignore and continue.")
@@ -2332,7 +2334,8 @@ class EditorsManager(QTabWidget):
             if path in self.__pluginMenus:
                 menu = self.__pluginMenus[path]
                 del self.__pluginMenus[path]
-                self.pluginContextMenuRemoved.emit(menu, len(self.__pluginMenus))
+                self.sigPluginContextMenuRemoved.emit(menu,
+                                                      len(self.__pluginMenus))
                 menu = None
         except Exception as exc:
             pluginName = plugin.getName()
