@@ -281,19 +281,18 @@ class CodimensionMainWindow(QMainWindow):
 
         # Create tabs on bars
         self.logViewer = LogViewer()
-        self.__bottomSideBar.addTab( self.logViewer,
-                                     getIcon( 'logviewer.png' ),
-                                     'Log' )
-        sys.stdout.appendToStdout.connect( self.toStdout )
-        sys.stderr.appendToStderr.connect( self.toStderr )
+        self.__bottomSideBar.addTab(self.logViewer, getIcon('logviewer.png'),
+                                    'Log', 'log', 0)
+        sys.stdout.appendToStdout.connect(self.toStdout)
+        sys.stderr.appendToStderr.connect(self.toStderr)
 
         # replace logging streamer to self.stdout
         logging.root.handlers = []
-        handler = logging.StreamHandler( sys.stdout )
+        handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(
             logging.Formatter( "%(levelname) -10s %(asctime)s %(message)s",
             None ) )
-        logging.root.addHandler( handler )
+        logging.root.addHandler(handler)
 
 
         self.projectViewer = ProjectViewer( self )
@@ -3985,7 +3984,7 @@ class CodimensionMainWindow(QMainWindow):
         debugSettings = self.settings.getDebuggerSettings()
         workingDir = getWorkingDir( fileName, runParameters )
         arguments = parseCommandLineArguments( runParameters.arguments )
-        environment = getNoArgsEnvironment( runParameters )
+        environment = getNoArgsEnvironment(runParameters)
 
         env = "Environment: "
         if runParameters.envType == runParameters.InheritParentEnv:
@@ -4002,32 +4001,32 @@ class CodimensionMainWindow(QMainWindow):
             keys = environment.keys()
             keys.sort()
             for key in keys:
-                env += "\n    " + key + " = " + environment[ key ]
+                env += "\n    " + key + " = " + environment[key]
                 if 'PATH' in key:
-                    pathVariables.append( key )
+                    pathVariables.append(key)
         else:
             if runParameters.envType == runParameters.InheritParentEnvPlus:
                 container = runParameters.additionToParentEnv
                 keys = runParameters.additionToParentEnv.keys()
                 keys.sort()
                 for key in keys:
-                    env += "\n    " + key + " = " + runParameters.additionToParentEnv[ key ]
+                    env += "\n    " + key + " = " + runParameters.additionToParentEnv[key]
                     if 'PATH' in key:
-                        pathVariables.append( key )
+                        pathVariables.append(key)
             elif runParameters.envType == runParameters.SpecificEnvironment:
                 container = runParameters.specificEnv
                 keys = runParameters.specificEnv.keys()
                 keys.sort()
                 for key in keys():
-                    env += "\n    " + key + " = " + runParameters.specificEnv[ key ]
+                    env += "\n    " + key + " = " + runParameters.specificEnv[key]
                     if 'PATH' in key:
-                        pathVariables.append( key )
+                        pathVariables.append(key)
 
         if pathVariables:
             env += "\nDetected PATH-containing variables:"
             for key in pathVariables:
                 env += "\n    " + key
-                for item in container[ key ].split( ':' ):
+                for item in container[key].split(':'):
                     env += "\n        " + item
 
         terminal = "Terminal to run in: "
@@ -4042,50 +4041,46 @@ class CodimensionMainWindow(QMainWindow):
         elif self.settings.terminalType == TERM_REDIRECT:
             terminal += "redirect to IDE"
 
-        logging.info( "\n".join(
-            [ "Current debug session settings",
-              "Script: " + fileName,
-              "Arguments: " + " ".join( arguments ),
-              "Working directory: " + workingDir,
-              env, terminal,
-              "Report exceptions: " + str( debugSettings.reportExceptions ),
-              "Trace interpreter libs: " + str( debugSettings.traceInterpreter ),
-              "Stop at first line: " + str( debugSettings.stopAtFirstLine ),
-              "Fork without asking: " + str( debugSettings.autofork ),
-              "Debug child process: " + str( debugSettings.followChild ),
-              "Close terminal upon successfull completion: " + str( runParameters.closeTerminal ) ] ) )
-        return
+        logging.info("\n".join(
+            ["Current debug session settings",
+             "Script: " + fileName,
+             "Arguments: " + " ".join(arguments),
+             "Working directory: " + workingDir,
+             env, terminal,
+             "Report exceptions: " + str(debugSettings.reportExceptions),
+             "Trace interpreter libs: " + str(debugSettings.traceInterpreter),
+             "Stop at first line: " + str(debugSettings.stopAtFirstLine),
+             "Fork without asking: " + str(debugSettings.autofork),
+             "Debug child process: " + str(debugSettings.followChild),
+             "Close terminal upon successfull completion: " + str(runParameters.closeTerminal)]))
 
-    def __onDumpDebugSettings( self, action = None ):
-        " Triggered when dumping visible settings was requested "
-        self.__dumpDebugSettings( self.__debugger.getScriptPath(), False )
-        return
+    def __onDumpDebugSettings(self, action=None):
+        """Triggered when dumping visible settings was requested"""
+        self.__dumpDebugSettings(self.__debugger.getScriptPath(), False)
 
-    def __onDumpFullDebugSettings( self ):
-        " Triggered when dumping complete settings is requested "
-        self.__dumpDebugSettings( self.__debugger.getScriptPath(), True )
-        return
+    def __onDumpFullDebugSettings(self):
+        """Triggered when dumping complete settings is requested"""
+        self.__dumpDebugSettings(self.__debugger.getScriptPath(), True)
 
-    def __onDumpScriptDebugSettings( self ):
-        " Triggered when dumping current script settings is requested "
+    def __onDumpScriptDebugSettings(self):
+        """Triggered when dumping current script settings is requested"""
         if self.__dumpScriptDbgSettingsAvailable():
             editorsManager = self.editorsManagerWidget.editorsManager
             currentWidget = editorsManager.currentWidget()
-            self.__dumpDebugSettings( currentWidget.getFileName(), False )
-        return
+            self.__dumpDebugSettings(currentWidget.getFileName(), False)
 
-    def __onDumpScriptFullDebugSettings( self ):
-        " Triggered when dumping current script complete settings is requested "
+    def __onDumpScriptFullDebugSettings(self):
+        """Triggered when dumping current script complete settings is requested"""
         if self.__dumpScriptDbgSettingsAvailable():
             editorsManager = self.editorsManagerWidget.editorsManager
             currentWidget = editorsManager.currentWidget()
-            self.__dumpDebugSettings( currentWidget.getFileName(), True )
+            self.__dumpDebugSettings(currentWidget.getFileName(), True)
 
-    def __onDumpProjectDebugSettings( self ):
-        " Triggered when dumping project script settings is requested "
+    def __onDumpProjectDebugSettings(self):
+        """Triggered when dumping project script settings is requested"""
         if self.__dumpProjectDbgSettingsAvailable():
             project = GlobalData().project
-            self.__dumpDebugSettings( project.getProjectScript(), False )
+            self.__dumpDebugSettings(project.getProjectScript(), False)
 
     def __onDumpProjectFullDebugSettings(self):
         """Triggered when dumping project script complete settings is requested"""
@@ -4127,7 +4122,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__debugDumpProjectSettingsEnvAct.setEnabled(projectAvailable)
 
     def installRedirectedIOConsole(self):
-        " Create redirected IO console "
+        """Create redirected IO console"""
         self.redirectedIOConsole = IOConsoleTabWidget(self)
         self.redirectedIOConsole.UserInput.connect(self.__onUserInput)
         self.redirectedIOConsole.textEditorZoom.connect(

@@ -52,11 +52,11 @@ class ProjectBrowser(FilesBrowser):
         GlobalData().project.fsChanged.connect(self._onFSChanged)
 
         # VCS status support
-        GlobalData().pluginManager.PluginDeactivated.connect(
+        GlobalData().pluginManager.sigPluginDeactivated.connect(
             self.__onPluginDeactivated)
-        self.__mainWindow.vcsManager.VCSFileStatus.connect(
+        self.__mainWindow.vcsManager.sigVCSFileStatus.connect(
             self.__onVCSFileStatus)
-        self.__mainWindow.vcsManager.VCSDirStatus.connect(
+        self.__mainWindow.vcsManager.sigVCSDirStatus.connect(
             self.__onVCSDirStatus)
 
     def __onProjectChanged(self, what):

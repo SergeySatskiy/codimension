@@ -193,8 +193,9 @@ class BrowserModelBase(QAbstractItemModel):
 
     def clear(self):
         """Clears the model"""
+        self.beginResetModel()
         self.rootItem.removeChildren()
-        self.reset()
+        self.endResetModel()
 
     def item(self, index):
         """Provides a reference to an item"""

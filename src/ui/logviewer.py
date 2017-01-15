@@ -76,7 +76,7 @@ class LogViewer(QWidget):
         # Messages list area
         self.messages = QPlainTextEdit(parent)
         self.messages.setLineWrapMode(QPlainTextEdit.NoWrap)
-        self.messages.setFont(QFont(GlobalData().skin.baseMonoFontFace))
+        self.messages.setFont(QFont(GlobalData().skin['monoFont'].family()))
         self.messages.setReadOnly(True)
         self.messages.setMaximumBlockCount(MAX_LINES)
 

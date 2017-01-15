@@ -25,7 +25,7 @@
     },
     "ioconsoleStderrBold": false,
     "ioconsoleStdinItalic": false,
-    "nolexerFont": {
+    "monoFont": {
         "__value__": "Monospace,12,-1,5,50,0,0,0,0,0",
         "__class__": "QFont"
     },
@@ -75,7 +75,6 @@
         "__value__": "102,102,102,255",
         "__class__": "QColor"
     },
-    "baseMonoFontFace": "Monospace",
     "calltipColor": {
         "__value__": "0,0,0,255",
         "__class__": "QColor"

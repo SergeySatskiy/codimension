@@ -110,6 +110,7 @@ class VCSManager(QObject):
     """Manages the VCS plugins"""
 
     sigVCSFileStatus = pyqtSignal(str, object)
+    sigVCSDirStatus = pyqtSignal(str, object)
 
     def __init__(self):
         QObject.__init__(self)
@@ -351,7 +352,7 @@ class VCSManager(QObject):
 
     def sendDirStatusNotification(self, path, status):
         """Sends a signal that a status of the directory is changed"""
-        self.VCSDirStatus.emit(path, status)
+        self.sigVCSDirStatus.emit(path, status)
 
     def sendFileStatusNotification(self, path, status):
         """Sends a signal that a status of the file is changed"""

@@ -46,7 +46,7 @@ _DEFAULT_SKIN_SETTINGS = {
     'spellingMarkColor': QColor(139, 0, 0, 255),
     'nolexerPaper': QColor(255, 255, 230, 255),
     'nolexerColor': QColor(0, 0, 0, 255),
-    'nolexerFont': buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
+    'monoFont': buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
     'currentLinePaper': QColor(232, 232, 255, 255),
     'edgeColor': QColor(127, 127, 127, 128),
     'matchedBracePaper': QColor(132, 117, 245, 255),
@@ -63,7 +63,6 @@ _DEFAULT_SKIN_SETTINGS = {
     'calltipColor': QColor(0, 0, 0, 255),
     'calltipHighColor': QColor(250, 89, 68, 255),
     'outdatedOutlineColor': QColor(255, 154, 154, 255),
-    'baseMonoFontFace': 'Monospace',
 
     'diffchanged2Color': QColor(0, 0, 0, 255),
     'diffchanged2Paper': QColor(247, 254, 0, 255),

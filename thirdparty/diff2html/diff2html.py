@@ -63,7 +63,7 @@ skin = GlobalData().skin
 CSS_RULES = {
     u'span.diffchanged2' : u'background:' + toCSSColor( skin['diffchanged2Paper'] ) + u';color:' + toCSSColor( skin['diffchanged2Color'] ),
     u'span.diffponct'    : u'color:' + toCSSColor( skin['diffponctColor'] ),
-    u'table'             : u'border:0px;border-collapse:collapse;width:98%;font-size:' + str( skin['nolexerFont'].pointSize() ) + 'pt; font-family:"' + skin['nolexerFont'].family() + '";',
+    u'table'             : u'border:0px;border-collapse:collapse;width:98%;font-size:' + str( skin['monoFont'].pointSize() ) + 'pt; font-family:"' + skin['monoFont'].family() + '";',
     u'td.diffline'       : u'vertical-align:top;color:' + toCSSColor( skin['difflineColor'] ),
     u'th'                : u'background:' + toCSSColor( skin['diffthPaper'] ) + u';color:' + toCSSColor( skin['diffthColor'] ),
     u'tr.diffadded'      : u'vertical-align:top;background:' + toCSSColor( skin['diffaddedPaper'] ),
