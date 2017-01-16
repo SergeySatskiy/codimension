@@ -54,9 +54,9 @@ class PyflakesViewer(QObject):
         self.setFlakesNotAvailable(self.__uiLabel)
 
         self.__editorsManager.currentChanged.connect(self.__onTabChanged)
-        self.__editorsManager.tabClosed.connect(self.__onTabClosed)
-        self.__editorsManager.bufferSavedAs.connect(self.__onSavedBufferAs)
-        self.__editorsManager.fileTypeChanged.connect(self.__onFileTypeChanged)
+        self.__editorsManager.sigTabClosed.connect(self.__onTabClosed)
+        self.__editorsManager.sigBufferSavedAs.connect(self.__onSavedBufferAs)
+        self.__editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
 
         self.__flakesResults = {}  # UUID -> PyflakesAttributes
         self.__currentUUID = None

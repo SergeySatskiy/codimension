@@ -58,9 +58,9 @@ class FileOutlineViewer(QWidget):
         self.__editorsManager = editorsManager
         self.__mainWindow = parent
         self.__editorsManager.currentChanged.connect(self.__onTabChanged)
-        self.__editorsManager.tabClosed.connect(self.__onTabClosed)
-        self.__editorsManager.bufferSavedAs.connect(self.__onSavedBufferAs)
-        self.__editorsManager.fileTypeChanged.connect(self.__onFileTypeChanged)
+        self.__editorsManager.sigTabClosed.connect(self.__onTabClosed)
+        self.__editorsManager.sigBufferSavedAs.connect(self.__onSavedBufferAs)
+        self.__editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
 
         self.__outlineBrowsers = {}  # UUID -> OutlineAttributes
         self.__currentUUID = None
@@ -73,7 +73,7 @@ class FileOutlineViewer(QWidget):
         self.toolbar = None
         self.__createLayout()
 
-        self.__modifiedFormat = Settings().modifiedFormat
+        self.__modifiedFormat = Settings()['modifiedFormat']
 
         # create the context menu
         self.__menu = QMenu(self)
@@ -124,7 +124,7 @@ class FileOutlineViewer(QWidget):
         self.__noneLabel.setAutoFillBackground(True)
         noneLabelPalette = self.__noneLabel.palette()
         noneLabelPalette.setColor(QPalette.Background,
-                                  GlobalData().skin.nolexerPaper)
+                                  GlobalData().skin['nolexerPaper'])
         self.__noneLabel.setPalette(noneLabelPalette)
 
         self.__layout = QVBoxLayout()

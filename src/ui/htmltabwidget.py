@@ -66,7 +66,7 @@ class HTMLTabWidget(MainWindowTabWidgetBase, QFrame):
 
         self.setFrameShape(QFrame.StyledPanel)
         layout = QHBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.__editor = HTMLViewer(self)
         self.__editor.escapePressed.connect(self.__onEsc)

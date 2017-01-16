@@ -64,7 +64,7 @@ class TagHelpViewer(QWidget):
         # __textEdit list area
         self.__textEdit = QPlainTextEdit(parent)
         self.__textEdit.setLineWrapMode(QPlainTextEdit.NoWrap)
-        self.__textEdit.setFont(QFont(GlobalData().skin.baseMonoFontFace))
+        self.__textEdit.setFont(QFont(GlobalData().skin['monoFont']))
         self.__textEdit.setReadOnly(True)
 
         # Default font size is good enough for most of the systems.

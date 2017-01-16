@@ -74,11 +74,11 @@ class Tooltip(QFrame):
         self.info = QLabel()
         self.info.setAutoFillBackground(True)
         font = self.info.font()
-        font.setFamily(GlobalData().skin.baseMonoFontFace)
+        font.setFamily(GlobalData().skin['monoFont'].family())
         self.info.setFont(font)
         self.info.setFrameShape(QFrame.StyledPanel)
         verticalLayout.addWidget(self.info)
-        verticalLayout.setMargin(0)
+        verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.location = QLabel()
         verticalLayout.addWidget(self.location)
 
@@ -326,7 +326,7 @@ class FindInFilesViewer(QWidget):
         self.__noneLabel.setAutoFillBackground(True)
         noneLabelPalette = self.__noneLabel.palette()
         noneLabelPalette.setColor(QPalette.Background,
-                                  GlobalData().skin.nolexerPaper)
+                                  GlobalData().skin['nolexerPaper'])
         self.__noneLabel.setPalette(noneLabelPalette)
 
         # Keep pylint happy

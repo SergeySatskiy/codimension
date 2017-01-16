@@ -83,6 +83,7 @@ class EditorsManager(QTabWidget):
     sigTabClosed = pyqtSignal(str)
     sigFileUpdated = pyqtSignal(str, str)
     sigBufferSavedAs = pyqtSignal(str, str)
+    sigFileTypeChanged = pyqtSignal(str, str, str)
 
     def __init__(self, parent, debugger):
         QTabWidget.__init__(self, parent)
@@ -491,8 +492,8 @@ class EditorsManager(QTabWidget):
         newWidget.updateStatus()
         self.setWidgetDebugMode(newWidget)
 
-        self.fileTypeChanged.emit(newWidget.getShortName(),
-                                  newWidget.getUUID(), fileType)
+        self.sigFileTypeChanged.emit(newWidget.getShortName(),
+                                     newWidget.getUUID(), fileType)
 
     def __updateControls(self):
         """Updates the navigation buttons status"""
@@ -1110,7 +1111,8 @@ class EditorsManager(QTabWidget):
                 GlobalData().project.addRecentFile(fileName)
             self.setWidgetDebugMode(newWidget)
 
-            self.fileTypeChanged.emit(fileName, newWidget.getUUID(), fileType)
+            self.sigFileTypeChanged.emit(fileName, newWidget.getUUID(),
+                                         fileType)
         except Exception as exc:
             logging.error(str(exc))
             return False
@@ -1205,7 +1207,7 @@ class EditorsManager(QTabWidget):
                 widget.updateStatus()
                 self.__updateStatusBar()
                 self.__mainWindow.updateRunDebugButtons()
-                self.fileTypeChanged.emit(
+                self.sigFileTypeChanged.emit(
                     fileName, widget.getUUID(), newFileType)
 
             editor.setModified(False)
@@ -1335,7 +1337,8 @@ class EditorsManager(QTabWidget):
                 widget.setFileType(newType)
                 widget.getEditor().bindLexer(fileName, newType)
                 widget.getEditor().clearPyflakesMessages()
-                self.fileTypeChanged.emit(fileName, widget.getUUID(), newType)
+                self.sigFileTypeChanged.emit(fileName, widget.getUUID(),
+                                             newType)
             self._updateIconAndTooltip(index, newType)
 
         if GlobalData().project.fileName == fileName:
