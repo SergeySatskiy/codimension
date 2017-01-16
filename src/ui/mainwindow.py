@@ -223,40 +223,39 @@ class CodimensionMainWindow(QMainWindow):
         self.updateWindowTitle()
         self.__printThirdPartyAvailability()
 
-        findNextAction = QShortcut( 'F3', self )
+        findNextAction = QShortcut('F3', self)
         findNextAction.activated.connect(
-                        self.editorsManagerWidget.editorsManager.findNext )
-        findPrevAction = QShortcut( 'Shift+F3', self )
+            self.editorsManagerWidget.editorsManager.findNext)
+        findPrevAction = QShortcut('Shift+F3', self)
         findPrevAction.activated.connect(
-                        self.editorsManagerWidget.editorsManager.findPrev )
+            self.editorsManagerWidget.editorsManager.findPrev)
 
         self.__runManager = RunManager(self)
 
-    def restoreWindowPosition( self ):
-        " Makes sure that the window frame delta is proper "
+    def restoreWindowPosition(self):
+        """Makes sure that the window frame delta is proper"""
         screenSize = GlobalData().application.desktop().screenGeometry()
-        if screenSize.width() != self.settings.screenwidth or \
-           screenSize.height() != self.settings.screenheight:
+        if screenSize.width() != self.settings['screenwidth'] or \
+           screenSize.height() != self.settings['screenheight']:
             # The screen resolution has been changed, save the new values
-            self.settings.screenwidth = screenSize.width()
-            self.settings.screenheight = screenSize.height()
-            self.settings.xdelta = self.settings.xpos - self.x()
-            self.settings.ydelta = self.settings.ypos - self.y()
-            self.settings.xpos = self.x()
-            self.settings.ypos = self.y()
+            self.settings['screenwidth'] = screenSize.width()
+            self.settings['screenheight'] = screenSize.height()
+            self.settings['xdelta'] = self.settings['xpos'] - self.x()
+            self.settings['ydelta'] = self.settings['ypos'] - self.y()
+            self.settings['xpos'] = self.x()
+            self.settings['ypos'] = self.y()
         else:
             # Screen resolution is the same as before
-            if self.settings.xpos != self.x() or \
-                self.settings.ypos != self.y():
+            if self.settings['xpos'] != self.x() or \
+                self.settings['ypos'] != self.y():
                 # The saved delta is incorrect, update it
-                self.settings.xdelta = self.settings.xpos - self.x() + \
-                                       self.settings.xdelta
-                self.settings.ydelta = self.settings.ypos - self.y() + \
-                                       self.settings.ydelta
-                self.settings.xpos = self.x()
-                self.settings.ypos = self.y()
+                self.settings['xdelta'] = self.settings['xpos'] - self.x() + \
+                                          self.settings['xdelta']
+                self.settings['ydelta'] = self.settings['ypos'] - self.y() + \
+                                          self.settings['ydelta']
+                self.settings['xpos'] = self.x()
+                self.settings['ypos'] = self.y()
         self.__initialisation = False
-        return
 
     def __onMaximizeEditor(self):
         """Triggered when F11 is pressed"""
@@ -366,59 +365,57 @@ class CodimensionMainWindow(QMainWindow):
                       SIGNAL( 'ClientExceptionsCleared' ),
                       self.__onClientExceptionsCleared )
 
-        self.debuggerBreakWatchPoints = DebuggerBreakWatchPoints( self,
-                                                                  self.__debugger )
-        self.__rightSideBar.addTab( self.debuggerBreakWatchPoints,
-                getIcon( '' ), 'Breakpoints' )
+        self.debuggerBreakWatchPoints = DebuggerBreakWatchPoints(
+            self, self.__debugger)
+        self.__rightSideBar.addTab(self.debuggerBreakWatchPoints,
+            getIcon(''), 'Breakpoints', 'breakpoints', 3)
 
         # Create splitters
-        self.__horizontalSplitter = QSplitter( Qt.Horizontal )
-        self.__verticalSplitter = QSplitter( Qt.Vertical )
+        self.__horizontalSplitter = QSplitter(Qt.Horizontal)
+        self.__verticalSplitter = QSplitter(Qt.Vertical)
 
-        self.__horizontalSplitter.addWidget( self.__leftSideBar )
-        self.__horizontalSplitter.addWidget( self.editorsManagerWidget )
-        self.__horizontalSplitter.addWidget( self.__rightSideBar )
+        self.__horizontalSplitter.addWidget(self.__leftSideBar)
+        self.__horizontalSplitter.addWidget(self.editorsManagerWidget)
+        self.__horizontalSplitter.addWidget(self.__rightSideBar)
 
         # This prevents changing the size of the side panels
-        self.__horizontalSplitter.setCollapsible( 0, False )
-        self.__horizontalSplitter.setCollapsible( 2, False )
-        self.__horizontalSplitter.setStretchFactor( 0, 0 )
-        self.__horizontalSplitter.setStretchFactor( 1, 1 )
-        self.__horizontalSplitter.setStretchFactor( 2, 0 )
+        self.__horizontalSplitter.setCollapsible(0, False)
+        self.__horizontalSplitter.setCollapsible(2, False)
+        self.__horizontalSplitter.setStretchFactor(0, 0)
+        self.__horizontalSplitter.setStretchFactor(1, 1)
+        self.__horizontalSplitter.setStretchFactor(2, 0)
 
-        self.__verticalSplitter.addWidget( self.__horizontalSplitter )
-        self.__verticalSplitter.addWidget( self.__bottomSideBar )
+        self.__verticalSplitter.addWidget(self.__horizontalSplitter)
+        self.__verticalSplitter.addWidget(self.__bottomSideBar)
         # This prevents changing the size of the side panels
-        self.__verticalSplitter.setCollapsible( 1, False )
-        self.__verticalSplitter.setStretchFactor( 0, 1 )
-        self.__verticalSplitter.setStretchFactor( 1, 1 )
+        self.__verticalSplitter.setCollapsible(1, False)
+        self.__verticalSplitter.setStretchFactor(0, 1)
+        self.__verticalSplitter.setStretchFactor(1, 1)
 
-        self.setCentralWidget( self.__verticalSplitter )
+        self.setCentralWidget(self.__verticalSplitter)
 
-        self.__leftSideBar.setSplitter( self.__horizontalSplitter )
-        self.__bottomSideBar.setSplitter( self.__verticalSplitter )
-        self.__rightSideBar.setSplitter( self.__horizontalSplitter )
-        return
+        self.__leftSideBar.setSplitter(self.__horizontalSplitter)
+        self.__bottomSideBar.setSplitter(self.__verticalSplitter)
+        self.__rightSideBar.setSplitter(self.__horizontalSplitter)
 
-    def restoreSplitterSizes( self ):
-        " Restore the side bar state "
-        self.__horizontalSplitter.setSizes( self.settings.hSplitterSizes )
-        self.__verticalSplitter.setSizes( self.settings.vSplitterSizes )
-        if self.settings.leftBarMinimized:
+    def restoreSplitterSizes(self):
+        """Restore the side bar state"""
+        self.__horizontalSplitter.setSizes(self.settings['hSplitterSizes'])
+        self.__verticalSplitter.setSizes(self.settings['vSplitterSizes'])
+        if self.settings['leftBarMinimized']:
             self.__leftSideBar.shrink()
-        if self.settings.bottomBarMinimized:
+        if self.settings['bottomBarMinimized']:
             self.__bottomSideBar.shrink()
-        if self.settings.rightBarMinimized:
+        if self.settings['rightBarMinimized']:
             self.__rightSideBar.shrink()
 
         # Setup splitters movement handlers
-        self.__verticalSplitter.splitterMoved.connect( self.vSplitterMoved )
-        self.__horizontalSplitter.splitterMoved.connect( self.hSplitterMoved )
-        return
+        self.__verticalSplitter.splitterMoved.connect(self.vSplitterMoved)
+        self.__horizontalSplitter.splitterMoved.connect(self.hSplitterMoved)
 
     @staticmethod
     def __printThirdPartyAvailability():
-        " Prints third party tools availability "
+        """Prints third party tools availability"""
         globalData = GlobalData()
         if globalData.graphvizAvailable:
             logging.debug("The 'graphviz' utility is available")
@@ -451,7 +448,6 @@ class CodimensionMainWindow(QMainWindow):
 
     def __createStatusBar(self):
         """Creates status bar"""
-
         self.__statusBar = self.statusBar()
         self.__statusBar.setSizeGripEnabled(True)
 
@@ -545,47 +541,47 @@ class CodimensionMainWindow(QMainWindow):
         self.sbPos.setFont(font)
 
     def __initMainMenu( self ):
-        " Initializes the main menu bar "
+        """Initializes the main menu bar"""
         editorsManager = self.editorsManagerWidget.editorsManager
 
         # The Project menu
-        self.__projectMenu = QMenu( "&Project", self )
-        self.__projectMenu.aboutToShow.connect( self.__prjAboutToShow )
-        self.__projectMenu.aboutToHide.connect( self.__prjAboutToHide )
+        self.__projectMenu = QMenu("&Project", self)
+        self.__projectMenu.aboutToShow.connect(self.__prjAboutToShow)
+        self.__projectMenu.aboutToHide.connect(self.__prjAboutToHide)
         self.__newProjectAct = self.__projectMenu.addAction(
-                getIcon( 'createproject.png' ),
-                "&New project", self.__createNewProject, 'Ctrl+Shift+N' )
+            getIcon('createproject.png'), "&New project",
+            self.__createNewProject, 'Ctrl+Shift+N')
         self.__openProjectAct = self.__projectMenu.addAction(
-                getIcon( 'project.png' ),
-                '&Open project', self.__openProject, 'Ctrl+Shift+O' )
+            getIcon('project.png'), '&Open project',
+            self.__openProject, 'Ctrl+Shift+O')
         self.__unloadProjectAct = self.__projectMenu.addAction(
-                getIcon( 'unloadproject.png' ),
-                '&Unload project', self.projectViewer.unloadProject )
+            getIcon('unloadproject.png'), '&Unload project',
+            self.projectViewer.unloadProject)
         self.__projectPropsAct = self.__projectMenu.addAction(
-                getIcon( 'smalli.png' ), '&Properties',
-                self.projectViewer.projectProperties )
+            getIcon('smalli.png'), '&Properties',
+            self.projectViewer.projectProperties)
         self.__projectMenu.addSeparator()
-        self.__prjTemplateMenu = QMenu( "Project-specific &template", self )
+        self.__prjTemplateMenu = QMenu("Project-specific &template", self)
         self.__createPrjTemplateAct = self.__prjTemplateMenu.addAction(
-                getIcon( 'generate.png' ), '&Create' )
+            getIcon('generate.png'), '&Create')
         self.__createPrjTemplateAct.triggered.connect(
-                                                    self.__onCreatePrjTemplate )
+            self.__onCreatePrjTemplate)
         self.__editPrjTemplateAct = self.__prjTemplateMenu.addAction(
-                getIcon( 'edit.png' ), '&Edit' )
-        self.__editPrjTemplateAct.triggered.connect( self.__onEditPrjTemplate )
+            getIcon('edit.png'), '&Edit')
+        self.__editPrjTemplateAct.triggered.connect(self.__onEditPrjTemplate)
         self.__prjTemplateMenu.addSeparator()
         self.__delPrjTemplateAct = self.__prjTemplateMenu.addAction(
-                getIcon( 'trash.png' ), '&Delete' )
-        self.__delPrjTemplateAct.triggered.connect( self.__onDelPrjTemplate )
-        self.__projectMenu.addMenu( self.__prjTemplateMenu )
+            getIcon('trash.png'), '&Delete')
+        self.__delPrjTemplateAct.triggered.connect(self.__onDelPrjTemplate)
+        self.__projectMenu.addMenu(self.__prjTemplateMenu)
         self.__projectMenu.addSeparator()
-        self.__recentPrjMenu = QMenu( "&Recent projects", self )
-        self.__recentPrjMenu.triggered.connect( self.__onRecentPrj )
-        self.__projectMenu.addMenu( self.__recentPrjMenu )
+        self.__recentPrjMenu = QMenu("&Recent projects", self)
+        self.__recentPrjMenu.triggered.connect(self.__onRecentPrj)
+        self.__projectMenu.addMenu(self.__recentPrjMenu)
         self.__projectMenu.addSeparator()
         self.__quitAct = self.__projectMenu.addAction(
-                getIcon( 'exitmenu.png' ),
-                "E&xit codimension", QApplication.closeAllWindows, "Ctrl+Q" )
+            getIcon('exitmenu.png'), "E&xit codimension",
+            QApplication.closeAllWindows, "Ctrl+Q")
 
         # The Tab menu
         self.__tabMenu = QMenu( "&Tab", self )
@@ -741,13 +737,6 @@ class CodimensionMainWindow(QMainWindow):
         self.__tabLineCounterAct = self.__toolsMenu.addAction(
                 getIcon( 'linecounter.png' ),
                 "L&ine counter for tab", self.__onTabLineCounter )
-        self.__toolsMenu.addSeparator()
-        self.__tabPythonTidyAct = self.__toolsMenu.addAction(
-                getIcon( 'pythontidy.png' ),
-                'PythonT&idy for tab', self.__onTabPythonTidy )
-        self.__tabPythonTidyDlgAct = self.__toolsMenu.addAction(
-                getIcon( 'detailsdlg.png' ),
-                'PythonTi&dy for tab...', self.__onTabPythonTidyDlg )
         self.__toolsMenu.addSeparator()
         self.__unusedClassesAct = self.__toolsMenu.addAction(
                 getIcon( 'notused.png' ),
@@ -3222,236 +3211,193 @@ class CodimensionMainWindow(QMainWindow):
         currentWidget.onLineCounter()
         return
 
-    def __onTabPythonTidy( self ):
-        " Triggered when python tidy is requested for a tab "
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onPythonTidy()
-        return
-
-    def __onTabPythonTidyDlg( self ):
-        " Triggered when python tidy with settings is requested "
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onPythonTidySettings()
-        return
-
-    def __onTabJumpToDef( self ):
-        " Triggered when jump to defenition is requested "
+    def __onTabJumpToDef(self):
+        """Triggered when jump to defenition is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().onGotoDefinition()
-        return
 
-    def __onTabJumpToScopeBegin( self ):
-        """ Triggered when jump to the beginning
-            of the current scope is requested """
+    def __onTabJumpToScopeBegin(self):
+        """Triggered when jump to the beginning
+           of the current scope is requested
+        """
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().onScopeBegin()
-        return
 
-    def __onFindOccurences( self ):
-        " Triggered when search for occurences is requested "
+    def __onFindOccurences(self):
+        """Triggered when search for occurences is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().onOccurences()
-        return
 
-    def findWhereUsed( self, fileName, item ):
-        " Find occurences for c/f/g browsers "
-
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+    def findWhereUsed(self, fileName, item):
+        """Find occurences for c/f/g browsers"""
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
         # False for no exceptions
-        locations = getOccurrences( fileName, item.absPosition, False )
-        if len( locations ) == 0:
+        locations = getOccurrences(fileName, item.absPosition, False)
+        if len(locations) == 0:
             QApplication.restoreOverrideCursor()
-            self.showStatusBarMessage( "No occurrences of " +
-                                       item.name + " found.", 0 )
+            self.showStatusBarMessage("No occurrences of " +
+                                      item.name + " found.", 0)
             return
 
         # Process locations for find results window
         result = []
         for loc in locations:
-            index = getSearchItemIndex( result, loc[ 0 ] )
+            index = getSearchItemIndex(result, loc[0])
             if index < 0:
-                widget = self.getWidgetForFileName( loc[0] )
+                widget = self.getWidgetForFileName(loc[0])
                 if widget is None:
                     uuid = ""
                 else:
                     uuid = widget.getUUID()
-                newItem = ItemToSearchIn( loc[ 0 ], uuid )
-                result.append( newItem )
-                index = len( result ) - 1
-            result[ index ].addMatch( item.name, loc[ 1 ] )
+                newItem = ItemToSearchIn(loc[0], uuid)
+                result.append(newItem)
+                index = len(result) - 1
+            result[index].addMatch(item.name, loc[1])
 
         QApplication.restoreOverrideCursor()
 
-        self.displayFindInFiles( "", result )
-        return
+        self.displayFindInFiles("", result)
 
-    def __onTabOpenImport( self ):
-        " Triggered when open import is requested "
+    def __onTabOpenImport(self):
+        """Triggered when open import is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onOpenImport()
-        return
 
-    def __onShowCalltip( self ):
-        " Triggered when show calltip is requested "
+    def __onShowCalltip(self):
+        """Triggered when show calltip is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().onShowCalltip()
-        return
 
-    def __onOpenAsFile( self ):
-        " Triggered when open as file is requested "
+    def __onOpenAsFile(self):
+        """Triggered when open as file is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().openAsFile()
-        return
 
-    def __onDownloadAndShow( self ):
-        " Triggered when a selected string should be treated as URL "
+    def __onDownloadAndShow(self):
+        """Triggered when a selected string should be treated as URL"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().downloadAndShow()
-        return
 
-    def __onOpenInBrowser( self ):
-        " Triggered when a selected url should be opened in a browser "
+    def __onOpenInBrowser(self):
+        """Triggered when a selected url should be opened in a browser"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().openInBrowser()
-        return
 
-    def __onHighlightInOutline( self ):
-        " Triggered to highlight the current context in the outline browser "
+    def __onHighlightInOutline(self):
+        """Triggered to highlight the current context in the outline browser"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().highlightInOutline()
-        return
 
-    def __onUndo( self ):
-        " Triggered when undo action is requested "
+    def __onUndo(self):
+        """Triggered when undo action is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().onUndo()
-        return
 
-    def __onRedo( self ):
-        " Triggered when redo action is requested "
+    def __onRedo(self):
+        """Triggered when redo action is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().onRedo()
-        return
 
-    def __onZoomIn( self ):
-        " Triggered when zoom in is requested "
+    def __onZoomIn(self):
+        """Triggered when zoom in is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         editorsManager.zoomIn()
-        return
 
-    def __onZoomOut( self ):
-        " Triggered when zoom out is requested "
+    def __onZoomOut(self):
+        """Triggered when zoom out is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         editorsManager.zoomOut()
-        return
 
-    def __onZoomReset( self ):
-        " Triggered when zoom 1:1 is requested "
+    def __onZoomReset(self):
+        """Triggered when zoom 1:1 is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         editorsManager.zoomReset()
-        return
 
-    def __onGoToLine( self ):
-        " Triggered when go to line is requested "
+    def __onGoToLine(self):
+        """Triggered when go to line is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         editorsManager.onGoto()
-        return
 
-    def __getEditor( self ):
-        " Provides reference to the editor "
+    def __getEditor(self):
+        """Provides reference to the editor"""
         editorsManager = self.editorsManagerWidget.editorsManager
         return editorsManager.currentWidget().getEditor()
 
-    def __onCut( self ):
-        " Triggered when cut is requested "
+    def __onCut(self):
+        """Triggered when cut is requested"""
         self.__getEditor().onShiftDel()
-        return
 
-    def __onPaste( self ):
-        " Triggered when paste is requested "
+    def __onPaste(self):
+        """Triggered when paste is requested"""
         self.__getEditor().paste()
-        return
 
-    def __onSelectAll( self ):
-        " Triggered when select all is requested "
+    def __onSelectAll(self):
+        """Triggered when select all is requested"""
         self.__getEditor().selectAll()
-        return
 
-    def __onComment( self ):
-        " Triggered when comment/uncomment is requested "
+    def __onComment(self):
+        """Triggered when comment/uncomment is requested"""
         self.__getEditor().onCommentUncomment()
-        return
 
-    def __onDuplicate( self ):
-        " Triggered when duplicate line is requested "
+    def __onDuplicate(self):
+        """Triggered when duplicate line is requested"""
         self.__getEditor().duplicateLine()
-        return
 
-    def __onAutocomplete( self ):
-        " Triggered when autocomplete is requested "
+    def __onAutocomplete(self):
+        """Triggered when autocomplete is requested"""
         self.__getEditor().onAutoComplete()
-        return
 
-    def __onFind( self ):
-        " Triggered when find is requested "
+    def __onFind(self):
+        """Triggered when find is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         editorsManager.onFind()
-        return
 
-    def __onFindCurrent( self ):
-        " Triggered when find of the current identifier is requested "
+    def __onFindCurrent(self):
+        """Triggered when find of the current identifier is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         editorsManager.onHiddenFind()
-        return
 
-    def __onReplace( self ):
-        " Triggered when replace is requested "
+    def __onReplace(self):
+        """Triggered when replace is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         editorsManager.onReplace()
-        return
 
-    def __onFindNext( self ):
-        " Triggered when find next is requested "
+    def __onFindNext(self):
+        """Triggered when find next is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         editorsManager.findNext()
-        return
 
-    def __onFindPrevious( self ):
-        " Triggered when find previous is requested "
+    def __onFindPrevious(self):
+        """Triggered when find previous is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         editorsManager.findPrev()
-        return
 
-    def __onExpandTabs( self ):
-        " Triggered when tabs expansion is requested "
+    def __onExpandTabs(self):
+        """Triggered when tabs expansion is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onExpandTabs()
-        return
 
-    def __onRemoveTrailingSpaces( self ):
-        " Triggered when trailing spaces removal is requested "
+    def __onRemoveTrailingSpaces(self):
+        """Triggered when trailing spaces removal is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onRemoveTrailingWS()
-        return
 
-    def __editAboutToShow( self ):
-        " Triggered when edit menu is about to show "
+    def __editAboutToShow(self):
+        """Triggered when edit menu is about to show"""
         isPlainBuffer = self.__isPlainTextBuffer()
         isPythonBuffer = self.__isPythonBuffer()
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -3459,81 +3405,80 @@ class CodimensionMainWindow(QMainWindow):
         if isPlainBuffer:
             editor = currentWidget.getEditor()
 
-        self.__undoAct.setShortcut( "Ctrl+Z" )
-        self.__undoAct.setEnabled( isPlainBuffer and editor.isUndoAvailable() )
-        self.__redoAct.setShortcut( "Ctrl+Y" )
-        self.__redoAct.setEnabled( isPlainBuffer and editor.isRedoAvailable() )
-        self.__cutAct.setShortcut( "Ctrl+X" )
-        self.__cutAct.setEnabled( isPlainBuffer and not editor.isReadOnly() )
-        self.__copyAct.setShortcut( "Ctrl+C" )
-        self.__copyAct.setEnabled( editorsManager.isCopyAvailable() )
-        self.__pasteAct.setShortcut( "Ctrl+V" )
-        self.__pasteAct.setEnabled( isPlainBuffer and
-                                    QApplication.clipboard().text() != "" and
-                                    not editor.isReadOnly() )
-        self.__selectAllAct.setShortcut( "Ctrl+A" )
-        self.__selectAllAct.setEnabled( isPlainBuffer )
-        self.__commentAct.setShortcut( "Ctrl+M" )
-        self.__commentAct.setEnabled( isPythonBuffer and
-                                      not editor.isReadOnly() )
-        self.__duplicateAct.setShortcut( "Ctrl+D" )
-        self.__duplicateAct.setEnabled( isPlainBuffer and
-                                        not editor.isReadOnly() )
-        self.__autocompleteAct.setShortcut( "Ctrl+Space" )
-        self.__autocompleteAct.setEnabled( isPlainBuffer and
-                                           not editor.isReadOnly() )
-        self.__expandTabsAct.setEnabled( isPlainBuffer and
-                                         not editor.isReadOnly() )
-        self.__trailingSpacesAct.setEnabled( isPlainBuffer and
-                                             not editor.isReadOnly() )
-        return
+        self.__undoAct.setShortcut("Ctrl+Z")
+        self.__undoAct.setEnabled(isPlainBuffer and editor.isUndoAvailable())
+        self.__redoAct.setShortcut("Ctrl+Y")
+        self.__redoAct.setEnabled(isPlainBuffer and editor.isRedoAvailable())
+        self.__cutAct.setShortcut("Ctrl+X")
+        self.__cutAct.setEnabled(isPlainBuffer and not editor.isReadOnly())
+        self.__copyAct.setShortcut("Ctrl+C")
+        self.__copyAct.setEnabled(editorsManager.isCopyAvailable())
+        self.__pasteAct.setShortcut("Ctrl+V")
+        self.__pasteAct.setEnabled(isPlainBuffer and
+                                   QApplication.clipboard().text() != "" and
+                                   not editor.isReadOnly())
+        self.__selectAllAct.setShortcut("Ctrl+A")
+        self.__selectAllAct.setEnabled(isPlainBuffer)
+        self.__commentAct.setShortcut("Ctrl+M")
+        self.__commentAct.setEnabled(isPythonBuffer and
+                                     not editor.isReadOnly())
+        self.__duplicateAct.setShortcut("Ctrl+D")
+        self.__duplicateAct.setEnabled(isPlainBuffer and
+                                       not editor.isReadOnly())
+        self.__autocompleteAct.setShortcut("Ctrl+Space")
+        self.__autocompleteAct.setEnabled(isPlainBuffer and
+                                          not editor.isReadOnly())
+        self.__expandTabsAct.setEnabled(isPlainBuffer and
+                                        not editor.isReadOnly())
+        self.__trailingSpacesAct.setEnabled(isPlainBuffer and
+                                            not editor.isReadOnly())
 
-    def __tabAboutToShow( self ):
-        " Triggered when tab menu is about to show "
+    def __tabAboutToShow(self):
+        """Triggered when tab menu is about to show"""
         plainTextBuffer = self.__isPlainTextBuffer()
         isPythonBuffer = self.__isPythonBuffer()
         isGeneratedDiagram = self.__isGeneratedDiagram()
         isProfileViewer = self.__isProfileViewer()
         editorsManager = self.editorsManagerWidget.editorsManager
 
-        self.__cloneTabAct.setEnabled( plainTextBuffer )
+        self.__cloneTabAct.setEnabled(plainTextBuffer)
         self.__closeOtherTabsAct.setEnabled(
-                                    editorsManager.closeOtherAvailable() )
-        self.__saveFileAct.setEnabled( plainTextBuffer or isGeneratedDiagram or
-                                       isProfileViewer )
-        self.__saveFileAsAct.setEnabled( plainTextBuffer or isGeneratedDiagram or
-                                         isProfileViewer )
-        self.__closeTabAct.setEnabled( editorsManager.isTabClosable() )
-        self.__tabJumpToDefAct.setEnabled( isPythonBuffer )
-        self.__calltipAct.setEnabled( isPythonBuffer )
-        self.__tabJumpToScopeBeginAct.setEnabled( isPythonBuffer )
-        self.__tabOpenImportAct.setEnabled( isPythonBuffer )
+            editorsManager.closeOtherAvailable())
+        self.__saveFileAct.setEnabled(plainTextBuffer or isGeneratedDiagram or
+                                      isProfileViewer)
+        self.__saveFileAsAct.setEnabled(plainTextBuffer or isGeneratedDiagram or
+                                        isProfileViewer)
+        self.__closeTabAct.setEnabled(editorsManager.isTabClosable())
+        self.__tabJumpToDefAct.setEnabled(isPythonBuffer)
+        self.__calltipAct.setEnabled(isPythonBuffer)
+        self.__tabJumpToScopeBeginAct.setEnabled(isPythonBuffer)
+        self.__tabOpenImportAct.setEnabled(isPythonBuffer)
         if plainTextBuffer:
             widget = editorsManager.currentWidget()
             editor = widget.getEditor()
             self.__openAsFileAct.setEnabled(
-                        editor.openAsFileAvailable() )
+                editor.openAsFileAvailable())
             self.__downloadAndShowAct.setEnabled(
-                        editor.downloadAndShowAvailable() )
+                editor.downloadAndShowAvailable())
             self.__openInBrowserAct.setEnabled(
-                        editor.downloadAndShowAvailable() )
+                editor.downloadAndShowAvailable())
         else:
-            self.__openAsFileAct.setEnabled( False )
-            self.__downloadAndShowAct.setEnabled( False )
-            self.__openInBrowserAct.setEnabled( False )
+            self.__openAsFileAct.setEnabled(False)
+            self.__downloadAndShowAct.setEnabled(False)
+            self.__openInBrowserAct.setEnabled(False)
 
         self.__highlightInPrjAct.setEnabled(
-                editorsManager.isHighlightInPrjAvailable() )
+            editorsManager.isHighlightInPrjAvailable())
         self.__highlightInFSAct.setEnabled(
-                editorsManager.isHighlightInFSAvailable() )
-        self.__highlightInOutlineAct.setEnabled( isPythonBuffer )
+            editorsManager.isHighlightInFSAvailable())
+        self.__highlightInOutlineAct.setEnabled(isPythonBuffer)
 
-        self.__closeTabAct.setShortcut( "Ctrl+F4" )
-        self.__tabJumpToDefAct.setShortcut( "Ctrl+\\" )
-        self.__calltipAct.setShortcut( "Ctrl+/" )
-        self.__tabJumpToScopeBeginAct.setShortcut( "Alt+U" )
-        self.__tabOpenImportAct.setShortcut( "Ctrl+I" )
-        self.__highlightInOutlineAct.setShortcut( "Ctrl+B" )
+        self.__closeTabAct.setShortcut("Ctrl+F4")
+        self.__tabJumpToDefAct.setShortcut("Ctrl+\\")
+        self.__calltipAct.setShortcut("Ctrl+/")
+        self.__tabJumpToScopeBeginAct.setShortcut("Alt+U")
+        self.__tabOpenImportAct.setShortcut("Ctrl+I")
+        self.__highlightInOutlineAct.setShortcut("Ctrl+B")
 
         self.__recentFilesMenu.clear()
         addedCount = 0
@@ -3541,76 +3486,71 @@ class CodimensionMainWindow(QMainWindow):
         for item in GlobalData().project.recentFiles:
             addedCount += 1
             act = self.__recentFilesMenu.addAction(
-                                self.__getAccelerator( addedCount ) + item )
-            act.setData( QVariant( item ) )
-            act.setEnabled( os.path.exists( item ) )
+                self.__getAccelerator(addedCount) + item)
+            act.setData(QVariant(item))
+            act.setEnabled(os.path.exists(item))
 
-        self.__recentFilesMenu.setEnabled( addedCount > 0 )
-        return
+        self.__recentFilesMenu.setEnabled(addedCount > 0)
 
-    def __searchAboutToShow( self ):
-        " Triggered when search menu is about to show "
+    def __searchAboutToShow(self):
+        """Triggered when search menu is about to show"""
         isPlainTextBuffer = self.__isPlainTextBuffer()
         isPythonBuffer = self.__isPythonBuffer()
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
 
-        self.__findOccurencesAct.setEnabled( isPythonBuffer and
-                                             os.path.isabs( currentWidget.getFileName() ) )
-        self.__goToLineAct.setEnabled( isPlainTextBuffer )
-        self.__findAct.setEnabled( isPlainTextBuffer )
-        self.__findCurrentAct.setEnabled( isPlainTextBuffer )
-        self.__replaceAct.setEnabled( isPlainTextBuffer and
-                                      currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer )
-        self.__findNextAct.setEnabled( isPlainTextBuffer )
-        self.__findPrevAct.setEnabled( isPlainTextBuffer )
+        self.__findOccurencesAct.setEnabled(isPythonBuffer and
+                                            os.path.isabs(currentWidget.getFileName()))
+        self.__goToLineAct.setEnabled(isPlainTextBuffer)
+        self.__findAct.setEnabled(isPlainTextBuffer)
+        self.__findCurrentAct.setEnabled(isPlainTextBuffer)
+        self.__replaceAct.setEnabled(isPlainTextBuffer and
+                                     currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer)
+        self.__findNextAct.setEnabled(isPlainTextBuffer)
+        self.__findPrevAct.setEnabled(isPlainTextBuffer)
 
-        self.__findOccurencesAct.setShortcut( "Ctrl+]" )
-        self.__goToLineAct.setShortcut( "Ctrl+G" )
-        self.__findAct.setShortcut( "Ctrl+F" )
-        self.__findCurrentAct.setShortcut( "Ctrl+F3" )
-        self.__replaceAct.setShortcut( "Ctrl+R" )
-        self.__findNextAct.setShortcut( "F3" )
-        self.__findPrevAct.setShortcut( "Shift+F3" )
-        return
+        self.__findOccurencesAct.setShortcut("Ctrl+]")
+        self.__goToLineAct.setShortcut("Ctrl+G")
+        self.__findAct.setShortcut("Ctrl+F")
+        self.__findCurrentAct.setShortcut("Ctrl+F3")
+        self.__replaceAct.setShortcut("Ctrl+R")
+        self.__findNextAct.setShortcut("F3")
+        self.__findPrevAct.setShortcut("Shift+F3")
 
-    def __diagramsAboutToShow( self ):
-        " Triggered when the diagrams menu is about to show "
+    def __diagramsAboutToShow(self):
+        """Triggered when the diagrams menu is about to show"""
         isPythonBuffer = self.__isPythonBuffer()
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
 
         enabled = isPythonBuffer and \
             currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer
-        self.__tabImportDgmAct.setEnabled( enabled )
-        self.__tabImportDgmDlgAct.setEnabled( enabled )
-        return
+        self.__tabImportDgmAct.setEnabled(enabled)
+        self.__tabImportDgmDlgAct.setEnabled(enabled)
 
-    def __runAboutToShow( self ):
-        " Triggered when the run menu is about to show "
+    def __runAboutToShow(self):
+        """Triggered when the run menu is about to show"""
         projectLoaded = GlobalData().project.isLoaded()
         prjScriptValid = GlobalData().isProjectScriptValid()
 
         enabled = projectLoaded and prjScriptValid and not self.debugMode
-        self.__prjRunAct.setEnabled( enabled )
-        self.__prjRunDlgAct.setEnabled( enabled )
+        self.__prjRunAct.setEnabled(enabled)
+        self.__prjRunDlgAct.setEnabled(enabled)
 
-        self.__prjProfileAct.setEnabled( enabled )
-        self.__prjProfileDlgAct.setEnabled( enabled )
-        return
+        self.__prjProfileAct.setEnabled(enabled)
+        self.__prjProfileDlgAct.setEnabled(enabled)
 
-    def __debugAboutToShow( self ):
-        " Triggered when the debug menu is about to show "
+    def __debugAboutToShow(self):
+        """Triggered when the debug menu is about to show"""
         projectLoaded = GlobalData().project.isLoaded()
         prjScriptValid = GlobalData().isProjectScriptValid()
 
         enabled = projectLoaded and prjScriptValid and not self.debugMode
-        self.__prjDebugAct.setEnabled( enabled )
-        self.__prjDebugDlgAct.setEnabled( enabled )
-        return
+        self.__prjDebugAct.setEnabled(enabled)
+        self.__prjDebugDlgAct.setEnabled(enabled)
 
-    def __toolsAboutToShow( self ):
-        " Triggered when tools menu is about to show "
+    def __toolsAboutToShow(self):
+        """Triggered when tools menu is about to show"""
         isPythonBuffer = self.__isPythonBuffer()
         projectLoaded = GlobalData().project.isLoaded()
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -3618,24 +3558,22 @@ class CodimensionMainWindow(QMainWindow):
 
         pythonBufferNonAnnotate = isPythonBuffer and \
             currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer
-        self.__tabLineCounterAct.setEnabled( isPythonBuffer )
-        self.__tabPythonTidyAct.setEnabled( pythonBufferNonAnnotate and not self.debugMode )
-        self.__tabPythonTidyDlgAct.setEnabled( pythonBufferNonAnnotate and not self.debugMode )
+        self.__tabLineCounterAct.setEnabled(isPythonBuffer)
 
         if projectLoaded:
             self.__unusedClassesAct.setEnabled(
-                            self.classesViewer.getItemCount() > 0 )
+                self.classesViewer.getItemCount() > 0)
             self.__unusedFunctionsAct.setEnabled(
-                            self.functionsViewer.getItemCount() > 0 )
+                self.functionsViewer.getItemCount() > 0)
             self.__unusedGlobalsAct.setEnabled(
-                            self.globalsViewer.getItemCount() > 0 )
+                self.globalsViewer.getItemCount() > 0)
         else:
-            self.__unusedClassesAct.setEnabled( False )
-            self.__unusedFunctionsAct.setEnabled( False )
-            self.__unusedGlobalsAct.setEnabled( False )
+            self.__unusedClassesAct.setEnabled(False)
+            self.__unusedFunctionsAct.setEnabled(False)
+            self.__unusedGlobalsAct.setEnabled(False)
 
-    def __viewAboutToShow( self ):
-        " Triggered when view menu is about to show "
+    def __viewAboutToShow(self):
+        """Triggered when view menu is about to show"""
         isPlainTextBuffer = self.__isPlainTextBuffer()
         isGraphicsBuffer = self.__isGraphicsBuffer()
         isGeneratedDiagram = self.__isGeneratedDiagram()
@@ -3647,99 +3585,91 @@ class CodimensionMainWindow(QMainWindow):
             editorsManager = self.editorsManagerWidget.editorsManager
             currentWidget = editorsManager.currentWidget()
             zoomEnabled = currentWidget.isZoomApplicable()
-        self.__zoomInAct.setEnabled( zoomEnabled )
-        self.__zoomOutAct.setEnabled( zoomEnabled )
-        self.__zoom11Act.setEnabled( zoomEnabled )
+        self.__zoomInAct.setEnabled(zoomEnabled)
+        self.__zoomOutAct.setEnabled(zoomEnabled)
+        self.__zoom11Act.setEnabled(zoomEnabled)
 
-        self.__zoomInAct.setShortcut( "Ctrl+=" )
-        self.__zoomOutAct.setShortcut( "Ctrl+-" )
-        self.__zoom11Act.setShortcut( "Ctrl+0" )
+        self.__zoomInAct.setShortcut("Ctrl+=")
+        self.__zoomOutAct.setShortcut("Ctrl+-")
+        self.__zoom11Act.setShortcut("Ctrl+0")
 
-        self.__debugBarAct.setEnabled( self.debugMode )
-        return
+        self.__debugBarAct.setEnabled(self.debugMode)
 
-    def __optionsAboutToShow( self ):
-        " Triggered when the options menu is about to show "
-        exists = os.path.exists( getIDETemplateFile() )
-        self.__ideCreateTemplateAct.setEnabled( not exists )
-        self.__ideEditTemplateAct.setEnabled( exists )
-        self.__ideDelTemplateAct.setEnabled( exists )
+    def __optionsAboutToShow(self):
+        """Triggered when the options menu is about to show"""
+        exists = os.path.exists(getIDETemplateFile())
+        self.__ideCreateTemplateAct.setEnabled(not exists)
+        self.__ideEditTemplateAct.setEnabled(exists)
+        self.__ideDelTemplateAct.setEnabled(exists)
 
-    def __helpAboutToShow( self ):
-        " Triggered when help menu is about to show "
+    def __helpAboutToShow(self):
+        """Triggered when help menu is about to show"""
         isPythonBuffer = self.__isPythonBuffer()
-        self.__contextHelpAct.setEnabled( isPythonBuffer )
-        self.__callHelpAct.setEnabled( isPythonBuffer )
+        self.__contextHelpAct.setEnabled(isPythonBuffer)
+        self.__callHelpAct.setEnabled(isPythonBuffer)
 
-        self.__contextHelpAct.setShortcut( "Ctrl+F1" )
-        self.__callHelpAct.setShortcut( "Ctrl+Shift+F1" )
-        return
+        self.__contextHelpAct.setShortcut("Ctrl+F1")
+        self.__callHelpAct.setShortcut("Ctrl+Shift+F1")
 
-    def __editAboutToHide( self ):
-        " Triggered when edit menu is about to hide "
-        self.__undoAct.setShortcut( "" )
-        self.__redoAct.setShortcut( "" )
-        self.__cutAct.setShortcut( "" )
-        self.__copyAct.setShortcut( "" )
-        self.__pasteAct.setShortcut( "" )
-        self.__selectAllAct.setShortcut( "" )
-        self.__commentAct.setShortcut( "" )
-        self.__duplicateAct.setShortcut( "" )
-        self.__autocompleteAct.setShortcut( "" )
-        return
+    def __editAboutToHide(self):
+        """Triggered when edit menu is about to hide"""
+        self.__undoAct.setShortcut("")
+        self.__redoAct.setShortcut("")
+        self.__cutAct.setShortcut("")
+        self.__copyAct.setShortcut("")
+        self.__pasteAct.setShortcut("")
+        self.__selectAllAct.setShortcut("")
+        self.__commentAct.setShortcut("")
+        self.__duplicateAct.setShortcut("")
+        self.__autocompleteAct.setShortcut("")
 
-    def __prjAboutToHide( self ):
-        self.__newProjectAct.setEnabled( True )
-        self.__openProjectAct.setEnabled( True )
-        return
+    def __prjAboutToHide(self):
+        self.__newProjectAct.setEnabled(True)
+        self.__openProjectAct.setEnabled(True)
 
-    def __tabAboutToHide( self ):
-        " Triggered when tab menu is about to hide "
-        self.__closeTabAct.setShortcut( "" )
-        self.__tabJumpToDefAct.setShortcut( "" )
-        self.__calltipAct.setShortcut( "" )
-        self.__tabJumpToScopeBeginAct.setShortcut( "" )
-        self.__tabOpenImportAct.setShortcut( "" )
-        self.__highlightInOutlineAct.setShortcut( "" )
+    def __tabAboutToHide(self):
+        """Triggered when tab menu is about to hide"""
+        self.__closeTabAct.setShortcut("")
+        self.__tabJumpToDefAct.setShortcut("")
+        self.__calltipAct.setShortcut("")
+        self.__tabJumpToScopeBeginAct.setShortcut("")
+        self.__tabOpenImportAct.setShortcut("")
+        self.__highlightInOutlineAct.setShortcut("")
 
-        self.__saveFileAct.setEnabled( True )
-        self.__saveFileAsAct.setEnabled( True )
-        return
+        self.__saveFileAct.setEnabled(True)
+        self.__saveFileAsAct.setEnabled(True)
 
-    def __searchAboutToHide( self ):
-        " Triggered when search menu is about to hide "
-        self.__findOccurencesAct.setShortcut( "" )
-        self.__goToLineAct.setShortcut( "" )
-        self.__findAct.setShortcut( "" )
-        self.__findCurrentAct.setShortcut( "" )
-        self.__replaceAct.setShortcut( "" )
-        self.__findNextAct.setShortcut( "" )
-        self.__findPrevAct.setShortcut( "" )
-        return
+    def __searchAboutToHide(self):
+        """Triggered when search menu is about to hide"""
+        self.__findOccurencesAct.setShortcut("")
+        self.__goToLineAct.setShortcut("")
+        self.__findAct.setShortcut("")
+        self.__findCurrentAct.setShortcut("")
+        self.__replaceAct.setShortcut("")
+        self.__findNextAct.setShortcut("")
+        self.__findPrevAct.setShortcut("")
 
     def __toolsAboutToHide( self ):
-        " Triggered when tools menu is about to hide "
-        return
+        """Triggered when tools menu is about to hide"""
+        pass
 
-    def __viewAboutToHide( self ):
-        " Triggered when view menu is about to hide "
-        self.__zoomInAct.setShortcut( "" )
-        self.__zoomOutAct.setShortcut( "" )
-        self.__zoom11Act.setShortcut( "" )
-        return
+    def __viewAboutToHide(self):
+        """Triggered when view menu is about to hide"""
+        self.__zoomInAct.setShortcut("")
+        self.__zoomOutAct.setShortcut("")
+        self.__zoom11Act.setShortcut("")
 
-    def __helpAboutToHide( self ):
-        " Triggered when help menu is about to hide "
-        self.__contextHelpAct.setShortcut( "" )
-        self.__callHelpAct.setShortcut( "" )
-        return
+    def __helpAboutToHide(self):
+        """Triggered when help menu is about to hide"""
+        self.__contextHelpAct.setShortcut("")
+        self.__callHelpAct.setShortcut("")
 
     @staticmethod
-    def __getAccelerator( count ):
-        " Provides an accelerator text for a menu item "
+    def __getAccelerator(count):
+        """Provides an accelerator text for a menu item"""
         if count < 10:
-            return "&" + str( count ) + ".  "
-        return "&" + chr( count - 10 + ord( 'a' ) ) + ".  "
+            return "&" + str(count) + ".  "
+        return "&" + chr(count - 10 + ord('a')) + ".  "
 
     def __prjAboutToShow(self):
         """Triggered when project menu is about to show"""
