@@ -57,7 +57,7 @@ class CDMComboBox(QComboBox):
     def __init__(self, insertOnEnter=True, parent=None):
         QComboBox.__init__(self, parent)
         self.setEditable(True)
-        self.setAutoCompletion(False)
+        self.setCompleter(None)
         self.setDuplicatesEnabled(False)
         self.setInsertPolicy(QComboBox.NoInsert)
         self.insert = insertOnEnter

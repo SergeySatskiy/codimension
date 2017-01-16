@@ -68,9 +68,9 @@ class FunctionsViewer(QWidget):
 
         GlobalData().project.projectChanged.connect(
             self.__onProjectChanged)
-        self.funcViewer.selectionChanged.connect(self.__selectionChanged)
-        self.funcViewer.openingItem.connect(self.itemActivated)
-        self.funcViewer.modelFilesChanged.connect(self.modelFilesChanged)
+        self.funcViewer.sigSelectionChanged.connect(self.__selectionChanged)
+        self.funcViewer.sigOpeningItem.connect(self.itemActivated)
+        self.funcViewer.sigModelFilesChanged.connect(self.modelFilesChanged)
 
         self.filterEdit.lineEdit().setFocus()
         self.__contextItem = None
@@ -138,10 +138,10 @@ class FunctionsViewer(QWidget):
 
     def __selectionChanged(self, index):
         """Handles the changed selection"""
-        if index is None:
-            self.__contextItem = None
-        else:
+        if index.isValid():
             self.__contextItem = self.funcViewer.model().item(index)
+        else:
+            self.__contextItem = None
         self.__updateButtons()
 
     def getItemCount(self):

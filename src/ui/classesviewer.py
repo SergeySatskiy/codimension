@@ -65,9 +65,9 @@ class ClassesViewer(QWidget):
             self.__handleShowContextMenu)
 
         GlobalData().project.projectChanged.connect(self.__onProjectChanged)
-        self.clViewer.selectionChanged.connect(self.__selectionChanged)
-        self.clViewer.openingItem.connect(self.itemActivated)
-        self.clViewer.modelFilesChanged.connect(self.modelFilesChanged)
+        self.clViewer.sigSelectionChanged.connect(self.__selectionChanged)
+        self.clViewer.sigOpeningItem.connect(self.itemActivated)
+        self.clViewer.sigModelFilesChanged.connect(self.modelFilesChanged)
 
         self.filterEdit.lineEdit().setFocus()
         self.__contextItem = None
@@ -136,10 +136,10 @@ class ClassesViewer(QWidget):
 
     def __selectionChanged(self, index):
         """Handles the changed selection"""
-        if index is None:
-            self.__contextItem = None
-        else:
+        if index.isValid():
             self.__contextItem = self.clViewer.model().item(index)
+        else:
+            self.__contextItem = None
         self.__updateButtons()
 
     def getItemCount(self):

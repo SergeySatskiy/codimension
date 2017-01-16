@@ -53,7 +53,7 @@ class ClickableTabBar(QTabBar):
 
     """Intercepts clicking on the toolbar"""
 
-    currentTabClicked = pyqtSignal()
+    sigCurrentTabClicked = pyqtSignal()
 
     def __init__(self, parent):
         QTabBar.__init__(self, parent)
@@ -81,6 +81,8 @@ class EditorsManager(QTabWidget):
     sigPluginContextMenuAdded = pyqtSignal(QMenu, int)
     sigPluginContextMenuRemoved = pyqtSignal(QMenu, int)
     sigTabClosed = pyqtSignal(str)
+    sigFileUpdated = pyqtSignal(str, str)
+    sigBufferSavedAs = pyqtSignal(str, str)
 
     def __init__(self, parent, debugger):
         QTabWidget.__init__(self, parent)
@@ -165,7 +167,7 @@ class EditorsManager(QTabWidget):
         self.tabBar().setContextMenuPolicy(Qt.CustomContextMenu)
         self.tabBar().customContextMenuRequested.connect(
             self.__showTabContextMenu)
-        self.tabBar().currentTabClicked.connect(self.__currentTabClicked)
+        self.tabBar().sigCurrentTabClicked.connect(self.__currentTabClicked)
 
         # Plugins context menus support
         self.__pluginMenus = {}
@@ -1212,7 +1214,7 @@ class EditorsManager(QTabWidget):
                 GlobalData().project.onProjectFileUpdated()
             if existedBefore:
                 # Otherwise the FS watcher will signal the changes
-                self.fileUpdated.emit(fileName, widget.getUUID())
+                self.sigFileUpdated.emit(fileName, widget.getUUID())
             self.__mainWindow.vcsManager.setLocallyModified(fileName)
             return True
 
@@ -1341,10 +1343,10 @@ class EditorsManager(QTabWidget):
 
         uuid = widget.getUUID()
         if existedBefore:
-            self.fileUpdated.emit(fileName, uuid)
+            self.sigFileUpdated.emit(fileName, uuid)
         else:
             if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
-                self.bufferSavedAs.emit(fileName, uuid)
+                self.sigBufferSavedAs.emit(fileName, uuid)
                 GlobalData().project.addRecentFile(fileName)
 
         if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:

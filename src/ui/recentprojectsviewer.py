@@ -510,7 +510,8 @@ class RecentProjectsViewer(QWidget):
         self.projectsView.header().resizeSections(
             QHeaderView.ResizeToContents)
         self.projectsView.header().resizeSection(0, 22)
-        self.projectsView.header().setResizeMode(0, QHeaderView.Fixed)
+        self.projectsView.header().setSectionResizeMode(
+            0, QHeaderView.Fixed)
 
     def __resizeFileColumns(self):
         """Resize the files list columns"""
@@ -518,7 +519,8 @@ class RecentProjectsViewer(QWidget):
         self.recentFilesView.header().resizeSections(
             QHeaderView.ResizeToContents)
         self.recentFilesView.header().resizeSection(0, 22)
-        self.recentFilesView.header().setResizeMode(0, QHeaderView.Fixed)
+        self.recentFilesView.header().setSectionResizeMode(
+            0, QHeaderView.Fixed)
 
     def __projectActivated(self, item, column):
         """Handles the double click (or Enter) on the item"""
@@ -613,7 +615,7 @@ class RecentProjectsViewer(QWidget):
     def __populateProjects(self):
         """Populates the recent projects"""
         self.projectsView.clear()
-        for item in Settings().recentProjects:
+        for item in Settings()['recentProjects']:
             self.projectsView.addTopLevelItem(RecentProjectViewItem(item))
 
         self.__sortProjects()

@@ -34,7 +34,7 @@ from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
 from .qt import (QSize, Qt, QVariant, QWidget, QVBoxLayout, QSplitter,
                  QToolBar, QAction, QToolButton, QHBoxLayout, QLabel,
                  QSpacerItem, QSizePolicy, QDialog, QMenu, QFrame,
-                 QApplication, QMessageBox, QCursor, QPalette)
+                 QApplication, QMessageBox, QCursor, QPalette, pyqtSignal)
 from .projectproperties import ProjectPropertiesDialog
 from .filesystembrowser import FileSystemBrowser
 from .projectbrowser import ProjectBrowser
@@ -51,6 +51,8 @@ from .newnesteddir import NewProjectDirDialog
 class ProjectViewer(QWidget):
 
     """Project viewer widget"""
+
+    sigFileUpdated = pyqtSignal(str, str)
 
     def __init__(self, parent):
         QWidget.__init__(self, parent)
@@ -94,9 +96,9 @@ class ProjectViewer(QWidget):
         # Plugin context menu support
         self.__pluginFileMenus = {}
         self.__pluginDirMenus = {}
-        GlobalData().pluginManager.PluginActivated.connect(
+        GlobalData().pluginManager.sigPluginActivated.connect(
             self.__onPluginActivated)
-        GlobalData().pluginManager.PluginDeactivated.connect(
+        GlobalData().pluginManager.sigPluginDeactivated.connect(
             self.__onPluginDeactivated)
 
         # Keep the min and max height of the FS part initialized
@@ -104,7 +106,7 @@ class ProjectViewer(QWidget):
         self.__maxH = self.lower.maximumHeight()
 
         # At the beginning the FS viewer is shown, so hide it if needed
-        if Settings().showFSViewer == False:
+        if Settings()['showFSViewer'] == False:
             self.__onShowHide(True)
 
     def setTooltips(self, switchOn):
@@ -195,7 +197,7 @@ class ProjectViewer(QWidget):
         self.upperToolbar.addAction(self.prjNewDirButton)
         self.upperToolbar.addAction(self.prjCopyToClipboardButton)
 
-        self.projectTreeView.firstSelectedItem.connect(
+        self.projectTreeView.sigFirstSelectedItem.connect(
             self.__prjSelectionChanged)
 
         self.projectTreeView.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -323,7 +325,7 @@ class ProjectViewer(QWidget):
 
         # Tree view part
         self.filesystemView = FileSystemBrowser()
-        self.filesystemView.firstSelectedItem.connect(
+        self.filesystemView.sigFirstSelectedItem.connect(
             self.__fsSelectionChanged)
         self.filesystemView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.filesystemView.customContextMenuRequested.connect(
@@ -514,23 +516,23 @@ class ProjectViewer(QWidget):
                 dialog.emailEdit.text().strip(),
                 dialog.descriptionEdit.toPlainText().strip())
 
-            self.fileUpdated.emit(project.fileName, None)
-            self.onFileUpdated(project.fileName, None)
+            self.sigFileUpdated.emit(project.fileName, "")
+            self.onFileUpdated(project.fileName, "")
 
     def __fsSelectionChanged(self, index):
         """Handles the changed selection in the FS browser"""
-        if index is None:
-            self.__fsContextItem = None
-        else:
+        if index.isValid():
             self.__fsContextItem = self.filesystemView.model().item(index)
+        else:
+            self.__fsContextItem = None
         self.__updateFSToolbarButtons()
 
     def __prjSelectionChanged(self, index):
         """Handles the changed selection in the project browser"""
-        if index is None:
-            self.__prjContextItem = None
-        else:
+        if index.isValid():
             self.__prjContextItem = self.projectTreeView.model().item(index)
+        else:
+            self.__prjContextItem = None
         self.__updatePrjToolbarButtons()
 
     def __updateFSToolbarButtons(self):
@@ -1026,7 +1028,7 @@ class ProjectViewer(QWidget):
             self.lower.setMinimumHeight(self.headerFrame.height())
             self.lower.setMaximumHeight(self.headerFrame.height())
 
-            Settings().showFSViewer = False
+            Settings()['showFSViewer'] = False
         else:
             self.filesystemView.setVisible(True)
             self.lowerToolbar.setVisible(True)
@@ -1036,7 +1038,7 @@ class ProjectViewer(QWidget):
             self.lower.setMinimumHeight(self.__minH)
             self.lower.setMaximumHeight(self.__maxH)
 
-            Settings().showFSViewer = True
+            Settings()['showFSViewer'] = True
 
     def highlightPrjItem(self, path):
         """Triggered when the file is to be highlighted in a project tree"""

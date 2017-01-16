@@ -63,9 +63,9 @@ class GlobalsViewer(QWidget):
             self.__handleShowContextMenu)
 
         GlobalData().project.projectChanged.connect(self.__onProjectChanged)
-        self.globalsViewer.selectionChanged.connect(self.__selectionChanged)
-        self.globalsViewer.openingItem.connect(self.itemActivated)
-        self.globalsViewer.modelFilesChanged.connect(self.modelFilesChanged)
+        self.globalsViewer.sigSelectionChanged.connect(self.__selectionChanged)
+        self.globalsViewer.sigOpeningItem.connect(self.itemActivated)
+        self.globalsViewer.sigModelFilesChanged.connect(self.modelFilesChanged)
 
         self.filterEdit.lineEdit().setFocus()
         self.__contextItem = None
@@ -130,10 +130,10 @@ class GlobalsViewer(QWidget):
 
     def __selectionChanged(self, index):
         """Handles the changed selection"""
-        if index is None:
-            self.__contextItem = None
-        else:
+        if index.isValid():
             self.__contextItem = self.globalsViewer.model().item(index)
+        else:
+            self.__contextItem = None
         self.__updateButtons()
 
     def getItemCount(self):

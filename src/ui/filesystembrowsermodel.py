@@ -39,7 +39,7 @@ class FileSystemBrowserModel(BrowserModelBase):
 
     def __init__(self, parent=None):
         BrowserModelBase.__init__(self, QVariant("Name"), parent)
-        self.setTooltips(Settings().projectTooltips)
+        self.setTooltips(Settings()['projectTooltips'])
 
         self.projectTopLevelDirs = []
         self.populateModel()

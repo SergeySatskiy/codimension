@@ -42,7 +42,7 @@ class FunctionsBrowserModel(BrowserModelBase):
         BrowserModelBase.__init__(self, [QVariant("Name"),
                                          QVariant("File name"),
                                          QVariant("Line")], parent)
-        self.setTooltips(Settings().functionsTooltips)
+        self.setTooltips(Settings()['functionsTooltips'])
         self.globalData.project.projectChanged.connect(self.__onProjectChanged)
 
     def __populateModel(self):

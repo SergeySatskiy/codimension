@@ -117,7 +117,9 @@ class ObjectsBrowser(QTreeView):
 
     """Common functionality of the G/F/C browsers"""
 
-    openingItem = pyqtSignal(str, int)
+    sigOpeningItem = pyqtSignal(str, int)
+    sigSelectionChanged = pyqtSignal(QModelIndex)
+    sigModelFilesChanged = pyqtSignal()
 
     def __init__(self, sourceModel, parent=None):
         QTreeView.__init__(self, parent)
@@ -144,7 +146,7 @@ class ObjectsBrowser(QTreeView):
         header = self.header()
         header.setSortIndicator(0, Qt.AscendingOrder)
         header.setSortIndicatorShown(True)
-        header.setClickable(True)
+        header.setSectionsClickable(True)
 
         self.setSortingEnabled(True)
 
@@ -247,7 +249,7 @@ class ObjectsBrowser(QTreeView):
             return
         path = item.getPath()
         line = item.data(2)
-        self.openingItem.emit(str(path), line)
+        self.sigOpeningItem.emit(str(path), line)
         GlobalData().mainWindow.openFile(path, line)
 
     def getDisassembled(self, item):
@@ -306,13 +308,13 @@ class ObjectsBrowser(QTreeView):
                 self.layoutDisplay()
                 self.updateCounter()
                 self.model().setFilterRegExp("")
-                self.modelFilesChanged.emit()
+                self.sigModelFilesChanged.emit()
 
     def selectionChanged(self, selected, deselected):
         """Slot is called when the selection has been changed"""
         if selected.indexes():
             # The objects browsers may have no more than one selected item
-            self.selectionChanged.emit(selected.indexes()[0])
+            self.sigSelectionChanged.emit(selected.indexes()[0])
         else:
-            self.selectionChanged.emit(None)
+            self.sigSelectionChanged.emit(QModelIndex())
         QTreeView.selectionChanged(self, selected, deselected)

@@ -198,7 +198,7 @@ class SideBar(QWidget):
     @staticmethod
     def __fromVariant(data):
         """A tab stores its name and priority"""
-        val = data.toString().split(':')
+        val = data.split(':')
         if val[0] == '':
             return val[1], None
         return val[1], int(val[0])

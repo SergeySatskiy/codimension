@@ -290,98 +290,78 @@ class CodimensionMainWindow(QMainWindow):
         logging.root.handlers = []
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(
-            logging.Formatter( "%(levelname) -10s %(asctime)s %(message)s",
-            None ) )
+            logging.Formatter("%(levelname) -10s %(asctime)s %(message)s",
+            None))
         logging.root.addHandler(handler)
 
-
-        self.projectViewer = ProjectViewer( self )
-        self.__leftSideBar.addTab( self.projectViewer,
-                                   getIcon( '' ),
-                                   "Project" )
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( 'fileUpdated' ),
-                      self.projectViewer.onFileUpdated )
-        self.recentProjectsViewer = RecentProjectsViewer( self )
-        self.__leftSideBar.addTab( self.recentProjectsViewer,
-                                   getIcon( '' ),
-                                   "Recent" )
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( 'fileUpdated' ),
-                      self.recentProjectsViewer.onFileUpdated )
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( "bufferSavedAs" ),
-                      self.recentProjectsViewer.onFileUpdated )
-        self.connect( self.projectViewer, SIGNAL( "fileUpdated" ),
-                      self.recentProjectsViewer.onFileUpdated )
+        self.projectViewer = ProjectViewer(self)
+        self.__leftSideBar.addTab(self.projectViewer, getIcon(''),
+                                  'Project', 'project', 0)
+        self.editorsManagerWidget.editorsManager.sigFileUpdated.connect(
+            self.projectViewer.onFileUpdated)
+        self.recentProjectsViewer = RecentProjectsViewer(self)
+        self.__leftSideBar.addTab(self.recentProjectsViewer, getIcon(''),
+                                  "Recent", 'recent', 1)
+        self.editorsManagerWidget.editorsManager.sigFileUpdated.connect(
+            self.recentProjectsViewer.onFileUpdated)
+        self.editorsManagerWidget.editorsManager.sigBufferSavedAs.connect(
+            self.recentProjectsViewer.onFileUpdated)
+        self.projectViewer.sigFileUpdated.connect(
+            self.recentProjectsViewer.onFileUpdated)
 
         self.classesViewer = ClassesViewer()
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( 'fileUpdated' ),
-                      self.classesViewer.onFileUpdated )
-        self.__leftSideBar.addTab( self.classesViewer,
-                                   getIcon( '' ),
-                                   "Classes" )
+        self.editorsManagerWidget.editorsManager.sigFileUpdated.connect(
+            self.classesViewer.onFileUpdated)
+        self.__leftSideBar.addTab(self.classesViewer, getIcon(''),
+                                  'Classes', 'classes', 2)
         self.functionsViewer = FunctionsViewer()
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( 'fileUpdated' ),
-                      self.functionsViewer.onFileUpdated )
-        self.__leftSideBar.addTab( self.functionsViewer,
-                                   getIcon( '' ),
-                                   "Functions" )
+        self.editorsManagerWidget.editorsManager.sigFileUpdated.connect(
+            self.functionsViewer.onFileUpdated)
+        self.__leftSideBar.addTab(self.functionsViewer, getIcon(''),
+                                  'Functions', 'functions', 3)
         self.globalsViewer = GlobalsViewer()
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( 'fileUpdated' ),
-                      self.globalsViewer.onFileUpdated )
-        self.__leftSideBar.addTab( self.globalsViewer,
-                                   getIcon( '' ),
-                                   "Globals" )
-
-
-        # Create todo viewer
-        todoViewer = TodoViewer()
-        self.__bottomSideBar.addTab( todoViewer,
-                                     getIcon( 'todo.png' ),
-                                     'Todo' )
-        self.__bottomSideBar.setTabEnabled( 1, False )
+        self.editorsManagerWidget.editorsManager.sigFileUpdated.connect(
+            self.globalsViewer.onFileUpdated)
+        self.__leftSideBar.addTab(self.globalsViewer, getIcon(''),
+                                  'Globals', 'globals', 4)
 
         # Create search results viewer
         self.findInFilesViewer = FindInFilesViewer()
-        self.__bottomSideBar.addTab( self.findInFilesViewer,
-                getIcon( 'findindir.png' ), 'Search results' )
+        self.__bottomSideBar.addTab(self.findInFilesViewer,
+            getIcon('findindir.png'), 'Search results', 'search', 1)
 
         # Create tag help viewer
         self.tagHelpViewer = TagHelpViewer()
-        self.__bottomSideBar.addTab( self.tagHelpViewer,
-                getIcon( 'helpviewer.png' ), 'Context help' )
-        self.__bottomSideBar.setTabToolTip( 5, "Ctrl+F1 in python file" )
+        self.__bottomSideBar.addTab(self.tagHelpViewer,
+            getIcon('helpviewer.png'), 'Context help', 'contexthelp', 2)
+        self.__bottomSideBar.setTabToolTip('contexthelp',
+                                           "Ctrl+F1 in python file")
 
         # Create diff viewer
         self.diffViewer = DiffViewer()
         self.__bottomSideBar.addTab( self.diffViewer,
-                getIcon( 'diffviewer.png' ), 'Diff viewer' )
-        self.__bottomSideBar.setTabToolTip( 6, 'No diff shown' )
+            getIcon('diffviewer.png'), 'Diff viewer', 'diff', 3)
+        self.__bottomSideBar.setTabToolTip('diff', 'No diff shown')
 
         # Create outline viewer
         self.outlineViewer = FileOutlineViewer(
-                                    self.editorsManagerWidget.editorsManager,
-                                    self )
+            self.editorsManagerWidget.editorsManager, self)
         self.__rightSideBar.addTab( self.outlineViewer,
-                getIcon( '' ), 'File outline' )
+            getIcon(''), 'File outline', 'fileoutline', 0)
 
         # Create the pyflakes viewer
         self.__pyflakesViewer = PyflakesViewer(
-                                    self.editorsManagerWidget.editorsManager,
-                                    self.sbPyflakes, self )
+            self.editorsManagerWidget.editorsManager,
+            self.sbPyflakes, self)
 
-        self.debuggerContext = DebuggerContext( self.__debugger )
-        self.__rightSideBar.addTab( self.debuggerContext,
-                getIcon( '' ), 'Debugger' )
-        self.__rightSideBar.setTabEnabled( 1, False )
+        self.debuggerContext = DebuggerContext(self.__debugger)
+        self.__rightSideBar.addTab(self.debuggerContext,
+            getIcon(''), 'Debugger', 'debugger', 1)
+        self.__rightSideBar.setTabEnabled('debugger', False)
 
         self.debuggerExceptions = DebuggerExceptions()
-        self.__rightSideBar.addTab( self.debuggerExceptions,
-                getIcon( '' ), 'Exceptions' )
+        self.__rightSideBar.addTab(self.debuggerExceptions,
+            getIcon(''), 'Exceptions', 'exceptions', 2)
         self.connect( self.debuggerExceptions,
                       SIGNAL( 'ClientExceptionsCleared' ),
                       self.__onClientExceptionsCleared )

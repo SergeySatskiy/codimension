@@ -26,7 +26,7 @@ from utils.pixmapcache import getIcon
 from utils.fileutils import isPythonMime, isCDMProjectMime, getFileProperties
 from utils.project import getProjectFileTooltip
 from .qt import (Qt, QModelIndex, QSortFilterProxyModel, QAbstractItemView,
-                 QApplication, QTreeView)
+                 QApplication, QTreeView, pyqtSignal)
 from .viewitems import (DirectoryItemType, SysPathItemType, GlobalsItemType,
                         ImportsItemType, FunctionsItemType, ClassesItemType,
                         StaticAttributesItemType, InstanceAttributesItemType,
@@ -100,6 +100,8 @@ class FilesBrowserSortFilterProxyModel(QSortFilterProxyModel):
 class FilesBrowser(QTreeView):
 
     """Common functionality of the FS and project browsers"""
+
+    sigFirstSelectedItem = pyqtSignal(QModelIndex)
 
     def __init__(self, sourceModel, isProjectFilter, parent=None):
         QTreeView.__init__(self, parent)
@@ -321,9 +323,9 @@ class FilesBrowser(QTreeView):
         QTreeView.selectionChanged(self, selected, deselected)
         indexesList = selected.indexes()
         if indexesList:
-            self.firstSelectedItem.emit(indexesList[0])
+            self.sigFirstSelectedItem.emit(indexesList[0])
         else:
-            self.firstSelectedItem.emit(None)
+            self.sigFirstSelectedItem.emit(QModelIndex())
 
     def _onFSChanged(self, items):
         """Triggered when the project files set has been changed"""
