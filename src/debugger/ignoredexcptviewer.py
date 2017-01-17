@@ -44,7 +44,7 @@ class IgnoredExceptionsViewer(QWidget):
 
         GlobalData().project.projectChanged.connect(self.__onProjectChanged)
 
-        if Settings().showIgnoredExcViewer == False:
+        if Settings()['showIgnoredExcViewer'] == False:
             self.__onShowHide(True)
 
     def __createPopupMenu(self):
@@ -186,7 +186,7 @@ class IgnoredExceptionsViewer(QWidget):
             self.setMinimumHeight(self.headerFrame.height())
             self.setMaximumHeight(self.headerFrame.height())
 
-            Settings().showIgnoredExcViewer = False
+            Settings()['showIgnoredExcViewer'] = False
         else:
             self.exceptionsList.setVisible(True)
             self.__excTypeEdit.setVisible(True)
@@ -199,7 +199,7 @@ class IgnoredExceptionsViewer(QWidget):
             self.setMinimumHeight(self.__minH)
             self.setMaximumHeight(self.__maxH)
 
-            Settings().showIgnoredExcViewer = True
+            Settings()['showIgnoredExcViewer'] = True
 
     def __onSelectionChanged(self):
         """Triggered when the current item is changed"""

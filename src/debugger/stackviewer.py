@@ -85,7 +85,7 @@ class StackViewer(QWidget):
         self.__createPopupMenu()
         self.__createLayout()
 
-        if Settings().showStackViewer == False:
+        if Settings()['showStackViewer'] == False:
             self.__onShowHide(True)
 
     def __createPopupMenu(self):
@@ -176,7 +176,7 @@ class StackViewer(QWidget):
             self.setMinimumHeight(self.headerFrame.height())
             self.setMaximumHeight(self.headerFrame.height())
 
-            Settings().showStackViewer = False
+            Settings()['showStackViewer'] = False
         else:
             self.__framesList.setVisible(True)
             self.__showHideButton.setIcon(getIcon('less.png'))
@@ -185,7 +185,7 @@ class StackViewer(QWidget):
             self.setMinimumHeight(self.__minH)
             self.setMaximumHeight(self.__maxH)
 
-            Settings().showStackViewer = True
+            Settings()['showStackViewer'] = True
 
     def clear(self):
         """Clears the content"""

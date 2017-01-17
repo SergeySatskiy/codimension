@@ -44,8 +44,8 @@ class VariablesViewer(QWidget):
 
         self.__debugger = debugger
         self.__browser = VariablesBrowser(debugger, self)
-        self.__filter = Settings().debugGLFilter
-        self.__hideMCFFilter = Settings().debugHideMCF
+        self.__filter = Settings()['debugGLFilter']
+        self.__hideMCFFilter = Settings()['debugHideMCF']
         self.__createLayout()
 
         self.setTabOrder(self.__browser, self.__execStatement)
@@ -176,7 +176,7 @@ class VariablesViewer(QWidget):
     def __onMCFFilter(self):
         """Triggered when modules/classes/functions filter changed"""
         self.__hideMCFFilter = self.__mcfButton.isChecked()
-        Settings().debugHideMCF = self.__hideMCFFilter
+        Settings()['debugHideMCF'] = self.__hideMCFFilter
         self.__updateFilter()
 
     def __onGlobalAndLocalFilter(self):
@@ -189,7 +189,7 @@ class VariablesViewer(QWidget):
             # No changes
             return
 
-        Settings().debugGLFilter = VariablesViewer.FilterGlobalAndLocal
+        Settings()['debugGLFilter'] = VariablesViewer.FilterGlobalAndLocal
         self.__filter = VariablesViewer.FilterGlobalAndLocal
         self.__updateFilter()
 
@@ -203,7 +203,7 @@ class VariablesViewer(QWidget):
             # No changes
             return
 
-        Settings().debugGLFilter = VariablesViewer.FilterLocalOnly
+        Settings()['debugGLFilter'] = VariablesViewer.FilterLocalOnly
         self.__filter = VariablesViewer.FilterLocalOnly
         self.__updateFilter()
 
@@ -217,7 +217,7 @@ class VariablesViewer(QWidget):
             # No changes
             return
 
-        Settings().debugGLFilter = VariablesViewer.FilterGlobalOnly
+        Settings()['debugGLFilter'] = VariablesViewer.FilterGlobalOnly
         self.__filter = VariablesViewer.FilterGlobalOnly
         self.__updateFilter()
 

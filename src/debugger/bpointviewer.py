@@ -70,7 +70,7 @@ class BreakPointView(QTreeView):
         header = self.header()
         header.setSortIndicator(0, Qt.AscendingOrder)
         header.setSortIndicatorShown(True)
-        header.setClickable(True)
+        header.setSectionsClickable(True)
 
         self.setSortingEnabled(True)
         self.layoutDisplay()

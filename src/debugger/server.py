@@ -81,6 +81,13 @@ class CodimensionDebugger(QObject):
     sigClientStdout = pyqtSignal(str)
     sigClientStderr = pyqtSignal(str)
     sigClientRawInput = pyqtSignal(str, str)
+    sigClientStack = pyqtSignal(list)
+    sigClientThreadList = pyqtSignal(int, list)
+    sigClientVariables = pyqtSignal(int, list)
+    sigClientVariable = pyqtSignal(int, list)
+    sigClientThreadSet = pyqtSignal()
+    sigClientClearBreak = pyqtSignal(str, int)
+    sigClientBreakConditionError = pyqtSignal(str, int)
 
     STATE_STOPPED = 0
     STATE_PROLOGUE = 1
@@ -93,9 +100,6 @@ class CodimensionDebugger(QObject):
     PROTOCOL_EVALEXEC = 1
     PROTOCOL_STDOUT = 2
     PROTOCOL_STDERR = 3
-
-    clientClearBreak = pyqtSignal(str, int)
-    clientBreakConditionError = pyqtSignal(str, int)
 
     def __init__(self, mainWindow):
         QObject.__init__(self)
@@ -131,8 +135,8 @@ class CodimensionDebugger(QObject):
             self.__breakPointDataAboutToBeChanged)
         self.__breakpointModel.dataChanged.connect(self.__changeBreakPoints)
         self.__breakpointModel.rowsInserted.connect(self.__addBreakPoints)
-        self.clientClearBreak.connect(self.__clientClearBreakPoint)
-        self.clientBreakConditionError.connect(
+        self.sigClientClearBreak.connect(self.__clientClearBreakPoint)
+        self.sigClientBreakConditionError.connect(
             self.__clientBreakConditionError)
 
     def getScriptPath(self):
@@ -412,7 +416,7 @@ class CodimensionDebugger(QObject):
             if self.__stopAtFirstLine:
                 cf = stack[0]
                 self.sigClientLine.emit(cf[0], int(cf[1]), cmd==ResponseStack)
-                self.ClientStack.emit(stack)
+                self.sigClientStack.emit(stack)
             else:
                 self.__stopAtFirstLine = True
                 QTimer.singleShot(0, self.remoteContinue)
@@ -423,7 +427,7 @@ class CodimensionDebugger(QObject):
 
         if cmd == ResponseThreadList:
             currentThreadID, threadList = eval(content)
-            self.ClientThreadList.emit(currentThreadID, threadList)
+            self.sigClientThreadList.emit(currentThreadID, threadList)
             return self.__buffer != ""
 
         if cmd == ResponseVariables:
@@ -433,7 +437,7 @@ class CodimensionDebugger(QObject):
                 variables = vlist[1:]
             except IndexError:
                 variables = []
-            self.ClientVariables.emit(scope, variables)
+            self.sigClientVariables.emit(scope, variables)
             return self.__buffer != ""
 
         if cmd == ResponseVariable:
@@ -443,7 +447,7 @@ class CodimensionDebugger(QObject):
                 variables = vlist[1:]
             except IndexError:
                 variables = []
-            self.ClientVariable.emit(scope, variables)
+            self.sigClientVariable.emit(scope, variables)
             return self.__buffer != ""
 
         if cmd == ResponseException:
@@ -488,19 +492,19 @@ class CodimensionDebugger(QObject):
             return self.__buffer != ""
 
         if cmd == ResponseThreadSet:
-            self.ClientThreadSet.emit()
+            self.sigClientThreadSet.emit()
             return self.__buffer != ""
 
         if cmd == ResponseClearBreak:
             fileName, lineNo = content.split(',')
             lineNo = int(lineNo)
-            self.clientClearBreak.emit(fileName, lineNo)
+            self.sigClientClearBreak.emit(fileName, lineNo)
             return self.__buffer != ""
 
         if cmd == ResponseBPConditionError:
             fileName, lineNo = content.split(',')
             lineNo = int(lineNo)
-            self.clientBreakConditionError.emit(fileName, lineNo)
+            self.sigClientBreakConditionError.emit(fileName, lineNo)
             return self.__buffer != ""
 
         if cmd == ResponseRaw:
@@ -829,7 +833,7 @@ class CodimensionDebugger(QObject):
                            str(line) + ',' + str(ignoreCount) + '\n')
 
     def __clientClearBreakPoint(self, fileName, line):
-        """Handles the clientClearBreak signal"""
+        """Handles the sigClientClearBreak signal"""
         if self.__state in [self.STATE_PROLOGUE,
                             self.STATE_STOPPED,
                             self.STATE_FINISHING,

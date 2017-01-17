@@ -361,9 +361,8 @@ class CodimensionMainWindow(QMainWindow):
         self.debuggerExceptions = DebuggerExceptions()
         self.__rightSideBar.addTab(self.debuggerExceptions,
             getIcon(''), 'Exceptions', 'exceptions', 2)
-        self.connect( self.debuggerExceptions,
-                      SIGNAL( 'ClientExceptionsCleared' ),
-                      self.__onClientExceptionsCleared )
+        self.debuggerExceptions.sigClientExceptionsCleared.connect(
+            self.__onClientExceptionsCleared)
 
         self.debuggerBreakWatchPoints = DebuggerBreakWatchPoints(
             self, self.__debugger)

@@ -28,11 +28,14 @@ class DebuggerExceptions(QWidget):
 
     """Implements the debugger context viewer"""
 
+    sigClientExceptionsCleared = pyqtSignal()
+
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
 
         self.__createLayout()
-        self.clientExcptViewer.connect(self.__onClientExceptionsCleared)
+        self.clientExcptViewer.sigClientExceptionsCleared.connect(
+            self.__onClientExceptionsCleared)
 
     def __createLayout(self):
         """Creates the widget layout"""
@@ -76,4 +79,4 @@ class DebuggerExceptions(QWidget):
 
     def __onClientExceptionsCleared(self):
         """Triggered when the user cleared exceptions"""
-        self.ClientExceptionsCleared.emit()
+        self.sigClientExceptionsCleared.emit()

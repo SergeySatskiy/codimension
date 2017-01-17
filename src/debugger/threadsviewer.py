@@ -87,7 +87,7 @@ class ThreadsViewer(QWidget):
         self.__debugger = debugger
         self.__createLayout()
 
-        if Settings().showThreadViewer == False:
+        if Settings()['showThreadViewer'] == False:
             self.__onShowHide(True)
 
     def __createLayout(self):
@@ -162,7 +162,7 @@ class ThreadsViewer(QWidget):
             self.setMinimumHeight(self.headerFrame.height())
             self.setMaximumHeight(self.headerFrame.height())
 
-            Settings().showThreadViewer = False
+            Settings()['showThreadViewer'] = False
         else:
             self.__threadsList.setVisible(True)
             self.__showHideButton.setIcon(getIcon('less.png'))
@@ -171,7 +171,7 @@ class ThreadsViewer(QWidget):
             self.setMinimumHeight(self.__minH)
             self.setMaximumHeight(self.__maxH)
 
-            Settings().showThreadViewer = True
+            Settings()['showThreadViewer'] = True
 
     def __resizeColumns(self):
         """Resize the files list columns"""

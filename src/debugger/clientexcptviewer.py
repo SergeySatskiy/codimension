@@ -144,6 +144,8 @@ class ClientExceptionsViewer(QWidget):
 
     """Implements the client exceptions viewer for a debugger"""
 
+    sigClientExceptionsCleared = pyqtSignal()
+
     def __init__(self, parent, ignoredExceptionsViewer):
         QWidget.__init__(self, parent)
 
@@ -249,7 +251,6 @@ class ClientExceptionsViewer(QWidget):
         verticalLayout.addWidget(self.headerFrame)
         verticalLayout.addWidget(self.toolbar)
         verticalLayout.addWidget(self.exceptionsList)
-        return
 
     def clear(self):
         """Clears the content"""
@@ -259,7 +260,7 @@ class ClientExceptionsViewer(QWidget):
         self.__jumpToCodeButton.setEnabled(False)
         self.__delAllButton.setEnabled(False)
         self.__currentItem = None
-        self.ClientExceptionsCleared.emit()
+        self.sigClientExceptionsCleared.emit()
 
     def __onExceptionDoubleClicked(self, item, column):
         """Triggered when an exception is double clicked"""

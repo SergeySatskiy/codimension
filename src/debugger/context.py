@@ -33,12 +33,12 @@ class DebuggerContext(QWidget):
     def __init__(self, debugger, parent=None):
         QWidget.__init__(self, parent)
         self.__debugger = debugger
-        self.__debugger.ClientLine.connect(self.__onClientLine)
-        self.__debugger.ClientStack.connect(self.onClientStack)
-        self.__debugger.ClientThreadList.connect(self.__onClientThreadList)
-        self.__debugger.ClientVariables.connect(self.__onClientVariables)
-        self.__debugger.ClientVariable.connect(self.__onClientVariable)
-        self.__debugger.ClientThreadSet.connect(self.__onClientThreadSet)
+        self.__debugger.sigClientLine.connect(self.__onClientLine)
+        self.__debugger.sigClientStack.connect(self.onClientStack)
+        self.__debugger.sigClientThreadList.connect(self.__onClientThreadList)
+        self.__debugger.sigClientVariables.connect(self.__onClientVariables)
+        self.__debugger.sigClientVariable.connect(self.__onClientVariable)
+        self.__debugger.sigClientThreadSet.connect(self.__onClientThreadSet)
 
         self.currentStack = None
         self.__createLayout()
