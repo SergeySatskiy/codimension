@@ -897,7 +897,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__prjBarAct = self.__leftSideBarMenu.addAction(
                 getIcon( 'project.png' ),
                 'Activate &project tab' )
-        self.__prjBarAct.setData( QVariant( 'prj' ) )
+        self.__prjBarAct.setData( QVariant( 'project' ) )
         self.__recentBarAct = self.__leftSideBarMenu.addAction(
                 getIcon( 'project.png' ),
                 'Activate &recent tab' )
@@ -909,11 +909,11 @@ class CodimensionMainWindow(QMainWindow):
         self.__funcsBarAct = self.__leftSideBarMenu.addAction(
                 getIcon( 'fx.png' ),
                 'Activate &functions tab' )
-        self.__funcsBarAct.setData( QVariant( 'funcs' ) )
+        self.__funcsBarAct.setData( QVariant( 'functions' ) )
         self.__globsBarAct = self.__leftSideBarMenu.addAction(
                 getIcon( 'globalvar.png' ),
                 'Activate &globals tab' )
-        self.__globsBarAct.setData( QVariant( 'globs' ) )
+        self.__globsBarAct.setData( QVariant( 'globals' ) )
         self.__leftSideBarMenu.addSeparator()
         self.__hideLeftSideBarAct = self.__leftSideBarMenu.addAction(
                 getIcon( "" ),
@@ -925,19 +925,19 @@ class CodimensionMainWindow(QMainWindow):
         self.__outlineBarAct = self.__rightSideBarMenu.addAction(
                 getIcon( 'filepython.png' ),
                 'Activate &outline tab' )
-        self.__outlineBarAct.setData( QVariant( 'outline' ) )
+        self.__outlineBarAct.setData( QVariant( 'fileoutline' ) )
         self.__debugBarAct = self.__rightSideBarMenu.addAction(
                 getIcon( '' ),
                 'Activate &debug tab' )
-        self.__debugBarAct.setData( QVariant( 'debug' ) )
+        self.__debugBarAct.setData( QVariant( 'debugger' ) )
         self.__excptBarAct = self.__rightSideBarMenu.addAction(
                 getIcon( '' ),
                 'Activate &exceptions tab' )
-        self.__excptBarAct.setData( QVariant( 'excpt' ) )
+        self.__excptBarAct.setData( QVariant( 'excptions' ) )
         self.__bpointBarAct = self.__rightSideBarMenu.addAction(
                 getIcon( '' ),
                 'Activate &breakpoints tab' )
-        self.__bpointBarAct.setData( QVariant( 'bpoint' ) )
+        self.__bpointBarAct.setData( QVariant( 'breakpoints' ) )
         self.__rightSideBarMenu.addSeparator()
         self.__hideRightSideBarAct = self.__rightSideBarMenu.addAction(
                 getIcon( "" ),
@@ -2272,37 +2272,33 @@ class CodimensionMainWindow(QMainWindow):
                                 not self.settings.taborderpreserved
         return
 
-    def __openTabsMenuTriggered( self, act ):
-        " Tab list settings menu triggered "
+    def __openTabsMenuTriggered(self, act):
+        """Tab list settings menu triggered"""
         value, isOK = act.data().toInt()
         if isOK:
             if value == -1:
                 self.settings.tablistsortalpha = True
-                self.__alphasort.setChecked( True )
-                self.__tabsort.setChecked( False )
+                self.__alphasort.setChecked(True)
+                self.__tabsort.setChecked(False)
             elif value == -2:
                 self.settings.tablistsortalpha = False
-                self.__alphasort.setChecked( False )
-                self.__tabsort.setChecked( True )
-        return
+                self.__alphasort.setChecked(False)
+                self.__tabsort.setChecked(True)
 
     @staticmethod
     def __buildThemesList():
-        " Builds a list of themes - system wide and the user local "
-
+        """Builds a list of themes - system wide and the user local"""
         result = []
-        localSkinsDir = os.path.normpath( str( QDir.homePath() ) ) + \
+        localSkinsDir = os.path.normpath(str(QDir.homePath())) + \
                         os.path.sep + CONFIG_DIR + os.path.sep + "skins" + \
                         os.path.sep
-        for item in os.listdir( localSkinsDir ):
-            if os.path.isdir( localSkinsDir + item ):
+        for item in os.listdir(localSkinsDir):
+            if os.path.isdir(localSkinsDir + item):
                 # Seems to be a skin dir
-                if not os.path.exists( localSkinsDir + item +
-                                       os.path.sep + "application.css" ) or \
-                   not os.path.exists( localSkinsDir + item +
-                                       os.path.sep + "general" ) or \
-                   not os.path.exists( localSkinsDir + item +
-                                       os.path.sep + "lexers" ):
+                if not os.path.exists(localSkinsDir + item +
+                                      os.path.sep + "application.css") or \
+                   not os.path.exists(localSkinsDir + item +
+                                      os.path.sep + "skin.json"):
                     continue
                 # Get the theme display name from the general file
                 config = ConfigParser.ConfigParser()
@@ -2341,58 +2337,53 @@ class CodimensionMainWindow(QMainWindow):
                 # Get the theme display name from the general file
                 config = ConfigParser.ConfigParser()
                 try:
-                    config.read( [ skinsDir + item + os.path.sep + "general" ] )
-                    displayName = config.get( 'general', 'name' )
+                    config.read([skinsDir + item + os.path.sep + "general"])
+                    displayName = config.get('general', 'name')
                 except:
                     continue
 
-                result.append( [ item, displayName ] )
-
+                result.append([item, displayName])
         return result
 
-    def __onTheme( self, act ):
-        " Triggers when a theme is selected "
-        skinSubdir = str( act.data().toString() )
+    def __onTheme(self, act):
+        """Triggers when a theme is selected"""
+        skinSubdir = str(act.data().toString())
         if self.settings.skin == skinSubdir:
             return
 
-        logging.info( "Please restart codimension to apply the new theme" )
+        logging.info("Please restart codimension to apply the new theme")
         self.settings.skin = skinSubdir
-        return
 
-    def __styleAboutToShow( self ):
-        " Style menu is about to show "
+    def __styleAboutToShow(self):
+        """Style menu is about to show"""
         currentStyle = self.settings.style.lower()
         for item in self.__styles:
-            font = item[ 1 ].font()
-            if item[ 0 ].lower() == currentStyle:
-                font.setBold( True )
+            font = item[1].font()
+            if item[0].lower() == currentStyle:
+                font.setBold(True)
             else:
-                font.setBold( False )
-            item[ 1 ].setFont( font )
-        return
+                font.setBold(False)
+            item[1].setFont(font)
 
-    def __onStyle( self, act ):
-        " Sets the selected style "
-        styleName = str( act.data().toString() )
-        QApplication.setStyle( styleName )
+    def __onStyle(self, act):
+        """Sets the selected style"""
+        styleName = str(act.data().toString())
+        QApplication.setStyle(styleName)
         self.settings.style = styleName.lower()
-        return
 
-    def __onMonoFont( self, act ):
-        " Sets the new mono font "
-        fontFace = str( act.data().toString() )
+    def __onMonoFont(self, act):
+        """Sets the new mono font"""
+        fontFace = str(act.data().toString())
         try:
             font = QFont()
-            font.setFamily( fontFace )
-            GlobalData().skin.setMainEditorFont( font )
-            GlobalData().skin.setBaseMonoFontFace( fontFace )
+            font.setFamily(fontFace)
+            GlobalData().skin.setMainEditorFont(font)
+            GlobalData().skin.setBaseMonoFontFace(fontFace)
         except Exception as exc:
-            logging.error( str( exc ) )
+            logging.error(str(exc))
             return
 
-        logging.info( "Please restart codimension to apply the new font" )
-        return
+        logging.info("Please restart codimension to apply the new font")
 
     def showStatusBarMessage(self, msg, timeout=10000):
         """Shows a temporary status bar message, default 10sec"""
@@ -2407,76 +2398,68 @@ class CodimensionMainWindow(QMainWindow):
            currently loaded by codimension"""
         self.editorsManagerWidget.editorsManager.checkOutsideFileChanges()
 
-    def __getPathLabelFilePath( self ):
-        " Provides undecorated path label content "
+    def __getPathLabelFilePath(self):
+        """Provides undecorated path label content"""
         txt = str( self.sbFile.getPath() )
-        if txt.startswith( "File: " ):
-            txt = txt.replace( "File: ", "" )
+        if txt.startswith("File: "):
+            txt = txt.replace("File: ", "")
         return txt
 
-    def __onPathLabelDoubleClick( self ):
-        " Double click on the status bar path label "
+    def __onPathLabelDoubleClick(self):
+        """Double click on the status bar path label"""
         txt = self.__getPathLabelFilePath()
-        if txt not in [ "", "N/A" ]:
-            QApplication.clipboard().setText( txt )
-        return
+        if txt not in ["", "N/A"]:
+            QApplication.clipboard().setText(txt)
 
-    def __onCopyDirToClipboard( self ):
-        " Copies the dir path of the current file into the clipboard "
+    def __onCopyDirToClipboard(self):
+        """Copies the dir path of the current file into the clipboard"""
         txt = self.__getPathLabelFilePath()
-        if txt not in [ "", "N/A" ]:
+        if txt not in ["", "N/A"]:
             try:
-                QApplication.clipboard().setText( os.path.dirname( txt ) +
-                                                  os.path.sep )
+                QApplication.clipboard().setText(os.path.dirname(txt) +
+                                                 os.path.sep)
             except:
                 pass
-        return
 
-    def __onCopyFileNameToClipboard( self ):
-        " Copies the file name of the current file into the clipboard "
+    def __onCopyFileNameToClipboard(self):
+        """Copies the file name of the current file into the clipboard"""
         txt = self.__getPathLabelFilePath()
-        if txt not in [ "", "N/A" ]:
+        if txt not in ["", "N/A"]:
             try:
-                QApplication.clipboard().setText( os.path.basename( txt ) )
+                QApplication.clipboard().setText( os.path.basename(txt))
             except:
                 pass
-        return
 
-    def __onVCSMonitorInterval( self ):
-        " Runs the VCS monitor interval setting dialog "
+    def __onVCSMonitorInterval(self):
+        """Runs the VCS monitor interval setting dialog"""
         dlg = VCSUpdateIntervalConfigDialog(
-                            self.settings.vcsstatusupdateinterval, self )
+            self.settings.vcsstatusupdateinterval, self)
         if dlg.exec_() == QDialog.Accepted:
             self.settings.vcsstatusupdateinterval = dlg.interval
-        return
 
-    def __showPathLabelContextMenu( self, pos ):
-        " Triggered when a context menu is requested for the path label "
-        contextMenu = QMenu( self )
-        contextMenu.addAction( getIcon( "copytoclipboard.png" ),
-                               "Copy full path to clipboard (double click)",
-                               self.__onPathLabelDoubleClick )
+    def __showPathLabelContextMenu(self, pos):
+        """Triggered when a context menu is requested for the path label"""
+        contextMenu = QMenu(self)
+        contextMenu.addAction(getIcon("copytoclipboard.png"),
+                              "Copy full path to clipboard (double click)",
+                              self.__onPathLabelDoubleClick)
         contextMenu.addSeparator()
-        contextMenu.addAction( getIcon( "" ),
-                               "Copy directory path to clipboard",
-                               self.__onCopyDirToClipboard )
-        contextMenu.addAction( getIcon( "" ),
-                               "Copy file name to clipboard",
-                               self.__onCopyFileNameToClipboard )
-        contextMenu.popup( self.sbFile.mapToGlobal( pos ) )
-        return
+        contextMenu.addAction(getIcon(""), "Copy directory path to clipboard",
+                              self.__onCopyDirToClipboard)
+        contextMenu.addAction(getIcon(""), "Copy file name to clipboard",
+                              self.__onCopyFileNameToClipboard)
+        contextMenu.popup(self.sbFile.mapToGlobal(pos))
 
-    def __showVCSLabelContextMenu( self, pos ):
-        " Triggered when a context menu is requested for a VCS label "
-        contextMenu = QMenu( self )
-        contextMenu.addAction( getIcon( "vcsintervalmenu.png" ),
-                               "Configure monitor interval",
-                               self.__onVCSMonitorInterval )
-        contextMenu.popup( self.sbVCSStatus.mapToGlobal( pos ) )
-        return
+    def __showVCSLabelContextMenu(self, pos):
+        """Triggered when a context menu is requested for a VCS label"""
+        contextMenu = QMenu(self)
+        contextMenu.addAction(getIcon("vcsintervalmenu.png"),
+                              "Configure monitor interval",
+                              self.__onVCSMonitorInterval)
+        contextMenu.popup(self.sbVCSStatus.mapToGlobal(pos))
 
-    def switchDebugMode( self, newState ):
-        " Switches the debug mode to the desired "
+    def switchDebugMode(self, newState):
+        """Switches the debug mode to the desired"""
         if self.debugMode == newState:
             return
 
@@ -2485,160 +2468,161 @@ class CodimensionMainWindow(QMainWindow):
         clearValidBreakpointLinesCache()
 
         # Satatus bar
-        self.dbgState.setVisible( newState )
-        self.sbLanguage.setVisible( not newState )
-        self.sbEncoding.setVisible( not newState )
-        self.sbEol.setVisible( not newState )
+        self.dbgState.setVisible(newState)
+        self.sbLanguage.setVisible(not newState)
+        self.sbEncoding.setVisible(not newState)
+        self.sbEol.setVisible(not newState)
 
         # Toolbar buttons
-        self.__dbgStopBrutal.setVisible( newState and
-                                         self.settings.terminalType != TERM_REDIRECT )
-        self.__dbgStopAndClearIO.setVisible( newState and
-                                             self.settings.terminalType == TERM_REDIRECT )
-        self.__dbgStop.setVisible( newState )
-        self.__dbgRestart.setVisible( newState )
-        self.__dbgGo.setVisible( newState )
-        self.__dbgNext.setVisible( newState )
-        self.__dbgStepInto.setVisible( newState )
-        self.__dbgRunToLine.setVisible( newState )
-        self.__dbgReturn.setVisible( newState )
-        self.__dbgJumpToCurrent.setVisible( newState )
-        self.__dbgDumpSettingsAct.setVisible( newState )
+        self.__dbgStopBrutal.setVisible(
+            newState and self.settings.terminalType != TERM_REDIRECT)
+        self.__dbgStopAndClearIO.setVisible(
+            newState and self.settings.terminalType == TERM_REDIRECT)
+        self.__dbgStop.setVisible(newState)
+        self.__dbgRestart.setVisible(newState)
+        self.__dbgGo.setVisible(newState)
+        self.__dbgNext.setVisible(newState)
+        self.__dbgStepInto.setVisible(newState)
+        self.__dbgRunToLine.setVisible(newState)
+        self.__dbgReturn.setVisible(newState)
+        self.__dbgJumpToCurrent.setVisible(newState)
+        self.__dbgDumpSettingsAct.setVisible(newState)
 
         if newState == False:
-            self.__debugStopBrutalAct.setEnabled( False )
-            self.__debugStopAct.setEnabled( False )
-            self.__debugRestartAct.setEnabled( False )
-            self.__debugContinueAct.setEnabled( False )
-            self.__debugStepOverAct.setEnabled( False )
-            self.__debugStepInAct.setEnabled( False )
-            self.__debugStepOutAct.setEnabled( False )
-            self.__debugRunToCursorAct.setEnabled( False )
-            self.__debugJumpToCurrentAct.setEnabled( False )
-            self.__debugDumpSettingsAct.setEnabled( False )
-            self.__debugDumpSettingsEnvAct.setEnabled( False )
+            self.__debugStopBrutalAct.setEnabled(False)
+            self.__debugStopAct.setEnabled(False)
+            self.__debugRestartAct.setEnabled(False)
+            self.__debugContinueAct.setEnabled(False)
+            self.__debugStepOverAct.setEnabled(False)
+            self.__debugStepInAct.setEnabled(False)
+            self.__debugStepOutAct.setEnabled(False)
+            self.__debugRunToCursorAct.setEnabled(False)
+            self.__debugJumpToCurrentAct.setEnabled(False)
+            self.__debugDumpSettingsAct.setEnabled(False)
+            self.__debugDumpSettingsEnvAct.setEnabled(False)
 
         self.updateRunDebugButtons()
 
         # Tabs at the right
         if newState == True:
-            self.__rightSideBar.setTabEnabled( 1, True )    # vars etc.
+            self.__rightSideBar.setTabEnabled(1, True)    # vars etc.
             self.debuggerContext.clear()
             self.debuggerExceptions.clear()
-            self.__rightSideBar.setTabText( 2, "Exceptions" )
+            self.__rightSideBar.setTabText(2, "Exceptions")
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.debuggerContext )
+            self.__rightSideBar.setCurrentWidget(self.debuggerContext)
             self.__rightSideBar.raise_()
             self.__lastDebugAction = None
-            self.__debugDumpSettingsAct.setEnabled( True )
-            self.__debugDumpSettingsEnvAct.setEnabled( True )
+            self.__debugDumpSettingsAct.setEnabled(True)
+            self.__debugDumpSettingsEnvAct.setEnabled(True)
         else:
             if not self.__rightSideBar.isMinimized():
                 if self.__rightSideBar.currentIndex() == 1:
-                    self.__rightSideBar.setCurrentWidget( self.outlineViewer )
-            self.__rightSideBar.setTabEnabled( 1, False )    # vars etc.
+                    self.__rightSideBar.setCurrentWidget(self.outlineViewer)
+            self.__rightSideBar.setTabEnabled(1, False)    # vars etc.
 
-        self.debugModeChanged.emit( newState )
-        return
+        self.debugModeChanged.emit(newState)
 
-    def __onDebuggerStateChanged( self, newState ):
-        " Triggered when the debugger reported its state changed "
+    def __onDebuggerStateChanged(self, newState):
+        """Triggered when the debugger reported its state changed"""
         if newState != CodimensionDebugger.STATE_IN_IDE:
             self.__removeCurrenDebugLineHighlight()
-            self.debuggerContext.switchControl( False )
+            self.debuggerContext.switchControl(False)
         else:
-            self.debuggerContext.switchControl( True )
+            self.debuggerContext.switchControl(True)
 
         if newState == CodimensionDebugger.STATE_STOPPED:
-            self.__dbgStopBrutal.setEnabled( False )
-            self.__dbgStopAndClearIO.setEnabled( False )
-            self.__debugStopBrutalAct.setEnabled( False )
-            self.__dbgStop.setEnabled( False )
-            self.__debugStopAct.setEnabled( False )
-            self.__dbgRestart.setEnabled( False )
-            self.__debugRestartAct.setEnabled( False )
-            self.__setDebugControlFlowButtonsState( False )
-            self.dbgState.setText( "Debugger: stopped" )
+            self.__dbgStopBrutal.setEnabled(False)
+            self.__dbgStopAndClearIO.setEnabled(False)
+            self.__debugStopBrutalAct.setEnabled(False)
+            self.__dbgStop.setEnabled(False)
+            self.__debugStopAct.setEnabled(False)
+            self.__dbgRestart.setEnabled(False)
+            self.__debugRestartAct.setEnabled(False)
+            self.__setDebugControlFlowButtonsState(False)
+            self.dbgState.setText("Debugger: stopped")
             self.redirectedIOConsole.sessionStopped()
         elif newState == CodimensionDebugger.STATE_PROLOGUE:
-            self.__dbgStopBrutal.setEnabled( True )
-            self.__dbgStopAndClearIO.setEnabled( True )
-            self.__debugStopBrutalAct.setEnabled( self.settings.terminalType != TERM_REDIRECT )
-            self.__dbgStop.setEnabled( False )
-            self.__debugStopAct.setEnabled( False )
-            self.__dbgRestart.setEnabled( False )
-            self.__debugRestartAct.setEnabled( False )
-            self.__setDebugControlFlowButtonsState( False )
-            self.dbgState.setText( "Debugger: prologue" )
+            self.__dbgStopBrutal.setEnabled(True)
+            self.__dbgStopAndClearIO.setEnabled(True)
+            self.__debugStopBrutalAct.setEnabled(
+                self.settings.terminalType != TERM_REDIRECT)
+            self.__dbgStop.setEnabled(False)
+            self.__debugStopAct.setEnabled(False)
+            self.__dbgRestart.setEnabled(False)
+            self.__debugRestartAct.setEnabled(False)
+            self.__setDebugControlFlowButtonsState(False)
+            self.dbgState.setText("Debugger: prologue")
         elif newState == CodimensionDebugger.STATE_IN_IDE:
-            self.__dbgStopBrutal.setEnabled( True )
-            self.__dbgStopAndClearIO.setEnabled( True )
-            self.__debugStopBrutalAct.setEnabled( self.settings.terminalType != TERM_REDIRECT )
-            self.__dbgStop.setEnabled( True )
-            self.__debugStopAct.setEnabled( True )
-            self.__dbgRestart.setEnabled( True )
-            self.__debugRestartAct.setEnabled( True )
-            self.__setDebugControlFlowButtonsState( True )
-            self.dbgState.setText( "Debugger: idle" )
+            self.__dbgStopBrutal.setEnabled(True)
+            self.__dbgStopAndClearIO.setEnabled(True)
+            self.__debugStopBrutalAct.setEnabled(
+                self.settings.terminalType != TERM_REDIRECT)
+            self.__dbgStop.setEnabled(True)
+            self.__debugStopAct.setEnabled(True)
+            self.__dbgRestart.setEnabled(True)
+            self.__debugRestartAct.setEnabled(True)
+            self.__setDebugControlFlowButtonsState(True)
+            self.dbgState.setText("Debugger: idle")
         elif newState == CodimensionDebugger.STATE_IN_CLIENT:
-            self.__dbgStopBrutal.setEnabled( True )
-            self.__dbgStopAndClearIO.setEnabled( True )
-            self.__debugStopBrutalAct.setEnabled( self.settings.terminalType != TERM_REDIRECT )
-            self.__dbgStop.setEnabled( True )
-            self.__debugStopAct.setEnabled( True )
-            self.__dbgRestart.setEnabled( True )
-            self.__debugRestartAct.setEnabled( True )
-            self.__setDebugControlFlowButtonsState( False )
-            self.dbgState.setText( "Debugger: running" )
+            self.__dbgStopBrutal.setEnabled(True)
+            self.__dbgStopAndClearIO.setEnabled(True)
+            self.__debugStopBrutalAct.setEnabled(
+                self.settings.terminalType != TERM_REDIRECT)
+            self.__dbgStop.setEnabled(True)
+            self.__debugStopAct.setEnabled(True)
+            self.__dbgRestart.setEnabled(True)
+            self.__debugRestartAct.setEnabled(True)
+            self.__setDebugControlFlowButtonsState(False)
+            self.dbgState.setText("Debugger: running")
         elif newState == CodimensionDebugger.STATE_FINISHING:
-            self.__dbgStopBrutal.setEnabled( True )
-            self.__dbgStopAndClearIO.setEnabled( True )
-            self.__debugStopBrutalAct.setEnabled( self.settings.terminalType != TERM_REDIRECT )
-            self.__dbgStop.setEnabled( False )
-            self.__debugStopAct.setEnabled( False )
-            self.__dbgRestart.setEnabled( False )
-            self.__debugRestartAct.setEnabled( False )
-            self.__setDebugControlFlowButtonsState( False )
-            self.dbgState.setText( "Debugger: finishing" )
+            self.__dbgStopBrutal.setEnabled(True)
+            self.__dbgStopAndClearIO.setEnabled(True)
+            self.__debugStopBrutalAct.setEnabled(
+                self.settings.terminalType != TERM_REDIRECT)
+            self.__dbgStop.setEnabled(False)
+            self.__debugStopAct.setEnabled(False)
+            self.__dbgRestart.setEnabled(False)
+            self.__debugRestartAct.setEnabled(False)
+            self.__setDebugControlFlowButtonsState(False)
+            self.dbgState.setText("Debugger: finishing")
         elif newState == CodimensionDebugger.STATE_BRUTAL_FINISHING:
-            self.__dbgStopBrutal.setEnabled( False )
-            self.__dbgStopAndClearIO.setEnabled( False )
-            self.__debugStopBrutalAct.setEnabled( False )
-            self.__dbgStop.setEnabled( False )
-            self.__dbgStop.setEnabled( False )
-            self.__dbgRestart.setEnabled( False )
-            self.__debugRestartAct.setEnabled( False )
-            self.__setDebugControlFlowButtonsState( False )
-            self.dbgState.setText( "Debugger: force finishing" )
+            self.__dbgStopBrutal.setEnabled(False)
+            self.__dbgStopAndClearIO.setEnabled(False)
+            self.__debugStopBrutalAct.setEnabled(False)
+            self.__dbgStop.setEnabled(False)
+            self.__dbgStop.setEnabled(False)
+            self.__dbgRestart.setEnabled(False)
+            self.__debugRestartAct.setEnabled(False)
+            self.__setDebugControlFlowButtonsState(False)
+            self.dbgState.setText("Debugger: force finishing")
         QApplication.processEvents()
-        return
 
-    def __onDebuggerCurrentLine( self, fileName, lineNumber, isStack, asException = False ):
-        " Triggered when the client reported a new line "
+    def __onDebuggerCurrentLine(self, fileName, lineNumber,
+                                isStack, asException=False):
+        "Triggered when the client reported a new line"""
         self.__removeCurrenDebugLineHighlight()
 
         self.__lastDebugFileName = fileName
         self.__lastDebugLineNumber = lineNumber
         self.__lastDebugAsException = asException
         self.__onDbgJumpToCurrent()
-        return
 
-    def __onDebuggerClientException( self, excType, excMessage, excStackTrace ):
-        " Debugged program exception handler "
-
-        self.debuggerExceptions.addException( excType, excMessage,
-                                              excStackTrace )
+    def __onDebuggerClientException(self, excType, excMessage, excStackTrace):
+        """Debugged program exception handler"""
+        self.debuggerExceptions.addException(excType, excMessage,
+                                             excStackTrace)
         count = self.debuggerExceptions.getTotalClientExceptionCount()
-        self.__rightSideBar.setTabText( 2, "Exceptions (" + str( count ) + ")" )
+        self.__rightSideBar.setTabText(2, "Exceptions (" + str(count) + ")")
 
         # The information about the exception is stored in the exception window
         # regardless whether there is a stack trace or not. So, there is no
         # need to show the exception info in the closing dialog (if this dialog
         # is required).
 
-        if excType is None or excType.startswith( "unhandled" ) or not excStackTrace:
+        if excType is None or excType.startswith("unhandled") or not excStackTrace:
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.debuggerExceptions )
+            self.__rightSideBar.setCurrentWidget(self.debuggerExceptions)
             self.__rightSideBar.raise_()
 
             if not excStackTrace:
@@ -2648,31 +2632,30 @@ class CodimensionMainWindow(QMainWindow):
                 message = "An unhandled exception occured.\n" \
                           "The debugging session will be closed."
 
-            dlg = QMessageBox( QMessageBox.Critical, "Debugging session",
-                               message )
-            dlg.addButton( QMessageBox.Ok )
-            dlg.addButton( QMessageBox.Cancel )
+            dlg = QMessageBox(QMessageBox.Critical, "Debugging session",
+                              message)
+            dlg.addButton(QMessageBox.Ok)
+            dlg.addButton(QMessageBox.Cancel)
 
-            btn1 = dlg.button( QMessageBox.Ok )
-            btn1.setText( "&Close debug console" )
-            btn1.setIcon( getIcon( '' ) )
+            btn1 = dlg.button(QMessageBox.Ok)
+            btn1.setText("&Close debug console")
+            btn1.setIcon(getIcon(''))
 
-            btn2 = dlg.button( QMessageBox.Cancel )
-            btn2.setText( "&Keep debug console" )
-            btn2.setIcon( getIcon( '' ) )
+            btn2 = dlg.button(QMessageBox.Cancel)
+            btn2.setText("&Keep debug console")
+            btn2.setIcon(getIcon(''))
 
-            dlg.setDefaultButton( QMessageBox.Ok )
+            dlg.setDefaultButton(QMessageBox.Ok)
             res = dlg.exec_()
 
             if res == QMessageBox.Cancel:
-                QTimer.singleShot( 0, self.__onStopDbgSession )
+                QTimer.singleShot(0, self.__onStopDbgSession)
             else:
-                QTimer.singleShot( 0, self.__onBrutalStopDbgSession )
+                QTimer.singleShot(0, self.__onBrutalStopDbgSession)
             self.debuggerExceptions.setFocus()
             return
 
-
-        if self.debuggerExceptions.isIgnored( str( excType ) ):
+        if self.debuggerExceptions.isIgnored(str(excType)):
             # Continue the last action
             if self.__lastDebugAction is None:
                 self.__debugger.remoteContinue()
@@ -2690,176 +2673,162 @@ class CodimensionMainWindow(QMainWindow):
 
         # Should stop at the exception
         self.__rightSideBar.show()
-        self.__rightSideBar.setCurrentWidget( self.debuggerExceptions )
+        self.__rightSideBar.setCurrentWidget(self.debuggerExceptions)
         self.__rightSideBar.raise_()
 
-        fileName = excStackTrace[ 0 ][ 0 ]
-        lineNumber = excStackTrace[ 0 ][ 1 ]
-        self.__onDebuggerCurrentLine( fileName, lineNumber, False, True )
+        fileName = excStackTrace[0][0]
+        lineNumber = excStackTrace[0][1]
+        self.__onDebuggerCurrentLine(fileName, lineNumber, False, True)
         self.__debugger.remoteThreadList()
 
         # If a stack is explicitly requested then the only deepest frame
         # is reported. It is better to stick with the exception stack
         # for the time beeing.
-        self.debuggerContext.onClientStack( excStackTrace )
+        self.debuggerContext.onClientStack(excStackTrace)
 
-        self.__debugger.remoteClientVariables( 1, 0 ) # globals
-        self.__debugger.remoteClientVariables( 0, 0 ) # locals
+        self.__debugger.remoteClientVariables(1, 0) # globals
+        self.__debugger.remoteClientVariables(0, 0) # locals
         self.debuggerExceptions.setFocus()
-        return
 
-    def __onDebuggerClientSyntaxError( self, errMessage, fileName, lineNo, charNo ):
-        " Triggered when the client reported a syntax error "
-
+    def __onDebuggerClientSyntaxError(self, errMessage, fileName,
+                                      lineNo, charNo):
+        """Triggered when the client reported a syntax error"""
         if errMessage is None:
             message = "The program being debugged contains an unspecified " \
                       "syntax error.\nDebugging session will be closed."
         else:
             # Jump to the source code
             editorsManager = self.editorsManagerWidget.editorsManager
-            editorsManager.openFile( fileName, lineNo )
+            editorsManager.openFile(fileName, lineNo)
             editor = editorsManager.currentWidget().getEditor()
-            editor.gotoLine( lineNo, charNo )
+            editor.gotoLine(lineNo, charNo)
 
             message = "The file " + fileName + " contains syntax error: '" + \
-                       errMessage + "' " \
-                       "at line " + str( lineNo ) + ", position " + str( charNo ) + \
-                       ".\nDebugging session will be closed."
+                errMessage + "' at line " + str(lineNo) + ", position " + \
+                str(charNo) + ".\nDebugging session will be closed."
 
-        dlg = QMessageBox( QMessageBox.Critical, "Debugging session",
-                           message )
+        dlg = QMessageBox(QMessageBox.Critical, "Debugging session", message)
 
         if self.settings.terminalType == TERM_REDIRECT:
-            dlg.addButton( QMessageBox.Ok )
+            dlg.addButton(QMessageBox.Ok)
         else:
-            dlg.addButton( QMessageBox.Ok )
-            dlg.addButton( QMessageBox.Cancel )
+            dlg.addButton(QMessageBox.Ok)
+            dlg.addButton(QMessageBox.Cancel)
 
-            btn1 = dlg.button( QMessageBox.Ok )
-            btn1.setText( "&Close debug console" )
-            btn1.setIcon( getIcon( '' ) )
+            btn1 = dlg.button(QMessageBox.Ok)
+            btn1.setText("&Close debug console")
+            btn1.setIcon(getIcon(''))
 
-            btn2 = dlg.button( QMessageBox.Cancel )
-            btn2.setText( "&Keep debug console" )
-            btn2.setIcon( getIcon( '' ) )
+            btn2 = dlg.button(QMessageBox.Cancel)
+            btn2.setText("&Keep debug console")
+            btn2.setIcon(getIcon(''))
 
-        dlg.setDefaultButton( QMessageBox.Ok )
+        dlg.setDefaultButton(QMessageBox.Ok)
         res = dlg.exec_()
 
         if res == QMessageBox.Cancel or \
            self.settings.terminalType == TERM_REDIRECT:
-            QTimer.singleShot( 0, self.__onStopDbgSession )
+            QTimer.singleShot(0, self.__onStopDbgSession)
         else:
-            QTimer.singleShot( 0, self.__onBrutalStopDbgSession )
-        return
+            QTimer.singleShot(0, self.__onBrutalStopDbgSession)
 
-    def __onDebuggerClientIDEMessage( self, message ):
-        " Triggered when the debug server has something to report "
+    def __onDebuggerClientIDEMessage(self, message):
+        """Triggered when the debug server has something to report"""
         if self.settings.terminalType == TERM_REDIRECT:
-            self.__ioconsoleIDEMessage( str( message ) )
+            self.__ioconsoleIDEMessage(str(message))
         else:
-            logging.info( str( message ) )
-        return
+            logging.info(str(message))
 
-    def __removeCurrenDebugLineHighlight( self ):
-        " Removes the current debug line highlight "
+    def __removeCurrenDebugLineHighlight(self):
+        """Removes the current debug line highlight"""
         if self.__lastDebugFileName is not None:
             editorsManager = self.editorsManagerWidget.editorsManager
             widget = editorsManager.getWidgetForFileName(
-                                                self.__lastDebugFileName )
+                self.__lastDebugFileName)
             if widget is not None:
                 widget.getEditor().clearCurrentDebuggerLine()
             self.__lastDebugFileName = None
             self.__lastDebugLineNumber = None
             self.__lastDebugAsException = None
-        return
 
-    def __setDebugControlFlowButtonsState( self, enabled ):
-        " Sets the control flow debug buttons state "
-        self.__dbgGo.setEnabled( enabled )
-        self.__debugContinueAct.setEnabled( enabled )
-        self.__dbgNext.setEnabled( enabled )
-        self.__debugStepOverAct.setEnabled( enabled )
-        self.__dbgStepInto.setEnabled( enabled )
-        self.__debugStepInAct.setEnabled( enabled )
-        self.__dbgReturn.setEnabled( enabled )
-        self.__debugStepOutAct.setEnabled( enabled )
-        self.__dbgJumpToCurrent.setEnabled( enabled )
-        self.__debugJumpToCurrentAct.setEnabled( enabled )
+    def __setDebugControlFlowButtonsState(self, enabled):
+        """Sets the control flow debug buttons state"""
+        self.__dbgGo.setEnabled(enabled)
+        self.__debugContinueAct.setEnabled(enabled)
+        self.__dbgNext.setEnabled(enabled)
+        self.__debugStepOverAct.setEnabled(enabled)
+        self.__dbgStepInto.setEnabled(enabled)
+        self.__debugStepInAct.setEnabled(enabled)
+        self.__dbgReturn.setEnabled(enabled)
+        self.__debugStepOutAct.setEnabled(enabled)
+        self.__dbgJumpToCurrent.setEnabled(enabled)
+        self.__debugJumpToCurrentAct.setEnabled(enabled)
 
         if enabled:
             self.setRunToLineButtonState()
         else:
-            self.__dbgRunToLine.setEnabled( False )
-            self.__debugRunToCursorAct.setEnabled( False )
-        return
+            self.__dbgRunToLine.setEnabled(False)
+            self.__debugRunToCursorAct.setEnabled(False)
 
-    def setRunToLineButtonState( self ):
-        " Sets the Run To Line button state "
+    def setRunToLineButtonState(self):
+        """Sets the Run To Line button state"""
         # Separate story:
         # - no run to unbreakable line
         # - no run for non-python file
         if not self.debugMode:
-            self.__dbgRunToLine.setEnabled( False )
-            self.__debugRunToCursorAct.setEnabled( False )
+            self.__dbgRunToLine.setEnabled(False)
+            self.__debugRunToCursorAct.setEnabled(False)
             return
         if not self.__isPythonBuffer():
-            self.__dbgRunToLine.setEnabled( False )
-            self.__debugRunToCursorAct.setEnabled( False )
+            self.__dbgRunToLine.setEnabled(False)
+            self.__debugRunToCursorAct.setEnabled(False)
             return
 
         # That's for sure a python buffer, so the widget exists
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
-        if currentWidget.getType() in [ MainWindowTabWidgetBase.VCSAnnotateViewer ]:
-            self.__dbgRunToLine.setEnabled( False )
-            self.__debugRunToCursorAct.setEnabled( False )
+        if currentWidget.getType() in [MainWindowTabWidgetBase.VCSAnnotateViewer]:
+            self.__dbgRunToLine.setEnabled(False)
+            self.__debugRunToCursorAct.setEnabled(False)
             return
 
         enabled = currentWidget.isLineBreakable()
-        self.__dbgRunToLine.setEnabled( enabled )
-        self.__debugRunToCursorAct.setEnabled( enabled )
-        return
+        self.__dbgRunToLine.setEnabled(enabled)
+        self.__debugRunToCursorAct.setEnabled(enabled)
 
-    def __onBrutalStopDbgSession( self ):
-        " Stop debugging brutally "
-        self.__debugger.stopDebugging( True )
+    def __onBrutalStopDbgSession(self):
+        """Stop debugging brutally"""
+        self.__debugger.stopDebugging(True)
         if self.settings.terminalType == TERM_REDIRECT:
             self.redirectedIOConsole.clear()
-        return
 
-    def __onStopDbgSession( self ):
-        " Debugger stop debugging clicked "
-        self.__debugger.stopDebugging( False )
-        return
+    def __onStopDbgSession(self):
+        """Debugger stop debugging clicked"""
+        self.__debugger.stopDebugging(False)
 
-    def __onRestartDbgSession( self ):
-        " Debugger restart session clicked "
+    def __onRestartDbgSession(self):
+        """Debugger restart session clicked"""
         fileName = self.__debugger.getScriptPath()
         self.__onBrutalStopDbgSession()
-        self.__debugger.startDebugging( fileName )
-        return
+        self.__debugger.startDebugging(fileName)
 
-    def __onDbgGo( self ):
-        " Debugger continue clicked "
+    def __onDbgGo(self):
+        """Debugger continue clicked"""
         self.__lastDebugAction = self.DEBUG_ACTION_GO
         self.__debugger.remoteContinue()
-        return
 
-    def __onDbgNext( self ):
-        " Debugger step over clicked "
+    def __onDbgNext(self):
+        """Debugger step over clicked"""
         self.__lastDebugAction = self.DEBUG_ACTION_NEXT
         self.__debugger.remoteStepOver()
-        return
 
-    def __onDbgStepInto( self ):
-        " Debugger step into clicked "
+    def __onDbgStepInto(self):
+        """Debugger step into clicked"""
         self.__lastDebugAction = self.DEBUG_ACTION_STEP_INTO
         self.__debugger.remoteStep()
-        return
 
-    def __onDbgRunToLine( self ):
-        " Debugger run to cursor clicked "
+    def __onDbgRunToLine(self):
+        """Debugger run to cursor clicked"""
         # The run-to-line button state is set approprietly
         if not self.__dbgRunToLine.isEnabled():
             return
@@ -2868,163 +2837,155 @@ class CodimensionMainWindow(QMainWindow):
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
 
-        self.__debugger.remoteBreakpoint( currentWidget.getFileName(),
-                                          currentWidget.getLine() + 1,
-                                          True, None, True )
+        self.__debugger.remoteBreakpoint(currentWidget.getFileName(),
+                                         currentWidget.getLine() + 1,
+                                         True, None, True)
         self.__debugger.remoteContinue()
-        return
 
-    def __onDbgReturn( self ):
-        " Debugger step out clicked "
+    def __onDbgReturn(self):
+        """Debugger step out clicked"""
         self.__lastDebugAction = self.DEBUG_ACTION_STEP_OUT
         self.__debugger.remoteStepOut()
-        return
 
-    def __onDbgJumpToCurrent( self ):
-        " Jump to the current debug line "
+    def __onDbgJumpToCurrent(self):
+        """Jump to the current debug line"""
         if self.__lastDebugFileName is None or \
            self.__lastDebugLineNumber is None or \
            self.__lastDebugAsException is None:
             return
 
         editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.openFile( self.__lastDebugFileName,
-                                 self.__lastDebugLineNumber )
+        editorsManager.openFile(self.__lastDebugFileName,
+                                self.__lastDebugLineNumber)
 
         editor = editorsManager.currentWidget().getEditor()
-        editor.gotoLine( self.__lastDebugLineNumber )
-        editor.highlightCurrentDebuggerLine( self.__lastDebugLineNumber,
-                                             self.__lastDebugAsException )
+        editor.gotoLine(self.__lastDebugLineNumber)
+        editor.highlightCurrentDebuggerLine(self.__lastDebugLineNumber,
+                                            self.__lastDebugAsException)
         editorsManager.currentWidget().setFocus()
-        return
 
-    def __openProject( self ):
-        " Shows up a dialog to open a project "
+    def __openProject(self):
+        """Shows up a dialog to open a project"""
         if self.debugMode:
             return
-        dialog = QFileDialog( self, 'Open project' )
-        dialog.setFileMode( QFileDialog.ExistingFile )
-        dialog.setNameFilter( "Codimension project files (*.cdm3)" )
+        dialog = QFileDialog(self, 'Open project')
+        dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setNameFilter("Codimension project files (*.cdm3)")
         urls = []
         for dname in QDir.drives():
-            urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
-        urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
-        dialog.setDirectory( QDir.homePath() )
-        dialog.setSidebarUrls( urls )
+            urls.append(QUrl.fromLocalFile(dname.absoluteFilePath()))
+        urls.append(QUrl.fromLocalFile(QDir.homePath()))
+        dialog.setDirectory(QDir.homePath())
+        dialog.setSidebarUrls(urls)
 
         if dialog.exec_() != QDialog.Accepted:
             return
 
         fileNames = dialog.selectedFiles()
-        fileName = os.path.realpath( str( fileNames[0] ) )
+        fileName = os.path.realpath(str(fileNames[0]))
         if fileName == GlobalData().project.fileName:
-            logging.warning( "The selected project to load is "
-                             "the currently loaded one." )
+            logging.warning("The selected project to load is "
+                            "the currently loaded one.")
             return
 
-        if detectFileType( fileName ) != CodimensionProjectFileType:
-            logging.warning( "Codimension project file "
-                             "must have .cdm3 extension" )
+        if not isCDMProjectFile(fileName):
+            logging.warning("Codimension project file "
+                            "must have .cdm3 extension")
             return
 
-        self.__loadProject( fileName )
-        return
+        self.__loadProject(fileName)
 
-    def __loadProject( self, projectFile ):
-        " Loads the given project "
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+    def __loadProject(self, projectFile):
+        """Loads the given project"""
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         editorsManager = self.editorsManagerWidget.editorsManager
         if editorsManager.closeRequest():
             prj = GlobalData().project
-            prj.setTabsStatus( editorsManager.getTabsStatus() )
+            prj.setTabsStatus(editorsManager.getTabsStatus())
             editorsManager.closeAll()
-            prj.loadProject( projectFile )
+            prj.loadProject(projectFile)
             if not self.__leftSideBar.isMinimized():
                 self.activateProjectTab()
         QApplication.restoreOverrideCursor()
-        return
 
-    def __openFile( self ):
-        " Triggers when Ctrl+O is pressed "
-
-        dialog = QFileDialog( self, 'Open file' )
-        dialog.setFileMode( QFileDialog.ExistingFiles )
+    def __openFile(self):
+        """Triggers when Ctrl+O is pressed"""
+        dialog = QFileDialog(self, 'Open file')
+        dialog.setFileMode(QFileDialog.ExistingFiles)
         urls = []
         for dname in QDir.drives():
-            urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
-        urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
+            urls.append(QUrl.fromLocalFile(dname.absoluteFilePath()))
+        urls.append(QUrl.fromLocalFile(QDir.homePath()))
 
         editorsManager = self.editorsManagerWidget.editorsManager
         try:
             fileName = editorsManager.currentWidget().getFileName()
-            if os.path.isabs( fileName ):
-                dirName = os.path.dirname( fileName )
-                url = QUrl.fromLocalFile( dirName )
+            if os.path.isabs(fileName):
+                dirName = os.path.dirname(fileName)
+                url = QUrl.fromLocalFile(dirName)
                 if not url in urls:
-                    urls.append( url )
+                    urls.append(url)
         except:
             pass
 
         project = GlobalData().project
         if project.isLoaded():
-            dialog.setDirectory( project.getProjectDir() )
-            urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
+            dialog.setDirectory(project.getProjectDir())
+            urls.append(QUrl.fromLocalFile(project.getProjectDir()))
         else:
             # There is no project loaded
-            dialog.setDirectory( QDir.homePath() )
-        dialog.setSidebarUrls( urls )
+            dialog.setDirectory(QDir.homePath())
+        dialog.setSidebarUrls(urls)
 
         if dialog.exec_() != QDialog.Accepted:
             return
 
         for fileName in dialog.selectedFiles():
             try:
-                self.detectTypeAndOpenFile( os.path.realpath( str( fileName ) ) )
+                self.detectTypeAndOpenFile(os.path.realpath(str(fileName)))
             except Exception as exc:
-                logging.error( str( exc ) )
-        return
+                logging.error(str(exc))
 
-    def __isPlainTextBuffer( self ):
-        " Provides if saving is enabled "
+    def __isPlainTextBuffer(self):
+        """Provides if saving is enabled"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         if currentWidget is None:
             return False
         return currentWidget.getType() in \
-                    [ MainWindowTabWidgetBase.PlainTextEditor,
-                      MainWindowTabWidgetBase.VCSAnnotateViewer ]
+            [MainWindowTabWidgetBase.PlainTextEditor,
+             MainWindowTabWidgetBase.VCSAnnotateViewer]
 
-    def __isTemporaryBuffer( self ):
-        " True if it is a temporary text buffer "
+    def __isTemporaryBuffer(self):
+        """True if it is a temporary text buffer"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         if currentWidget is None:
             return False
         return currentWidget.getType() in \
-                    [ MainWindowTabWidgetBase.VCSAnnotateViewer ]
+            [MainWindowTabWidgetBase.VCSAnnotateViewer]
 
-    def __isPythonBuffer( self ):
-        " True if the current tab is a python buffer "
+    def __isPythonBuffer(self):
+        """True if the current tab is a python buffer"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         if currentWidget is None:
             return False
         return currentWidget.getType() in \
-                [ MainWindowTabWidgetBase.PlainTextEditor,
-                  MainWindowTabWidgetBase.VCSAnnotateViewer ] and \
-               currentWidget.getFileType() in \
-                            [ PythonFileType, Python3FileType ]
+            [MainWindowTabWidgetBase.PlainTextEditor,
+             MainWindowTabWidgetBase.VCSAnnotateViewer] and \
+            isPythonMime(currentWidget.getFileType())
 
-    def __isGraphicsBuffer( self ):
-        " True if is pictures viewer "
+    def __isGraphicsBuffer(self):
+        """True if is pictures viewer"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         if currentWidget is None:
             return False
         return currentWidget.getType() == MainWindowTabWidgetBase.PictureViewer
 
-    def __isGeneratedDiagram( self ):
-        " True if this is a generated diagram "
+    def __isGeneratedDiagram(self):
+        """True if this is a generated diagram"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         if currentWidget is None:
@@ -3036,179 +2997,127 @@ class CodimensionMainWindow(QMainWindow):
                 return True
         return False
 
-    def __isProfileViewer( self ):
-        " True if this is a profile viewer "
+    def __isProfileViewer(self):
+        """True if this is a profile viewer"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         if currentWidget is None:
             return False
         return currentWidget.getType() == MainWindowTabWidgetBase.ProfileViewer
 
-    def __isDiffViewer( self ):
-        " True if this is a diff viewer "
+    def __isDiffViewer(self):
+        """True if this is a diff viewer"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         if currentWidget is None:
             return False
         return currentWidget.getType() == MainWindowTabWidgetBase.DiffViewer
 
-    def __onTabImportDgm( self ):
-        " Triggered when tab imports diagram is requested "
+    def __onTabImportDgm(self):
+        """Triggered when tab imports diagram is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onImportDgm()
-        return
 
-    def __onTabImportDgmTuned( self ):
-        " Triggered when tuned tab imports diagram is requested "
+    def __onTabImportDgmTuned(self):
+        """Triggered when tuned tab imports diagram is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onImportDgmTuned()
-        return
 
-    def onRunTab( self ):
-        " Triggered when run tab script is requested "
+    def onRunTab(self):
+        """Triggered when run tab script is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
-        self.__runManager.run( currentWidget.getFileName(), False )
-        return
+        self.__runManager.run(currentWidget.getFileName(), False)
 
-    def __onDebugTab( self ):
-        " Triggered when debug tab is requested "
+    def __onDebugTab(self):
+        """Triggered when debug tab is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onDebugScript()
-        return
 
-    def __onProfileTab( self ):
-        " Triggered when profile script is requested "
+    def __onProfileTab(self):
+        """Triggered when profile script is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onProfileScript()
-        return
 
-    def onRunTabDlg( self ):
-        " Triggered when run tab script dialog is requested "
+    def onRunTabDlg(self):
+        """Triggered when run tab script dialog is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
-        self.__runManager.run( currentWidget.getFileName(), True )
-        return
+        self.__runManager.run(currentWidget.getFileName(), True)
 
-    def __onDebugTabDlg( self ):
-        " Triggered when debug tab script dialog is requested "
+    def __onDebugTabDlg(self):
+        """Triggered when debug tab script dialog is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onDebugScriptSettings()
-        return
 
-    def __onProfileTabDlg( self ):
-        " Triggered when profile tab script dialog is requested "
+    def __onProfileTabDlg(self):
+        """Triggered when profile tab script dialog is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onProfileScriptSettings()
-        return
 
-    def __onPluginManager( self ):
-        " Triggered when a plugin manager dialog is requested "
-        dlg = PluginsDialog( GlobalData().pluginManager, self )
+    def __onPluginManager(self):
+        """Triggered when a plugin manager dialog is requested"""
+        dlg = PluginsDialog(GlobalData().pluginManager, self)
         dlg.exec_()
-        return
 
-    def __onContextHelp( self ):
-        " Triggered when Ctrl+F1 is clicked "
+    def __onContextHelp(self):
+        """Triggered when Ctrl+F1 is clicked"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().onTagHelp()
-        return
 
     def __onCallHelp( self ):
-        " Triggered when a context help for the current call is requested "
+        """Triggered when a context help for the current call is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().onCallHelp()
-        return
-
 
     @staticmethod
     def __onHomePage():
-        " Triggered when opening the home page is requested "
-        QDesktopServices.openUrl( QUrl( "http://codimension.org" ) )
-        return
+        """Triggered when opening the home page is requested"""
+        QDesktopServices.openUrl(QUrl("http://codimension.org"))
 
     @staticmethod
     def __onAllShortcurs():
-        " Triggered when opening key bindings page is requested"
+        """Triggered when opening key bindings page is requested"""
         QDesktopServices.openUrl(
-            QUrl( "http://codimension.org/documentation/cheatsheet.html" ) )
-        return
+            QUrl("http://codimension.org/documentation/cheatsheet.html"))
 
-    def __onAbout( self ):
-        " Triggered when 'About' info is requested "
-        dlg = AboutDialog( self )
+    def __onAbout(self):
+        """Triggered when 'About' info is requested"""
+        dlg = AboutDialog(self)
         dlg.exec_()
-        return
 
-    def __activateSideTab( self, act ):
-        " Triggered when a side bar should be activated "
-        name = str( act.data().toString() )
-        if name == "prj":
-            self.activateProjectTab()
-        elif name == "recent":
+    def __activateSideTab(self, act):
+        """Triggered when a side bar should be activated"""
+        if isinstance(act, str):
+            name = act
+        else:
+            name = str(act.data().toString())
+        if name in ["project", "recent", "classes", "functions", "globals"]:
             self.__leftSideBar.show()
-            self.__leftSideBar.setCurrentWidget( self.recentProjectsViewer )
+            self.__leftSideBar.setCurrentTab(name)
             self.__leftSideBar.raise_()
-        elif name == "classes":
-            self.__leftSideBar.show()
-            self.__leftSideBar.setCurrentWidget( self.classesViewer )
-            self.__leftSideBar.raise_()
-        elif name == "funcs":
-            self.__leftSideBar.show()
-            self.__leftSideBar.setCurrentWidget( self.functionsViewer )
-            self.__leftSideBar.raise_()
-        elif name == "globs":
-            self.__leftSideBar.show()
-            self.__leftSideBar.setCurrentWidget( self.globalsViewer )
-            self.__leftSideBar.raise_()
-        elif name == "outline":
+        elif name in ['fileoutline', 'debugger', 'exceptions', 'breakpoints']:
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.outlineViewer )
+            self.__rightSideBar.setCurrentTab(name)
             self.__rightSideBar.raise_()
-        elif name == "debug":
-            self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.debuggerContext )
-            self.__rightSideBar.raise_()
-        elif name == "excpt":
-            self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.debuggerExceptions )
-            self.__rightSideBar.raise_()
-        elif name == "bpoint":
-            self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.debuggerBreakWatchPoints )
-            self.__rightSideBar.raise_()
-        elif name == "log":
+        elif name in ['log', 'search', 'contexthelp', 'diff']:
             self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.logViewer )
+            self.__bottomSideBar.setCurrentTab(name)
             self.__bottomSideBar.raise_()
-        elif name == "search":
-            self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.findInFilesViewer )
-            self.__bottomSideBar.raise_()
-        elif name == "contexthelp":
-            self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.tagHelpViewer )
-            self.__bottomSideBar.raise_()
-        elif name == 'diff':
-            self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.diffViewer )
-            self.__bottomSideBar.raise_()
-        return
 
-    def __onTabLineCounter( self ):
-        " Triggered when line counter for the current buffer is requested "
+    def __onTabLineCounter(self):
+        """Triggered when line counter for the current buffer is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onLineCounter()
-        return
 
     def __onTabJumpToDef(self):
         """Triggered when jump to defenition is requested"""
@@ -3811,88 +3720,84 @@ class CodimensionMainWindow(QMainWindow):
         """Triggered when Eval failed"""
         logging.error("Exec failed:\n" + message)
 
-    def setDebugTabAvailable( self, enabled ):
-        " Sets a new status when a tab is changed or a content has been changed "
-        self.__tabDebugAct.setEnabled( enabled )
-        self.__tabDebugDlgAct.setEnabled( enabled )
+    def setDebugTabAvailable(self, enabled):
+        """Sets a new status when a tab is changed
+           or a content has been changed
+        """
+        self.__tabDebugAct.setEnabled(enabled)
+        self.__tabDebugDlgAct.setEnabled(enabled)
 
-        self.__tabRunAct.setEnabled( enabled )
-        self.__tabRunDlgAct.setEnabled( enabled )
+        self.__tabRunAct.setEnabled(enabled)
+        self.__tabRunDlgAct.setEnabled(enabled)
 
-        self.__tabProfileAct.setEnabled( enabled )
-        self.__tabProfileDlgAct.setEnabled( enabled )
-        return
+        self.__tabProfileAct.setEnabled(enabled)
+        self.__tabProfileDlgAct.setEnabled(enabled)
 
-    def __initPluginSupport( self ):
-        " Initializes the main window plugin support "
+    def __initPluginSupport(self):
+        """Initializes the main window plugin support"""
         self.__pluginMenus = {}
-        self.connect( GlobalData().pluginManager, SIGNAL( 'PluginActivated' ),
-                      self.__onPluginActivated )
-        self.connect( GlobalData().pluginManager, SIGNAL( 'PluginDeactivated' ),
-                      self.__onPluginDeactivated )
-        return
+        GlobalData().pluginManager.sigPluginActivated.connect(
+            self.__onPluginActivated)
+        GlobalData().pluginManager.sigPluginDeactivated.connect(
+            self.__onPluginDeactivated)
 
-    def __onPluginActivated( self, plugin ):
-        " Triggered when a plugin is activated "
+    def __onPluginActivated(self, plugin):
+        """Triggered when a plugin is activated"""
         pluginName = plugin.getName()
         try:
-            pluginMenu = QMenu( pluginName, self )
-            plugin.getObject().populateMainMenu( pluginMenu )
+            pluginMenu = QMenu(pluginName, self)
+            plugin.getObject().populateMainMenu(pluginMenu)
             if pluginMenu.isEmpty():
                 pluginMenu = None
                 return
-            self.__pluginMenus[ plugin.getPath() ] = pluginMenu
+            self.__pluginMenus[plugin.getPath()  = pluginMenu
             self.__recomposePluginMenu()
         except Exception as exc:
-            logging.error( "Error populating " + pluginName + " plugin main menu: " +
-                           str( exc ) + ". Ignore and continue." )
-        return
+            logging.error("Error populating " + pluginName +
+                          " plugin main menu: " +
+                          str(exc) + ". Ignore and continue.")
 
-    def __recomposePluginMenu( self ):
-        " Recomposes the plugin menu "
+    def __recomposePluginMenu(self):
+        """Recomposes the plugin menu"""
         self.__pluginsMenu.clear()
-        self.__pluginsMenu.addAction(
-            getIcon( 'pluginmanagermenu.png' ),
-            'Plugin &manager', self.__onPluginManager )
+        self.__pluginsMenu.addAction(getIcon('pluginmanagermenu.png'),
+                                     'Plugin &manager', self.__onPluginManager)
         if self.__pluginMenus:
             self.__pluginsMenu.addSeparator()
         for path in self.__pluginMenus:
-            self.__pluginsMenu.addMenu( self.__pluginMenus[ path ] )
-        return
+            self.__pluginsMenu.addMenu(self.__pluginMenus[path])
 
-    def __onPluginDeactivated( self, plugin ):
-        " Triggered when a plugin is deactivated "
+    def __onPluginDeactivated(self, plugin):
+        """Triggered when a plugin is deactivated"""
         try:
             path = plugin.getPath()
             if path in self.__pluginMenus:
-                del self.__pluginMenus[ path ]
+                del self.__pluginMenus[path]
                 self.__recomposePluginMenu()
         except Exception as exc:
             pluginName = plugin.getName()
-            logging.error( "Error removing " + pluginName + " plugin main menu: " +
-                           str( exc ) + ". Ignore and continue." )
-        return
+            logging.error("Error removing " + pluginName +
+                          " plugin main menu: " +
+                          str(exc) + ". Ignore and continue.")
 
-    def activateProjectTab( self ):
-        " Activates the project tab "
+    def activateProjectTab(self):
+        """Activates the project tab"""
         self.__leftSideBar.show()
-        self.__leftSideBar.setCurrentWidget( self.projectViewer )
+        self.__leftSideBar.setCurrentWidget(self.projectViewer)
         self.__leftSideBar.raise_()
-        return
 
-    def activateOutlineTab( self ):
-        " Activates the outline tab "
+    def activateOutlineTab(self):
+        """Activates the outline tab"""
         self.__rightSideBar.show()
-        self.__rightSideBar.setCurrentWidget( self.outlineViewer )
+        self.__rightSideBar.setCurrentWidget(self.outlineViewer)
         self.__rightSideBar.raise_()
-        return
 
-    def __dumpDebugSettings( self, fileName, fullEnvironment ):
-        " Provides common settings except the environment "
-        runParameters = GlobalData().getRunParameters( fileName )
+    def __dumpDebugSettings(self, fileName, fullEnvironment):
+        """Provides common settings except the environment"""
+        runParameters = GlobalData().getRunParameters(fileName)
         debugSettings = self.settings.getDebuggerSettings()
-        workingDir = getWorkingDir( fileName, runParameters )
-        arguments = parseCommandLineArguments( runParameters.arguments )
+        workingDir = getWorkingDir(fileName, runParameters)
+        arguments = parseCommandLineArguments(runParameters.arguments)
         environment = getNoArgsEnvironment(runParameters)
 
         env = "Environment: "

@@ -9,7 +9,7 @@ init-hook="import sys;sys.path.insert(0,'./src')"
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
-ignore=.svn,.git,unittest,everything.py,cdmverspec.py
+ignore=.svn,.git,unittest,everything.py,cdmverspec.py,qt.py
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.

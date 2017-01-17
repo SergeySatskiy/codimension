@@ -24,7 +24,7 @@ from ui.qt import (Qt, pyqtSignal, QSize, QSizePolicy, QFrame, QTreeView,
                    QHeaderView, QVBoxLayout, QSortFilterProxyModel, QLabel,
                    QWidget, QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
                    QPalette, QCursor, QItemSelectionModel, QDialog, QToolBar,
-                   QAction)
+                   QAction, QModelIndex)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
@@ -38,6 +38,8 @@ from .bputils import getBreakpointLines
 class BreakPointView(QTreeView):
 
     """Breakpoint viewer widget"""
+
+    sigSelectionChanged = pyqtSignal(QModelIndex)
 
     def __init__(self, parent, bpointsModel):
         QTreeView.__init__(self, parent)
@@ -278,9 +280,9 @@ class BreakPointView(QTreeView):
     def selectionChanged(self, selected, deselected):
         """The slot is called when the selection has changed"""
         if selected.indexes():
-            self.selectionChanged.emit(selected.indexes()[0])
+            self.sigSelectionChanged.emit(selected.indexes()[0])
         else:
-            self.selectionChanged.emit(None)
+            self.sigSelectionChanged.emit(QModelIndex())
         QTreeView.selectionChanged(self, selected, deselected)
 
 
@@ -297,8 +299,8 @@ class BreakPointViewer(QWidget):
         GlobalData().project.projectChanged.connect(self.__onProjectChanged)
         GlobalData().project.projectAboutToUnload.connect(
             self.__onProjectAboutToUnload)
-        self.bpointsList.selectionChanged.connect(self.__onSelectionChanged)
-        bpointsModel.BreakpoinsChanged.connect(self.__onModelChanged)
+        self.bpointsList.sigSelectionChanged.connect(self.__onSelectionChanged)
+        bpointsModel.sigBreakpoinsChanged.connect(self.__onModelChanged)
 
     def setFocus(self):
         """Sets the widget focus"""
@@ -479,12 +481,12 @@ class BreakPointViewer(QWidget):
 
     def __onSelectionChanged(self, index):
         """Triggered when the current item is changed"""
-        if index is None:
-            self.__currentItem = None
-        else:
+        if index.isValid():
             srcModel = self.bpointsList.model().sourceModel()
             sindex = self.bpointsList.toSourceIndex(index)
             self.__currentItem = srcModel.getBreakPointByIndex(sindex)
+        else:
+            self.__currentItem = None
         self.__updateButtons()
 
     def __updateButtons(self):

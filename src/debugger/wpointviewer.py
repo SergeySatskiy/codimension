@@ -34,6 +34,8 @@ class WatchPointView(QTreeView):
 
     """Watch expression viewer widget"""
 
+    sigSelectionChanged = pyqtSignal(QModelIndex)
+
     def __init__(self, parent, wpointsModel):
         QTreeView.__init__(self, parent)
 
@@ -65,7 +67,7 @@ class WatchPointView(QTreeView):
         header = self.header()
         header.setSortIndicator(0, Qt.AscendingOrder)
         header.setSortIndicatorShown(True)
-        header.setClickable(True)
+        header.setSectionsClickable(True)
 
         self.setSortingEnabled(True)
         self.__layoutDisplay()
@@ -323,6 +325,14 @@ class WatchPointView(QTreeView):
         # column count is 1 greater than selectable
         return count
 
+    def selectionChanged(self, selected, deselected):
+        """The slot is called when the selection has changed"""
+        if selected.indexes():
+            self.sigSelectionChanged.emit(selected.indexes()[0])
+        else:
+            self.sigSelectionChanged.emit(QModelIndex())
+        QTreeView.selectionChanged(self, selected, deselected)
+
 
 class WatchPointViewer(QWidget):
 
@@ -338,7 +348,7 @@ class WatchPointViewer(QWidget):
 
         GlobalData().project.projectChanged.connect(self.__onProjectChanged)
 
-        if Settings().showWatchPointViewer == False:
+        if Settings()['showWatchPointViewer'] == False:
             self.__onShowHide(True)
 
     def __createPopupMenu(self):
@@ -412,7 +422,7 @@ class WatchPointViewer(QWidget):
         toolbarLayout.addSpacerItem(expandingSpacer)
         toolbarLayout.addWidget(self.__jumpToCodeButton)
 
-        self.__wpointsList.itemSelectionChanged.connect(
+        self.__wpointsList.sigSelectionChanged.connect(
             self.__onSelectionChanged)
 
         verticalLayout.addWidget(self.headerFrame)
@@ -445,7 +455,7 @@ class WatchPointViewer(QWidget):
             self.setMinimumHeight(self.headerFrame.height())
             self.setMaximumHeight(self.headerFrame.height())
 
-            Settings().showWatchPointViewer = False
+            Settings()['showWatchPointViewer'] = False
         else:
             self.__wpointsList.setVisible(True)
             self.__enableButton.setVisible(True)
@@ -456,10 +466,14 @@ class WatchPointViewer(QWidget):
             self.setMinimumHeight(self.__minH)
             self.setMaximumHeight(self.__maxH)
 
-            Settings().showWatchPointViewer = True
+            Settings()['showWatchPointViewer'] = True
 
-    def __onSelectionChanged(self):
+    def __onSelectionChanged(self, index):
         """Triggered when the current item is changed"""
+        if index.isValid():
+            pass
+        else:
+            pass
         return
         selected = list(self.__exceptionsList.selectedItems())
         if selected:

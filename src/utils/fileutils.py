@@ -637,6 +637,12 @@ def isCDMProjectMime(mime):
     return 'x-codimension3' in mime
 
 
+def isCDMProjectFile(fName):
+    """True if it is a codimension project file"""
+    mime, _, _, _ = getFileProperties(fName)
+    return 'x-codimension3' in mime
+
+
 # Utility functions to save/load generic JSON
 def loadJSON(fileName, errorWhat, defaultValue):
     """Generic JSON loading"""
