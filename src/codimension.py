@@ -162,22 +162,22 @@ Runs codimension UI"""
         # be opened
         for fName in args:
             mainWindow.openFile(os.path.abspath(fName), -1)
-    elif settings.projectLoaded:
-        if len(settings.recentProjects) == 0:
+    elif settings['projectLoaded']:
+        if len(settings['recentProjects']) == 0:
             # Some project was loaded but now it is not available.
             pass
         else:
             splash.showMessage("Loading recent project...")
-            if os.path.exists(settings.recentProjects[0]):
-                globalData.project.loadProject(settings.recentProjects[0])
+            if os.path.exists(settings['recentProjects'][0]):
+                globalData.project.loadProject(settings['recentProjects'][0])
                 needSignal = False
             else:
                 __delayedWarnings.append(
                     "Cannot open the most recent project: " +
-                    settings.recentProjects[0] + ". Ignore and continue.")
+                    settings['recentProjects'][0] + ". Ignore and continue.")
     else:
         mainWindow.editorsManagerWidget.editorsManager.restoreTabs(
-            settings.tabsStatus)
+            settings.tabStatus)
 
     # Signal for triggering browsers layout
     if needSignal:

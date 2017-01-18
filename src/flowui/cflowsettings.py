@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2015-206  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2015-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,93 +26,22 @@
 
 
 from ui.qt import QColor, QFont, QFontMetrics
-
-
-def buildFont(fontAsString):
-    """Converts a string into QFont object"""
-    fontAsString = fontAsString.strip()
-    font = QFont()
-    font.fromString(fontAsString)
-    return font
+from utils.globals import GlobalData
 
 
 class CFlowSettings:
 
     """Holds the control flow rendering and drawing settings"""
 
-    def __init__(self, paintDevice):
+    def __init__(self, paintDevice, params):
         # Visibility of the virtual cells (dotted outline)
-        self.debug = False
         self.__paintDevice = paintDevice
 
-        self.monoFont = buildFont("Ubuntu mono,12,-1,5,50,0,0,0,0,0")
-        self.monoFontMetrics = QFontMetrics(self.monoFont, paintDevice)
-        self.badgeFont = buildFont("Ubuntu mono,9,-1,5,50,0,0,0,0,0")
-        self.badgeFontMetrics = QFontMetrics(self.badgeFont, paintDevice)
+        for key, value in params.items:
+            setattr(self, key, value)
 
-        self.hCellPadding = 8       # in pixels (left and right)
-        self.vCellPadding = 8       # in pixels (top and bottom)
-        self.hTextPadding = 5       # in pixels (left and right)
-        self.vTextPadding = 5       # in pixels (top and bottom)
-
-        # Scope header (file, decor, loops etc) paddings
-        self.hHeaderPadding = 5
-        self.vHeaderPadding = 5
-
-        self.vSpacer = 10
-
-        # Rounded rectangles radius for the scopes
-        self.rectRadius = 6
-        # Rounded rectangles radius for the return-like statements
-        self.returnRectRadius = 16
-        self.minWidth = 100
-        self.ifWidth = 10           # One if wing width
-        self.commentCorner = 6      # Top right comment corner
-
-        self.lineWidth = 1          # used for connections and box edges
-        self.lineColor = QColor(16, 16, 16, 255)
-
-        # Selection
-        self.selectColor = QColor(63, 81, 181, 255)
-        self.selectPenWidth = 3
-
-        # Code blocks and other statements
-        self.boxBGColor = QColor(250, 250, 250, 255)
-        self.boxFGColor = QColor(0, 0, 0, 255)
-
-        # Badges
-        self.badgeBGColor = QColor(230, 230, 230, 255)
-        self.badgeFGColor = QColor(0, 0, 0, 255)
-        self.badgeLineWidth = 1
-        self.badgeLineColor = QColor(180, 180, 180, 255)
-
-        # Labels
-        self.labelBGColor = QColor(230, 230, 230, 255)
-        self.labelFGColor = QColor(0, 0, 0, 255)
-        self.labelLineWidth = 1
-        self.labelLineColor = QColor(0, 0, 0, 255)
-
-        # Comments: leading, side & independent
-        self.commentBGColor = QColor(255, 255, 153, 255)
-        self.commentFGColor = QColor(0, 0, 0, 255)
-        self.commentLineColor = QColor(102, 102, 61, 255)
-        self.commentLineWidth = 1
-        self.mainLine = 25
-
-        self.fileScopeBGColor = QColor(255, 255, 230, 255)
-        self.funcScopeBGColor = QColor(230, 230, 255, 255)
-        self.decorScopeBGColor = QColor(230, 255, 255, 255)
-        self.classScopeBGColor = QColor(230, 255, 230, 255)
-        self.forScopeBGColor = QColor(187, 222, 251, 255)
-        self.whileScopeBGColor = QColor(187, 222, 251, 255)
-        self.elseScopeBGColor = QColor(209, 196, 233, 255)
-        self.withScopeBGColor = QColor(255, 255, 255, 255)
-        self.tryScopeBGColor = QColor(255, 255, 255, 255)
-        self.exceptScopeBGColor = QColor(255, 255, 255, 255)
-        self.finallyScopeBGColor = QColor(192, 192, 192, 255)
-        self.breakBGColor = QColor(144, 202, 249, 255)
-        self.continueBGColor = QColor(144, 202, 249, 255)
-        self.ifBGColor = QColor(255, 229, 127, 255)
+        self.monoFontMetrics = QFontMetrics(params['monoFont'], paintDevice)
+        self.badgeFontMetrics = QFontMetrics(params['badgeFont'], paintDevice)
 
     def setMonoFont(self, font):
         """Sets the mono font"""
@@ -127,5 +56,5 @@ class CFlowSettings:
                                              self.__paintDevice)
 
 
-def getDefaultCflowSettings(paintDevice):
-    return CFlowSettings(paintDevice)
+def getCflowSettings(paintDevice):
+    return CFlowSettings(paintDevice, GlobalData().skin.cflowSettings)

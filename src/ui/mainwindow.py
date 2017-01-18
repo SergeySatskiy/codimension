@@ -52,6 +52,8 @@ from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
 from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
 from editor.redirectedioconsole import IOConsoleTabWidget
+from utils.skin import getThemesList
+from utils.config import CONFIG_DIR
 from .qt import (Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal, QLabel,
                  QToolBar, QWidget, QMessageBox, QVBoxLayout, QSplitter,
                  QSizePolicy, QAction, QMainWindow, QShortcut, QFrame,
@@ -2161,60 +2163,10 @@ class CodimensionMainWindow(QMainWindow):
     @staticmethod
     def __buildThemesList():
         """Builds a list of themes - system wide and the user local"""
-        result = []
         localSkinsDir = os.path.normpath(str(QDir.homePath())) + \
                         os.path.sep + CONFIG_DIR + os.path.sep + "skins" + \
                         os.path.sep
-        for item in os.listdir(localSkinsDir):
-            if os.path.isdir(localSkinsDir + item):
-                # Seems to be a skin dir
-                if not os.path.exists(localSkinsDir + item +
-                                      os.path.sep + "application.css") or \
-                   not os.path.exists(localSkinsDir + item +
-                                      os.path.sep + "skin.json"):
-                    continue
-                # Get the theme display name from the general file
-                config = ConfigParser.ConfigParser()
-                try:
-                    config.read([localSkinsDir + item +
-                                 os.path.sep + "general"])
-                    displayName = config.get('general', 'name')
-                except:
-                    continue
-
-                result.append([item, displayName])
-
-        # Add the installed names unless the same dirs have been already copied
-        # to the user local dir
-        srcDir = os.path.dirname(os.path.realpath(sys.argv[0]))
-        skinsDir = srcDir + os.path.sep + "skins" + os.path.sep
-        for item in os.listdir(skinsDir):
-            if os.path.isdir(skinsDir + item):
-                # Seems to be a skin dir
-                if not os.path.exists(skinsDir + item +
-                                      os.path.sep + "application.css") or \
-                   not os.path.exists(skinsDir + item +
-                                      os.path.sep + "lexers"):
-                    continue
-                # Check if this name alrady added
-                found = False
-                for theme in result:
-                    if theme[0] == item:
-                        found = True
-                        break
-                if found:
-                    continue
-
-                # Get the theme display name from the general file
-                config = ConfigParser.ConfigParser()
-                try:
-                    config.read([skinsDir + item + os.path.sep + "general"])
-                    displayName = config.get('general', 'name')
-                except:
-                    continue
-
-                result.append([item, displayName])
-        return result
+        return getThemesList(localSkinsDir)
 
     def __onTheme(self, act):
         """Triggers when a theme is selected"""

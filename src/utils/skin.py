@@ -19,8 +19,10 @@
 
 """Skins support"""
 
+import sys
 import logging
 import os
+import os.path
 import json
 from copy import deepcopy
 from ui.qt import QColor, QFont
@@ -126,6 +128,77 @@ QListView
 { background-color: #ffffe6; }"""
 
 
+_DEFAULT_CFLOW_SETTINGS = {
+    'debug': False,
+    'monoFont':  buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
+    'badgeFont': buildFont('Monospace,9,-1,5,50,0,0,0,0,0'),
+
+    'hCellPadding': 8,      # in pixels (left and right)
+    'vCellPadding': 8,      # in pixels (top and bottom)
+    'hTextPadding': 5,      # in pixels (left and right)
+    'vTextPadding': 5,      # in pixels (top and bottom)
+
+    # Scope header (file, decor, loops etc) paddings
+    'hHeaderPadding': 5,
+    'vHeaderPadding': 5,
+
+    'vSpacer': 10,
+
+    # Rounded rectangles radius for the scopes
+    'rectRadius': 6,
+
+    # Rounded rectangles radius for the return-like statements
+    'returnRectRadius': 16,
+    'minWidth': 100,
+    'ifWidth': 10,           # One if wing width
+    'commentCorner': 6,      # Top right comment corner
+
+    'lineWidth': 1,          # used for connections and box edges
+    'lineColor': QColor(16, 16, 16, 255),
+
+    # Selection
+    'selectColor': QColor(63, 81, 181, 255),
+    'selectPenWidth': 3,
+
+    # Code blocks and other statements
+    'boxBGColor': QColor(250, 250, 250, 255),
+    'boxFGColor': QColor(0, 0, 0, 255),
+
+    # Badges
+    'badgeBGColor': QColor(230, 230, 230, 255),
+    'badgeFGColor': QColor(0, 0, 0, 255),
+    'badgeLineWidth': 1,
+    'badgeLineColor': QColor(180, 180, 180, 255),
+
+    # Labels
+    'labelBGColor': QColor(230, 230, 230, 255),
+    'labelFGColor': QColor(0, 0, 0, 255),
+    'labelLineWidth': 1,
+    'labelLineColor': QColor(0, 0, 0, 255),
+
+    # Comments: leading, side & independent
+    'commentBGColor': QColor(255, 255, 153, 255),
+    'commentFGColor': QColor(0, 0, 0, 255),
+    'commentLineColor': QColor(102, 102, 61, 255),
+    'commentLineWidth': 1,
+    'mainLine': 25,
+
+    'fileScopeBGColor': QColor(255, 255, 230, 255),
+    'funcScopeBGColor': QColor(230, 230, 255, 255),
+    'decorScopeBGColor': QColor(230, 255, 255, 255),
+    'classScopeBGColor': QColor(230, 255, 230, 255),
+    'forScopeBGColor': QColor(187, 222, 251, 255),
+    'whileScopeBGColor': QColor(187, 222, 251, 255),
+    'elseScopeBGColor': QColor(209, 196, 233, 255),
+    'withScopeBGColor': QColor(255, 255, 255, 255),
+    'tryScopeBGColor': QColor(255, 255, 255, 255),
+    'exceptScopeBGColor': QColor(255, 255, 255, 255),
+    'finallyScopeBGColor': QColor(192, 192, 192, 255),
+    'breakBGColor': QColor(144, 202, 249, 255),
+    'continueBGColor': QColor(144, 202, 249, 255),
+    'ifBGColor': QColor(255, 229, 127, 255)}
+
+
 class Skin:
 
     """Holds the definitions for a skin"""
@@ -135,6 +208,7 @@ class Skin:
         self.__dirName = None
         self.__appCSS = None
         self.__values = {}
+        self.__cfValues = {}
         self.__reset()
 
     def __reset(self):
@@ -145,11 +219,21 @@ class Skin:
             # wrapper is not initialized in this case. So...
             if isinstance(value, QFont):
                 self.__values[key] = QFont(_DEFAULT_SKIN_SETTINGS[key])
+
+        self.__cfValues = deepcopy(_DEFAULT_CFLOW_SETTINGS)
+        for key, value in self.__cfValues.items():
+            # deepcopy() does not work properly for QFont: the underlied C++
+            # wrapper is not initialized in this case. So...
+            if isinstance(value, QFont):
+                self.__cfValues[key] = QFont(_DEFAULT_CFLOW_SETTINGS[key])
+
         self.__appCSS = deepcopy(_DEFAULT_APP_CSS)
 
     def __getitem__(self, key):
         if key == 'appCSS':
             return self.__appCSS
+        if key in self.__cfValues:
+            return self.__cfValues[key]
         return self.__values[key]
 
     def __setitem__(self, key, value):
@@ -159,9 +243,17 @@ class Skin:
         if key == 'appCSS':
             self.__appCSS = value
             self.flushCSS()
+        elif key in self.__cfValues:
+            self.__cfValues[key] = value
+            self.flushCFlow()
         else:
             self.__values[key] = value
             self.flush()
+
+    @property
+    def cflowSettings(self):
+        """Provides the cflow settings dictionary"""
+        return self.__cfValues
 
     def flush(self):
         """Saves the values to the disk"""
@@ -173,6 +265,18 @@ class Skin:
                               default=toJSON)
             except Exception as exc:
                 logging.error('Error saving skin settings (to ' +
+                              fName + '): ' + str(exc))
+
+    def flushCFlow(self):
+        """Saves the cflow settings to the disk"""
+        if self.__dirName:
+            fName = self.__dirName + 'cflow.json'
+            try:
+                with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
+                    json.dump(self.__cfValues, diskfile, indent=4,
+                              default=toJSON)
+            except Exception as exc:
+                logging.error('Error saving control flow settings (to ' +
                               fName + '): ' + str(exc))
 
     def flushCSS(self):
@@ -207,11 +311,20 @@ class Skin:
                           ' is not found.')
             return False
 
+        cflowFile = self.__dirName + 'cflow.json'
+        if not os.path.exists(cflowFile):
+            logging.error('Cannot load a skin from ' + dName +
+                          '. The control flow settings file ' + cflowFile +
+                          ' is not found.')
+            return False
+
         # All the files are in place. Load them
         if not self.__loadAppCSS(appFile):
             self.flushCSS()
         if not self.__loadSkin(skinFile):
             self.flush()
+        if not self.__loadCFlow(cflowFile):
+            self.flushCFlow()
         return True
 
     def __loadAppCSS(self, fName):
@@ -237,3 +350,67 @@ class Skin:
                           'default skin settings')
             return False
         return True
+
+    def __loadCFlow(self, fName):
+        """Loads control flow settings file"""
+        try:
+            with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
+                self.__cfValues = json.load(diskfile, object_hook=fromJSON)
+        except Exception as exc:
+            logging.error('Cannot read control flow settings from ' + fName +
+                          ': ' + str(exc) +
+                          '\nThe file will be updated with '
+                          'default control flow settings')
+            return False
+        return True
+
+
+def getThemesList(localSkinsDir):
+    """Builds a list of themes - system wide and the user local"""
+    def isSkinDir(dName):
+        """True if all the required files are there"""
+        for fName in ['app.css', 'skin.json', 'cflow.json']:
+            if not os.path.exists(dName + fName):
+                return False
+        return True
+
+    def getSkinName(dName):
+        """Provides the skin name or None"""
+        try:
+            fName = dName + 'skin.json'
+            with open(fName, 'r',
+                      encoding=DEFAULT_ENCODING) as diskfile:
+                values = json.load(diskfile, object_hook=fromJSON)
+                return values['name']
+        except:
+            return None
+
+    result = []
+    for item in os.listdir(localSkinsDir):
+        dName = localSkinsDir + item + os.path.sep
+        if os.path.isdir(dName):
+            # Seems to be a skin dir
+            if isSkinDir(dName):
+                # Get the theme display name
+                name = getSkinName(dName)
+                if name:
+                    result.append([item, name])
+
+    # Add the installed names unless the same dirs have been already copied
+    # to the user local dir
+    srcDir = os.path.dirname(os.path.realpath(sys.argv[0]))
+    skinsDir = srcDir + os.path.sep + "skins" + os.path.sep
+    for item in os.listdir(skinsDir):
+        dName = skinsDir + item + os.path.sep
+        if os.path.isdir(dName):
+            # Seems to be a skin dir
+            if isSkinDir(dName):
+                # Check if this name alrady added
+                for theme in result:
+                    if theme[0] == item:
+                        break
+                else:
+                    # Get the theme display name
+                    name = getSkinName(dName)
+                    result.append([item, name])
+    return result

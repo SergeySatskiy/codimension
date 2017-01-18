@@ -29,7 +29,7 @@ from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QRectF, QPoint,
                    QPrinter)
 from cdmcf import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas
-from flowui.cflowsettings import getDefaultCflowSettings
+from flowui.cflowsettings import getCflowSettings
 from flowui.cml import CMLVersion
 from utils.pixmapcache import getPixmap, getIcon
 from utils.globals import GlobalData
@@ -347,7 +347,7 @@ class FlowUIWidget(QWidget):
         self.__connected = False
         self.__needPathUpdate = False
 
-        self.cflowSettings = getDefaultCflowSettings(self)
+        self.cflowSettings = getCflowSettings(self)
 
         hLayout = QHBoxLayout()
         hLayout.setContentsMargins(0, 0, 0, 0)
