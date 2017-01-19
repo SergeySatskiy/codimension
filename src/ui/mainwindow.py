@@ -2007,155 +2007,157 @@ class CodimensionMainWindow(QMainWindow):
 
     def __verticalEdgeChanged(self):
         """Editor setting changed"""
-        self.settings.verticalEdge = not self.settings.verticalEdge
+        self.settings['verticalEdge'] = not self.settings['verticalEdge']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __showSpacesChanged(self):
         """Editor setting changed"""
-        self.settings.showSpaces = not self.settings.showSpaces
+        self.settings['showSpaces'] = not self.settings['showSpaces']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __lineWrapChanged(self):
         """Editor setting changed"""
-        self.settings.lineWrap = not self.settings.lineWrap
+        self.settings['lineWrap'] = not self.settings['lineWrap']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __showEOLChanged(self):
         """Editor setting changed"""
-        self.settings.showEOL = not self.settings.showEOL
+        self.settings['showEOL'] = not self.settings['showEOL']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __showBraceMatchChanged(self):
         """Editor setting changed"""
-        self.settings.showBraceMatch = not self.settings.showBraceMatch
+        self.settings['showBraceMatch'] = not self.settings['showBraceMatch']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __autoIndentChanged(self):
         """Editor setting changed"""
-        self.settings.autoIndent = not self.settings.autoIndent
+        self.settings['autoIndent'] = not self.settings['autoIndent']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __backspaceUnindentChanged(self):
         """Editor setting changed"""
-        self.settings.backspaceUnindent = not self.settings.backspaceUnindent
+        self.settings['backspaceUnindent'] = \
+            not self.settings['backspaceUnindent']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __tabIndentsChanged(self):
         """Editor setting changed"""
-        self.settings.tabIndents = not self.settings.tabIndents
+        self.settings['tabIndents'] = not self.settings['tabIndents']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __indentationGuidesChanged(self):
         """Editor setting changed"""
-        self.settings.indentationGuides = not self.settings.indentationGuides
+        self.settings['indentationGuides'] = \
+            not self.settings['indentationGuides']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __currentLineVisibleChanged(self):
         """Editor setting changed"""
-        self.settings.currentLineVisible = not self.settings.currentLineVisible
+        self.settings['currentLineVisible'] = \
+            not self.settings['currentLineVisible']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __homeToFirstNonSpaceChanged(self):
         """Editor setting changed"""
-        self.settings.jumpToFirstNonSpace = \
-            not self.settings.jumpToFirstNonSpace
+        self.settings['jumpToFirstNonSpace'] = \
+            not self.settings['jumpToFirstNonSpace']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __removeTrailingChanged(self):
         """Editor setting changed"""
-        self.settings.removeTrailingOnSave = \
-            not self.settings.removeTrailingOnSave
+        self.settings['removeTrailingOnSave'] = \
+            not self.settings['removeTrailingOnSave']
 
     def __editorCalltipsChanged(self):
         """Editor calltips changed"""
-        self.settings.editorCalltips = not self.settings.editorCalltips
+        self.settings['editorCalltips'] = not self.settings['editorCalltips']
 
     def __clearDebugIOChanged(self):
         """Clear debug IO console before a new session changed"""
-        self.settings.clearDebugIO = not self.settings.clearDebugIO
+        self.settings['clearDebugIO'] = not self.settings['clearDebugIO']
 
     def __showNavBarChanged(self):
         """Editor setting changed"""
-        self.settings.showNavigationBar = \
-            not self.settings.showNavigationBar
+        self.settings['showNavigationBar'] = \
+            not self.settings['showNavigationBar']
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
 
     def __showCFNavBarChanged(self):
         """Control flow toolbar visibility changed"""
-        self.settings.showCFNavigationBar = \
-            not self.settings.showCFNavigationBar
+        self.settings['showCFNavigationBar'] = \
+            not self.settings['showCFNavigationBar']
         self.editorsManagerWidget.editorsManager.updateCFEditorsSettings()
 
     def __showMainToolbarChanged(self):
         """Main toolbar visibility changed"""
-        self.settings.showMainToolBar = \
-            not self.settings.showMainToolBar
-        self.__toolbar.setVisible(self.settings.showMainToolBar)
+        self.settings['showMainToolBar'] = \
+            not self.settings['showMainToolBar']
+        self.__toolbar.setVisible(self.settings['showMainToolBar'])
 
     def __projectTooltipsChanged(self):
         """Tooltips setting changed"""
-        self.settings.projectTooltips = \
-            not self.settings.projectTooltips
-        self.projectViewer.setTooltips(self.settings.projectTooltips)
+        self.settings['projectTooltips'] = \
+            not self.settings['projectTooltips']
+        self.projectViewer.setTooltips(self.settings['projectTooltips'])
 
     def __recentTooltipsChanged(self):
         """Tooltips setting changed"""
-        self.settings.recentTooltips = \
-            not self.settings.recentTooltips
-        self.recentProjectsViewer.setTooltips(self.settings.recentTooltips)
+        self.settings['recentTooltips'] = \
+            not self.settings['recentTooltips']
+        self.recentProjectsViewer.setTooltips(self.settings['recentTooltips'])
 
     def __classesTooltipsChanged(self):
         """Tooltips setting changed"""
-        self.settings.classesTooltips = \
-            not self.settings.classesTooltips
-        self.classesViewer.setTooltips(self.settings.classesTooltips)
+        self.settings['classesTooltips'] = \
+            not self.settings['classesTooltips']
+        self.classesViewer.setTooltips(self.settings['classesTooltips'])
 
     def __functionsTooltipsChanged(self):
         """Tooltips setting changed"""
-        self.settings.functionsTooltips = \
-            not self.settings.functionsTooltips
-        self.functionsViewer.setTooltips(self.settings.functionsTooltips)
+        self.settings['functionsTooltips'] = \
+            not self.settings['functionsTooltips']
+        self.functionsViewer.setTooltips(self.settings['functionsTooltips'])
 
     def __outlineTooltipsChanged(self):
         """Tooltips setting changed"""
         self.settings.outlineTooltips = \
-            not self.settings.outlineTooltips
-        self.outlineViewer.setTooltips(self.settings.outlineTooltips)
+            not self.settings['outlineTooltips']
+        self.outlineViewer.setTooltips(self.settings['outlineTooltips'])
 
     def __findNameTooltipsChanged(self):
         """Tooltips setting changed"""
-        self.settings.findNameTooltips = \
-            not self.settings.findNameTooltips
+        self.settings['findNameTooltips'] = \
+            not self.settings['findNameTooltips']
 
     def __findFileTooltipsChanged(self):
         """Tooltips setting changed"""
-        self.settings.findFileTooltips = \
-            not self.settings.findFileTooltips
+        self.settings['findFileTooltips'] = \
+            not self.settings['findFileTooltips']
 
     def __editorTooltipsChanged(self):
         """Tooltips setting changed"""
-        self.settings.editorTooltips = \
-            not self.settings.editorTooltips
+        self.settings['editorTooltips'] = \
+            not self.settings['editorTooltips']
         self.editorsManagerWidget.editorsManager.setTooltips(
-            self.settings.editorTooltips)
+            self.settings['editorTooltips'])
 
     def __tabOrderPreservedChanged(self):
         """Tab order preserved option changed"""
-        self.settings.taborderpreserved = \
-            not self.settings.taborderpreserved
+        self.settings['taborderpreserved'] = \
+            not self.settings['taborderpreserved']
 
     def __openTabsMenuTriggered(self, act):
         """Tab list settings menu triggered"""
-        value, isOK = act.data().toInt()
-        if isOK:
-            if value == -1:
-                self.settings.tablistsortalpha = True
-                self.__alphasort.setChecked(True)
-                self.__tabsort.setChecked(False)
-            elif value == -2:
-                self.settings.tablistsortalpha = False
-                self.__alphasort.setChecked(False)
-                self.__tabsort.setChecked(True)
+        value = act.data()
+        if value == -1:
+            self.settings.tablistsortalpha = True
+            self.__alphasort.setChecked(True)
+            self.__tabsort.setChecked(False)
+        elif value == -2:
+            self.settings.tablistsortalpha = False
+            self.__alphasort.setChecked(False)
+            self.__tabsort.setChecked(True)
 
     @staticmethod
     def __buildThemesList():
@@ -2167,12 +2169,12 @@ class CodimensionMainWindow(QMainWindow):
 
     def __onTheme(self, act):
         """Triggers when a theme is selected"""
-        skinSubdir = str(act.data().toString())
-        if self.settings.skin == skinSubdir:
+        skinSubdir = act.data()
+        if self.settings['skin'] == skinSubdir:
             return
 
         logging.info("Please restart codimension to apply the new theme")
-        self.settings.skin = skinSubdir
+        self.settings['skin'] = skinSubdir
 
     def __styleAboutToShow(self):
         """Style menu is about to show"""
@@ -3757,7 +3759,6 @@ class CodimensionMainWindow(QMainWindow):
 
     def installRedirectedIOConsole(self):
         """Create redirected IO console"""
-        return
         self.redirectedIOConsole = IOConsoleTabWidget(self)
         self.redirectedIOConsole.UserInput.connect(self.__onUserInput)
         self.redirectedIOConsole.textEditorZoom.connect(

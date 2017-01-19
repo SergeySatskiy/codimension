@@ -42,7 +42,7 @@ class RunParameters:
 
     def isDefault(self):
         """Returns True if all the values are default"""
-        return self.params == DEFAULT_RUN_PARAMETERS
+        return self.__params == DEFAULT_RUN_PARAMETERS
 
     def toJSON(self):
         """Converts the instance to a serializable structure"""
