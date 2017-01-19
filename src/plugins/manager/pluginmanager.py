@@ -178,7 +178,7 @@ class CDMPluginManager(PluginManager, QObject):
     def __applyDisabledPlugins(self, collectedPlugins):
         """Takes the disabled plugins from settings and marks
            collected plugins accordingly"""
-        for disabledPlugin in Settings().disabledPlugins:
+        for disabledPlugin in Settings()['disabledPlugins']:
             # Parse the record
             try:
                 conflictType, path, conflictMessage = \
@@ -349,7 +349,7 @@ class CDMPluginManager(PluginManager, QObject):
             line = plugin.getDisabledLine()
             if line is not None:
                 value.append(line)
-        Settings().disabledPlugins = value
+        Settings()['disabledPlugins'] = value
 
     def checkConflict(self, cdmPlugin):
         """Checks for the conflict and returns a message if so.

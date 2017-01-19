@@ -238,7 +238,7 @@ class IgnoredExceptionsViewer(QWidget):
         if project.isLoaded():
             self.__ignored = list(project.ignoredExcpt)
         else:
-            self.__ignored = list(Settings().ignoredExceptions)
+            self.__ignored = Settings()['ignoredExceptions']
 
         for exceptionType in self.__ignored:
             item = QTreeWidgetItem(self.exceptionsList)

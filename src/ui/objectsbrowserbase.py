@@ -90,7 +90,6 @@ class ObjectsBrowserSortFilterProxyModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, sourceRow, sourceParent):
         """Filters rows"""
-
         if self.__filtersCount == 0 or self.__sourceModelRoot is None:
             return True     # No filters
 
@@ -166,7 +165,8 @@ class ObjectsBrowser(QTreeView):
     def __onProjectChanged(self, what):
         """Triggered when a project is changed"""
         if what == CodimensionProject.CompleteProject:
-            self.__model.reset()
+            self.__model.beginResetModel()
+            self.__model.endResetModel()
             self.layoutDisplay()
             self.updateCounter()
 

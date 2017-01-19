@@ -84,18 +84,16 @@ class TextEditor(QutepartWrapper):
         self.__debugger = debugger
 
         self.__initMargins()
-        self.__initIndicators()
-        self.__alterKeyBinding()
         self._initContextMenu()
         self.__initDebuggerMarkers()
 
-        self.SCN_DOUBLECLICK.connect(self.__onDoubleClick)
-        self.cursorPositionChanged.connect(self._onCursorPositionChanged)
+        # self.SCN_DOUBLECLICK.connect(self.__onDoubleClick)
+        # self.cursorPositionChanged.connect(self._onCursorPositionChanged)
 
-        self.SCN_DWELLSTART.connect(self._onDwellStart)
-        self.SCN_DWELLEND.connect( self._onDwellEnd )
+        # self.SCN_DWELLSTART.connect(self._onDwellStart)
+        # self.SCN_DWELLEND.connect( self._onDwellEnd )
 
-        self.SCN_MODIFIED.connect(self.__onSceneModified)
+        # self.SCN_MODIFIED.connect(self.__onSceneModified)
         self.__skipChangeCursor = False
 
         skin = GlobalData().skin
@@ -548,13 +546,6 @@ class TextEditor(QutepartWrapper):
         """Converts an indicator style from a config file
            to the scintilla constant
         """
-
-    def __alterKeyBinding(self):
-        """Disable some unwanted key bindings"""
-        ctrl  = self.SCMOD_CTRL << 16
-        shift = self.SCMOD_SHIFT << 16
-        alt = self.SCMOD_ALT << 16
-
 
     def bindLexer(self, fileName, fileType):
         """Sets the correct lexer depending on language"""

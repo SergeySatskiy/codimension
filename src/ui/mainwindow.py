@@ -1359,15 +1359,14 @@ class CodimensionMainWindow(QMainWindow):
 
     def __guessMaximized(self):
         """True if the window is maximized"""
-
         # Ugly but I don't see any better way.
         # It is impossible to catch the case when the main window is maximized.
         # Especially when networked XServer is used (like xming)
         # So, make a wild guess instead and do not save the status is
         # maximized.
         availGeom = GlobalData().application.desktop().availableGeometry()
-        if self.width() + abs(self.settings.xdelta) > availGeom.width() or \
-           self.height() + abs(self.settings.ydelta) > availGeom.height():
+        if self.width() + abs(self.settings['xdelta']) > availGeom.width() or \
+           self.height() + abs(self.settings['ydelta']) > availGeom.height():
             return True
         return False
 
@@ -1530,9 +1529,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def showLogTab(self):
         """Makes sure that the log tab is visible"""
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget(self.logViewer)
-        self.__bottomSideBar.raise_()
+        self.__activateSideTab('log')
 
     def openFile(self, path, lineNo, pos=0):
         """User double clicked on a file or an item in a file"""
@@ -1649,11 +1646,11 @@ class CodimensionMainWindow(QMainWindow):
     def closeEvent(self, event):
         """Triggered when the IDE is closed"""
         # Save the side bars status
-        self.settings.vSplitterSizes = self.__verticalSplitterSizes
-        self.settings.hSplitterSizes = self.__horizontalSplitterSizes
-        self.settings.bottomBarMinimized = self.__bottomSideBar.isMinimized()
-        self.settings.leftBarMinimized = self.__leftSideBar.isMinimized()
-        self.settings.rightBarMinimized = self.__rightSideBar.isMinimized()
+        self.settings['vSplitterSizes'] = self.__verticalSplitterSizes
+        self.settings['hSplitterSizes'] = self.__horizontalSplitterSizes
+        self.settings['bottomBarMinimized'] = self.__bottomSideBar.isMinimized()
+        self.settings['leftBarMinimized'] = self.__leftSideBar.isMinimized()
+        self.settings['rightBarMinimized'] = self.__rightSideBar.isMinimized()
 
         # Ask the editors manager to close all the editors
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -3877,7 +3874,7 @@ class CodimensionMainWindow(QMainWindow):
     def closeAllIOConsoles(self):
         """Closes all IO run/profile tabs and clears the debug IO console"""
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        index = self.__bottomSideBar.count() - 1
+        index = self.__bottomSideBar.count - 1
         while index >= 0:
             widget = self.__bottomSideBar.widget(index)
             if hasattr(widget, "getType"):

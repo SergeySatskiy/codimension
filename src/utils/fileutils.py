@@ -629,11 +629,15 @@ def isPythonFile(fName):
 
 def isPythonMime(mime):
     """True if it is a python mime"""
+    if mime is None:
+        return False
     return 'python' in mime
 
 
 def isCDMProjectMime(mime):
     """True if it is a codimension project mime"""
+    if mime is None:
+        return False
     return 'x-codimension3' in mime
 
 

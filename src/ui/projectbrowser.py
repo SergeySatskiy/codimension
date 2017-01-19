@@ -62,12 +62,14 @@ class ProjectBrowser(FilesBrowser):
     def __onProjectChanged(self, what):
         """Triggered when a project is changed"""
         if what == CodimensionProject.CompleteProject:
-            self.model().reset()
+            self.model().beginResetModel()
+            self.model().endResetModel()
 
     def reload(self):
         """Reloads the projects view"""
         self.model().sourceModel().populateModel()
-        self.model().reset()
+        self.model().beginResetModel()
+        self.model().endResetModel()
         self.layoutDisplay()
 
     def __onPluginDeactivated(self, plugin):
