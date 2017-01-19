@@ -21,6 +21,7 @@
 
 
 from qutepart import Qutepart
+from ui.qt import QPalette
 
 
 class QutepartWrapper(Qutepart):
@@ -29,3 +30,17 @@ class QutepartWrapper(Qutepart):
 
     def __init__(self, parent):
         Qutepart.__init__(self, parent)
+
+    def setPaper(self, paperColor):
+        """Sets the new paper color"""
+        palette = self.palette()
+        palette.setColor(QPalette.Active, QPalette.Base, paperColor)
+        palette.setColor(QPalette.Inactive, QPalette.Base, paperColor)
+        self.setPalette(palette)
+
+    def setColor(self, textColor):
+        """Sets the new text color"""
+        palette = self.palette()
+        palette.setColor(QPalette.Active, QPalette.Text, textColor)
+        palette.setColor(QPalette.Inactive, QPalette.Text, textColor)
+        self.setPalette(palette)

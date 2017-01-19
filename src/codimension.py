@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ import shutil
 import datetime
 from optparse import OptionParser
 from ui.qt import QTimer, QDir, QMessageBox
+from utils.config import DEFAULT_ENCODING
 
 
 # Workaround if link is used
@@ -70,7 +71,6 @@ except:
 
 def codimensionMain():
     """The codimension driver"""
-
     # Parse command line arguments
     helpMessaege = """
 %prog [options] [project file | python files]
@@ -206,7 +206,6 @@ Runs codimension UI"""
 
 def launchUserInterface():
     """UI launchpad"""
-
     globalData = GlobalData()
     if not globalData.splash is None:
         globalData.splash.finish(globalData.mainWindow)
@@ -222,7 +221,8 @@ def launchUserInterface():
 
     # Additional checks may come here
     globalData.mainWindow.installRedirectedIOConsole()
-    globalData.mainWindow.getToolbar().setVisible(Settings().showMainToolBar)
+    globalData.mainWindow.getToolbar().setVisible(
+        Settings()['showMainToolBar'])
 
     # Some startup time objects could be collected here. In my test runs
     # there were around 700 objects.
@@ -231,7 +231,6 @@ def launchUserInterface():
 
 def setupLogging(debug):
     """Configures the logging module"""
-
     global __rootLoggingHandlers
 
     if debug:
@@ -344,7 +343,6 @@ def copySkin():
 
 def exceptionHook(excType, excValue, tracebackObj):
     """Catches unhandled exceptions"""
-
     globalData = GlobalData()
 
     # Keyboard interrupt is a special case
@@ -364,33 +362,32 @@ def exceptionHook(excType, excValue, tracebackObj):
     excptFileName = SETTINGS_DIR + "unhandledexceptions.log"
     try:
         savedOK = True
-        f = open(excptFileName, "a")
-        f.write("------ Unhandled exception report at " +
-                str(datetime.datetime.now()) + "\n")
-        f.write("Traceback:\n")
-        f.write(stackTraceString)
+        with open(excptFileName, 'a',
+                  encoding=DEFAULT_ENCODING) as diskfile:
+            diskfile.write("------ Unhandled exception report at " +
+                           str(datetime.datetime.now()) + "\n")
+            diskfile.write("Traceback:\n")
+            diskfile.write(stackTraceString)
 
-        f.write("Log window:\n")
-        if globalData.mainWindow is not None:
-            # i.e. the log window is available, save its content too
-            logWindowContent = globalData.mainWindow.getLogViewerContent()
-            logWindowContent = logWindowContent.strip()
-            if logWindowContent:
-                f.write(logWindowContent)
-                f.write("\n")
+            diskfile.write("Log window:\n")
+            if globalData.mainWindow is not None:
+                # i.e. the log window is available, save its content too
+                logWindowContent = globalData.mainWindow.getLogViewerContent()
+                logWindowContent = logWindowContent.strip()
+                if logWindowContent:
+                    diskfile.write(logWindowContent)
+                    diskfile.write('\n')
+                else:
+                    diskfile.write('Nothing is there\n')
             else:
-                f.write("Nothing is there\n")
-        else:
-            f.write("Has not been created yet\n")
-
-        f.write("------\n\n")
-        f.close()
+                diskfile.write('Has not been created yet\n')
+            diskfile.write('------\n\n')
     except:
         savedOK = False
 
     # This output will be to a console if the application has not started yet
     # or to a log window otherwise.
-    logging.error("Unhandled exception is caught\n" + stackTraceString)
+    logging.error('Unhandled exception is caught\n' + stackTraceString)
 
     # Display the message as a QT modal dialog box if the application
     # has started
@@ -400,8 +397,8 @@ def exceptionHook(excType, excValue, tracebackObj):
             message += "Stack trace and log window content saved in " + \
                        excptFileName + ".<br>"
         else:
-            message += "Failed to save stack trace and log window content in " + \
-                       excptFileName + ".<br>"
+            message += "Failed to save stack trace and log window " \
+                       "content in " + excptFileName + ".<br>"
 
         lines = stackTraceString.split('\n')
         if len(lines) > 32:

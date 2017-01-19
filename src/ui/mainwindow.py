@@ -2176,7 +2176,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def __styleAboutToShow(self):
         """Style menu is about to show"""
-        currentStyle = self.settings.style.lower()
+        currentStyle = self.settings['style'].lower()
         for item in self.__styles:
             font = item[1].font()
             if item[0].lower() == currentStyle:
@@ -2187,7 +2187,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def __onStyle(self, act):
         """Sets the selected style"""
-        styleName = str(act.data().toString())
+        styleName = act.data()
         QApplication.setStyle(styleName)
         self.settings.style = styleName.lower()
 
@@ -3757,6 +3757,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def installRedirectedIOConsole(self):
         """Create redirected IO console"""
+        return
         self.redirectedIOConsole = IOConsoleTabWidget(self)
         self.redirectedIOConsole.UserInput.connect(self.__onUserInput)
         self.redirectedIOConsole.textEditorZoom.connect(

@@ -110,11 +110,10 @@ class TextEditor(QutepartWrapper):
 
         self.__breakpoints = {}         # marker handle -> Breakpoint
 
-        self.setPaper(skin.nolexerPaper)
-        self.setColor(skin.nolexerColor)
-        self.monospacedStyles(skin.nolexerFont)
+        self.setPaper(skin['nolexerPaper'])
+        self.setColor(skin['nolexerColor'])
+        self.setFont(skin['monoFont'])
 
-        self.setUtf8(True)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setIndentationWidth(4)
         self.setTabWidth(4)
