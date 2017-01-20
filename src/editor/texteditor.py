@@ -26,7 +26,7 @@ from ui.qt import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal, QVariant,
                    QDesktopServices, QFont, QApplication, QToolBar,
                    QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                    QSizePolicy, QToolButton, QDialog, QToolTip,
-                   QVBoxLayout, QSplitter)
+                   QVBoxLayout, QSplitter, QTextOption)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache import getIcon, getPixmap
 from utils.globals import GlobalData
@@ -115,16 +115,7 @@ class TextEditor(QutepartWrapper):
         self.setFont(skin['monoFont'])
 
         self.setFocusPolicy(Qt.StrongFocus)
-        self.setIndentationWidth(4)
-        self.setTabWidth(4)
-        self.setEdgeColumn(Settings().editorEdge)
-
-        self.setMatchedBraceBackgroundColor(skin.matchedBracePaper)
-        self.setMatchedBraceForegroundColor(skin.matchedBraceColor)
-        self.setUnmatchedBraceBackgroundColor(skin.unmatchedBracePaper)
-        self.setUnmatchedBraceForegroundColor(skin.unmatchedBraceColor)
-        self.setIndentationGuidesBackgroundColor(skin.indentGuidePaper)
-        self.setIndentationGuidesForegroundColor(skin.indentGuideColor)
+        self.indentWidth = 4
 
         self.updateSettings()
 
@@ -137,8 +128,6 @@ class TextEditor(QutepartWrapper):
         self.__inCompletion = False
         self.__completer.activated.connect(self.insertCompletion)
         self.__lastTabPosition = -1
-
-        self.marginClicked.connect(self._marginClicked)
 
         # Calltip support
         self.__calltip = None
@@ -158,6 +147,25 @@ class TextEditor(QutepartWrapper):
 
         self.__initHotKeys()
         self.installEventFilter(self)
+
+    def selectParagraphUp(self):
+        pass
+    def selectParagraphDown(self):
+        pass
+    def dedentLine(self):
+        pass
+    def selectTillDisplayEnd(self):
+        pass
+    def wordPartLeft(self):
+        pass
+    def wordPartRight(self):
+        pass
+    def paragraphUp(self):
+        pass
+    def paragraphDown(self):
+        pass
+    def moveToLineEnd(self):
+        pass
 
     def __initHotKeys(self):
         """Initializes a map for the hot keys event filter"""
@@ -458,42 +466,18 @@ class TextEditor(QutepartWrapper):
         """Updates the editor settings"""
         settings = Settings()
 
-        if settings.verticalEdge:
-            self.setEdgeMode(QsciScintilla.EdgeLine)
-            self.setEdgeColor(GlobalData().skin.edgeColor)
+        if settings['verticalEdge']:
+            self.lineLengthEdge = settings['editorEdge']
+            self.lineLengthEdgeColor = GlobalData().skin['edgeColor']
         else:
-            self.setEdgeMode(QsciScintilla.EdgeNone)
+            self.lineLengthEdge = None
 
-        if settings.showSpaces:
-            self.setWhitespaceVisibility(QsciScintilla.WsVisible)
+        self.drawAnyWhitespace = settings['showSpaces']
+
+        if settings['lineWrap']:
+            self.setWordWrapMode(QTextOption.WrapAnywhere)
         else:
-            self.setWhitespaceVisibility(QsciScintilla.WsInvisible)
-
-        if settings.lineWrap:
-            self.setWrapMode(QsciScintilla.WrapWord)
-        else:
-            self.setWrapMode(QsciScintilla.WrapNone)
-
-        # Moving the cursor and letting messages be processed allows the
-        # bracing highlight be switched on/off properly even if the cursor is
-        # currently on the highlighted position
-        oldLine, oldPos = self.getCursorPosition()
-        self.setCursorPosition(oldLine, 0)
-        QApplication.processEvents()
-        if settings.showBraceMatch:
-            self.setBraceMatching(QsciScintilla.StrictBraceMatch)
-        else:
-            self.setBraceMatching(QsciScintilla.NoBraceMatch)
-        QApplication.processEvents()
-        self.setCursorPosition(oldLine, oldPos)
-
-        self.setEolVisibility(settings.showEOL)
-        self.setAutoIndent(settings.autoIndent)
-        self.setBackspaceUnindents(settings.backspaceUnindent)
-        self.setTabIndents(settings.tabIndents)
-        self.setIndentationGuides(settings.indentationGuides)
-        self.setCurrentLineHighlight(settings.currentLineVisible,
-                                     GlobalData().skin.currentLinePaper)
+            self.setWordWrapMode(QTextOption.NoWrap)
 
         if hasattr(self._parent, "getNavigationBar"):
             navBar = self._parent.getNavigationBar()
