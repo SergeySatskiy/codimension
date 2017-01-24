@@ -9,7 +9,7 @@ description could be found on the library web site.
 
 
 There are two places where codimension looks for plugins:
-- system wide: /usr/share/codimension-plugins/
+- system wide: /usr/share/codimension3-plugins/
   The system-wide plugins location is separate to the location of the IDE
   in order to simplfy plugins packaging for the developers
 - user: ~/.codimension3/plugins/

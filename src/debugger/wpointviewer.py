@@ -346,7 +346,7 @@ class WatchPointViewer(QWidget):
         self.__createPopupMenu()
         self.__createLayout(wpointModel)
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
         if Settings()['showWatchPointViewer'] == False:
             self.__onShowHide(True)

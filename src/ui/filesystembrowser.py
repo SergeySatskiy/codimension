@@ -41,7 +41,7 @@ class FileSystemBrowser(FilesBrowser):
         self.setWindowTitle('Filesystem browser')
         self.setWindowIcon(getIcon('icon.png'))
 
-        GlobalData().project.fsChanged.connect(self._onFSChanged)
+        GlobalData().project.sigFSChanged.connect(self._onFSChanged)
 
     def removeToplevelDir(self):
         """Handles the Remove from toplevel popup menu entry"""

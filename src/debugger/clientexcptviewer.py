@@ -155,7 +155,7 @@ class ClientExceptionsViewer(QWidget):
         self.__createPopupMenu()
         self.__createLayout()
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
     def setFocus(self):
         """Sets the widget focus"""

@@ -64,7 +64,7 @@ class ClassesViewer(QWidget):
         self.clViewer.customContextMenuRequested.connect(
             self.__handleShowContextMenu)
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
         self.clViewer.sigSelectionChanged.connect(self.__selectionChanged)
         self.clViewer.sigOpeningItem.connect(self.itemActivated)
         self.clViewer.sigModelFilesChanged.connect(self.modelFilesChanged)

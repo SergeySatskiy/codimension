@@ -42,7 +42,7 @@ class ProjectBrowserModel(BrowserModelBase):
         BrowserModelBase.__init__(self, QVariant("Name"), self.__mainWindow)
         self.setTooltips(Settings()['projectTooltips'])
         self.populateModel()
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
     def populateModel(self):
         """Populates the project browser model"""

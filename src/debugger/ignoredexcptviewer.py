@@ -42,7 +42,7 @@ class IgnoredExceptionsViewer(QWidget):
         self.__ignored = []
         self.__currentItem = None
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
         if Settings()['showIgnoredExcViewer'] == False:
             self.__onShowHide(True)

@@ -98,8 +98,7 @@ _DEFAULT_SKIN_SETTINGS = {
     'ioconsoleIDEMsgPaper': QColor(228, 228, 228, 255),
     'ioconsoleIDEMsgColor': QColor(0, 0, 255, 255),
     'ioconsolemarginPaper': QColor(228, 228, 228, 255),
-    'ioconsolemarginColor': QColor(128, 128, 128, 255),
-    'ioconsolemarginFont': buildFont('Monospace,12,-1,5,50,0,0,0,0,0')}
+    'ioconsolemarginColor': QColor(128, 128, 128, 255)}
 
 
 _DEFAULT_APP_CSS = """

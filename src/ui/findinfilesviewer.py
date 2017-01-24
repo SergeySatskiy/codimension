@@ -338,7 +338,7 @@ class FindInFilesViewer(QWidget):
 
         self.__updateButtonsStatus()
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
     def __createLayout(self, parent):
         """Creates the toolbar and layout"""

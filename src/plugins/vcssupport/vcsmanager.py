@@ -128,8 +128,8 @@ class VCSManager(QObject):
         self.__dirRequestLoopTimer.timeout.connect(
             self.__onDirRequestLoopTimer)
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
-        GlobalData().project.fsChanged.connect(self.__onFSChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigFSChanged.connect(self.__onFSChanged)
         GlobalData().pluginManager.sigPluginActivated.connect(
             self.__onPluginActivated)
 

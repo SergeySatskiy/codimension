@@ -44,7 +44,7 @@ class FileSystemBrowserModel(BrowserModelBase):
         self.projectTopLevelDirs = []
         self.populateModel()
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
     def populateModel(self):
         """Populates the browser model"""

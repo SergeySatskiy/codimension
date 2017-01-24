@@ -60,15 +60,15 @@ class CodimensionProject(QObject,
                          FilePositions):
     """Provides codimension project singleton facility"""
 
-    # Constants for the projectChanged signal
+    # Constants for the sigProjectChanged signal
     CompleteProject = 0     # It is a completely new project
     Properties = 1          # Project properties were updated
 
-    projectChanged = pyqtSignal(int)
-    fsChanged = pyqtSignal(list)
-    restoreProjectExpandedDirs = pyqtSignal()
-    projectAboutToUnload = pyqtSignal()
-    recentFilesChanged = pyqtSignal()
+    sigProjectChanged = pyqtSignal(int)
+    sigFSChanged = pyqtSignal(list)
+    sigRestoreProjectExpandedDirs = pyqtSignal()
+    sigProjectAboutToUnload = pyqtSignal()
+    sigRecentFilesChanged = pyqtSignal()
 
     def __init__(self):
         QObject.__init__(self)
@@ -101,7 +101,6 @@ class CodimensionProject(QObject,
 
     def __resetValues(self):
         """Initializes or resets all the project members"""
-
         # Empty file name means that the project has not been loaded or
         # created. This must be an absolute path.
         self.fileName = ""
@@ -127,7 +126,6 @@ class CodimensionProject(QObject,
 
     def createNew(self, fileName, props):
         """Creates a new project"""
-
         # Try to create the user project directory
         projectUuid = str(uuid.uuid1())
         userProjectDir = SETTINGS_DIR + projectUuid + sep
@@ -149,6 +147,7 @@ class CodimensionProject(QObject,
         self.__resetValues()
 
         self.fileName = fileName
+        props['uuid'] = projectUuid
         self.props = props
         self.userProjectDir = userProjectDir
 
@@ -167,13 +166,12 @@ class CodimensionProject(QObject,
         # Update the watcher
         self.__dirWatcher = Watcher(Settings()['projectFilesFilters'],
                                     self.getProjectDir())
-        self.__dirWatcher.fsChanged.connect(self.onFSChanged)
+        self.__dirWatcher.sigFSChanged.connect(self.onFSChanged)
 
-        self.projectChanged.emit(self.CompleteProject)
+        self.sigProjectChanged.emit(self.CompleteProject)
 
     def __removeProjectFiles(self, userProjectDir):
         """Removes user project files"""
-
         for root, dirs, files in os.walk(userProjectDir):
             for f in files:
                 try:
@@ -220,7 +218,6 @@ class CodimensionProject(QObject,
 
     def loadProject(self, projectFile):
         """Loads a project from the given file"""
-
         path = realpath(projectFile)
         if not exists(path):
             raise Exception('Cannot open project file ' + projectFile)
@@ -264,10 +261,10 @@ class CodimensionProject(QObject,
         # Setup the new watcher
         self.__dirWatcher = Watcher(Settings()['projectFilesFilters'],
                                     self.getProjectDir())
-        self.__dirWatcher.fsChanged.connect(self.onFSChanged)
+        self.__dirWatcher.sigFSChanged.connect(self.onFSChanged)
 
-        self.projectChanged.emit(self.CompleteProject)
-        self.restoreProjectExpandedDirs.emit()
+        self.sigProjectChanged.emit(self.CompleteProject)
+        self.sigRestoreProjectExpandedDirs.emit()
 
     def getImportDirsAsAbsolutePaths(self):
         """Provides a list of import dirs as absolute paths"""
@@ -289,24 +286,24 @@ class CodimensionProject(QObject,
                     self.filesList.remove(item[1:])
             except:
                 pass
-        self.fsChanged.emit(items)
+        self.sigFSChanged.emit(items)
 
     def unloadProject(self, emitSignal=True):
         """Unloads the current project if required"""
-        self.projectAboutToUnload.emit()
+        self.sigProjectAboutToUnload.emit()
         if self.isLoaded():
             self.__saveProjectBrowserExpandedDirs()
         self.__resetValues()
         if emitSignal:
             # No need to send a signal e.g. if IDE is closing
-            self.projectChanged.emit(self.CompleteProject)
+            self.sigProjectChanged.emit(self.CompleteProject)
 
     def setImportDirs(self, paths):
         """Sets a new set of the project import dirs"""
         if self.props['importdirs'] != paths:
             self.props['importdirs'] = paths
             self.saveProject()
-            self.projectChanged.emit(self.Properties)
+            self.sigProjectChanged.emit(self.Properties)
 
     def __generateFilesList(self):
         """Generates the files list having the list of dirs"""
@@ -366,14 +363,14 @@ class CodimensionProject(QObject,
         if self.props != props:
             self.props = props
             self.saveProject()
-            self.projectChanged.emit(self.Properties)
+            self.sigProjectChanged.emit(self.Properties)
 
     def onProjectFileUpdated(self):
         """Called when a project file is updated via direct editing"""
         self.props = getProjectProperties(self.fileName)
 
         # no need to save, but signal just in case
-        self.projectChanged.emit(self.Properties)
+        self.sigProjectChanged.emit(self.Properties)
 
     def isLoaded(self):
         """Returns True if a project is loaded"""
@@ -399,7 +396,7 @@ class CodimensionProject(QObject,
         """Adds a single recent file. True if a new file was inserted."""
         ret = FileSystemEnvironment.addRecentFile(self, path)
         if ret:
-            self.recentFilesChanged.emit()
+            self.sigRecentFilesChanged.emit()
         return ret
 
 

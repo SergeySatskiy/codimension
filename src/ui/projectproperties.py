@@ -340,6 +340,8 @@ class ProjectPropertiesDialog(QDialog):
         """Displays a file selection dialog"""
         scriptName = QFileDialog.getOpenFileName(
             self, "Select project main script", self.dirEdit.text())
+        if isinstance(scriptName, tuple):
+            scriptName = scriptName[0]
         if scriptName:
             self.scriptEdit.setText(os.path.normpath(scriptName))
 

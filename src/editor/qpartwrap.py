@@ -21,15 +21,31 @@
 
 
 from qutepart import Qutepart
-from ui.qt import QPalette
+from ui.qt import QPalette, pyqtSignal, QFont
+from utils.globals import GlobalData
+from utils.settings import Settings
 
 
 class QutepartWrapper(Qutepart):
 
     """Convenience qutepart wrapper"""
 
+    sigTextEditorZoom = pyqtSignal(int)
+
     def __init__(self, parent):
         Qutepart.__init__(self, parent)
+
+        # Remove all the default margins
+        self.delMargin('mark_area')
+        self.delMargin('line_numbers')
+
+        # The minimum possible zoom not to make the margin disappear
+        skin = GlobalData().skin
+        marginPointSize = skin['lineNumFont'].pointSize()
+        mainAreaPointSize = skin['monoFont'].pointSize()
+        self.__minZoom = (min(marginPointSize, mainAreaPointSize) - 1) * -1
+
+        self.setFont(QFont(skin['monoFont']))
 
     def setPaper(self, paperColor):
         """Sets the new paper color"""
@@ -44,3 +60,26 @@ class QutepartWrapper(Qutepart):
         palette.setColor(QPalette.Active, QPalette.Text, textColor)
         palette.setColor(QPalette.Inactive, QPalette.Text, textColor)
         self.setPalette(palette)
+
+    def onZoomIn(self):
+        """Increases the font"""
+        self.sigTextEditorZoom.emit(Settings()['zoom'] + 1)
+
+    def onZoomOut(self):
+        """Decreases the font"""
+        newZoom = Settings()['zoom'] - 1
+        if newZoom >= self.__minZoom:
+            self.sigTextEditorZoom.emit(newZoom)
+
+    def zoomTo(self, zoomVal):
+        """Sets the zoom to a certain value if possible"""
+        # zoomVal is an integer: > 0 => larger, < 0 => smaller than the base
+        font = QFont(GlobalData().skin['monoFont'])
+        zoomVal = max(zoomVal, self.__minZoom)
+        fontSize = font.pointSize() + zoomVal
+        font.setPointSize(fontSize)
+        self.setFont(font)
+
+        for margin in self.getMargins():
+            if hasattr(margin, 'zoomTo'):
+                margin.zoomTo(zoomVal)

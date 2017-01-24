@@ -181,7 +181,7 @@ Runs codimension UI"""
 
     # Signal for triggering browsers layout
     if needSignal:
-        globalData.project.projectChanged.emit(
+        globalData.project.sigProjectChanged.emit(
             CodimensionProject.CompleteProject)
 
     mainWindow.show()
@@ -194,7 +194,7 @@ Runs codimension UI"""
     # themselves and then manually call the main window handler to restore the
     # editors. The last step is to connect the signal.
     mainWindow.onProjectChanged(CodimensionProject.CompleteProject)
-    globalData.project.projectChanged.connect(mainWindow.onProjectChanged)
+    globalData.project.sigProjectChanged.connect(mainWindow.onProjectChanged)
 
     # Launch the user interface
     QTimer.singleShot(1, launchUserInterface)

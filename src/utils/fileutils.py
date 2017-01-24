@@ -590,7 +590,6 @@ def setFileEncoding(fName, encoding):
 def compactPath(path, width, measure=len):
     """ Provides a compacted path fitting inside the given width.
         measure - ref to a function used to get the length of the string """
-
     if measure(path) <= width:
         return path
 
@@ -617,7 +616,6 @@ def compactPath(path, width, measure=len):
         if measure(path) <= width:
             return path
         tail = tail[1:]
-
     return ''
 
 

@@ -1397,7 +1397,7 @@ class CodimensionMainWindow(QMainWindow):
             self.settings['ypos'] = self.y()
 
     def onProjectChanged(self, what):
-        """Slot to receive projectChanged signal"""
+        """Slot to receive sigProjectChanged signal"""
         if what == CodimensionProject.CompleteProject:
             self.closeAllIOConsoles()
             self.updateToolbarStatus()
@@ -1416,7 +1416,7 @@ class CodimensionMainWindow(QMainWindow):
             self.settings.projectLoaded = projectLoaded
             if projectLoaded:
                 # The editor tabs must be loaded after a VCS plugin has a
-                # chance to receive projectChanged signal where it reads
+                # chance to receive sigProjectChanged signal where it reads
                 # the plugin configuration
                 QTimer.singleShot(1, self.__delayedEditorsTabRestore)
         self.updateRunDebugButtons()
@@ -1602,8 +1602,7 @@ class CodimensionMainWindow(QMainWindow):
             return
 
         # Request accepted
-        baseDir = os.path.dirname(str(dialog.absProjectFileName)) + \
-                  os.path.sep
+        baseDir = os.path.dirname(dialog.absProjectFileName) + os.path.sep
         importDirs = []
         index = 0
         while index < dialog.importDirList.count():
@@ -1620,20 +1619,20 @@ class CodimensionMainWindow(QMainWindow):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
         prj = GlobalData().project
-        prj.setTabsStatus(editorsManager.getTabsStatus())
+        prj.tabxsStatus = editorsManager.getTabsStatus()
         editorsManager.closeAll()
 
         GlobalData().project.createNew(
             dialog.absProjectFileName,
-            dialog.scriptEdit.text().strip(),
-            importDirs,
-            dialog.authorEdit.text().strip(),
-            dialog.licenseEdit.text().strip(),
-            dialog.copyrightEdit.text().strip(),
-            dialog.descriptionEdit.toPlainText().strip(),
-            dialog.creationDateEdit.text().strip(),
-            dialog.versionEdit.text().strip(),
-            dialog.emailEdit.text().strip())
+            {'scriptname': dialog.scriptEdit.text().strip(),
+             'creationdate': dialog.creationDateEdit.text().strip(),
+             'author': dialog.authorEdit.text().strip(),
+             'license': dialog.licenseEdit.text().strip(),
+             'copyright': dialog.copyrightEdit.text().strip(),
+             'version': dialog.versionEdit.text().strip(),
+             'email': dialog.emailEdit.text().strip(),
+             'description': dialog.descriptionEdit.toPlainText().strip(),
+             'importdirs': importDirs})
 
         QApplication.restoreOverrideCursor()
         self.settings.addRecentProject(dialog.absProjectFileName)
@@ -3411,7 +3410,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__recentPrjMenu.clear()
         addedCount = 0
         currentPrj = GlobalData().project.fileName
-        for item in self.settings.recentProjects:
+        for item in self.settings['recentProjects']:
             if item == currentPrj:
                 continue
             addedCount += 1
@@ -3760,15 +3759,16 @@ class CodimensionMainWindow(QMainWindow):
     def installRedirectedIOConsole(self):
         """Create redirected IO console"""
         self.redirectedIOConsole = IOConsoleTabWidget(self)
-        self.redirectedIOConsole.UserInput.connect(self.__onUserInput)
-        self.redirectedIOConsole.textEditorZoom.connect(
+        self.redirectedIOConsole.sigUserInput.connect(self.__onUserInput)
+        self.redirectedIOConsole.sigTextEditorZoom.connect(
             self.editorsManagerWidget.editorsManager.onZoom)
-        self.redirectedIOConsole.settingUpdated.connect(
+        self.redirectedIOConsole.sigSettingUpdated.connect(
             self.onIOConsoleSettingUpdated)
         self.__bottomSideBar.addTab(
-            self.redirectedIOConsole,
-            getIcon('ioconsole.png'), 'IO console')
-        self.__bottomSideBar.setTabToolTip(7, 'Redirected IO debug console')
+            self.redirectedIOConsole, getIcon('ioconsole.png'),
+            'IO console', 'ioredirect', None)
+        self.__bottomSideBar.setTabToolTip('ioredirect',
+                                           'Redirected IO debug console')
 
     def clearDebugIOConsole(self):
         """Clears the content of the debug IO console"""

@@ -43,7 +43,7 @@ class FunctionsBrowserModel(BrowserModelBase):
                                          QVariant("File name"),
                                          QVariant("Line")], parent)
         self.setTooltips(Settings()['functionsTooltips'])
-        self.globalData.project.projectChanged.connect(self.__onProjectChanged)
+        self.globalData.project.sigProjectChanged.connect(self.__onProjectChanged)
 
     def __populateModel(self):
         """Populates the project browser model"""

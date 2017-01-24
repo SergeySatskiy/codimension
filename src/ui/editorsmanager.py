@@ -836,7 +836,7 @@ class EditorsManager(QTabWidget):
 
         if fileType is None:
             fileType, _, _, _ = getFileProperties(fileName)
-        if isPythonMime(fileType):
+        if not isPythonMime(fileType):
             self.setTabIcon(widgetIndex, QIcon())
             self.setTabToolTip(widgetIndex, widget.getTooltip())
             self.history.updateIconForTab(widget.getUUID(), QIcon())
@@ -1875,7 +1875,7 @@ class EditorsManager(QTabWidget):
             return
 
         if GlobalData().project.isLoaded():
-            GlobalData().project.setTabsStatus(self.getTabsStatus())
+            GlobalData().project.tabStatus = self.getTabsStatus()
         else:
             Settings().tabsStatus = self.getTabsStatus()
 
@@ -1888,20 +1888,17 @@ class EditorsManager(QTabWidget):
         helpShortName = self.__helpWidget.getShortName()
         curWidget = self.currentWidget()
 
-
         for index in range(self.count()):
             item = self.widget(index)
             if item.getType() == MainWindowTabWidgetBase.HTMLViewer and \
                item.getShortName() == helpShortName:
-                record = "help"
-                if item == curWidget:
-                    record = "*:" + record
-                status.append(record)
+                status.append({'active': item == curWidget,
+                               'path': 'help'})
                 continue
             if item.getType() in [MainWindowTabWidgetBase.PlainTextEditor,
                                   MainWindowTabWidgetBase.PictureViewer]:
                 fileName = item.getFileName()
-                if fileName == "":
+                if not fileName:
                     continue    # New, not saved yet file
 
                 # Need to save the file name only. The cursor position is saved
@@ -1909,12 +1906,11 @@ class EditorsManager(QTabWidget):
                 if GlobalData().project.isProjectFile(fileName):
                     prjDir = os.path.dirname(GlobalData().project.fileName)
                     relativePath = relpath(fileName, prjDir)
-                    record = relativePath
+                    pathToSave = relativePath
                 else:
-                    record = fileName
-                if item == curWidget:
-                    record = "*:" + record
-                status.append(record)
+                    pathToSave = fileName
+                status.append({'active': item == curWidget,
+                               'path': pathToSave})
         return status
 
     def restoreTabs(self, status):
@@ -1930,18 +1926,9 @@ class EditorsManager(QTabWidget):
         activeIndex = -1
         for index in range(len(status) - 1, -1, -1):
             record = status[index]
-            if record.startswith("*:"):
+            if record['active']:
                 activeIndex = index
-                record = record[2:]
-            parts = record.split(':')
-            if len(parts) not in [1, 4]:
-                logging.warning('Cannot restore last session tab. '
-                                'Unknown status format (' +
-                                status[index] + ')')
-                continue
-
-            # The old format had 4 items; ignore the last three
-            fileName = parts[0]
+            fileName = record['path']
 
             if fileName == 'help':
                 # Help widget
@@ -2076,7 +2063,8 @@ class EditorsManager(QTabWidget):
     def checkOutsideFileChanges(self):
         """Checks all the tabs if the files were changed / disappeared outside"""
         for index in range(self.count()):
-            self._updateIconAndTooltip(index)
+            if self.__welcomeWidget != self.widget(index):
+                self._updateIconAndTooltip(index)
 
         currentWidget = self.currentWidget()
         if currentWidget is None:

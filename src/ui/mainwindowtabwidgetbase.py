@@ -39,7 +39,7 @@ class MainWindowTabWidgetBase():
     IOConsole = 9
 
     def __init__(self):
-        self.__uuid = uuid.uuid1()
+        self.__uuid = str(uuid.uuid1())
         self.__tooltip = ""
 
     def isModified(self):

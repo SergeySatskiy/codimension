@@ -134,7 +134,7 @@ class ObjectsBrowser(QTreeView):
         self.expanded.connect(self._resizeColumns)
         self.collapsed.connect(self._resizeColumns)
 
-        GlobalData().project.fsChanged.connect(self.onFSChanged)
+        GlobalData().project.sigFSChanged.connect(self.onFSChanged)
         self.__model.modelReset.connect(self.updateCounter)
 
         self.setRootIsDecorated(True)
@@ -154,7 +154,7 @@ class ObjectsBrowser(QTreeView):
 
         self.layoutDisplay()
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
     def updateCounter(self, parent=None, start=0, end=0):
         """Updates the header with the currently visible and total items"""

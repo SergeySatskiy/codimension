@@ -58,7 +58,7 @@ class CDMPluginManager(PluginManager, QObject):
         QObject.__init__(self)
         PluginManager.__init__(self, None,
                                [SETTINGS_DIR + "plugins",
-                                "/usr/share/codimension-plugins"], "cdmp")
+                                "/usr/share/codimension3-plugins"], "cdmp")
 
         self.inactivePlugins = {}   # Categorized inactive plugins
         self.activePlugins = {}     # Categorized active plugins

@@ -21,7 +21,8 @@
 
 from ui.qt import (Qt, QSize, QPoint, QEvent, pyqtSignal, QToolBar, QFont,
                    QFontMetrics, QHBoxLayout, QWidget, QAction, QSizePolicy,
-                   QToolTip, QMenu, QToolButton, QActionGroup, QApplication)
+                   QToolTip, QMenu, QToolButton, QActionGroup, QApplication,
+                   QTextOption)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
@@ -33,6 +34,8 @@ from .redirectedmsg import IOConsoleMessages, IOConsoleMsg
 class RedirectedIOConsole(TextEditor):
 
     """Widget which implements the redirected IO console"""
+
+    sigUserInput = pyqtSignal(str)
 
     TIMESTAMP_MARGIN = 0     # Introduced here
 
@@ -61,14 +64,8 @@ class RedirectedIOConsole(TextEditor):
 
         self.__timestampTooltipShown = False
         self.__initMessageMarkers()
-        self._updateDwellingTime()
 
         self.installEventFilter(self)
-
-    def zoomTo(self, zoomValue):
-        """Reimplemented zoomTo"""
-        QsciScintilla.zoomTo(self, zoomValue)
-        self.zoom = zoomValue
 
     def eventFilter(self, obj, event):
         """Event filter to catch shortcuts on UBUNTU"""
@@ -181,7 +178,7 @@ class RedirectedIOConsole(TextEditor):
 
         # Non-printable character or some other key
         if key == Qt.Key_Enter or key == Qt.Key_Return:
-            userInput = str(self.__getUserInput())
+            userInput = self.__getUserInput()
             self.switchMode(self.MODE_OUTPUT)
             timestampLine, _ = self.getEndPosition()
             self.append('\n')
@@ -198,7 +195,7 @@ class RedirectedIOConsole(TextEditor):
                                userInput + "\n")
             self.__messages.append(msg)
             self.__addTooltip(timestampLine, msg.getTimestamp())
-            self.emit(SIGNAL('UserInput'), userInput)
+            self.sigUserInput.emit(userInput)
             return
         if key == Qt.Key_Backspace:
             if self.currentPosition() == self.lastOutputPos:
@@ -245,28 +242,23 @@ class RedirectedIOConsole(TextEditor):
 
     def __initGeneralSettings(self):
         """Sets some generic look and feel"""
-        skin = GlobalData()['skin']
+        skin = GlobalData().skin
 
-        self.setEolVisibility(Settings().ioconsoleshoweol)
-        if Settings().ioconsolelinewrap:
-            self.setWrapMode(QsciScintilla.WrapWord)
+        if Settings()['ioconsolelinewrap']:
+            self.setWordWrapMode(QTextOption.WrapAnywhere)
         else:
-            self.setWrapMode(QsciScintilla.WrapNone)
-        if Settings().ioconsoleshowspaces:
-            self.setWhitespaceVisibility(QsciScintilla.WsVisible)
-        else:
-            self.setWhitespaceVisibility(QsciScintilla.WsInvisible)
+            self.setWordWrapMode(QTextOption.NoWrap)
 
-        self.setPaper(skin.ioconsolePaper)
-        self.setColor(skin.ioconsoleColor)
+        self.drawAnyWhitespace = Settings()['ioconsoleshowspaces']
 
-        self.setModified(False)
+        self.setPaper(skin['ioconsolePaper'])
+        self.setColor(skin['ioconsoleColor'])
+
         self.setReadOnly(True)
 
-        self.setCurrentLineHighlight(False, None)
-        self.setEdgeMode(QsciScintilla.EdgeNone)
+        # self.setCurrentLineHighlight(False, None)
+        self.lineLengthEdge = None
         self.setCursorStyle()
-        self.setAutoIndent(False)
 
     def _onCursorPositionChanged(self, line, pos):
         """Called when the cursor changed position"""
@@ -274,18 +266,15 @@ class RedirectedIOConsole(TextEditor):
 
     def setCursorStyle( self ):
         """Sets the cursor style depending on the mode and the cursor pos"""
-        self.SendScintilla(self.SCI_SETCARETPERIOD, 750)
         if self.mode == self.MODE_OUTPUT:
-            self.SendScintilla(self.SCI_SETCARETSTYLE, self.CARETSTYLE_LINE)
+            self.setCursorWidth(1)
         else:
-            currentPos = self.currentPosition()
-            if currentPos >= self.lastOutputPos:
-                self.SendScintilla(self.SCI_SETCARETSTYLE,
-                                   self.CARETSTYLE_BLOCK)
+            if self.absCursorPosition >= self.lastOutputPos:
+                fontMetrics = QFontMetrics(self.font(), self)
+                self.setCursorWidth(fontMetrics.width('W'))
                 self.setReadOnly(False)
             else:
-                self.SendScintilla(self.SCI_SETCARETSTYLE,
-                                   self.CARETSTYLE_LINE)
+                self.setCursorWidth(1)
                 self.setReadOnly(True)
 
     def switchMode(self, newMode):
@@ -297,8 +286,7 @@ class RedirectedIOConsole(TextEditor):
             self.inputEcho = True
             self.inputBuffer = ""
         else:
-            line, pos = self.getEndPosition()
-            self.lastOutputPos = self.positionFromLineIndex(line, pos)
+            self.lastOutputPos = self.absCursorPosition
             self.setReadOnly(False)
             self.setCursorPosition(line, pos)
             self.ensureLineVisible(line)
@@ -307,98 +295,14 @@ class RedirectedIOConsole(TextEditor):
     def __initMargins(self):
         """Initializes the IO console margins"""
         # The supported margins: timestamp
-
-        # reset standard margins settings
-        for margin in range(5):
-            self.setMarginLineNumbers(margin, False)
-            self.setMarginMarkerMask(margin, 0)
-            self.setMarginWidth(margin, 0)
-            self.setMarginSensitivity(margin, False)
-
-        self.setMarginType(self.TIMESTAMP_MARGIN, self.TextMargin)
-        self.setMarginMarkerMask(self.TIMESTAMP_MARGIN, 0)
-
-        skin = GlobalData().skin
-        self.setMarginsBackgroundColor(skin.ioconsolemarginPaper)
-        self.setMarginsForegroundColor(skin.ioconsolemarginColor)
-
-        # Define margin style
-        self.SendScintilla(self.SCI_STYLESETFORE, self.marginStyle,
-                           self.convertColor(skin.ioconsolemarginColor))
-        self.SendScintilla(self.SCI_STYLESETBACK, self.marginStyle,
-                           self.convertColor(skin.ioconsolemarginPaper))
-        self.SendScintilla(self.SCI_STYLESETFONT, self.marginStyle,
-                           str( skin.ioconsolemarginFont.family()))
-        self.SendScintilla(self.SCI_STYLESETSIZE, self.marginStyle,
-                           skin.ioconsolemarginFont.pointSize())
-        self.SendScintilla(self.SCI_STYLESETBOLD, self.marginStyle,
-                           skin.ioconsolemarginFont.bold())
-        self.SendScintilla(self.SCI_STYLESETITALIC, self.marginStyle,
-                           skin.ioconsolemarginFont.italic())
-
-        self.setMarginsFont(skin.ioconsolemarginFont)
-        self.setTimestampMarginWidth()
+        pass
 
     def __initMessageMarkers(self):
         """Initializes the marker used for the IDE messages"""
         skin = GlobalData().skin
-        self.ideMessageMarker = self.markerDefine(QsciScintilla.Background)
-        self.setMarkerForegroundColor(skin.ioconsoleIDEMsgColor,
-                                      self.ideMessageMarker)
-        self.setMarkerBackgroundColor(skin.ioconsoleIDEMsgPaper,
-                                      self.ideMessageMarker)
-
-        # stdout style
-        self.SendScintilla(self.SCI_STYLESETFORE, self.stdoutStyle,
-                           self.convertColor(skin.ioconsoleStdoutColor))
-        self.SendScintilla(self.SCI_STYLESETBACK, self.stdoutStyle,
-                           self.convertColor(skin.ioconsoleStdoutPaper))
-        self.SendScintilla(self.SCI_STYLESETBOLD, self.stdoutStyle,
-                           skin.ioconsoleStdoutBold != 0)
-        self.SendScintilla(self.SCI_STYLESETITALIC, self.stdoutStyle,
-                           skin.ioconsoleStdoutItalic != 0)
-
-        # stdout style
-        self.SendScintilla(self.SCI_STYLESETFORE, self.stderrStyle,
-                           self.convertColor(skin.ioconsoleStderrColor))
-        self.SendScintilla(self.SCI_STYLESETBACK, self.stderrStyle,
-                           self.convertColor(skin.ioconsoleStderrPaper))
-        self.SendScintilla(self.SCI_STYLESETBOLD, self.stderrStyle,
-                           skin.ioconsoleStderrBold != 0)
-        self.SendScintilla(self.SCI_STYLESETITALIC, self.stderrStyle,
-                           skin.ioconsoleStderrItalic != 0)
-
-        # stdin style
-        self.SendScintilla(self.SCI_STYLESETFORE, self.stdinStyle,
-                           self.convertColor(skin.ioconsoleStdinColor))
-        self.SendScintilla(self.SCI_STYLESETBACK, self.stdinStyle,
-                           self.convertColor(skin.ioconsoleStdinPaper))
-        self.SendScintilla(self.SCI_STYLESETBOLD, self.stdinStyle,
-                           skin.ioconsoleStdinBold != 0)
-        self.SendScintilla(self.SCI_STYLESETITALIC, self.stdinStyle,
-                           skin.ioconsoleStdinItalic != 0)
 
     def _marginClicked(self, margin, line, modifiers):
         return
-
-    def _styleNeeded(self, position):
-        return
-
-    def _updateDwellingTime(self):
-        """There is always something to show"""
-        self.SendScintilla(self.SCI_SETMOUSEDWELLTIME, 250)
-
-    def _onDwellStart(self, position, x, y):
-        """Triggered when mouse started to dwell"""
-        if not self.underMouse():
-            return
-
-        marginNumber = self._marginNumber(x)
-        if marginNumber == self.TIMESTAMP_MARGIN:
-            self.__showTimestampTooltip(position, x, y)
-            return
-
-        TextEditor._onDwellStart(self, position, x, y)
 
     def __showTimestampTooltip(self, position, x, y):
         """Shows a tooltip on the timestamp margin"""
@@ -418,12 +322,6 @@ class RedirectedIOConsole(TextEditor):
         if line in self.__marginTooltip:
             return "\n".join(self.__marginTooltip[line])
         return None
-
-    def _onDwellEnd(self, position, x, y):
-        """Triggered when mouse ended to dwell"""
-        if self.__timestampTooltipShown:
-            self.__timestampTooltipShown = False
-            QToolTip.hideText()
 
     def _initContextMenu(self):
         """Called to initialize a context menu"""
@@ -463,7 +361,7 @@ class RedirectedIOConsole(TextEditor):
         settings = Settings()
         if settings['ioconsoleshowmargin']:
             skin = GlobalData()['skin']
-            font = QFont(skin['ioconsolemarginFont'])
+            font = QFont(skin['lineNumFont'])
             font.setPointSize(font.pointSize() + settings['zoom'])
             # The second parameter of the QFontMetrics is essential!
             # If it is not there then the width is not calculated properly.
@@ -669,21 +567,22 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     """IO console tab widget"""
 
-    textEditorZoom = pyqtSignal(int)
-    settingUpdated = pyqtSignal()
+    sigUserInput = pyqtSignal(str)
+    sigTextEditorZoom = pyqtSignal(int)
+    sigSettingUpdated = pyqtSignal()
 
     def __init__(self, parent):
         MainWindowTabWidgetBase.__init__(self)
         QWidget.__init__(self, parent)
 
         self.__viewer = RedirectedIOConsole(self)
-        self.connect(self.__viewer, SIGNAL('UserInput'), self.__onUserInput)
+        self.__viewer.sigUserInput.connect(self.__onUserInput)
 
         self.__createLayout()
 
     def __onUserInput(self, userInput):
         """Triggered when the user finished input in the redirected IO console"""
-        self.emit(SIGNAL('UserInput'), userInput)
+        self.sigUserInput.emit(userInput)
         self.__clearButton.setEnabled(True)
 
     def __createLayout(self):

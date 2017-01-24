@@ -66,7 +66,7 @@ class FunctionsViewer(QWidget):
         self.funcViewer.customContextMenuRequested.connect(
             self.__handleShowContextMenu)
 
-        GlobalData().project.projectChanged.connect(
+        GlobalData().project.sigProjectChanged.connect(
             self.__onProjectChanged)
         self.funcViewer.sigSelectionChanged.connect(self.__selectionChanged)
         self.funcViewer.sigOpeningItem.connect(self.itemActivated)

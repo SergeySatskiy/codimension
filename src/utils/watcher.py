@@ -34,7 +34,7 @@ class Watcher(QObject):
 
     """Filesystem watcher implementation"""
 
-    fsChanged = pyqtSignal(list)
+    sigFSChanged = pyqtSignal(list)
 
     def __init__(self, excludeFilters, dirToWatch):
         QObject.__init__(self)
@@ -205,7 +205,7 @@ class Watcher(QObject):
 
             # Report
             if itemsToReport:
-                self.fsChanged.emit(itemsToReport)
+                self.sigFSChanged.emit(itemsToReport)
             return
         except:
             # it is not a top level dir - no key
@@ -270,7 +270,7 @@ class Watcher(QObject):
                 self.__dirWatcher.addPaths(dirsToBeAdded)
 
             # Report
-            self.fsChanged.emit(itemsToReport)
+            self.sigFSChanged.emit(itemsToReport)
         except:
             # It could be a queued signal about what was already reported
             pass
@@ -408,7 +408,7 @@ class Watcher(QObject):
 
         # Report the changes
         if itemsToReport:
-            self.fsChanged.emit(itemsToReport)
+            self.sigFSChanged.emit(itemsToReport)
 
         # self.debug()
         return
@@ -483,7 +483,7 @@ class Watcher(QObject):
 
         # Report the changes
         if itemsToReport:
-            self.fsChanged.emit(itemsToReport)
+            self.sigFSChanged.emit(itemsToReport)
 
         # self.debug()
 

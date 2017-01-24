@@ -62,7 +62,7 @@ class GlobalsViewer(QWidget):
         self.globalsViewer.customContextMenuRequested.connect(
             self.__handleShowContextMenu)
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
         self.globalsViewer.sigSelectionChanged.connect(self.__selectionChanged)
         self.globalsViewer.sigOpeningItem.connect(self.itemActivated)
         self.globalsViewer.sigModelFilesChanged.connect(self.modelFilesChanged)

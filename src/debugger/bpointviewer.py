@@ -296,8 +296,8 @@ class BreakPointViewer(QWidget):
         self.__currentItem = None
         self.__createLayout(bpointsModel)
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
-        GlobalData().project.projectAboutToUnload.connect(
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigProjectAboutToUnload.connect(
             self.__onProjectAboutToUnload)
         self.bpointsList.sigSelectionChanged.connect(self.__onSelectionChanged)
         bpointsModel.sigBreakpoinsChanged.connect(self.__onModelChanged)

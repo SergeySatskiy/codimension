@@ -48,8 +48,8 @@ class ProjectBrowser(FilesBrowser):
         self.setWindowTitle('Project browser')
         self.setWindowIcon(getIcon('icon.png'))
 
-        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
-        GlobalData().project.fsChanged.connect(self._onFSChanged)
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
+        GlobalData().project.sigFSChanged.connect(self._onFSChanged)
 
         # VCS status support
         GlobalData().pluginManager.sigPluginDeactivated.connect(

@@ -81,9 +81,9 @@ class ProjectViewer(QWidget):
         self.__updateFSToolbarButtons()
         self.__updatePrjToolbarButtons()
 
-        GlobalData().project.projectChanged.connect(
+        GlobalData().project.sigProjectChanged.connect(
             self.__onProjectChanged)
-        GlobalData().project.restoreProjectExpandedDirs.connect(
+        GlobalData().project.sigRestoreProjectExpandedDirs.connect(
             self.__onRestorePrjExpandedDirs)
 
         # Support switching to debug and back
