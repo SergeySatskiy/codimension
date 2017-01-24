@@ -122,6 +122,8 @@ class GlobalDataWrapper:
     def isProjectScriptValid(self):
         """True if the project script valid"""
         scriptName = self.project.getProjectScript()
+        if not scriptName:
+            return False
         if not exists(scriptName):
             return False
         if not isfile(scriptName):

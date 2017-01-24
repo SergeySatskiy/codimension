@@ -179,7 +179,7 @@ class ThreadsViewer(QWidget):
         self.__threadsList.header().resizeSections(
             QHeaderView.ResizeToContents)
         self.__threadsList.header().resizeSection(0, 22)
-        self.__threadsList.header().setResizeMode(0, QHeaderView.Fixed)
+        self.__threadsList.header().setSectionResizeMode(0, QHeaderView.Fixed)
 
     def clear(self):
         """Clears the content"""

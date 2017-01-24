@@ -249,7 +249,7 @@ class RecentProjectsViewer(QWidget):
         self.projectsView.customContextMenuRequested.connect(
             self.__handleShowPrjContextMenu)
 
-        Settings().recentListChanged.connect(self.__populateProjects)
+        Settings().sigRecentListChanged.connect(self.__populateProjects)
         GlobalData().project.sigProjectChanged.connect(self.__projectChanged)
 
     def __createRecentFilesLayout(self):

@@ -269,18 +269,20 @@ class PluginsDialog(QDialog):
         self.__pluginsView.header().resizeSections(
             QHeaderView.ResizeToContents)
         self.__pluginsView.header().resizeSection(STATE_COL, 28)
-        self.__pluginsView.header().setResizeMode(STATE_COL, QHeaderView.Fixed)
+        self.__pluginsView.header().setSectionResizeMode(STATE_COL,
+                                                         QHeaderView.Fixed)
         self.__pluginsView.header().resizeSection(CONFLICT_COL, 28)
-        self.__pluginsView.header().setResizeMode(CONFLICT_COL,
-                                                  QHeaderView.Fixed)
+        self.__pluginsView.header().setSectionResizeMode(CONFLICT_COL,
+                                                         QHeaderView.Fixed)
         self.__pluginsView.header().resizeSection(TYPE_COL, 28)
-        self.__pluginsView.header().setResizeMode(TYPE_COL, QHeaderView.Fixed)
+        self.__pluginsView.header().setSectionResizeMode(TYPE_COL,
+                                                         QHeaderView.Fixed)
 
-        self.__pluginsView.header().setResizeMode(VERSION_COL,
-                                                  QHeaderView.Stretch)
+        self.__pluginsView.header().setSectionResizeMode(VERSION_COL,
+                                                         QHeaderView.Stretch)
         self.__pluginsView.header().resizeSection(SETTINGS_COL, 24)
-        self.__pluginsView.header().setResizeMode(SETTINGS_COL,
-                                                  QHeaderView.Fixed)
+        self.__pluginsView.header().setSectionResizeMode(SETTINGS_COL,
+                                                         QHeaderView.Fixed)
 
     def __pluginSelectionChanged(self):
         """Triggered when an item is selected"""

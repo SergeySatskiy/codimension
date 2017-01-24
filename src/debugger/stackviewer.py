@@ -199,7 +199,7 @@ class StackViewer(QWidget):
         self.__framesList.header().resizeSections(
             QHeaderView.ResizeToContents)
         self.__framesList.header().resizeSection(0, 22)
-        self.__framesList.header().setResizeMode(0, QHeaderView.Fixed)
+        self.__framesList.header().setSectionResizeMode(0, QHeaderView.Fixed)
 
     def populate(self, stack):
         """Sets the new call stack and selects the first item in it"""

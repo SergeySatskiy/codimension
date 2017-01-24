@@ -392,8 +392,8 @@ class ProfileTableViewer(QWidget):
         self.__table.header().resizeSections(QHeaderView.ResizeToContents)
         self.__table.header().setStretchLastSection(True)
         self.__table.header().resizeSection(OUTSIDE_COL_INDEX, 28)
-        self.__table.header().setResizeMode(OUTSIDE_COL_INDEX,
-                                            QHeaderView.Fixed)
+        self.__table.header().setSectionResizeMode(OUTSIDE_COL_INDEX,
+                                                   QHeaderView.Fixed)
 
     def setFocus(self):
         """Set focus to the proper widget"""

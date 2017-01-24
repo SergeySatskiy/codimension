@@ -546,7 +546,7 @@ class FindNameDialog(QDialog):
         comboBox.setSizePolicy(sizePolicy)
         comboBox.setEditable(True)
         comboBox.setInsertPolicy(QComboBox.InsertAtTop)
-        comboBox.setAutoCompletion(False)
+        comboBox.setCompleter(None)
         comboBox.setDuplicatesEnabled(False)
 
     def __filterChanged(self, text):

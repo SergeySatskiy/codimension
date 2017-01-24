@@ -225,7 +225,7 @@ class SettingsWrapper(QObject,
 
     """Provides settings singleton facility"""
 
-    recentListChanged = pyqtSignal()
+    sigRecentListChanged = pyqtSignal()
     flowSplitterChanged = pyqtSignal()
     flowScaleChanged = pyqtSignal()
 
@@ -336,7 +336,7 @@ class SettingsWrapper(QObject,
         self.__values['recentProjects'] = recentProjects
         if needFlush:
             self.flush()
-        self.recentListChanged.emit()
+        self.sigRecentListChanged.emit()
 
     def deleteRecentProject(self, projectFile, needFlush=True):
         """Deletes the recent project from the list"""
@@ -348,8 +348,7 @@ class SettingsWrapper(QObject,
             self.__values['recentProjects'] = recentProjects
             if needFlush:
                 self.flush()
-            self.recentListChanged.emit()
-        return
+            self.sigRecentListChanged.emit()
 
     @staticmethod
     def getDefaultGeometry():
