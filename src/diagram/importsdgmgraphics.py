@@ -490,7 +490,7 @@ class DiagramWidget(QGraphicsView):
 
     """Widget to show a generated diagram"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
 
     def __init__(self, parent=None):
         QGraphicsView.__init__(self, parent)
@@ -500,7 +500,7 @@ class DiagramWidget(QGraphicsView):
     def keyPressEvent(self, event):
         """Handles the key press events"""
         if event.key() == Qt.Key_Escape:
-            self.escapePressed.emit()
+            self.sigEscapePressed.emit()
             event.accept()
         elif event.key() == Qt.Key_C and \
              event.modifiers() == Qt.ControlModifier:
@@ -565,14 +565,14 @@ class ImportDgmTabWidget(QWidget, MainWindowTabWidgetBase):
 
     """Widget for an editors manager"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
 
     def __init__(self, parent=None):
         MainWindowTabWidgetBase.__init__(self)
         QWidget.__init__(self, parent)
 
         self.__viewer = DiagramWidget(self)
-        self.__viewer.escapePressed.connect(self.__onEsc)
+        self.__viewer.sigEscapePressed.connect(self.__onEsc)
 
         self.__createLayout()
 
@@ -658,7 +658,7 @@ class ImportDgmTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __onEsc(self):
         """Triggered when Esc is pressed"""
-        self.escapePressed.emit()
+        self.sigEscapePressed.emit()
 
     def onCopy(self):
         """Copies the diagram to the exchange buffer"""

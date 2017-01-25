@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ class ProfileResultsWidget(QWidget, MainWindowTabWidgetBase):
 
     """Profiling results widget"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
 
     def __init__(self, scriptName, params, reportTime, dataFile, parent=None):
         MainWindowTabWidgetBase.__init__(self)
@@ -49,8 +49,8 @@ class ProfileResultsWidget(QWidget, MainWindowTabWidgetBase):
                                               dataFile, stats, self)
         self.__profTable.hide()
 
-        self.__profTable.escapePressed.connect(self.__onEsc)
-        self.__profGraph.escapePressed.connect(self.__onEsc)
+        self.__profTable.sigEscapePressed.connect(self.__onEsc)
+        self.__profGraph.sigEscapePressed.connect(self.__onEsc)
 
         self.__createLayout()
 
@@ -133,7 +133,7 @@ class ProfileResultsWidget(QWidget, MainWindowTabWidgetBase):
 
     def __onEsc(self):
         """Triggered when Esc is pressed"""
-        self.escapePressed.emit()
+        self.sigEscapePressed.emit()
 
     def __switchView(self, state):
         """Triggered when view is to be switched"""

@@ -73,7 +73,7 @@ class TextEditor(QutepartWrapper):
 
     textToIterate = ""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
     cflowSyncRequested = pyqtSignal(int, int, int)
 
     def __init__(self, parent, debugger):
@@ -731,7 +731,7 @@ class TextEditor(QutepartWrapper):
 
         elif key == Qt.Key_Escape:
             self.__resetCalltip()
-            self.escapePressed.emit()
+            self.sigEscapePressed.emit()
             event.accept()
 
         elif key == Qt.Key_Tab:

@@ -125,10 +125,10 @@ class EditorsManager(QTabWidget):
         self.__welcomeWidget = WelcomeWidget()
         self.addTab(self.__welcomeWidget,
                     self.__welcomeWidget.getShortName())
-        self.__welcomeWidget.escapePressed.connect(self.__onESC)
+        self.__welcomeWidget.sigEscapePressed.connect(self.__onESC)
 
         self.__helpWidget = QuickHelpWidget()
-        self.__helpWidget.escapePressed.connect(self.__onESC)
+        self.__helpWidget.sigEscapePressed.connect(self.__onESC)
 
         self.__updateControls()
         self.__installActions()
@@ -876,7 +876,7 @@ class EditorsManager(QTabWidget):
                     return True
             # Not found - create a new one
             newWidget = PixmapTabWidget(self)
-            newWidget.escapePressed.connect(self.__onESC)
+            newWidget.sigEscapePressed.connect(self.__onESC)
             newWidget.reloadRequst.connect(self.onReload)
             newWidget.reloadAllNonModifiedRequest.connect(self.onReloadAllNonModified)
 
@@ -905,7 +905,7 @@ class EditorsManager(QTabWidget):
         """Opens a tab with a graphics scene on it"""
         try:
             newWidget = ImportDgmTabWidget()
-            newWidget.escapePressed.connect(self.__onESC)
+            newWidget.sigEscapePressed.connect(self.__onESC)
             newWidget.setScene(scene)
 
             if self.widget(0) == self.__welcomeWidget:
@@ -931,7 +931,7 @@ class EditorsManager(QTabWidget):
         """Shows diff (expected HTML format)"""
         try:
             newWidget = DiffTabWidget()
-            newWidget.escapePressed.connect(self.__onESC)
+            newWidget.sigEscapePressed.connect(self.__onESC)
             newWidget.textEditorZoom.connect(self.onZoom)
 
             newWidget.setHTML(content)
@@ -958,7 +958,7 @@ class EditorsManager(QTabWidget):
     def showProfileReport(self, newWidget, tooltip):
         """Shows profiling report"""
         try:
-            newWidget.escapePressed.connect(self.__onESC)
+            newWidget.sigEscapePressed.connect(self.__onESC)
 
             if self.widget(0) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
@@ -986,7 +986,7 @@ class EditorsManager(QTabWidget):
                       " at " + reportTime
             newWidget = DisassemblerResultsWidget(scriptPath, name,
                                                   code, reportTime)
-            newWidget.escapePressed.connect(self.__onESC)
+            newWidget.sigEscapePressed.connect(self.__onESC)
             newWidget.textEditorZoom.connect(self.onZoom)
 
             if self.widget(0) == self.__welcomeWidget:
@@ -1017,7 +1017,7 @@ class EditorsManager(QTabWidget):
 
             newWidget = VCSAnnotateViewerTabWidget(self)
             newWidget.setFileType(mime)
-            newWidget.escapePressed.connect(self.__onESC)
+            newWidget.sigEscapePressed.connect(self.__onESC)
 
             newWidget.setAnnotatedContent(shortName, text, lineRevisions,
                                           revisionInfo)
@@ -1715,7 +1715,7 @@ class EditorsManager(QTabWidget):
         editor.modificationChanged.connect(self.__modificationChanged)
         editor.SCEN_CHANGE.connect(self.__contentChanged)
         editor.cursorPositionChanged.connect(self.__cursorPositionChanged)
-        editor.escapePressed.connect(self.__onESC)
+        editor.sigEscapePressed.connect(self.__onESC)
         editorWidget.textEditorZoom.connect(self.onZoom)
 
     def __modificationChanged(self, modified):

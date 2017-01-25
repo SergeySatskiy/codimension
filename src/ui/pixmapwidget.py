@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ class PixmapWidget(QScrollArea):
 
     """The pixmap widget"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
 
     def __init__(self, parent=None):
         QScrollArea.__init__(self, parent)
@@ -108,7 +108,7 @@ class PixmapWidget(QScrollArea):
     def keyPressEvent(self, event):
         """Handles the key press events"""
         if event.key() == Qt.Key_Escape:
-            self.escapePressed.emit()
+            self.sigEscapePressed.emit()
             event.accept()
         else:
             QScrollArea.keyPressEvent(self, event)
@@ -140,7 +140,7 @@ class PixmapTabWidget(QWidget, MainWindowTabWidgetBase):
 
     """Pixmap viewer tab widget"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
     reloadRequst = pyqtSignal()
     reloadAllNonModifiedRequest = pyqtSignal()
 
@@ -153,7 +153,7 @@ class PixmapTabWidget(QWidget, MainWindowTabWidgetBase):
         self.__fileName = ""
         self.__shortName = ""
 
-        self.__viewer.escapePressed.connect(self.__onEsc)
+        self.__viewer.sigEscapePressed.connect(self.__onEsc)
         self.__viewer.setContextMenuPolicy(Qt.CustomContextMenu)
         self.__viewer.customContextMenuRequested.connect(self.__onContextMenu)
 
@@ -298,7 +298,7 @@ class PixmapTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __onEsc(self):
         """Triggered when Esc is pressed"""
-        self.escapePressed.emit()
+        self.sigEscapePressed.emit()
 
     def resizeEvent(self, event):
         """Resizes the outside changes dialogue if necessary"""

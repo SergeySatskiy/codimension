@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ from ui.qt import (Qt, QPointF, pyqtSignal, QPalette, QFont, QPen, QColor,
                    QGraphicsItem, QGraphicsRectItem, QSizePolicy)
 from utils.settings import Settings, THIRDPARTY_DIR
 from utils.globals import GlobalData
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getPixmap
 from diagram.plaindotparser import getGraphFromPlainDotData
 from diagram.importsdgmgraphics import DiagramWidget
 from .proftable import FLOAT_FORMAT
@@ -198,7 +198,7 @@ class Function(QGraphicsRectItem):
                          self.__node.label.replace('\\n', '\n'))
 
         if self.__outside:
-            pixmap = PixmapCache().getPixmap("nonprojectentrydgm.png")
+            pixmap = getPixmap("nonprojectentrydgm.png")
             pixmapPosX = self.__node.posX - self.__node.width / 2.0 + 2
             pixmapPosY = self.__node.posY + self.__node.height / 2.0 - \
                 pixmap.height() - 2
@@ -235,7 +235,7 @@ class ProfileGraphViewer(QWidget):
 
     """Profiling results as a graph"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
 
     def __init__(self, scriptName, params, reportTime,
                  dataFile, stats, parent=None):
@@ -296,7 +296,7 @@ class ProfileGraphViewer(QWidget):
 
         self.__scene = QGraphicsScene()
         self.__viewer = DiagramWidget()
-        self.__viewer.escapePressed.connect(self.__onESC)
+        self.__viewer.sigEscapePressed.connect(self.__onESC)
 
         vLayout = QVBoxLayout()
         vLayout.setContentsMargins(0, 0, 0, 0)
@@ -352,7 +352,7 @@ class ProfileGraphViewer(QWidget):
 
     def __onESC(self):
         """Triggered when ESC is clicked"""
-        self.escapePressed.emit()
+        self.sigEscapePressed.emit()
 
     def onCopy(self):
         """Copies the diagram to the exchange buffer"""

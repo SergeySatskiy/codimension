@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017 Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -187,9 +187,9 @@ class ProfilingTableItem(QTreeWidgetItem):
 
 class ProfilerTreeWidget(QTreeWidget):
 
-    """Need only to generate escapePressed signal"""
+    """Need only to generate sigEscapePressed signal"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
 
     def __init__(self, parent=None):
         QTreeWidget.__init__(self, parent)
@@ -197,7 +197,7 @@ class ProfilerTreeWidget(QTreeWidget):
     def keyPressEvent(self, event):
         """Handles the key press events"""
         if event.key() == Qt.Key_Escape:
-            self.escapePressed.emit()
+            self.sigEscapePressed.emit()
             event.accept()
         else:
             QTreeWidget.keyPressEvent(self, event)
@@ -206,14 +206,14 @@ class ProfilerTreeWidget(QTreeWidget):
 class ProfileTableViewer(QWidget):
     """Profiling results table viewer"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
 
     def __init__(self, scriptName, params, reportTime,
                  dataFile, stats, parent=None):
         QWidget.__init__(self, parent)
 
         self.__table = ProfilerTreeWidget(self)
-        self.__table.escapePressed.connect(self.__onEsc)
+        self.__table.sigEscapePressed.connect(self.__onEsc)
 
         self.__script = scriptName
         self.__stats = stats
@@ -296,7 +296,7 @@ class ProfileTableViewer(QWidget):
 
     def __onEsc(self):
         """Triggered when Esc is pressed"""
-        self.escapePressed.emit()
+        self.sigEscapePressed.emit()
 
     def __createContextMenu(self):
         """Creates context menu for the table raws"""

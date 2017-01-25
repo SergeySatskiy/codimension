@@ -232,7 +232,7 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
     """VCS annotate viewer tab widget"""
 
     textEditorZoom = pyqtSignal(int)
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
 
     def __init__(self, parent):
 
@@ -240,7 +240,7 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
         QWidget.__init__(self, parent)
 
         self.__viewer = VCSAnnotateViewer(self)
-        self.__viewer.escapePressed.connect(self.__onEsc)
+        self.__viewer.sigEscapePressed.connect(self.__onEsc)
         self.__fileName = ""
         self.__shortName = ""
         self.__fileType = UnknownFileType
@@ -250,7 +250,7 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __onEsc(self):
         """Triggered when Esc is pressed"""
-        self.escapePressed.emit()
+        self.sigEscapePressed.emit()
 
     def __createLayout(self):
         """Creates the toolbar and layout"""

@@ -30,7 +30,7 @@ class HTMLViewer(QTextBrowser):
 
     """HTML viewer (web browser)"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
 
     def __init__(self, parent=None):
         QTextBrowser.__init__(self, parent)
@@ -38,7 +38,7 @@ class HTMLViewer(QTextBrowser):
     def keyPressEvent(self, event):
         """Handles the key press events"""
         if event.key() == Qt.Key_Escape:
-            self.escapePressed.emit()
+            self.sigEscapePressed.emit()
             event.accept()
         else:
             QTextBrowser.keyPressEvent(self, event)
@@ -57,7 +57,7 @@ class HTMLTabWidget(MainWindowTabWidgetBase, QFrame):
 
     """The widget which displays a RO HTML page"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
 
     def __init__(self, parent=None):
 
@@ -69,7 +69,7 @@ class HTMLTabWidget(MainWindowTabWidgetBase, QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.__editor = HTMLViewer(self)
-        self.__editor.escapePressed.connect(self.__onEsc)
+        self.__editor.sigEscapePressed.connect(self.__onEsc)
         layout.addWidget(self.__editor)
 
         self.__fileName = ""
@@ -78,7 +78,7 @@ class HTMLTabWidget(MainWindowTabWidgetBase, QFrame):
 
     def __onEsc(self):
         """Triggered when Esc is pressed"""
-        self.escapePressed.emit()
+        self.sigEscapePressed.emit()
 
     def setHTML(self, content):
         """Sets the content from the given string"""

@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,7 +66,7 @@ class DisassemblerResultsWidget(QWidget, MainWindowTabWidgetBase):
 
     """Disassembling results widget"""
 
-    escapePressed = pyqtSignal()
+    sigEscapePressed = pyqtSignal()
     textEditorZoom = pyqtSignal(int)
 
     def __init__(self, scriptName, name, code, reportTime, parent=None):
@@ -193,7 +192,7 @@ class DisassemblerResultsWidget(QWidget, MainWindowTabWidgetBase):
     def keyPressEvent(self, event):
         """Handles the key press events"""
         if event.key() == Qt.Key_Escape:
-            self.escapePressed.emit()
+            self.sigEscapePressed.emit()
             event.accept()
         else:
             QWidget.keyPressEvent(self, event)
