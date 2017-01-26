@@ -263,6 +263,8 @@ class FilesBrowser(QTreeView):
             return
 
         if item.itemType == FileItemType:
+            if item.fileType is None:
+                return
             if 'broken-symlink' in item.fileType:
                 return
 

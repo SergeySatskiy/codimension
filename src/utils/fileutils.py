@@ -24,6 +24,7 @@ from os.path import islink, exists, split, join, sep, basename, realpath
 import logging
 import json
 import magic
+from errno import EACCES
 from ui.qt import QImageReader
 
 # Qutepart has a few maps which halp to map a file to a syntax.
@@ -378,7 +379,6 @@ def __initMimeToIcon():
 
 def __getIcon(xmlSyntaxFile, mime, fBaseName):
     """Provides an icon for a file"""
-
     fileExtension = fBaseName.split('.')[-1].lower()
 
     if xmlSyntaxFile is not None:
@@ -434,17 +434,19 @@ def __getIcon(xmlSyntaxFile, mime, fBaseName):
 
     if fileExtension in ['pyc', 'pyo']:
         return getIcon('filepythoncompiled.png')
-    if mime == 'application/x-executable':
-        return getIcon('filebinary.png')
 
-    if mime.startswith('text/'):
-        return getIcon('filetext.png')
+    if mime is not None:
+        if mime == 'application/x-executable':
+            return getIcon('filebinary.png')
+        if mime.startswith('text/'):
+            return getIcon('filetext.png')
     return getIcon('filemisc.png')
 
 
 def __getMagicMimeAndEncoding(fName):
     """ Uses the magic module to retrieve mime and encoding.
         Both values could be None if e.g. thefile does not exist
+        The third bool tells if it was a permission denied case
     """
     try:
         # E.g.: 'text/x-shellscript; charset=us-ascii'
@@ -454,20 +456,25 @@ def __getMagicMimeAndEncoding(fName):
             # Unknown magic library problem
             logging.error("python-magic library unknown output format. (" +
                           output + ")")
-            return None, None
+            return None, None, False
         if not parts[1].startswith('charset='):
             logging.error("Unexpected python-magic library charset output. (" +
                           parts[1] + ")")
-            return None, None
+            return None, None, False
         # Second value: strip 'charset='
         enc = parts[1][8:]
         if enc.lower() == 'us-ascii':
             enc = DEFAULT_ENCODING
-        return parts[0], enc
+        return parts[0], enc, False
+    except OSError as exc:
+        if exc.errno == EACCES:
+            return None, None, True
+        logging.error(str(exc))
+        return None, None, False
     except Exception as exc:
         # Most probably the file does not exist
         logging.error(str(exc))
-        return None, None
+        return None, None, False
 
 
 # Cache is initialized with:
@@ -517,7 +524,7 @@ def getFileProperties(fName, needEncoding=False,
         value = __filePropertiesCache[fName]
         if needEncoding:
             if value[1] is None:
-                mime, encoding = __getMagicMimeAndEncoding(fName)
+                mime, encoding, _ = __getMagicMimeAndEncoding(fName)
                 if mime is not None:
                     value[0] = mime
                 if encoding is not None:
@@ -537,17 +544,20 @@ def getFileProperties(fName, needEncoding=False,
 
     syntaxFile = __getXmlSyntaxFile(fBaseName)
     if syntaxFile is None:
+        denied = False
         # Special case: this could be a QT supported image
         if fileExtension in __QTSupportedImageFormats:
             mime = 'image/' + fileExtension
             encoding = 'binary'
         else:
-            mime, encoding = __getMagicMimeAndEncoding(fName)
+            mime, encoding, denied = __getMagicMimeAndEncoding(fName)
             if mime is not None:
                 syntaxFile = __getXmlSyntaxFileByMime(mime)
 
         cacheValue = [mime, encoding,
-                      __getIcon(syntaxFile, mime, fBaseName), syntaxFile]
+                      getIcon('filedenied.png') if denied else
+                      __getIcon(syntaxFile, mime, fBaseName),
+                      syntaxFile]
         __filePropertiesCache[fName] = cacheValue
         return cacheValue
 
@@ -562,14 +572,14 @@ def getFileProperties(fName, needEncoding=False,
     else:
         mime = __getMimeByXmlSyntaxFile(syntaxFile)
         if mime is None:
-            mime, encoding = __getMagicMimeAndEncoding(fName)
+            mime, encoding, _ = __getMagicMimeAndEncoding(fName)
             magicTried = True
 
     if needEncoding and encoding is None and not magicTried:
-        _, encoding = __getMagicMimeAndEncoding(fName)
+        _, encoding, _ = __getMagicMimeAndEncoding(fName)
 
     cacheValue = [mime, encoding,
-                  __getIcon(None, mime, fBaseName), None]
+                  __getIcon(syntaxFile, mime, fBaseName), syntaxFile]
     __filePropertiesCache[fName] = cacheValue
     return cacheValue
 

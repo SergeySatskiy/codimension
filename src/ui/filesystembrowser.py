@@ -62,5 +62,6 @@ class FileSystemBrowser(FilesBrowser):
     def reload(self):
         """Reloads the filesystem view"""
         self.model().sourceModel().populateModel()
-        self.model().reset()
+        self.model().beginResetModel()
+        self.model().endResetModel()
         self.layoutDisplay()

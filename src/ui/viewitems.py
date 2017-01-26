@@ -417,6 +417,10 @@ class TreeViewFileItem(TreeViewItem):
         self.isLink = False
 
         self.fileType, _, self.icon, _ = getFileProperties(path)
+        if self.fileType is None:
+            self.icon = getIcon('filemisc.png')
+            return
+
         if 'broken-symlink' in self.fileType:
             self.isLink = True
             self.toolTip = self.__brokenLinkTooltip(path)
