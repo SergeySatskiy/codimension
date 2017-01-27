@@ -64,7 +64,7 @@ class Calltip(QFrame):
         self.__calltipLabel.setPalette(palette)
 
         gridLayout = QGridLayout(self)
-        gridLayout.setMargin(3)
+        gridLayout.setContentsMargins(3, 3, 3, 3)
         gridLayout.addWidget(self.__calltipLabel, 0, 0, 1, 1)
 
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)

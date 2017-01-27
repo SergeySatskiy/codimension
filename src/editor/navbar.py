@@ -126,7 +126,7 @@ class NavigationBar(QFrame):
         # Connect to the change file type signal
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
-        editorsManager.fileTypeChanged.connect(self.__onFileTypeChanged)
+        editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
 
     def getEditor(self):
         """Provides the editor"""
@@ -152,7 +152,6 @@ class NavigationBar(QFrame):
         """Creates the layout"""
         self.setFixedHeight(24)
         self.__layout = QHBoxLayout(self)
-        self.__layout.setMargin(0)
         self.__layout.setContentsMargins(0, 0, 0, 0)
 
         # Set the background color

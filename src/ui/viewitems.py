@@ -418,7 +418,8 @@ class TreeViewFileItem(TreeViewItem):
 
         self.fileType, _, self.icon, _ = getFileProperties(path)
         if self.fileType is None:
-            self.icon = getIcon('filemisc.png')
+            if self.icon is None:
+                self.icon = getIcon('filemisc.png')
             return
 
         if 'broken-symlink' in self.fileType:

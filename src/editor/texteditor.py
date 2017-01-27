@@ -28,32 +28,33 @@ from ui.qt import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal, QVariant,
                    QSizePolicy, QToolButton, QDialog, QToolTip,
                    QVBoxLayout, QSplitter, QTextOption)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from ui.completer import CodeCompleter
+from ui.runparams import RunDialog
+from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
+from ui.linecounter import LineCounterDialog
+from ui.calltip import Calltip
+from ui.importlist import ImportListWidget
+from ui.outsidechanges import OutsideChangeWidget
 from utils.pixmapcache import getIcon, getPixmap
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.misc import getLocaleDateTime
-from diagram.importsdgm import ( ImportsDiagramDialog, ImportDiagramOptions,
-                                 ImportsDiagramProgress )
-from utils.importutils import ( getImportsList, getImportsInLine, resolveImport,
-                                getImportedNameDefinitionLine, resolveImports )
-from ui.importlist import ImportListWidget
-from ui.outsidechanges import OutsideChangeWidget
-from autocomplete.bufferutils import ( getContext, getPrefixAndObject,
-                                       getEditorTags, isImportLine,
-                                       isStringLiteral, getCallPosition,
-                                       getCommaCount )
-from autocomplete.completelists import ( getCompletionList, getCalltipAndDoc,
-                                         getDefinitionLocation, getOccurrences )
+from utils.encoding import SUPPORTED_CODECS
+from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
+                                ImportsDiagramProgress)
+from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
+                               getImportedNameDefinitionLine, resolveImports)
+from autocomplete.bufferutils import (getContext, getPrefixAndObject,
+                                      getEditorTags, isImportLine,
+                                      isStringLiteral, getCallPosition,
+                                      getCommaCount)
+from autocomplete.completelists import (getCompletionList, getCalltipAndDoc,
+                                        getDefinitionLocation, getOccurrences)
 from cdmbriefparser import getBriefModuleInfoFromMemory
-from ui.completer import CodeCompleter
-from ui.runparams import RunDialog
-from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
-from ui.linecounter import LineCounterDialog
 from profiling.profui import ProfilingProgressDialog
 from debugger.bputils import getBreakpointLines
 from debugger.breakpoint import Breakpoint
-from ui.calltip import Calltip
 from .flowuiwidget import FlowUIWidget
 from .navbar import NavigationBar
 from .qpartwrap import QutepartWrapper
@@ -141,7 +142,7 @@ class TextEditor(QutepartWrapper):
         if self.__debugger:
             bpointModel = self.__debugger.getBreakPointModel()
             bpointModel.rowsAboutToBeRemoved.connect(self.__deleteBreakPoints)
-            bpointModel.dataAboutToBeChanged.connect(self.__breakPointDataAboutToBeChanged)
+            bpointModel.sigDataAboutToBeChanged.connect(self.__breakPointDataAboutToBeChanged)
             bpointModel.dataChanged.connect(self.__changeBreakPoints)
             bpointModel.rowsInserted.connect(self.__addBreakPoints)
 
@@ -301,8 +302,10 @@ class TextEditor(QutepartWrapper):
         else:
             self.__pluginMenuSeparator.setVisible(False)
 
-        editorsManager.pluginContextMenuAdded.connect(self.__onPluginMenuAdded)
-        editorsManager.pluginContextMenuRemoved.connect(self.__onPluginMenuRemoved)
+        editorsManager.sigPluginContextMenuAdded.connect(
+            self.__onPluginMenuAdded)
+        editorsManager.sigPluginContextMenuRemoved.connect(
+            self.__onPluginMenuRemoved)
 
     def __onPluginMenuAdded(self, menu, count):
         """Triggered when a new menu was added"""
@@ -333,7 +336,7 @@ class TextEditor(QutepartWrapper):
         self.supportedEncodings = {}
         self.encodingMenu = QMenu("&Encoding")
         self.encodingsActGrp = QActionGroup(self)
-        for encoding in sorted(supportedCodecs):
+        for encoding in sorted(SUPPORTED_CODECS):
             act = self.encodingMenu.addAction(encoding)
             act.setCheckable(True)
             act.setData(QVariant(encoding))
@@ -1929,7 +1932,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         self.__editor = TextEditor(self, debugger)
         self.__fileName = ""
         self.__shortName = ""
-        self.__fileType = UnknownFileType
+        self.__fileType = None
 
         self.__createLayout()
         self.__editor.zoomTo(Settings().zoom)

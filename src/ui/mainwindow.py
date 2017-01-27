@@ -29,7 +29,8 @@ from utils.misc import (getDefaultTemplate, getIDETemplateFile,
                         getProjectTemplateFile)
 from utils.pixmapcache import getIcon
 from utils.settings import THIRDPARTY_DIR
-from utils.fileutils import getFileProperties
+from utils.fileutils import (getFileProperties, isImageViewable,
+                             isFileSearchable)
 from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
                                 ImportDiagramOptions)
 from utils.run import (getWorkingDir,
@@ -1557,7 +1558,7 @@ class CodimensionMainWindow(QMainWindow):
         """Detects the file type and opens the corresponding editor / browser"""
         self.openFileByType(detectFileType(path), path, lineNo)
 
-    def openFileByType(self, fileType, path, lineNo=-1):
+    def openFileByType(self, mime, path, lineNo=-1):
         """Opens editor/browser suitable for the file type"""
         path = os.path.abspath(path)
         if not os.path.exists(path):
@@ -1569,7 +1570,7 @@ class CodimensionMainWindow(QMainWindow):
                 logging.error("Cannot open " + path + ", does not exist")
                 return
             # The type may differ...
-            fileType = detectFileType(path)
+            mime, _, _, _ = getFileProperties(path)
         else:
             # The intermediate directory could be a link, so use the real path
             path = os.path.realpath(path)
@@ -1582,10 +1583,10 @@ class CodimensionMainWindow(QMainWindow):
             logging.error(path + " is not a file")
             return
 
-        if fileType == PixmapFileType:
+        if isImageViewable(mime):
             self.openPixmapFile(path)
             return
-        if not isFileTypeSearchable(fileType):
+        if not isFileSearchable(path):
             logging.error("Cannot open non-text file for editing")
             return
 

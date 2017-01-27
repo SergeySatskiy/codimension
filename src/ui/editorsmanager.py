@@ -1050,6 +1050,8 @@ class EditorsManager(QTabWidget):
 
     def openFile(self, fileName, lineNo, pos=0):
         """Opens the required file"""
+        if not fileName:
+            return
         try:
             fileName = os.path.realpath(fileName)
             # Check if the file is already opened
@@ -1069,21 +1071,20 @@ class EditorsManager(QTabWidget):
             # Not found - create a new one
             newWidget = TextEditorTabWidget(self, self.__debugger)
             newWidget.reloadRequest.connect(self.onReload)
-            newWidget.reloadAllNonModifiedRequest.connect(self.onReloadAllNonModified)
+            newWidget.reloadAllNonModifiedRequest.connect(
+                self.onReloadAllNonModified)
             newWidget.sigTabRunChanged.connect(self.onTabRunChanged)
             editor = newWidget.getEditor()
             newWidget.readFile(fileName)
 
             editor.setModified(False)
-            fileType, _, _, _ = getFileProperties(fileName)
+            fileType, encoding, _, syntaxFile = getFileProperties(
+                fileName, needEncoding=True)
 
             if self.widget(0) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
                 self.removeTab(0)
                 self.setTabsClosable(True)
-
-            # Bind a lexer
-            editor.bindLexer(newWidget.getFileName(), fileType)
 
             self.insertTab(0, newWidget, newWidget.getShortName())
             self.activateTab(0)

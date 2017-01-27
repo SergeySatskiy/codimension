@@ -211,7 +211,6 @@ class ControlFlowNavigationBar(QFrame):
         """Creates the layout"""
         self.setFixedHeight(24)
         self.__layout = QHBoxLayout(self)
-        self.__layout.setMargin(0)
         self.__layout.setContentsMargins(0, 0, 0, 0)
 
         # Create info icon
@@ -379,7 +378,7 @@ class FlowUIWidget(QWidget):
         # Connect to the change file type signal
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
-        editorsManager.fileTypeChanged.connect(self.__onFileTypeChanged)
+        editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
 
     def __createToolbar(self):
         """Creates the toolbar"""

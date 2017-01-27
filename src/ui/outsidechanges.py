@@ -86,7 +86,7 @@ class OutsideChangeWidget(QFrame):
         self.__reloadAllNonChangedButton.setFixedWidth(buttonWidth)
 
         gridLayout = QGridLayout(self)
-        gridLayout.setMargin(3)
+        gridLayout.setContentsMargins(3, 3, 3, 3)
 
         gridLayout.addWidget(self.__messageLabel, 0, 0, 1, 1)
         gridLayout.addWidget(self.__leaveAsIsButton, 0, 1, 1, 1)

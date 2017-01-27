@@ -70,7 +70,7 @@ class ImportListWidget(QFrame):
         self.__importList.itemActivated.connect(self.__importActivated)
 
         verticalLayout.addWidget(self.__importList)
-        verticalLayout.setMargin(0)
+        verticalLayout.setContentsMargins(0, 0, 0, 0)
 
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizeHint = self.__importList.minimumSizeHint()
