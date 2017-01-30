@@ -25,7 +25,7 @@
 
 """Module implementing the Breakpoint model"""
 
-from ui.qt import pyqtSignal, QAbstractItemModel, QVariant, Qt, QModelIndex
+from ui.qt import pyqtSignal, QAbstractItemModel, Qt, QModelIndex
 
 
 class BreakPointModel(QAbstractItemModel):
@@ -39,18 +39,14 @@ class BreakPointModel(QAbstractItemModel):
         QAbstractItemModel.__init__(self, parent)
 
         self.breakpoints = []
-        self.header = [
-            QVariant('File:line'),
-            QVariant('Condition'),
-            QVariant('Temporary'),
-            QVariant('Enabled'),
-            QVariant('Ignore Count')]
+        self.header = ['File:line', 'Condition', 'Temporary',
+                       'Enabled', 'Ignore Count']
         self.alignments = [
-            QVariant(Qt.Alignment(Qt.AlignLeft)),
-            QVariant(Qt.Alignment(Qt.AlignLeft)),
-            QVariant(Qt.Alignment(Qt.AlignHCenter)),
-            QVariant(Qt.Alignment(Qt.AlignHCenter)),
-            QVariant(Qt.Alignment(Qt.AlignRight))]
+            Qt.Alignment(Qt.AlignLeft),
+            Qt.Alignment(Qt.AlignLeft),
+            Qt.Alignment(Qt.AlignHCenter),
+            Qt.Alignment(Qt.AlignHCenter),
+            Qt.Alignment(Qt.AlignRight)]
         self.__columnCount = len(self.header)
 
     def columnCount(self, parent=QModelIndex()):
@@ -67,7 +63,7 @@ class BreakPointModel(QAbstractItemModel):
     def data(self, index, role):
         """Provides the requested data"""
         if not index.isValid():
-            return QVariant()
+            return None
 
         if role == Qt.DisplayRole:
             column = index.column()
@@ -83,19 +79,18 @@ class BreakPointModel(QAbstractItemModel):
                     value = bpoint.isEnabled()
                 else:
                     value = bpoint.getIgnoreCount()
-                return QVariant(value)
+                return value
         if role == Qt.ToolTipRole:
             column = index.column()
             if column < self.__columnCount:
-                return QVariant(self.breakpoints[index.row()].getTooltip())
-            else:
-                return QVariant()
+                return self.breakpoints[index.row()].getTooltip()
+            return None
 
         if role == Qt.TextAlignmentRole:
             if index.column() < self.__columnCount:
                 return self.alignments[index.column()]
 
-        return QVariant()
+        return None
 
     def flags(self, index):
         """Provides the item flags"""
@@ -108,8 +103,8 @@ class BreakPointModel(QAbstractItemModel):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             if section < self.__columnCount:
                 return self.header[section]
-            return QVariant("")
-        return QVariant()
+            return ""
+        return None
 
     def index(self, row, column, parent=QModelIndex()):
         """Creates an index"""

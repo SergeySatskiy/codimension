@@ -28,7 +28,7 @@
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.settings import Settings
-from .qt import Qt, QVariant
+from .qt import Qt
 from .viewitems import TreeViewDirectoryItem
 from .browsermodelbase import BrowserModelBase
 
@@ -39,7 +39,7 @@ class ProjectBrowserModel(BrowserModelBase):
 
     def __init__(self, parent):
         self.__mainWindow = parent
-        BrowserModelBase.__init__(self, QVariant("Name"), self.__mainWindow)
+        BrowserModelBase.__init__(self, "Name", self.__mainWindow)
         self.setTooltips(Settings()['projectTooltips'])
         self.populateModel()
         GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
@@ -62,17 +62,17 @@ class ProjectBrowserModel(BrowserModelBase):
     def data(self, index, role):
         """Extention to modify the background and tooltips for the browser"""
         if not index.isValid():
-            return QVariant()
+            return None
 
         item = index.internalPointer()
         if item.vcsStatus:
             indicator = self.__mainWindow.vcsManager.getStatusIndicator(item.vcsStatus)
             if role == Qt.TextColorRole:
                 if indicator and indicator.foregroundColor:
-                    return QVariant(indicator.foregroundColor)
+                    return indicator.foregroundColor
             elif role == Qt.BackgroundColorRole:
                 if indicator and indicator.backgroundColor:
-                    return QVariant(indicator.backgroundColor)
+                    return indicator.backgroundColor
             elif role == Qt.ToolTipRole:
                 docstringPart = None
                 if self.showTooltips and item.toolTip != "":
@@ -86,11 +86,11 @@ class ProjectBrowserModel(BrowserModelBase):
                         vcsPart = indicator.defaultTooltip
 
                 if docstringPart and vcsPart:
-                    return QVariant(docstringPart + "\n\nVCS status: " + vcsPart)
+                    return docstringPart + "\n\nVCS status: " + vcsPart
                 if docstringPart:
-                    return QVariant(docstringPart)
+                    return docstringPart
                 if vcsPart:
-                    return QVariant("VCS status: " + vcsPart)
-                return QVariant()
+                    return "VCS status: " + vcsPart
+                return None
 
         return BrowserModelBase.data(self, index, role)

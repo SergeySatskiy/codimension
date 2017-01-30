@@ -137,7 +137,6 @@ class FilesBrowser(QTreeView):
 
     def layoutDisplay(self):
         """Performs the layout operation"""
-        self.doItemsLayout()
         self._resizeColumns(QModelIndex())
         self._resort()
 

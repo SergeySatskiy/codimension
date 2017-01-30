@@ -21,7 +21,7 @@
 
 
 import os.path, logging, urllib, socket
-from ui.qt import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal, QVariant,
+from ui.qt import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal,
                    QRect, QEvent, QPoint, QModelIndex, QCursor, QFontMetrics,
                    QDesktopServices, QFont, QApplication, QToolBar,
                    QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
@@ -339,7 +339,7 @@ class TextEditor(QutepartWrapper):
         for encoding in sorted(SUPPORTED_CODECS):
             act = self.encodingMenu.addAction(encoding)
             act.setCheckable(True)
-            act.setData(QVariant(encoding))
+            act.setData(encoding)
             self.supportedEncodings[encoding] = act
             self.encodingsActGrp.addAction(act)
         self.encodingMenu.triggered.connect(self.__encodingsMenuTriggered)

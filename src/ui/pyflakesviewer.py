@@ -23,7 +23,7 @@ import cgi
 from utils.pixmapcache import getIcon, getPixmap
 from utils.fileutils import isPythonMime, isPythonFile
 from analysis.ierrors import getFileErrors
-from .qt import QTimer, QObject, Qt, QVariant, QMenu
+from .qt import QTimer, QObject, Qt, QMenu
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -228,7 +228,7 @@ class PyflakesViewer(QObject):
             act = contextMenu.addAction(
                 getIcon('pyflakesmsgmarker.png'),
                 "Line " + str(item[1]) + ": " + item[0])
-            act.setData(QVariant(item[1]))
+            act.setData(item[1])
         contextMenu.triggered.connect(self.__onContextMenu)
         contextMenu.popup(self.__uiLabel.mapToGlobal(pos))
 

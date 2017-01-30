@@ -28,7 +28,7 @@
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.settings import Settings
-from .qt import QVariant, QModelIndex, QDir
+from .qt import QModelIndex, QDir
 from .viewitems import TreeViewDirectoryItem, TreeViewSysPathItem
 from .browsermodelbase import BrowserModelBase
 
@@ -38,7 +38,7 @@ class FileSystemBrowserModel(BrowserModelBase):
     """Class implementing the file system browser model"""
 
     def __init__(self, parent=None):
-        BrowserModelBase.__init__(self, QVariant("Name"), parent)
+        BrowserModelBase.__init__(self, "Name", parent)
         self.setTooltips(Settings()['projectTooltips'])
 
         self.projectTopLevelDirs = []

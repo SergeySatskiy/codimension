@@ -55,7 +55,7 @@ from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
 from editor.redirectedioconsole import IOConsoleTabWidget
 from utils.skin import getThemesList
 from utils.config import CONFIG_DIR
-from .qt import (Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal, QLabel,
+from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QLabel,
                  QToolBar, QWidget, QMessageBox, QVBoxLayout, QSplitter,
                  QSizePolicy, QAction, QMainWindow, QShortcut, QFrame,
                  QApplication, QMenu, QToolButton, QToolTip, QFileDialog,
@@ -870,19 +870,19 @@ class CodimensionMainWindow(QMainWindow):
         self.__leftSideBarMenu.triggered.connect(self.__activateSideTab)
         self.__prjBarAct = self.__leftSideBarMenu.addAction(
             getIcon('project.png'), 'Activate &project tab')
-        self.__prjBarAct.setData(QVariant('project'))
+        self.__prjBarAct.setData('project')
         self.__recentBarAct = self.__leftSideBarMenu.addAction(
             getIcon('project.png'), 'Activate &recent tab')
-        self.__recentBarAct.setData(QVariant('recent'))
+        self.__recentBarAct.setData('recent')
         self.__classesBarAct = self.__leftSideBarMenu.addAction(
             getIcon('class.png'), 'Activate &classes tab')
-        self.__classesBarAct.setData(QVariant('classes'))
+        self.__classesBarAct.setData('classes')
         self.__funcsBarAct = self.__leftSideBarMenu.addAction(
             getIcon('fx.png'), 'Activate &functions tab')
-        self.__funcsBarAct.setData(QVariant('functions'))
+        self.__funcsBarAct.setData('functions')
         self.__globsBarAct = self.__leftSideBarMenu.addAction(
             getIcon('globalvar.png'), 'Activate &globals tab')
-        self.__globsBarAct.setData(QVariant('globals'))
+        self.__globsBarAct.setData('globals')
         self.__leftSideBarMenu.addSeparator()
         self.__hideLeftSideBarAct = self.__leftSideBarMenu.addAction(
             getIcon(""), '&Hide left sidebar', self.__leftSideBar.shrink)
@@ -892,16 +892,16 @@ class CodimensionMainWindow(QMainWindow):
         self.__rightSideBarMenu.triggered.connect(self.__activateSideTab)
         self.__outlineBarAct = self.__rightSideBarMenu.addAction(
             getIcon('filepython.png'), 'Activate &outline tab')
-        self.__outlineBarAct.setData(QVariant('fileoutline'))
+        self.__outlineBarAct.setData('fileoutline')
         self.__debugBarAct = self.__rightSideBarMenu.addAction(
             getIcon(''), 'Activate &debug tab')
-        self.__debugBarAct.setData(QVariant('debugger'))
+        self.__debugBarAct.setData('debugger')
         self.__excptBarAct = self.__rightSideBarMenu.addAction(
             getIcon(''), 'Activate &exceptions tab')
-        self.__excptBarAct.setData(QVariant('excptions'))
+        self.__excptBarAct.setData('excptions')
         self.__bpointBarAct = self.__rightSideBarMenu.addAction(
             getIcon(''), 'Activate &breakpoints tab')
-        self.__bpointBarAct.setData(QVariant('breakpoints'))
+        self.__bpointBarAct.setData('breakpoints')
         self.__rightSideBarMenu.addSeparator()
         self.__hideRightSideBarAct = self.__rightSideBarMenu.addAction(
             getIcon(""), '&Hide right sidebar', self.__rightSideBar.shrink)
@@ -911,16 +911,16 @@ class CodimensionMainWindow(QMainWindow):
         self.__bottomSideBarMenu.triggered.connect(self.__activateSideTab)
         self.__logBarAct = self.__bottomSideBarMenu.addAction(
             getIcon('logviewer.png'), 'Activate &log tab')
-        self.__logBarAct.setData(QVariant('log'))
+        self.__logBarAct.setData('log')
         self.__searchBarAct = self.__bottomSideBarMenu.addAction(
             getIcon('findindir.png'), 'Activate &search tab')
-        self.__searchBarAct.setData(QVariant('search'))
+        self.__searchBarAct.setData('search')
         self.__contextHelpBarAct = self.__bottomSideBarMenu.addAction(
             getIcon('helpviewer.png'), 'Activate context &help tab')
-        self.__contextHelpBarAct.setData(QVariant('contexthelp'))
+        self.__contextHelpBarAct.setData('contexthelp')
         self.__diffBarAct = self.__bottomSideBarMenu.addAction(
             getIcon('diffviewer.png'), 'Activate &diff tab')
-        self.__diffBarAct.setData(QVariant('diff'))
+        self.__diffBarAct.setData('diff')
         self.__bottomSideBarMenu.addSeparator()
         self.__hideBottomSideBarAct = self.__bottomSideBarMenu.addAction(
             getIcon(""), '&Hide bottom sidebar', self.__bottomSideBar.shrink)
@@ -1070,11 +1070,11 @@ class CodimensionMainWindow(QMainWindow):
         self.__navigationSortGroup = QActionGroup(self)
         self.__alphasort = openTabsMenu.addAction("Sort alphabetically")
         self.__alphasort.setCheckable(True)
-        self.__alphasort.setData(QVariant(-1))
+        self.__alphasort.setData(-1)
         self.__alphasort.setActionGroup(self.__navigationSortGroup)
         self.__tabsort = openTabsMenu.addAction("Tab order sort")
         self.__tabsort.setCheckable(True)
-        self.__tabsort.setData(QVariant(-2))
+        self.__tabsort.setData(-2)
         self.__tabsort.setActionGroup(self.__navigationSortGroup)
         if self.settings['tablistsortalpha']:
             self.__alphasort.setChecked(True)
@@ -1084,7 +1084,7 @@ class CodimensionMainWindow(QMainWindow):
         tabOrderPreservedAct = openTabsMenu.addAction(
             "Tab order preserved on selection")
         tabOrderPreservedAct.setCheckable(True)
-        tabOrderPreservedAct.setData(QVariant(0))
+        tabOrderPreservedAct.setData(0)
         tabOrderPreservedAct.setChecked(self.settings['taborderpreserved'])
         tabOrderPreservedAct.changed.connect(self.__tabOrderPreservedChanged)
         openTabsMenu.triggered.connect(self.__openTabsMenuTriggered)
@@ -1094,7 +1094,7 @@ class CodimensionMainWindow(QMainWindow):
         availableThemes = self.__buildThemesList()
         for theme in availableThemes:
             themeAct = themesMenu.addAction(theme[1])
-            themeAct.setData(QVariant(theme[0]))
+            themeAct.setData(theme[0])
             if theme[0] == self.settings['skin']:
                 font = themeAct.font()
                 font.setBold(True)
@@ -1106,7 +1106,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__styles = []
         for style in availableStyles:
             styleAct = styleMenu.addAction(style)
-            styleAct.setData(QVariant(style))
+            styleAct.setData(style)
             self.__styles.append((str(style), styleAct))
         styleMenu.triggered.connect(self.__onStyle)
         styleMenu.aboutToShow.connect(self.__styleAboutToShow)
@@ -1114,7 +1114,7 @@ class CodimensionMainWindow(QMainWindow):
         fontFaceMenu = self.__optionsMenu.addMenu("Mono font face")
         for fontFace in getMonospaceFontList():
             faceAct = fontFaceMenu.addAction(fontFace)
-            faceAct.setData(QVariant(fontFace))
+            faceAct.setData(fontFace)
             f = faceAct.font()
             f.setFamily(fontFace)
             faceAct.setFont(f)
@@ -3217,7 +3217,7 @@ class CodimensionMainWindow(QMainWindow):
             addedCount += 1
             act = self.__recentFilesMenu.addAction(
                 self.__getAccelerator(addedCount) + item)
-            act.setData(QVariant(item))
+            act.setData(item)
             act.setEnabled(os.path.exists(item))
 
         self.__recentFilesMenu.setEnabled(addedCount > 0)
@@ -3418,7 +3418,7 @@ class CodimensionMainWindow(QMainWindow):
             act = self.__recentPrjMenu.addAction(
                                 self.__getAccelerator(addedCount) +
                                 os.path.basename(item).replace(".cdm3", ""))
-            act.setData(QVariant(item))
+            act.setData(item)
             act.setEnabled(not self.debugMode and os.path.exists(item))
 
         self.__recentPrjMenu.setEnabled(addedCount > 0)

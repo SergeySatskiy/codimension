@@ -23,7 +23,7 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from autocomplete.bufferutils import getItemForDisplayPath
-from .qt import QPalette, QTreeView, QVariant
+from .qt import QPalette, QTreeView
 from .browsermodelbase import BrowserModelBase
 from .filesbrowserbase import FilesBrowser
 from .viewitems import (DirectoryItemType, SysPathItemType, GlobalsItemType,
@@ -41,7 +41,7 @@ class OutlineBrowserModel(BrowserModelBase):
     """Class implementing the file outline browser model"""
 
     def __init__(self, shortName, info, parent=None):
-        BrowserModelBase.__init__(self, QVariant(shortName), parent)
+        BrowserModelBase.__init__(self, shortName, parent)
         self.populateModel(info)
         self.setTooltips(Settings()['outlineTooltips'])
 

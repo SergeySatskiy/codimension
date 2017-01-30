@@ -21,7 +21,7 @@
 
 
 from PyQt5.QtCore import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal,
-                          QEventLoop, QVariant, QRect, QEvent, QPoint, QRectF,
+                          QEventLoop, QRect, QEvent, QPoint, QRectF,
                           QModelIndex, QAbstractItemModel, QItemSelectionModel,
                           QStringListModel, QDir, QRegExp, QPointF, QSizeF,
                           QSortFilterProxyModel, QObject, QFileSystemWatcher,

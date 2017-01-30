@@ -24,7 +24,6 @@ from os.path import basename
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.settings import Settings
 from utils.project import CodimensionProject
-from .qt import QVariant
 from .viewitems import TreeViewClassItem
 from .browsermodelbase import BrowserModelBase
 
@@ -34,11 +33,10 @@ class ClassesBrowserModel(BrowserModelBase):
     """Class implementing the project browser model"""
 
     def __init__(self, parent=None):
-        BrowserModelBase.__init__(self, [QVariant("Name"),
-                                         QVariant("File name"),
-                                         QVariant("Line")], parent)
+        BrowserModelBase.__init__(self, ["Name", "File name", "Line"], parent)
         self.setTooltips(Settings()['classesTooltips'])
-        self.globalData.project.sigProjectChanged.connect(self.__onProjectChanged)
+        self.globalData.project.sigProjectChanged.connect(
+            self.__onProjectChanged)
 
     def __populateModel(self):
         """Populates the project browser model"""

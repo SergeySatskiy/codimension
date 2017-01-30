@@ -21,7 +21,7 @@
 
 import logging
 import os.path
-from ui.qt import (Qt, QVariant, pyqtSignal, QCursor, QPalette,
+from ui.qt import (Qt, pyqtSignal, QCursor, QPalette,
                    QTreeWidgetItem, QTreeWidget, QLabel, QWidget, QVBoxLayout,
                    QFrame, QHeaderView, QMenu, QAbstractItemView, QSizePolicy)
 from ui.itemdelegates import NoOutlineHeightDelegate
@@ -352,8 +352,8 @@ class ProfileTableViewer(QWidget):
                     act = self.__callersMenu.addAction(menuText)
                 funcFileName, funcLine, funcName = \
                     self.__getLocationAndName(callerFunc)
-                act.setData(QVariant(funcFileName + ":" +
-                                     str(funcLine) + ":" + funcName))
+                act.setData(funcFileName + ":" + str(funcLine) + 
+                            ":" + funcName)
             self.__callersMenu.setEnabled(not self.__callersMenu.isEmpty())
             self.__outsideCallersMenu.setEnabled(
                 not self.__outsideCallersMenu.isEmpty())
@@ -373,8 +373,8 @@ class ProfileTableViewer(QWidget):
                     act = self.__calleesMenu.addAction(menuText)
                 funcFileName, funcLine, funcName = \
                     self.__getLocationAndName(calleeFunc)
-                act.setData(QVariant(funcFileName + ":" +
-                                     str(funcLine) + ":" + funcName))
+                act.setData(funcFileName + ":" +
+                            str(funcLine) + ":" + funcName)
             self.__calleesMenu.setEnabled(not self.__calleesMenu.isEmpty())
             self.__outsideCalleesMenu.setEnabled(
                 not self.__outsideCalleesMenu.isEmpty())

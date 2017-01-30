@@ -28,7 +28,6 @@
 from os.path import basename, realpath
 from utils.project import CodimensionProject
 from utils.fileutils import isPythonFile
-from .qt import QVariant
 from .viewitems import TreeViewGlobalItem
 from .browsermodelbase import BrowserModelBase
 
@@ -38,9 +37,7 @@ class GlobalsBrowserModel(BrowserModelBase):
     """Class implementing the globals browser model"""
 
     def __init__(self, parent=None):
-        BrowserModelBase.__init__(self, [QVariant("Name"),
-                                         QVariant("File name"),
-                                         QVariant("Line")], parent)
+        BrowserModelBase.__init__(self, ["Name", "File name", "Line"], parent)
 
         self.globalData.project.sigProjectChanged.connect(self.__onProjectChanged)
 

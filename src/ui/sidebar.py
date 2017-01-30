@@ -25,7 +25,7 @@
 
 """Sidebar implementation"""
 
-from .qt import (QEvent, QSize, Qt, QVariant, QTabBar, QWidget, QStackedWidget,
+from .qt import (QEvent, QSize, Qt, QTabBar, QWidget, QStackedWidget,
                  QBoxLayout)
 
 
@@ -192,8 +192,8 @@ class SideBar(QWidget):
     def __toVariant(name, priority):
         """A tab stores its name and priority"""
         if priority is None:
-            return QVariant(':' + name)
-        return QVariant(str(priority) + ':' + name)
+            return ':' + name
+        return str(priority) + ':' + name
 
     @staticmethod
     def __fromVariant(data):

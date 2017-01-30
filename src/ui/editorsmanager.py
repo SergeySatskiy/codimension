@@ -38,7 +38,7 @@ from utils.fileutils import (getFileProperties, isImageViewable,
 from diagram.importsdgmgraphics import ImportDgmTabWidget
 from profiling.disasmwidget import DisassemblerResultsWidget
 from editor.vcsannotateviewer import VCSAnnotateViewerTabWidget
-from .qt import (Qt, QVariant, QDir, QUrl, pyqtSignal, QIcon, QTabWidget,
+from .qt import (Qt, QDir, QUrl, pyqtSignal, QIcon, QTabWidget,
                  QDialog, QMessageBox, QWidget, QHBoxLayout, QMenu,
                  QToolButton, QShortcut, QFileDialog, QApplication, QTabBar)
 from .welcomewidget import WelcomeWidget
@@ -712,7 +712,7 @@ class EditorsManager(QTabWidget):
         for item in items:
             act = self.__navigationMenu.addAction(item[0], item[1])
             index = item[2]
-            act.setData(QVariant(index))
+            act.setData(index)
             if self.currentIndex() == index:
                 font = act.font()
                 font.setBold(True)
@@ -1633,7 +1633,7 @@ class EditorsManager(QTabWidget):
                              MainWindowTabWidgetBase.VCSAnnotateViewer]:
             text += ", " + str(entry.line + 1) + ":" + str(entry.pos + 1)
         act = menu.addAction(entry.icon, text)
-        act.setData(QVariant(index))
+        act.setData(index)
         if index == currentHistoryIndex:
             font = act.font()
             font.setBold(True)

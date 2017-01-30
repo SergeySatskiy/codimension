@@ -25,7 +25,7 @@
 
 """Module implementing the Watch expression model"""
 
-from ui.qt import pyqtSignal, QAbstractItemModel, QVariant, Qt, QModelIndex
+from ui.qt import pyqtSignal, QAbstractItemModel, Qt, QModelIndex
 
 
 class WatchPointModel(QAbstractItemModel):
@@ -36,16 +36,13 @@ class WatchPointModel(QAbstractItemModel):
         QAbstractItemModel.__init__(self, parent)
 
         self.watchpoints = []
-        self.header = [QVariant('Condition'),
-                       QVariant('Special'),
-                       QVariant('Temporary'),
-                       QVariant('Enabled'),
-                       QVariant('Ignore Count')]
-        self.alignments = [QVariant(Qt.Alignment(Qt.AlignLeft)),
-                           QVariant(Qt.Alignment(Qt.AlignLeft)),
-                           QVariant(Qt.Alignment(Qt.AlignHCenter)),
-                           QVariant(Qt.Alignment(Qt.AlignHCenter)),
-                           QVariant(Qt.Alignment(Qt.AlignRight))]
+        self.header = ['Condition', 'Special', 'Temporary', 'Enabled',
+                       'Ignore Count']
+        self.alignments = [Qt.Alignment(Qt.AlignLeft),
+                           Qt.Alignment(Qt.AlignLeft),
+                           Qt.Alignment(Qt.AlignHCenter),
+                           Qt.Alignment(Qt.AlignHCenter),
+                           Qt.Alignment(Qt.AlignRight)]
 
     def columnCount(self, parent=QModelIndex()):
         """Provides the current column count"""
@@ -61,18 +58,17 @@ class WatchPointModel(QAbstractItemModel):
     def data(self, index, role):
         """Provides the requested data"""
         if not index.isValid():
-            return QVariant()
+            return None
 
         if role == Qt.DisplayRole or role == Qt.ToolTipRole:
             if index.column() < len(self.header):
-                return QVariant(
-                        self.watchpoints[index.row()][index.column()])
+                return self.watchpoints[index.row()][index.column()]
 
         if role == Qt.TextAlignmentRole:
             if index.column() < len(self.alignments):
                 return self.alignments[index.column()]
 
-        return QVariant()
+        return None
 
     def flags(self, index):
         """Provides the item flags"""
@@ -84,9 +80,9 @@ class WatchPointModel(QAbstractItemModel):
         """Public method to get header data"""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             if section >= len(self.header):
-                return QVariant("")
+                return ""
             return self.header[section]
-        return QVariant()
+        return None
 
     def index(self, row, column, parent=QModelIndex()):
         """Creates the index"""

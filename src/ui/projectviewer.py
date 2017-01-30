@@ -31,7 +31,7 @@ from utils.project import CodimensionProject
 from utils.fileutils import isPythonMime, isPythonFile
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
-from .qt import (QSize, Qt, QVariant, QWidget, QVBoxLayout, QSplitter,
+from .qt import (QSize, Qt, QWidget, QVBoxLayout, QSplitter,
                  QToolBar, QAction, QToolButton, QHBoxLayout, QLabel,
                  QSpacerItem, QSizePolicy, QDialog, QMenu, QFrame,
                  QApplication, QMessageBox, QCursor, QPalette, pyqtSignal)
@@ -1135,10 +1135,10 @@ class ProjectViewer(QWidget):
 
         for path in self.__pluginFileMenus:
             menu = self.__pluginFileMenus[path]
-            menu.menuAction().setData(QVariant(value))
+            menu.menuAction().setData(value)
         for path in self.__pluginDirMenus:
             menu = self.__pluginDirMenus[path]
-            menu.menuAction().setData(QVariant(value))
+            menu.menuAction().setData(value)
 
     def onDebugMode(self, newState):
         """Triggered when a debug mode is changed"""

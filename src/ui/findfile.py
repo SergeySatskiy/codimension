@@ -25,7 +25,7 @@ from cdmbriefparser import getBriefModuleInfoFromMemory
 from utils.globals import GlobalData
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.settings import Settings
-from .qt import (Qt, QAbstractItemModel, QRegExp, QModelIndex, QVariant,
+from .qt import (Qt, QAbstractItemModel, QRegExp, QModelIndex,
                  QTreeView, QAbstractItemView, QDialog, QVBoxLayout,
                  QCursor, QSizePolicy, QHeaderView, QComboBox,
                  QSortFilterProxyModel, QApplication)
@@ -208,25 +208,25 @@ class FindFileModel(QAbstractItemModel):
     def data(self, index, role):
         """Provides data of an item"""
         if not index.isValid():
-            return QVariant()
+            return None
 
         if role == Qt.DisplayRole:
             item = index.internalPointer()
             if index.column() < item.columnCount():
-                return QVariant(item.data(index.column()))
+                return item.data(index.column())
             elif index.column() == item.columnCount() and \
                 index.column() < self.columnCount(self.parent(index)):
                 # This is for the case when an item under a multi-column
                 # parent doesn't have a value for all the columns
-                return QVariant("")
+                return ""
         elif role == Qt.DecorationRole:
             if index.column() == 0:
-                return QVariant(index.internalPointer().icon)
+                return index.internalPointer().icon
         elif role == Qt.ToolTipRole:
             item = index.internalPointer()
             if item.tooltip != "":
-                return QVariant(item.tooltip)
-        return QVariant()
+                return item.tooltip
+        return None
 
     def flags(self, index):
         """Provides the item flags"""
@@ -238,9 +238,9 @@ class FindFileModel(QAbstractItemModel):
         """Provides the header data"""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             if section >= self.rootItem.columnCount():
-                return QVariant("")
+                return ""
             return self.rootItem.data(section)
-        return QVariant()
+        return None
 
     def index(self, row, column, parent=QModelIndex()):
         """Creates an index"""
@@ -410,7 +410,6 @@ class FilesBrowser(QTreeView):
 
     def layoutDisplay(self):
         """Performs the layout operation"""
-        self.doItemsLayout()
         self.header().resizeSections(QHeaderView.ResizeToContents)
         self.header().setStretchLastSection(True)
         self._resort()

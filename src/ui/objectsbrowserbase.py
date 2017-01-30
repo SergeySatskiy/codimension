@@ -179,12 +179,10 @@ class ObjectsBrowser(QTreeView):
         self.model().setFilterRegExp('')
 
         # No need to resort but need to resize columns
-        self.doItemsLayout()
         self._resizeColumns(QModelIndex())
 
     def layoutDisplay(self):
         """Performs the layout operation"""
-        self.doItemsLayout()
         self._resizeColumns(QModelIndex())
         self._resort()
 

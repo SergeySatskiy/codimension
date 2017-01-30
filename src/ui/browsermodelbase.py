@@ -31,8 +31,7 @@ import logging
 from utils.fileutils import isPythonFile, isPythonMime
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
-from .qt import (Qt, QAbstractItemModel, QVariant, QModelIndex, QApplication,
-                 QCursor)
+from .qt import Qt, QAbstractItemModel, QModelIndex, QApplication, QCursor
 from .viewitems import (TreeViewItem, TreeViewDirectoryItem, TreeViewFileItem,
                         TreeViewGlobalsItem, TreeViewImportsItem,
                         TreeViewFunctionsItem, TreeViewClassesItem,
@@ -79,28 +78,28 @@ class BrowserModelBase(QAbstractItemModel):
     def data(self, index, role):
         """Provides data of an item"""
         if not index.isValid():
-            return QVariant()
+            return None
 
         column = index.column()
         if role == Qt.DisplayRole:
             item = index.internalPointer()
             if column < item.columnCount():
-                return QVariant(item.data(column))
+                return item.data(column)
             if column == item.columnCount() and \
                column < self.columnCount(self.parent(index)):
                 # This is for the case when an item under a multi-column
                 # parent doesn't have a value for all the columns
-                return QVariant("")
+                return ""
         elif role == Qt.DecorationRole:
             if column == 0:
-                return QVariant(index.internalPointer().getIcon())
+                return index.internalPointer().getIcon()
         elif role == Qt.ToolTipRole:
             item = index.internalPointer()
             if column == 1 and item.path is not None:
-                return QVariant(item.path)
+                return item.path
             if self.showTooltips and column == 0 and item.toolTip != "":
-                return QVariant(item.toolTip)
-        return QVariant()
+                return item.toolTip
+        return None
 
     def flags(self, index):
         """Provides the item flags"""
@@ -112,9 +111,9 @@ class BrowserModelBase(QAbstractItemModel):
         """Provides the header data"""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             if section >= self.rootItem.columnCount():
-                return QVariant("")
+                return ""
             return self.rootItem.data(section)
-        return QVariant()
+        return None
 
     def index(self, row, column, parent=QModelIndex()):
         """Creates an index"""
