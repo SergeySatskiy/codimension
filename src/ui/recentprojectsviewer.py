@@ -60,7 +60,7 @@ class RecentProjectViewItem(QTreeWidgetItem):
             # Get the project properties
             try:
                 tooltip = getProjectFileTooltip(fileName)
-                if Settings().recentTooltips:
+                if Settings()['recentTooltips']:
                     self.setToolTip(1, tooltip)
                 else:
                     self.setToolTip(1, "")
@@ -132,7 +132,7 @@ class RecentFileViewItem(QTreeWidgetItem):
         if isPythonMime(mime):
             # The tooltip could be the file docstring
             info = GlobalData().briefModinfoCache.get(fileName)
-            if info.docstring and Settings().recentTooltips:
+            if info.docstring and Settings()['recentTooltips']:
                 self.setToolTip(1, info.docstring.text)
             else:
                 self.setToolTip(1, "")
@@ -146,7 +146,7 @@ class RecentFileViewItem(QTreeWidgetItem):
             try:
                 self.setToolTip(0, "")
                 tooltip = getProjectFileTooltip(fileName)
-                if Settings().recentTooltips:
+                if Settings()['recentTooltips']:
                     self.setToolTip(1, tooltip)
                 else:
                     self.setToolTip(1, "")
@@ -601,7 +601,7 @@ class RecentProjectsViewer(QWidget):
             editorsManager = mainWin.editorsManagerWidget.editorsManager
             if editorsManager.closeRequest():
                 prj = GlobalData().project
-                prj.setTabsStatus(editorsManager.getTabsStatus())
+                prj.tabsStatus = editorsManager.getTabsStatus()
                 editorsManager.closeAll()
                 prj.loadProject(projectFileName)
                 mainWin.activateProjectTab()

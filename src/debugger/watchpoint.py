@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -61,35 +60,17 @@ class Watchpoint:
 
     def serialize(self):
         """Serializes the watchpoint to a string"""
-        return ":::".join([str(self.__condition), str(self.__special),
-                           str(self.__temporary),
-                           str(self.__enabled), str(self.__ignoreCount)])
+        return {'condition': self.__condition,
+                'special': self.__special,
+                'temp': self.__temporary,
+                'enabled': self.__enabled,
+                'ignorecnt':self.__ignoreCount}
 
     def deserialize(self, source):
         """Deserializes the watchpoint"""
-        parts = source.split(":::")
-        if len(parts) != 6:
-            raise Exception("Unexpected number of fields")
-
-        if parts[0] == "None":
-            self.__condition = None
-        else:
-            self.__condition = parts[0]
-
-        if parts[1] == "True":
-            self.__special = True
-        else:
-            self.__special = False
-
-        if parts[2] == "True":
-            self.__temporary = True
-        else:
-            self.__temporary = False
-
-        if parts[3] == "True":
-            self.__enabled = True
-        else:
-            self.__enabled = False
-
-        self.__ignoreCount = int(parts[4])
+        self.__condition = source.get('condition', None)
+        self.__special = source.get('special', False)
+        self.__temporary = source.get('temp', False)
+        self.__enabled = source.get('enabled', False)
+        self.__ignoreCount = source.get('ignorecnt', 0)
         return self.isValid()

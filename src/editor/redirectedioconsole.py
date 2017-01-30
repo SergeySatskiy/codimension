@@ -182,7 +182,7 @@ class RedirectedIOConsole(TextEditor):
             self.switchMode(self.MODE_OUTPUT)
             timestampLine, _ = self.getEndPosition()
             self.append('\n')
-            self.clearUndoHistory()
+            self.clearUndoRedoHistory()
             line, pos = self.getEndPosition()
             self.setCursorPosition(line, pos)
             self.ensureLineVisible(line)
@@ -538,7 +538,7 @@ class RedirectedIOConsole(TextEditor):
             self.SendScintilla(self.SCI_SETSTYLING,
                                endPos - startPos, styleNo)
 
-        self.clearUndoHistory()
+        self.clearUndoRedoHistory()
         if Settings().ioconsoleautoscroll:
             line, pos = self.getEndPosition()
             self.gotoLine(line + 1, pos + 1)
@@ -560,7 +560,7 @@ class RedirectedIOConsole(TextEditor):
         """Clears both data and visible content"""
         self.clearData()
         self.clear()
-        self.clearUndoHistory()
+        self.clearUndoRedoHistory()
 
 
 class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):

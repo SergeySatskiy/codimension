@@ -313,7 +313,7 @@ class VCSManager(QObject):
     def requestStatus(self, path,
                       flag=VersionControlSystemInterface.REQUEST_ITEM_ONLY):
         """Provides the path status asynchronously via sending a signal"""
-        delta = datetime.timedelta(0, Settings().vcsstatusupdateinterval)
+        delta = datetime.timedelta(0, Settings()['vcsstatusupdateinterval'])
         if path.endswith(os.path.sep):
             status = self.dirCache.getStatus(path)
             if status:
@@ -450,4 +450,4 @@ class VCSManager(QObject):
     def __startDirRequestTimer(self):
         """Starts the periodic request timer"""
         self.__dirRequestLoopTimer.start(
-            Settings().vcsstatusupdateinterval * 1000)
+            Settings()['vcsstatusupdateinterval'] * 1000)

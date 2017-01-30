@@ -147,42 +147,21 @@ class Breakpoint:
 
     def serialize(self):
         """Serializes the breakpoint to a string"""
-        return ":::".join([str(self.__fileName), str(self.__lineNumber),
-                           str(self.__condition), str(self.__temporary),
-                           str(self.__enabled), str(self.__ignoreCount)])
+        return {'file': self.__fileName,
+                'line': self.__lineNumber,
+                'condition': self.__condition,
+                'temp': self.__temporary,
+                'enabled': self.__enabled,
+                'ignorecnt': self.__ignoreCount}
 
     def deserialize(self, source):
         """Deserializes the breakpoint"""
-        parts = source.split(":::")
-        if len(parts) != 6:
-            raise Exception("Unexpected number of fields")
-
-        if parts[0] == "None":
-            self.__fileName = None
-        else:
-            self.__fileName = parts[0]
-
-        if parts[1] == "None":
-            self.__lineNumber = None
-        else:
-            self.__lineNumber = int(parts[1])
-
-        if parts[2] == "None":
-            self.__condition = None
-        else:
-            self.__condition = parts[2]
-
-        if parts[3] == "True":
-            self.__temporary = True
-        else:
-            self.__temporary = False
-
-        if parts[4] == "True":
-            self.__enabled = True
-        else:
-            self.__enabled = False
-
-        self.__ignoreCount = int(parts[5])
+        self.__fileName = source.get('file', None)
+        self.__lineNumber = source.get('line', None)
+        self.__condition = source.get('condition', None)
+        self.__temporary = source.get('temp', False)
+        self.__enabled = source.get('enabled', False)
+        self.__ignoreCount = source.get('ignorecnt', 0)
         return self.isValid()
 
     def __eq__(self, other):

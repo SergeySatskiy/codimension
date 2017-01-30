@@ -83,3 +83,7 @@ class QutepartWrapper(Qutepart):
         for margin in self.getMargins():
             if hasattr(margin, 'zoomTo'):
                 margin.zoomTo(zoomVal)
+
+    def clearUndoRedoHistory(self):
+        """Clears the undo/redo history"""
+        self.document().clearUndoRedoStacks()

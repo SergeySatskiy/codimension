@@ -182,7 +182,7 @@ class FunctionsViewer(QWidget):
             if project.isLoaded():
                 self.filterEdit.editTextChanged.disconnect(
                     self.__filterChanged)
-                self.filterEdit.addItems(project.findFuncHistory)
+                self.filterEdit.addItems(project.findFunctionHistory)
                 self.filterEdit.editTextChanged.connect(self.__filterChanged)
                 self.findNotUsedButton.setEnabled(self.getItemCount() > 0)
             else:

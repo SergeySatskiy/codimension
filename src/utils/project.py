@@ -291,8 +291,6 @@ class CodimensionProject(QObject,
     def unloadProject(self, emitSignal=True):
         """Unloads the current project if required"""
         self.sigProjectAboutToUnload.emit()
-        if self.isLoaded():
-            self.__saveProjectBrowserExpandedDirs()
         self.__resetValues()
         if emitSignal:
             # No need to send a signal e.g. if IDE is closing
@@ -386,11 +384,11 @@ class CodimensionProject(QObject,
         """Provides the project script file name"""
         if not self.isLoaded():
             return None
-        if self.scriptName == '':
+        if self.props['scriptname'] == '':
             return None
-        if isabs(self.scriptName):
-            return self.scriptName
-        return realpath(self.getProjectDir() + self.scriptName)
+        if isabs(self.props['scriptname']):
+            return self.props['scriptname']
+        return realpath(self.getProjectDir() + self.props['scriptname'])
 
     def addRecentFile(self, path):
         """Adds a single recent file. True if a new file was inserted."""

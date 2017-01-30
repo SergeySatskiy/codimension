@@ -29,8 +29,8 @@ from utils.misc import (getDefaultTemplate, getIDETemplateFile,
                         getProjectTemplateFile)
 from utils.pixmapcache import getIcon
 from utils.settings import THIRDPARTY_DIR
-from utils.fileutils import (getFileProperties, isImageViewable,
-                             isFileSearchable)
+from utils.fileutils import (getFileProperties, isImageViewable, isImageFile,
+                             isFileSearchable, isCDMProjectFile)
 from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
                                 ImportDiagramOptions)
 from utils.run import (getWorkingDir,
@@ -1657,7 +1657,7 @@ class CodimensionMainWindow(QMainWindow):
         if editorsManager.getUnsavedCount() == 0:
             project = GlobalData().project
             if project.isLoaded():
-                project.setTabsStatus(editorsManager.getTabsStatus())
+                project.tabsStatus = editorsManager.getTabsStatus()
                 self.settings.tabsStatus = []
             else:
                 self.settings.tabsStatus = editorsManager.getTabsStatus()
@@ -1668,7 +1668,7 @@ class CodimensionMainWindow(QMainWindow):
                 self.__onBrutalStopDbgSession()
 
             project = GlobalData().project
-            project.fileBrowserPaths = self.getProjectExpandedPaths()
+            project.fsBrowserExpandedDirs = self.getProjectExpandedPaths()
             project.unloadProject(False)
 
             # Stop the VCS manager threads
@@ -1723,7 +1723,7 @@ class CodimensionMainWindow(QMainWindow):
             return
 
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget(self.tagHelpViewer)
+        self.__bottomSideBar.setCurrentTab('contexthelp')
         self.__bottomSideBar.raise_()
 
         self.tagHelpViewer.display(calltip, docstring)
@@ -1731,11 +1731,11 @@ class CodimensionMainWindow(QMainWindow):
     def showDiff(self, diff, tooltip):
         """Shows the diff"""
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget(self.diffViewer)
+        self.__bottomSideBar.setCurrentTab('diff')
         self.__bottomSideBar.raise_()
 
         try:
-            self.__bottomSideBar.setTabToolTip(6, tooltip)
+            self.__bottomSideBar.setTabToolTip('diff', tooltip)
             self.diffViewer.setHTML(parse_from_memory(diff, False, True),
                                     tooltip)
         except Exception as exc:
@@ -1867,7 +1867,7 @@ class CodimensionMainWindow(QMainWindow):
             self.__verticalSplitter.setSizes(splitterSizes)
 
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget(self.findInFilesViewer)
+        self.__bottomSideBar.setCurrentTab('search')
         self.__bottomSideBar.raise_()
 
     def findNameClicked(self):
@@ -2149,12 +2149,11 @@ class CodimensionMainWindow(QMainWindow):
 
     def __openTabsMenuTriggered(self, act):
         """Tab list settings menu triggered"""
-        value = act.data()
-        if value == -1:
+        if act == -1:
             self.settings.tablistsortalpha = True
             self.__alphasort.setChecked(True)
             self.__tabsort.setChecked(False)
-        elif value == -2:
+        elif act == -2:
             self.settings.tablistsortalpha = False
             self.__alphasort.setChecked(False)
             self.__tabsort.setChecked(True)
@@ -2167,14 +2166,13 @@ class CodimensionMainWindow(QMainWindow):
                         os.path.sep
         return getThemesList(localSkinsDir)
 
-    def __onTheme(self, act):
+    def __onTheme(self, skinSubdir):
         """Triggers when a theme is selected"""
-        skinSubdir = act.data()
-        if self.settings['skin'] == skinSubdir:
+        if self.settings['skin'] == skinSubdir.data():
             return
 
         logging.info("Please restart codimension to apply the new theme")
-        self.settings['skin'] = skinSubdir
+        self.settings['skin'] = skinSubdir.data()
 
     def __styleAboutToShow(self):
         """Style menu is about to show"""
@@ -2187,15 +2185,13 @@ class CodimensionMainWindow(QMainWindow):
                 font.setBold(False)
             item[1].setFont(font)
 
-    def __onStyle(self, act):
+    def __onStyle(self, styleName):
         """Sets the selected style"""
-        styleName = act.data()
         QApplication.setStyle(styleName)
         self.settings.style = styleName.lower()
 
-    def __onMonoFont(self, act):
+    def __onMonoFont(self, fintFace):
         """Sets the new mono font"""
-        fontFace = str(act.data().toString())
         try:
             font = QFont()
             font.setFamily(fontFace)
@@ -2332,7 +2328,7 @@ class CodimensionMainWindow(QMainWindow):
             self.debuggerExceptions.clear()
             self.__rightSideBar.setTabText(2, "Exceptions")
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget(self.debuggerContext)
+            self.__rightSideBar.setCurrentTab('debugger')
             self.__rightSideBar.raise_()
             self.__lastDebugAction = None
             self.__debugDumpSettingsAct.setEnabled(True)
@@ -2340,7 +2336,7 @@ class CodimensionMainWindow(QMainWindow):
         else:
             if not self.__rightSideBar.isMinimized():
                 if self.__rightSideBar.currentIndex() == 1:
-                    self.__rightSideBar.setCurrentWidget(self.outlineViewer)
+                    self.__rightSideBar.setCurrentTab('fileoutline')
             self.__rightSideBar.setTabEnabled(1, False)    # vars etc.
 
         self.debugModeChanged.emit(newState)
@@ -2444,7 +2440,7 @@ class CodimensionMainWindow(QMainWindow):
 
         if excType is None or excType.startswith("unhandled") or not excStackTrace:
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget(self.debuggerExceptions)
+            self.__rightSideBar.setCurrentTab('exceptions')
             self.__rightSideBar.raise_()
 
             if not excStackTrace:
@@ -2495,7 +2491,7 @@ class CodimensionMainWindow(QMainWindow):
 
         # Should stop at the exception
         self.__rightSideBar.show()
-        self.__rightSideBar.setCurrentWidget(self.debuggerExceptions)
+        self.__rightSideBar.setCurrentTab('exceptions')
         self.__rightSideBar.raise_()
 
         fileName = excStackTrace[0][0]
@@ -2723,7 +2719,7 @@ class CodimensionMainWindow(QMainWindow):
         editorsManager = self.editorsManagerWidget.editorsManager
         if editorsManager.closeRequest():
             prj = GlobalData().project
-            prj.setTabsStatus(editorsManager.getTabsStatus())
+            prj.tabsStatus = editorsManager.getTabsStatus()
             editorsManager.closeAll()
             prj.loadProject(projectFile)
             if not self.__leftSideBar.isMinimized():
@@ -2921,7 +2917,7 @@ class CodimensionMainWindow(QMainWindow):
         if isinstance(act, str):
             name = act
         else:
-            name = str(act.data().toString())
+            name = act.data()
         if name in ["project", "recent", "classes", "functions", "globals"]:
             self.__leftSideBar.show()
             self.__leftSideBar.setCurrentTab(name)
@@ -3433,19 +3429,17 @@ class CodimensionMainWindow(QMainWindow):
         else:
             self.__prjTemplateMenu.setEnabled(False)
 
-    def __onRecentPrj(self, act):
+    def __onRecentPrj(self, path):
         """Triggered when a recent project is requested to be loaded"""
-        path = str(act.data().toString())
+        path = path.data()
         if not os.path.exists(path):
             logging.error("Could not find project file: " + path)
         else:
             self.__loadProject(path)
 
-    def __onRecentFile(self, act):
+    def __onRecentFile(self, path):
         """Triggered when a recent file is requested to be loaded"""
-        path = str(act.data().toString())
-        fileType = detectFileType(path)
-        if fileType == PixmapFileType:
+        if isImageFile(path):
             self.openPixmapFile(path)
         else:
             self.openFile(path, -1)
@@ -3605,13 +3599,13 @@ class CodimensionMainWindow(QMainWindow):
     def activateProjectTab(self):
         """Activates the project tab"""
         self.__leftSideBar.show()
-        self.__leftSideBar.setCurrentWidget(self.projectViewer)
+        self.__leftSideBar.setCurrentTab('project')
         self.__leftSideBar.raise_()
 
     def activateOutlineTab(self):
         """Activates the outline tab"""
         self.__rightSideBar.show()
-        self.__rightSideBar.setCurrentWidget(self.outlineViewer)
+        self.__rightSideBar.setCurrentTab('fileoutline')
         self.__rightSideBar.raise_()
 
     def __dumpDebugSettings(self, fileName, fullEnvironment):
@@ -3779,28 +3773,28 @@ class CodimensionMainWindow(QMainWindow):
     def __onClientStdout(self, data):
         """Triggered when the client reports stdout"""
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget(self.redirectedIOConsole)
+        self.__bottomSideBar.setCurrentTab('ioredirect')
         self.__bottomSideBar.raise_()
         self.redirectedIOConsole.appendStdoutMessage(data)
 
     def __onClientStderr(self, data):
         """Triggered when the client reports stderr"""
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget(self.redirectedIOConsole)
+        self.__bottomSideBar.setCurrentTab('ioredirect')
         self.__bottomSideBar.raise_()
         self.redirectedIOConsole.appendStderrMessage(data)
 
     def __ioconsoleIDEMessage(self, message):
         """Sends an IDE message to the IO console"""
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget(self.redirectedIOConsole)
+        self.__bottomSideBar.setCurrentTab('ioredirect')
         self.__bottomSideBar.raise_()
         self.redirectedIOConsole.appendIDEMessage(message)
 
     def __onClientRawInput(self, prompt, echo):
         """Triggered when the client input is requested"""
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget(self.redirectedIOConsole)
+        self.__bottomSideBar.setCurrentTab('ioredirect')
         self.__bottomSideBar.raise_()
         self.redirectedIOConsole.rawInput(prompt, echo)
         self.redirectedIOConsole.setFocus()
@@ -3824,10 +3818,12 @@ class CodimensionMainWindow(QMainWindow):
         if isProfile:
             index = str(self.__getNewProfileIndex())
             caption = "Profiling #" + index
+            name = 'profiling#' + index
             tooltip = "Redirected IO profile console #" + index + " (running)"
         else:
             index = str(self.__getNewRunIndex())
             caption = "Run #" + index
+            name = 'running#' + index
             tooltip = "Redirected IO run console #" + index + " (running)"
 
         widget.CloseIOConsole.connect(self.__onCloseIOConsole)
@@ -3837,11 +3833,10 @@ class CodimensionMainWindow(QMainWindow):
         widget.settingUpdated.connect(self.onIOConsoleSettingUpdated)
 
         self.__bottomSideBar.addTab(
-            widget, getIcon('ioconsole.png'), caption)
-        self.__bottomSideBar.setTabToolTip(
-            self.__bottomSideBar.count() - 1, tooltip)
+            widget, getIcon('ioconsole.png'), caption, name)
+        self.__bottomSideBar.setTabToolTip(name, tooltip)
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget(widget)
+        self.__bottomSideBar.setCurrentTab(name)
         self.__bottomSideBar.raise_()
         widget.setFocus()
 

@@ -854,11 +854,6 @@ class ScintillaWrapper( QsciScintilla ):
         " True is a calltip is displayed "
         return self.SendScintilla( self.SCI_CALLTIPACTIVE ) == 1
 
-    def clearUndoHistory( self ):
-        " Clears undo history "
-        self.SendScintilla( self.SCI_EMPTYUNDOBUFFER )
-        return
-
     def wordPartLeft( self ):
         " Moves the cursor a word part left "
         self.SendScintilla( self.SCI_WORDPARTLEFT )

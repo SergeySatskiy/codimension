@@ -457,14 +457,15 @@ class ProjectViewer(QWidget):
         mainWindow = globalData.mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         if editorsManager.closeRequest():
-            globalData.project.setTabsStatus(editorsManager.getTabsStatus())
+            globalData.project.tabsStatus = editorsManager.getTabsStatus()
             editorsManager.closeAll()
-            globalData.project.fileBrowserPaths = mainWindow.getProjectExpandedPaths()
+            globalData.project.fsBrowserExpandedDirs = \
+                mainWindow.getProjectExpandedPaths()
             globalData.project.unloadProject()
 
     def __onRestorePrjExpandedDirs(self):
         """Triggered when a project tree should restore its previous state"""
-        for path in GlobalData().project.fileBrowserPaths:
+        for path in GlobalData().project.fsBrowserExpandedDirs:
             self.projectTreeView.highlightItem(path)
 
     def __onProjectChanged(self, what):

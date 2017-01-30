@@ -153,7 +153,7 @@ class ClassesViewer(QWidget):
     def __filterItemAdded(self):
         """The filter item has been added"""
         project = GlobalData().project
-        if project.isLoadded():
+        if project.isLoaded():
             project.setFindClassHistory(self.filterEdit.getItems())
 
     def __enterInFilter(self):

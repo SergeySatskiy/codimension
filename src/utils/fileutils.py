@@ -106,12 +106,24 @@ def isFileSearchable(fName, checkForBrokenLink=True):
                                                skipCache=False)
     if syntaxFile is not None:
         return True
+    if mime is None:
+        return False
     return mime.startswith('text/')
 
 
 def isImageViewable(mime):
     """True if QT can show the image"""
+    if mime is None:
+        return False
     return mime in VIEWABLE_IMAGE_MIMES
+
+
+def isImageFile(fName):
+    """True is the file is a viewable image"""
+    mime, _, _, _ = getFileProperties(fName, False,
+                                      checkForBrokenLink,
+                                      skipCache=False)
+    return isImageViewable(mime)
 
 
 def isFileOpenable(fName):
@@ -452,14 +464,17 @@ def __getMagicMimeAndEncoding(fName):
         # E.g.: 'text/x-shellscript; charset=us-ascii'
         output = __magic.from_file(realpath(fName))
         parts = output.split('; ')
+        if len(parts) == 1:
+            # if a file is short, e.g. 1 byte, then encoding is not provided
+            return parts[0].strip(), None, False
         if len(parts) != 2:
             # Unknown magic library problem
             logging.error("python-magic library unknown output format. (" +
-                          output + ")")
+                          output + ") for " + fName)
             return None, None, False
         if not parts[1].startswith('charset='):
             logging.error("Unexpected python-magic library charset output. (" +
-                          parts[1] + ")")
+                          parts[1] + ") for " + fName)
             return None, None, False
         # Second value: strip 'charset='
         enc = parts[1][8:]
@@ -632,6 +647,8 @@ def compactPath(path, width, measure=len):
 def isPythonFile(fName):
     """True if it is a python file"""
     mime, _, _, _ = getFileProperties(fName)
+    if mime is None:
+        return False
     return 'python' in mime
 
 
@@ -652,6 +669,8 @@ def isCDMProjectMime(mime):
 def isCDMProjectFile(fName):
     """True if it is a codimension project file"""
     mime, _, _, _ = getFileProperties(fName)
+    if mime is None:
+        return False
     return 'x-codimension3' in mime
 
 

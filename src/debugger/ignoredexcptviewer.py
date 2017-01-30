@@ -236,7 +236,7 @@ class IgnoredExceptionsViewer(QWidget):
         self.clear()
         project = GlobalData().project
         if project.isLoaded():
-            self.__ignored = list(project.ignoredExcpt)
+            self.__ignored = list(project.exceptionFilters)
         else:
             self.__ignored = Settings()['ignoredExceptions']
 

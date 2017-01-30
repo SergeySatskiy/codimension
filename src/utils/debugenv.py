@@ -24,8 +24,17 @@ from copy import deepcopy
 from .fileutils import loadJSON, saveJSON
 
 
-_DEFAULT_DEBUGGER_PROPS = {'breakpoints': [],          # [[file, line], ...]
-                           'watchpoints': [],          # [[file, expr], ...]
+_DEFAULT_DEBUGGER_PROPS = {'breakpoints': [],   # [{'file': <str>,
+                                                #   'line': <int>,
+                                                #   'condition': <str>,
+                                                #   'temp': <bool>,
+                                                #   'enabled': <bool>,
+                                                #   'ignorecnt': <int>}, ...]
+                           'watchpoints': [],   # [{'condition': <str>,
+                                                #   'special': <bool>,
+                                                #   'temp': <bool>,
+                                                #   'enabled': <bool>,
+                                                #   'ignorecnt': <int>}, ...]
                            'ignoredexceptions': []}    # [type name, ... ]
 
 

@@ -475,7 +475,7 @@ class BreakPointViewer(QWidget):
 
         project = GlobalData().project
         if project.isLoaded():
-            project.setBreakpoints(model.serialize())
+            project.breakpoints = model.serialize()
         else:
             Settings().breakpoints = model.serialize()
 
