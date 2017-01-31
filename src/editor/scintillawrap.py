@@ -52,22 +52,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def setLexer( self, lex = None ):
         """ Sets the new lexer or resets if None """
-        QsciScintilla.setLexer( self, lex )
-        if lex is None:
-            self.clearStyles()
-        self._charWidth = -1
-        self._lineHeight = -1
-        return
-
-    def clearStyles( self ):
-        """ Sets the styles according the selected Qt style """
-        palette = QApplication.palette()
-        self.SendScintilla( self.SCI_STYLESETFORE, self.STYLE_DEFAULT,
-                            palette.color( QPalette.Text ) )
-        self.SendScintilla( self.SCI_STYLESETBACK, self.STYLE_DEFAULT,
-                            palette.color( QPalette.Base ) )
-        self.SendScintilla( self.SCI_STYLECLEARALL )
-        self.SendScintilla( self.SCI_CLEARDOCUMENTSTYLE )
         return
 
     def monospacedStyles( self, font ):
@@ -174,25 +158,6 @@ class ScintillaWrapper( QsciScintilla ):
         """ Provides the style at the current cursor position """
         return self.styleAt( self.currentPosition() )
 
-    def getEndStyled( self ):
-        """ Provides the last styled position """
-        return self.SendScintilla( self.SCI_GETENDSTYLED )
-
-    def startStyling( self, pos, mask ):
-        """ Prepares styling """
-        self.SendScintilla( self.SCI_STARTSTYLING, pos, mask )
-        return
-
-    def setStyling( self, length, style ):
-        """ Styles some text """
-        self.SendScintilla( self.SCI_SETSTYLING, length, style )
-        return
-
-    def setStyleBits( self, bits ):
-        """ Sets the number of bits to be used for styling """
-        self.SendScintilla( self.SCI_SETSTYLEBITS, bits )
-        return
-
     def stringAt( self, pos, length ):
         """ Provides a string starting at position 'pos' with
             the length of 'length' bytes (not characters!).
@@ -237,25 +202,6 @@ class ScintillaWrapper( QsciScintilla ):
         if character < 0:
             return chr( character + 256 )
         return chr( character )
-
-    def foldLevelAt( self, line ):
-        """ Provides the fold level for the line in the document """
-        level = self.SendScintilla( self.SCI_GETFOLDLEVEL, line )
-        return (level & self.SC_FOLDLEVELNUMBERMASK) - self.SC_FOLDLEVELBASE
-
-    def foldFlagsAt( self, line ):
-        """ Provides the fold flags for the line in the document """
-        level = self.SendScintilla( self.SCI_GETFOLDLEVEL, line )
-        return level & ~self.SC_FOLDLEVELNUMBERMASK
-
-    def foldHeaderAt( self, line ):
-        """ Determines if the line in the document is a fold header line """
-        level = self.SendScintilla( self.SCI_GETFOLDLEVEL, line )
-        return level & self.SC_FOLDLEVELHEADERFLAG
-
-    def foldExpandedAt( self, line ):
-        """ Determines if a fold is expanded """
-        return self.SendScintilla( self.SCI_GETFOLDEXPANDED, line )
 
     def setIndentationGuideView( self, view ):
         """ Sets the view of the indentation guides """
@@ -307,43 +253,6 @@ class ScintillaWrapper( QsciScintilla ):
         self.SendScintilla( self.SCI_LINESCROLL, 0, lines )
         return
 
-    def moveCursorToEOL( self ):
-        """ Moves the cursor to the end of line """
-        self.SendScintilla( self.SCI_LINEEND )
-        return
-
-    def moveCursorLeft( self ):
-        """ Moves the cursor left """
-        self.SendScintilla( self.SCI_CHARLEFT )
-        return
-
-    def moveCursorRight( self ):
-        """ Moves the cursor right """
-        self.SendScintilla( self.SCI_CHARRIGHT )
-        return
-
-    def moveCursorWordLeft( self ):
-        """ Moves the cursor one word left """
-        self.SendScintilla( self.SCI_WORDLEFT )
-        return
-
-    def moveCursorWordRight( self ):
-        """ Moves the cursor one word right """
-        self.SendScintilla( self.SCI_WORDRIGHT )
-        return
-
-    def newLineBelow( self ):
-        """ Inserts a new line below the current one """
-        self.SendScintilla( self.SCI_LINEEND )
-        self.SendScintilla( self.SCI_NEWLINE )
-        return
-
-    def newLineAbove( self ):
-        self.SendScintilla( self.SCI_HOME )
-        self.SendScintilla( self.SCI_NEWLINE )
-        self.SendScintilla( self.SCI_LINEUP )
-        return
-
     def duplicateLine( self ):
         " Duplicates the current line "
         if not self.isReadOnly():
@@ -360,64 +269,9 @@ class ScintillaWrapper( QsciScintilla ):
         self.SendScintilla( self.SCI_CLEAR )
         return
 
-    def deleteWordLeft( self ):
-        """ Deletes the word to the left of the cursor """
-        self.SendScintilla( self.SCI_DELWORDLEFT )
-        return
-
-    def deleteWordRight( self ):
-        """ Deletes the word to the right of the cursor """
-        self.SendScintilla( self.SCI_DELWORDRIGHT )
-        return
-
-    def deleteLineLeft( self ):
-        """ Deletes the line to the left of the cursor """
-        self.SendScintilla( self.SCI_DELLINELEFT )
-        return
-
     def deleteLineRight( self ):
         """ Deletes the line to the right of the cursor """
         self.SendScintilla( self.SCI_DELLINERIGHT )
-        return
-
-    def extendSelectionLeft( self ):
-        """ Extends the selection one character to the left """
-        self.SendScintilla( self.SCI_CHARLEFTEXTEND )
-        return
-
-    def extendSelectionRight( self ):
-        """ Extends the selection one character to the right """
-        self.SendScintilla( self.SCI_CHARRIGHTEXTEND )
-        return
-
-    def extendSelectionWordLeft( self ):
-        """ Extends the selection one word to the left """
-        self.SendScintilla( self.SCI_WORDLEFTEXTEND )
-        return
-
-    def extendSelectionWordRight( self ):
-        """ Extends the selection one word to the right """
-        self.SendScintilla( self.SCI_WORDRIGHTEXTEND )
-        return
-
-    def extendSelectionToBOL( self ):
-        """ Extends the selection to the beginning of the line """
-        self.SendScintilla( self.SCI_VCHOMEEXTEND )
-        return
-
-    def extendSelectionToEOL( self ):
-        """ Extends the selection to the end of the line """
-        self.SendScintilla( self.SCI_LINEENDEXTEND )
-        return
-
-    def extendSelectionToEOF( self ):
-        " Extends the selection to the end of file "
-        self.SendScintilla( self.SCI_DOCUMENTENDEXTEND )
-        return
-
-    def extendSelectionToBOF( self ):
-        " Extends the selection to the beginning of the file "
-        self.SendScintilla( self.SCI_DOCUMENTSTARTEXTEND )
         return
 
     def setHScrollOffset( self, value ):
@@ -834,25 +688,6 @@ class ScintillaWrapper( QsciScintilla ):
         " Provides the text of the given length under the cursor "
         text = self.text( line )
         return text[ col : col + length ]
-
-    def hideCalltip( self ):
-        " Hides a calltip if shown "
-        self.SendScintilla( self.SCI_CALLTIPCANCEL )
-        return
-
-    def setCalltipHighlight( self, startPos, endPos ):
-        " Sets a portion of a calltip highlighted "
-        self.SendScintilla( self.SCI_CALLTIPSETHLT, startPos, endPos )
-        return
-
-    def showCalltip( self, pos, text ):
-        " Shows the calltip at the given position "
-        self.SendScintilla( self.SCI_CALLTIPSHOW, pos, text )
-        return
-
-    def isCalltipShown( self ):
-        " True is a calltip is displayed "
-        return self.SendScintilla( self.SCI_CALLTIPACTIVE ) == 1
 
     def wordPartLeft( self ):
         " Moves the cursor a word part left "

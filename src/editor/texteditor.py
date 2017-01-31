@@ -2123,7 +2123,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
         self.__splitter.setSizes(Settings()['flowSplitterSizes'])
         self.__splitter.splitterMoved.connect(self.flowSplitterMoved)
-        Settings().flowSplitterChanged.connect(self.otherFlowSplitterMoved)
+        Settings().sigFlowSplitterChanged.connect(self.otherFlowSplitterMoved)
 
     def flowSplitterMoved(self, pos, index):
         """Splitter has been moved"""

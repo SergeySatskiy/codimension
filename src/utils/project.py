@@ -37,6 +37,7 @@ from .searchenv import SearchEnvironment
 from .fsenv import FileSystemEnvironment
 from .runparamscache import RunParametersCache
 from .filepositions import FilePositions
+from .userencodings import FileEncodings
 
 
 # Saved in .cdm3 file
@@ -57,7 +58,8 @@ class CodimensionProject(QObject,
                          SearchEnvironment,
                          FileSystemEnvironment,
                          RunParametersCache,
-                         FilePositions):
+                         FilePositions,
+                         FileEncodings):
     """Provides codimension project singleton facility"""
 
     # Constants for the sigProjectChanged signal
@@ -77,6 +79,7 @@ class CodimensionProject(QObject,
         FileSystemEnvironment.__init__(self)
         RunParametersCache.__init__(self)
         FilePositions.__init__(self)
+        FileEncodings.__init__(self)
 
         self.__dirWatcher = None
 
@@ -118,6 +121,7 @@ class CodimensionProject(QObject,
         SearchEnvironment.reset(self)
         FileSystemEnvironment.reset(self)
         FilePositions.reset(self)
+        FileEncodings.reset(self)
 
         # Reset the dir watchers if so
         if self.__dirWatcher is not None:
@@ -158,6 +162,7 @@ class CodimensionProject(QObject,
         SearchEnvironment.setup(self, self.userProjectDir)
         FileSystemEnvironment.setup(self, self.userProjectDir)
         FilePositions.setup(self, self.userProjectDir)
+        FileEncodings.setup(self, self.userProjectDir)
 
         self.__generateFilesList()
 

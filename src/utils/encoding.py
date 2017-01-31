@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016 Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017 Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 """Encoding related functions"""
 
 import re
+import encodings
+
 
 # There is no way to query a complete list of the supported codecs at run-time.
 # So there is the list below.
@@ -63,3 +65,14 @@ def convertLineEnds(text, eol):
         regexp = re.compile(r"(\r\n|\n)")
         return regexp.sub(lambda m, eol='\r': eol, text)
     return text
+
+
+def isValidEncoding(enc):
+    """Checks if it is a valid encoding"""
+    if enc in SUPPORTED_CODECS:
+        return True
+
+    # Check the aliases as well
+    if enc in encodings.aliases.aliases:
+        return True
+    return False

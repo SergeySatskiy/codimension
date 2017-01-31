@@ -34,6 +34,7 @@ from .debugenv import DebuggerEnvironment
 from .searchenv import SearchEnvironment
 from .fsenv import FileSystemEnvironment
 from .filepositions import FilePositions
+from .userencodings import FileEncodings
 
 
 SETTINGS_DIR = os.path.join(os.path.realpath(QDir.homePath()),
@@ -221,12 +222,13 @@ class SettingsWrapper(QObject,
                       SearchEnvironment,
                       FileSystemEnvironment,
                       RunParametersCache,
-                      FilePositions):
+                      FilePositions,
+                      FileEncodings):
 
     """Provides settings singleton facility"""
 
     sigRecentListChanged = pyqtSignal()
-    flowSplitterChanged = pyqtSignal()
+    sigFlowSplitterChanged = pyqtSignal()
     sigFlowScaleChanged = pyqtSignal()
 
     def __init__(self):
@@ -236,6 +238,7 @@ class SettingsWrapper(QObject,
         FileSystemEnvironment.__init__(self)
         RunParametersCache.__init__(self)
         FilePositions.__init__(self)
+        FileEncodings.__init__(self)
 
         self.__values = deepcopy(_DEFAULT_SETTINGS)
 
@@ -248,6 +251,7 @@ class SettingsWrapper(QObject,
         SearchEnvironment.setup(self, SETTINGS_DIR)
         FileSystemEnvironment.setup(self, SETTINGS_DIR)
         FilePositions.setup(self, SETTINGS_DIR)
+        FileEncodings.setup(self, SETTINGS_DIR)
 
         # Save the config file name
         self.__fullFileName = SETTINGS_DIR + "settings.json"
@@ -383,6 +387,10 @@ class SettingsWrapper(QObject,
 
     def __setitem__(self, key, value):
         self.__values[key] = value
+        if key == 'flowSplitterSizes':
+            self.sigFlowSplitterChanged.emit()
+        elif key == 'flowScale':
+            self.sigFlowScaleChanged.emit()
         self.flush()
 
 
