@@ -528,18 +528,6 @@ class TextEditor(QutepartWrapper):
         self.markerDeleteAll(self.__dbgMarker)
         self.markerDeleteAll(self.__excptMarker)
 
-    def _convertIndicator(self, value):
-        """Converts an indicator style from a config file
-           to the scintilla constant
-        """
-
-    def bindLexer(self, fileName, fileType):
-        """Sets the correct lexer depending on language"""
-
-    def _styleNeeded(self, position):
-        """Handles the need for more styling"""
-        self.lexer_.styleText(self.getEndStyled(), position)
-
     def setEncoding(self, newEncoding):
         """Sets the required encoding for the buffer"""
         if newEncoding == self.encoding:
@@ -558,7 +546,6 @@ class TextEditor(QutepartWrapper):
 
     def readFile(self, fileName):
         """Reads the text from a file"""
-        fileName = unicode(fileName)
         try:
             f = open(fileName, 'rb')
         except IOError:
@@ -1922,7 +1909,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
     textEditorZoom = pyqtSignal(int)
     reloadRequest = pyqtSignal()
     reloadAllNonModifiedRequest = pyqtSignal()
-    tabRunChanged = pyqtSignal(bool)
+    sigTabRunChanged = pyqtSignal(bool)
 
     def __init__(self, parent, debugger):
         MainWindowTabWidgetBase.__init__(self)
@@ -1935,7 +1922,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         self.__fileType = None
 
         self.__createLayout()
-        self.__editor.zoomTo(Settings().zoom)
+        self.__editor.zoomTo(Settings()['zoom'])
 
         self.__editor.modificationChanged.connect(self.modificationChanged)
         self.__editor.cflowSyncRequested.connect(self.cflowSyncRequested)
@@ -2134,21 +2121,21 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         containerLayout.addWidget(self.__splitter)
         self.setLayout(containerLayout)
 
-        self.__splitter.setSizes(Settings().flowSplitterSizes)
+        self.__splitter.setSizes(Settings()['flowSplitterSizes'])
         self.__splitter.splitterMoved.connect(self.flowSplitterMoved)
         Settings().flowSplitterChanged.connect(self.otherFlowSplitterMoved)
 
     def flowSplitterMoved(self, pos, index):
         """Splitter has been moved"""
         newSizes = list(self.__splitter.sizes())
-        Settings().flowSplitterSizes = newSizes
+        Settings()['flowSplitterSizes'] = newSizes
 
     def otherFlowSplitterMoved(self):
         """Other window has changed the splitter position"""
-        self.__splitter.setSizes(Settings().flowSplitterSizes)
+        self.__splitter.setSizes(Settings()['flowSplitterSizes'])
 
     def updateStatus(self):
-        "Updates the toolbar buttons status"
+        """Updates the toolbar buttons status"""
         self.__updateRunDebugButtons()
         if self.__fileType == UnknownFileType:
             self.__fileType = self.getFileType()
@@ -2215,7 +2202,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
             self.runScriptButton.setEnabled(enable)
             self.profileScriptButton.setEnabled(enable)
             self.debugScriptButton.setEnabled(enable)
-            self.tabRunChanged.emit(enable)
+            self.sigTabRunChanged.emit(enable)
 
     def isTabRunEnabled(self):
         """Tells the status of run-like buttons"""

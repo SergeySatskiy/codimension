@@ -84,7 +84,7 @@ class CFGraphicsView(QGraphicsView):
         self.__currentFactor = 1.0
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.TextAntialiasing)
-        Settings().flowScaleChanged.connect(self.__scaleChanged)
+        Settings().sigFlowScaleChanged.connect(self.__scaleChanged)
 
     def wheelEvent(self, event):
         """Mouse wheel event"""
@@ -93,7 +93,7 @@ class CFGraphicsView(QGraphicsView):
             self.__currentFactor *= factor
             self.setTransform(QTransform.fromScale(self.__currentFactor,
                                                    self.__currentFactor))
-            Settings().flowScale = self.__currentFactor
+            Settings()['flowScale'] = self.__currentFactor
         else:
             QGraphicsView.wheelEvent(self, event)
 
@@ -107,17 +107,17 @@ class CFGraphicsView(QGraphicsView):
         """Mouse event delta is typically 120"""
         factor = 1.41 ** (120.0 / 240.0)
         self.zoomTo(self.__currentFactor * factor)
-        Settings().flowScale = self.__currentFactor
+        Settings()['flowScale'] = self.__currentFactor
 
     def zoomOut(self):
         """Mouse event delta is typically 120"""
         factor = 1.41 ** (-120.0 / 240.0)
         self.zoomTo(self.__currentFactor * factor)
-        Settings().flowScale = self.__currentFactor
+        Settings()['flowScale'] = self.__currentFactor
 
     def __scaleChanged(self):
         """When another window made a change"""
-        newScale = Settings().flowScale
+        newScale = Settings()['flowScale']
         if newScale != self.__currentFactor:
             self.zoomTo(newScale)
 
@@ -427,7 +427,7 @@ class FlowUIWidget(QWidget):
         self.scene = CFGraphicsScene(self.__navBar, self)
         self.view = CFGraphicsView(self)
         self.view.setScene(self.scene)
-        self.view.zoomTo(Settings().flowScale)
+        self.view.zoomTo(Settings()['flowScale'])
         return self.view
 
     def process(self):
@@ -558,7 +558,7 @@ class FlowUIWidget(QWidget):
     def updateSettings(self):
         """Updates settings"""
         s = Settings()
-        self.__needPathUpdate = s.showCFNavigationBar
+        self.__needPathUpdate = s['showCFNavigationBar']
         self.__navBar.setPathVisible(self.__needPathUpdate)
         self.__navBar.setPath('')
 

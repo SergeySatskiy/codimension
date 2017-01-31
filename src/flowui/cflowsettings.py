@@ -37,7 +37,7 @@ class CFlowSettings:
         # Visibility of the virtual cells (dotted outline)
         self.__paintDevice = paintDevice
 
-        for key, value in params.items:
+        for key, value in params.items():
             setattr(self, key, value)
 
         self.monoFontMetrics = QFontMetrics(params['monoFont'], paintDevice)

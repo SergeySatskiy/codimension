@@ -227,7 +227,7 @@ class SettingsWrapper(QObject,
 
     sigRecentListChanged = pyqtSignal()
     flowSplitterChanged = pyqtSignal()
-    flowScaleChanged = pyqtSignal()
+    sigFlowScaleChanged = pyqtSignal()
 
     def __init__(self):
         QObject.__init__(self)

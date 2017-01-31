@@ -1414,7 +1414,7 @@ class CodimensionMainWindow(QMainWindow):
             self.__prjImportDgmAct.setEnabled(projectLoaded)
             self.__prjImportsDgmDlgAct.setEnabled(projectLoaded)
 
-            self.settings.projectLoaded = projectLoaded
+            self.settings['projectLoaded'] = projectLoaded
             if projectLoaded:
                 # The editor tabs must be loaded after a VCS plugin has a
                 # chance to receive sigProjectChanged signal where it reads
@@ -1425,7 +1425,7 @@ class CodimensionMainWindow(QMainWindow):
     def __delayedEditorsTabRestore(self):
         """Delayed restore editor tabs"""
         editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.restoreTabs(GlobalData().project.tabsStatus)
+        editorsManager.restoreTabs(GlobalData().project.tabStatus)
 
     def updateWindowTitle(self):
         """Updates the main window title with the current so file"""
