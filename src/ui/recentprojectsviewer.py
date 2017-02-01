@@ -555,14 +555,17 @@ class RecentProjectsViewer(QWidget):
                     scriptName = relativePath
 
                 project.updateProperties(
-                    scriptName, importDirs,
-                    dialog.creationDateEdit.text().strip(),
-                    dialog.authorEdit.text().strip(),
-                    dialog.licenseEdit.text().strip(),
-                    dialog.copyrightEdit.text().strip(),
-                    dialog.versionEdit.text().strip(),
-                    dialog.emailEdit.text().strip(),
-                    dialog.descriptionEdit.toPlainText().strip())
+                    {'scriptname': scriptName,
+                     'creationdate': dialog.creationDateEdit.text().strip(),
+                     'author': dialog.authorEdit.text().strip(),
+                     'license': dialog.licenseEdit.text().strip(),
+                     'copyright': dialog.copyrightEdit.text().strip(),
+                     'version': dialog.versionEdit.text().strip(),
+                     'email': dialog.emailEdit.text().strip(),
+                     'description': dialog.descriptionEdit.toPlainText().strip(),
+                     'uuid': dialog.uuidEdit.text().strip(),
+                     'importdirs': importDirs,
+                     'encoding': dialog.encodingCombo.currentText().strip()})
         else:
             # This is not the current project - it can be viewed
             fName = self.__projectContextItem.getFilename()

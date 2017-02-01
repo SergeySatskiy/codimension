@@ -28,10 +28,11 @@ import logging
 from utils.project import getProjectProperties
 from utils.misc import getLocaleDate
 from utils.settings import SETTINGS_DIR
+from utils.encoding import SUPPORTED_CODECS
 from .qt import (Qt, QEvent, QObject, QDialog, QLineEdit, QGridLayout, QLabel,
                  QTextEdit, QDialogButtonBox, QVBoxLayout, QPushButton,
                  QFileDialog, QMessageBox, QListWidget, QAbstractItemView,
-                 QApplication)
+                 QApplication, QComboBox)
 from .fitlabel import FramedLabelWithDoubleClick
 from .itemdelegates import NoOutlineHeightDelegate
 from .completers import DirCompleter, FileCompleter
@@ -106,6 +107,7 @@ class ProjectPropertiesDialog(QDialog):
             self.licenseEdit.setText(props['license'])
             self.copyrightEdit.setText(props['copyright'])
             self.descriptionEdit.setText(props['description'])
+            self.encodingCombo.setCurrentText(props['encoding'])
             self.creationDateEdit.setText(props['creationdate'])
             self.uuidEdit.setText(props['uuid'])
             self.uuidEdit.setToolTip(SETTINGS_DIR + props['uuid'] +
@@ -131,6 +133,7 @@ class ProjectPropertiesDialog(QDialog):
             self.licenseEdit.setText(project.props['license'])
             self.copyrightEdit.setText(project.props['copyright'])
             self.descriptionEdit.setText(project.props['description'])
+            self.encodingCombo.setCurrentText(project.props['encoding'])
             self.creationDateEdit.setText(project.props['creationdate'])
             self.uuidEdit.setText(project.props['uuid'])
             self.uuidEdit.setToolTip(project.userProjectDir +
@@ -263,20 +266,29 @@ class ProjectPropertiesDialog(QDialog):
         self.descriptionEdit.setAcceptRichText(False)
         gridLayout.addWidget(self.descriptionEdit, 9, 1, 1, 1)
 
+        # Default encoding
+        encodingLabel = QLabel('Default encoding:', self)
+        gridLayout.addWidget(encodingLabel, 10, 0, 1, 1)
+        self.encodingCombo = QComboBox(self)
+        self.encodingCombo.addItem('')
+        self.encodingCombo.addItems(sorted(SUPPORTED_CODECS))
+        self.encodingCombo.setEditable(False)
+        gridLayout.addWidget(self.encodingCombo, 10, 1, 1, 1)
+
         # Creation date
         creationDateLabel = QLabel(self)
         creationDateLabel.setText("Creation date:")
-        gridLayout.addWidget(creationDateLabel, 10, 0, 1, 1)
+        gridLayout.addWidget(creationDateLabel, 11, 0, 1, 1)
         self.creationDateEdit = FramedLabelWithDoubleClick()
         self.creationDateEdit.setToolTip("Double click to copy")
-        gridLayout.addWidget(self.creationDateEdit, 10, 1, 1, 1)
+        gridLayout.addWidget(self.creationDateEdit, 11, 1, 1, 1)
 
         # Project UUID
         uuidLabel = QLabel(self)
         uuidLabel.setText("UUID:")
-        gridLayout.addWidget(uuidLabel, 11, 0, 1, 1)
+        gridLayout.addWidget(uuidLabel, 12, 0, 1, 1)
         self.uuidEdit = FramedLabelWithDoubleClick("", self.__copyProjectPath)
-        gridLayout.addWidget(self.uuidEdit, 11, 1, 1, 1)
+        gridLayout.addWidget(self.uuidEdit, 12, 1, 1, 1)
 
         verticalLayout.addLayout(gridLayout)
 
@@ -508,6 +520,7 @@ class ProjectPropertiesDialog(QDialog):
         self.licenseEdit.setDisabled(True)
         self.copyrightEdit.setDisabled(True)
         self.descriptionEdit.setDisabled(True)
+        self.encodingCombo.setDisabled(True)
 
     def __copyProjectPath(self):
         """Copies the project path when a label is double clicked"""

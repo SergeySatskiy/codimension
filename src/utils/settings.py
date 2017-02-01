@@ -167,6 +167,7 @@ _DEFAULT_SETTINGS = {
     'maxRecentProjects': 32,
     'maxRecentFiles': 32,
     'maxSearchEntries': 32,
+    'encoding': 'utf-8',
 
     # The IO redirect console
     'ioconsolemaxmsgs': 10000,

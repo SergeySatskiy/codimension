@@ -1633,6 +1633,7 @@ class CodimensionMainWindow(QMainWindow):
              'version': dialog.versionEdit.text().strip(),
              'email': dialog.emailEdit.text().strip(),
              'description': dialog.descriptionEdit.toPlainText().strip(),
+             'encoding': dialog.encodingCombo.currentText().strip(),
              'importdirs': importDirs})
 
         QApplication.restoreOverrideCursor()

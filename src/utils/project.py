@@ -50,7 +50,8 @@ _DEFAULT_PROJECT_PROPS = {'scriptname': '',    # Script to run the project
                           'email': '',
                           'description': '',
                           'uuid': '',
-                          'importdirs': []}
+                          'importdirs': [],
+                          'encoding': ''}
 
 
 class CodimensionProject(QObject,
@@ -428,4 +429,5 @@ def getProjectFileTooltip(fileName):
                       'Copyright: ' + props.get('copyright', 'n/a'),
                       'License: ' + props.get('license', 'n/a'),
                       'Creation date: ' + props.get('creationdate', 'n/a'),
+                      'Default encoding: ' + props.get('encoding', 'n/a'),
                       'UUID: ' + props.get('uuid', 'n/a')])
