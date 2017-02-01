@@ -29,6 +29,7 @@ import encodings
 # Note: there could be user registered codecs as well
 # Note: the list is copied from the python documentation:
 #       https://docs.python.org/3/library/codecs.html
+# Note: instead of the '_' char in the list the '-' was used: it looks nicer
 SUPPORTED_CODECS = ['ascii', 'big5', 'big5hkscs', 'cp037', 'cp273', 'cp424',
                     'cp437', 'cp500', 'cp720', 'cp737', 'cp775', 'cp850',
                     'cp852', 'cp855', 'cp856', 'cp857', 'cp858', 'cp860',
@@ -37,20 +38,20 @@ SUPPORTED_CODECS = ['ascii', 'big5', 'big5hkscs', 'cp037', 'cp273', 'cp424',
                     'cp1006', 'cp1026', 'cp1125', 'cp1140', 'cp1250',
                     'cp1251', 'cp1252', 'cp1253', 'cp1254', 'cp1255',
                     'cp1256', 'cp1257', 'cp1258', 'cp65001', 'euc_jp',
-                    'euc_jis_2004', 'euc_jisx0213', 'euc_kr', 'gb2312',
-                    'gbk', 'gb18030', 'hz', 'iso2022_jp', 'iso2022_jp_1',
-                    'iso2022_jp_2', 'iso2022_jp_2004', 'iso2022_jp_3',
-                    'iso2022_jp_ext', 'iso2022_kr', 'latin_1', 'iso8859_2',
-                    'iso8859_3', 'iso8859_4', 'iso8859_5', 'iso8859_6',
-                    'iso8859_7', 'iso8859_8', 'iso8859_9', 'iso8859_10',
-                    'iso8859_11', 'iso8859_13', 'iso8859_14', 'iso8859_15',
-                    'iso8859_16', 'johab', 'koi8_r', 'koi8_t', 'koi8_u',
-                    'kz1048', 'mac_cyrillic', 'mac_greek', 'mac_iceland',
-                    'mac_latin2', 'mac_roman', 'mac_turkish', 'ptcp154',
-                    'shift_jis', 'shift_jis_2004', 'shift_jisx0213',
-                    'utf_32', 'utf_32_be', 'utf_32_le',
-                    'utf_16', 'utf_16_be', 'utf_16_le',
-                    'utf_7', 'utf_8', 'utf_8_sig']
+                    'euc-jis-2004', 'euc-jisx0213', 'euc-kr', 'gb2312',
+                    'gbk', 'gb18030', 'hz', 'iso2022-jp', 'iso2022-jp-1',
+                    'iso2022-jp-2', 'iso2022-jp-2004', 'iso2022-jp-3',
+                    'iso2022_jp-ext', 'iso2022-kr', 'latin-1', 'iso8859-2',
+                    'iso8859-3', 'iso8859-4', 'iso8859-5', 'iso8859-6',
+                    'iso8859-7', 'iso8859-8', 'iso8859-9', 'iso8859-10',
+                    'iso8859-11', 'iso8859-13', 'iso8859-14', 'iso8859-15',
+                    'iso8859-16', 'johab', 'koi8-r', 'koi8-t', 'koi8-u',
+                    'kz1048', 'mac-cyrillic', 'mac-greek', 'mac-iceland',
+                    'mac-latin2', 'mac-roman', 'mac-turkish', 'ptcp154',
+                    'shift-jis', 'shift-jis-2004', 'shift-jisx0213',
+                    'utf-32', 'utf-32-be', 'utf-32-le',
+                    'utf-16', 'utf-16-be', 'utf-16-le',
+                    'utf-7', 'utf-8', 'utf-8-sig']
 
 
 def convertLineEnds(text, eol):
@@ -69,10 +70,27 @@ def convertLineEnds(text, eol):
 
 def isValidEncoding(enc):
     """Checks if it is a valid encoding"""
-    if enc in SUPPORTED_CODECS:
+    norm_enc = encodings.normalize_encoding(enc).lower()
+    if norm_enc in SUPPORTED_CODECS:
+        return True
+    if norm_enc in [encodings.normalize_encoding(supp_enc)
+                    for supp_enc in SUPPORTED_CODECS]:
         return True
 
     # Check the aliases as well
-    if enc in encodings.aliases.aliases:
+    if norm_enc in encodings.aliases.aliases:
         return True
     return False
+
+
+def getNormalizedEncoding(enc):
+    """Returns a normalized encoding or throws an exception"""
+    if not isValidEncoding(enc):
+        raise Exception('Unsupported encoding ' + enc)
+    norm_enc = encodings.normalize_encoding(enc).lower()
+    return encodings.aliases.aliases.get(norm_enc, norm_enc)
+
+
+def areEncodingsEqual(enc_lhs, enc_rhs):
+    """True if the encodings are essentially the same"""
+    return getNormalizedEncoding(enc_lhs) == getNormalizedEncoding(enc_rhs)

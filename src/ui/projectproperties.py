@@ -28,7 +28,7 @@ import logging
 from utils.project import getProjectProperties
 from utils.misc import getLocaleDate
 from utils.settings import SETTINGS_DIR
-from utils.encoding import SUPPORTED_CODECS
+from utils.encoding import SUPPORTED_CODECS, isValidEncoding
 from .qt import (Qt, QEvent, QObject, QDialog, QLineEdit, QGridLayout, QLabel,
                  QTextEdit, QDialogButtonBox, QVBoxLayout, QPushButton,
                  QFileDialog, QMessageBox, QListWidget, QAbstractItemView,
@@ -165,8 +165,7 @@ class ProjectPropertiesDialog(QDialog):
         gridLayout = QGridLayout()
 
         # Project name
-        nameLabel = QLabel(self)
-        nameLabel.setText("Project name:")
+        nameLabel = QLabel("Project name:", self)
         gridLayout.addWidget(nameLabel, 0, 0, 1, 1)
         self.nameEdit = QLineEdit(self)
         self.nameEdit.setToolTip("Type a project name without a path")
@@ -174,8 +173,7 @@ class ProjectPropertiesDialog(QDialog):
         gridLayout.addWidget(self.nameEdit, 0, 1, 1, 1)
 
         # Project dir
-        dirLabel = QLabel(self)
-        dirLabel.setText("Project directory:")
+        dirLabel = QLabel("Project directory:", self)
         gridLayout.addWidget(dirLabel, 1, 0, 1, 1)
         self.dirEdit = QLineEdit(self)
         self.dirEdit.setToolTip("Not existed directories will be created")
@@ -197,8 +195,7 @@ class ProjectPropertiesDialog(QDialog):
         self.fileCompleter = FileCompleter(self.scriptEdit)
 
         # Import dirs
-        importLabel = QLabel(self)
-        importLabel.setText("Import directories:")
+        importLabel = QLabel("Import directories:", self)
         importLabel.setAlignment(Qt.AlignTop)
         gridLayout.addWidget(importLabel, 3, 0, 1, 1)
         self.importDirList = QListWidget(self)
@@ -222,43 +219,37 @@ class ProjectPropertiesDialog(QDialog):
         gridLayout.addLayout(vLayout, 3, 2, 1, 1)
 
         # Version
-        versionLabel = QLabel(self)
-        versionLabel.setText("Version:")
+        versionLabel = QLabel("Version:", self)
         gridLayout.addWidget(versionLabel, 4, 0, 1, 1)
         self.versionEdit = QLineEdit(self)
         gridLayout.addWidget(self.versionEdit, 4, 1, 1, 1)
 
         # Author
-        authorLabel = QLabel(self)
-        authorLabel.setText("Author:")
+        authorLabel = QLabel("Author:", self)
         gridLayout.addWidget(authorLabel, 5, 0, 1, 1)
         self.authorEdit = QLineEdit(self)
         gridLayout.addWidget(self.authorEdit, 5, 1, 1, 1)
 
         # E-mail
-        emailLabel = QLabel(self)
-        emailLabel.setText("E-mail:")
+        emailLabel = QLabel("E-mail:", self)
         gridLayout.addWidget(emailLabel, 6, 0, 1, 1)
         self.emailEdit = QLineEdit(self)
         gridLayout.addWidget(self.emailEdit, 6, 1, 1, 1)
 
         # License
-        licenseLabel = QLabel(self)
-        licenseLabel.setText("License:")
+        licenseLabel = QLabel("License:", self)
         gridLayout.addWidget(licenseLabel, 7, 0, 1, 1)
         self.licenseEdit = QLineEdit(self)
         gridLayout.addWidget(self.licenseEdit, 7, 1, 1, 1)
 
         # Copyright
-        copyrightLabel = QLabel(self)
-        copyrightLabel.setText("Copyright:")
+        copyrightLabel = QLabel("Copyright:", self)
         gridLayout.addWidget(copyrightLabel, 8, 0, 1, 1)
         self.copyrightEdit = QLineEdit(self)
         gridLayout.addWidget(self.copyrightEdit, 8, 1, 1, 1)
 
         # Description
-        descriptionLabel = QLabel(self)
-        descriptionLabel.setText("Description:")
+        descriptionLabel = QLabel("Description:", self)
         descriptionLabel.setAlignment(Qt.AlignTop)
         gridLayout.addWidget(descriptionLabel, 9, 0, 1, 1)
         self.descriptionEdit = QTextEdit(self)
@@ -272,20 +263,18 @@ class ProjectPropertiesDialog(QDialog):
         self.encodingCombo = QComboBox(self)
         self.encodingCombo.addItem('')
         self.encodingCombo.addItems(sorted(SUPPORTED_CODECS))
-        self.encodingCombo.setEditable(False)
+        self.encodingCombo.setEditable(True)
         gridLayout.addWidget(self.encodingCombo, 10, 1, 1, 1)
 
         # Creation date
-        creationDateLabel = QLabel(self)
-        creationDateLabel.setText("Creation date:")
+        creationDateLabel = QLabel("Creation date:", self)
         gridLayout.addWidget(creationDateLabel, 11, 0, 1, 1)
         self.creationDateEdit = FramedLabelWithDoubleClick()
         self.creationDateEdit.setToolTip("Double click to copy")
         gridLayout.addWidget(self.creationDateEdit, 11, 1, 1, 1)
 
         # Project UUID
-        uuidLabel = QLabel(self)
-        uuidLabel.setText("UUID:")
+        uuidLabel = QLabel("UUID:", self)
         gridLayout.addWidget(uuidLabel, 12, 0, 1, 1)
         self.uuidEdit = FramedLabelWithDoubleClick("", self.__copyProjectPath)
         gridLayout.addWidget(self.uuidEdit, 12, 1, 1, 1)
@@ -412,7 +401,8 @@ class ProjectPropertiesDialog(QDialog):
         """Checks that the mandatory fields are filled properly"""
         # The checks must be done for a new project only
         if not self.nameEdit.isEnabled():
-            self.accept()
+            if self.__checkEncoding():
+                self.accept()
             return
 
         # Check that the project name does not have path separators and is not
@@ -478,11 +468,24 @@ class ProjectPropertiesDialog(QDialog):
                                      "Cannot create the project directory")
                 return
 
+        if not self.__checkEncoding():
+            return
+
         # Save the absolute file name for further reading it by the caller
         self.absProjectFileName = projectFileName
 
         # The minimum is provided so we can accept it
         self.accept()
+
+    def __checkEncoding(self):
+        """True if OK"""
+        enc = self.encodingCombo.currentText().strip()
+        if enc:
+            if not isValidEncoding(enc):
+                QMessageBox.critical(self, "Error",
+                                     "Unsupported default project encoding")
+                return False
+        return True
 
     def onProjectNameChanged(self, newName):
         """Called when the project name changed"""
