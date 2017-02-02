@@ -1077,7 +1077,6 @@ class EditorsManager(QTabWidget):
             editor = newWidget.getEditor()
             newWidget.readFile(fileName)
 
-            editor.setModified(False)
             fileType, encoding, _, syntaxFile = getFileProperties(
                 fileName, needEncoding=True)
 

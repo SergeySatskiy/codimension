@@ -39,7 +39,8 @@ from utils.pixmapcache import getIcon, getPixmap
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.misc import getLocaleDateTime
-from utils.encoding import SUPPORTED_CODECS
+from utils.encoding import SUPPORTED_CODECS, readEncodedFile
+from utils.fileutils import getFileProperties
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
 from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
@@ -523,10 +524,7 @@ class TextEditor(QutepartWrapper):
 
     def clearCurrentDebuggerLine(self):
         """Removes the current debugger line marker"""
-        self.markerDeleteAll(self.__currentDebuggerLineMarker)
-        self.markerDeleteAll(self.__exceptionLineMarker)
-        self.markerDeleteAll(self.__dbgMarker)
-        self.markerDeleteAll(self.__excptMarker)
+        pass
 
     def setEncoding(self, newEncoding):
         """Sets the required encoding for the buffer"""
@@ -546,36 +544,19 @@ class TextEditor(QutepartWrapper):
 
     def readFile(self, fileName):
         """Reads the text from a file"""
-        try:
-            f = open(fileName, 'rb')
-        except IOError:
-            raise Exception("Cannot open file " + fileName)
-
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         try:
-            fileType = detectFileType(fileName)
-            if fileType in [DesignerFileType, LinguistFileType]:
-                # special treatment for Qt-Linguist and Qt-Designer files
-                txt = f.read()
-                self.encoding = 'latin-1'
-            else:
-                content = f.read()
-                txt, self.encoding = decode(content)
-
-            f.close()
-            self.detectEolString(txt)
+            content, encoding, bomUsed = readEncodedFile(fileName)
+            # self.detectEolString(content)
 
             # Hack to avoid breakpoints reset when a file is reload
             self.__breakpoints = {}
-            self.setText(txt)
+            self.text = content
 
             # perform automatic eol conversion
-            self.convertEols(self.eolMode())
-            self.setModified(False)
-
-            # self.extractTasks()
-            # self.extractBookmarks()
-        except Exception:
+            # self.convertEols(self.eolMode())
+            self.document().setModified(False)
+        except Exception as exc:
             QApplication.restoreOverrideCursor()
             raise
 
@@ -1407,11 +1388,6 @@ class TextEditor(QutepartWrapper):
         self.insertAt(text + "\n", line - 1, 0)
         self.endUndoAction()
 
-    @staticmethod
-    def utf8len(txt):
-        """Calculates lenght in bytes"""
-        return len(str(txt).encode('utf-8'))
-
     def hideCompleter(self):
         """Hides the completer if visible"""
         self.__completer.hide()
@@ -1477,7 +1453,7 @@ class TextEditor(QutepartWrapper):
     def clearPyflakesMessages(self):
         """Clears all the pyflakes markers"""
         self.ignoreBufferChangedSignal = True
-        self.markerDeleteAll(self.__pyflakesMsgMarker)
+        # self.markerDeleteAll(self.__pyflakesMsgMarker)
         self.__pyflakesMessages = {}
         self.ignoreBufferChangedSignal = False
         self._updateDwellingTime()
@@ -1780,9 +1756,9 @@ class TextEditor(QutepartWrapper):
     def restoreBreakpoints(self):
         """Restores the breakpoints"""
         self.ignoreBufferChangedSignal = True
-        self.markerDeleteAll(self.__bpointMarker)
-        self.markerDeleteAll(self.__tempbpointMarker)
-        self.markerDeleteAll(self.__disbpointMarker)
+        # self.markerDeleteAll(self.__bpointMarker)
+        # self.markerDeleteAll(self.__tempbpointMarker)
+        # self.markerDeleteAll(self.__disbpointMarker)
         self.ignoreBufferChangedSignal = False
         self.__addBreakPoints(QModelIndex(), 0,
                               self.__debugger.getBreakPointModel().rowCount() - 1)
@@ -1924,6 +1900,8 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         self.__createLayout()
         self.__editor.zoomTo(Settings()['zoom'])
 
+        self.__editor.redoAvailable.connect(self.__redoAvailable)
+        self.__editor.undoAvailable.connect(self.__undoAvailable)
         self.__editor.modificationChanged.connect(self.modificationChanged)
         self.__editor.cflowSyncRequested.connect(self.cflowSyncRequested)
 
@@ -2185,14 +2163,18 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         """triggered when the print preview button is pressed"""
         pass
 
+    def __redoAvailable(self, available):
+        self.__redoButton.setEnabled(available)
+    def __undoAvailable(self, available):
+        self.__undoButton.setEnabled(available)
+
     def modificationChanged(self, modified=False):
         """Triggered when the content is changed"""
-        self.__undoButton.setEnabled(self.__editor.isUndoAvailable())
-        self.__redoButton.setEnabled(self.__editor.isRedoAvailable())
         self.__updateRunDebugButtons()
 
     def __updateRunDebugButtons(self):
         """Enables/disables the run and debug buttons as required"""
+        return
         enable = self.__fileType == PythonFileType and \
                  self.isModified() == False and \
                  self.__debugMode == False and \
@@ -2549,8 +2531,9 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getLanguage(self):
         """Tells the content language"""
-        if self.__fileType == UnknownFileType:
+        if self.__fileType is None:
             self.__fileType = self.getFileType()
+        return "wwwwww"
         if self.__fileType != UnknownFileType:
             return getFileLanguage(self.__fileType)
         return self.__editor.getLanguage()
@@ -2563,20 +2546,21 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         """Sets the file name"""
         self.__fileName = name
         self.__shortName = os.path.basename(name)
-        self.__fileType = detectFileType(name)
+        self.__fileType, _, _, _ = getFileProperties(name)
 
     def getEol(self):
         """Tells the EOL style"""
+        return "JJJ"
         return self.__editor.getEolIndicator()
 
     def getLine(self):
         """Tells the cursor line"""
-        line, pos = self.__editor.getCursorPosition()
+        line, pos = self.__editor.cursorPosition
         return int(line)
 
     def getPos(self):
         """Tells the cursor column"""
-        line, pos = self.__editor.getCursorPosition()
+        line, pos = self.__editor.cursorPosition
         return int(pos)
 
     def getEncoding(self):

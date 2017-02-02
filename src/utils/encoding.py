@@ -21,6 +21,8 @@
 
 import re
 import encodings
+import logging
+from codecs import BOM_UTF8, BOM_UTF16, BOM_UTF32
 
 
 # There is no way to query a complete list of the supported codecs at run-time.
@@ -52,6 +54,10 @@ SUPPORTED_CODECS = ['ascii', 'big5', 'big5hkscs', 'cp037', 'cp273', 'cp424',
                     'utf-32', 'utf-32-be', 'utf-32-le',
                     'utf-16', 'utf-16-be', 'utf-16-le',
                     'utf-7', 'utf-8', 'utf-8-sig']
+
+CODING_FROM_BYTES = [
+    (2, re.compile(br'''coding[:=]\s*([-\w_.]+)''')),
+    (1, re.compile(br'''<\?xml.*\bencoding\s*=\s*['"]([-\w_.]+)['"]\?>'''))]
 
 
 def convertLineEnds(text, eol):
@@ -94,3 +100,53 @@ def getNormalizedEncoding(enc):
 def areEncodingsEqual(enc_lhs, enc_rhs):
     """True if the encodings are essentially the same"""
     return getNormalizedEncoding(enc_lhs) == getNormalizedEncoding(enc_rhs)
+
+
+def getCodingFromBytes(text):
+    """Tries to find an encoding spec from a binary file content"""
+    lines = text.splitlines()
+    for cfb in CODING_FROM_BYTES:
+        head = lines[:cfb[0]]
+        regexp = cfb[1]
+        for line in head:
+            match = regexp.search(line)
+            if match:
+                return str(match.group(1), 'ascii')
+    return None
+
+
+def readEncodedFile(fName):
+    """Reads the encoded file"""
+    # Returns: text, used encoding
+    f = open(fName, 'rb')
+    text = f.read()
+    f.close()
+
+    try:
+        if text.startswith(BOM_UTF8):
+            return str(text[len(BOM_UTF8):], 'utf-8'), 'utf-8', True
+        if text.startswith(BOM_UTF16):
+            return str(text[len(BOM_UTF16):], 'utf-16'), 'utf-16', True
+        if text.startswith(BOM_UTF32):
+            return str(text[len(BOM_UTF32):], 'utf-32'), 'utf-32', True
+    except (UnicodeError, LookupError) as exc:
+        logging.error("BOM signature found but decoding failed: " + str(exc))
+        logging.error("Continue trying...")
+
+    # Extract encoding from the file
+    encFromFile = getCodingFromBytes(text)
+    if encFromFile:
+        if not isValidEncoding(encFromFile):
+            logging.error("Invalid encoding found in the content: " + encFromFile)
+            logging.error("Continue trying...")
+
+    # Check if it was a user assigned encoding
+
+    # Check the project default encoding
+
+    # Checks the IDE encoding
+
+    # default: utf-8
+
+    # Last resort utf-8 with loosing information
+    return str(text, 'utf-8', 'ignore'), 'utf-8', False
