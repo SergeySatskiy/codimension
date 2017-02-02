@@ -184,8 +184,8 @@ class RedirectedIOConsole(TextEditor):
             self.append('\n')
             self.clearUndoRedoHistory()
             line, pos = self.getEndPosition()
-            self.setCursorPosition(line, pos)
-            self.ensureLineVisible(line)
+            self.cursorPosition = line, pos
+            self.ensureLineOnScreen(line)
             endPos = self.currentPosition()
             startPos = self.positionBefore(endPos)
             self.SendScintilla(self.SCI_STARTSTYLING, startPos, 31)
@@ -288,8 +288,8 @@ class RedirectedIOConsole(TextEditor):
         else:
             self.lastOutputPos = self.absCursorPosition
             self.setReadOnly(False)
-            self.setCursorPosition(line, pos)
-            self.ensureLineVisible(line)
+            self.cursorPosition = line, pos
+            self.ensureLineOnScreen(line)
         self.setCursorStyle()
 
     def __initMargins(self):
@@ -956,12 +956,12 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getLine(self):
         """Tells the cursor line"""
-        line, _ = self.__viewer.getCursorPosition()
+        line, _ = self.__viewer.cursorPosition
         return int(line)
 
     def getPos(self):
         """Tells the cursor column"""
-        _, pos = self.__viewer.getCursorPosition()
+        _, pos = self.__viewer.cursorPosition
         return int(pos)
 
     def getEncoding(self):

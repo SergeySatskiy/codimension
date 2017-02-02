@@ -76,3 +76,4 @@ class FilePositions:
         """Updates the position for the file"""
         self.__filePos[fileName] = (line, pos, firstLine,
                                     horizontalPos, verticalPos)
+        FilePositions.save(self)

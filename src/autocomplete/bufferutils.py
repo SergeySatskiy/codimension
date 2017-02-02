@@ -206,7 +206,7 @@ def getContext(editor, info=None,
     if info is None:
         info = getBriefModuleInfoFromMemory(editor.text())
 
-    line, pos = editor.getCursorPosition()
+    line, pos = editor.cursorPosition
     if skipBlankLinesBack == True:
         while line >= 0:
             text = editor.text(line)
@@ -328,7 +328,7 @@ def getPrefixAndObject(editor):
             a.b.bla would return 'bla' and 'a.b'
     """
     # Get the word to the left
-    line, col = editor.getCursorPosition()
+    line, col = editor.cursorPosition
     prefix = str(editor.getWord(line, col, 1, True))
 
     # Search for object

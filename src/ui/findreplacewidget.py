@@ -313,9 +313,9 @@ class FindReplaceBase(QWidget):
                 self._editor.clearAllIndicators(self._editor.searchIndicator)
                 self._editor.clearAllIndicators(self._editor.matchIndicator)
 
-                self._editor.setCursorPosition(searchAttributes.line,
-                                               searchAttributes.pos)
-                self._editor.ensureLineVisible(searchAttributes.firstLine)
+                self._editor.cursorPosition = searchAttributes.line, \
+                                              searchAttributes.pos
+                self._editor.ensureLineOnScreen(searchAttributes.firstLine)
                 searchAttributes.match = [-1, -1, -1]
                 self.incSearchDone.emit(False)
                 return
@@ -335,13 +335,13 @@ class FindReplaceBase(QWidget):
                     tgtPos + matchTarget[2])
                 self._editor.setSelection(eLine, ePos,
                                           matchTarget[0], matchTarget[1])
-                self._editor.ensureLineVisible(matchTarget[0])
+                self._editor.ensureLineOnScreen(matchTarget[0])
                 self.incSearchDone.emit(True)
             else:
                 # Nothing is found, so scroll back to the original
-                self._editor.setCursorPosition(searchAttributes.line,
-                                               searchAttributes.pos)
-                self._editor.ensureLineVisible(searchAttributes.firstLine)
+                self._editor.cursorPosition = searchAttributes.line, \
+                                              searchAttributes.pos
+                self._editor.ensureLineOnScreen(searchAttributes.firstLine)
                 self.incSearchDone.emit(False)
 
             return
@@ -367,7 +367,7 @@ class FindReplaceBase(QWidget):
                                                              matchTarget[2])
             self._editor.setSelection(eLine, ePos,
                                       matchTarget[0], matchTarget[1])
-            self._editor.ensureLineVisible(matchTarget[0])
+            self._editor.ensureLineOnScreen(matchTarget[0])
             self.incSearchDone.emit(True)
             return
 
@@ -422,7 +422,7 @@ class FindReplaceBase(QWidget):
         editor.setSelection(eLine, ePos, newLine, newPos)
 
         # Move the cursor to the new match
-        editor.ensureLineVisible(newLine)
+        editor.ensureLineOnScreen(newLine)
 
     def onNext(self, clearSBMessage=True):
         """Triggered when the find next is clicked"""
@@ -793,8 +793,7 @@ class ReplaceWidget(FindReplaceBase):
         self.__updateReplaceAllButtonStatus()
 
         if self._isTextEditor:
-            self.__cursorPositionChanged(self._currentWidget.getLine(),
-                                         self._currentWidget.getPos())
+            self.__cursorPositionChanged()
         else:
             self.replaceButton.setEnabled(False)
             self.replaceAndMoveButton.setEnabled(False)
@@ -872,9 +871,10 @@ class ReplaceWidget(FindReplaceBase):
                 pass
             self.__connected = False
 
-    def __cursorPositionChanged(self, line, pos):
+    def __cursorPositionChanged(self):
         """Triggered when the cursor position is changed"""
         if self._searchSupport.hasEditor(self._editorUUID):
+            line, pos = self._editor.cursorPosition
             searchAttributes = self._searchSupport.get(self._editorUUID)
             enable = line == searchAttributes.match[0] and \
                      pos == searchAttributes.match[1]
@@ -944,8 +944,8 @@ class ReplaceWidget(FindReplaceBase):
                 # Positioning cursor to the end of the replaced text helps
                 # to avoid problems of replacing 'text' with 'prefix_text'
                 searchAttributes.match[1] += len(replaceText)
-                self._editor.setCursorPosition(searchAttributes.match[0],
-                                               searchAttributes.match[1])
+                self._editor.cursorPosition = searchAttributes.match[0], \
+                                              searchAttributes.match[1]
                 self.replaceButton.setEnabled(False)
                 self.replaceAndMoveButton.setEnabled(False)
             else:

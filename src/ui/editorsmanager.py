@@ -339,7 +339,7 @@ class EditorsManager(QTabWidget):
 
         editor = widget.getEditor()
         firstVisible = editor.firstVisibleLine()
-        line, pos = editor.getCursorPosition()
+        line, pos = editor.cursorPosition
 
         # Create a new tab
         self.newTabClicked(editor.text(),
@@ -625,17 +625,16 @@ class EditorsManager(QTabWidget):
         if widget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
             # Save the current cursor position
             editor = widget.getEditor()
-            line, pos = editor.getCursorPosition()
+            line, pos = editor.cursorPosition
 
             cflowHPos = -1
             cflowVPos = -1
-            if widget.getFileType() in [PythonFileType, Python3FileType]:
+            if isPythonMime(widget.getFileType()):
                 cflowHPos, cflowVPos = widget.getCFEditor().getScrollbarPositions()
 
-            Settings().filePositions.updatePosition(
+            Settings().updateFilePosition(
                 widget.getFileName(), line, pos, editor.firstVisibleLine(),
                 cflowHPos, cflowVPos)
-            Settings().filePositions.save()
 
     def createNavigationButtons(self):
         """Creates widgets navigation button at the top corners"""
@@ -1094,7 +1093,7 @@ class EditorsManager(QTabWidget):
             else:
                 # Restore the last position
                 line, pos, firstVisible, cflowHPos, cflowVPos = \
-                            Settings().filePositions.getPosition(fileName)
+                            Settings().getFilePosition(fileName)
                 if line != -1:
                     editor.gotoLine(line + 1, pos + 1, firstVisible + 1)
                 else:
@@ -1713,7 +1712,7 @@ class EditorsManager(QTabWidget):
         """Connects the editor's signals"""
         editor = editorWidget.getEditor()
         editor.modificationChanged.connect(self.__modificationChanged)
-        editor.SCEN_CHANGE.connect(self.__contentChanged)
+        editor.textChanged.connect(self.__contentChanged)
         editor.cursorPositionChanged.connect(self.__cursorPositionChanged)
         editor.sigEscapePressed.connect(self.__onESC)
         editorWidget.textEditorZoom.connect(self.onZoom)
@@ -1749,11 +1748,12 @@ class EditorsManager(QTabWidget):
                                 MainWindowTabWidgetBase.VCSAnnotateViewer]:
             widget.getEditor().clearSearchIndicators()
 
-    def __cursorPositionChanged(self, line, pos):
+    def __cursorPositionChanged(self):
         """Triggered when the cursor position changed"""
+        widget = self.currentWidget()
         mainWindow = self.__mainWindow
-        mainWindow.sbLine.setText("Line: " + str(line + 1))
-        mainWindow.sbPos.setText("Pos: " + str(pos + 1))
+        mainWindow.sbLine.setText("Line: " + str(widget.getLine() + 1))
+        mainWindow.sbPos.setText("Pos: " + str(widget.getPos() + 1))
 
         if self.__debugMode:
             mainWindow.setRunToLineButtonState()
@@ -1905,7 +1905,7 @@ class EditorsManager(QTabWidget):
                 # in another file.
                 if GlobalData().project.isProjectFile(fileName):
                     prjDir = os.path.dirname(GlobalData().project.fileName)
-                    relativePath = relpath(fileName, prjDir)
+                    relativePath = os.path.relpath(fileName, prjDir)
                     pathToSave = relativePath
                 else:
                     pathToSave = fileName
@@ -2122,7 +2122,7 @@ class EditorsManager(QTabWidget):
         try:
             if isTextEditor:
                 editor = self.widget(index).getEditor()
-                line , pos = editor.getCursorPosition()
+                line , pos = editor.cursorPosition
                 firstLine = editor.firstVisibleLine()
 
             self.widget(index).reload()

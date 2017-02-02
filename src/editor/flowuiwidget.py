@@ -521,7 +521,7 @@ class FlowUIWidget(QWidget):
         if not self.__connected:
             self.__editor.cursorPositionChanged.connect(
                 self.__cursorPositionChanged)
-            self.__editor.SCEN_CHANGE.connect(self.__onBufferChanged)
+            self.__editor.textChanged.connect(self.__onBufferChanged)
             self.__connected = True
 
     def __disconnectEditorSignals(self):
@@ -529,10 +529,10 @@ class FlowUIWidget(QWidget):
         if self.__connected:
             self.__editor.cursorPositionChanged.disconnect(
                 self.__cursorPositionChanged)
-            self.__editor.SCEN_CHANGE.disconnect(self.__onBufferChanged)
+            self.__editor.textChanged.disconnect(self.__onBufferChanged)
             self.__connected = False
 
-    def __cursorPositionChanged(self, line, pos):
+    def __cursorPositionChanged(self):
         """Cursor position changed"""
         # The timer should be reset only in case if the redrawing was delayed
         if self.__updateTimer.isActive():

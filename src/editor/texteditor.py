@@ -39,7 +39,7 @@ from utils.pixmapcache import getIcon, getPixmap
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.misc import getLocaleDateTime
-from utils.encoding import SUPPORTED_CODECS, readEncodedFile
+from utils.encoding import SUPPORTED_CODECS, readEncodedFile, detectEolString
 from utils.fileutils import getFileProperties
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
@@ -92,16 +92,12 @@ class TextEditor(QutepartWrapper):
         # self.SCN_DOUBLECLICK.connect(self.__onDoubleClick)
         # self.cursorPositionChanged.connect(self._onCursorPositionChanged)
 
-        # self.SCN_DWELLSTART.connect(self._onDwellStart)
-        # self.SCN_DWELLEND.connect( self._onDwellEnd )
-
         # self.SCN_MODIFIED.connect(self.__onSceneModified)
         self.__skipChangeCursor = False
 
         skin = GlobalData().skin
         self.__openedLine = -1
 
-        self.encoding = 'utf-8'     # default
         self.lexer_ = None
 
         self.__pyflakesMessages = {}    # marker handle -> error message
@@ -546,15 +542,13 @@ class TextEditor(QutepartWrapper):
         """Reads the text from a file"""
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         try:
-            content, encoding, bomUsed = readEncodedFile(fileName)
-            # self.detectEolString(content)
+            content, self.encoding = readEncodedFile(fileName)
+            self.eol = detectEolString(content)
 
             # Hack to avoid breakpoints reset when a file is reload
             self.__breakpoints = {}
             self.text = content
 
-            # perform automatic eol conversion
-            # self.convertEols(self.eolMode())
             self.document().setModified(False)
         except Exception as exc:
             QApplication.restoreOverrideCursor()
@@ -587,15 +581,6 @@ class TextEditor(QutepartWrapper):
             self.removeTrailingWhitespaces()
         txt = unicode(self.text())
 
-        # work around glitch in scintilla: always make sure,
-        # that the last line is terminated properly
-        eol = self.getLineSeparator()
-        if eol:
-            if len(txt) >= len(eol):
-                if txt[-len(eol) :] != eol:
-                    txt += eol
-            else:
-                txt += eol
         try:
             # For liguist and designer file types the latin-1 is enforced
             fileType = detectFileType(fileName, True, True)
@@ -663,7 +648,7 @@ class TextEditor(QutepartWrapper):
                     self.setFocus()
         elif key in [Qt.Key_Enter, Qt.Key_Return]:
             QApplication.processEvents()
-            line, pos = self.getCursorPosition()
+            line, pos = self.cursorPosition
 
             self.beginUndoAction()
             QutepartWrapper.keyPressEvent(self, event)
@@ -675,7 +660,7 @@ class TextEditor(QutepartWrapper):
 
             # If the new line has one or more spaces then it is a candidate for
             # automatic trimming
-            line, pos = self.getCursorPosition()
+            line, pos = self.cursorPosition
             text = self.text(line)
             self.__openedLine = -1
             if len(text) > 0 and len(text.strip()) == 0:
@@ -683,21 +668,20 @@ class TextEditor(QutepartWrapper):
 
         elif key in [Qt.Key_Up, Qt.Key_PageUp,
                      Qt.Key_Down, Qt.Key_PageDown]:
-            line, pos = self.getCursorPosition()
+            line, pos = self.cursorPosition
             lineToTrim = -1
             if line == self.__openedLine:
                 lineToTrim = line
 
-            self.beginUndoAction()
-            QutepartWrapper.keyPressEvent(self, event)
-            QApplication.processEvents()
+            with self:
+                QutepartWrapper.keyPressEvent(self, event)
+                QApplication.processEvents()
 
-            if lineToTrim != -1:
-                line, pos = self.getCursorPosition()
-                if line != lineToTrim:
-                    # The cursor was really moved to another line
-                    self.__removeLine(lineToTrim)
-            self.endUndoAction()
+                if lineToTrim != -1:
+                    line, pos = self.cursorPosition
+                    if line != lineToTrim:
+                        # The cursor was really moved to another line
+                        self.__removeLine(lineToTrim)
             self.__openedLine = -1
 
         elif key == Qt.Key_Escape:
@@ -706,7 +690,7 @@ class TextEditor(QutepartWrapper):
             event.accept()
 
         elif key == Qt.Key_Tab:
-            line, pos = self.getCursorPosition()
+            line, pos = self.cursorPosition
             currentPosition = self.currentPosition()
             if pos != 0:
                 previousCharPos = self.positionBefore(currentPosition)
@@ -764,10 +748,10 @@ class TextEditor(QutepartWrapper):
         if line < 0:
             return
 
-        currentLine, currentPos = self.getCursorPosition()
-        self.setCursorPosition(line, 0)
+        currentLine, currentPos = self.cursorPosition
+        self.cursorPosition = line, 0
         self.deleteLineRight()
-        self.setCursorPosition(currentLine, currentPos)
+        self.cursorPosition = currentLine, currentPos
         QApplication.processEvents()
 
     def getLanguage(self):
@@ -796,8 +780,8 @@ class TextEditor(QutepartWrapper):
 
     def onFirstChar(self):
         """Jump to the first character in the buffer"""
-        self.setCursorPosition(0, 0)
-        self.ensureLineVisible(0)
+        self.cursorPosition = 0, 0
+        self.ensureLineOnScreen(0)
         self.setHScrollOffset(0)
         return True
 
@@ -807,8 +791,8 @@ class TextEditor(QutepartWrapper):
         if line != 0:
             line -= 1
         pos = self.lineLength(line)
-        self.setCursorPosition(line, pos)
-        self.ensureLineVisible(line)
+        self.cursorPosition = line, pos
+        self.ensureLineOnScreen(line)
         self.setHScrollOffset(0)
         return True
 
@@ -847,7 +831,7 @@ class TextEditor(QutepartWrapper):
         if foundCount == 0:
             return True
 
-        line, index = self.getCursorPosition()
+        line, index = self.cursorPosition
         if foundCount == 1:
             if line == targets[0][0] and \
                index >= targets[0][1] and \
@@ -870,15 +854,15 @@ class TextEditor(QutepartWrapper):
                     # Cursor within this target, we need the next one
                     continue
             # Move the cursor to the target
-            self.setCursorPosition(target[0], target[1])
-            self.ensureLineVisible(target[0])
+            self.cursorPosition = target[0], target[1]
+            self.ensureLineOnScreen(target[0])
             GlobalData().mainWindow.showStatusBarMessage(
                 "Highlighted occurrences: " + str(count) +
                 " of " + str(foundCount))
             return True
 
-        self.setCursorPosition( targets[0][0], targets[0][1])
-        self.ensureLineVisible( targets[0][0])
+        self.cursorPosition = targets[0][0], targets[0][1]
+        self.ensureLineOnScreen(targets[0][0])
         GlobalData().mainWindow.showStatusBarMessage(
             "Highlighted occurrences: 1 of " + str(foundCount))
         return True
@@ -895,7 +879,7 @@ class TextEditor(QutepartWrapper):
         if foundCount == 0:
             return True
 
-        line, index = self.getCursorPosition()
+        line, index = self.cursorPosition
         if foundCount == 1:
             if line == targets[0][0] and \
                index >= targets[0][1] and \
@@ -914,13 +898,13 @@ class TextEditor(QutepartWrapper):
                     # Cursor within this target, we need the previous one
                     continue
             # Move the cursor to the target
-            self.setCursorPosition(target[0], target[1])
-            self.ensureLineVisible(target[0])
+            self.cursorPosition = target[0], target[1]
+            self.ensureLineOnScreen(target[0])
             return True
 
         last = foundCount - 1
-        self.setCursorPosition(targets[last][0], targets[last][1])
-        self.ensureLineVisible(targets[last][0])
+        self.cursorPosition = targets[last][0], targets[last][1]
+        self.ensureLineOnScreen(targets[last][0])
         return True
 
     def onCommentUncomment(self):
@@ -955,7 +939,7 @@ class TextEditor(QutepartWrapper):
                 self.setSelection(lineFrom, 0, endLine + 1, 0)
         else:
             # Detect what we need - comment or uncomment
-            line, index = self.getCursorPosition()
+            line, index = self.cursorPosition
             if self.text( line ).startswith(commentStr):
                 # need to uncomment
                 self.setSelection(line, 0, line, len(commentStr))
@@ -966,8 +950,8 @@ class TextEditor(QutepartWrapper):
             # Jump to the beginning of the next line
             if self.lines() != line + 1:
                 line += 1
-            self.setCursorPosition(line, 0)
-            self.ensureLineVisible(line)
+            self.cursorPosition = line, 0
+            self.ensureLineOnScreen(line)
         self.endUndoAction()
         return True
 
@@ -1002,17 +986,17 @@ class TextEditor(QutepartWrapper):
         """Sets the self._lineHeight"""
         firstVisible = self.firstVisibleLine()
         lastVisible = firstVisible + self.linesOnScreen()
-        line, pos = self.getCursorPosition()
+        line, pos = self.cursorPosition
         xPos, yPos = self.getCurrentPixelPosition()
         if line > 0 and (line - 1) >= firstVisible \
                     and (line - 1) <= lastVisible:
-            self.setCursorPosition(line - 1, 0)
+            self.cursorPosition = line - 1, 0
             xPos1, yPos1 = self.getCurrentPixelPosition()
             self._lineHeight = yPos - yPos1
         else:
             if self.lines() > line + 1 and (line + 1) >= firstVisible \
                                        and (line + 1) <= lastVisible:
-                self.setCursorPosition(line + 1, 0)
+                self.cursorPosition = line + 1, 0
                 xPos1, yPos1 = self.getCurrentPixelPosition()
                 self._lineHeight = yPos1 -yPos
             else:
@@ -1020,19 +1004,19 @@ class TextEditor(QutepartWrapper):
                 currentPosFont = self.getCurrentPosFont()
                 metric = QFontMetrics(currentPosFont)
                 self._lineHeight = metric.lineSpacing()
-        self.setCursorPosition(line, pos)
+        self.cursorPosition = line, pos
 
     def __detectCharWidth(self):
         """Sets the self._charWidth"""
-        line, pos = self.getCursorPosition()
+        line, pos = self.cursorPosition
         xPos, yPos = self.getCurrentPixelPosition()
         if pos > 0:
-            self.setCursorPosition(line, pos - 1)
+            self.cursorPosition = line, pos - 1
             xPos1, yPos1 = self.getCurrentPixelPosition()
             self._charWidth = xPos - xPos1
         else:
             if len(self.text(line)) > 1:
-                self.setCursorPosition(line, pos + 1)
+                self.cursorPosition = line, pos + 1
                 xPos1, yPos1 = self.getCurrentPixelPosition()
                 self._charWidth = xPos1 - xPos
             else:
@@ -1040,7 +1024,7 @@ class TextEditor(QutepartWrapper):
                 currentPosFont = self.getCurrentPosFont()
                 metric = QFontMetrics(currentPosFont)
                 self._charWidth = metric.boundingRect("W").width()
-        self.setCursorPosition(line, pos)
+        self.cursorPosition = line, pos
 
     def onAutoComplete(self):
         """Triggered when ctrl+space or TAB is clicked"""
@@ -1072,7 +1056,7 @@ class TextEditor(QutepartWrapper):
             self.__inCompletion = False
             return True
 
-        line, pos = self.getCursorPosition()
+        line, pos = self.cursorPosition
         if isModName:
             # The prefix should be re-taken because a module name may have '.'
             # in it.
@@ -1090,7 +1074,7 @@ class TextEditor(QutepartWrapper):
             return True
 
         # Make sure the line is visible
-        self.ensureLineVisible(line)
+        self.ensureLineOnScreen(line)
         xPos, yPos = self.getCurrentPixelPosition()
         if self.hasSelectedText():
             # Remove the selection as it could be interpreted not as expected
@@ -1149,13 +1133,13 @@ class TextEditor(QutepartWrapper):
 
     def makeLineFirst(self):
         """Make the cursor line the first on the screen"""
-        currentLine, _ = self.getCursorPosition()
+        currentLine, _ = self.cursorPosition
         self.setFirstVisibleLine(currentLine)
         return True
 
     def onJumpToTop(self):
         """Jumps to the first position of the first visible line"""
-        self.setCursorPosition(self.firstVisibleLine(), 0)
+        self.cursorPosition = self.firstVisibleLine(), 0
         return True
 
     def onJumpToMiddle(self):
@@ -1176,23 +1160,23 @@ class TextEditor(QutepartWrapper):
             if self.isLineVisible(jumpTo):
                 shift -= 1
             jumpTo += 1
-        self.setCursorPosition(jumpTo, 0)
+        self.cursorPosition = jumpTo, 0
         return True
 
     def onJumpToBottom(self):
         """Jumps to the first position of the last line"""
         currentFirstVisible = self.firstVisibleLine()
-        self.setCursorPosition(self.lastVisibleLine(), 0)
+        self.cursorPosition = self.lastVisibleLine(), 0
         safeLastVisible = self.lastVisibleLine()
 
         while self.firstVisibleLine() != currentFirstVisible:
             # Here: a partially visible last line caused scrolling. So the
             # cursor needs to be set to the previous visible line
-            self.setCursorPosition(currentFirstVisible, 0)
+            self.cursorPosition = currentFirstVisible, 0
             safeLastVisible -= 1
             while not self.isLineVisible(safeLastVisible):
                 safeLastVisible -= 1
-            self.setCursorPosition(safeLastVisible, 0)
+            self.cursorPosition = safeLastVisible, 0
         return True
 
     def onGotoDefinition(self):
@@ -1360,18 +1344,18 @@ class TextEditor(QutepartWrapper):
             currentWord = str(self.getCurrentWord())
             prefixLength = len(str(self.__completionPrefix).decode('utf-8'))
             # wordLength = len( currentWord.decode( 'utf-8' ) )
-            line, pos = self.getCursorPosition()
+            line, pos = self.cursorPosition
 
             if text == currentWord:
                 # No changes, just possible cursor position change
-                self.setCursorPosition(line, pos + len(text) - prefixLength)
+                self.cursorPosition = line, pos + len(text) - prefixLength
             else:
                 oldBuffer = QApplication.clipboard().text()
                 self.beginUndoAction()
                 self.setSelection(line, pos - prefixLength, line, pos)
                 self.removeSelectedText()
                 self.insert(text)
-                self.setCursorPosition(line, pos + len(text) - prefixLength)
+                self.cursorPosition = line, pos + len(text) - prefixLength
                 self.endUndoAction()
                 QApplication.clipboard().setText(oldBuffer)
 
@@ -1456,7 +1440,6 @@ class TextEditor(QutepartWrapper):
         # self.markerDeleteAll(self.__pyflakesMsgMarker)
         self.__pyflakesMessages = {}
         self.ignoreBufferChangedSignal = False
-        self._updateDwellingTime()
 
     def addPyflakesMessage(self, line, message):
         """Shows up a pyflakes message"""
@@ -1464,10 +1447,9 @@ class TextEditor(QutepartWrapper):
         if line <= 0:
             line = 1    # Sometimes line is reported as 0
 
-        handle = self.markerAdd(line - 1, self.__pyflakesMsgMarker)
-        self.__pyflakesMessages[handle] = message
+        # handle = self.markerAdd(line - 1, self.__pyflakesMsgMarker)
+        # self.__pyflakesMessages[handle] = message
         self.ignoreBufferChangedSignal = False
-        self._updateDwellingTime()
 
     def downloadAndShow(self):
         """Triggered when the user wants to download and see the file"""
@@ -1520,7 +1502,7 @@ class TextEditor(QutepartWrapper):
         text = self.text()
         info = getBriefModuleInfoFromMemory(text)
         context = getContext(self, info, True, False)
-        line, pos = self.getCursorPosition()
+        line, pos = self.cursorPosition
         GlobalData().mainWindow.highlightInOutline(context, int(line) + 1)
         self.setFocus()
         return True
@@ -1530,7 +1512,7 @@ class TextEditor(QutepartWrapper):
         if self.lexer_ is None or not isinstance(self.lexer_, QsciLexerPython):
             # It is not a python file at all
             return True
-        line, pos = self.getCursorPosition()
+        line, pos = self.cursorPosition
         absPos = self.positionFromLineIndex(line, pos)
         self.cflowSyncRequested.emit(absPos, line + 1, pos + 1)
         return True
@@ -1550,11 +1532,11 @@ class TextEditor(QutepartWrapper):
 
         if self.isLineOnScreen(editorLine):
             if firstVisible is None:
-                self.setCursorPosition(editorLine, editorPos)
+                self.cursorPosition = editorLine, editorPos
                 return
 
         # The line could be in a collapsed block
-        self.ensureLineVisible(editorLine)
+        self.ensureLineOnScreen(editorLine)
 
         # Otherwise we would deal with scrolling any way, so normalize
         # the first visible line
@@ -1565,7 +1547,7 @@ class TextEditor(QutepartWrapper):
         if editorFirstVisible < 0:
             editorFirstVisible = 0
 
-        self.setCursorPosition(editorLine, editorPos)
+        self.cursorPosition = editorLine, editorPos
         self.setHScrollOffset(0) # avoid unwanted scrolling
 
         # The loop below is required because in line wrap mode a line could
@@ -1650,7 +1632,7 @@ class TextEditor(QutepartWrapper):
 
         if not self.isLineOnScreen(candidateLine - 1):
             # The redirected breakpoint line is not on the screen, scroll it
-            self.ensureLineVisible(candidateLine - 1)
+            self.ensureLineOnScreen(candidateLine - 1)
             currentFirstVisible = self.firstVisibleLine()
             requiredVisible = candidateLine - 2
             if requiredVisible < 0:
@@ -2198,24 +2180,24 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         # So, there is an ugly select -> replace manipulation below...
         self.__editor.beginUndoAction()
 
-        origLine, origPos = self.__editor.getCursorPosition()
+        origLine, origPos = self.__editor.cursorPosition
         self.__editor.setSelection(0, 0, origLine, origPos)
         self.__editor.removeSelectedText()
         self.__editor.insert(newText)
         self.__editor.setCurrentPosition(len(newText))
-        line, pos = self.__editor.getCursorPosition()
+        line, pos = self.__editor.cursorPosition
         lastLine = self.__editor.lines()
         self.__editor.setSelection(line, pos,
                                    lastLine - 1,
                                    len(self.__editor.text(lastLine - 1)))
         self.__editor.removeSelectedText()
-        self.__editor.setCursorPosition(origLine, origPos)
+        self.__editor.cursorPosition = origLine, origPos
 
         # These two for the proper cursor positioning after redo
         self.__editor.insert("s")
-        self.__editor.setCursorPosition(origLine, origPos + 1)
+        self.__editor.cursorPosition = origLine, origPos + 1
         self.__editor.deleteBack()
-        self.__editor.setCursorPosition(origLine, origPos)
+        self.__editor.cursorPosition = origLine, origPos
 
         self.__editor.endUndoAction()
 
@@ -2500,7 +2482,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def isModified(self):
         """Tells if the file is modified"""
-        return self.__editor.isModified()
+        return self.__editor.document().isModified()
 
     def getRWMode(self):
         """Tells if the file is read only"""
@@ -2512,11 +2494,11 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getFileType(self):
         """Provides the file type"""
-        if self.__fileType == UnknownFileType:
+        if self.__fileType is None:
             if self.__fileName:
-                self.__fileType = detectFileType(self.__fileName)
+                self.__fileType, _, _, _ = getFileProperties(self.__fileName)
             elif self.__shortName:
-                self.__fileType = detectFileType(self.__shortName)
+                self.__fileType, _, _, _ = getFileProperties(self.__shortName)
         return self.__fileType
 
     def setFileType(self, typeToSet):
@@ -2550,7 +2532,6 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getEol(self):
         """Tells the EOL style"""
-        return "JJJ"
         return self.__editor.getEolIndicator()
 
     def getLine(self):

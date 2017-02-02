@@ -513,12 +513,12 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getLine(self):
         """Tells the cursor line"""
-        line, pos = self.__viewer.getCursorPosition()
+        line, pos = self.__viewer.cursorPosition
         return int(line)
 
     def getPos(self):
         """Tells the cursor column"""
-        line, pos = self.__viewer.getCursorPosition()
+        line, pos = self.__viewer.cursorPosition
         return int(pos)
 
     def getEncoding(self):

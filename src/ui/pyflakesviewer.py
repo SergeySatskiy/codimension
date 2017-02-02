@@ -113,10 +113,10 @@ class PyflakesViewer(QObject):
 
         # It is first time we are here, create a new
         editor = widget.getEditor()
-        editor.SCEN_CHANGE.connect(self.__onBufferChanged)
+        editor.textChanged.connect(self.__onBufferChanged)
         editor.cursorPositionChanged.connect(self.__cursorPositionChanged)
 
-        results = getFileErrors(editor.text())
+        results = getFileErrors(editor.text)
         attributes = PyflakesAttributes()
         attributes.messages = results
         attributes.changed = False
@@ -125,7 +125,7 @@ class PyflakesViewer(QObject):
 
         self.setFlakesResults(self.__uiLabel, results, editor)
 
-    def __cursorPositionChanged(self, xpos, ypos):
+    def __cursorPositionChanged(self):
         """Triggered when a cursor position is changed"""
         if self.__updateTimer.isActive():
             # If a file is very large and the cursor is moved
@@ -166,7 +166,7 @@ class PyflakesViewer(QObject):
             return
 
         editor = widget.getEditor()
-        results = getFileErrors(editor.text())
+        results = getFileErrors(editor.text)
 
         self.__flakesResults[self.__currentUUID].messages = results
         self.__flakesResults[self.__currentUUID].changed = False

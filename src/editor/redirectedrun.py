@@ -453,12 +453,12 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getLine(self):
         """Tells the cursor line"""
-        line, _ = self.__viewer.getCursorPosition()
+        line, _ = self.__viewer.cursorPosition
         return int(line)
 
     def getPos(self):
         """Tells the cursor column"""
-        _, pos = self.__viewer.getCursorPosition()
+        _, pos = self.__viewer.cursorPosition
         return int(pos)
 
     def getEncoding(self):

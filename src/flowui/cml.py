@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2015-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2015-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ class CMLCommentBase:
         isSideComment = self.__isSideComment(editor)
 
         editor.beginUndoAction()
-        oldLine, oldPos = editor.getCursorPosition()
+        oldLine, oldPos = editor.cursorPosition
 
         line = self.ref.endLine
         while line >= self.ref.beginLine:
@@ -65,11 +65,11 @@ class CMLCommentBase:
                                 "has not been implemented yet")
             else:
                 # Editor has 0-based lines
-                editor.setCursorPosition(line - 1, 0)
+                editor.cursorPosition = line - 1, 0
                 editor.deleteLine()
             line -= 1
 
-        editor.setCursorPosition(oldLine, oldPos)
+        editor.cursorPosition = oldLine, oldPos
         editor.endUndoAction()
 
 

@@ -35,6 +35,8 @@ class QutepartWrapper(Qutepart):
     def __init__(self, parent):
         Qutepart.__init__(self, parent)
 
+        self.encoding = None
+
         # Remove all the default margins
         self.delMargin('mark_area')
         self.delMargin('line_numbers')
@@ -87,3 +89,55 @@ class QutepartWrapper(Qutepart):
     def clearUndoRedoHistory(self):
         """Clears the undo/redo history"""
         self.document().clearUndoRedoStacks()
+
+    def getEolIndicator(self):
+        """Provides the eol indicator for the current eol mode"""
+        if self.eol == '\r\n':
+            return "CRLF"
+        if self.eol == '\r':
+            return 'CR'
+        return 'LF'
+
+    def firstVisibleLine(self):
+        """Provides the first visible line. 0-based"""
+        return self.firstVisibleBlock().blockNumber()
+
+    def lastVisibleLine(self):
+        """Provides the last visible line. 0-based"""
+        editorHeight = self.height()
+        bar = self.horizontalScrollBar()
+        if bar:
+            if bar.isVisible():
+                editorHeight -= bar.height()
+        block = self.firstVisibleBlock()
+        blockRect = self.blockBoundingRect(block)
+
+        lastVisible = block.blockNumber()
+        blocksHeight = 0.0
+        while block.isValid():
+            if not block.isValid():
+                break
+            blocksHeight += self.blockBoundingRect(block).height()
+            if blocksHeight > editorHeight:
+                break
+            lastVisible = block.blockNumber()
+            block = block.next()
+        return lastVisible
+
+    def isLineOnScreen(self, line):
+        """True if the line is on screen. line is 0-based."""
+        if line < self.firstVisibleLine():
+            return False
+        return line <= self.lastVisibleLine()
+
+    def ensureLineOnScreen(self, line):
+        """Makes sure the line is visible on screen. line is 0-based."""
+        # Prerequisite: the cursor has to be on the desired position
+        if not self.isLineOnScreen(line):
+            self.ensureCursorVisible()
+
+    def setHScrollOffset(self, value):
+        """Sets the new horizontal scroll bar value"""
+        bar = self.horizontalScrollBar()
+        if bar:
+            bar.setValue(value)

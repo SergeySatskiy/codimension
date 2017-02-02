@@ -137,8 +137,8 @@ class GotoLineWidget(QWidget):
         editor = currentWidget.getEditor()
         line = min(int(txt), editor.lines()) - 1
 
-        editor.setCursorPosition(line, 0)
-        editor.ensureLineVisible(line)
+        editor.cursorPosition = line, 0
+        editor.ensureLineOnScreen(line)
         currentWidget.setFocus()
 
     def __onEditTextChanged(self, text):

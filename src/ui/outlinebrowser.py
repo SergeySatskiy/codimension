@@ -103,7 +103,7 @@ class OutlineBrowser(FilesBrowser):
     def __getBrokenHeaderBackground(self):
         """Returns the broken header bg color as a string useful for CSS"""
         return self.__toCSSColor(
-            GlobalData().skin.outdatedOutlineColor.getRgb())
+            GlobalData().skin['outdatedOutlineColor'].getRgb())
 
     def setHeaderHighlight(self, on):
         """Sets or removes the header highlight"""

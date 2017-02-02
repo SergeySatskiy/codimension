@@ -87,33 +87,6 @@ class ScintillaWrapper( QsciScintilla ):
         """ Provides the number of the visible lines """
         return self.SendScintilla( self.SCI_LINESONSCREEN )
 
-    def firstVisibleLine( self ):
-        " Overriden base class method "
-        # Scintilla makes mistake if a line wrap mode is on
-        # So this ugly implementation...
-        pos = self.SendScintilla( self.SCI_POSITIONFROMPOINT, 1, 1 )
-        line, index = self.lineIndexFromPosition( pos )
-        return line
-
-    def lastVisibleLine( self ):
-        " Provides the last visible line on the screen "
-        pos = self.SendScintilla( self.SCI_POSITIONFROMPOINT, 1,
-                                  self.height() - 3 )
-        line, index = self.lineIndexFromPosition( pos )
-        return line
-
-    def isLineOnScreen( self, lineNumber ):
-        " True if the line is on screen and visible "
-        if not self.isLineVisible( lineNumber ):
-            return False
-        if lineNumber < self.firstVisibleLine():
-            return False
-        return lineNumber <= self.lastVisibleLine()
-
-    def isLineVisible( self, lineNumber ):
-        " Tells is line is visible "
-        return self.SendScintilla( self.SCI_GETLINEVISIBLE, lineNumber )
-
     def lineAt( self, pos ):
         """ Calculates the line at a position. pos is int or QPoint.
             Returns -1 if there is no line at pos """
@@ -274,62 +247,9 @@ class ScintillaWrapper( QsciScintilla ):
         self.SendScintilla( self.SCI_DELLINERIGHT )
         return
 
-    def setHScrollOffset( self, value ):
-        " Sets the current horizontal offset "
-        self.SendScintilla( self.SCI_SETXOFFSET, value )
-        return
-
     def getHScrollOffset( self ):
         " Provides the current horizontal offset "
         return self.SendScintilla( self.SCI_GETXOFFSET )
-
-    def getLineSeparator( self ):
-        """ Provides the line separator for the current eol mode """
-        mode = self.eolMode()
-        if mode == QsciScintilla.EolWindows:
-            return '\r\n'
-        if mode == QsciScintilla.EolUnix:
-            return '\n'
-        if mode == QsciScintilla.EolMac:
-            return '\r'
-        return ''
-
-    def getEolIndicator( self ):
-        """ Provides the eol indicator for the current eol mode """
-        mode = self.eolMode()
-        if mode == QsciScintilla.EolWindows:
-            return 'CRLF'
-        if mode == QsciScintilla.EolUnix:
-            return 'LF'
-        if mode == QsciScintilla.EolMac:
-            return 'CR'
-        return ''
-
-    def setEolModeByEolString( self, eolStr ):
-        """ Sets the eol mode by the eol string """
-        if eolStr == '\n':
-            self.setEolMode( self.EolMode( self.EolUnix ) )
-            return
-        if eolStr == '\r\n':
-            self.setEolMode( self.EolMode( self.EolWindows ) )
-            return
-        if eolStr == '\r':
-            self.setEolMode( self.EolMode( self.EolMac ) )
-            return
-        self.setEolMode( self.EolMode( self.EolUnix ) )
-        return
-
-    @staticmethod
-    def detectEolString( txt ):
-        """ Determines the eol string """
-        utxt = unicode( txt )
-        if len( utxt.split( "\r\n", 1 ) ) == 2:
-            return '\r\n'
-        if len( utxt.split( "\n", 1 ) ) == 2:
-            return '\n'
-        if len( utxt.split( "\r", 1 ) ) == 2:
-            return '\r'
-        return None
 
         # methods to perform searches in target range
 
@@ -356,11 +276,6 @@ class ScintillaWrapper( QsciScintilla ):
         for i in xrange( index ):
             pos = self.positionAfter( pos )
         return pos
-
-    def getAbsCursorPosition( self ):
-        " Provides the absolute current cursor position "
-        line, pos = self.getCursorPosition()
-        return self.positionFromLineIndex( line, pos )
 
     def lineIndexFromPosition( self, pos ):
         """ Converts an absolute position to line and index """
