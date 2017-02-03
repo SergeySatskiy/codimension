@@ -44,7 +44,7 @@ def setFileEncoding(fileName, encoding):
     if project.isLoaded():
         if project.isProjectFile(fileName):
             key = relpath(fileName, dirname(project.fileName))
-            project.setFileEncoding(fileName, encoding)
+            project.setFileEncoding(key, encoding)
             return
     Settings().setFileEncoding(fileName, encoding)
 
@@ -53,7 +53,7 @@ def getRunParameters(fileName):
     """Provides the run parameters"""
     project = GlobalData().project
     if project.isLoaded():
-        if self.project.isProjectFile(fileName):
+        if project.isProjectFile(fileName):
             key = relpath(fileName, dirname(project.fileName))
             return project.getRunParameters(key)
     return Settings().getRunParameters(fileName)
