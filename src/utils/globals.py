@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,9 +41,8 @@ def getSubdirs(path, baseNamesOnly=True, excludePythonModulesDirs=True):
             candidate = path + item
             if isdir(candidate):
                 if excludePythonModulesDirs:
-                    modFile1 = candidate + sep + "__init__.py"
-                    modFile2 = candidate + sep + "__init__.py3"
-                    if exists(modFile1) or exists(modFile2):
+                    modFile = candidate + sep + "__init__.py"
+                    if exists(modFile):
                         continue
                 if baseNamesOnly:
                     subdirs.append(item)
@@ -72,38 +71,7 @@ class GlobalDataWrapper:
 
         self.briefModinfoCache = BriefModuleInfoCache()
 
-        self.pylintAvailable = self.__checkPylint()
         self.graphvizAvailable = self.__checkGraphviz()
-
-        self.pylintVersion = None
-        if self.pylintAvailable:
-            self.pylintVersion = self.__getPylintVersion()
-            if self.pylintVersion is None:
-                self.pylintAvailable = False
-
-    def getRunParameters(self, fileName):
-        """Provides the run parameters"""
-        if self.project.isLoaded():
-            if self.project.isProjectFile(fileName):
-                key = relpath(fileName, dirname(self.project.fileName))
-            else:
-                key = fileName
-            return self.project.getRunParameters(key)
-
-        # No project loaded
-        return Settings().getRunParameters(fileName)
-
-    def addRunParams(self, fileName, params):
-        """Registers new latest run parameters"""
-        if self.project.isLoaded():
-            if self.project.isProjectFile(fileName):
-                key = relpath(fileName, dirname(self.project.fileName))
-            else:
-                key = fileName
-            self.project.addRunParameters(key, params)
-        else:
-            # No project loaded
-            Settings().addRunParameters(fileName, params)
 
     def getProfileOutputPath(self):
         """Provides the path to the profile output file"""
@@ -175,29 +143,6 @@ class GlobalDataWrapper:
         if 'win' in sys.platform.lower():
             return os.system('which dot > /NUL 2>&1') == 0
         return os.system('which dot > /dev/null 2>&1') == 0
-
-    @staticmethod
-    def __checkPylint():
-        """Checks if pylint is available"""
-        if 'win' in sys.platform.lower():
-            return os.system('which pylint > /NUL 2>&1') == 0
-        return os.system('which pylint > /dev/null 2>&1') == 0
-
-    @staticmethod
-    def __getPylintVersion():
-        " Provides the pylint version "
-        output = check_output("pylint --version; exit 0",
-                              stderr=STDOUT, shell=True)
-        output = output.decode(DEFAULT_ENCODING)
-        for line in output.splitlines():
-            line = line.strip()
-            if line.startswith("pylint "):
-                version = line.replace("pylint", "").replace(",", "")
-                try:
-                    return StrictVersion(version.strip())
-                except:
-                    return None
-        return None
 
 
 globalsSingleton = GlobalDataWrapper()

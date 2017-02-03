@@ -23,6 +23,11 @@ import re
 import encodings
 import logging
 from codecs import BOM_UTF8, BOM_UTF16, BOM_UTF32
+from cdmbriefparser import getBriefModuleInfoFromMemory
+from .diskvaluesrelay import getFileEncoding
+from .fileutils import isPythonFile
+from .globals import GlobalData
+from .settings import Settings
 
 
 # There is no way to query a complete list of the supported codecs at run-time.
@@ -131,38 +136,160 @@ def getCodingFromBytes(text):
     return None
 
 
+def encodingSanityCheck(fName, decodedText, expectedEncoding):
+    """Checks if the expected encoding matches the encing in the file"""
+    try:
+        modInfo = getBriefModuleInfoFromMemory(decodedText)
+        modEncoding = modInfo.encoding
+        if modEncoding:
+            if not isValidEncoding(modEncoding):
+                logging.warning("Invalid encoding " + modEncoding +
+                                " found in the file " + fName)
+                return False
+            if not areEncodingsEqual(modEncoding, expectedEncoding):
+                if expectedEncoding.startswith('bom-'):
+                    noBomEncoding = expectedEncoding[4:]
+                    if areEncodingsEqual(modEncoding, noBomEncoding):
+                        return True
+                logging.warning("The expected encoding " + expectedEncoding +
+                                " does not match encoding " + modEncoding +
+                                " specified in the  file " + fName)
+                return False
+    except:
+        pass
+    return True
+
+
 def readEncodedFile(fName):
     """Reads the encoded file"""
     # Returns: text, used encoding
     with open(fName, 'rb') as diskfile:
         text = diskfile.read()
 
+    isPython = isPythonFile(fName)
+    triedEncodings = []
+    # Step 1: check for BOM
     try:
         if text.startswith(BOM_UTF8):
-            return str(text[len(BOM_UTF8):], 'utf-8'), 'bom-utf-8'
+            text = text[len(BOM_UTF8):]
+            triedEncodings.append(encodings.normalize_encoding('utf-8'))
+            decodedText = str(text, 'utf-8')
+            if isPython:
+                encodingSanityCheck(fName, decodedText, 'bom-utf-8')
+            return decodedText, 'bom-utf-8'
         if text.startswith(BOM_UTF16):
-            return str(text[len(BOM_UTF16):], 'utf-16'), 'bom-utf-16'
+            text = text[len(BOM_UTF16):]
+            triedEncodings.append(encodings.normalize_encoding('utf-16'))
+            decodedText = str(text, 'utf-16')
+            if isPython:
+                encodingSanityCheck(fName, decodedText, 'bom-utf-16')
+            return decodedText, 'bom-utf-16'
         if text.startswith(BOM_UTF32):
-            return str(text[len(BOM_UTF32):], 'utf-32'), 'bom-utf-32'
+            text = text[len(BOM_UTF32):]
+            triedEncodings.append(encodings.normalize_encoding('utf-32'))
+            decodedText = str(text, 'utf-32')
+            if isPython:
+                encodingSanityCheck(fName, decodedText, 'bom-utf-32')
+            return decodedText, 'bom-utf-32'
     except (UnicodeError, LookupError) as exc:
-        logging.error("BOM signature found but decoding failed: " + str(exc))
-        logging.error("Continue trying...")
+        logging.error("BOM signature bom-" + triedEncodings[0] +
+                      " found in the file but decoding failed: " + str(exc))
+        logging.error("Continue trying to decode...")
 
-    # Extract encoding from the file
+    # Check if it was a user assigned encoding
+    userAssignedEncoding = getFileEncoding(fName)
+    if userAssignedEncoding:
+        if not isValidEncoding(userAssignedEncoding):
+            logging.error("User assigned encoding " + userAssignedEncoding +
+                          " is invalid. Continue trying to decode...")
+        elif encodings.normalize_encoding(userAssignedEncoding) \
+                                                    not in triedEncodings:
+            triedEncodings.append(
+                encodings.normalize_encoding(userAssignedEncoding))
+            try:
+                decodedText = str(text, userAssignedEncoding)
+                if isPython:
+                    encodingSanityCheck(fName, decodedText,
+                                        userAssignedEncoding)
+                return decodedText, userAssignedEncoding
+            except (UnicodeError, LookupError) as exc:
+                logging.error("Failed to decode using the user assigned "
+                              "encoding " + userAssignedEncoding +
+                              ". Continue trying...")
+
+    # Step 3: extract encoding from the file
     encFromFile = getCodingFromBytes(text)
     if encFromFile:
         if not isValidEncoding(encFromFile):
             logging.error("Invalid encoding found in the content: " +
-                          encFromFile)
-            logging.error("Continue trying...")
+                          encFromFile + ". Continue trying...")
+        elif encodings.normalize_encoding(encFromFile) not in triedEncodings:
+            triedEncodings.append(
+                encodings.normalize_encoding(encFromFile))
+            try:
+                decodedText = str(text, encFromFile)
+                if isPython:
+                    encodingSanityCheck(fName, decodedText,
+                                        encFromFile)
+                return decodedText, encFromFile
+            except (UnicodeError, LookupError) as exc:
+                logging.error("Failed to decode using encoding " +
+                              encFromFile + " found in the file. "
+                              "Continue trying...")
 
-    # Check if it was a user assigned encoding
+    # Step 4: check the project default encoding
+    project = GlobalData().project
+    if project.isLoaded():
+        projectEncoding = project.props['encoding']
+        if projectEncoding:
+            if not isValidEncoding(projectEncoding):
+                logging.error("Invalid project encoding: " +
+                              projectEncoding + ". Continue trying...")
+            elif encodings.normalize_encoding(projectEncoding) not in triedEncodings:
+                triedEncodings.append(
+                    encodings.normalize_encoding(projectEncoding))
+                try:
+                    decodedText = str(text, projectEncoding)
+                    if isPython:
+                        encodingSanityCheck(fName, decodedText,
+                                            projectEncoding)
+                    return decodedText, projectEncoding
+                except (UnicodeError, LookupError) as exc:
+                    logging.error("Failed to decode using project encoding " +
+                                  projectEncoding + ". Continue trying...")
 
-    # Check the project default encoding
+    # Step 5: checks the IDE encoding
+    ideEncoding = Settings()['encoding']
+    if ideEncoding:
+        if not isValidEncoding(ideEncoding):
+            logging.error("Invalid ide encoding: " +
+                          ideEncoding + ". Continue trying...")
+        elif encodings.normalize_encoding(ideEncoding) not in triedEncodings:
+            triedEncodings.append(
+                encodings.normalize_encoding(ideEncoding))
+            try:
+                decodedText = str(text, ideEncoding)
+                if isPython:
+                    encodingSanityCheck(fName, decodedText,
+                                        ideEncoding)
+                return decodedText, ideEncoding
+            except (UnicodeError, LookupError) as exc:
+                logging.error("Failed to decode using project encoding " +
+                              ideEncoding + ". Continue trying...")
 
-    # Checks the IDE encoding
+    # Step 6: default: utf-8
+    if encodings.normalize_encoding('utf-8') not in triedEncodings:
+        triedEncodings.append(encodings.normalize_encoding('utf-8'))
+        try:
+            decodedText = str(text, 'utf-8')
+            if isPython:
+                encodingSanityCheck(fName, decodedText,
+                                    'utf-8')
+            return decodedText, 'utf-8'
+        except (UnicodeError, LookupError) as exc:
+            logging.error("Failed to decode using default encoding "
+                          "utf-8. Continue trying...")
 
-    # default: utf-8
-
-    # Last resort utf-8 with loosing information
+    # Step 7: last resort utf-8 with loosing information
+    logging.warning("Last try: utf-8 decoding ignoring the errors...")
     return str(text, 'utf-8', 'ignore'), 'utf-8'
