@@ -152,7 +152,7 @@ class FindFileModel(QAbstractItemModel):
         for fname in GlobalData().project.filesList:
             if fname.endswith(os.path.sep):
                 continue
-            mime, _, icon, _ = getFileProperties(fName)
+            mime, icon, _ = getFileProperties(fName)
             tooltip = ""
             if showTooltips and isPythonMime(mime):
                 widget = mainWindow.getWidgetForFileName(fname)
@@ -176,7 +176,7 @@ class FindFileModel(QAbstractItemModel):
             # uuid = record[0]
             fname = record[1]
             widget = record[2]
-            mime, _, icon, _ = getFileProperties(fname)
+            mime, icon, _ = getFileProperties(fname)
             tooltip = ""
             if isPythonMime(mime):
                 content = widget.getEditor().text()

@@ -384,8 +384,8 @@ class RedirectedIOConsole(TextEditor):
 
     def _contextMenuAboutToShow(self):
         """IO Console context menu is about to show"""
-        self.__menuUndo.setEnabled(self.isUndoAvailable())
-        self.__menuRedo.setEnabled(self.isRedoAvailable())
+        self.__menuUndo.setEnabled(self.document().isUndoAvailable())
+        self.__menuRedo.setEnabled(self.document().isRedoAvailable())
 
         pasteText = QApplication.clipboard().text()
         pasteEnable = pasteText != "" and \
@@ -438,12 +438,12 @@ class RedirectedIOConsole(TextEditor):
 
     def onUndo(self):
         """undo implementation"""
-        if self.isUndoAvailable():
+        if self.document().isUndoAvailable():
             self.undo()
 
     def onRedo(self):
         """redo implementation"""
-        if self.isRedoAvailable():
+        if self.document().isRedoAvailable():
             self.redo()
 
     def onCtrlShiftC(self):

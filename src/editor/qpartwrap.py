@@ -36,6 +36,7 @@ class QutepartWrapper(Qutepart):
         Qutepart.__init__(self, parent)
 
         self.encoding = None
+        self.mime = None
 
         # Remove all the default margins
         self.delMargin('mark_area')

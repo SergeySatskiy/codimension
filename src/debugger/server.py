@@ -33,6 +33,7 @@ from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG, getUserShell, TERM_REDIRECT
 from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.pixmapcache import getIcon
+from utils.diskvaluesrelay import getRunParameters
 from .client.protocol_cdm_dbg import (EOT, RequestStep, RequestStepOver,
                                       RequestStepOut, RequestShutdown,
                                       ResponseLine, ResponseStack,
@@ -206,7 +207,7 @@ class CodimensionDebugger(QObject):
         self.__createProcfeedbackSocket()
         self.__createTCPServer()
 
-        self.__runParameters = GlobalData().getRunParameters(fileName)
+        self.__runParameters = getRunParameters(fileName)
         workingDir, cmd, environment = getCwdCmdEnv(
             CMD_TYPE_DEBUG, fileName, self.__runParameters, terminalType,
             self.__procFeedbackPort, self.__tcpServer.serverPort())

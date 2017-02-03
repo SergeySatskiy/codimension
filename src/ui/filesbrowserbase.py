@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -276,7 +276,7 @@ class FilesBrowser(QTreeView):
                 # Convert it to the real path and the decide what to do
                 itemPath = os.path.realpath(itemPath)
                 # The type may differ...
-                itemMime, _, _, _ = getFileProperties(itemPath)
+                itemMime, _, _ = getFileProperties(itemPath)
             else:
                 # The intermediate directory could be a link, so use the real
                 # path
@@ -460,7 +460,7 @@ class FilesBrowser(QTreeView):
 
     def onFileUpdated(self, fileName, uuid):
         """Triggered when the file is updated"""
-        mime, icon, _, _ = getFileProperties(fileName)
+        mime, icon, _ = getFileProperties(fileName)
         if isPythonMime(mime):
             path = os.path.realpath(fileName)
             info = GlobalData().briefModinfoCache.get(path)

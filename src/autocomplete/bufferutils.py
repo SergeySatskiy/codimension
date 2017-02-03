@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -198,18 +198,17 @@ def getContext(editor, info=None,
 
     context = TextCursorContext()
 
-    lexer = editor.lexer()
-    if lexer is None or not isinstance(lexer, QsciLexerPython):
+    if not editor.isPythonBuffer():
         return context
 
     # It's not the first position, so the parsed module info is required
     if info is None:
-        info = getBriefModuleInfoFromMemory(editor.text())
+        info = getBriefModuleInfoFromMemory(editor.text)
 
     line, pos = editor.cursorPosition
     if skipBlankLinesBack == True:
         while line >= 0:
-            text = editor.text(line)
+            text = editor.lines[line]
             trimmedText = text.strip()
             if trimmedText != "":
                 pos = len(text.rstrip())
@@ -231,11 +230,11 @@ def getContext(editor, info=None,
     continueLine = False
     currentLine = context.getLastScopeLine() + 1
     for currentLine in range(context.getLastScopeLine(),
-                             editor.lines()):
+                             len(editor.lines)):
         if currentLine == line:
             break
 
-        text = editor.text(currentLine)
+        text = editor.lines[currentLine]
         trimmedText = text.strip()
         if continueLine == False:
             if trimmedText == "" or trimmedText.startswith("#"):
@@ -256,7 +255,7 @@ def getContext(editor, info=None,
     if continueLine:
         context.stripLevels(nonSpacePos)
     else:
-        nonSpacePos = _getFirstNonSpacePos(editor.text(line))
+        nonSpacePos = _getFirstNonSpacePos(editor.lines[line])
         if nonSpacePos == -1:
             context.stripLevels(pos)
         else:

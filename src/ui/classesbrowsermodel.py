@@ -44,7 +44,7 @@ class ClassesBrowserModel(BrowserModelBase):
         project = self.globalData.project
         cache = self.globalData.briefModinfoCache
         for fname in project.filesList:
-            mime, _, _, _ = getFileProperties(fname)
+            mime, _, _ = getFileProperties(fname)
             if isPythonMime(mime):
                 info = cache.get(fname)
                 for classObj in info.classes:

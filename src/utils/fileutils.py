@@ -96,14 +96,13 @@ def __getXmlSyntaxFileByMime(mime):
         return None
 
 
-__magic = magic.Magic(mime=True, mime_encoding=True)
+__magic = magic.Magic(mime=True)
 
 
 def isFileSearchable(fName, checkForBrokenLink=True):
     """Returns True if it makes sense to search for text in that file"""
-    mime, _, _, syntaxFile = getFileProperties(fName, False,
-                                               checkForBrokenLink,
-                                               skipCache=False)
+    mime, _, syntaxFile = getFileProperties(fName, checkForBrokenLink,
+                                            skipCache=False)
     if syntaxFile is not None:
         return True
     if mime is None:
@@ -120,15 +119,13 @@ def isImageViewable(mime):
 
 def isImageFile(fName):
     """True is the file is a viewable image"""
-    mime, _, _, _ = getFileProperties(fName, False,
-                                      checkForBrokenLink,
-                                      skipCache=False)
+    mime, _, _ = getFileProperties(fName, checkForBrokenLink, skipCache=False)
     return isImageViewable(mime)
 
 
 def isFileOpenable(fName):
     """True if codimension can open the file"""
-    mime, _, _, syntaxFile = getFileProperties(fName, False, True, False)
+    mime, _, syntaxFile = getFileProperties(fName, True, False)
     if syntaxFile is not None:
         return True
     return isImageViewable(mime)
@@ -455,41 +452,24 @@ def __getIcon(xmlSyntaxFile, mime, fBaseName):
     return getIcon('filemisc.png')
 
 
-def __getMagicMimeAndEncoding(fName):
-    """ Uses the magic module to retrieve mime and encoding.
-        Both values could be None if e.g. thefile does not exist
-        The third bool tells if it was a permission denied case
+def __getMagicMime(fName):
+    """ Uses the magic module to retrieve the file mime.
+        The mime could be None if e.g. the file does not exist.
+        The second bool tells if it was a permission denied case.
     """
     try:
-        # E.g.: 'text/x-shellscript; charset=us-ascii'
+        # E.g.: 'text/x-shellscript'
         output = __magic.from_file(realpath(fName))
-        parts = output.split('; ')
-        if len(parts) == 1:
-            # if a file is short, e.g. 1 byte, then encoding is not provided
-            return parts[0].strip(), None, False
-        if len(parts) != 2:
-            # Unknown magic library problem
-            logging.error("python-magic library unknown output format. (" +
-                          output + ") for " + fName)
-            return None, None, False
-        if not parts[1].startswith('charset='):
-            logging.error("Unexpected python-magic library charset output. (" +
-                          parts[1] + ") for " + fName)
-            return None, None, False
-        # Second value: strip 'charset='
-        enc = parts[1][8:]
-        if enc.lower() == 'us-ascii':
-            enc = DEFAULT_ENCODING
-        return parts[0], enc, False
+        return output, False
     except OSError as exc:
         if exc.errno == EACCES:
-            return None, None, True
+            return None, True
         logging.error(str(exc))
-        return None, None, False
+        return None, False
     except Exception as exc:
         # Most probably the file does not exist
         logging.error(str(exc))
-        return None, None, False
+        return None, False
 
 
 # Cache is initialized with:
@@ -503,17 +483,14 @@ def __initFilePropertiesCache():
     """Prevents calling getIcon before a QApplication is created"""
     global __filePropertiesCache
     __filePropertiesCache = {
-        '': [None, 'binary', getIcon('filemisc.png'), None],
-        '/': ['inode/directory', 'binary', getIcon('dirclosed.png'), None],
-        '.': ['inode/broken-symlink', 'binary',
-              getIcon('filebrokenlink.png'), None]}
+        '': [None, getIcon('filemisc.png'), None],
+        '/': ['inode/directory', getIcon('dirclosed.png'), None],
+        '.': ['inode/broken-symlink', getIcon('filebrokenlink.png'), None]}
 
 
-def getFileProperties(fName, needEncoding=False,
-                      checkForBrokenLink=True, skipCache=False):
+def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
     """ Provides the following properties:
         - mime type (could be None)
-        - encoding (could be None)
         - icon
         - syntax file name (could be None)
 
@@ -537,13 +514,11 @@ def getFileProperties(fName, needEncoding=False,
 
     if not skipCache and fName in __filePropertiesCache:
         value = __filePropertiesCache[fName]
-        if needEncoding:
-            if value[1] is None:
-                mime, encoding, _ = __getMagicMimeAndEncoding(fName)
-                if mime is not None:
-                    value[0] = mime
-                if encoding is not None:
-                    value[1] = encoding
+        if value[0] is None:
+            mime, _ = __getMagicMime(fName)
+            if mime is not None:
+                value[0] = mime
+                __filePropertiesCache[fName] = value
         return value
 
     # The function should work both for existing and non-existing files
@@ -563,13 +538,12 @@ def getFileProperties(fName, needEncoding=False,
         # Special case: this could be a QT supported image
         if fileExtension in __QTSupportedImageFormats:
             mime = 'image/' + fileExtension
-            encoding = 'binary'
         else:
-            mime, encoding, denied = __getMagicMimeAndEncoding(fName)
+            mime, denied = __getMagicMime(fName)
             if mime is not None:
                 syntaxFile = __getXmlSyntaxFileByMime(mime)
 
-        cacheValue = [mime, encoding,
+        cacheValue = [mime,
                       getIcon('filedenied.png') if denied else
                       __getIcon(syntaxFile, mime, fBaseName),
                       syntaxFile]
@@ -578,8 +552,6 @@ def getFileProperties(fName, needEncoding=False,
 
     # syntax file was successfully identified.
     # Detect the mime type by a syntax file
-    encoding = None
-    magicTried = False
     if fileExtension == 'cdm':
         mime = 'text/x-codimension'
     elif fileExtension == 'cdm3':
@@ -587,29 +559,11 @@ def getFileProperties(fName, needEncoding=False,
     else:
         mime = __getMimeByXmlSyntaxFile(syntaxFile)
         if mime is None:
-            mime, encoding, _ = __getMagicMimeAndEncoding(fName)
-            magicTried = True
+            mime, _ = __getMagicMime(fName)
 
-    if needEncoding and encoding is None and not magicTried:
-        _, encoding, _ = __getMagicMimeAndEncoding(fName)
-
-    cacheValue = [mime, encoding,
-                  __getIcon(syntaxFile, mime, fBaseName), syntaxFile]
+    cacheValue = [mime, __getIcon(syntaxFile, mime, fBaseName), syntaxFile]
     __filePropertiesCache[fName] = cacheValue
     return cacheValue
-
-
-def setFileEncoding(fName, encoding):
-    """ Sets the file encoding. It is used when the user specifies
-        the encoding explicitly when the file is saved.
-    """
-    if __filePropertiesCache is None:
-        __initFilePropertiesCache()
-
-    if fName in __filePropertiesCache:
-        val = __filePropertiesCache[fName]
-        val[1] = encoding
-        __filePropertiesCache[fName] = val
 
 
 def compactPath(path, width, measure=len):
@@ -646,7 +600,7 @@ def compactPath(path, width, measure=len):
 
 def isPythonFile(fName):
     """True if it is a python file"""
-    mime, _, _, _ = getFileProperties(fName)
+    mime, _, _ = getFileProperties(fName)
     if mime is None:
         return False
     return 'python' in mime
@@ -668,7 +622,7 @@ def isCDMProjectMime(mime):
 
 def isCDMProjectFile(fName):
     """True if it is a codimension project file"""
-    mime, _, _, _ = getFileProperties(fName)
+    mime, _, _ = getFileProperties(fName)
     if mime is None:
         return False
     return 'x-codimension3' in mime

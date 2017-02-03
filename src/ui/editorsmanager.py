@@ -466,7 +466,7 @@ class EditorsManager(QTabWidget):
         else:
             newWidget.setShortName(shortName)
 
-        fileType, _, _, _ = getFileProperties(newWidget.getShortName())
+        fileType, _, _ = getFileProperties(newWidget.getShortName())
 
         if initialContent is None or isinstance(initialContent, bool):
             # Load a template content if available
@@ -834,7 +834,7 @@ class EditorsManager(QTabWidget):
                 return
 
         if fileType is None:
-            fileType, _, _, _ = getFileProperties(fileName)
+            fileType, _, _ = getFileProperties(fileName)
         if not isPythonMime(fileType):
             self.setTabIcon(widgetIndex, QIcon())
             self.setTabToolTip(widgetIndex, widget.getTooltip())
@@ -842,7 +842,7 @@ class EditorsManager(QTabWidget):
             return
 
         try:
-            info = GlobalData().briefModinfoCache.get(fileName)
+            info = GlobalData().getModInfo(fileName)
             if info.errors  or info.lexerErrors:
                 icon = getIcon('filepythonbroken.png')
                 self.setTabIcon(widgetIndex, icon)
@@ -854,7 +854,7 @@ class EditorsManager(QTabWidget):
                 self.setTabIcon(widgetIndex, QIcon())
                 self.history.updateIconForTab(widget.getUUID(), QIcon())
 
-                if info.docstring is not None and Settings().editorTooltips:
+                if info.docstring is not None and Settings()['editorTooltips']:
                     self.setTabToolTip(widgetIndex, info.docstring.text)
                 else:
                     self.setTabToolTip(widgetIndex, "")
@@ -1012,7 +1012,7 @@ class EditorsManager(QTabWidget):
             shortName = ".".join(parts)
             tooltip = "Annotated file: " + fileName
 
-            mime, _, _, _ = getFileProperties(fileName)
+            mime, _, _ = getFileProperties(fileName)
 
             newWidget = VCSAnnotateViewerTabWidget(self)
             newWidget.setFileType(mime)
@@ -1073,11 +1073,7 @@ class EditorsManager(QTabWidget):
             newWidget.reloadAllNonModifiedRequest.connect(
                 self.onReloadAllNonModified)
             newWidget.sigTabRunChanged.connect(self.onTabRunChanged)
-            editor = newWidget.getEditor()
             newWidget.readFile(fileName)
-
-            fileType, encoding, _, syntaxFile = getFileProperties(
-                fileName, needEncoding=True)
 
             if self.widget(0) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
@@ -1087,6 +1083,7 @@ class EditorsManager(QTabWidget):
             self.insertTab(0, newWidget, newWidget.getShortName())
             self.activateTab(0)
 
+            editor = newWidget.getEditor()
             if lineNo > 0:
                 # Jump to the asked line
                 editor.gotoLine(lineNo, pos)
@@ -1099,7 +1096,7 @@ class EditorsManager(QTabWidget):
                 else:
                     editor.gotoLine(1, 1, 1)
 
-            self._updateIconAndTooltip(self.currentIndex(), fileType)
+            self._updateIconAndTooltip(self.currentIndex(), editor.mime)
             self.__updateControls()
             self.__connectEditorWidget(newWidget)
             self.__updateStatusBar()
@@ -1111,7 +1108,7 @@ class EditorsManager(QTabWidget):
             self.setWidgetDebugMode(newWidget)
 
             self.sigFileTypeChanged.emit(fileName, newWidget.getUUID(),
-                                         fileType)
+                                         editor.mime if editor.mime else '')
         except Exception as exc:
             logging.error(str(exc))
             return False
@@ -1198,8 +1195,7 @@ class EditorsManager(QTabWidget):
             # to save on one disk operation for detecting a file type.
             # It could be changed due to a symlink or due to a newly populated
             # content like in .cgi files
-            newFileType, _, _, _ = getFileProperties(fileName, False,
-                                                     True, True)
+            newFileType, _, _ = getFileProperties(fileName, False, True, True)
             if oldFileType != newFileType:
                 widget.setFileType(newFileType)
                 widget.getEditor().bindLexer(fileName, newFileType)
@@ -1331,7 +1327,7 @@ class EditorsManager(QTabWidget):
 
         if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
             widget.getEditor().setModified(False)
-            newType, _, _, _ = getFileProperties(fileName, False, True, True)
+            newType, _, _ = getFileProperties(fileName, False, True, True)
             if newType != oldType or newType is None:
                 widget.setFileType(newType)
                 widget.getEditor().bindLexer(fileName, newType)
@@ -1952,7 +1948,7 @@ class EditorsManager(QTabWidget):
                 continue
 
             # Detect file type, it could be a picture
-            mime, _, _, _ = getFileProperties(fileName)
+            mime, _, _ = getFileProperties(fileName)
             if isImageViewable(mime):
                 self.openPixmapFile(fileName)
                 continue
@@ -2220,7 +2216,7 @@ class EditorsManager(QTabWidget):
         fileName = widget.getFileName()
         if widget.getType() not in [MainWindowTabWidgetBase.PlainTextEditor]:
             return
-        if widget.getFileType() not in [PythonFileType, Python3FileType]:
+        if not isPythonMime(widget.getFileType()):
             return
         if fileName == "":
             return

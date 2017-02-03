@@ -128,7 +128,7 @@ class RecentFileViewItem(QTreeWidgetItem):
         """Mark the file as OK"""
         self.__isValid = True
         fileName = self.getFilename()
-        mime, _, icon, _ = getFileProperties(fileName)
+        mime, icon, _ = getFileProperties(fileName)
         if isPythonMime(mime):
             # The tooltip could be the file docstring
             info = GlobalData().briefModinfoCache.get(fileName)
@@ -662,7 +662,7 @@ class RecentProjectsViewer(QWidget):
             logging.warning("Cannot open " + fName)
             return
 
-        mime, _, _, _ = getFileProperties(fName)
+        mime, _, _ = getFileProperties(fName)
         if isImageViewable(mime):
             GlobalData().mainWindow.openPixmapFile(fName)
         else:

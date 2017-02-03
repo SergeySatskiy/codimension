@@ -40,11 +40,12 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.misc import getLocaleDateTime
 from utils.encoding import SUPPORTED_CODECS, readEncodedFile, detectEolString
-from utils.fileutils import getFileProperties
-from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
-                                ImportsDiagramProgress)
+from utils.fileutils import getFileProperties, isPythonMime
+from utils.diskvaluesrelay import getRunParameters, addRunParams
 from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
                                getImportedNameDefinitionLine, resolveImports)
+from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
+                                ImportsDiagramProgress)
 from autocomplete.bufferutils import (getContext, getPrefixAndObject,
                                       getEditorTags, isImportLine,
                                       isStringLiteral, getCallPosition,
@@ -97,8 +98,6 @@ class TextEditor(QutepartWrapper):
 
         skin = GlobalData().skin
         self.__openedLine = -1
-
-        self.lexer_ = None
 
         self.__pyflakesMessages = {}    # marker handle -> error message
         self.ignoreBufferChangedSignal = False  # Changing margin icons also
@@ -386,8 +385,8 @@ class TextEditor(QutepartWrapper):
         """Called just before showing a context menu"""
         event.accept()
         if self._marginNumber(event.x()) is None:
-            self.__menuUndo.setEnabled(self.isUndoAvailable())
-            self.__menuRedo.setEnabled(self.isRedoAvailable())
+            self.__menuUndo.setEnabled(self.document().isUndoAvailable())
+            self.__menuRedo.setEnabled(self.document().isRedoAvailable())
             self.__menuCut.setEnabled(not self.isReadOnly())
             self.__menuPaste.setEnabled(QApplication.clipboard().text() != ""
                                         and not self.isReadOnly())
@@ -549,29 +548,16 @@ class TextEditor(QutepartWrapper):
             self.__breakpoints = {}
             self.text = content
 
+            self.mime, _, xmlSyntaxFile = getFileProperties(fileName)
+            if xmlSyntaxFile:
+                self.detectSyntax(xmlSyntaxFile)
+
             self.document().setModified(False)
         except Exception as exc:
             QApplication.restoreOverrideCursor()
             raise
 
         QApplication.restoreOverrideCursor()
-
-    def getFileEncoding(self, fileName, fileType):
-        """Provides the file encoding"""
-        if fileType in [DesignerFileType, LinguistFileType]:
-            # special treatment for Qt-Linguist and Qt-Designer files
-            return 'latin-1'
-
-        try:
-            f = open(unicode(fileName), 'rb')
-            fewLines = f.read(512)
-            f.close()
-        except IOError:
-            raise Exception("Cannot read file " + fileName +
-                            " to detect its encoding")
-
-        txt, encoding = decode(fewLines)
-        return encoding
 
     def writeFile(self, fileName):
         """Writes the text to a file"""
@@ -753,12 +739,6 @@ class TextEditor(QutepartWrapper):
         self.deleteLineRight()
         self.cursorPosition = currentLine, currentPos
         QApplication.processEvents()
-
-    def getLanguage(self):
-        """Provides the lexer language if it is set"""
-        if self.lexer_ is not None:
-            return self.lexer_.language()
-        return "Unknown"
 
     def getCurrentPosFont(self):
         """Provides the font of the current character"""
@@ -1378,13 +1358,13 @@ class TextEditor(QutepartWrapper):
 
     def onUndo(self):
         """Triggered when undo button is clicked"""
-        if self.isUndoAvailable():
+        if self.document().isUndoAvailable():
             self.undo()
             self._parent.modificationChanged()
 
     def onRedo(self):
         """Triggered when redo button is clicked"""
-        if self.isRedoAvailable():
+        if self.document().isRedoAvailable():
             self.redo()
             self._parent.modificationChanged()
 
@@ -1857,7 +1837,15 @@ class TextEditor(QutepartWrapper):
 
     def isPythonBuffer(self):
         """True if it is a python buffer"""
-        return isPythonMime(self._parent.getFileType())
+        return isPythonMime(self.mime)
+
+    def setMarginsBackgroundColor(self, color):
+        """Sets the margins background"""
+        pass
+
+    def setMarginsForegroundColor(self, color):
+        """Sets the margins foreground"""
+        pass
 
 
 class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
@@ -2097,7 +2085,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
     def updateStatus(self):
         """Updates the toolbar buttons status"""
         self.__updateRunDebugButtons()
-        if self.__fileType == UnknownFileType:
+        if self.__fileType is None:
             self.__fileType = self.getFileType()
         isPythonFile = isPythonMime(self.__fileType)
         self.importsDiagramButton.setEnabled(
@@ -2156,8 +2144,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __updateRunDebugButtons(self):
         """Enables/disables the run and debug buttons as required"""
-        return
-        enable = self.__fileType == PythonFileType and \
+        enable = isPythonMime(self.__fileType) and \
                  self.isModified() == False and \
                  self.__debugMode == False and \
                  os.path.isabs(self.__fileName)
@@ -2391,14 +2378,14 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
     def onProfileScriptSettings(self):
         """Shows the profile parameters dialogue"""
         fileName = self.getFileName()
-        params = GlobalData().getRunParameters(fileName)
+        params = getRunParameters(fileName)
         termType = Settings().terminalType
         profilerParams = Settings().getProfilerSettings()
         debuggerParams = Settings().getDebuggerSettings()
         dlg = RunDialog(fileName, params, termType,
                         profilerParams, debuggerParams, "Profile", self)
         if dlg.exec_() == QDialog.Accepted:
-            GlobalData().addRunParams(fileName, dlg.runParams)
+            addRunParams(fileName, dlg.runParams)
             if dlg.termType != termType:
                 Settings().terminalType = dlg.termType
             if dlg.profilerParams != profilerParams:
@@ -2422,14 +2409,14 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
             return
 
         fileName = self.getFileName()
-        params = GlobalData().getRunParameters(fileName)
+        params = getRunParameters(fileName)
         termType = Settings().terminalType
         profilerParams = Settings().getProfilerSettings()
         debuggerParams = Settings().getDebuggerSettings()
         dlg = RunDialog(fileName, params, termType,
                         profilerParams, debuggerParams, "Debug", self)
         if dlg.exec_() == QDialog.Accepted:
-            GlobalData().addRunParams(fileName, dlg.runParams)
+            addRunParams(fileName, dlg.runParams)
             if dlg.termType != termType:
                 Settings().terminalType = dlg.termType
             if dlg.debuggerParams != debuggerParams:
@@ -2467,8 +2454,8 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def passFocusToFlow(self):
         """Sets the focus to the graphics part"""
-        if self.__fileType == UnknownFileType:
-            self.__fileType = self.getFileType()
+        if self.__fileType is None:
+            self.getFileType()
         if isPythonMime(self.__fileType):
             self.__flowUI.setFocus()
             return True
@@ -2496,9 +2483,9 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         """Provides the file type"""
         if self.__fileType is None:
             if self.__fileName:
-                self.__fileType, _, _, _ = getFileProperties(self.__fileName)
+                self.__fileType, _, _ = getFileProperties(self.__fileName)
             elif self.__shortName:
-                self.__fileType, _, _, _ = getFileProperties(self.__shortName)
+                self.__fileType, _, _ = getFileProperties(self.__shortName)
         return self.__fileType
 
     def setFileType(self, typeToSet):
@@ -2513,12 +2500,14 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getLanguage(self):
         """Tells the content language"""
-        if self.__fileType is None:
-            self.__fileType = self.getFileType()
-        return "wwwwww"
-        if self.__fileType != UnknownFileType:
-            return getFileLanguage(self.__fileType)
-        return self.__editor.getLanguage()
+        editorLanguage = self.__editor.language()
+        if editorLanguage:
+            return editorLanguage
+
+        editorMime = self.__editor.mime
+        if editorMime:
+            return editorMime
+        return 'n/a'
 
     def getFileName(self):
         """Tells what file name of the widget content"""
@@ -2528,7 +2517,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         """Sets the file name"""
         self.__fileName = name
         self.__shortName = os.path.basename(name)
-        self.__fileType, _, _, _ = getFileProperties(name)
+        self.__fileType, _, _ = getFileProperties(name)
 
     def getEol(self):
         """Tells the EOL style"""
@@ -2599,8 +2588,10 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
         if mode == True:
             if disableEditing:
-                self.__editor.setMarginsBackgroundColor(skin.marginPaperDebug)
-                self.__editor.setMarginsForegroundColor(skin.marginColorDebug)
+                self.__editor.setMarginsBackgroundColor(
+                    skin['marginPaperDebug'])
+                self.__editor.setMarginsForegroundColor(
+                    skin['marginColorDebug'])
                 self.__editor.setReadOnly(True)
 
                 # Undo/redo
@@ -2611,13 +2602,15 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
                 self.removeTrailingSpacesButton.setEnabled(False)
                 self.expandTabsButton.setEnabled(False)
         else:
-            self.__editor.setMarginsBackgroundColor(skin.marginPaper)
-            self.__editor.setMarginsForegroundColor(skin.marginColor)
+            self.__editor.setMarginsBackgroundColor(skin['marginPaper'])
+            self.__editor.setMarginsForegroundColor(skin['marginColor'])
             self.__editor.setReadOnly(False)
 
             # Undo/redo
-            self.__undoButton.setEnabled(self.__editor.isUndoAvailable())
-            self.__redoButton.setEnabled(self.__editor.isRedoAvailable())
+            self.__undoButton.setEnabled(
+                self.__editor.document().isUndoAvailable())
+            self.__redoButton.setEnabled(
+                self.__editor.document().isRedoAvailable())
 
             # Spaces/tabs
             self.removeTrailingSpacesButton.setEnabled(True)

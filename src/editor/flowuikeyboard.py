@@ -52,7 +52,7 @@ class CFSceneKeyboardMixin:
                 Qt.Key_Escape: self.clearSelection}}
 
     def keyPressEvent(self, event):
-        """ Handles the key press event """
+        """Handles the key press event"""
         key = event.key()
         modifiers = int(event.modifiers())
         if modifiers in self.__hotKeys:

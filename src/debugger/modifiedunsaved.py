@@ -85,7 +85,7 @@ class ModifiedUnsavedDialog(QDialog):
         for item in files:
             fileName = item[0]
             fileItem = QTreeWidgetItem([fileName])
-            fileType, _, icon, _ = getFileProperties(fileName)
+            fileType, icon, _ = getFileProperties(fileName)
             fileItem.setIcon(0, icon)
             if isPythonMime(fileType):
                 infoSrc = GlobalData().briefModinfoCache

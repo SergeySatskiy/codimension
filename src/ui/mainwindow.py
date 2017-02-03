@@ -31,6 +31,7 @@ from utils.pixmapcache import getIcon
 from utils.settings import THIRDPARTY_DIR
 from utils.fileutils import (getFileProperties, isImageViewable, isImageFile,
                              isFileSearchable, isCDMProjectFile)
+from utils.diskvaluesrelay import getRunParameters, addRunParams
 from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
                                 ImportDiagramOptions)
 from utils.run import (getWorkingDir,
@@ -1570,7 +1571,7 @@ class CodimensionMainWindow(QMainWindow):
                 logging.error("Cannot open " + path + ", does not exist")
                 return
             # The type may differ...
-            mime, _, _, _ = getFileProperties(path)
+            mime, _, _ = getFileProperties(path)
         else:
             # The intermediate directory could be a link, so use the real path
             path = os.path.realpath(path)
@@ -1919,14 +1920,14 @@ class CodimensionMainWindow(QMainWindow):
         """Brings up the dialog with profile script settings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
-            params = GlobalData().getRunParameters(fileName)
+            params = getRunParameters(fileName)
             termType = self.settings.terminalType
             profilerParams = self.settings.getProfilerSettings()
             debuggerParams = self.settings.getDebuggerSettings()
             dlg = RunDialog(fileName, params, termType,
                             profilerParams, debuggerParams, "Profile")
             if dlg.exec_() == QDialog.Accepted:
-                GlobalData().addRunParams(fileName, dlg.runParams)
+                addRunParams(fileName, dlg.runParams)
                 if dlg.termType != termType:
                     self.settings.terminalType = dlg.termType
                 if dlg.profilerParams != profilerParams:
@@ -1937,14 +1938,14 @@ class CodimensionMainWindow(QMainWindow):
         """Brings up the dialog with debug script settings"""
         if self.__checkDebugPrerequisites():
             fileName = GlobalData().project.getProjectScript()
-            params = GlobalData().getRunParameters(fileName)
+            params = getRunParameters(fileName)
             termType = self.settings.terminalType
             profilerParams = self.settings.getProfilerSettings()
             debuggerParams = self.settings.getDebuggerSettings()
             dlg = RunDialog(fileName, params, termType,
                             profilerParams, debuggerParams, "Debug")
             if dlg.exec_() == QDialog.Accepted:
-                GlobalData().addRunParams(fileName, dlg.runParams)
+                addRunParams(fileName, dlg.runParams)
                 if dlg.termType != termType:
                     self.settings.terminalType = dlg.termType
                 if dlg.debuggerParams != debuggerParams:
@@ -3133,9 +3134,11 @@ class CodimensionMainWindow(QMainWindow):
             editor = currentWidget.getEditor()
 
         self.__undoAct.setShortcut("Ctrl+Z")
-        self.__undoAct.setEnabled(isPlainBuffer and editor.isUndoAvailable())
+        self.__undoAct.setEnabled(isPlainBuffer and
+                                  editor.document().isUndoAvailable())
         self.__redoAct.setShortcut("Ctrl+Y")
-        self.__redoAct.setEnabled(isPlainBuffer and editor.isRedoAvailable())
+        self.__redoAct.setEnabled(isPlainBuffer and
+                                  editor.document().isRedoAvailable())
         self.__cutAct.setShortcut("Ctrl+X")
         self.__cutAct.setEnabled(isPlainBuffer and not editor.isReadOnly())
         self.__copyAct.setShortcut("Ctrl+C")
@@ -3611,7 +3614,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def __dumpDebugSettings(self, fileName, fullEnvironment):
         """Provides common settings except the environment"""
-        runParameters = GlobalData().getRunParameters(fileName)
+        runParameters = getRunParameters(fileName)
         debugSettings = self.settings.getDebuggerSettings()
         workingDir = getWorkingDir(fileName, runParameters)
         arguments = parseCommandLineArguments(runParameters.arguments)

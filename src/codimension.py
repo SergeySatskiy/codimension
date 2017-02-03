@@ -267,14 +267,14 @@ def processCommandLineArgs(args):
             raise Exception("The file " + fName + " could not be opened")
 
     if len(args) == 1:
-        mime, _, _, _ = getFileProperties(args[0])
+        mime, _, _ = getFileProperties(args[0])
         if isCDMProjectMime(mime):
             return args[0]
         return ''
 
     # There are many files, check that they are python only
     for fName in args:
-        mime, _, _, _ = getFileProperties(fName)
+        mime, _, _ = getFileProperties(fName)
         if isCDMProjectMime(mime):
             raise Exception("Codimension project file (" +
                             fName + ") must not come "

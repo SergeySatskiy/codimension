@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,6 +32,7 @@ from utils.settings import Settings
 from utils.run import getCwdCmdEnv, CMD_TYPE_PROFILE
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.misc import getLocaleDateTime
+from utils.diskvaluesrelay import getRunParameters
 from .profwidget import ProfileResultsWidget
 
 POLL_INTERVAL = 0.1
@@ -123,7 +123,7 @@ class ProfilingProgressDialog(QDialog):
 
         sock, port = createDoneFeedbackSocket()
 
-        params = GlobalData().getRunParameters(self.__scriptName)
+        params = getRunParameters(self.__scriptName)
         workingDir, cmd, environment = getCwdCmdEnv(CMD_TYPE_PROFILE,
                                                     self.__scriptName, params,
                                                     Settings().terminalType,

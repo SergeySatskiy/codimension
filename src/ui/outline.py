@@ -90,7 +90,7 @@ class FileOutlineViewer(QWidget):
         browser.setContextMenuPolicy(Qt.CustomContextMenu)
         browser.customContextMenuRequested.connect(
             self.__handleShowContextMenu)
-        browser.selectionChanged.connect(self.__selectionChanged)
+        browser.sigFirstSelectedItem.connect(self.__selectionChanged)
 
     def __createLayout(self):
         """Helper to create the viewer layout"""
@@ -137,12 +137,12 @@ class FileOutlineViewer(QWidget):
 
     def __selectionChanged(self, index):
         """Handles the changed selection"""
-        if index is None:
-            self.__outlineBrowsers[self.__currentUUID].contentItem = None
-        else:
+        if index.isValid():
             self.__outlineBrowsers[self.__currentUUID].contentItem = \
                 self.__outlineBrowsers[
                     self.__currentUUID].browser.model().item(index)
+        else:
+            self.__outlineBrowsers[self.__currentUUID].contentItem = None
         self.__updateButtons()
 
     def __handleShowContextMenu(self, coord):

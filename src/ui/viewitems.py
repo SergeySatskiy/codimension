@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -416,7 +416,7 @@ class TreeViewFileItem(TreeViewItem):
         self.parsingErrors = False  # Used for python files only
         self.isLink = False
 
-        self.fileType, _, self.icon, _ = getFileProperties(path)
+        self.fileType, self.icon, _ = getFileProperties(path)
         if self.fileType is None:
             if self.icon is None:
                 self.icon = getIcon('filemisc.png')
@@ -431,7 +431,7 @@ class TreeViewFileItem(TreeViewItem):
             self.isLink = True
             self.toolTip = self.__linkTooltip(path)
             self.icon = getIcon('filelink.png')
-            self.fileType, _, _, _ = getFileProperties(os.path.realpath(path))
+            self.fileType, _, _ = getFileProperties(os.path.realpath(path))
             return
 
         # Fine corrections for some file types
@@ -467,14 +467,14 @@ class TreeViewFileItem(TreeViewItem):
         if not self.isLink:
             return
 
-        self.fileType, _, self.icon, _ = getFileProperties(path)
+        self.fileType, self.icon, _ = getFileProperties(path)
         if 'broken-symlink' in self.fileType:
             self.toolTip = self.__brokenLinkTooltip(path)
             return
 
         self.toolTip = self.__linkTooltip(path)
         self.icon = getIcon('filelink.png')
-        self.fileType, _, _, _ = getFileProperties(os.path.realpath(path))
+        self.fileType, _, _ = getFileProperties(os.path.realpath(path))
 
     @staticmethod
     def __brokenLinkTooltip(path):

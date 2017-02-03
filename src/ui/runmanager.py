@@ -27,6 +27,7 @@ from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
 from utils.procfeedback import killProcess
 from utils.globals import GlobalData
 from utils.settings import Settings
+from utils.diskvaluesrelay import getRunParameters, addRunParams
 from editor.redirectedrun import RunConsoleTabWidget
 from debugger.client.protocol_cdm_dbg import (EOT, RequestContinue,
                                               StdoutStderrEOT, ResponseRaw,
@@ -87,7 +88,7 @@ class RemoteProcessWrapper(QObject):
 
     def start(self):
         """Starts the remote process"""
-        params = GlobalData().getRunParameters(self.__path)
+        params = getRunParameters(self.__path)
         if self.__needRedirection:
             workingDir, cmd, environment = \
                 getCwdCmdEnv(CMD_TYPE_RUN, self.__path, params,
@@ -409,7 +410,7 @@ class RunManager(QObject):
     def run(self, path, needDialog):
         """Runs the given script with redirected IO"""
         if needDialog:
-            params = GlobalData().getRunParameters(path)
+            params = getRunParameters(path)
             termType = Settings().terminalType
             profilerParams = Settings().getProfilerSettings()
             debuggerParams = Settings().getDebuggerSettings()
@@ -418,7 +419,7 @@ class RunManager(QObject):
                             self.__mainWindow)
             if dlg.exec_() != QDialog.Accepted:
                 return
-            GlobalData().addRunParams(path, dlg.runParams)
+            addRunParams(path, dlg.runParams)
             if dlg.termType != termType:
                 Settings().terminalType = dlg.termType
 

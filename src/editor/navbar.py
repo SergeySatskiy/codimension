@@ -202,21 +202,20 @@ class NavigationBar(QFrame):
         if self.__parentWidget.getUUID() != uuid:
             return
 
-        if not isPythonMime(newFileType) or not Settings().showNavigationBar:
+        if isPythonMime(newFileType) and Settings()['showNavigationBar']:
+            # Update the bar and show it
+            self.setVisible(True)
+            self.updateBar()
+        else:
             self.__disconnectEditorSignals()
             self.__updateTimer.stop()
             self.__currentInfo = None
             self.setVisible(False)
             self.__currentIconState = self.STATE_UNKNOWN
-            return
-
-        # Update the bar and show it
-        self.setVisible(True)
-        self.updateBar()
 
     def updateSettings(self):
         """Called when navigation bar settings have been updated"""
-        if not Settings().showNavigationBar:
+        if not Settings()['showNavigationBar']:
             self.__disconnectEditorSignals()
             self.__updateTimer.stop()
             self.__currentInfo = None
@@ -236,7 +235,7 @@ class NavigationBar(QFrame):
             self.__connectEditorSignals()
 
         # Parse the buffer content
-        self.__currentInfo = getBriefModuleInfoFromMemory(self.__editor.text())
+        self.__currentInfo = getBriefModuleInfoFromMemory(self.__editor.text)
 
         # Decide what icon to use
         if self.__currentInfo.isOK:
@@ -321,7 +320,7 @@ class NavigationBar(QFrame):
         self.__populateClassesAndFunctions(self.__currentInfo,
                                            self.__globalScopeCombo)
 
-        if not Settings().navbarglobalsimports:
+        if not Settings()['navbarglobalsimports']:
             return
 
         if len(self.__currentInfo.globals) == 0 and \

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -467,7 +467,7 @@ class FindInFilesViewer(QWidget):
                 matchText = " (" + str(matched) + " matches)"
             columns = [item.fileName, matchText]
             fileItem = MatchTableFileItem(columns, item.bufferUUID)
-            _, _, icon, _ = getFileProperties(item.fileName)
+            _, icon, _ = getFileProperties(item.fileName)
             fileItem.setIcon(0, icon)
             if item.tooltip != "":
                 fileItem.setToolTip(0, item.tooltip)
