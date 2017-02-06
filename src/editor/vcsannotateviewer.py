@@ -243,7 +243,6 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
         self.__viewer.sigEscapePressed.connect(self.__onEsc)
         self.__fileName = ""
         self.__shortName = ""
-        self.__fileType = UnknownFileType
 
         self.__createLayout()
         self.__viewer.zoomTo(Settings()['zoom'])
@@ -300,10 +299,7 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def updateStatus(self):
         """Updates the toolbar buttons status"""
-        if self.__fileType == UnknownFileType:
-            self.__fileType = self.getFileType()
-        isPythonFile = self.__fileType in [PythonFileType, Python3FileType]
-        self.lineCounterButton.setEnabled(isPythonFile)
+        self.lineCounterButton.setEnabled(isPythonMime(self.mime))
 
     def onZoomReset(self):
         """Triggered when the zoom reset button is pressed"""
@@ -341,7 +337,7 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def onOpenImport(self):
         """Triggered when Ctrl+I is received"""
-        if self.__fileType not in [PythonFileType, Python3FileType]:
+        if not isPythonMime(self.__viewer.mime):
             return True
 
         # Python file, we may continue
@@ -474,17 +470,9 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
         """Tells if the file is read only"""
         return "RO"
 
-    def getFileType(self):
+    def getMime(self):
         """Provides the file type"""
-        if self.__fileType == UnknownFileType:
-            if self.__shortName:
-                self.__fileType = detectFileType(self.__shortName)
-        return self.__fileType
-
-    def setFileType(self, typeToSet):
-        """Sets the file type explicitly.
-           It needs e.g. for .cgi files which can change its type"""
-        self.__fileType = typeToSet
+        return self.__viewer.mime
 
     def getType(self):
         """Tells the widget type"""
@@ -492,11 +480,10 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getLanguage(self):
         """Tells the content language"""
-        if self.__fileType == UnknownFileType:
-            self.__fileType = self.getFileType()
-        if self.__fileType != UnknownFileType:
-            return getFileLanguage(self.__fileType)
-        return self.__viewer.getLanguage()
+        lang = self.__viewer.language()
+        if lang:
+            return lang
+        return self.__viewer.mime if self.__viewer.mime else 'n/a'
 
     def getFileName(self):
         """Tells what file name of the widget content"""
@@ -536,4 +523,3 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
     def setShortName(self, name):
         """Sets the display name"""
         self.__shortName = name
-        self.__fileType = detectFileType(name)

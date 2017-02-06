@@ -66,10 +66,7 @@ class FilePositions:
 
     def getFilePosition(self, fileName):
         """Provides the position or (-1,-1,-1,-1,-1) if not found"""
-        try:
-            return self.__filePos[fileName]
-        except KeyError:
-            return (-1, -1, -1, -1, -1)
+        return self.__filePos.get(fileName, (-1, -1, -1, -1, -1))
 
     def updateFilePosition(self, fileName, line, pos, firstLine,
                            horizontalPos, verticalPos):

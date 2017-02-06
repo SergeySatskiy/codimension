@@ -175,6 +175,7 @@ def _getFirstNonSpacePos(text):
 
 def _endsWithTripleQuotedString(editor, line, pos):
     """True if the position is a triple quoted string literal"""
+    return False
     editorPos = editor.positionFromLineIndex(line, pos)
     return editor.styleAt(editorPos) in \
         [QsciLexerPython.TripleDoubleQuotedString,

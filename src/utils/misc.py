@@ -114,17 +114,17 @@ def getNewFileTemplate():
     projectLoaded = project.isLoaded()
     if projectLoaded:
         subs = [(re.compile(re.escape('$projectdate'), re.I),
-                 project.creationDate),
+                 project.props['creationdate']),
                 (re.compile(re.escape('$author'), re.I),
-                 project.author),
+                 project.props['author']),
                 (re.compile(re.escape('$license'), re.I),
-                 project.license),
+                 project.props['license']),
                 (re.compile(re.escape('$copyright'), re.I),
-                 project.copyright),
+                 project.props['copyright']),
                 (re.compile(re.escape('$version'), re.I),
-                 project.version),
+                 project.props['version']),
                 (re.compile(re.escape('$email'), re.I),
-                 project.email)]
+                 project.props['email'])]
     else:
         subs = []
 
@@ -139,7 +139,7 @@ def getNewFileTemplate():
     if projectLoaded:
         # description could be multilined so it is a different story
         descriptionRegexp = re.compile(re.escape('$description'), re.I)
-        description = project.description.split('\n')
+        description = project.props['description'].split('\n')
 
     result = []
     for line in content:

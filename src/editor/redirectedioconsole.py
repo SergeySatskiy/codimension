@@ -922,16 +922,9 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
         """Tells if the file is read only"""
         return "IO"
 
-    def getFileType(self):
+    def getMime(self):
         """Provides the file type"""
-        return ""
-
-    def setFileType(self, typeToSet):
-        """Sets the file type explicitly.
-           It needs e.g. for .cgi files which can change its type
-        """
-        raise Exception("Setting a file type is not supported by the "
-                        "IO console widget")
+        return None
 
     def getType(self):
         """Tells the widget type"""

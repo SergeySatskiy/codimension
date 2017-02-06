@@ -96,7 +96,7 @@ class PyflakesViewer(QObject):
             return
 
         # This is text editor, detect the file type
-        if isPythonMime(widget.getFileType()):
+        if isPythonMime(widget.getMime()):
             self.__currentUUID = None
             self.setFlakesNotAvailable(self.__uiLabel)
             return

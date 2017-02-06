@@ -35,6 +35,7 @@ from utils.pixmapcache import getPixmap, getIcon
 from utils.globals import GlobalData
 from utils.fileutils import isPythonMime
 from utils.settings import Settings
+from utils.diskvaluesrelay import getFilePosition
 from .flowuicontextmenus import CFSceneContextMenuMixin
 from .flowuimouse import CFSceneMouseMixin
 from .flowuikeyboard import CFSceneKeyboardMixin
@@ -435,8 +436,7 @@ class FlowUIWidget(QWidget):
         if not self.__connected:
             self.__connectEditorSignals()
 
-        content = self.__editor.text()
-        cf = getControlFlowFromMemory(content)
+        cf = getControlFlowFromMemory(self.__editor.text)
         if cf.errors:
             self.__navBar.updateInfoIcon(self.__navBar.STATE_BROKEN_UTD)
             errors = []
@@ -512,8 +512,7 @@ class FlowUIWidget(QWidget):
 
         # The buffer type change event comes when the content is loaded first
         # time. So this is a good point to restore the position
-        _, _, _, cflowHPos, cflowVPos = \
-            Settings().filePositions.getPosition(fileName)
+        _, _, _, cflowHPos, cflowVPos = getFilePosition(fileName)
         self.setScrollbarPositions(cflowHPos, cflowVPos)
 
     def __connectEditorSignals(self):

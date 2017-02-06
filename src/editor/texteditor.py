@@ -392,15 +392,11 @@ class TextEditor(QutepartWrapper):
                                         and not self.isReadOnly())
 
             # Check the proper encoding in the menu
-            fileType = self._parent.getFileType()
             fileName = self._parent.getFileName()
-            if fileType in [ DesignerFileType, LinguistFileType ]:
-                self.encodingMenu.setEnabled( False )
-            else:
-                self.encodingMenu.setEnabled( True )
-                encoding = self.__normalizeEncoding( self.encoding )
-                if encoding in self.supportedEncodings:
-                    self.supportedEncodings[ encoding ].setChecked( True )
+            self.encodingMenu.setEnabled( True )
+            encoding = self.__normalizeEncoding( self.encoding )
+            if encoding in self.supportedEncodings:
+                self.supportedEncodings[ encoding ].setChecked( True )
 
             self.__menuOpenAsFile.setEnabled(self.openAsFileAvailable())
             self.__menuDownloadAndShow.setEnabled(
@@ -1865,7 +1861,6 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         self.__editor = TextEditor(self, debugger)
         self.__fileName = ""
         self.__shortName = ""
-        self.__fileType = None
 
         self.__createLayout()
         self.__editor.zoomTo(Settings()['zoom'])
@@ -2085,9 +2080,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
     def updateStatus(self):
         """Updates the toolbar buttons status"""
         self.__updateRunDebugButtons()
-        if self.__fileType is None:
-            self.__fileType = self.getFileType()
-        isPythonFile = isPythonMime(self.__fileType)
+        isPythonFile = isPythonMime(self.__editor.mime)
         self.importsDiagramButton.setEnabled(
             isPythonFile and GlobalData().graphvizAvailable)
         self.__editor.importsDgmAct.setEnabled(
@@ -2144,7 +2137,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __updateRunDebugButtons(self):
         """Enables/disables the run and debug buttons as required"""
-        enable = isPythonMime(self.__fileType) and \
+        enable = isPythonMime(self.__editor.mime) and \
                  self.isModified() == False and \
                  self.__debugMode == False and \
                  os.path.isabs(self.__fileName)
@@ -2254,7 +2247,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def onOpenImport(self):
         """Triggered when Ctrl+I is received"""
-        if not isPythonMime(self.__fileType):
+        if not isPythonMime(self.__editor.mime):
             return True
 
         # Python file, we may continue
@@ -2454,9 +2447,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def passFocusToFlow(self):
         """Sets the focus to the graphics part"""
-        if self.__fileType is None:
-            self.getFileType()
-        if isPythonMime(self.__fileType):
+        if isPythonMime(self.__editor.mime):
             self.__flowUI.setFocus()
             return True
         return False
@@ -2475,24 +2466,11 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         """Tells if the file is read only"""
         if not os.path.exists(self.__fileName):
             return "N/A"
-        if QFileInfo(self.__fileName).isWritable():
-            return "RW"
-        return "RO"
+        return 'RW' if QFileInfo(self.__fileName).isWritable() else 'RO'
 
-    def getFileType(self):
-        """Provides the file type"""
-        if self.__fileType is None:
-            if self.__fileName:
-                self.__fileType, _, _ = getFileProperties(self.__fileName)
-            elif self.__shortName:
-                self.__fileType, _, _ = getFileProperties(self.__shortName)
-        return self.__fileType
-
-    def setFileType(self, typeToSet):
-        """Sets the file type explicitly.
-           It needs e.g. for .cgi files which can change its type
-        """
-        self.__fileType = typeToSet
+    def getMime(self):
+        """Provides the buffer mime"""
+        return self.__editor.mime
 
     def getType(self):
         """Tells the widget type"""
@@ -2503,11 +2481,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         editorLanguage = self.__editor.language()
         if editorLanguage:
             return editorLanguage
-
-        editorMime = self.__editor.mime
-        if editorMime:
-            return editorMime
-        return 'n/a'
+        return self.__editor.mime if self.__editor.mime else 'n/a'
 
     def getFileName(self):
         """Tells what file name of the widget content"""
@@ -2517,7 +2491,6 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         """Sets the file name"""
         self.__fileName = name
         self.__shortName = os.path.basename(name)
-        self.__fileType, _, _ = getFileProperties(name)
 
     def getEol(self):
         """Tells the EOL style"""
@@ -2548,7 +2521,6 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
     def setShortName(self, name):
         """Sets the display name"""
         self.__shortName = name
-        self.__fileType = detectFileType(name)
 
     def isDiskFileModified(self):
         """Return True if the loaded file is modified"""
@@ -2626,7 +2598,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
            self.__fileName == "" or \
            os.path.isabs(self.__fileName) == False:
             return False
-        if not isPythonMime(self.getFileType()):
+        if not isPythonMime(self.getMime()):
             return False
 
         if line is None:

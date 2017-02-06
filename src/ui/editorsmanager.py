@@ -29,15 +29,17 @@ import logging
 import os
 import os.path
 from utils.pixmapcache import getIcon
-from editor.texteditor import TextEditorTabWidget
 from utils.misc import getNewFileTemplate, getLocaleDateTime
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import (getFileProperties, isImageViewable,
                              isPythonMime, isPythonFile)
+from utils.diskvaluesrelay import getFilePosition, updateFilePosition
+from utils.encoding import detectEolString, detectWriteEncoding
 from diagram.importsdgmgraphics import ImportDgmTabWidget
 from profiling.disasmwidget import DisassemblerResultsWidget
 from editor.vcsannotateviewer import VCSAnnotateViewerTabWidget
+from editor.texteditor import TextEditorTabWidget
 from .qt import (Qt, QDir, QUrl, pyqtSignal, QIcon, QTabWidget,
                  QDialog, QMessageBox, QWidget, QHBoxLayout, QMenu,
                  QToolButton, QShortcut, QFileDialog, QApplication, QTabBar)
@@ -466,21 +468,25 @@ class EditorsManager(QTabWidget):
         else:
             newWidget.setShortName(shortName)
 
-        fileType, _, _ = getFileProperties(newWidget.getShortName())
+        editor.mime, _, xmlSyntaxFile = \
+            getFileProperties(newWidget.getShortName())
 
         if initialContent is None or isinstance(initialContent, bool):
             # Load a template content if available
             initialContent = getNewFileTemplate()
             if initialContent != "":
-                editor.setText(initialContent)
-                lineNo = editor.lines()
-                editor.gotoLine(lineNo, editor.lineLength(lineNo - 1) + 1)
+                editor.text = initialContent
+                lineNo = len(editor.lines)
+                editor.gotoLine(lineNo, len(editor.line[lineNo - 1]) + 1)
         else:
-            editor.setText(initialContent)
-        editor.setModified(False)
+            editor.text = initialContent
 
-        # Bind a lexer
-        editor.bindLexer(newWidget.getShortName(), fileType)
+        editor.eol = detectEolString(editor.text)
+        editor.encoding = detectWriteEncoding(editor, newWidget.getShortName())
+        if xmlSyntaxFile:
+            self.detectSyntax(xmlSyntaxFile)
+
+        editor.setModified(False)
 
         self.insertTab(0, newWidget, newWidget.getShortName())
         self.activateTab(0)
@@ -492,8 +498,9 @@ class EditorsManager(QTabWidget):
         newWidget.updateStatus()
         self.setWidgetDebugMode(newWidget)
 
+        # Here: mime will always be x-python
         self.sigFileTypeChanged.emit(newWidget.getShortName(),
-                                     newWidget.getUUID(), fileType)
+                                     newWidget.getUUID(), editor.mime)
 
     def __updateControls(self):
         """Updates the navigation buttons status"""
@@ -576,9 +583,15 @@ class EditorsManager(QTabWidget):
         # - the changes were saved successfully
         # - there were no changes
 
-        if self.widget(index).getType() == MainWindowTabWidgetBase.PlainTextEditor:
+        widgetType = self.widget(index).getType()
+        if widgetType == MainWindowTabWidgetBase.PlainTextEditor:
             # Check the breakpoints validity
             self.widget(index).getEditor().validateBreakpoints()
+
+        if widgetType in [MainWindowTabWidgetBase.PlainTextEditor,
+                          MainWindowTabWidgetBase.VCSAnnotateViewer]:
+            # Terminate the syntax highlight if needed
+            self.widget(index).getEditor().terminate()
 
         closingUUID = self.widget(index).getUUID()
         if not wasDiscard and not enforced:
@@ -629,10 +642,10 @@ class EditorsManager(QTabWidget):
 
             cflowHPos = -1
             cflowVPos = -1
-            if isPythonMime(widget.getFileType()):
+            if isPythonMime(widget.getMime()):
                 cflowHPos, cflowVPos = widget.getCFEditor().getScrollbarPositions()
 
-            Settings().updateFilePosition(
+            updateFilePosition(
                 widget.getFileName(), line, pos, editor.firstVisibleLine(),
                 cflowHPos, cflowVPos)
 
@@ -1090,7 +1103,7 @@ class EditorsManager(QTabWidget):
             else:
                 # Restore the last position
                 line, pos, firstVisible, cflowHPos, cflowVPos = \
-                            Settings().getFilePosition(fileName)
+                            getFilePosition(fileName)
                 if line != -1:
                     editor.gotoLine(line + 1, pos + 1, firstVisible + 1)
                 else:
@@ -1186,7 +1199,7 @@ class EditorsManager(QTabWidget):
                     return True
 
             # Save the buffer into the file
-            oldFileType = widget.getFileType()
+            oldFileType = widget.getMime()
             if widget.writeFile(fileName) == False:
                 # Error saving.
                 return False
@@ -1311,7 +1324,7 @@ class EditorsManager(QTabWidget):
             if res == QMessageBox.Abort or res == QMessageBox.Cancel:
                 return False
 
-        oldType = widget.getFileType()
+        oldType = widget.getMime()
 
         existedBefore = os.path.exists(fileName)
 
@@ -1718,7 +1731,7 @@ class EditorsManager(QTabWidget):
         index = self.currentIndex()
         currentWidget = self.currentWidget()
         if modified:
-            title = Settings().modifiedFormat % currentWidget.getShortName()
+            title = Settings()['modifiedFormat'] % currentWidget.getShortName()
             self.setTabText(index, title)
         else:
             self.setTabText(index, currentWidget.getShortName())
@@ -2216,7 +2229,7 @@ class EditorsManager(QTabWidget):
         fileName = widget.getFileName()
         if widget.getType() not in [MainWindowTabWidgetBase.PlainTextEditor]:
             return
-        if not isPythonMime(widget.getFileType()):
+        if not isPythonMime(widget.getMime()):
             return
         if fileName == "":
             return

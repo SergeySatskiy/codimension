@@ -70,9 +70,29 @@ def addRunParams(fileName, params):
     Settings().addRunParameters(fileName, params)
 
 
+def getFilePosition(fileName):
+    """Provides the position or (-1,-1,-1,-1,-1) if not found"""
+    project = GlobalData().project
+    if project.isLoaded():
+        if project.isProjectFile(fileName):
+            key = relpath(fileName, dirname(project.fileName))
+            return project.getFilePosition(key)
+    return Settings().getFilePosition(fileName)
+
+
+def updateFilePosition(fileName, line, pos, firstLine,
+                       horizontalPos, verticalPos):
+    """Updates the position for the file"""
+    project = GlobalData().project
+    if project.isLoaded():
+        if project.isProjectFile(fileName):
+            key = relpath(fileName, dirname(project.fileName))
+            project.updateFilePosition(key, line, pos, firstLine,
+                                       horizontalPos, verticalPos)
+            return
+    Settings().updateFilePosition(fileName, line, pos, firstLine,
+                                  horizontalPos, verticalPos)
 
 ##DebuggerEnvironment
 ##SearchEnvironment
 ##FileSystemEnvironment
-##RunParametersCache
-##FilePositions

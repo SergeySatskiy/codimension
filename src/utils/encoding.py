@@ -72,6 +72,11 @@ CODING_FROM_BYTES = [
     (1, re.compile(br'''<\?xml.*\bencoding\s*=\s*['"]([-\w_.]+)['"]\?>'''))]
 
 
+CODING_FROM_TEXT = [
+    (2, re.compile(r'''coding[:=]\s*([-\w_.]+)''')),
+    (1, re.compile(r'''<\?xml.*\bencoding\s*=\s*['"]([-\w_.]+)['"]\?>'''))]
+
+
 def convertLineEnds(text, eol):
     """Converts the end of line characters in text to the given eol"""
     if eol == '\r\n':
@@ -133,6 +138,19 @@ def getCodingFromBytes(text):
             match = regexp.search(line)
             if match:
                 return str(match.group(1), 'ascii')
+    return None
+
+
+def getCodingFromText(text):
+    """Tries to find an encoding spec from a text file content"""
+    lines = text.splitlines()
+    for cft in CODING_FROM_TEXT:
+        head = lines[:cft[0]]
+        regexp = cft[1]
+        for line in head:
+            match = regexp.search(line)
+            if match:
+                return match.group(1)
     return None
 
 
@@ -293,3 +311,79 @@ def readEncodedFile(fName):
     # Step 7: last resort utf-8 with loosing information
     logging.warning("Last try: utf-8 decoding ignoring the errors...")
     return str(text, 'utf-8', 'ignore'), 'utf-8'
+
+
+def detectWriteEncoding(editor, fName):
+    """Detects the write encoding for a buffer"""
+    isPython = isPythonFile(fName)
+
+    if editor.newFileUserEncoding:
+        # The user specifically set an encoding for a new buffer
+        if isPython:
+            encFromText = getCodingFromText(editor.text)
+            if encFromText:
+                if not isValidEncoding(encFromText):
+                    logging.warning(
+                        "Encoding from the buffer (" + encFromText + ") is "
+                        "invalid and does not match the explicitly set "
+                        "encoding " + editor.newFileUserEncoding + ". The " +
+                        editor.newFileUserEncoding + " is used")
+                elif not areEncodingsEqual(editor.newFileUserEncoding,
+                                           encFromText):
+                    logging.warning(
+                        "Encoding from the buffer (" + encFromText + ") does "
+                        "not match the explicitly set encoding " +
+                        editor.newFileUserEncoding + ". The " +
+                        editor.newFileUserEncoding + " is used")
+        return editor.newFileUserEncoding
+
+    # Here: it could be
+    # - a new file with auto picked encoding
+    # - disk file auto or user set encoding
+    if os.path.isabs(fName):
+        userAssignedEncoding = getFileEncoding(fName)
+        if userAssignedEncoding:
+            if isPython:
+                encFromText = getCodingFromText(editor.text)
+                if encFromText:
+                    if not isValidEncoding(encFromText):
+                        logging.warning(
+                            "Encoding from the buffer (" + encFromText +
+                            ") is invalid and does not match the explicitly "
+                            "set encoding " + userAssignedEncoding + ". The " +
+                            userAssignedEncoding + " is used")
+                    elif not areEncodingsEqual(userAssignedEncoding,
+                                               encFromText):
+                    logging.warning(
+                        "Encoding from the buffer (" + encFromText + ") does "
+                        "not match the explicitly set encoding " +
+                        userAssignedEncoding + ". The " +
+                        userAssignedEncoding + " is used")
+            return userAssignedEncoding
+
+    # Check the buffer
+    if isPython:
+        encFromText = getCodingFromText(editor.text)
+        if encFromText:
+            if not isValidEncoding(encFromText):
+                logging.error(
+                    "Encoding from the buffer (" + encFromText +
+                    ") is invalid. Please fix the encoding in the source "
+                    "or explicitly set the required one and try again.")
+                return None
+            return encFromText
+
+    # Check the project default encoding
+    project = GlobalData().project
+    if project.isLoaded():
+        projectEncoding = project.props['encoding']
+        if projectEncoding:
+            return projectEncoding
+
+    # Check the IDE wide encoding
+    ideEncoding = Settings()['encoding']
+    if ideEncoding:
+        return ideEncoding
+
+    # The default one
+    return 'utf-8'

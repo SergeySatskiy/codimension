@@ -2794,7 +2794,7 @@ class CodimensionMainWindow(QMainWindow):
         return currentWidget.getType() in \
             [MainWindowTabWidgetBase.PlainTextEditor,
              MainWindowTabWidgetBase.VCSAnnotateViewer] and \
-            isPythonMime(currentWidget.getFileType())
+            isPythonMime(currentWidget.getMime())
 
     def __isGraphicsBuffer(self):
         """True if is pictures viewer"""

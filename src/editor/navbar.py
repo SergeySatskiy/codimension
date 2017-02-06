@@ -74,10 +74,7 @@ class NavBarComboBox(QComboBox):
     def onActivated(self, index):
         """User selected an item"""
         if index >= 0:
-            itemData = self.itemData(index)
-            line, isOK = itemData.toInt()
-            if isOK:
-                self.jumpToLine.emit(line)
+            self.jumpToLine.emit(self.itemData(index))
 
 
 class PathElement:
@@ -228,7 +225,7 @@ class NavigationBar(QFrame):
         """Triggered when the timer is fired"""
         self.__updateTimer.stop()  # just in case
 
-        if not isPythonMime(self.__parentWidget.getFileType()):
+        if not isPythonMime(self.__parentWidget.getMime()):
             return
 
         if not self.__connected:
