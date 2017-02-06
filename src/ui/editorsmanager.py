@@ -483,6 +483,7 @@ class EditorsManager(QTabWidget):
 
         editor.eol = detectEolString(editor.text)
         editor.encoding = detectWriteEncoding(editor, newWidget.getShortName())
+
         if xmlSyntaxFile:
             self.detectSyntax(xmlSyntaxFile)
 

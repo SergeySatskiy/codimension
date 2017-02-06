@@ -22,6 +22,7 @@
 import re
 import encodings
 import logging
+import os.path
 from codecs import BOM_UTF8, BOM_UTF16, BOM_UTF32
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from .diskvaluesrelay import getFileEncoding
@@ -259,13 +260,13 @@ def readEncodedFile(fName):
     project = GlobalData().project
     if project.isLoaded():
         projectEncoding = project.props['encoding']
+        normProjectEncoding = encodings.normalize_encoding(projectEncoding)
         if projectEncoding:
             if not isValidEncoding(projectEncoding):
                 logging.error("Invalid project encoding: " +
                               projectEncoding + ". Continue trying...")
-            elif encodings.normalize_encoding(projectEncoding) not in triedEncodings:
-                triedEncodings.append(
-                    encodings.normalize_encoding(projectEncoding))
+            elif normProjectEncoding not in triedEncodings:
+                triedEncodings.append(normProjectEncoding)
                 try:
                     decodedText = str(text, projectEncoding)
                     if isPython:
@@ -313,12 +314,23 @@ def readEncodedFile(fName):
     return str(text, 'utf-8', 'ignore'), 'utf-8'
 
 
+def detectNewFileWriteEncoding(editor, fName):
+    """Detects a new file encoding"""
+
+
+
+def detectExistingFileWriteEncoding(editor, fName):
+    """Provides the previously opened file encoding"""
+    
+
+
 def detectWriteEncoding(editor, fName):
     """Detects the write encoding for a buffer"""
     isPython = isPythonFile(fName)
 
     if editor.newFileUserEncoding:
         # The user specifically set an encoding for a new buffer
+        # It is impossible to set an invalid encoding
         if isPython:
             encFromText = getCodingFromText(editor.text)
             if encFromText:
@@ -343,6 +355,11 @@ def detectWriteEncoding(editor, fName):
     if os.path.isabs(fName):
         userAssignedEncoding = getFileEncoding(fName)
         if userAssignedEncoding:
+            if not isValidEncoding(userAssignedEncoding):
+                logging.error(
+                    "User assigned encoding " + userAssignedEncoding + " is "
+                    "invalid. Please assign a valid one and try again.")
+                return None
             if isPython:
                 encFromText = getCodingFromText(editor.text)
                 if encFromText:
@@ -361,6 +378,11 @@ def detectWriteEncoding(editor, fName):
                             userAssignedEncoding + " is used")
             return userAssignedEncoding
 
+        # Second option here: the file was loaded with certain encoding
+        if editor.encoding:
+            
+
+
     # Check the buffer
     if isPython:
         encFromText = getCodingFromText(editor.text)
@@ -378,11 +400,21 @@ def detectWriteEncoding(editor, fName):
     if project.isLoaded():
         projectEncoding = project.props['encoding']
         if projectEncoding:
+            if not isValidEncoding(projectEncoding):
+                logging.error(
+                    "The prject encoding " + projectEncoding + " is invalid. "
+                    "Please select a valid one in the project properties and "
+                    "try again.")
+                return None
             return projectEncoding
 
     # Check the IDE wide encoding
     ideEncoding = Settings()['encoding']
     if ideEncoding:
+        if not isValidEncoding(ideEncoding):
+            logging.error("The ide encoding " + ideEncoding + " is invalid. "
+                          "Please set a valid one and try again.")
+            return None
         return ideEncoding
 
     # The default one
