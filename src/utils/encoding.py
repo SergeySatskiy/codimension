@@ -354,11 +354,11 @@ def detectWriteEncoding(editor, fName):
                             userAssignedEncoding + " is used")
                     elif not areEncodingsEqual(userAssignedEncoding,
                                                encFromText):
-                    logging.warning(
-                        "Encoding from the buffer (" + encFromText + ") does "
-                        "not match the explicitly set encoding " +
-                        userAssignedEncoding + ". The " +
-                        userAssignedEncoding + " is used")
+                        logging.warning(
+                            "Encoding from the buffer (" + encFromText + ") "
+                            "does not match the explicitly set encoding " +
+                            userAssignedEncoding + ". The " +
+                            userAssignedEncoding + " is used")
             return userAssignedEncoding
 
     # Check the buffer

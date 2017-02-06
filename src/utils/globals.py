@@ -21,14 +21,11 @@
 
 import sys
 import os
-from os.path import relpath, dirname, sep, realpath, isdir, exists, isfile
-from subprocess import check_output, STDOUT
-from distutils.version import StrictVersion
+from os.path import sep, realpath, isdir, exists, isfile
 from plugins.manager.pluginmanager import CDMPluginManager
 from .project import CodimensionProject
 from .briefmodinfocache import BriefModuleInfoCache
-from .settings import SETTINGS_DIR, Settings
-from .config import DEFAULT_ENCODING
+from .settings import SETTINGS_DIR
 
 
 # This function needs to have a rope project built smart

@@ -25,7 +25,7 @@ from ui.qt import (Qt, QSize, QPoint, pyqtSignal, QToolBar, QFont,
                    QFontMetrics, QHBoxLayout, QWidget, QAction, QSizePolicy,
                    QToolTip)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from utils.fileutils import getFileProperties
+from utils.fileutils import getFileProperties, isPythonMime
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings

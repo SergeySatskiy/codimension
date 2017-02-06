@@ -20,7 +20,9 @@
 """Text editor implementation"""
 
 
-import os.path, logging, urllib, socket
+import os.path
+import logging
+import socket
 from ui.qt import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal,
                    QRect, QEvent, QPoint, QModelIndex, QCursor, QFontMetrics,
                    QDesktopServices, QFont, QApplication, QToolBar,
@@ -35,7 +37,7 @@ from ui.linecounter import LineCounterDialog
 from ui.calltip import Calltip
 from ui.importlist import ImportListWidget
 from ui.outsidechanges import OutsideChangeWidget
-from utils.pixmapcache import getIcon, getPixmap
+from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.misc import getLocaleDateTime
@@ -138,7 +140,8 @@ class TextEditor(QutepartWrapper):
         if self.__debugger:
             bpointModel = self.__debugger.getBreakPointModel()
             bpointModel.rowsAboutToBeRemoved.connect(self.__deleteBreakPoints)
-            bpointModel.sigDataAboutToBeChanged.connect(self.__breakPointDataAboutToBeChanged)
+            bpointModel.sigDataAboutToBeChanged.connect(
+                self.__breakPointDataAboutToBeChanged)
             bpointModel.dataChanged.connect(self.__changeBreakPoints)
             bpointModel.rowsInserted.connect(self.__addBreakPoints)
 
@@ -346,13 +349,6 @@ class TextEditor(QutepartWrapper):
         encoding = act.data().toString()
         self.setEncoding(encoding + "-selected")
 
-    @staticmethod
-    def __normalizeEncoding(enc):
-        " Strips display purpose suffix "
-        return enc.replace("-default", "") \
-                  .replace("-guessed", "") \
-                  .replace("-selected", "")
-
     def __initToolsMenu(self):
         """Creates the tools menu"""
         self.toolsMenu = QMenu("Too&ls")
@@ -393,8 +389,8 @@ class TextEditor(QutepartWrapper):
 
             # Check the proper encoding in the menu
             fileName = self._parent.getFileName()
-            self.encodingMenu.setEnabled( True )
-            encoding = self.__normalizeEncoding( self.encoding )
+            self.encodingMenu.setEnabled(True)
+            encoding = self.encoding
             if encoding in self.supportedEncodings:
                 self.supportedEncodings[ encoding ].setChecked( True )
 
@@ -516,22 +512,6 @@ class TextEditor(QutepartWrapper):
     def clearCurrentDebuggerLine(self):
         """Removes the current debugger line marker"""
         pass
-
-    def setEncoding(self, newEncoding):
-        """Sets the required encoding for the buffer"""
-        if newEncoding == self.encoding:
-            return
-
-        encoding = self.__normalizeEncoding(newEncoding)
-        if encoding not in supportedCodecs:
-            logging.warning("Cannot change encoding to '" +
-                            newEncoding + "'. "
-                            "Supported encodings are: " +
-                            ", ".join(sorted(supportedCodecs)))
-            return
-
-        self.encoding = newEncoding
-        GlobalData().mainWindow.sbEncoding.setText(newEncoding)
 
     def readFile(self, fileName):
         """Reads the text from a file"""
@@ -2498,12 +2478,12 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getLine(self):
         """Tells the cursor line"""
-        line, pos = self.__editor.cursorPosition
+        line, _ = self.__editor.cursorPosition
         return int(line)
 
     def getPos(self):
         """Tells the cursor column"""
-        line, pos = self.__editor.cursorPosition
+        _, pos = self.__editor.cursorPosition
         return int(pos)
 
     def getEncoding(self):
