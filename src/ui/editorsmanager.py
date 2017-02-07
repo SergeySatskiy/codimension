@@ -570,7 +570,8 @@ class EditorsManager(QTabWidget):
                     "discard your changes and close the tab or "
                     "cancel closing the tab?</p>",
                     QMessageBox.StandardButtons(
-                        QMessageBox.Cancel | QMessageBox.Discard | QMessageBox.Save),
+                        QMessageBox.Cancel | QMessageBox.Discard |
+                        QMessageBox.Save),
                     QMessageBox.Save)
                 if res == QMessageBox.Save:
                     if self.onSave() != True:
@@ -601,8 +602,8 @@ class EditorsManager(QTabWidget):
 
         # Check if it is necessary to add a file to the recent history
         if self.widget(index).getType() in \
-            [ MainWindowTabWidgetBase.PlainTextEditor,
-              MainWindowTabWidgetBase.PictureViewer ]:
+            [MainWindowTabWidgetBase.PlainTextEditor,
+             MainWindowTabWidgetBase.PictureViewer]:
             # Yes, it needs to be saved if it was saved at least once
             fileName = self.widget(index).getFileName()
             if os.path.isabs(fileName) and os.path.exists(fileName):
@@ -1859,6 +1860,13 @@ class EditorsManager(QTabWidget):
             curWidget.getEditor().hideCompleter()
 
         if self.closeRequest():
+            # Need to call terminate for all the text editors if so
+            for index in range(self.count()):
+                if self.widget(index).getType() in [
+                    MainWindowTabWidgetBase.PlainTextEditor,
+                    MainWindowTabWidgetBase.VCSAnnotateViewer]:
+                    self.widget(index).getEditor().terminate()
+
             event.accept()
             return True
 

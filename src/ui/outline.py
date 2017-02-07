@@ -60,7 +60,8 @@ class FileOutlineViewer(QWidget):
         self.__editorsManager.currentChanged.connect(self.__onTabChanged)
         self.__editorsManager.sigTabClosed.connect(self.__onTabClosed)
         self.__editorsManager.sigBufferSavedAs.connect(self.__onSavedBufferAs)
-        self.__editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
+        self.__editorsManager.sigFileTypeChanged.connect(
+            self.__onFileTypeChanged)
 
         self.__outlineBrowsers = {}  # UUID -> OutlineAttributes
         self.__currentUUID = None
@@ -302,7 +303,8 @@ class FileOutlineViewer(QWidget):
             if self.__outlineBrowsers[self.__currentUUID].changed == False:
                 self.__outlineBrowsers[self.__currentUUID].changed = True
                 browser = self.__outlineBrowsers[self.__currentUUID].browser
-                fName = self.__outlineBrowsers[self.__currentUUID].shortFileName
+                fName = self.__outlineBrowsers[
+                    self.__currentUUID].shortFileName
                 title = self.__modifiedFormat % fName
                 browser.model().sourceModel().updateRootData(0, title)
         self.__updateTimer.start(1500)
@@ -339,7 +341,7 @@ class FileOutlineViewer(QWidget):
             return None
 
         editor = widget.getEditor()
-        info = getBriefModuleInfoFromMemory(editor.text())
+        info = getBriefModuleInfoFromMemory(editor.text)
         return info
 
     def __onTabClosed(self, uuid):
@@ -402,7 +404,7 @@ class FileOutlineViewer(QWidget):
                 return
 
             editor = widget.getEditor()
-            info = getBriefModuleInfoFromMemory(editor.text())
+            info = getBriefModuleInfoFromMemory(editor.text)
             fName = self.__outlineBrowsers[self.__currentUUID].shortFileName
             dialog = ParserErrorsDialog(fName, info)
             dialog.exec_()

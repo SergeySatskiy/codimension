@@ -612,18 +612,17 @@ class TextEditor(QutepartWrapper):
             QApplication.processEvents()
             line, pos = self.cursorPosition
 
-            self.beginUndoAction()
-            QutepartWrapper.keyPressEvent(self, event)
-            QApplication.processEvents()
+            with self:
+                QutepartWrapper.keyPressEvent(self, event)
+                QApplication.processEvents()
 
-            if line == self.__openedLine:
-                self.__removeLine(line)
-            self.endUndoAction()
+                if line == self.__openedLine:
+                    self.__removeLine(line)
 
             # If the new line has one or more spaces then it is a candidate for
             # automatic trimming
             line, pos = self.cursorPosition
-            text = self.text(line)
+            text = self.lines[line]
             self.__openedLine = -1
             if len(text) > 0 and len(text.strip()) == 0:
                 self.__openedLine = line
@@ -653,10 +652,9 @@ class TextEditor(QutepartWrapper):
 
         elif key == Qt.Key_Tab:
             line, pos = self.cursorPosition
-            currentPosition = self.currentPosition()
+            currentPosition = self.cursorPosition
             if pos != 0:
-                previousCharPos = self.positionBefore(currentPosition)
-                char = self.charAt(previousCharPos)
+                char = self.lines[line][pos - 1]
                 if (char.isalnum() or char in ['_', '.']) and \
                    currentPosition != self.__lastTabPosition:
                     self.onAutoComplete()
@@ -699,22 +697,17 @@ class TextEditor(QutepartWrapper):
             return
 
         self.__skipChangeCursor = True
-        self.beginUndoAction()
-        self.__removeLine(self.__openedLine)
-        self.endUndoAction()
+        if self.__openedLine >= 0:
+            with self:
+                self.__removeLine(self.__openedLine)
         self.__skipChangeCursor = False
         self.__openedLine = -1
 
     def __removeLine(self, line):
         """Removes characters from the given line"""
-        if line < 0:
-            return
-
-        currentLine, currentPos = self.cursorPosition
-        self.cursorPosition = line, 0
-        self.deleteLineRight()
-        self.cursorPosition = currentLine, currentPos
-        QApplication.processEvents()
+        if line >= 0:
+            self.lines[line] = ''
+            QApplication.processEvents()
 
     def getCurrentPosFont(self):
         """Provides the font of the current character"""
@@ -872,43 +865,42 @@ class TextEditor(QutepartWrapper):
 
         commentStr = self.lexer_.commentStr()
 
-        self.beginUndoAction()
-        if self.hasSelectedText():
-            lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
-            if indexTo == 0:
-                endLine = lineTo - 1
-            else:
-                endLine = lineTo
+        with self:
+            if self.hasSelectedText():
+                lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
+                if indexTo == 0:
+                    endLine = lineTo - 1
+                else:
+                    endLine = lineTo
 
-            if self.text(lineFrom).startswith(commentStr):
-                # need to uncomment
-                for line in range(lineFrom, endLine + 1):
-                    if not self.text(line).startswith(commentStr):
-                        continue
+                if self.text(lineFrom).startswith(commentStr):
+                    # need to uncomment
+                    for line in range(lineFrom, endLine + 1):
+                        if not self.text(line).startswith(commentStr):
+                            continue
+                        self.setSelection(line, 0, line, len(commentStr))
+                        self.removeSelectedText()
+                    self.setSelection(lineFrom, 0, endLine + 1, 0)
+                else:
+                    # need to comment
+                    for line in range(lineFrom, endLine + 1):
+                        self.insertAt(commentStr, line, 0)
+                    self.setSelection(lineFrom, 0, endLine + 1, 0)
+            else:
+                # Detect what we need - comment or uncomment
+                line, index = self.cursorPosition
+                if self.text( line ).startswith(commentStr):
+                    # need to uncomment
                     self.setSelection(line, 0, line, len(commentStr))
                     self.removeSelectedText()
-                self.setSelection(lineFrom, 0, endLine + 1, 0)
-            else:
-                # need to comment
-                for line in range(lineFrom, endLine + 1):
+                else:
+                    # need to comment
                     self.insertAt(commentStr, line, 0)
-                self.setSelection(lineFrom, 0, endLine + 1, 0)
-        else:
-            # Detect what we need - comment or uncomment
-            line, index = self.cursorPosition
-            if self.text( line ).startswith(commentStr):
-                # need to uncomment
-                self.setSelection(line, 0, line, len(commentStr))
-                self.removeSelectedText()
-            else:
-                # need to comment
-                self.insertAt(commentStr, line, 0)
-            # Jump to the beginning of the next line
-            if self.lines() != line + 1:
-                line += 1
-            self.cursorPosition = line, 0
-            self.ensureLineOnScreen(line)
-        self.endUndoAction()
+                # Jump to the beginning of the next line
+                if self.lines() != line + 1:
+                    line += 1
+                self.cursorPosition = line, 0
+                self.ensureLineOnScreen(line)
         return True
 
     def _onHome(self):
@@ -1307,12 +1299,11 @@ class TextEditor(QutepartWrapper):
                 self.cursorPosition = line, pos + len(text) - prefixLength
             else:
                 oldBuffer = QApplication.clipboard().text()
-                self.beginUndoAction()
-                self.setSelection(line, pos - prefixLength, line, pos)
-                self.removeSelectedText()
-                self.insert(text)
-                self.cursorPosition = line, pos + len(text) - prefixLength
-                self.endUndoAction()
+                with self:
+                    self.setSelection(line, pos - prefixLength, line, pos)
+                    self.removeSelectedText()
+                    self.insert(text)
+                    self.cursorPosition = line, pos + len(text) - prefixLength
                 QApplication.clipboard().setText(oldBuffer)
 
             self.__completionPrefix = ""
@@ -1324,9 +1315,8 @@ class TextEditor(QutepartWrapper):
            Adds the trailing \n
            All is done in a single undo block
         """
-        self.beginUndoAction()
-        self.insertAt(text + "\n", line - 1, 0)
-        self.endUndoAction()
+        with self:
+            self.insertAt(text + "\n", line - 1, 0)
 
     def hideCompleter(self):
         """Hides the completer if visible"""
@@ -2142,28 +2132,25 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         # used. The selectAll() and replacing selected text do not suite
         # because after undo the cursor does not jump to the previous position.
         # So, there is an ugly select -> replace manipulation below...
-        self.__editor.beginUndoAction()
+        with self.__editor:
+            origLine, origPos = self.__editor.cursorPosition
+            self.__editor.setSelection(0, 0, origLine, origPos)
+            self.__editor.removeSelectedText()
+            self.__editor.insert(newText)
+            self.__editor.setCurrentPosition(len(newText))
+            line, pos = self.__editor.cursorPosition
+            lastLine = self.__editor.lines()
+            self.__editor.setSelection(line, pos,
+                                       lastLine - 1,
+                                       len(self.__editor.text(lastLine - 1)))
+            self.__editor.removeSelectedText()
+            self.__editor.cursorPosition = origLine, origPos
 
-        origLine, origPos = self.__editor.cursorPosition
-        self.__editor.setSelection(0, 0, origLine, origPos)
-        self.__editor.removeSelectedText()
-        self.__editor.insert(newText)
-        self.__editor.setCurrentPosition(len(newText))
-        line, pos = self.__editor.cursorPosition
-        lastLine = self.__editor.lines()
-        self.__editor.setSelection(line, pos,
-                                   lastLine - 1,
-                                   len(self.__editor.text(lastLine - 1)))
-        self.__editor.removeSelectedText()
-        self.__editor.cursorPosition = origLine, origPos
-
-        # These two for the proper cursor positioning after redo
-        self.__editor.insert("s")
-        self.__editor.cursorPosition = origLine, origPos + 1
-        self.__editor.deleteBack()
-        self.__editor.cursorPosition = origLine, origPos
-
-        self.__editor.endUndoAction()
+            # These two for the proper cursor positioning after redo
+            self.__editor.insert("s")
+            self.__editor.cursorPosition = origLine, origPos + 1
+            self.__editor.deleteBack()
+            self.__editor.cursorPosition = origLine, origPos
 
     def onLineCounter(self):
         """Triggered when line counter button is clicked"""

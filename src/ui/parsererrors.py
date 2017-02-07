@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ class ParserErrorsDialog(QDialog):
         resultEdit.setTabChangesFocus(False)
         resultEdit.setAcceptRichText(False)
         resultEdit.setReadOnly(True)
-        resultEdit.setFontFamily(GlobalData().skin.baseMonoFontFace)
+        resultEdit.setFontFamily(GlobalData().skin['monoFont'].family())
         if info is not None:
             modInfo = info
         else:
