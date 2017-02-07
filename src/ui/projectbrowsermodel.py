@@ -59,6 +59,27 @@ class ProjectBrowserModel(BrowserModelBase):
         if what == CodimensionProject.CompleteProject:
             self.populateModel()
 
+    def __tooltipRoleData(self, item, indicator):
+        """Provides the data for the tooltip role"""
+        docstringPart = None
+        if self.showTooltips and item.toolTip != "":
+            docstringPart = item.toolTip
+
+        vcsPart = None
+        if indicator:
+            if item.vcsStatus.message:
+                vcsPart = item.vcsStatus.message
+            else:
+                vcsPart = indicator.defaultTooltip
+
+        if docstringPart and vcsPart:
+            return docstringPart + "\n\nVCS status: " + vcsPart
+        if docstringPart:
+            return docstringPart
+        if vcsPart:
+            return "VCS status: " + vcsPart
+        return None
+
     def data(self, index, role):
         """Extention to modify the background and tooltips for the browser"""
         if not index.isValid():
@@ -66,7 +87,8 @@ class ProjectBrowserModel(BrowserModelBase):
 
         item = index.internalPointer()
         if item.vcsStatus:
-            indicator = self.__mainWindow.vcsManager.getStatusIndicator(item.vcsStatus)
+            indicator = self.__mainWindow.vcsManager.getStatusIndicator(
+                item.vcsStatus)
             if role == Qt.TextColorRole:
                 if indicator and indicator.foregroundColor:
                     return indicator.foregroundColor
@@ -74,23 +96,6 @@ class ProjectBrowserModel(BrowserModelBase):
                 if indicator and indicator.backgroundColor:
                     return indicator.backgroundColor
             elif role == Qt.ToolTipRole:
-                docstringPart = None
-                if self.showTooltips and item.toolTip != "":
-                    docstringPart = item.toolTip
-
-                vcsPart = None
-                if indicator:
-                    if item.vcsStatus.message:
-                        vcsPart = item.vcsStatus.message
-                    else:
-                        vcsPart = indicator.defaultTooltip
-
-                if docstringPart and vcsPart:
-                    return docstringPart + "\n\nVCS status: " + vcsPart
-                if docstringPart:
-                    return docstringPart
-                if vcsPart:
-                    return "VCS status: " + vcsPart
-                return None
+                return self.__tooltipRoleData(item, indicator)
 
         return BrowserModelBase.data(self, index, role)

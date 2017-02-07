@@ -403,7 +403,7 @@ class SideBar(QWidget):
             self.__tabBar.setTabWhatsThis(index, text)
 
     def widget(self, indexOrNameOrWidget):
-        """Provides the reference to the widget (QWidget)"""
+        """Provides the reference to the widget: QWidget or None"""
         index = self.__getWidgetIndex(indexOrNameOrWidget)
         if index is not None:
             return self.__stackedWidget.widget(index)

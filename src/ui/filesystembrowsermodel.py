@@ -93,7 +93,7 @@ class FileSystemBrowserModel(BrowserModelBase):
         self.projectTopLevelDirs.append(dirname)
 
     def removeTopLevelDir(self, index):
-        " Removes a toplevel directory "
+        """Removes a toplevel directory"""
         if index.isValid():
             item = index.internalPointer()
             self.beginRemoveRows(index.parent(), index.row(), index.row())

@@ -90,9 +90,10 @@ class OutlineBrowser(FilesBrowser):
     @staticmethod
     def __toCSSColor(rgba):
         """Converts the color to the CSS format"""
-        return "#" + OutlineBrowser.__converttohex(rgba[0]) + \
-                     OutlineBrowser.__converttohex(rgba[1]) + \
-                     OutlineBrowser.__converttohex(rgba[2])
+        return ''.join(['#',
+                        OutlineBrowser.__converttohex(rgba[0]),
+                        OutlineBrowser.__converttohex(rgba[1]),
+                        OutlineBrowser.__converttohex(rgba[2])])
 
     def __getOriginalHeaderBackground(self):
         """Retrieves the original header color as a string useful for CSS"""
@@ -105,9 +106,9 @@ class OutlineBrowser(FilesBrowser):
         return self.__toCSSColor(
             GlobalData().skin['outdatedOutlineColor'].getRgb())
 
-    def setHeaderHighlight(self, on):
+    def setHeaderHighlight(self, switchOn):
         """Sets or removes the header highlight"""
-        if on:
+        if switchOn:
             color = self.__brokenHeaderBackground
             self.__bufferBroken = True
         else:

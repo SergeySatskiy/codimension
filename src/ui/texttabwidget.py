@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ class TextTabWidget(QWidget, MainWindowTabWidgetBase):
     sigEscapePressed = pyqtSignal()
 
     def __init__(self, parent=None):
-        QWidget.__init__(self)
+        QWidget.__init__(self, parent)
         MainWindowTabWidgetBase.__init__(self)
 
         layout = QHBoxLayout(self)
@@ -153,5 +153,5 @@ class TextTabWidget(QWidget, MainWindowTabWidgetBase):
         return self.__shortName
 
     def setShortName(self, name):
-        " Sets the display name "
+        """Sets the display name"""
         self.__shortName = name

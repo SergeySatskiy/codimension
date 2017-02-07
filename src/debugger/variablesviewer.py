@@ -232,6 +232,7 @@ class VariablesViewer(QWidget):
         self.__updateHeaderLabel()
 
     def __updateHeaderLabel(self):
+        """Updates the header text"""
         shown, total = self.__browser.getShownAndTotalCounts()
         if shown == 0 and total == 0:
             self.__headerLabel.setText("Variables")
@@ -239,7 +240,8 @@ class VariablesViewer(QWidget):
             self.__headerLabel.setText("Variables (" + str(shown) +
                                        " of " + str(total) + ")")
 
-    def __textFilterChanged(self, text):
+    # Arguments: text
+    def __textFilterChanged(self, _):
         """Triggered when a text filter has been changed"""
         self.__updateFilter()
 

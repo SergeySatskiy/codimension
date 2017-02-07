@@ -55,13 +55,14 @@ class TabsHistory(QObject):
         QObject.__init__(self)
 
         self.__editorsManger = editorsManager
-        self.__history = []     # No history
-        self.__index = -1       # No history
-                                # The index always points to the history
-                                # position which is currently displayed
+        self.__history = []
 
-        self.__tabsSequence = []    # Sequence of the history entries as they
-                                    # have appeared on the screen
+        # The index always points to the history position which is currently
+        # displayed
+        self.__index = -1
+
+        # Sequence of the history entries as they have appeared on the screen
+        self.__tabsSequence = []
 
     def backAvailable(self):
         """True if step back available"""

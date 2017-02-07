@@ -87,7 +87,7 @@ class ThreadsViewer(QWidget):
         self.__debugger = debugger
         self.__createLayout()
 
-        if Settings()['showThreadViewer'] == False:
+        if not Settings()['showThreadViewer']:
             self.__onShowHide(True)
 
     def __createLayout(self):
@@ -207,7 +207,8 @@ class ThreadsViewer(QWidget):
         """Switches the UI depending where the control flow is"""
         self.__threadsList.setEnabled(isInIDE)
 
-    def __onThreadClicked(self, item, column):
+    # Arguments: item, column
+    def __onThreadClicked(self, item, _):
         """Triggered when a thread is clicked"""
         if item.isCurrent():
             return

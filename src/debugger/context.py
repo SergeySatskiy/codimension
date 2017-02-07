@@ -23,7 +23,7 @@
 from .stackviewer import StackViewer
 from .threadsviewer import ThreadsViewer
 from .variablesviewer import VariablesViewer
-from ui.qt import Qt, pyqtSignal,QVBoxLayout, QWidget, QSplitter
+from ui.qt import Qt, QVBoxLayout, QWidget, QSplitter
 
 
 class DebuggerContext(QWidget):
@@ -70,7 +70,8 @@ class DebuggerContext(QWidget):
         self.stackViewer.clear()
         self.threadsViewer.clear()
 
-    def __onClientLine(self, fileName, line, forStack):
+    # Arguments: fileName, line, forStack
+    def __onClientLine(self, _, _, forStack):
         """Handles the signal from the debugged program"""
         if not forStack:
             self.__debugger.remoteThreadList()
