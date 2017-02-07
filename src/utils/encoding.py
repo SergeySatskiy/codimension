@@ -316,16 +316,9 @@ def readEncodedFile(fName):
 
 def detectNewFileWriteEncoding(editor, fName):
     """Detects a new file encoding"""
-
-
-
-def detectExistingFileWriteEncoding(editor, fName):
-    """Provides the previously opened file encoding"""
-    
-
-
-def detectWriteEncoding(editor, fName):
-    """Detects the write encoding for a buffer"""
+    # It could be one of two cases:
+    # - the file is just created and there is no user typed content yet
+    # - a new content has been modified
     isPython = isPythonFile(fName)
 
     if editor.newFileUserEncoding:
@@ -348,40 +341,6 @@ def detectWriteEncoding(editor, fName):
                         editor.newFileUserEncoding + ". The " +
                         editor.newFileUserEncoding + " is used")
         return editor.newFileUserEncoding
-
-    # Here: it could be
-    # - a new file with auto picked encoding
-    # - disk file auto or user set encoding
-    if os.path.isabs(fName):
-        userAssignedEncoding = getFileEncoding(fName)
-        if userAssignedEncoding:
-            if not isValidEncoding(userAssignedEncoding):
-                logging.error(
-                    "User assigned encoding " + userAssignedEncoding + " is "
-                    "invalid. Please assign a valid one and try again.")
-                return None
-            if isPython:
-                encFromText = getCodingFromText(editor.text)
-                if encFromText:
-                    if not isValidEncoding(encFromText):
-                        logging.warning(
-                            "Encoding from the buffer (" + encFromText +
-                            ") is invalid and does not match the explicitly "
-                            "set encoding " + userAssignedEncoding + ". The " +
-                            userAssignedEncoding + " is used")
-                    elif not areEncodingsEqual(userAssignedEncoding,
-                                               encFromText):
-                        logging.warning(
-                            "Encoding from the buffer (" + encFromText + ") "
-                            "does not match the explicitly set encoding " +
-                            userAssignedEncoding + ". The " +
-                            userAssignedEncoding + " is used")
-            return userAssignedEncoding
-
-        # Second option here: the file was loaded with certain encoding
-        if editor.encoding:
-            
-
 
     # Check the buffer
     if isPython:
@@ -419,3 +378,60 @@ def detectWriteEncoding(editor, fName):
 
     # The default one
     return 'utf-8'
+
+
+def detectExistingFileWriteEncoding(editor, fName):
+    """Provides the previously opened file encoding"""
+    isPython = isPythonFile(fName)
+
+    # The file is not new and there are a few sources of the encoding:
+    # - the one which was used during reading (editor.encoding)
+    # - user explicitly specified
+    # - encoding in the buffer
+    userAssignedEncoding = getFileEncoding(fName)
+    if userAssignedEncoding:
+        if not isValidEncoding(userAssignedEncoding):
+            logging.error(
+                "User assigned encoding " + userAssignedEncoding + " is "
+                "invalid. Please assign a valid one and try again.")
+            return None
+        if isPython:
+            encFromText = getCodingFromText(editor.text)
+            if encFromText:
+                if not isValidEncoding(encFromText):
+                    logging.warning(
+                        "Encoding from the buffer (" + encFromText +
+                        ") is invalid and does not match the explicitly "
+                        "set encoding " + userAssignedEncoding + ". The " +
+                        userAssignedEncoding + " is used")
+                elif not areEncodingsEqual(userAssignedEncoding,
+                                           encFromText):
+                    logging.warning(
+                        "Encoding from the buffer (" + encFromText + ") "
+                        "does not match the explicitly set encoding " +
+                        userAssignedEncoding + ". The " +
+                        userAssignedEncoding + " is used")
+        return userAssignedEncoding
+
+    # Check the buffer
+    if isPython:
+        encFromText = getCodingFromText(editor.text)
+        if encFromText:
+            if not isValidEncoding(encFromText):
+                logging.error(
+                    "Encoding from the buffer (" + encFromText +
+                    ") is invalid. Please fix the encoding in the source "
+                    "or explicitly set the required one and try again.")
+                return None
+            return encFromText
+
+    # Here: no explicitly specified encoding, no encoding in the buffer,
+    #       then use the encoding the file was read with
+    return editor.encoding
+
+
+def detectWriteEncoding(editor, fName):
+    """Detects the write encoding for a buffer"""
+    if os.path.isabs(fName):
+        return detectExistingFileWriteEncoding(editor, fName)
+    return detectNewFileWriteEncoding(editor, fName)

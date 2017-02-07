@@ -81,8 +81,15 @@ def __getMimeByXmlSyntaxFile(xmlSyntaxFile):
                 Qutepart._globalSyntaxManager._mimeTypeToXmlFileName.items():
         if xmlFileName == xmlSyntaxFile:
             candidates.append(mime)
-    if len(candidates) != 1:
+    if not candidates:
         return None
+    if len(candidates) == 1:
+        return candidates[0]
+
+    # Prefer the text candidate
+    for item in candidates:
+        if item.startswith('text'):
+            return item
     return candidates[0]
 
 

@@ -477,17 +477,17 @@ class EditorsManager(QTabWidget):
             if initialContent != "":
                 editor.text = initialContent
                 lineNo = len(editor.lines)
-                editor.gotoLine(lineNo, len(editor.line[lineNo - 1]) + 1)
+                editor.gotoLine(lineNo, len(editor.lines[lineNo - 1]) + 1)
         else:
             editor.text = initialContent
 
         editor.eol = detectEolString(editor.text)
-        editor.encoding = detectWriteEncoding(editor, newWidget.getShortName())
+        editor.encoding = None
 
         if xmlSyntaxFile:
-            self.detectSyntax(xmlSyntaxFile)
+            editor.detectSyntax(xmlSyntaxFile)
 
-        editor.setModified(False)
+        editor.document().setModified(False)
 
         self.insertTab(0, newWidget, newWidget.getShortName())
         self.activateTab(0)
@@ -501,7 +501,8 @@ class EditorsManager(QTabWidget):
 
         # Here: mime will always be x-python
         self.sigFileTypeChanged.emit(newWidget.getShortName(),
-                                     newWidget.getUUID(), editor.mime)
+                                     newWidget.getUUID(),
+                                     editor.mime if editor.mime else '')
 
     def __updateControls(self):
         """Updates the navigation buttons status"""
@@ -1217,9 +1218,10 @@ class EditorsManager(QTabWidget):
                 self.__updateStatusBar()
                 self.__mainWindow.updateRunDebugButtons()
                 self.sigFileTypeChanged.emit(
-                    fileName, widget.getUUID(), newFileType)
+                    fileName, widget.getUUID(),
+                    newFileType if newFileType else '')
 
-            editor.setModified(False)
+            editor.document().setModified(False)
             self._updateIconAndTooltip(index)
             if GlobalData().project.fileName == fileName:
                 GlobalData().project.onProjectFileUpdated()
@@ -1340,14 +1342,14 @@ class EditorsManager(QTabWidget):
             return False
 
         if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
-            widget.getEditor().setModified(False)
+            widget.getEditor().document().setModified(False)
             newType, _, _ = getFileProperties(fileName, False, True, True)
             if newType != oldType or newType is None:
                 widget.setFileType(newType)
                 widget.getEditor().bindLexer(fileName, newType)
                 widget.getEditor().clearPyflakesMessages()
                 self.sigFileTypeChanged.emit(fileName, widget.getUUID(),
-                                             newType)
+                                             newType if newType else '')
             self._updateIconAndTooltip(index, newType)
 
         if GlobalData().project.fileName == fileName:
@@ -1787,7 +1789,9 @@ class EditorsManager(QTabWidget):
         else:
             mainWindow.sbLine.setText("Line: " + cLine)
         mainWindow.sbWritable.setText(currentWidget.getRWMode())
-        mainWindow.sbEncoding.setText(currentWidget.getEncoding())
+
+        enc = currentWidget.getEncoding()
+        mainWindow.sbEncoding.setText(enc if enc else 'n/a')
         if currentWidget.getFileName() == "":
             mainWindow.sbFile.setPath("File: n/a")
         else:

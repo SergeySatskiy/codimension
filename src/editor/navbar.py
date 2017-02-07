@@ -248,7 +248,8 @@ class NavigationBar(QFrame):
         if context.length == 0:
             self.__globalScopeCombo.setCurrentIndex(-1)
         else:
-            index = self.__globalScopeCombo.findData(context.levels[0][0].line)
+            index = self.__globalScopeCombo.findData(
+                context.levels[0][0].line)
             self.__globalScopeCombo.setCurrentIndex(index)
 
         usedFromStore = 0
