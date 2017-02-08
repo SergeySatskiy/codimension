@@ -222,7 +222,7 @@ def readEncodedFile(fName):
             logging.error("User assigned encoding " + userAssignedEncoding +
                           " is invalid. Continue trying to decode...")
         elif encodings.normalize_encoding(userAssignedEncoding) \
-                                                    not in triedEncodings:
+                not in triedEncodings:
             triedEncodings.append(
                 encodings.normalize_encoding(userAssignedEncoding))
             try:
@@ -435,3 +435,29 @@ def detectWriteEncoding(editor, fName):
     if os.path.isabs(fName):
         return detectExistingFileWriteEncoding(editor, fName)
     return detectNewFileWriteEncoding(editor, fName)
+
+
+def writeEncodedFile(fName, content, encoding):
+    """Writes into a file taking care of encoding"""
+    normEnc = getNormalizedEncoding(encoding)
+    try:
+        if normEnc.startswith('bom_'):
+            enc = normEnc[4:]
+            if enc == 'utf_8':
+                encContent = BOM_UTF8 + content.encode(enc)
+            elif enc == 'utf_16':
+                encContent = BOM_UTF16 + content.encode(enc)
+            else:
+                encContent = BOM_UTF32 + content.encode(enc)
+        else:
+            encContent = content.encode(normEnc)
+    except (UnicodeError, LookupError) as exc:
+        raise Exception('Error encoding the buffer content with ' + encoding +
+                        ': ' + str(exc))
+
+    try:
+        with open(fName, 'wb') as diskfile:
+            diskfile.write(encContent)
+    except Exception as exc:
+        raise Exception('Error writing encoded buffer content into ' +
+                        fName + ': ' + str(exc))

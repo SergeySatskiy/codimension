@@ -41,9 +41,11 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.misc import getLocaleDateTime
-from utils.encoding import SUPPORTED_CODECS, readEncodedFile, detectEolString
+from utils.encoding import (SUPPORTED_CODECS, readEncodedFile, detectEolString,
+                            detectWriteEncoding, writeEncodedFile)
 from utils.fileutils import getFileProperties, isPythonMime
-from utils.diskvaluesrelay import getRunParameters, addRunParams
+from utils.diskvaluesrelay import (getRunParameters, addRunParams,
+                                   setFileEncoding)
 from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
                                getImportedNameDefinitionLine, resolveImports)
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
@@ -539,35 +541,26 @@ class TextEditor(QutepartWrapper):
         """Writes the text to a file"""
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
-        if Settings().removeTrailingOnSave:
+        if Settings()['removeTrailingOnSave']:
             self.removeTrailingWhitespaces()
-        txt = unicode(self.text())
 
         try:
-            # For liguist and designer file types the latin-1 is enforced
-            fileType = detectFileType(fileName, True, True)
-            txt, newEncoding = encode(txt, self.encoding,
-                                      fileType in [DesignerFileType,
-                                                   LinguistFileType])
-        except CodingError as exc:
+            encoding = detectWriteEncoding(self, fileName)
+            if encoding is None:
+                QApplication.restoreOverrideCursor()
+                return False
+
+            writeEncodedFile(fileName, self.textForSaving(), encoding)
+        except Exception as exc:
+            logging.error(str(exc))
             QApplication.restoreOverrideCursor()
-            logging.critical("Cannot save " + fileName +
-                             ". Reason: " + str(exc))
             return False
 
-        # Now write text to the file
-        fileName = unicode(fileName)
-        try:
-            f = open(fileName, 'wb')
-            f.write(txt)
-            f.close()
-        except IOError as why:
-            QApplication.restoreOverrideCursor()
-            logging.critical("Cannot save " + fileName +
-                             ". Reason: " + str(why))
-            return False
+        self.encoding = encoding
+        if self.newFileUserEncoding:
+            setFileEncoding(fileName, self.newFileUserEncoding)
+            self.newFileUserEncoding = None
 
-        self.setEncoding(self.getFileEncoding(fileName, fileType))
         self._parent.updateModificationTime(fileName)
         self._parent.setReloadDialogShown(False)
         QApplication.restoreOverrideCursor()
@@ -576,7 +569,7 @@ class TextEditor(QutepartWrapper):
     def clearSearchIndicators(self):
         """Hides the search indicator"""
         # Removes the 'highlighted occurrences: ...' if so
-        GlobalData().mainWindow.clearStatusBarMessage(1)
+        GlobalData().mainWindow.clearStatusBarMessage()
 
     def setSearchIndicator(self, startPos, indicLength):
         """Sets a single search indicator"""

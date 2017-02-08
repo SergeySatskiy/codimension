@@ -1165,7 +1165,7 @@ class EditorsManager(QTabWidget):
         # This is a text editor
         editor = widget.getEditor()
         fileName = widget.getFileName()
-        if fileName != "":
+        if fileName:
             # This is the buffer which has the corresponding file on FS
             existedBefore = os.path.exists(fileName)
             if widget.isDiskFileModified() and \
@@ -1198,29 +1198,29 @@ class EditorsManager(QTabWidget):
                     return True
             else:
                 # The disk file is the same as we read it
-                if not editor.isModified() and widget.doesFileExist():
+                if not editor.document().isModified() and widget.doesFileExist():
                     return True
 
             # Save the buffer into the file
-            oldFileType = widget.getMime()
+            oldFileMime = widget.getMime()
             if widget.writeFile(fileName) == False:
-                # Error saving.
+                # Error saving
                 return False
 
             # The disk access has happened anyway so it does not make sense
             # to save on one disk operation for detecting a file type.
             # It could be changed due to a symlink or due to a newly populated
             # content like in .cgi files
-            newFileType, _, _ = getFileProperties(fileName, False, True, True)
-            if oldFileType != newFileType:
-                widget.setFileType(newFileType)
-                widget.getEditor().bindLexer(fileName, newFileType)
+            newFileMime, _, _ = getFileProperties(fileName, True, True)
+            if oldFileMime != newFileMime:
+                widget.setFileType(newFileMime)
+                widget.getEditor().bindLexer(fileName, newFileMime)
                 widget.updateStatus()
                 self.__updateStatusBar()
                 self.__mainWindow.updateRunDebugButtons()
                 self.sigFileTypeChanged.emit(
                     fileName, widget.getUUID(),
-                    newFileType if newFileType else '')
+                    newFileMime if newFileMime else '')
 
             editor.document().setModified(False)
             self._updateIconAndTooltip(index)
@@ -1344,7 +1344,7 @@ class EditorsManager(QTabWidget):
 
         if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
             widget.getEditor().document().setModified(False)
-            newType, _, _ = getFileProperties(fileName, False, True, True)
+            newType, _, _ = getFileProperties(fileName, True, True)
             if newType != oldType or newType is None:
                 widget.setFileType(newType)
                 widget.getEditor().bindLexer(fileName, newType)

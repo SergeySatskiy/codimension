@@ -71,7 +71,7 @@ class DebuggerContext(QWidget):
         self.threadsViewer.clear()
 
     # Arguments: fileName, line, forStack
-    def __onClientLine(self, _, _, forStack):
+    def __onClientLine(self, _, __, forStack):
         """Handles the signal from the debugged program"""
         if not forStack:
             self.__debugger.remoteThreadList()
