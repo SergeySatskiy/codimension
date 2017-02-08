@@ -22,7 +22,6 @@
 
 import os.path
 import logging
-import socket
 from ui.qt import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal,
                    QRect, QEvent, QPoint, QModelIndex, QCursor, QFontMetrics,
                    QDesktopServices, QFont, QApplication, QToolBar,
@@ -40,8 +39,7 @@ from ui.outsidechanges import OutsideChangeWidget
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
-from utils.misc import getLocaleDateTime
-from utils.encoding import (SUPPORTED_CODECS, readEncodedFile, detectEolString,
+from utils.encoding import (readEncodedFile, detectEolString,
                             detectWriteEncoding, writeEncodedFile)
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.diskvaluesrelay import (getRunParameters, addRunParams,
@@ -168,8 +166,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         pass
     def paragraphDown(self):
         pass
-    def moveToLineEnd(self):
-        pass
 
     def __initHotKeys(self):
         """Initializes a map for the hot keys event filter"""
@@ -220,7 +216,8 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         if hasattr(self._parent, "onOpenImport" ):
             self.__hotKeys[CTRL][Qt.Key_I] = self._parent.onOpenImport
         if hasattr(self._parent, "onNavigationBar"):
-            self.__hotKeys[NO_MODIFIER][Qt.Key_F2] = self._parent.onNavigationBar
+            self.__hotKeys[NO_MODIFIER][Qt.Key_F2] = \
+                self._parent.onNavigationBar
 
     def eventFilter(self, obj, event):
         """Event filter to catch shortcuts on UBUNTU"""
@@ -233,7 +230,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                         self.__hotKeys[modifiers][key]()
                         return True
             except Exception as exc:
-                logging.warnings(str(exc))
+                logging.warning(str(exc))
         return False
 
     def wheelEvent(self, event):
@@ -245,35 +242,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                 self._parent.onZoomOut()
         else:
             QutepartWrapper.wheelEvent(self, event)
-
-    def openAsFileAvailable(self):
-        """True if there is something to try to open as a file"""
-        importLine, line = isImportLine(self)
-        if importLine:
-            return False
-        selectedText = self.selectedText().strip()
-        if selectedText:
-            return '\n' not in selectedText and \
-                   '\r' not in selectedText
-
-        currentWord = str(self.getCurrentWord()).strip()
-        return currentWord != ""
-
-    def downloadAndShowAvailable(self):
-        """True if download and show available"""
-        importLine, line = isImportLine(self)
-        if importLine:
-            return False
-        selectedText = self.selectedText().strip()
-        if not selectedText:
-            return False
-
-        if '\n' in selectedText or '\r' in selectedText:
-            # Not a single line selection
-            return False
-
-        return selectedText.startswith('http://') or \
-               selectedText.startswith('www.')
 
     def focusInEvent(self, event):
         """Enable Shift+Tab when the focus is received"""
@@ -296,10 +264,12 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         if settings['verticalEdge']:
             self.lineLengthEdge = settings['editorEdge']
             self.lineLengthEdgeColor = GlobalData().skin['edgeColor']
+            self.drawSolidEdge = True
         else:
             self.lineLengthEdge = None
 
         self.drawAnyWhitespace = settings['showSpaces']
+        self.drawIncorrectIndentation = settings['showSpaces']
 
         if settings['lineWrap']:
             self.setWordWrapMode(QTextOption.WrapAnywhere)
@@ -311,30 +281,13 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             if navBar:
                 navBar.updateSettings()
 
-    def detectLineNumMarginWidth(self):
-        """Caculates the margin width depending on
-           the margin font and the current zoom
-        """
-        skin = GlobalData().skin
-        font = QFont(skin.lineNumFont)
-        font.setPointSize(font.pointSize() + self.zoom)
-        # The second parameter of the QFontMetrics is essential!
-        # If it is not there then the width is not calculated properly.
-        fontMetrics = QFontMetrics(font, self)
-        return fontMetrics.width('8888') + 5
-
-    def setLineNumMarginWidth(self):
-        """Called when zooming is done to keep the width enough for 4 digits"""
-        self.setMarginWidth(self.LINENUM_MARGIN,
-                            self.detectLineNumMarginWidth())
-
     def __initMargins(self):
         """Initializes the editor margins"""
         # The supported margins: line numbers, break points, flakes messages
 
     def __initDebuggerMarkers(self):
         """Initializes debugger related markers"""
-        skin = GlobalData().skin
+        # skin = GlobalData().skin
 
     def highlightCurrentDebuggerLine(self, line, asException):
         """Highlights the current debugger line"""
@@ -730,15 +683,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                 self.ensureLineOnScreen(line)
         return True
 
-    def _onHome(self):
-        """Triggered when HOME is received"""
-        self.moveToLineBegin(Settings().jumpToFirstNonSpace)
-        return True
-
     def _onShiftHome(self):
         """Triggered when Shift+HOME is received"""
-        self.selectTillLineBegin(Settings().jumpToFirstNonSpace)
-        return True
+        self.selectTillLineBegin(Settings()['jumpToFirstNonSpace'])
 
     def __detectLineHeight(self):
         """Sets the self._lineHeight"""

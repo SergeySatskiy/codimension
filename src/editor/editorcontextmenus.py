@@ -21,10 +21,13 @@
 
 
 import logging
-from ui.qt import QMenu, QAction, QActionGroup, QApplication
+import os.path
+import socket
+import urllib.request
+from ui.qt import QMenu, QActionGroup, QApplication, Qt, QCursor
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
-from utils.encoding import SUPPORTED_CODECS
+from utils.encoding import SUPPORTED_CODECS, decodeURLContent
 
 
 class EditorContextMenuMixin:
@@ -173,13 +176,13 @@ class EditorContextMenuMixin:
         self.encodingMenu.setEnabled(True)
         encoding = self.encoding
         if encoding in self.supportedEncodings:
-            self.supportedEncodings[ encoding ].setChecked( True )
+            self.supportedEncodings[encoding].setChecked(True)
 
         self.__menuOpenAsFile.setEnabled(self.openAsFileAvailable())
         self.__menuDownloadAndShow.setEnabled(
-                                    self.downloadAndShowAvailable())
+            self.downloadAndShowAvailable())
         self.__menuOpenInBrowser.setEnabled(
-                                    self.downloadAndShowAvailable())
+            self.downloadAndShowAvailable())
         self.__menuHighlightInPrj.setEnabled(
             os.path.isabs(fileName) and GlobalData().project.isLoaded() and
             GlobalData().project.isProjectFile(fileName))
@@ -220,9 +223,7 @@ class EditorContextMenuMixin:
             self.copyLine()
 
     def openAsFile(self):
-        """Triggered when a selection or a current tag is
-           requested to be opened as a file
-        """
+        """Opens a selection or a current tag as a file"""
         selectedText = self.selectedText().strip()
         singleSelection = selectedText != "" and \
                           '\n' not in selectedText and \
@@ -277,8 +278,8 @@ class EditorContextMenuMixin:
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
         try:
-            response = urllib2.urlopen(url)
-            content = response.read()
+            response = urllib.request.urlopen(url)
+            content = decodeURLContent(response.read())
 
             # The content has been read sucessfully
             mainWindow = GlobalData().mainWindow
@@ -299,3 +300,32 @@ class EditorContextMenuMixin:
         """Triggered when a menu was deleted"""
         self._menu.removeAction(menu.menuAction())
         self.__pluginMenuSeparator.setVisible(count != 0)
+
+    def openAsFileAvailable(self):
+        """True if there is something to try to open as a file"""
+        importLine, line = isImportLine(self)
+        if importLine:
+            return False
+        selectedText = self.selectedText().strip()
+        if selectedText:
+            return '\n' not in selectedText and \
+                   '\r' not in selectedText
+
+        currentWord = self.getCurrentWord().strip()
+        return currentWord != ""
+
+    def downloadAndShowAvailable(self):
+        """True if download and show available"""
+        importLine, line = isImportLine(self)
+        if importLine:
+            return False
+        selectedText = self.selectedText().strip()
+        if not selectedText:
+            return False
+
+        if '\n' in selectedText or '\r' in selectedText:
+            # Not a single line selection
+            return False
+
+        return selectedText.startswith('http://') or \
+               selectedText.startswith('www.')

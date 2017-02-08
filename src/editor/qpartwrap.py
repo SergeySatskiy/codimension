@@ -42,6 +42,7 @@ class QutepartWrapper(Qutepart):
         # Remove all the default margins
         self.delMargin('mark_area')
         self.delMargin('line_numbers')
+        self.completionEnabled = False
 
         # The minimum possible zoom not to make the margin disappear
         skin = GlobalData().skin
@@ -143,3 +144,26 @@ class QutepartWrapper(Qutepart):
         bar = self.horizontalScrollBar()
         if bar:
             bar.setValue(value)
+
+    def moveToLineEnd(self):
+        """Moves the cursor to the end of the line"""
+        line, pos = self.cursorPosition
+        self.cursorPosition = line, len(self.lines[line])
+
+    def moveToLineBegin(self, toFirstNonSpace):
+        """Jumps to the first non-space or to position 0"""
+        line, pos = self.cursorPosition
+        if toFirstNonSpace:
+            lStripped = self.lines[line].lstrip()
+            if lStripped:
+                pos = len(self.lines[line]) - len(lStripped)
+                self.cursorPosition = line, pos
+            else:
+                self.cursorPosition = line, 0
+        else:
+            self.cursorPosition = line, 0
+
+    def _onHome(self):
+        """Triggered when HOME is received"""
+        self.moveToLineBegin(Settings()['jumpToFirstNonSpace'])
+
