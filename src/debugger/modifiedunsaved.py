@@ -88,12 +88,9 @@ class ModifiedUnsavedDialog(QDialog):
             fileType, icon, _ = getFileProperties(fileName)
             fileItem.setIcon(0, icon)
             if isPythonMime(fileType):
-                infoSrc = GlobalData().briefModinfoCache
-                info = infoSrc.get(fileName)
-                if info.docstring is not None:
-                    fileItem.setToolTip(0, info.docstring.text)
-                else:
-                    fileItem.setToolTip(0, "")
+                info = GlobalData().briefModinfoCache.get(fileName)
+                fileItem.setToolTip(0, info.docstring.text if info.docstring
+                                    else '')
             filesList.addTopLevelItem(fileItem)
         layout.addWidget(filesList)
 

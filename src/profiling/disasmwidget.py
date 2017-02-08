@@ -222,30 +222,10 @@ class DisassemblerResultsWidget(QWidget, MainWindowTabWidgetBase):
         """Tells the content language"""
         return "Disassembler"
 
-    def getFileName(self):
-        """Tells what file name of the widget content"""
-        return "N/A"
-
     def setFileName(self, name):
         """Sets the file name - not applicable"""
         raise Exception("Setting a file name for disassembler "
                         "results is not applicable")
-
-    def getEol(self):
-        """Tells the EOL style"""
-        return "N/A"
-
-    def getLine(self):
-        """Tells the cursor line"""
-        return "N/A"
-
-    def getPos(self):
-        """Tells the cursor column"""
-        return "N/A"
-
-    def getEncoding(self):
-        """Tells the content encoding"""
-        return "N/A"
 
     def setEncoding(self, newEncoding):
         """Sets the new encoding - not applicable for

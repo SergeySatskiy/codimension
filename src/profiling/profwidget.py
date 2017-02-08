@@ -56,7 +56,6 @@ class ProfileResultsWidget(QWidget, MainWindowTabWidgetBase):
 
     def __createLayout(self):
         """Creates the toolbar and layout"""
-
         # Buttons
         self.__toggleViewButton = QAction(getIcon('tableview.png'),
                                           'Switch to table view', self)
@@ -235,35 +234,13 @@ class ProfileResultsWidget(QWidget, MainWindowTabWidgetBase):
         """Tells the content language"""
         return "Profiler"
 
-    def getFileName(self):
-        """Tells what file name of the widget content"""
-        return "N/A"
-
     def setFileName(self, name):
         """Sets the file name - not applicable"""
         raise Exception("Setting a file name for profile results "
                         "is not applicable")
 
-    def getEol(self):
-        """Tells the EOL style"""
-        return "N/A"
-
-    def getLine(self):
-        """Tells the cursor line"""
-        return "N/A"
-
-    def getPos(self):
-        """Tells the cursor column"""
-        return "N/A"
-
-    def getEncoding(self):
-        """Tells the content encoding"""
-        return "N/A"
-
     def setEncoding(self, newEncoding):
-        """Sets the new encoding - not applicable for
-           the profiler results viewer
-        """
+        """Not applicable for the profiler results viewer"""
         return
 
     def getShortName(self):

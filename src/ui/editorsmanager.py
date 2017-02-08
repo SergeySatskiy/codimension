@@ -62,11 +62,12 @@ class ClickableTabBar(QTabBar):
 
     def mousePressEvent(self, event):
         """Intercepts clicking on the toolbar and emits a signal.
-           It is used to transfer focus to the currently active tab editor.
+
+        It is used to transfer focus to the currently active tab editor.
         """
         tabBarPoint = self.mapTo(self, event.pos())
         if self.tabAt(tabBarPoint) == self.currentIndex():
-            self.currentTabClicked.emit()
+            self.sigCurrentTabClicked.emit()
         QTabBar.mousePressEvent(self, event)
 
     def focusInEvent(self, event):
@@ -1730,11 +1731,14 @@ class EditorsManager(QTabWidget):
         editor.sigEscapePressed.connect(self.__onESC)
         editorWidget.textEditorZoom.connect(self.onZoom)
 
-    def __modificationChanged(self, modified):
+    # Arguments: modified
+    def __modificationChanged(self, _):
         """Triggered when the file is changed"""
         index = self.currentIndex()
         currentWidget = self.currentWidget()
-        if modified:
+        # Sometimes a signal comes from a tab which has already been closed
+        # so the check is done for the current widget
+        if currentWidget.isModified():
             title = Settings()['modifiedFormat'] % currentWidget.getShortName()
             self.setTabText(index, title)
         else:
@@ -1774,30 +1778,45 @@ class EditorsManager(QTabWidget):
     def __updateStatusBar(self):
         """Updates the status bar values"""
         currentWidget = self.currentWidget()
-
         mainWindow = self.__mainWindow
+
         mainWindow.sbLanguage.setText(currentWidget.getLanguage())
-        mainWindow.sbEol.setText(currentWidget.getEol())
+        if currentWidget.getType() in [MainWindowTabWidgetBase.PlainTextEditor,
+                                       MainWindowTabWidgetBase.VCSAnnotateViewer]:
+            mime = currentWidget.getMime()
+            if mime:
+                mainWindow.sbLanguage.setToolTip('Mime type: ' + mime)
+            else:
+                mainWindow.sbLanguage.setToolTip('Mime type: unknown')
+        elif currentWidget.getType() in [MainWindowTabWidgetBase.PictureViewer]:
+            mainWindow.sbLanguage.setToolTip('Image format')
+        else:
+            mainWindow.sbLanguage.setToolTip('')
+
+        eol = currentWidget.getEol()
+        mainWindow.sbEol.setText(eol if eol else 'n/a')
 
         cPos = currentWidget.getPos()
-        if isinstance(cPos, int):
-            mainWindow.sbPos.setText("Pos: " + str(cPos + 1))
+        if cPos:
+            mainWindow.sbPos.setText('Pos: ' + str(cPos + 1))
         else:
-            mainWindow.sbPos.setText("Pos: " + cPos)
+            mainWindow.sbPos.setText('Pos: n/a')
         cLine = currentWidget.getLine()
-        if isinstance(cLine, int):
-            mainWindow.sbLine.setText("Line: " + str(cLine + 1))
+        if cLine:
+            mainWindow.sbLine.setText('Line: ' + str(cLine + 1))
         else:
-            mainWindow.sbLine.setText("Line: " + cLine)
-        mainWindow.sbWritable.setText(currentWidget.getRWMode())
+            mainWindow.sbLine.setText('Line: n/a')
+
+        rwMode = currentWidget.getRWMode()
+        mainWindow.sbWritable.setText(rwMode if rwMode else 'n/a')
 
         enc = currentWidget.getEncoding()
         mainWindow.sbEncoding.setText(enc if enc else 'n/a')
-        if currentWidget.getFileName() == "":
-            mainWindow.sbFile.setPath("File: n/a")
+        fName = currentWidget.getFileName()
+        if fName:
+            mainWindow.sbFile.setPath("File: " + fName)
         else:
-            mainWindow.sbFile.setPath("File: " +
-                                      currentWidget.getFileName())
+            mainWindow.sbFile.setPath('File: n/a')
         if self.__debugMode:
             mainWindow.setRunToLineButtonState()
 

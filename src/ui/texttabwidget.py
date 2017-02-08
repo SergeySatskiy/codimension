@@ -128,18 +128,6 @@ class TextTabWidget(QWidget, MainWindowTabWidgetBase):
         self.__fileName = path
         self.__shortName = os.path.basename(path)
 
-    def getEol(self):
-        """Tells the EOL style"""
-        return "n/a"
-
-    def getLine(self):
-        """Tells the cursor line"""
-        return "n/a"
-
-    def getPos(self):
-        """Tells the cursor column"""
-        return "n/a"
-
     def getEncoding(self):
         """Tells the content encoding"""
         return self.__encoding

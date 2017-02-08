@@ -64,6 +64,7 @@ from debugger.breakpoint import Breakpoint
 from .flowuiwidget import FlowUIWidget
 from .navbar import NavigationBar
 from .qpartwrap import QutepartWrapper
+from .editorcontextmenus import EditorContextMenuMixin
 
 
 CTRL_SHIFT = int(Qt.ShiftModifier | Qt.ControlModifier)
@@ -74,7 +75,7 @@ CTRL_KEYPAD = int(Qt.KeypadModifier | Qt.ControlModifier)
 NO_MODIFIER = int(Qt.NoModifier)
 
 
-class TextEditor(QutepartWrapper):
+class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     """Text editor implementation"""
 
@@ -86,12 +87,13 @@ class TextEditor(QutepartWrapper):
     def __init__(self, parent, debugger):
         self._parent = parent
         QutepartWrapper.__init__(self, parent)
+        EditorContextMenuMixin.__init__(self)
+
         self.setAttribute(Qt.WA_KeyCompression)
 
         self.__debugger = debugger
 
         self.__initMargins()
-        self._initContextMenu()
         self.__initDebuggerMarkers()
 
         # self.SCN_DOUBLECLICK.connect(self.__onDoubleClick)
@@ -231,7 +233,7 @@ class TextEditor(QutepartWrapper):
                         self.__hotKeys[modifiers][key]()
                         return True
             except Exception as exc:
-                pass
+                logging.warnings(str(exc))
         return False
 
     def wheelEvent(self, event):
@@ -243,174 +245,6 @@ class TextEditor(QutepartWrapper):
                 self._parent.onZoomOut()
         else:
             QutepartWrapper.wheelEvent(self, event)
-
-    def _initContextMenu(self):
-        """Initializes the context menu"""
-        mainWindow = GlobalData().mainWindow
-        editorsManager = mainWindow.editorsManagerWidget.editorsManager
-
-        self._menu = QMenu(self)
-        self.__menuUndo = self._menu.addAction(
-            getIcon('undo.png'), '&Undo', self.onUndo, "Ctrl+Z")
-        self.__menuRedo = self._menu.addAction(
-            getIcon('redo.png'), '&Redo', self.onRedo, "Ctrl+Y")
-        self._menu.addSeparator()
-        self.__menuCut = self._menu.addAction(
-            getIcon('cutmenu.png'), 'Cu&t', self.onShiftDel, "Ctrl+X")
-        self.__menuCopy = self._menu.addAction(
-            getIcon('copymenu.png'), '&Copy', self.onCtrlC, "Ctrl+C")
-        self.__menuPaste = self._menu.addAction(
-            getIcon('pastemenu.png'), '&Paste', self.paste, "Ctrl+V")
-        self.__menuSelectAll = self._menu.addAction(
-            getIcon('selectallmenu.png'), 'Select &all', self.selectAll, "Ctrl+A")
-        self._menu.addSeparator()
-        menu = self._menu.addMenu(self.__initEncodingMenu())
-        menu.setIcon( getIcon('textencoding.png'))
-        self._menu.addSeparator()
-        menu = self._menu.addMenu(self.__initToolsMenu())
-        menu.setIcon(getIcon('toolsmenu.png'))
-        self._menu.addSeparator()
-        menu = self._menu.addMenu(self.__initDiagramsMenu())
-        menu.setIcon(getIcon('diagramsmenu.png'))
-        self._menu.addSeparator()
-        self.__menuOpenAsFile = self._menu.addAction(
-            getIcon('filemenu.png'), 'O&pen as file', self.openAsFile)
-        self.__menuDownloadAndShow = self._menu.addAction(
-            getIcon('filemenu.png'), 'Do&wnload and show', self.downloadAndShow)
-        self.__menuOpenInBrowser = self._menu.addAction(
-            getIcon('homepagemenu.png'), 'Open in browser', self.openInBrowser)
-        self._menu.addSeparator()
-        self.__menuHighlightInPrj = self._menu.addAction(
-            getIcon("highlightmenu.png"), "&Highlight in project browser",
-            editorsManager.onHighlightInPrj)
-        self.__menuHighlightInFS = self._menu.addAction(
-            getIcon("highlightmenu.png"), "H&ighlight in file system browser",
-            editorsManager.onHighlightInFS)
-        self._menuHighlightInOutline = self._menu.addAction(
-            getIcon("highlightmenu.png"), "Highlight in &outline browser",
-            self.highlightInOutline, 'Ctrl+B')
-
-        self._menu.aboutToShow.connect(self._contextMenuAboutToShow)
-
-        # Plugins support
-        self.__pluginMenuSeparator = self._menu.addSeparator()
-        mainWindow = GlobalData().mainWindow
-        editorsManager = mainWindow.editorsManagerWidget.editorsManager
-        registeredMenus = editorsManager.getPluginMenus()
-        if registeredMenus:
-            for path in registeredMenus:
-                self._menu.addMenu(registeredMenus[path])
-        else:
-            self.__pluginMenuSeparator.setVisible(False)
-
-        editorsManager.sigPluginContextMenuAdded.connect(
-            self.__onPluginMenuAdded)
-        editorsManager.sigPluginContextMenuRemoved.connect(
-            self.__onPluginMenuRemoved)
-
-    def __onPluginMenuAdded(self, menu, count):
-        """Triggered when a new menu was added"""
-        self._menu.addMenu(menu)
-        self.__pluginMenuSeparator.setVisible(True)
-
-    def __onPluginMenuRemoved(self, menu, count):
-        """Triggered when a menu was deleted"""
-        self._menu.removeAction(menu.menuAction())
-        self.__pluginMenuSeparator.setVisible(count != 0)
-
-    def _marginNumber(self, xPos):
-        """Calculates the margin number based on a x position"""
-        width = 0
-        for margin in range(5):
-            width += self.marginWidth(margin)
-            if xPos <= width:
-                return margin
-        return None
-
-    def _marginClicked(self, margin, line, modifiers):
-        """Triggered when a margin is clicked"""
-        if margin == self.BPOINT_MARGIN:
-            self.__breakpointMarginClicked(line + 1)
-
-    def __initEncodingMenu(self):
-        """Creates the encoding menu"""
-        self.supportedEncodings = {}
-        self.encodingMenu = QMenu("&Encoding")
-        self.encodingsActGrp = QActionGroup(self)
-        for encoding in sorted(SUPPORTED_CODECS):
-            act = self.encodingMenu.addAction(encoding)
-            act.setCheckable(True)
-            act.setData(encoding)
-            self.supportedEncodings[encoding] = act
-            self.encodingsActGrp.addAction(act)
-        self.encodingMenu.triggered.connect(self.__encodingsMenuTriggered)
-        return self.encodingMenu
-
-    def __encodingsMenuTriggered(self, act):
-        """Triggered when encoding is selected"""
-        encoding = act.data().toString()
-        self.setEncoding(encoding + "-selected")
-
-    def __initToolsMenu(self):
-        """Creates the tools menu"""
-        self.toolsMenu = QMenu("Too&ls")
-        self.runAct = self.toolsMenu.addAction(
-            getIcon('run.png'), 'Run script', self._parent.onRunScript)
-        self.runParamAct = self.toolsMenu.addAction(
-            getIcon('paramsmenu.png'), 'Set parameters and run',
-            self._parent.onRunScriptSettings)
-        self.toolsMenu.addSeparator()
-        self.profileAct = self.toolsMenu.addAction(
-            getIcon('profile.png'), 'Profile script',
-            self._parent.onProfileScript)
-        self.profileParamAct = self.toolsMenu.addAction(
-            getIcon('paramsmenu.png'), 'Set parameters and profile',
-            self._parent.onProfileScriptSettings)
-        return self.toolsMenu
-
-    def __initDiagramsMenu(self):
-        """Creates the diagrams menu"""
-        self.diagramsMenu = QMenu("&Diagrams")
-        self.importsDgmAct = self.diagramsMenu.addAction(
-            getIcon('importsdiagram.png'), 'Imports diagram',
-            self._parent.onImportDgm)
-        self.importsDgmParamAct = self.diagramsMenu.addAction(
-            getIcon('paramsmenu.png'), 'Fine tuned imports diagram',
-            self._parent.onImportDgmTuned)
-        return self.diagramsMenu
-
-    def contextMenuEvent(self, event):
-        """Called just before showing a context menu"""
-        event.accept()
-        if self._marginNumber(event.x()) is None:
-            self.__menuUndo.setEnabled(self.document().isUndoAvailable())
-            self.__menuRedo.setEnabled(self.document().isRedoAvailable())
-            self.__menuCut.setEnabled(not self.isReadOnly())
-            self.__menuPaste.setEnabled(QApplication.clipboard().text() != ""
-                                        and not self.isReadOnly())
-
-            # Check the proper encoding in the menu
-            fileName = self._parent.getFileName()
-            self.encodingMenu.setEnabled(True)
-            encoding = self.encoding
-            if encoding in self.supportedEncodings:
-                self.supportedEncodings[ encoding ].setChecked( True )
-
-            self.__menuOpenAsFile.setEnabled(self.openAsFileAvailable())
-            self.__menuDownloadAndShow.setEnabled(
-                                        self.downloadAndShowAvailable())
-            self.__menuOpenInBrowser.setEnabled(
-                                        self.downloadAndShowAvailable())
-            self.__menuHighlightInPrj.setEnabled(
-                os.path.isabs(fileName) and GlobalData().project.isLoaded() and
-                GlobalData().project.isProjectFile(fileName))
-            self.__menuHighlightInFS.setEnabled(os.path.isabs(fileName))
-            self._menuHighlightInOutline.setEnabled(self.isPythonBuffer())
-            self._menu.popup(event.globalPos())
-        else:
-            # Menu for a margin
-            pass
-        return
 
     def openAsFileAvailable(self):
         """True if there is something to try to open as a file"""
@@ -906,23 +740,6 @@ class TextEditor(QutepartWrapper):
         self.selectTillLineBegin(Settings().jumpToFirstNonSpace)
         return True
 
-    def onShiftDel(self):
-        """Triggered when Shift+Del is received"""
-        if self.hasSelectedText():
-            self.cut()
-        else:
-            self.copyLine()
-            self.deleteLine()
-        return True
-
-    def onCtrlC(self):
-        " Triggered when Ctrl+C / Ctrl+Insert is receved "
-        if self.hasSelectedText():
-            self.copy()
-        else:
-            self.copyLine()
-        return True
-
     def __detectLineHeight(self):
         """Sets the self._lineHeight"""
         firstVisible = self.firstVisibleLine()
@@ -1315,64 +1132,6 @@ class TextEditor(QutepartWrapper):
         """Hides the completer if visible"""
         self.__completer.hide()
 
-    def onUndo(self):
-        """Triggered when undo button is clicked"""
-        if self.document().isUndoAvailable():
-            self.undo()
-            self._parent.modificationChanged()
-
-    def onRedo(self):
-        """Triggered when redo button is clicked"""
-        if self.document().isRedoAvailable():
-            self.redo()
-            self._parent.modificationChanged()
-
-    def openAsFile(self):
-        """Triggered when a selection or a current tag is
-           requested to be opened as a file
-        """
-        selectedText = self.selectedText().strip()
-        singleSelection = selectedText != "" and \
-                          '\n' not in selectedText and \
-                          '\r' not in selectedText
-        currentWord = ""
-        if selectedText == "":
-            currentWord = self.getCurrentWord().strip()
-
-        path = currentWord
-        if singleSelection:
-            path = selectedText
-
-        # Now the processing
-        if os.path.isabs(path):
-            GlobalData().mainWindow.detectTypeAndOpenFile(path)
-            return
-        # This is not an absolute path but could be a relative path for the
-        # current buffer file. Let's try it.
-        fileName = self._parent.getFileName()
-        if fileName != "":
-            # There is a file name
-            fName = os.path.dirname(fileName) + os.path.sep + path
-            fName = os.path.abspath(os.path.realpath(fName))
-            if os.path.exists(fName):
-                GlobalData().mainWindow.detectTypeAndOpenFile(fName)
-                return
-        if GlobalData().project.isLoaded():
-            # Try it as a relative path to the project
-            prjFile = GlobalData().project.fileName
-            fName = os.path.dirname(prjFile) + os.path.sep + path
-            fName = os.path.abspath(os.path.realpath(fName))
-            if os.path.exists(fName):
-                GlobalData().mainWindow.detectTypeAndOpenFile(fName)
-                return
-        # The last hope - open as is
-        if os.path.exists(path):
-            path = os.path.abspath(os.path.realpath(path))
-            GlobalData().mainWindow.detectTypeAndOpenFile(path)
-            return
-
-        logging.error("Cannot find '" + path + "' to open")
-
     def clearPyflakesMessages(self):
         """Clears all the pyflakes markers"""
         self.ignoreBufferChangedSignal = True
@@ -1390,47 +1149,12 @@ class TextEditor(QutepartWrapper):
         # self.__pyflakesMessages[handle] = message
         self.ignoreBufferChangedSignal = False
 
-    def downloadAndShow(self):
-        """Triggered when the user wants to download and see the file"""
-        url = self.selectedText().strip()
-        if url.startswith("www."):
-            url = "http://" + url
-
-        oldTimeout = socket.getdefaulttimeout()
-        newTimeout = 5      # Otherwise the pause is too long
-        socket.setdefaulttimeout(newTimeout)
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-
-        try:
-            response = urllib2.urlopen(url)
-            content = response.read()
-
-            # The content has been read sucessfully
-            mainWindow = GlobalData().mainWindow
-            editorsManager = mainWindow.editorsManagerWidget.editorsManager
-            editorsManager.newTabClicked(content, os.path.basename(url))
-        except Exception as exc:
-            logging.error("Error downloading '" + url + "'\n" + str(exc))
-
-        QApplication.restoreOverrideCursor()
-        socket.setdefaulttimeout(oldTimeout)
-
     def openInBrowser(self):
         """Triggered when a selected URL should be opened in a browser"""
         url = self.selectedText().strip()
         if url.startswith("www."):
             url = "http://" + url
         QDesktopServices.openUrl(QUrl(url))
-
-    def _contextMenuAboutToShow(self):
-        """Context menu is about to show"""
-        self._menuHighlightInOutline.setEnabled(self.isPythonBuffer())
-
-        self.runAct.setEnabled(self._parent.runScriptButton.isEnabled())
-        self.runParamAct.setEnabled(self._parent.runScriptButton.isEnabled())
-        self.profileAct.setEnabled(self._parent.runScriptButton.isEnabled())
-        self.profileParamAct.setEnabled(
-            self._parent.runScriptButton.isEnabled())
 
     def highlightInOutline(self):
         """Triggered when highlight in outline browser is requested"""
@@ -2429,7 +2153,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
     def getRWMode(self):
         """Tells if the file is read only"""
         if not os.path.exists(self.__fileName):
-            return "N/A"
+            return None
         return 'RW' if QFileInfo(self.__fileName).isWritable() else 'RO'
 
     def getMime(self):
@@ -2463,12 +2187,12 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
     def getLine(self):
         """Tells the cursor line"""
         line, _ = self.__editor.cursorPosition
-        return int(line)
+        return line
 
     def getPos(self):
         """Tells the cursor column"""
         _, pos = self.__editor.cursorPosition
-        return int(pos)
+        return pos
 
     def getEncoding(self):
         """Tells the content encoding"""

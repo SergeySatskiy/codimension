@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,8 @@ from utils.pixmapcache import getIcon
 from utils.settings import Settings
 from utils.project import CodimensionProject, getProjectFileTooltip
 from utils.globals import GlobalData
-from utils.fileutils import getFileProperties, isPythonMime, isCDMProjectMime
+from utils.fileutils import (getFileProperties, isPythonMime,
+                             isCDMProjectMime, isImageViewable)
 from .qt import (Qt, QSize, QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
                  QToolButton, QWidget, QAction, QDialog, QSpacerItem,
                  QVBoxLayout, QSizePolicy, QToolBar, QApplication, QFrame,

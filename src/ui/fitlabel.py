@@ -76,7 +76,6 @@ class FitPathLabel(QLabel):
 
     def paintEvent(self, event):
         """Called when painting is required"""
-
         sparePixels = 5
         metric = self.fontMetrics()
         requiredWidth = metric.width(self.__path)

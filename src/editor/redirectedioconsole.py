@@ -61,6 +61,7 @@ class RedirectedIOConsole(TextEditor):
 
         self.__initGeneralSettings()
         self.__initMargins()
+        self._initContextMenu()
 
         self.__timestampTooltipShown = False
         self.__initMessageMarkers()
@@ -934,10 +935,6 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
         """Tells the content language"""
         return "IO console"
 
-    def getFileName(self):
-        """Tells what file name of the widget content"""
-        return "n/a"
-
     def setFileName(self, name):
         """Sets the file name"""
         raise Exception("Setting a file name for IO console "
@@ -950,12 +947,12 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def getLine(self):
         """Tells the cursor line"""
         line, _ = self.__viewer.cursorPosition
-        return int(line)
+        return line
 
     def getPos(self):
         """Tells the cursor column"""
         _, pos = self.__viewer.cursorPosition
-        return int(pos)
+        return pos
 
     def getEncoding(self):
         """Tells the content encoding"""

@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-" Annotated VCS viewer implementation "
+"""Annotated VCS viewer implementation"""
 
 
 import os.path
@@ -485,10 +485,6 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
             return lang
         return self.__viewer.mime if self.__viewer.mime else 'n/a'
 
-    def getFileName(self):
-        """Tells what file name of the widget content"""
-        return "n/a"
-
     def setFileName(self, name):
         """Sets the file name"""
         raise Exception("Setting a file name for "
@@ -500,13 +496,13 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getLine(self):
         """Tells the cursor line"""
-        line, pos = self.__viewer.cursorPosition
-        return int(line)
+        line, _ = self.__viewer.cursorPosition
+        return line
 
     def getPos(self):
         """Tells the cursor column"""
-        line, pos = self.__viewer.cursorPosition
-        return int(pos)
+        _, pos = self.__viewer.cursorPosition
+        return pos
 
     def getEncoding(self):
         """Tells the content encoding"""

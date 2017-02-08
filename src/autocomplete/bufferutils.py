@@ -396,7 +396,7 @@ def isStringLiteral(editor, pos=None):
        It is supposed that the file type is Python
     """
     if pos is None:
-        pos = editor.currentPosition()
+        pos = editor.cursorPosition
     return editor.styleAt(pos) in \
                     [QsciLexerPython.TripleDoubleQuotedString,
                      QsciLexerPython.TripleSingleQuotedString,
@@ -410,7 +410,7 @@ def isRemarkLine(editor, pos=None):
        It is supposed that the file type is Python
     """
     if pos is None:
-        pos = editor.currentPosition()
+        pos = editor.cursorPosition
     return editor.styleAt(pos) in \
                     [QsciLexerPython.Comment,
                      QsciLexerPython.CommentBlock]
@@ -421,7 +421,7 @@ def isImportLine(editor, pos=None):
        It is supposed that the file type is Python
     """
     if pos is None:
-        pos = editor.currentPosition()
+        pos = editor.cursorPosition
     if isStringLiteral(editor, pos):
         return False, -1
 
@@ -473,7 +473,7 @@ def isOnSomeImport(editor):
             # It is an import line, but no need to complete
             return True, False, ""
         # Search for the first non space character before the current word
-        position = editor.positionBefore(editor.currentPosition())
+        position = editor.positionBefore(editor.cursorPosition)
         while editor.charAt(position) not in charsToSkip:
             position = editor.positionBefore(position)
         while editor.charAt(position) in charsToSkip:
@@ -493,7 +493,7 @@ def isOnSomeImport(editor):
     if currentWord in ["from", "import", "as"]:
         return True, False, ""
     # Search for the first non space character before the current word
-    position = editor.positionBefore(editor.currentPosition())
+    position = editor.positionBefore(editor.cursorPosition)
     while editor.charAt(position) not in charsToSkip:
         position = editor.positionBefore(position)
     while editor.charAt(position) in charsToSkip:
@@ -559,7 +559,7 @@ def getCallPosition(editor, pos=None):
        of the last character of the function name is (or None if not found)
     """
     if pos is None:
-        pos = editor.currentPosition()
+        pos = editor.cursorPosition
 
     if editor.charAt(pos) in [')', '(']:
         pos = editor.positionBefore(pos)

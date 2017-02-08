@@ -47,10 +47,8 @@ class MainWindowTabWidgetBase():
         raise Exception("isModified() is not implemented")
 
     def getRWMode(self):
-        """Tells the read/write mode
-           Should return 'n/a', 'RW' or 'RO'
-        """
-        raise Exception("getRWMode() is not implemented")
+        """Tells the read/write mode"""
+        return None
 
     def getType(self):
         """Tells the widget type"""
@@ -62,7 +60,7 @@ class MainWindowTabWidgetBase():
 
     def getFileName(self):
         """Tells what file name of the widget"""
-        raise Exception("getFilename() is not implemented")
+        return None
 
     def setFileName(self, name):
         """Sets the file name"""
@@ -70,19 +68,19 @@ class MainWindowTabWidgetBase():
 
     def getEol(self):
         """Tells the EOL style"""
-        raise Exception("getEol() is not implemented")
+        return None
 
     def getLine(self):
         """Tells the cursor line"""
-        raise Exception("getLine() is not implemented")
+        return None
 
     def getPos(self):
         """Tells the cursor column"""
-        raise Exception("getPos() is not implemented")
+        return None
 
     def getEncoding(self):
         """Tells the content encoding"""
-        raise Exception("getEncoding() is not implemented")
+        return None
 
     def setEncoding(self, newEncoding):
         """Sets the encoding for the text document"""

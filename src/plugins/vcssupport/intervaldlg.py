@@ -42,7 +42,6 @@ class VCSUpdateIntervalConfigDialog(QDialog):
 
     def __createLayout(self):
         """Creates the dialog layout"""
-
         self.resize(400, 80)
         self.setSizeGripEnabled(True)
 

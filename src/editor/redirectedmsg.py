@@ -66,10 +66,7 @@ class IOConsoleMessages:
         self.size = 0
 
     def append(self, msg):
-        """Appends the given message to the list
-
-           Returns True if there was trimming
-        """
+        """Appends the message to the list. Returns True if it was trimmed"""
         self.msgs.append(msg)
         self.size += 1
 

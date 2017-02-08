@@ -95,7 +95,6 @@ class Graph():
 
     def normalize(self, scaleX, scaleY):
         """normalizes all the measures"""
-
         self.width = self.width * self.scale * scaleX
         self.height = self.height * self.scale * scaleY
 
