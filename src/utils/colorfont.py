@@ -30,10 +30,12 @@ def checkColorRange(value):
 
 def buildColor(color):
     """Four options are supported:
-       #hhhhhh             hexadecimal rgb
-       #hhhhhhhh           hexadecimal rgb and alpha
-       ddd,ddd,ddd         decimal rgb
-       ddd,ddd,ddd,ddd     decimal rgb and alpha"""
+
+    #hhhhhh             hexadecimal rgb
+    #hhhhhhhh           hexadecimal rgb and alpha
+    ddd,ddd,ddd         decimal rgb
+    ddd,ddd,ddd,ddd     decimal rgb and alpha
+    """
     if color.startswith('#'):
         color = color[1:]
         length = len(color)
@@ -42,18 +44,18 @@ def buildColor(color):
 
         try:
             # The most common case
-            r = int(color[0:2], 16)
-            checkColorRange(r)
-            g = int(color[2:4], 16)
-            checkColorRange(g)
-            b = int(color[4:6], 16)
-            checkColorRange(b)
+            red = int(color[0:2], 16)
+            checkColorRange(red)
+            green = int(color[2:4], 16)
+            checkColorRange(green)
+            blue = int(color[4:6], 16)
+            checkColorRange(blue)
 
             if length == 6:
-                return QColor(r, g, b)
-            a = int(color[6:8], 16)
-            checkColorRange(a)
-            return QColor(r, g, b, a)
+                return QColor(red, green, blue)
+            alpha = int(color[6:8], 16)
+            checkColorRange(alpha)
+            return QColor(red, green, blue, alpha)
         except:
             raise Exception("Invalid hexadecimal color format: #" + color)
 
@@ -63,18 +65,18 @@ def buildColor(color):
         raise Exception("Invalid decimal color format: " + color)
 
     try:
-        r = int(parts[0].strip())
-        checkColorRange(r)
-        g = int(parts[1].strip())
-        checkColorRange(g)
-        b = int(parts[2].strip())
-        checkColorRange(b)
+        red = int(parts[0].strip())
+        checkColorRange(red)
+        green = int(parts[1].strip())
+        checkColorRange(green)
+        blue = int(parts[2].strip())
+        checkColorRange(blue)
 
         if length == 3:
-            return QColor(r, g, b)
-        a = int(parts[3].strip())
-        checkColorRange(a)
-        return QColor(r, g, b, a)
+            return QColor(red, green, blue)
+        alpha = int(parts[3].strip())
+        checkColorRange(alpha)
+        return QColor(red, green, blue, alpha)
     except:
         raise Exception("Invalid decimal color format: " + color)
 

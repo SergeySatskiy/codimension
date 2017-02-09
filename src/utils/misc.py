@@ -164,8 +164,7 @@ def getNewFileTemplate():
 
 def getDefaultTemplate():
     """Provides a body (i.e. help) of the default template file"""
-    return """
-#
+    return """#
 # This template will be used when a new file is created.
 #
 # Codimension supports an IDE-wide template file and project-specific template

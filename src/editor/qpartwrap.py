@@ -21,7 +21,7 @@
 
 
 from qutepart import Qutepart
-from ui.qt import QPalette, pyqtSignal, QFont
+from ui.qt import QPalette, pyqtSignal, QFont, QTextCursor
 from utils.globals import GlobalData
 from utils.settings import Settings
 
@@ -178,9 +178,7 @@ class QutepartWrapper(Qutepart):
         if data is None:
             print(str(line+1) + ":" + str(pos+1) + " None")
             return
-        literal = self._highlighter._syntax._getTextType(data.data, pos) == 's'
-        print(str(line+1) + ":" + str(pos+1) + " " + str(literal) +
-              " " + repr(data.data))
+        print(str(line+1) + ":" + str(pos+1) + " " + repr(data.data))
 
     def isStringLiteral(self, line, pos):
         """True if it is a string literal"""
@@ -191,3 +189,10 @@ class QutepartWrapper(Qutepart):
         if data is None:
             return False
         return self._highlighter._syntax._getTextType(data.data, pos) == 's'
+
+    def getCurrentWord(self):
+        """Provides the current word"""
+        cursor = self.textCursor()
+        cursor.select(QTextCursor.WordUnderCursor)
+        word = cursor.selectedText()
+        return word

@@ -22,9 +22,9 @@
 
 import os.path
 import logging
-from ui.qt import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal,
+from ui.qt import (Qt, QFileInfo, QSize, QTimer, pyqtSignal,
                    QRect, QEvent, QPoint, QModelIndex, QCursor, QFontMetrics,
-                   QDesktopServices, QFont, QApplication, QToolBar,
+                   QFont, QApplication, QToolBar,
                    QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                    QSizePolicy, QToolButton, QDialog, QToolTip,
                    QVBoxLayout, QSplitter, QTextOption)
@@ -1095,13 +1095,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         # handle = self.markerAdd(line - 1, self.__pyflakesMsgMarker)
         # self.__pyflakesMessages[handle] = message
         self.ignoreBufferChangedSignal = False
-
-    def openInBrowser(self):
-        """Triggered when a selected URL should be opened in a browser"""
-        url = self.selectedText().strip()
-        if url.startswith("www."):
-            url = "http://" + url
-        QDesktopServices.openUrl(QUrl(url))
 
     def highlightInOutline(self):
         """Triggered when highlight in outline browser is requested"""

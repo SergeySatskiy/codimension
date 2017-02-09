@@ -50,7 +50,8 @@ VIEWABLE_IMAGE_MIMES = ['image/' + ext for ext in __QTSupportedImageFormats]
 
 def __getXmlSyntaxFile(fName):
     """Checks the Qutepart mapping of a file extension to a syntax file.
-       Returns: None if not found or a syntax file name
+
+    Returns: None if not found or a syntax file name
     """
     # Special cases: codimension project files
     #                makefiles
@@ -74,7 +75,8 @@ def __getXmlSyntaxFile(fName):
 
 def __getMimeByXmlSyntaxFile(xmlSyntaxFile):
     """Checks the Qutepart mapping of a mime type to a syntax file.
-       Returns a mime type or None
+
+    Returns a mime type or None
     """
     candidates = []
     for mime, xmlFileName in \
@@ -95,7 +97,8 @@ def __getMimeByXmlSyntaxFile(xmlSyntaxFile):
 
 def __getXmlSyntaxFileByMime(mime):
     """Checks the Qutepart mapping of a mime type to a syntax file.
-       Returns an xml syntax file or None
+
+    Returns an xml syntax file or None
     """
     try:
         return Qutepart._globalSyntaxManager._mimeTypeToXmlFileName[mime]
@@ -126,7 +129,8 @@ def isImageViewable(mime):
 
 def isImageFile(fName):
     """True is the file is a viewable image"""
-    mime, _, _ = getFileProperties(fName, checkForBrokenLink, skipCache=False)
+    mime, _, _ = getFileProperties(fName, checkForBrokenLink=True,
+                                   skipCache=False)
     return isImageViewable(mime)
 
 
@@ -460,9 +464,10 @@ def __getIcon(xmlSyntaxFile, mime, fBaseName):
 
 
 def __getMagicMime(fName):
-    """ Uses the magic module to retrieve the file mime.
-        The mime could be None if e.g. the file does not exist.
-        The second bool tells if it was a permission denied case.
+    """Uses the magic module to retrieve the file mime.
+
+    The mime could be None if e.g. the file does not exist.
+    The second bool tells if it was a permission denied case.
     """
     try:
         # E.g.: 'text/x-shellscript'
@@ -496,15 +501,16 @@ def __initFilePropertiesCache():
 
 
 def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
-    """ Provides the following properties:
-        - mime type (could be None)
-        - icon
-        - syntax file name (could be None)
+    """Provides the following properties:
 
-        Works for non-existing files too.
-        Special cases:
-        - fName ends with os.path.sep => directory
-        - fName is empy or None => unknown file type
+    - mime type (could be None)
+    - icon
+    - syntax file name (could be None)
+
+    Works for non-existing files too.
+    Special cases:
+    - fName ends with os.path.sep => directory
+    - fName is empy or None => unknown file type
     """
     if __filePropertiesCache is None:
         __initFilePropertiesCache()
@@ -574,8 +580,10 @@ def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
 
 
 def compactPath(path, width, measure=len):
-    """ Provides a compacted path fitting inside the given width.
-        measure - ref to a function used to get the length of the string """
+    """Provides a compacted path fitting inside the given width.
+
+    measure - ref to a function used to get the length of the string
+    """
     if measure(path) <= width:
         return path
 

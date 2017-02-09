@@ -391,12 +391,15 @@ def getEditorTags(editor, exclude="", excludePythonKeywords=False):
     return result
 
 
-def isStringLiteral(editor, pos=None):
-    """Returns True if the position is inside a string literal.
-       It is supposed that the file type is Python
-    """
-    if pos is None:
-        pos = editor.cursorPosition
+# Note: docstrings are considered as comments
+def isStringLiteral(editor, line=None, pos=None):
+    """True if the position is inside a string literal"""
+    if line is None or pos is None:
+        line, pos = editor.cursorPosition
+    text = editor.lines[line]
+    if not text.strip():
+        return False
+
     return editor.styleAt(pos) in \
                     [QsciLexerPython.TripleDoubleQuotedString,
                      QsciLexerPython.TripleSingleQuotedString,
@@ -405,8 +408,9 @@ def isStringLiteral(editor, pos=None):
                      QsciLexerPython.UnclosedString]
 
 
+# Note: The docstrings are considered as comments as well
 def isComment(editor, line=None, pos=None):
-    """True if the position is inside a remark"""
+    """True if the position is inside a comment or a docstring"""
     if line is None or pos is None:
         line, pos = editor.cursorPosition
     text = editor.lines[line]
@@ -414,6 +418,7 @@ def isComment(editor, line=None, pos=None):
         return False
     if pos >= len(text):
         pos = len(text) - 1
+
     return editor.isComment(line, pos)
 
 
@@ -438,9 +443,12 @@ def isImportLine(editor):
         pos = len(text) - 1
 
     if editor.isComment(line, pos):
-        return False
+        return False, None
     if editor.isStringLiteral(line, pos):
-        return false
+        return False, None
+
+    return False, None
+
 
     # Find the beginning of the line
     while True:

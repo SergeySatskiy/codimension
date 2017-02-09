@@ -24,7 +24,8 @@ import logging
 import os.path
 import socket
 import urllib.request
-from ui.qt import QMenu, QActionGroup, QApplication, Qt, QCursor
+from ui.qt import (QMenu, QActionGroup, QApplication, Qt, QCursor,
+                   QDesktopServices, QUrl)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.encoding import SUPPORTED_CODECS, decodeURLContent
@@ -36,9 +37,10 @@ class EditorContextMenuMixin:
     """Encapsulates the context menu handling"""
 
     def __init__(self):
-        self.supportedEncodings = {}
-        self.encodingMenu = None
-        self.encodingsActGrp = None
+        self.encodingReloadMenu = QMenu("Set &encoding and reload")
+        self.encodingReloadActGrp = QActionGroup(self)
+        self.encodingWriteMenu = QMenu("Set read/write encodin&g")
+        self.encodingWriteActGrp = QActionGroup(self)
 
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
@@ -61,8 +63,15 @@ class EditorContextMenuMixin:
             self.selectAll, "Ctrl+A")
         self._menu.addSeparator()
 
-        menu = self._menu.addMenu(self.__initEncodingMenu())
-        menu.setIcon(getIcon('textencoding.png'))
+        self.__initReloadEncodingMenu()
+        self.encodingReloadMenu.setIcon(getIcon('textencoding.png'))
+        self._menu.addMenu(self.encodingReloadMenu)
+        self.__initWriteEncodingMenu()
+        self.encodingWriteMenu.setIcon(getIcon('textencoding.png'))
+        menu = self._menu.addMenu(self.encodingWriteMenu)
+        self.__menuClearEncoding = self._menu.addAction(
+            getIcon('clearmenu.png'), 'Clear explicit encoding',
+            self.__onClearEncoding)
         self._menu.addSeparator()
 
         menu = self._menu.addMenu(self.__initToolsMenu())
@@ -92,8 +101,6 @@ class EditorContextMenuMixin:
             getIcon("highlightmenu.png"), "Highlight in &outline browser",
             self.highlightInOutline, 'Ctrl+B')
 
-        self._menu.aboutToShow.connect(self._contextMenuAboutToShow)
-
         # Plugins support
         self.__pluginMenuSeparator = self._menu.addSeparator()
         mainWindow = GlobalData().mainWindow
@@ -110,18 +117,23 @@ class EditorContextMenuMixin:
         editorsManager.sigPluginContextMenuRemoved.connect(
             self.__onPluginMenuRemoved)
 
-    def __initEncodingMenu(self):
-        """Creates the encoding menu"""
-        self.encodingMenu = QMenu("&Encoding")
-        self.encodingsActGrp = QActionGroup(self)
+    def __initReloadEncodingMenu(self):
+        """Creates the encoding menu for reloading the existing file"""
         for encoding in sorted(SUPPORTED_CODECS):
-            act = self.encodingMenu.addAction(encoding)
+            act = self.encodingReloadMenu.addAction(encoding)
             act.setCheckable(True)
             act.setData(encoding)
-            self.supportedEncodings[encoding] = act
-            self.encodingsActGrp.addAction(act)
-        self.encodingMenu.triggered.connect(self.__encodingsMenuTriggered)
-        return self.encodingMenu
+            self.encodingReloadActGrp.addAction(act)
+        self.encodingReloadMenu.triggered.connect(self.__onReloadWithEncoding)
+
+    def __initWriteEncodingMenu(self):
+        """Creates the encoding menu for further read/write operations"""
+        for encoding in sorted(SUPPORTED_CODECS):
+            act = self.encodingWriteMenu.addAction(encoding)
+            act.setCheckable(True)
+            act.setData(encoding)
+            self.encodingWriteActGrp.addAction(act)
+        self.encodingWriteMenu.triggered.connect(self.__onReadWriteEncoding)
 
     def __initToolsMenu(self):
         """Creates the tools menu"""
@@ -151,50 +163,62 @@ class EditorContextMenuMixin:
             self._parent.onImportDgmTuned)
         return self.diagramsMenu
 
-    def _contextMenuAboutToShow(self):
-        """Context menu is about to show"""
-        print("_contextMenuAboutToShow")
-        self._menuHighlightInOutline.setEnabled(self.isPythonBuffer())
-
-        self.runAct.setEnabled(self._parent.runScriptButton.isEnabled())
-        self.runParamAct.setEnabled(self._parent.runScriptButton.isEnabled())
-        self.profileAct.setEnabled(self._parent.runScriptButton.isEnabled())
-        self.profileParamAct.setEnabled(
-            self._parent.runScriptButton.isEnabled())
-
     def contextMenuEvent(self, event):
         """Called just before showing a context menu"""
-        print("contextMenuEvent")
+        # Accepting needs to suppress the native menu
         event.accept()
+
+        isPython = self.isPythonBuffer()
+        readOnly = self.isReadOnly()
         self.__menuUndo.setEnabled(self.document().isUndoAvailable())
         self.__menuRedo.setEnabled(self.document().isRedoAvailable())
-        self.__menuCut.setEnabled(not self.isReadOnly())
+        self.__menuCut.setEnabled(not readOnly)
         self.__menuPaste.setEnabled(QApplication.clipboard().text() != ""
-                                    and not self.isReadOnly())
+                                    and not readOnly)
 
         # Check the proper encoding in the menu
-        fileName = self._parent.getFileName()
-        self.encodingMenu.setEnabled(True)
-        encoding = self.encoding
-        if encoding in self.supportedEncodings:
-            self.supportedEncodings[encoding].setChecked(True)
+#        self.encodingMenu.setEnabled(True)
+#        encoding = self.encoding
+#        if encoding in self.supportedEncodings:
+#            self.supportedEncodings[encoding].setChecked(True)
 
+        fileName = self._parent.getFileName()
+        absFileName = os.path.isabs(fileName)
         self.__menuOpenAsFile.setEnabled(self.openAsFileAvailable())
-        self.__menuDownloadAndShow.setEnabled(
-            self.downloadAndShowAvailable())
-        self.__menuOpenInBrowser.setEnabled(
-            self.downloadAndShowAvailable())
+        self.__menuDownloadAndShow.setEnabled(self.downloadAndShowAvailable())
+        self.__menuOpenInBrowser.setEnabled(self.downloadAndShowAvailable())
         self.__menuHighlightInPrj.setEnabled(
-            os.path.isabs(fileName) and GlobalData().project.isLoaded() and
-            GlobalData().project.isProjectFile(fileName))
-        self.__menuHighlightInFS.setEnabled(os.path.isabs(fileName))
-        self._menuHighlightInOutline.setEnabled(self.isPythonBuffer())
+            absFileName and GlobalData().project.isProjectFile(fileName))
+        self.__menuHighlightInFS.setEnabled(absFileName)
+        self._menuHighlightInOutline.setEnabled(isPython)
+        self._menuHighlightInOutline.setEnabled(isPython)
+
+        runEnabled = self._parent.runScriptButton.isEnabled()
+        self.runAct.setEnabled(runEnabled)
+        self.runParamAct.setEnabled(runEnabled)
+        self.profileAct.setEnabled(runEnabled)
+        self.profileParamAct.setEnabled(runEnabled)
+
+        if absFileName:
+            self.__menuClearEncoding.setEnabled(
+                getFileEncoding(absFileName) is not None)
+        else:
+            self.__menuClearEncoding.setEnabled(
+                self.newFileUserEncoding is not None)
+
+        # Show the menu
         self._menu.popup(event.globalPos())
 
-    def __encodingsMenuTriggered(self, act):
+    def __onReloadWithEncoding(self, act):
         """Triggered when encoding is selected"""
         encoding = act.data()
-        self.setEncoding(encoding)
+
+    def __onReadWriteEncoding(self, act):
+        """Sets explicit encoding for further read/write ops"""
+        encoding = act.data()
+
+    def __onClearEncoding(self, _):
+        """Clears the explicitly set encoding"""
 
     def onUndo(self):
         """Undo implementation"""
@@ -210,37 +234,35 @@ class EditorContextMenuMixin:
 
     def onShiftDel(self):
         """Triggered when Shift+Del is received"""
-        if self.hasSelectedText():
-            self.cut()
+        if self.selectedText:
+            QApplication.clipboard().setText(self.selectedText)
+            self.selectedText = ''
         else:
-            self.copyLine()
-            self.deleteLine()
+            line, _ = self.cursorPosition
+            if self.lines[line]:
+                QApplication.clipboard().setText(self.lines[line])
+                self.lines[line] = ''
 
     def onCtrlC(self):
         """Handles copying"""
-        if self.hasSelectedText():
-            self.copy()
+        if self.selectedText:
+            QApplication.clipboard().setText(self.selectedText)
         else:
-            self.copyLine()
+            line, _ = self.cursorPosition
+            if self.lines[line]:
+                QApplication.clipboard().setText(self.lines[line])
 
     def openAsFile(self):
         """Opens a selection or a current tag as a file"""
-        selectedText = self.selectedText().strip()
-        singleSelection = selectedText != "" and \
-                          '\n' not in selectedText and \
-                          '\r' not in selectedText
-        currentWord = ""
-        if selectedText == "":
-            currentWord = self.getCurrentWord().strip()
-
-        path = currentWord
-        if singleSelection:
-            path = selectedText
+        path = self.selectedText.strip()
+        if path == "" or '\n' in path or '\r' in path:
+            return
 
         # Now the processing
         if os.path.isabs(path):
             GlobalData().mainWindow.detectTypeAndOpenFile(path)
             return
+
         # This is not an absolute path but could be a relative path for the
         # current buffer file. Let's try it.
         fileName = self._parent.getFileName()
@@ -269,8 +291,8 @@ class EditorContextMenuMixin:
 
     def downloadAndShow(self):
         """Triggered when the user wants to download and see the file"""
-        url = self.selectedText().strip()
-        if url.startswith("www."):
+        url = self.selectedText.strip()
+        if url.lower().startswith("www."):
             url = "http://" + url
 
         oldTimeout = socket.getdefaulttimeout()
@@ -304,29 +326,27 @@ class EditorContextMenuMixin:
 
     def openAsFileAvailable(self):
         """True if there is something to try to open as a file"""
-        importLine, line = isImportLine(self)
-        if importLine:
-            return False
-        selectedText = self.selectedText().strip()
-        if selectedText:
-            return '\n' not in selectedText and \
-                   '\r' not in selectedText
-
-        currentWord = self.getCurrentWord().strip()
-        return currentWord != ""
+        importLine, _ = isImportLine(self)
+        if not importLine:
+            selectedText = self.selectedText.strip()
+            if selectedText:
+                return '\n' not in selectedText and \
+                       '\r' not in selectedText
+        return False
 
     def downloadAndShowAvailable(self):
         """True if download and show available"""
-        importLine, line = isImportLine(self)
-        if importLine:
-            return False
-        selectedText = self.selectedText().strip()
-        if not selectedText:
-            return False
+        importLine, _ = isImportLine(self)
+        if not importLine:
+            selectedText = self.selectedText.strip()
+            if '\n' not in selectedText and '\r' not in selectedText:
+                return selectedText.lower().startswith('http://') or \
+                       selectedText.lower().startswith('www.')
+        return False
 
-        if '\n' in selectedText or '\r' in selectedText:
-            # Not a single line selection
-            return False
-
-        return selectedText.startswith('http://') or \
-               selectedText.startswith('www.')
+    def openInBrowser(self):
+        """Triggered when a selected URL should be opened in a browser"""
+        url = self.selectedText.strip()
+        if url.lower().startswith("www."):
+            url = "http://" + url
+        QDesktopServices.openUrl(QUrl(url))

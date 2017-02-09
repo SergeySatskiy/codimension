@@ -496,6 +496,7 @@ class EditorsManager(QTabWidget):
         self.__updateControls()
         self.__connectEditorWidget(newWidget)
         self.__updateStatusBar()
+        self.__cursorPositionChanged()
         editor.setFocus()
         newWidget.updateStatus()
         self.setWidgetDebugMode(newWidget)
