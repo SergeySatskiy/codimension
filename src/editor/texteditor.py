@@ -449,7 +449,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             event.accept()
 
         elif key == Qt.Key_ParenLeft:
-            if Settings().editorCalltips:
+            if Settings()['editorCalltips']:
                 QutepartWrapper.keyPressEvent(self, event)
                 self.onShowCalltip(False, False)
             else:

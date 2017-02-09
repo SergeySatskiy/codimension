@@ -27,7 +27,7 @@ from cdmbriefparser import (getBriefModuleInfoFromMemory,
 from utils.globals import GlobalData
 from utils.settings import Settings
 from .listmodules import getSysModules, getModules
-from .bufferutils import (getEditorTags, isRemarkLine, isStringLiteral,
+from .bufferutils import (getEditorTags, isComment, isStringLiteral,
                           isOnSomeImport)
 
 
@@ -418,7 +418,7 @@ def getCompletionList(fileName, scope, obj, prefix,
         # Need to complete a module name
         return list(__getModuleNames(fileName)), True
 
-    if isRemarkLine(editor):
+    if isComment(editor):
         return list(getEditorTags(editor, prefix, True)), False
     if isStringLiteral(editor):
         return list(getEditorTags(editor, prefix, True)), False

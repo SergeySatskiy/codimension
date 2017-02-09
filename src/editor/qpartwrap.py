@@ -167,3 +167,27 @@ class QutepartWrapper(Qutepart):
         """Triggered when HOME is received"""
         self.moveToLineBegin(Settings()['jumpToFirstNonSpace'])
 
+    def printUserData(self):
+        """Debug purpose member to print the highlight data"""
+        line, pos = self.cursorPosition
+        if self._highlighter is None:
+            print(str(line+1) + ":" + str(pos+1) + " no highlight")
+            return
+        block = self.document().findBlockByNumber(line)
+        data = block.userData()
+        if data is None:
+            print(str(line+1) + ":" + str(pos+1) + " None")
+            return
+        literal = self._highlighter._syntax._getTextType(data.data, pos) == 's'
+        print(str(line+1) + ":" + str(pos+1) + " " + str(literal) +
+              " " + repr(data.data))
+
+    def isStringLiteral(self, line, pos):
+        """True if it is a string literal"""
+        if self._highlighter is None:
+            return False
+        block = self.document().findBlockByNumber(line)
+        data = block.userData()
+        if data is None:
+            return False
+        return self._highlighter._syntax._getTextType(data.data, pos) == 's'

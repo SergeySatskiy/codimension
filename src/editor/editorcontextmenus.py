@@ -28,6 +28,7 @@ from ui.qt import QMenu, QActionGroup, QApplication, Qt, QCursor
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.encoding import SUPPORTED_CODECS, decodeURLContent
+from autocomplete.bufferutils import isImportLine
 
 
 class EditorContextMenuMixin:

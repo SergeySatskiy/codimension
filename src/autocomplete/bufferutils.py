@@ -405,43 +405,64 @@ def isStringLiteral(editor, pos=None):
                      QsciLexerPython.UnclosedString]
 
 
-def isRemarkLine(editor, pos=None):
-    """Returns True if the position is inside a remark.
-       It is supposed that the file type is Python
-    """
-    if pos is None:
-        pos = editor.cursorPosition
-    return editor.styleAt(pos) in \
-                    [QsciLexerPython.Comment,
-                     QsciLexerPython.CommentBlock]
+def isComment(editor, line=None, pos=None):
+    """True if the position is inside a remark"""
+    if line is None or pos is None:
+        line, pos = editor.cursorPosition
+    text = editor.lines[line]
+    if not text.strip():
+        return False
+    if pos >= len(text):
+        pos = len(text) - 1
+    return editor.isComment(line, pos)
 
 
-def isImportLine(editor, pos=None):
-    """Returns True if the current line is a part of an import line.
-       It is supposed that the file type is Python
-    """
-    if pos is None:
-        pos = editor.cursorPosition
-    if isStringLiteral(editor, pos):
-        return False, -1
+def hasCommentAtEnd(editor, line):
+    """True if the line has comment at the end"""
+    text = editor.lines[line]
+    if not text.strip():
+        return False
+    pos = len(text) - 1
+    while text[pos].isspace():
+        pos -= 1
+    return editor.isComment(line, pos)
 
-    line, index = editor.lineIndexFromPosition(pos)
+
+def isImportLine(editor):
+    """True if the current line is a part of an import line"""
+    line, pos = editor.cursorPosition
+    text = editor.lines[line]
+    if not text.strip():
+        return False, None
+    if pos >= len(text):
+        pos = len(text) - 1
+
+    if editor.isComment(line, pos):
+        return False
+    if editor.isStringLiteral(line, pos):
+        return false
+
     # Find the beginning of the line
     while True:
         if line == 0:
             break
-        prevLine = editor.text(line - 1).strip()
+        prevLine = editor.lines[line - 1]
+
+    while True:
+        if line == 0:
+            break
+        prevLine = editor.lines[line - 1].strip()
         if not prevLine.endswith('\\') and not prevLine.endswith(','):
             break
         line -= 1
 
-    text = editor.text(line).strip()
+    text = editor.lines[line].strip()
     if text.startswith("import ") or text.startswith("from ") or \
        text.startswith("import\\") or text.startswith("from\\"):
         if not isStringLiteral(editor,
                                editor.positionFromLineIndex(line, 0)):
             return True, line
-    return False, -1
+    return False, None
 
 
 def getWordAtPosition(editor, position, direction=0,
