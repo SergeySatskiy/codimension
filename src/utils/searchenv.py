@@ -55,7 +55,7 @@ class SearchEnvironment:
 
     def __init__(self):
         self.__props = deepcopy(_DEFAULT_SEARCH_HISTORY)
-        self.__fileName = None
+        self.__seFileName = None
 
         # Default. Could be updated later
         self.__limit = 32
@@ -63,7 +63,7 @@ class SearchEnvironment:
     def reset(self):
         """Un-binds from the file system"""
         self.__props = deepcopy(_DEFAULT_SEARCH_HISTORY)
-        self.__fileName = None
+        self.__seFileName = None
 
     def setup(self, dirName):
         """Binds the parameters to a disk file"""
@@ -77,21 +77,21 @@ class SearchEnvironment:
             raise Exception('Directory name is expected for the search '
                             'environment. The given ' + dirName + ' is not.')
 
-        self.__fileName = dirName + "searchenv.json"
-        if os.path.exists(self.__fileName):
+        self.__seFileName = dirName + "searchenv.json"
+        if os.path.exists(self.__seFileName):
             SearchEnvironment.load(self)
 
     def load(self):
         """Loads the saved search environment"""
-        if self.__fileName:
+        if self.__seFileName:
             default = deepcopy(_DEFAULT_SEARCH_HISTORY)
-            self.__props = loadJSON(self.__fileName, 'search environment',
+            self.__props = loadJSON(self.__seFileName, 'search environment',
                                     default)
 
     def save(self):
         """Saves the search environment into a file"""
-        if self.__fileName:
-            saveJSON(self.__fileName, self.__props, 'search environment')
+        if self.__seFileName:
+            saveJSON(self.__seFileName, self.__props, 'search environment')
 
     def __addToContainer(self, element, item):
         """Common implementation of adding a search item"""

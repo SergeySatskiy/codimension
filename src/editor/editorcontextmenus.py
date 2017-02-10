@@ -25,11 +25,12 @@ import os.path
 import socket
 import urllib.request
 from ui.qt import (QMenu, QActionGroup, QApplication, Qt, QCursor,
-                   QDesktopServices, QUrl)
+                   QDesktopServices, QUrl, QMessageBox)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.encoding import (SUPPORTED_CODECS, decodeURLContent,
-                            getNormalizedEncoding)
+                            getNormalizedEncoding,
+                            detectExistingFileWriteEncoding)
 from utils.diskvaluesrelay import getFileEncoding, setFileEncoding
 from autocomplete.bufferutils import isImportLine
 
@@ -41,7 +42,7 @@ class EditorContextMenuMixin:
     def __init__(self):
         self.encodingReloadMenu = QMenu("Set &encoding and reload")
         self.encodingReloadActGrp = QActionGroup(self)
-        self.encodingWriteMenu = QMenu("Set read/write encodin&g")
+        self.encodingWriteMenu = QMenu("Set encodin&g")
         self.encodingWriteActGrp = QActionGroup(self)
 
         mainWindow = GlobalData().mainWindow
@@ -220,13 +221,55 @@ class EditorContextMenuMixin:
         # Show the menu
         self._menu.popup(event.globalPos())
 
+    def __isSameEncodingAsCurrent(self, enc):
+        """True if the same encoding has already been set"""
+        fileName = self._parent.getFileName()
+        if not os.path.isabs(fileName):
+            # New unsaved yet file
+            if not self.newFileUserEncoding:
+                return False
+            return getNormalizedEncoding(enc) == getNormalizedEncoding(
+                self.newFileUserEncoding)
+
+        # Existed before or just saved new file
+        currentEnc = getFileEncoding(fileName)
+        if not currentEnc:
+            return False
+        return getNormalizedEncoding(currentEnc) == getNormalizedEncoding(enc)
+
     def __onReloadWithEncoding(self, act):
         """Triggered when encoding is selected"""
+        # The method is called only for the existing disk files
         encoding = act.data()
+        if self.__isSameEncodingAsCurrent(encoding):
+            return
+
+        if self.document().isModified():
+            res = QMessageBox.warning(
+                self, 'Continue loosing changes',
+                '<p>The buffer has unsaved changes. Are you sure to continue '
+                'reloading the content using ' + encoding + ' encoding and '
+                'loosing the changes?</p>',
+                QMessageBox.StandardButtons(QMessageBox.Cancel |
+                                            QMessageBox.Yes),
+                QMessageBox.Cancel)
+            if res == QMessageBox.Cancel:
+                return
+
+        # Do the reload
+        fileName = self._parent.getFileName()
+        setFileEncoding(fileName, encoding)
+        self.__updateFilePosition()
+        self.readFile(fileName)
+        self.__restoreFilePosition()
+        self.__updateMainWindowStatusBar()
 
     def __onReadWriteEncoding(self, act):
         """Sets explicit encoding for further read/write ops"""
         encoding = act.data()
+        if self.__isSameEncodingAsCurrent(encoding):
+            return
+
         fileName = self._parent.getFileName()
         absFileName = os.path.isabs(fileName)
         if absFileName:
@@ -234,12 +277,22 @@ class EditorContextMenuMixin:
             setFileEncoding(fileName, encoding)
         else:
             self.newFileUserEncoding = encoding
-        mainWindow = GlobalData().mainWindow
-        editorsManager = mainWindow.editorsManagerWidget.editorsManager
-        editorsManager._updateStatusBar()
+        self.setModified(True)
+        self.__updateMainWindowStatusBar()
 
     def __onClearEncoding(self):
         """Clears the explicitly set encoding"""
+        fileName = self._parent.getFileName()
+        absFileName = os.path.isabs(fileName)
+        if absFileName:
+            setFileEncoding(fileName, None)
+            print("User encoding: " + str(getFileEncoding(fileName)))
+            self.encoding = None
+            self.encoding = detectExistingFileWriteEncoding(self, fileName)
+            print("Saving encoding: " + str(self.encoding))
+        else:
+            self.newFileUserEncoding = None
+        self.__updateMainWindowStatusBar()
 
     def onUndo(self):
         """Undo implementation"""
@@ -371,3 +424,21 @@ class EditorContextMenuMixin:
         if url.lower().startswith("www."):
             url = "http://" + url
         QDesktopServices.openUrl(QUrl(url))
+
+    @staticmethod
+    def __updateMainWindowStatusBar():
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.updateStatusBar()
+
+    @staticmethod
+    def __updateFilePosition():
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.updateFilePosition(None)
+
+    @staticmethod
+    def __restoreFilePosition():
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.restoreFilePosition(None)

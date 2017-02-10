@@ -36,7 +36,7 @@ class QutepartWrapper(Qutepart):
         Qutepart.__init__(self, parent)
 
         self.encoding = None
-        self.newFileUserEncoding = None
+        self.explicitUserEncoding = None
         self.mime = None
 
         # Remove all the default margins
@@ -108,12 +108,11 @@ class QutepartWrapper(Qutepart):
     def lastVisibleLine(self):
         """Provides the last visible line. 0-based"""
         editorHeight = self.height()
-        bar = self.horizontalScrollBar()
-        if bar:
-            if bar.isVisible():
-                editorHeight -= bar.height()
+        hBar = self.horizontalScrollBar()
+        if hBar:
+            if hBar.isVisible():
+                editorHeight -= hBar.height()
         block = self.firstVisibleBlock()
-        blockRect = self.blockBoundingRect(block)
 
         lastVisible = block.blockNumber()
         blocksHeight = 0.0
@@ -147,7 +146,7 @@ class QutepartWrapper(Qutepart):
 
     def moveToLineEnd(self):
         """Moves the cursor to the end of the line"""
-        line, pos = self.cursorPosition
+        line, _ = self.cursorPosition
         self.cursorPosition = line, len(self.lines[line])
 
     def moveToLineBegin(self, toFirstNonSpace):
@@ -205,3 +204,9 @@ class QutepartWrapper(Qutepart):
                 stripped = orig.rstrip()
                 if orig != stripped:
                     self.lines[index] = stripped
+
+    def getEncoding(self):
+        """Provides the encoding"""
+        if self.explicitUserEncoding:
+            return self.explicitUserEncoding
+        return self.encoding

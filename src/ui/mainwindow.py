@@ -30,7 +30,7 @@ from utils.misc import (getDefaultTemplate, getIDETemplateFile,
 from utils.pixmapcache import getIcon
 from utils.settings import THIRDPARTY_DIR
 from utils.fileutils import (getFileProperties, isImageViewable, isImageFile,
-                             isFileSearchable, isCDMProjectFile)
+                             isFileSearchable, isCDMProjectFile, isPythonMime)
 from utils.diskvaluesrelay import getRunParameters, addRunParams
 from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
                                 ImportDiagramOptions)

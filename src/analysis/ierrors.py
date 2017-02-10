@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,15 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-" Interactive errors report using pyflakes "
+"""Interactive errors report using pyflakes"""
 
 from _ast import PyCF_ONLY_AST
 from pyflakes.checker import Checker
 
 
 def getFileErrors(sourceCode):
-    " Provides a list of warnings/errors for the given source code "
-
+    """Provides a list of warnings/errors for the given source code"""
     sourceCode += '\n'
 
     # First, compile into an AST and handle syntax errors.

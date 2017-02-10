@@ -44,12 +44,12 @@ class DebuggerEnvironment:
 
     def __init__(self):
         self.__props = deepcopy(_DEFAULT_DEBUGGER_PROPS)
-        self.__fileName = None
+        self.__deFileName = None
 
     def reset(self):
         """Resets the filesystem binding"""
         self.__props = deepcopy(_DEFAULT_DEBUGGER_PROPS)
-        self.__fileName = None
+        self.__deFileName = None
 
     def setup(self, dirName):
         """Binds the parameters to a disk file"""
@@ -63,21 +63,21 @@ class DebuggerEnvironment:
             raise Exception('Directory name is expected for the debugger '
                             'environment. The given ' + dirName + ' is not.')
 
-        self.__fileName = dirName + "debuggerenv.json"
-        if os.path.exists(self.__fileName):
+        self.__deFileName = dirName + "debuggerenv.json"
+        if os.path.exists(self.__deFileName):
             DebuggerEnvironment.load(self)
 
     def load(self):
         """Loads the saved debugger environment"""
-        if self.__fileName:
+        if self.__deFileName:
             default = deepcopy(_DEFAULT_DEBUGGER_PROPS)
-            self.__props = loadJSON(self.__fileName, 'debugger environment',
+            self.__props = loadJSON(self.__deFileName, 'debugger environment',
                                     default)
 
     def save(self):
         """Saves the debugger environment into a file"""
-        if self.__fileName:
-            saveJSON(self.__fileName, self.__props, 'debugger environment')
+        if self.__deFileName:
+            saveJSON(self.__deFileName, self.__props, 'debugger environment')
 
     @property
     def breakpoints(self):

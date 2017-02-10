@@ -40,7 +40,7 @@ class FileSystemEnvironment:
 
     def __init__(self):
         self.__props = deepcopy(_DEFAULT_FS_PROPS)
-        self.__fileName = None
+        self.__fseFileName = None
 
         # Default. Could be updated later.
         self.__limit = 32
@@ -48,7 +48,7 @@ class FileSystemEnvironment:
     def reset(self):
         """Resets the binding to the file system"""
         self.__props = deepcopy(_DEFAULT_FS_PROPS)
-        self.__fileName = None
+        self.__fseFileName = None
 
     def setup(self, dirName):
         """Binds the parameters to a disk file"""
@@ -62,21 +62,22 @@ class FileSystemEnvironment:
             raise Exception('Directory name is expected for the file system '
                             'environment. The given ' + dirName + ' is not.')
 
-        self.__fileName = dirName + "fsenv.json"
-        if os.path.exists(self.__fileName):
+        self.__fseFileName = dirName + "fsenv.json"
+        if os.path.exists(self.__fseFileName):
             FileSystemEnvironment.load(self)
 
     def load(self):
         """Loads the saved file system environment"""
-        if self.__fileName:
+        if self.__fseFileName:
             default = deepcopy(_DEFAULT_FS_PROPS)
-            self.__props = loadJSON(self.__fileName, 'file system environment',
-                                    default)
+            self.__props = loadJSON(self.__fseFileName,
+                                    'file system environment', default)
 
     def save(self):
         """Saves the file system environment into a file"""
-        if self.__fileName:
-            saveJSON(self.__fileName, self.__props, 'file system environment')
+        if self.__fseFileName:
+            saveJSON(self.__fseFileName, self.__props,
+                     'file system environment')
 
     def setLimit(self, newLimit):
         """Sets the new limit to the number of entries"""

@@ -186,13 +186,13 @@ def getContext(editor, info=None,
                skipBlankLinesBack=False, skipDef=True):
     """Detects the context at the text cursor position.
 
-       skipBlankLinesBack == False => current cursor position is used
-       skipBlankLinesBack == True => skip blank lines back and use the first 
-                                     non-blank line as the cursor position.
-       skipDef == True => treat a definition as belonging to an upper
-                          level context (not included into the context stack)
-       skipDef == False => treat a definition as starting a context level
-                           (included into the context stack as the last one)
+    skipBlankLinesBack == False => current cursor position is used
+    skipBlankLinesBack == True => skip blank lines back and use the first 
+                                  non-blank line as the cursor position.
+    skipDef == True => treat a definition as belonging to an upper
+                       level context (not included into the context stack)
+    skipDef == False => treat a definition as starting a context level
+                        (included into the context stack as the last one)
     """
     # It is expected that this is a python editor.
     # If non-python editor is given, then a global context is provided

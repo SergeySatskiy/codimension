@@ -43,7 +43,6 @@ def buildSystemWideModulesList():
     if not __systemwideInitialized:
         __systemwideModules = getSysModules()
         __systemwideInitialized = True
-    return
 
 
 def __getModuleNames(fileName):
@@ -117,7 +116,7 @@ def __getParsedModuleNames(info):
 
 
 def __getImportedObjects(moduleName, fileName):
-    " Provides a list of objects to be imported from "
+    """Provides a list of objects to be imported from"""
     buildSystemWideModulesList()
 
     modulePath = None
@@ -183,7 +182,8 @@ def __getImportedObjects(moduleName, fileName):
 #             pythons-import-doesnt-work-as-expected
 def importModule(modName, parentModule=None):
     """Attempts to import the supplied string as a module.
-       Returns the module that was imported.
+
+    Returns the module that was imported.
     """
     mods = modName.split('.')
     childModuleString = '.'.join(mods[1:])
@@ -264,6 +264,7 @@ def getDefinitionLocation(fileName, editor):
         return None
     except:
         return None
+
 
 def _switchFileAndBuffer(fileName, editor):
     """Saves the original file under a temporary name and

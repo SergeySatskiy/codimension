@@ -36,12 +36,12 @@ class RunParametersCache:
         # The path can be relative or absolute:
         # relative for project files, absolute for non-project ones
         self.__cache = {}
-        self.__fileName = None
+        self.__rpFileName = None
 
     def reset(self):
         """Resets the binding to the file system"""
         self.__cache = {}
-        self.__fileName = None
+        self.__rpFileName = None
 
     def setup(self, dirName):
         """Binds the cache to a disk file"""
@@ -56,32 +56,32 @@ class RunParametersCache:
                             'run parameters cache. The given ' +
                             dirName + ' is not.')
 
-        self.__fileName = dirName + 'runparams.json'
-        if os.path.exists(self.__fileName):
+        self.__rpFileName = dirName + 'runparams.json'
+        if os.path.exists(self.__rpFileName):
             RunParametersCache.load(self)
 
     def load(self):
         """Loads the cache from the given file"""
-        if self.__fileName:
+        if self.__rpFileName:
             try:
-                with open(self.__fileName, 'r',
+                with open(self.__rpFileName, 'r',
                           encoding=DEFAULT_ENCODING) as diskfile:
                     self.__cache = json.load(diskfile, object_hook=fromJSON)
             except Exception as exc:
                 logging.error('Error loading run paramaters cache (from ' +
-                              self.__fileName + '): ' + str(exc))
+                              self.__rpFileName + '): ' + str(exc))
                 self.__cache = {}
 
     def save(self):
         """Saves the cache into the given file"""
-        if self.__fileName:
+        if self.__rpFileName:
             try:
-                with open(self.__fileName, 'w',
+                with open(self.__rpFileName, 'w',
                           encoding=DEFAULT_ENCODING) as diskfile:
                     json.dump(self.__cache, diskfile, default=toJSON)
             except Exception as exc:
                 logging.error('Error saving run paramaters cache (to ' +
-                              self.__fileName + '): ' + str(exc))
+                              self.__rpFileName + '): ' + str(exc))
 
     def getRunParameters(self, path):
         """Provides the required parameters object"""

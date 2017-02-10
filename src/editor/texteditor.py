@@ -344,7 +344,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             return False
 
         self.encoding = encoding
-        if self.newFileUserEncoding:
+        if self.explicitUserEncoding:
             setFileEncoding(fileName, self.newFileUserEncoding)
             self.newFileUserEncoding = None
 
@@ -907,8 +907,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def onScopeBegin(self):
         """The user requested jumping to the current scope begin"""
         if self.isPythonBuffer():
-            text = self.text()
-            info = getBriefModuleInfoFromMemory(text)
+            info = getBriefModuleInfoFromMemory(self.text)
             context = getContext(self, info, True)
             if context.getScope() != context.GlobalScope:
                 GlobalData().mainWindow.jumpToLine(context.getLastScopeLine())
@@ -1006,7 +1005,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             GlobalData().mainWindow.showStatusBarMessage(
                 "Save the buffer first")
             return True
-        if self.isModified():
+        if self.document().isModified():
             # Check that the directory is writable for a temporary file
             dirName = os.path.dirname(self._parent.getFileName())
             if not os.access(dirName, os.W_OK):
@@ -1098,31 +1097,24 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def highlightInOutline(self):
         """Triggered when highlight in outline browser is requested"""
-        if self.lexer_ is None or not isinstance(self.lexer_, QsciLexerPython):
-            # It is not a python file at all
-            return True
-
-        text = self.text()
-        info = getBriefModuleInfoFromMemory(text)
-        context = getContext(self, info, True, False)
-        line, pos = self.cursorPosition
-        GlobalData().mainWindow.highlightInOutline(context, int(line) + 1)
-        self.setFocus()
-        return True
+        if self.isPythonBuffer():
+            info = getBriefModuleInfoFromMemory(self.text)
+            context = getContext(self, info, True, False)
+            line, pos = self.cursorPosition
+            GlobalData().mainWindow.highlightInOutline(context, int(line) + 1)
+            self.setFocus()
 
     def highlightInCFlow(self):
         """Triggered when highlight in the control flow is requested"""
-        if self.lexer_ is None or not isinstance(self.lexer_, QsciLexerPython):
-            # It is not a python file at all
-            return True
-        line, pos = self.cursorPosition
-        absPos = self.positionFromLineIndex(line, pos)
-        self.cflowSyncRequested.emit(absPos, line + 1, pos + 1)
-        return True
+        if self.isPythonBuffer():
+            line, pos = self.cursorPosition
+            absPos = self.positionFromLineIndex(line, pos)
+            self.cflowSyncRequested.emit(absPos, line + 1, pos + 1)
 
     def gotoLine(self, line, pos=None, firstVisible=None):
         """Jumps to the given position and scrolls if needed.
-           line and pos and firstVisible are 1-based
+
+        line and pos and firstVisible are 1-based
         """
         # Normalize editor line and pos
         editorLine = line - 1
@@ -1192,7 +1184,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             return
 
 
-        breakableLines = getBreakpointLines("", self.text(), True, False)
+        breakableLines = getBreakpointLines("", self.text, True, False)
         if breakableLines is None:
             logging.warning("The breakable lines could not be identified "
                             "due to the file compilation errors. Fix the code "
@@ -1411,7 +1403,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             return
 
         fileName = self._parent.getFileName()
-        breakableLines = getBreakpointLines(fileName, self.text(),
+        breakableLines = getBreakpointLines(fileName, self.text,
                                             True, False)
 
         toBeDeleted = []
@@ -1824,7 +1816,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def onImportDgmTuned(self):
         """Runs the settings dialog first"""
-        if self.__editor.isModified():
+        if self.isModified():
             what = ImportsDiagramDialog.SingleBuffer
             if not os.path.isabs(self.getFileName()):
                 logging.warning("Imports diagram can only be generated for "
@@ -1840,7 +1832,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def onImportDgm(self, action=None):
         """Runs the generation process with default options"""
-        if self.__editor.isModified():
+        if self.isModified():
             what = ImportsDiagramDialog.SingleBuffer
             if not os.path.isabs(self.getFileName()):
                 logging.warning("Imports diagram can only be generated for "
@@ -1853,10 +1845,10 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __generateImportDiagram(self, what, options):
         """Show the generation progress and display the diagram"""
-        if self.__editor.isModified():
+        if self.isModified():
             progressDlg = ImportsDiagramProgress(what, options,
                                                  self.getFileName(),
-                                                 self.__editor.text())
+                                                 self.__editor.text)
             tooltip = "Generated for modified buffer (" + \
                       self.getFileName() + ")"
         else:
@@ -1877,7 +1869,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         basePath = os.path.dirname(self.__fileName)
 
         if importLine:
-            lineImports, importWhat = getImportsInLine(self.__editor.text(),
+            lineImports, importWhat = getImportsInLine(self.__editor.text,
                                                        lineNo + 1)
             currentWord = self.__editor.getCurrentWord(".")
             if currentWord in lineImports:
@@ -1914,7 +1906,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
         # Here: the cursor is not on the import line. Take all the file imports
         # and resolve them
-        fileImports = getImportsList(self.__editor.text())
+        fileImports = getImportsList(self.__editor.text)
         if not fileImports:
             GlobalData().mainWindow.showStatusBarMessage(
                 "There are no imports.")
@@ -1960,7 +1952,8 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
     def showOutsideChangesBar(self, allEnabled):
         """Shows the bar for the editor for the user to choose the action"""
         self.setReloadDialogShown(True)
-        self.__outsideChangesBar.showChoice(self.isModified(), allEnabled)
+        self.__outsideChangesBar.showChoice(self.isModified(),
+                                            allEnabled)
 
     def __onReload(self):
         """Triggered when a request to reload the file is received"""
@@ -2227,7 +2220,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
             return line in self.__breakableLines
 
         self.__breakableLines = getBreakpointLines(self.getFileName(),
-                                                   self.__editor.text(),
+                                                   self.__editor.text,
                                                    enforceRecalc)
 
         if self.__breakableLines is None :

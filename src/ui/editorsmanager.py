@@ -135,7 +135,7 @@ class EditorsManager(QTabWidget):
 
         self.__updateControls()
         self.__installActions()
-        self._updateStatusBar()
+        self.updateStatusBar()
 
         self.tabCloseRequested.connect(self.__onCloseRequest)
         self.currentChanged.connect(self.__currentChanged)
@@ -363,7 +363,7 @@ class EditorsManager(QTabWidget):
                 notSaved.append(self.widget(index).getShortName())
             else:
                 # The tab will be closed soon, so save the file position
-                self.__updateFilePosition(index)
+                self.updateFilePosition(index)
                 toClose.insert(0, index)
 
         if notSaved:
@@ -495,7 +495,7 @@ class EditorsManager(QTabWidget):
 
         self.__updateControls()
         self.__connectEditorWidget(newWidget)
-        self._updateStatusBar()
+        self.updateStatusBar()
         self.__cursorPositionChanged()
         editor.setFocus()
         newWidget.updateStatus()
@@ -552,7 +552,8 @@ class EditorsManager(QTabWidget):
                     "discard your changes and close the tab or "
                     "cancel closing the tab?</p>",
                     QMessageBox.StandardButtons(
-                        QMessageBox.Cancel | QMessageBox.Discard | QMessageBox.Save),
+                        QMessageBox.Cancel | QMessageBox.Discard |
+                        QMessageBox.Save),
                     QMessageBox.Save)
 
                 if res == QMessageBox.Save:
@@ -600,7 +601,7 @@ class EditorsManager(QTabWidget):
 
         closingUUID = self.widget(index).getUUID()
         if not wasDiscard and not enforced:
-            self.__updateFilePosition(index)
+            self.updateFilePosition(index)
 
         # Check if it is necessary to add a file to the recent history
         if self.widget(index).getType() in \
@@ -637,9 +638,14 @@ class EditorsManager(QTabWidget):
         self.saveTabsStatus()
         self.sigTabClosed.emit(closingUUID)
 
-    def __updateFilePosition(self, index):
-        """Updates the file position of a file which is loaded to the given tab"""
-        widget = self.widget(index)
+    def updateFilePosition(self, index):
+        """Updates the file position of a file loaded to the given tab"""
+        if index is None:
+            widget = self.currentWidget()
+        else:
+            widget = self.widget(index)
+        if not os.path.isabs(widget.getFileName()):
+            return
         if widget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
             # Save the current cursor position
             editor = widget.getEditor()
@@ -648,11 +654,29 @@ class EditorsManager(QTabWidget):
             cflowHPos = -1
             cflowVPos = -1
             if isPythonMime(widget.getMime()):
-                cflowHPos, cflowVPos = widget.getCFEditor().getScrollbarPositions()
+                cfEditor = widget.getCFEditor()
+                cflowHPos, cflowVPos = cfEditor.getScrollbarPositions()
 
             updateFilePosition(
                 widget.getFileName(), line, pos, editor.firstVisibleLine(),
                 cflowHPos, cflowVPos)
+
+    def restoreFilePosition(self, index):
+        """Restores the file position"""
+        if index is None:
+            widget = self.currentWidget()
+        else:
+            widget = self.widget(index)
+        if not os.path.isabs(widget.getFileName()):
+            return
+        if widget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
+            line, pos, firstVisible, cflowHPos, cflowVPos = \
+                getFilePosition(widget.getFileName())
+            editor = widget.getEditor()
+            if line != -1:
+                editor.gotoLine(line + 1, pos + 1, firstVisible + 1)
+            else:
+                editor.gotoLine(1, 1, 1)
 
     def createNavigationButtons(self):
         """Creates widgets navigation button at the top corners"""
@@ -768,7 +792,7 @@ class EditorsManager(QTabWidget):
             return
 
         self._updateIconAndTooltip(self.currentIndex())
-        self._updateStatusBar()
+        self.updateStatusBar()
 
         self.gotoWidget.updateStatus()
         self.findWidget.updateStatus()
@@ -907,7 +931,7 @@ class EditorsManager(QTabWidget):
             self.insertTab(0, newWidget, newWidget.getShortName())
             self.activateTab(0)
             self.__updateControls()
-            self._updateStatusBar()
+            self.updateStatusBar()
             newWidget.setFocus()
             self.saveTabsStatus()
             if self.__restoringTabs == False:
@@ -936,7 +960,7 @@ class EditorsManager(QTabWidget):
                 newWidget.setTooltip(tooltip)
             self.activateTab(0)
             self.__updateControls()
-            self._updateStatusBar()
+            self.updateStatusBar()
             newWidget.setFocus()
             self.saveTabsStatus()
         except Exception as exc:
@@ -966,7 +990,7 @@ class EditorsManager(QTabWidget):
                 newWidget.setTooltip(tooltip)
             self.activateTab(0)
             self.__updateControls()
-            self._updateStatusBar()
+            self.updateStatusBar()
             newWidget.setFocus()
             self.saveTabsStatus()
         except Exception as exc:
@@ -988,7 +1012,7 @@ class EditorsManager(QTabWidget):
                 newWidget.setTooltip(tooltip)
             self.activateTab(0)
             self.__updateControls()
-            self._updateStatusBar()
+            self.updateStatusBar()
             newWidget.setFocus()
             self.saveTabsStatus()
         except Exception as exc:
@@ -1016,7 +1040,7 @@ class EditorsManager(QTabWidget):
             newWidget.setTooltip(tooltip)
             self.activateTab(0)
             self.__updateControls()
-            self._updateStatusBar()
+            self.updateStatusBar()
             newWidget.setFocus()
             self.saveTabsStatus()
         except Exception as exc:
@@ -1049,7 +1073,7 @@ class EditorsManager(QTabWidget):
             self.activateTab(0)
             self.__updateControls()
             self.__connectEditorWidget(newWidget)
-            self._updateStatusBar()
+            self.updateStatusBar()
             newWidget.setFocus()
             newWidget.getEditor().gotoLine(1, 1)
             self.saveTabsStatus()
@@ -1106,18 +1130,12 @@ class EditorsManager(QTabWidget):
                 # Jump to the asked line
                 editor.gotoLine(lineNo, pos)
             else:
-                # Restore the last position
-                line, pos, firstVisible, cflowHPos, cflowVPos = \
-                            getFilePosition(fileName)
-                if line != -1:
-                    editor.gotoLine(line + 1, pos + 1, firstVisible + 1)
-                else:
-                    editor.gotoLine(1, 1, 1)
+                self.restoreFilePosition(None)
 
             self._updateIconAndTooltip(self.currentIndex(), editor.mime)
             self.__updateControls()
             self.__connectEditorWidget(newWidget)
-            self._updateStatusBar()
+            self.updateStatusBar()
             self.__cursorPositionChanged()
             editor.setFocus()
             newWidget.updateStatus()
@@ -1219,7 +1237,7 @@ class EditorsManager(QTabWidget):
                 widget.setFileType(newFileMime)
                 widget.getEditor().bindLexer(fileName, newFileMime)
                 widget.updateStatus()
-                self._updateStatusBar()
+                self.updateStatusBar()
                 self.__mainWindow.updateRunDebugButtons()
                 self.sigFileTypeChanged.emit(
                     fileName, widget.getUUID(),
@@ -1370,7 +1388,7 @@ class EditorsManager(QTabWidget):
         if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
             self.history.updateFileNameForTab(uuid, fileName)
             widget.updateStatus()
-            self._updateStatusBar()
+            self.updateStatusBar()
             self.__mainWindow.updateRunDebugButtons()
         self.__mainWindow.vcsManager.setLocallyModified(fileName)
 
@@ -1777,7 +1795,7 @@ class EditorsManager(QTabWidget):
         if self.__debugMode:
             mainWindow.setRunToLineButtonState()
 
-    def _updateStatusBar(self):
+    def updateStatusBar(self):
         """Updates the status bar values"""
         currentWidget = self.currentWidget()
         mainWindow = self.__mainWindow
@@ -1862,7 +1880,7 @@ class EditorsManager(QTabWidget):
                     firstIndex = index
             else:
                 # The tab will be closed soon, so save the file position
-                self.__updateFilePosition(index)
+                self.updateFilePosition(index)
 
         if not notSaved:
             return True

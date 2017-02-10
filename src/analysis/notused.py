@@ -30,7 +30,8 @@ from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
 
 
 class NotUsedAnalysisProgress(QDialog):
-    " Progress of the not used analysis "
+
+    """Progress of the not used analysis"""
 
     Functions = 0
     Classes = 1
@@ -58,18 +59,16 @@ class NotUsedAnalysisProgress(QDialog):
         self.__createLayout()
         self.setWindowTitle(self.__formTitle())
         QTimer.singleShot(0, self.__process)
-        return
 
     def keyPressEvent(self, event):
-        " Processes the ESC key specifically "
+        """Processes the ESC key specifically"""
         if event.key() == Qt.Key_Escape:
             self.__onClose()
         else:
             QDialog.keyPressEvent(self, event)
-        return
 
     def __formTitle(self):
-        " Forms the progress dialog title "
+        """Forms the progress dialog title"""
         title = "Unused "
         if self.__what == self.Functions:
             title += 'function'
@@ -80,7 +79,7 @@ class NotUsedAnalysisProgress(QDialog):
         return title + " analysis"
 
     def __formInfoLabel(self, name):
-        " Forms the info label "
+        """Forms the info label"""
         if self.__what == self.Functions:
             return 'Function: ' + name
         if self.__what == self.Classes:
@@ -88,7 +87,7 @@ class NotUsedAnalysisProgress(QDialog):
         return 'Globlal variable: ' + name
 
     def __whatAsString(self):
-        " Provides 'what' as string "
+        """Provides 'what' as string"""
         if self.__what == self.Functions:
             return 'function'
         if self.__what == self.Classes:
@@ -96,16 +95,14 @@ class NotUsedAnalysisProgress(QDialog):
         return 'global variable'
 
     def __updateFoundLabel(self):
-        " Updates the found label "
+        """Updates the found label"""
         text = "Found: " + str(self.__found) + " candidate"
         if self.__found != 1:
             text += "s"
         self.__foundLabel.setText(text)
-        return
 
     def __createLayout(self):
-        """ Creates the dialog layout """
-
+        """Creates the dialog layout"""
         self.resize(450, 20)
         self.setSizeGripEnabled(True)
 
@@ -138,19 +135,15 @@ class NotUsedAnalysisProgress(QDialog):
         verticalLayout.addWidget(buttonBox)
 
         buttonBox.rejected.connect(self.__onClose)
-        return
 
     def __onClose(self):
-        " triggered when the close button is clicked "
-
+        """triggered when the close button is clicked"""
         self.__cancelRequest = True
         if not self.__inProgress:
             self.close()
-        return
 
     def __process(self):
-        " Analysis process "
-
+        """Analysis process"""
         self.__inProgress = True
 
         mainWindow = GlobalData().mainWindow
@@ -239,4 +232,3 @@ class NotUsedAnalysisProgress(QDialog):
         self.__inProgress = False
 
         self.accept()
-        return

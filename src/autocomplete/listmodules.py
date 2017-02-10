@@ -74,10 +74,10 @@ __regexpr = re.compile(r"(?i)[a-z_]\w*$")
 
 def getModules(path):
     """Provides modules in a given directory.
-       It expects absolute real path. Otherwise it is not guaranteed it
-       works all right.
-    """
 
+    It expects absolute real path. Otherwise it is not guaranteed it
+    works all right.
+    """
     # Make sure the path does not have double separators
     # and has separator at the end
     path = normpath(path) + sep
@@ -158,7 +158,6 @@ def resolveLink(path):
 
 def __getSysPathExceptCurrent():
     """Provides a list of paths for system modules"""
-
     path = map(realpath, map(os.path.abspath, sys.path[:]))
 
     def __filterCallback(path, cwd=realpath(getcwd())):

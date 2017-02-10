@@ -70,5 +70,9 @@ class FileEncodings:
 
     def setFileEncoding(self, fileName, encoding):
         """Sets the encoding for the file"""
-        self.__encodings[fileName] = encoding
-        FileEncodings.save(self)
+        if encoding:
+            self.__encodings[fileName] = encoding
+            FileEncodings.save(self)
+        else:
+            if self.__encodings.pop(fileName, None):
+                FileEncodings.save(self)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,12 +30,12 @@ class FilePositions:
     def __init__(self):
         # file name -> (line, pos, first visible, horizontalPos, verticalPos)
         self.__filePos = {}
-        self.__fileName = None
+        self.__fpFileName = None
 
     def reset(self):
         """Un-binds from the file system"""
         self.__filePos = {}
-        self.__fileName = None
+        self.__fpFileName = None
 
     def setup(self, dirName):
         """Binds the parameters to a disk file"""
@@ -49,20 +49,21 @@ class FilePositions:
             raise Exception('Directory name is expected for files '
                             'positions. The given ' + dirName + ' is not.')
 
-        self.__fileName = dirName + 'lastpositions.json'
-        if os.path.exists(self.__fileName):
+        self.__fpFileName = dirName + 'lastpositions.json'
+        if os.path.exists(self.__fpFileName):
             FilePositions.load(self)
 
     def load(self):
         """Loads the saved positions file"""
-        if self.__fileName:
-            self.__filePos = loadJSON(self.__fileName,
+        if self.__fpFileName:
+            self.__filePos = loadJSON(self.__fpFileName,
                                       'file editing positions', {})
 
     def save(self):
         """Saves the positions into a file"""
-        if self.__fileName:
-            saveJSON(self.__fileName, self.__filePos, 'file editing positions')
+        if self.__fpFileName:
+            saveJSON(self.__fpFileName, self.__filePos,
+                     'file editing positions')
 
     def getFilePosition(self, fileName):
         """Provides the position or (-1,-1,-1,-1,-1) if not found"""
