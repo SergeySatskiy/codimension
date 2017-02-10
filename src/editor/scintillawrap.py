@@ -506,23 +506,6 @@ class ScintillaWrapper( QsciScintilla ):
             self.SendScintilla( self.SCI_SETCARETLINEBACK, color )
         return
 
-    def removeTrailingWhitespaces( self ):
-        " Removes trailing whitespaces "
-        searchRE = r"[ \t]+$"    # whitespace at the end of a line
-
-        line, pos = self.getCursorPosition()
-        found = self.findFirstTarget( searchRE, True, False, False, 0, 0 )
-        self.beginUndoAction()
-        while found:
-            self.replaceTarget( "" )
-            found = self.findNextTarget()
-        self.endUndoAction()
-        newLength = len( str( self.text( line ) ).rstrip() )
-        if newLength < pos:
-            pos = newLength
-        self.setCursorPosition( line, pos )
-        return
-
     def expandTabs( self, spaces ):
         " Expands tabs "
         searchRE = r"\t"

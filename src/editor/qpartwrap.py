@@ -196,3 +196,12 @@ class QutepartWrapper(Qutepart):
         cursor.select(QTextCursor.WordUnderCursor)
         word = cursor.selectedText()
         return word
+
+    def removeTrailingWhitespaces(self):
+        """Removes trailing whitespaces"""
+        with self:
+            for index in len(self.lines):
+                orig = self.lines[index]
+                stripped = orig.rstrip()
+                if orig != stripped:
+                    self.lines[index] = stripped

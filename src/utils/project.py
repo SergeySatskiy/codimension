@@ -256,6 +256,7 @@ class CodimensionProject(QObject,
         FileSystemEnvironment.setup(self, self.userProjectDir)
         RunParametersCache.setup(self, self.userProjectDir)
         FilePositions.setup(self, self.userProjectDir)
+        FileEncodings.setup(self, self.userProjectDir)
 
         # The project might have been moved...
         self.__createProjectFile()  # ~/.codimension3/uuidNN/project

@@ -30,12 +30,12 @@ class FileEncodings:
     def __init__(self):
         # file name -> encoding
         self.__encodings = {}
-        self.__fileName = None
+        self.__encFileName = None
 
     def reset(self):
         """Un-binds from the file system"""
         self.__encodings = {}
-        self.__fileName = None
+        self.__encFileName = None
 
     def setup(self, dirName):
         """Binds the parameters to a disk file"""
@@ -49,20 +49,20 @@ class FileEncodings:
             raise Exception('Directory name is expected for file '
                             'encodings. The given ' + dirName + ' is not.')
 
-        self.__fileName = dirName + 'encodings.json'
-        if os.path.exists(self.__fileName):
+        self.__encFileName = dirName + 'encodings.json'
+        if os.path.exists(self.__encFileName):
             FileEncodings.load(self)
 
     def load(self):
         """Loads the saved encodings file"""
-        if self.__fileName:
-            self.__encodings = loadJSON(self.__fileName,
+        if self.__encFileName:
+            self.__encodings = loadJSON(self.__encFileName,
                                         'file encodings', {})
 
     def save(self):
         """Saves the encodings into a file"""
-        if self.__fileName:
-            saveJSON(self.__fileName, self.__encodings, 'file encodings')
+        if self.__encFileName:
+            saveJSON(self.__encFileName, self.__encodings, 'file encodings')
 
     def getFileEncoding(self, fileName):
         """Provides None if not found"""

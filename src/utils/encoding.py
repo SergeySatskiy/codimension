@@ -117,10 +117,11 @@ def isValidEncoding(enc):
     return False
 
 
-def getNormalizedEncoding(enc):
+def getNormalizedEncoding(enc, validityCheck=True):
     """Returns a normalized encoding or throws an exception"""
-    if not isValidEncoding(enc):
-        raise Exception('Unsupported encoding ' + enc)
+    if validityCheck:
+        if not isValidEncoding(enc):
+            raise Exception('Unsupported encoding ' + enc)
     norm_enc = encodings.normalize_encoding(enc).lower()
     return encodings.aliases.aliases.get(norm_enc, norm_enc)
 
@@ -162,18 +163,19 @@ def encodingSanityCheck(fName, decodedText, expectedEncoding):
         modInfo = getBriefModuleInfoFromMemory(decodedText)
         modEncoding = modInfo.encoding
         if modEncoding:
-            if not isValidEncoding(modEncoding):
-                logging.warning("Invalid encoding " + modEncoding +
+            if not isValidEncoding(modEncoding.name):
+                logging.warning("Invalid encoding " + modEncoding.name +
                                 " found in the file " + fName)
                 return False
-            if not areEncodingsEqual(modEncoding, expectedEncoding):
+            if not areEncodingsEqual(modEncoding.name, expectedEncoding):
                 if expectedEncoding.startswith('bom-'):
                     noBomEncoding = expectedEncoding[4:]
-                    if areEncodingsEqual(modEncoding, noBomEncoding):
+                    if areEncodingsEqual(modEncoding.name, noBomEncoding):
                         return True
-                logging.warning("The expected encoding " + expectedEncoding +
-                                " does not match encoding " + modEncoding +
-                                " specified in the  file " + fName)
+                logging.warning("The explicitly set encoding " +
+                                expectedEncoding +
+                                " does not match encoding " + modEncoding.name +
+                                " found in the file " + fName)
                 return False
     except:
         pass

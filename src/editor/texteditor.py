@@ -1714,15 +1714,9 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         isPythonFile = isPythonMime(self.__editor.mime)
         self.importsDiagramButton.setEnabled(
             isPythonFile and GlobalData().graphvizAvailable)
-        self.__editor.importsDgmAct.setEnabled(
+        self.__editor.diagramsMenu.setEnabled(
             self.importsDiagramButton.isEnabled())
-        self.__editor.importsDgmParamAct.setEnabled(
-            self.importsDiagramButton.isEnabled())
-        self.__editor.runAct.setEnabled(self.runScriptButton.isEnabled())
-        self.__editor.runParamAct.setEnabled(self.runScriptButton.isEnabled())
-        self.__editor.profileAct.setEnabled(self.runScriptButton.isEnabled())
-        self.__editor.profileParamAct.setEnabled(
-            self.runScriptButton.isEnabled())
+        self.__editor.toolsMenu.setEnabled(self.runScriptButton.isEnabled())
         self.lineCounterButton.setEnabled(isPythonFile)
 
     def onZoomReset(self):
@@ -2000,7 +1994,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         """Shows the profile parameters dialogue"""
         fileName = self.getFileName()
         params = getRunParameters(fileName)
-        termType = Settings().terminalType
+        termType = Settings()['terminalType']
         profilerParams = Settings().getProfilerSettings()
         debuggerParams = Settings().getDebuggerSettings()
         dlg = RunDialog(fileName, params, termType,
@@ -2008,7 +2002,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         if dlg.exec_() == QDialog.Accepted:
             addRunParams(fileName, dlg.runParams)
             if dlg.termType != termType:
-                Settings().terminalType = dlg.termType
+                Settings()['terminalType'] = dlg.termType
             if dlg.profilerParams != profilerParams:
                 Settings().setProfilerSettings(dlg.profilerParams)
             self.onProfileScript()
@@ -2031,7 +2025,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
         fileName = self.getFileName()
         params = getRunParameters(fileName)
-        termType = Settings().terminalType
+        termType = Settings()['terminalType']
         profilerParams = Settings().getProfilerSettings()
         debuggerParams = Settings().getDebuggerSettings()
         dlg = RunDialog(fileName, params, termType,
@@ -2039,7 +2033,7 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         if dlg.exec_() == QDialog.Accepted:
             addRunParams(fileName, dlg.runParams)
             if dlg.termType != termType:
-                Settings().terminalType = dlg.termType
+                Settings()['terminalType'] = dlg.termType
             if dlg.debuggerParams != debuggerParams:
                 Settings().setDebuggerSettings(dlg.debuggerParams)
             self.onDebugScript()
@@ -2136,11 +2130,9 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getEncoding(self):
         """Tells the content encoding"""
+        if self.__editor.newFileUserEncoding:
+            return self.__editor.newFileUserEncoding
         return self.__editor.encoding
-
-    def setEncoding(self, newEncoding):
-        """Sets the new editor encoding"""
-        self.__editor.setEncoding(newEncoding)
 
     def getShortName(self):
         """Tells the display name"""

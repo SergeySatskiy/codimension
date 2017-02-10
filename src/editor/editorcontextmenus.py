@@ -28,7 +28,9 @@ from ui.qt import (QMenu, QActionGroup, QApplication, Qt, QCursor,
                    QDesktopServices, QUrl)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
-from utils.encoding import SUPPORTED_CODECS, decodeURLContent
+from utils.encoding import (SUPPORTED_CODECS, decodeURLContent,
+                            getNormalizedEncoding)
+from utils.diskvaluesrelay import getFileEncoding, setFileEncoding
 from autocomplete.bufferutils import isImportLine
 
 
@@ -176,12 +178,6 @@ class EditorContextMenuMixin:
         self.__menuPaste.setEnabled(QApplication.clipboard().text() != ""
                                     and not readOnly)
 
-        # Check the proper encoding in the menu
-#        self.encodingMenu.setEnabled(True)
-#        encoding = self.encoding
-#        if encoding in self.supportedEncodings:
-#            self.supportedEncodings[encoding].setChecked(True)
-
         fileName = self._parent.getFileName()
         absFileName = os.path.isabs(fileName)
         self.__menuOpenAsFile.setEnabled(self.openAsFileAvailable())
@@ -194,17 +190,32 @@ class EditorContextMenuMixin:
         self._menuHighlightInOutline.setEnabled(isPython)
 
         runEnabled = self._parent.runScriptButton.isEnabled()
-        self.runAct.setEnabled(runEnabled)
-        self.runParamAct.setEnabled(runEnabled)
-        self.profileAct.setEnabled(runEnabled)
-        self.profileParamAct.setEnabled(runEnabled)
+        self.toolsMenu.setEnabled(runEnabled)
 
         if absFileName:
             self.__menuClearEncoding.setEnabled(
-                getFileEncoding(absFileName) is not None)
+                getFileEncoding(fileName) is not None)
         else:
             self.__menuClearEncoding.setEnabled(
                 self.newFileUserEncoding is not None)
+
+        # Check the proper encoding in the menu
+        encoding = 'undefined'
+        if absFileName:
+            enc = getFileEncoding(fileName)
+            if enc:
+                encoding = enc
+        else:
+            if self.newFileUserEncoding:
+                encoding = self.newFileUserEncoding
+        encoding = getNormalizedEncoding(encoding, False)
+        if absFileName:
+            for act in self.encodingReloadActGrp.actions():
+                act.setChecked(encoding == getNormalizedEncoding(act.data()))
+        else:
+            self.encodingReloadMenu.setEnabled(False)
+        for act in self.encodingWriteActGrp.actions():
+            act.setChecked(encoding == getNormalizedEncoding(act.data()))
 
         # Show the menu
         self._menu.popup(event.globalPos())
@@ -216,8 +227,18 @@ class EditorContextMenuMixin:
     def __onReadWriteEncoding(self, act):
         """Sets explicit encoding for further read/write ops"""
         encoding = act.data()
+        fileName = self._parent.getFileName()
+        absFileName = os.path.isabs(fileName)
+        if absFileName:
+            self.encoding = encoding
+            setFileEncoding(fileName, encoding)
+        else:
+            self.newFileUserEncoding = encoding
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager._updateStatusBar()
 
-    def __onClearEncoding(self, _):
+    def __onClearEncoding(self):
         """Clears the explicitly set encoding"""
 
     def onUndo(self):
