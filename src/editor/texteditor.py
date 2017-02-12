@@ -43,7 +43,7 @@ from utils.encoding import (readEncodedFile, detectEolString,
                             detectWriteEncoding, writeEncodedFile)
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.diskvaluesrelay import (getRunParameters, addRunParams,
-                                   setFileEncoding)
+                                   setFileEncoding, getFileEncoding)
 from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
                                getImportedNameDefinitionLine, resolveImports)
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
@@ -345,8 +345,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
         self.encoding = encoding
         if self.explicitUserEncoding:
-            setFileEncoding(fileName, self.newFileUserEncoding)
-            self.newFileUserEncoding = None
+            userEncoding = getFileEncoding(fileName)
+            if userEncoding != self.explicitUserEncoding:
+                setFileEncoding(fileName, self.explicitUserEncoding)
+            self.explicitUserEncoding = None
 
         self._parent.updateModificationTime(fileName)
         self._parent.setReloadDialogShown(False)
@@ -2123,8 +2125,8 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getEncoding(self):
         """Tells the content encoding"""
-        if self.__editor.newFileUserEncoding:
-            return self.__editor.newFileUserEncoding
+        if self.__editor.explicitUserEncoding:
+            return self.__editor.explicitUserEncoding
         return self.__editor.encoding
 
     def getShortName(self):

@@ -30,7 +30,8 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.encoding import (SUPPORTED_CODECS, decodeURLContent,
                             getNormalizedEncoding,
-                            detectExistingFileWriteEncoding)
+                            detectExistingFileWriteEncoding,
+                            detectEncodingOnCrearExplicit)
 from utils.diskvaluesrelay import getFileEncoding, setFileEncoding
 from autocomplete.bufferutils import isImportLine
 
@@ -198,7 +199,7 @@ class EditorContextMenuMixin:
                 getFileEncoding(fileName) is not None)
         else:
             self.__menuClearEncoding.setEnabled(
-                self.newFileUserEncoding is not None)
+                self.explicitUserEncoding is not None)
 
         # Check the proper encoding in the menu
         encoding = 'undefined'
@@ -207,8 +208,8 @@ class EditorContextMenuMixin:
             if enc:
                 encoding = enc
         else:
-            if self.newFileUserEncoding:
-                encoding = self.newFileUserEncoding
+            if self.explicitUserEncoding:
+                encoding = self.explicitUserEncoding
         encoding = getNormalizedEncoding(encoding, False)
         if absFileName:
             for act in self.encodingReloadActGrp.actions():
@@ -226,10 +227,10 @@ class EditorContextMenuMixin:
         fileName = self._parent.getFileName()
         if not os.path.isabs(fileName):
             # New unsaved yet file
-            if not self.newFileUserEncoding:
+            if not self.explicitUserEncoding:
                 return False
             return getNormalizedEncoding(enc) == getNormalizedEncoding(
-                self.newFileUserEncoding)
+                self.explicitUserEncoding)
 
         # Existed before or just saved new file
         currentEnc = getFileEncoding(fileName)
@@ -272,26 +273,18 @@ class EditorContextMenuMixin:
 
         fileName = self._parent.getFileName()
         absFileName = os.path.isabs(fileName)
-        if absFileName:
-            self.encoding = encoding
-            setFileEncoding(fileName, encoding)
-        else:
-            self.newFileUserEncoding = encoding
-        self.setModified(True)
+        self.document().setModified(True)
+        self.explicitUserEncoding = encoding
         self.__updateMainWindowStatusBar()
 
     def __onClearEncoding(self):
         """Clears the explicitly set encoding"""
+        self.explicitUserEncoding = None
         fileName = self._parent.getFileName()
         absFileName = os.path.isabs(fileName)
         if absFileName:
             setFileEncoding(fileName, None)
-            print("User encoding: " + str(getFileEncoding(fileName)))
-            self.encoding = None
-            self.encoding = detectExistingFileWriteEncoding(self, fileName)
-            print("Saving encoding: " + str(self.encoding))
-        else:
-            self.newFileUserEncoding = None
+            self.encoding = detectEncodingOnCrearExplicit(fileName, self.text)
         self.__updateMainWindowStatusBar()
 
     def onUndo(self):

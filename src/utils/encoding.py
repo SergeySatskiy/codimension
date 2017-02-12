@@ -182,6 +182,51 @@ def encodingSanityCheck(fName, decodedText, expectedEncoding):
     return True
 
 
+def detectEncodingOnCrearExplicit(fName, content):
+    """Provides the reading encoding as a file would be read"""
+    # The function is used in case the user reset the explicit encoding
+    # so the current encoding needs to be set as if the file would be
+    # read again
+    try:
+        with open(fName, 'rb') as diskfile:
+            text = diskfile.read(1024)
+
+        if text.startswith(BOM_UTF8):
+            return 'bom-utf-8'
+        if text.startswith(BOM_UTF16):
+            return 'bom-utf-16'
+        if text.startswith(BOM_UTF32):
+            return 'bom-utf-32'
+
+        # The function is called when an explicit encoding is reset so
+        # there is no need to check for it
+
+        encFromBuffer = getCodingFromText(content)
+        if encFromBuffer:
+            if isValidEncoding(encFromBuffer):
+                return encFromBuffer
+
+        project = GlobalData().project
+        if project.isLoaded():
+            projectEncoding = project.props['encoding']
+            if projectEncoding:
+                if isValidEncoding(projectEncoding):
+                    return projectEncoding
+
+        ideEncoding = Settings()['encoding']
+        if ideEncoding:
+            if isValidEncoding(ideEncoding):
+                return ideEncoding
+
+        return DEFAULT_ENCODING
+    except Exception as exc:
+        logging.warning("Error while guessing encoding for reading " +
+                        fileName + ": " + str(exc) + "\n"
+                        "The default encoding " +
+                        DEFAULT_ENCODING + " will be used.")
+        return DEFAULT_ENCODING
+
+
 def readEncodedFile(fName):
     """Reads the encoded file"""
     # Returns: text, used encoding
@@ -328,7 +373,7 @@ def detectNewFileWriteEncoding(editor, fName):
     # - a new content has been modified
     isPython = isPythonFile(fName)
 
-    if editor.newFileUserEncoding:
+    if editor.explicitUserEncoding:
         # The user specifically set an encoding for a new buffer
         # It is impossible to set an invalid encoding
         if isPython:
@@ -338,16 +383,16 @@ def detectNewFileWriteEncoding(editor, fName):
                     logging.warning(
                         "Encoding from the buffer (" + encFromText + ") is "
                         "invalid and does not match the explicitly set "
-                        "encoding " + editor.newFileUserEncoding + ". The " +
-                        editor.newFileUserEncoding + " is used")
-                elif not areEncodingsEqual(editor.newFileUserEncoding,
+                        "encoding " + editor.explicitUserEncoding + ". The " +
+                        editor.explicitUserEncoding + " is used")
+                elif not areEncodingsEqual(editor.explicitUserEncoding,
                                            encFromText):
                     logging.warning(
                         "Encoding from the buffer (" + encFromText + ") does "
                         "not match the explicitly set encoding " +
-                        editor.newFileUserEncoding + ". The " +
-                        editor.newFileUserEncoding + " is used")
-        return editor.newFileUserEncoding
+                        editor.explicitUserEncoding + ". The " +
+                        editor.explicitUserEncoding + " is used")
+        return editor.explicitUserEncoding
 
     # Check the buffer
     if isPython:
