@@ -89,7 +89,7 @@ _scopeToName = {
     CellElement.FINALLY_SCOPE: "finally"}
 
 
-__terminalCellTypes = (
+_terminalCellTypes = (
     CellElement.BREAK,
     CellElement.CONTINUE,
     CellElement.RETURN,
@@ -173,8 +173,8 @@ class VirtualCanvas:
         try:
             cell = self.cells[row][column]
             if cell.kind == CellElement.VCANVAS:
-                return cell.cells[-1][0].kind in __terminalCellTypes
-            return cell.kind in __terminalCellTypes
+                return cell.cells[-1][0].kind in _terminalCellTypes
+            return cell.kind in _terminalCellTypes
         except:
             return False
 
