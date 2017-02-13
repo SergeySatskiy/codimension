@@ -41,11 +41,11 @@ from .items import (CellElement, VacantCell, CodeBlockCell,
                     BreakCell, ContinueCell, ReturnCell, RaiseCell,
                     AssertCell, SysexitCell, ImportCell, AboveCommentCell,
                     LeadingCommentCell, SideCommentCell, ConnectorCell, IfCell,
-                    VSpacerCell, HSpacerCell, IndependentCommentCell)
+                    VSpacerCell, IndependentCommentCell)
 from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
-                        ClassScopeCell, ForScopeCell, WhileScopeCell,
-                        TryScopeCell, WithScopeCell, DecoratorScopeCell,
-                        ElseScopeCell, ExceptScopeCell, FinallyScopeCell)
+                         ClassScopeCell, ForScopeCell, WhileScopeCell,
+                         TryScopeCell, WithScopeCell, DecoratorScopeCell,
+                         ElseScopeCell, ExceptScopeCell, FinallyScopeCell)
 
 
 CONN_N_S = [(ConnectorCell.NORTH, ConnectorCell.SOUTH)]
