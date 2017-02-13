@@ -307,8 +307,8 @@ class EditorContextMenuMixin:
         else:
             line, _ = self.cursorPosition
             if self.lines[line]:
-                QApplication.clipboard().setText(self.lines[line])
-                self.lines[line] = ''
+                QApplication.clipboard().setText(self.lines[line] + '\n')
+                del self.lines[line]
 
     def onCtrlC(self):
         """Handles copying"""
@@ -317,7 +317,7 @@ class EditorContextMenuMixin:
         else:
             line, _ = self.cursorPosition
             if self.lines[line]:
-                QApplication.clipboard().setText(self.lines[line])
+                QApplication.clipboard().setText(self.lines[line] + '\n')
 
     def openAsFile(self):
         """Opens a selection or a current tag as a file"""

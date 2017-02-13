@@ -101,7 +101,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.__skipChangeCursor = False
 
         skin = GlobalData().skin
-        self.__openedLine = -1
+        self.__openedLine = None
 
         self.__pyflakesMessages = {}    # marker handle -> error message
         self.ignoreBufferChangedSignal = False  # Changing margin icons also
@@ -390,42 +390,39 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                 if self.__completer.completionCount() == 0:
                     self.__completer.hide()
                     self.setFocus()
+
         elif key in [Qt.Key_Enter, Qt.Key_Return]:
             QApplication.processEvents()
-            line, pos = self.cursorPosition
+            line, _ = self.cursorPosition
 
-            with self:
-                QutepartWrapper.keyPressEvent(self, event)
-                QApplication.processEvents()
+            QutepartWrapper.keyPressEvent(self, event)
+            QApplication.processEvents()
 
-                if line == self.__openedLine:
-                    self.__removeLine(line)
+            if line == self.__openedLine:
+                self.lines[line] = ''
 
             # If the new line has one or more spaces then it is a candidate for
             # automatic trimming
             line, pos = self.cursorPosition
             text = self.lines[line]
-            self.__openedLine = -1
-            if len(text) > 0 and len(text.strip()) == 0:
+            self.__openedLine = None
+            if pos > 0 and len(text.strip()) == 0:
                 self.__openedLine = line
 
         elif key in [Qt.Key_Up, Qt.Key_PageUp,
                      Qt.Key_Down, Qt.Key_PageDown]:
-            line, pos = self.cursorPosition
-            lineToTrim = -1
-            if line == self.__openedLine:
-                lineToTrim = line
+            line, _ = self.cursorPosition
+            lineToTrim = line if line == self.__openedLine else None
 
-            with self:
-                QutepartWrapper.keyPressEvent(self, event)
-                QApplication.processEvents()
+            QutepartWrapper.keyPressEvent(self, event)
+            QApplication.processEvents()
 
-                if lineToTrim != -1:
-                    line, pos = self.cursorPosition
-                    if line != lineToTrim:
-                        # The cursor was really moved to another line
-                        self.__removeLine(lineToTrim)
-            self.__openedLine = -1
+            if lineToTrim is not None:
+                line, _ = self.cursorPosition
+                if line != lineToTrim:
+                    # The cursor was really moved to another line
+                    self.lines[lineToTrim] = ''
+            self.__openedLine = None
 
         elif key == Qt.Key_Escape:
             self.__resetCalltip()
@@ -459,7 +456,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         else:
             # Special keyboard keys are delivered as 0 values
             if key != 0:
-                self.__openedLine = -1
+                self.__openedLine = None
                 QutepartWrapper.keyPressEvent(self, event)
 
         self.__skipChangeCursor = False
@@ -471,25 +468,16 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                 self.__calltipTimer.stop()
             self.__calltipTimer.start(500)
 
-        if self.__skipChangeCursor:
-            return
+        if not self.__skipChangeCursor:
+            if line == self.__openedLine:
+                self.__openedLine = None
+                return
 
-        if line == self.__openedLine:
-            self.__openedLine = -1
-            return
-
-        self.__skipChangeCursor = True
-        if self.__openedLine >= 0:
-            with self:
-                self.__removeLine(self.__openedLine)
-        self.__skipChangeCursor = False
-        self.__openedLine = -1
-
-    def __removeLine(self, line):
-        """Removes characters from the given line"""
-        if line >= 0:
-            self.lines[line] = ''
-            QApplication.processEvents()
+            if self.__openedLine is not None:
+                self.__skipChangeCursor = True
+                self.lines[self.__openedLine] = ''
+                self.__skipChangeCursor = False
+                self.__openedLine = None
 
     def getCurrentPosFont(self):
         """Provides the font of the current character"""
