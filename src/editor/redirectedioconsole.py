@@ -74,12 +74,6 @@ class RedirectedIOConsole(TextEditor):
             key = event.key()
             modifiers = event.modifiers()
             if modifiers == Qt.ShiftModifier | Qt.ControlModifier:
-                if key == Qt.Key_Up:
-                    self.selectParagraphUp()
-                    return True
-                if key == Qt.Key_Down:
-                    self.selectParagraphDown()
-                    return True
                 if key == Qt.Key_C:
                     self.onCtrlShiftC()
                     return True
@@ -107,35 +101,22 @@ class RedirectedIOConsole(TextEditor):
                 if key == Qt.Key_Comma:
                     return self._onPrevHighlight() # Ctrl + ,
                 if key == Qt.Key_Minus:
-                    return self._parent.onZoomOut()
+                    return self.onZoomOut()
                 if key == Qt.Key_Equal:
-                    return self._parent.onZoomIn()
+                    return self.onZoomIn()
                 if key == Qt.Key_0:
-                    return self._parent.onZoomReset()
+                    return self.onZoomReset()
                 if key == Qt.Key_Home:
                     return self.onFirstChar()
                 if key == Qt.Key_End:
                     return self.onLastChar()
-            if modifiers == Qt.AltModifier:
-                if key == Qt.Key_Left:
-                    self.wordPartLeft()
-                    return True
-                if key == Qt.Key_Right:
-                    self.wordPartRight()
-                    return True
-                if key == Qt.Key_Up:
-                    self.paragraphUp()
-                    return True
-                if key == Qt.Key_Down:
-                    self.paragraphDown()
-                    return True
             if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
                 if key == Qt.Key_Minus:
-                    return self._parent.onZoomOut()
+                    return self.onZoomOut()
                 if key == Qt.Key_Plus:
-                    return self._parent.onZoomIn()
+                    return self.onZoomIn()
                 if key == Qt.Key_0:
-                    return self._parent.onZoomReset()
+                    return self.onZoomReset()
             if modifiers == Qt.NoModifier:
                 if key == Qt.Key_Home:
                     return self._onHome()

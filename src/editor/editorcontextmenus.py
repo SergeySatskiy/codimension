@@ -24,6 +24,7 @@ import logging
 import os.path
 import socket
 import urllib.request
+from cdmbriefparser import getBriefModuleInfoFromMemory
 from ui.qt import (QMenu, QActionGroup, QApplication, Qt, QCursor,
                    QDesktopServices, QUrl, QMessageBox)
 from utils.pixmapcache import getIcon
@@ -33,7 +34,7 @@ from utils.encoding import (SUPPORTED_CODECS, decodeURLContent,
                             detectExistingFileWriteEncoding,
                             detectEncodingOnCrearExplicit)
 from utils.diskvaluesrelay import getFileEncoding, setFileEncoding
-from autocomplete.bufferutils import isImportLine
+from autocomplete.bufferutils import isImportLine, getContext
 
 
 class EditorContextMenuMixin:
@@ -417,6 +418,15 @@ class EditorContextMenuMixin:
         if url.lower().startswith("www."):
             url = "http://" + url
         QDesktopServices.openUrl(QUrl(url))
+
+    def highlightInOutline(self):
+        """Triggered when highlight in outline browser is requested"""
+        if self.isPythonBuffer():
+            info = getBriefModuleInfoFromMemory(self.text)
+            context = getContext(self, info, True, False)
+            line, _ = self.cursorPosition
+            GlobalData().mainWindow.highlightInOutline(context, int(line) + 1)
+            self.setFocus()
 
     @staticmethod
     def __updateMainWindowStatusBar():

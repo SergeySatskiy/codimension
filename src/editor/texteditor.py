@@ -25,7 +25,7 @@ import logging
 from ui.qt import (Qt, QFileInfo, QSize, QTimer, pyqtSignal,
                    QRect, QEvent, QPoint, QModelIndex, QCursor, QFontMetrics,
                    QFont, QApplication, QToolBar,
-                   QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
+                   QHBoxLayout, QWidget, QAction, QMenu,
                    QSizePolicy, QToolButton, QDialog, QToolTip,
                    QVBoxLayout, QSplitter, QTextOption)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
@@ -150,21 +150,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.__initHotKeys()
         self.installEventFilter(self)
 
-    def selectParagraphUp(self):
-        pass
-    def selectParagraphDown(self):
-        pass
     def dedentLine(self):
         pass
     def selectTillDisplayEnd(self):
-        pass
-    def wordPartLeft(self):
-        pass
-    def wordPartRight(self):
-        pass
-    def paragraphUp(self):
-        pass
-    def paragraphDown(self):
         pass
 
     def __initHotKeys(self):
@@ -173,9 +161,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             CTRL_SHIFT: {Qt.Key_F1: self.onCallHelp,
                          Qt.Key_T: self.onJumpToTop,
                          Qt.Key_M: self.onJumpToMiddle,
-                         Qt.Key_B: self.onJumpToBottom,
-                         Qt.Key_Up: self.selectParagraphUp,
-                         Qt.Key_Down: self.selectParagraphDown},
+                         Qt.Key_B: self.onJumpToBottom},
             SHIFT: {Qt.Key_Delete: self.onShiftDel,
                     Qt.Key_Tab: self.dedentLine,
                     Qt.Key_Backtab: self.dedentLine,
@@ -200,11 +186,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                    Qt.Key_End: self.onLastChar,
                    Qt.Key_B: self.highlightInOutline,
                    Qt.Key_QuoteLeft: self.highlightInCFlow},
-            ALT: {Qt.Key_Left: self.wordPartLeft,
-                  Qt.Key_Right: self.wordPartRight,
-                  Qt.Key_Up: self.paragraphUp,
-                  Qt.Key_Down: self.paragraphDown,
-                  Qt.Key_U: self.onScopeBegin},
+            ALT: {Qt.Key_U: self.onScopeBegin},
             CTRL_KEYPAD: {Qt.Key_Minus: self.onZoomOut,
                           Qt.Key_Plus: self.onZoomIn,
                           Qt.Key_0: self.onZoomReset},
@@ -219,7 +201,8 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             self.__hotKeys[NO_MODIFIER][Qt.Key_F2] = \
                 self._parent.onNavigationBar
 
-    def eventFilter(self, obj, event):
+    # Arguments: obj, event
+    def eventFilter(self, _, event):
         """Event filter to catch shortcuts on UBUNTU"""
         if event.type() == QEvent.KeyPress:
             key = event.key()
@@ -318,7 +301,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                 self.detectSyntax(xmlSyntaxFile)
 
             self.document().setModified(False)
-        except Exception as exc:
+        except:
             QApplication.restoreOverrideCursor()
             raise
 
@@ -502,18 +485,16 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.cursorPosition = 0, 0
         self.ensureLineOnScreen(0)
         self.setHScrollOffset(0)
-        return True
 
     def onLastChar(self):
         """Jump to the last char"""
-        line = self.lines()
+        line = len(self.lines)
         if line != 0:
             line -= 1
-        pos = self.lineLength(line)
+        pos = len(self.lines[line])
         self.cursorPosition = line, pos
         self.ensureLineOnScreen(line)
         self.setHScrollOffset(0)
-        return True
 
     def highlightWord(self, text):
         """Highlights the given word with the searchIndicator"""
@@ -835,7 +816,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def onJumpToTop(self):
         """Jumps to the first position of the first visible line"""
         self.cursorPosition = self.firstVisibleLine(), 0
-        return True
 
     def onJumpToMiddle(self):
         """Jumps to the first line pos in a middle of the editing area"""
@@ -1084,15 +1064,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         # handle = self.markerAdd(line - 1, self.__pyflakesMsgMarker)
         # self.__pyflakesMessages[handle] = message
         self.ignoreBufferChangedSignal = False
-
-    def highlightInOutline(self):
-        """Triggered when highlight in outline browser is requested"""
-        if self.isPythonBuffer():
-            info = getBriefModuleInfoFromMemory(self.text)
-            context = getContext(self, info, True, False)
-            line, pos = self.cursorPosition
-            GlobalData().mainWindow.highlightInOutline(context, int(line) + 1)
-            self.setFocus()
 
     def highlightInCFlow(self):
         """Triggered when highlight in the control flow is requested"""

@@ -158,15 +158,13 @@ class QutepartWrapper(Qutepart):
     def moveToLineBegin(self, toFirstNonSpace):
         """Jumps to the first non-space or to position 0"""
         line, pos = self.cursorPosition
+        newPos = 0
         if toFirstNonSpace:
             lStripped = self.lines[line].lstrip()
             if lStripped:
-                pos = len(self.lines[line]) - len(lStripped)
-                self.cursorPosition = line, pos
-            else:
-                self.cursorPosition = line, 0
-        else:
-            self.cursorPosition = line, 0
+                calcPos = len(self.lines[line]) - len(lStripped)
+                newPos = 0 if calcPos <= pos else pos
+        self.cursorPosition = line, newPos
 
     def _onHome(self):
         """Triggered when HOME is received"""

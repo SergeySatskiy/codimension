@@ -50,39 +50,6 @@ class ScintillaWrapper( QsciScintilla ):
         self.__targetSearchActive = False
         return
 
-    def setLexer( self, lex = None ):
-        """ Sets the new lexer or resets if None """
-        return
-
-    def monospacedStyles( self, font ):
-        """ Sets the current style to be monospaced """
-        try:
-            rangeLow = range( self.STYLE_DEFAULT )
-        except AttributeError:
-            rangeLow = range( 32 )
-
-        try:
-            rangeHigh = range( self.STYLE_LASTPREDEFINED + 1,
-                               self.STYLE_MAX + 1 )
-        except AttributeError:
-            rangeHigh = range( 40, 128 )
-
-        fontFamily = str( font.family() )
-        fontSize = font.pointSize()
-        fontWeight = int( font.weight() )
-        isItalic = font.italic()
-        isUnderline = font.underline()
-        for style in rangeLow + rangeHigh:
-            self.SendScintilla( self.SCI_STYLESETFONT, style, fontFamily )
-            self.SendScintilla( self.SCI_STYLESETSIZE, style, fontSize )
-            try:
-                self.SendScintilla( self.SCI_STYLESETWEIGHT, style, fontWeight * 10 )
-            except AttributeError:
-                self.SendScintilla( self.SCI_STYLESETBOLD, style, fontWeight > 50 )
-            self.SendScintilla( self.SCI_STYLESETITALIC, style, isItalic )
-            self.SendScintilla( self.SCI_STYLESETUNDERLINE, style, isUnderline )
-        return
-
     def linesOnScreen( self ):
         """ Provides the number of the visible lines """
         return self.SendScintilla( self.SCI_LINESONSCREEN )
@@ -101,10 +68,6 @@ class ScintillaWrapper( QsciScintilla ):
         if line >= self.lines():
             return -1
         return line
-
-    def currentPosition( self ):
-        """ Provides the current cursor position """
-        return self.SendScintilla( self.SCI_GETCURRENTPOS )
 
     def getEndPosition( self ):
         " Provides the end position "
@@ -186,35 +149,6 @@ class ScintillaWrapper( QsciScintilla ):
         return self.SendScintilla( self.SCI_GETINDENTATIONGUIDES )
 
     # methods below are missing from QScintilla
-
-    def zoomIn( self, zoom = 1 ):
-        """ Increases the zoom factor """
-        self.zoom += zoom
-        QsciScintilla.zoomIn( self, zoom )
-        self._charWidth = -1
-        self._lineHeight = -1
-        return
-
-    def zoomOut( self, zoom = 1 ):
-        """ Decreases the zoom factor """
-        self.zoom -= zoom
-        QsciScintilla.zoomOut( self, zoom )
-        self._charWidth = -1
-        self._lineHeight = -1
-        return
-
-    def zoomTo( self, zoom ):
-        """ Zooms to the specific zoom factor """
-        self.zoom = zoom
-        QsciScintilla.zoomTo( self, zoom )
-        self.setLineNumMarginWidth()
-        self._charWidth = -1
-        self._lineHeight = -1
-        return
-
-    def getZoom( self ):
-        """ Provides the current zoom factor """
-        return self.zoom
 
     def editorCommand( self, cmd ):
         """ Executes a simple editor command """
@@ -536,27 +470,6 @@ class ScintillaWrapper( QsciScintilla ):
             return self.getCurrentWord()
         return ""
 
-    def getCurrentWord( self, addChars = "" ):
-        " Provides the word at the current position "
-        line, col = self.getCursorPosition()
-        return self.getWord( line, col, 0, True, addChars )
-
-    def getWord( self, line, col, direction = 0,
-                 useWordChars = True, addChars = "" ):
-        """ Provides the word at a position.
-            direction direction to look in (0 = whole word, 1 = left, 2 = right)
-        """
-        start, end = self.getWordBoundaries( line, col, useWordChars, addChars )
-        if direction == 1:
-            end = col
-        elif direction == 2:
-            start = col
-
-        if end > start:
-            text = self.text( line )
-            return text[ start : end ]
-        return ''
-
     def getWordBoundaries( self, line, col,
                            useWordChars = True, addChars = "" ):
         " Provides the word boundaries at a position "
@@ -587,16 +500,6 @@ class ScintillaWrapper( QsciScintilla ):
         text = self.text( line )
         return text[ col : col + length ]
 
-    def wordPartLeft( self ):
-        " Moves the cursor a word part left "
-        self.SendScintilla( self.SCI_WORDPARTLEFT )
-        return
-
-    def wordPartRight( self ):
-        " Moves the cursor a word part right "
-        self.SendScintilla( self.SCI_WORDPARTRIGHT )
-        return
-
     def selectParagraphUp( self ):
         " Selects the paragraph up "
         self.SendScintilla( self.SCI_PARAUPEXTEND )
@@ -622,16 +525,6 @@ class ScintillaWrapper( QsciScintilla ):
         self.SendScintilla( self.SCI_LINEDELETE )
         return
 
-    def paragraphUp( self ):
-        " Move the cursor a paragraph up "
-        self.SendScintilla( self.SCI_PARAUP )
-        return
-
-    def paragraphDown( self ):
-        " Move the cursor a paragraph down "
-        self.SendScintilla( self.SCI_PARADOWN )
-        return
-
     def selectTillDisplayEnd( self ):
         " Selects from the current position till the displayed end of line "
         self.SendScintilla( self.SCI_LINEENDDISPLAYEXTEND )
@@ -648,14 +541,6 @@ class ScintillaWrapper( QsciScintilla ):
             self.SendScintilla( self.SCI_VCHOMEEXTEND )
         else:
             self.SendScintilla( self.SCI_HOMEDISPLAYEXTEND )
-        return
-
-    def moveToLineBegin( self, firstNonSpace ):
-        " Moves the cursor to the beginning of the line "
-        if firstNonSpace:
-            self.SendScintilla( self.SCI_VCHOME )
-        else:
-            self.SendScintilla( self.SCI_HOMEDISPLAY )
         return
 
     def getSelectionStart( self ):
