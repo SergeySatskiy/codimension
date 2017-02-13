@@ -76,6 +76,11 @@ class QutepartWrapper(Qutepart):
         if newZoom >= self.__minZoom:
             self.sigTextEditorZoom.emit(newZoom)
 
+    def onZoomReset(self):
+        """Resets zoom"""
+        if Settings()['zoom'] != 0:
+            self.sigTextEditorZoom.emit(0)
+
     def zoomTo(self, zoomVal):
         """Sets the zoom to a certain value if possible"""
         # zoomVal is an integer: > 0 => larger, < 0 => smaller than the base
@@ -88,6 +93,7 @@ class QutepartWrapper(Qutepart):
         for margin in self.getMargins():
             if hasattr(margin, 'zoomTo'):
                 margin.zoomTo(zoomVal)
+        self._setSolidEdgeGeometry()
 
     def clearUndoRedoHistory(self):
         """Clears the undo/redo history"""

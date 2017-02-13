@@ -1749,7 +1749,7 @@ class EditorsManager(QTabWidget):
         editor.textChanged.connect(self.__contentChanged)
         editor.cursorPositionChanged.connect(self.__cursorPositionChanged)
         editor.sigEscapePressed.connect(self.__onESC)
-        editorWidget.textEditorZoom.connect(self.onZoom)
+        editor.sigTextEditorZoom.connect(self.onZoom)
 
     # Arguments: modified
     def __modificationChanged(self, _):
@@ -2050,7 +2050,7 @@ class EditorsManager(QTabWidget):
 
     def onZoom(self, zoomValue):
         """Sets the zoom value for all the opened editor tabs"""
-        Settings().zoom = zoomValue
+        Settings()['zoom'] = zoomValue
 
         for index in range(self.count()):
             item = self.widget(index)
@@ -2059,7 +2059,7 @@ class EditorsManager(QTabWidget):
                 item.getEditor().zoomTo(zoomValue)
             elif item.getType() in [MainWindowTabWidgetBase.DisassemblerViewer,
                                     MainWindowTabWidgetBase.DiffViewer]:
-                item.zoomTo( zoomValue )
+                item.zoomTo(zoomValue)
         GlobalData().mainWindow.zoomIOconsole(zoomValue)
         GlobalData().mainWindow.zoomDiff(zoomValue)
 

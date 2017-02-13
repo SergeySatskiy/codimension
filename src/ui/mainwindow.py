@@ -1754,7 +1754,7 @@ class CodimensionMainWindow(QMainWindow):
     def zoomIOconsole(self, zoomValue):
         """Zooms the IO console"""
         # Handle run/profile IO consoles and the debug IO console
-        index = self.__bottomSideBar.count() - 1
+        index = self.__bottomSideBar.count - 1
         while index >= 0:
             widget = self.__bottomSideBar.widget(index)
             if hasattr(widget, "getType"):

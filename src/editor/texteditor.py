@@ -193,9 +193,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                    Qt.Key_Backslash: self.onGotoDefinition,
                    Qt.Key_BracketRight: self.onOccurences,
                    Qt.Key_Slash: self.onShowCalltip,
-                   Qt.Key_Minus: self._parent.onZoomOut,
-                   Qt.Key_Equal: self._parent.onZoomIn,
-                   Qt.Key_0: self._parent.onZoomReset,
+                   Qt.Key_Minus: self.onZoomOut,
+                   Qt.Key_Equal: self.onZoomIn,
+                   Qt.Key_0: self.onZoomReset,
                    Qt.Key_Home: self.onFirstChar,
                    Qt.Key_End: self.onLastChar,
                    Qt.Key_B: self.highlightInOutline,
@@ -205,9 +205,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                   Qt.Key_Up: self.paragraphUp,
                   Qt.Key_Down: self.paragraphDown,
                   Qt.Key_U: self.onScopeBegin},
-            CTRL_KEYPAD: {Qt.Key_Minus: self._parent.onZoomOut,
-                          Qt.Key_Plus: self._parent.onZoomIn,
-                          Qt.Key_0: self._parent.onZoomReset},
+            CTRL_KEYPAD: {Qt.Key_Minus: self.onZoomOut,
+                          Qt.Key_Plus: self.onZoomIn,
+                          Qt.Key_0: self.onZoomReset},
             NO_MODIFIER: {Qt.Key_Home: self._onHome,
                           Qt.Key_End: self.moveToLineEnd,
                           Qt.Key_F12: self.makeLineFirst}}
@@ -237,9 +237,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         """Mouse wheel event"""
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
             if event.delta() > 0:
-                self._parent.onZoomIn()
+                self.onZoomIn()
             else:
-                self._parent.onZoomOut()
+                self.onZoomOut()
         else:
             QutepartWrapper.wheelEvent(self, event)
 
@@ -1712,24 +1712,6 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
             self.importsDiagramButton.isEnabled())
         self.__editor.toolsMenu.setEnabled(self.runScriptButton.isEnabled())
         self.lineCounterButton.setEnabled(isPythonFile)
-
-    def onZoomReset(self):
-        """Triggered when the zoom reset button is pressed"""
-        if self.__editor.zoom != 0:
-            self.textEditorZoom.emit(0)
-        return True
-
-    def onZoomIn(self):
-        """Triggered when the zoom in button is pressed"""
-        if self.__editor.zoom < 20:
-            self.textEditorZoom.emit(self.__editor.zoom + 1)
-        return True
-
-    def onZoomOut(self):
-        """Triggered when the zoom out button is pressed"""
-        if self.__editor.zoom > -10:
-            self.textEditorZoom.emit( self.__editor.zoom - 1)
-        return True
 
     def onNavigationBar(self):
         """Triggered when navigation bar focus is requested"""

@@ -361,7 +361,7 @@ class RedirectedIOConsole(TextEditor):
         """Sets the timestamp margin width"""
         settings = Settings()
         if settings['ioconsoleshowmargin']:
-            skin = GlobalData()['skin']
+            skin = GlobalData().skin
             font = QFont(skin['lineNumFont'])
             font.setPointSize(font.pointSize() + settings['zoom'])
             # The second parameter of the QFontMetrics is essential!
@@ -889,7 +889,7 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def zoomTo(self, zoomValue):
         """Sets the new zoom value"""
         self.__viewer.zoomTo(zoomValue)
-        self.__viewer.setTimestampMarginWidth()
+        # self.__viewer.setTimestampMarginWidth()
 
     def rawInput(self, prompt, echo):
         """Triggered when raw input is requested"""
