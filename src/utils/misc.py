@@ -194,3 +194,12 @@ def getDefaultTemplate():
 #       templates. The values for the variables are taken from the project
 #       properties dialogue.
 #"""
+
+
+# Dynamic mixin at runtime:
+# http://stackoverflow.com/questions/8544983/
+#        dynamically-mixin-a-base-class-to-an-instance-in-python
+def extendInstance(obj, cls):
+    base_cls = obj.__class__
+    base_cls_name = obj.__class__.__name__
+    obj.__class__ = type(base_cls_name, (base_cls, cls), {})

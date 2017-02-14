@@ -221,7 +221,7 @@ def detectEncodingOnCrearExplicit(fName, content):
         return DEFAULT_ENCODING
     except Exception as exc:
         logging.warning("Error while guessing encoding for reading " +
-                        fileName + ": " + str(exc) + "\n"
+                        fName + ": " + str(exc) + "\n"
                         "The default encoding " +
                         DEFAULT_ENCODING + " will be used.")
         return DEFAULT_ENCODING

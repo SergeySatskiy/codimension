@@ -91,10 +91,10 @@ def colorAsString(color, hexadecimal=False):
         return asStr
 
     if hexadecimal:
-        return '#'.join([toHex(color.red()),
-                         toHex(color.green()),
-                         toHex(color.blue()),
-                         toHex(color.alpha())])
+        return '#' + ''.join([toHex(color.red()),
+                              toHex(color.green()),
+                              toHex(color.blue()),
+                              toHex(color.alpha())])
     return ','.join([str(color.red()),
                      str(color.green()),
                      str(color.blue()),

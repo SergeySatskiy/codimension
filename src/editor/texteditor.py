@@ -22,7 +22,7 @@
 
 import os.path
 import logging
-from ui.qt import (Qt, QTimer, pyqtSignal, QRect, QEvent, QPoint, QModelIndex,
+from ui.qt import (Qt, QTimer, pyqtSignal, QRect, QEvent, QModelIndex,
                    QCursor, QFontMetrics, QFont, QApplication, QWidget,
                    QTextOption)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
@@ -35,8 +35,6 @@ from utils.encoding import (readEncodedFile, detectEolString,
                             detectWriteEncoding, writeEncodedFile)
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.diskvaluesrelay import setFileEncoding, getFileEncoding
-from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
-                               getImportedNameDefinitionLine, resolveImports)
 from autocomplete.bufferutils import (getContext, getPrefixAndObject,
                                       getEditorTags, isStringLiteral,
                                       getCallPosition, getCommaCount)
@@ -203,10 +201,13 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def wheelEvent(self, event):
         """Mouse wheel event"""
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
-            if event.delta() > 0:
-                self.onZoomIn()
-            else:
-                self.onZoomOut()
+            angleDelta = event.angleDelta()
+            if not angleDelta.isNull():
+                if angleDelta.y() > 0:
+                    self.onZoomIn()
+                else:
+                    self.onZoomOut()
+            event.accept()
         else:
             QutepartWrapper.wheelEvent(self, event)
 

@@ -59,10 +59,13 @@ class DiffTabWidget(HTMLTabWidget):
     def wheelEvent(self, event):
         """Mouse wheel event"""
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
-            if event.delta() > 0:
-                self.onZoomIn()
-            else:
-                self.onZoomOut()
+            angleDelta = event.angleDelta()
+            if not angleDelta.isNull():
+                if angleDelta.y() > 0:
+                    self.onZoomIn()
+                else:
+                    self.onZoomOut()
+            event.accept()
         else:
             HTMLTabWidget.wheelEvent(self, event)
 

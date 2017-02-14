@@ -90,7 +90,7 @@ class CFGraphicsView(QGraphicsView):
     def wheelEvent(self, event):
         """Mouse wheel event"""
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
-            factor = 1.41 ** (-event.delta() / 240.0)
+            factor = 1.41 ** (-event.angleDelta() / 240.0)
             self.__currentFactor *= factor
             self.setTransform(QTransform.fromScale(self.__currentFactor,
                                                    self.__currentFactor))

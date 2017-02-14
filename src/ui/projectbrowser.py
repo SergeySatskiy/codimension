@@ -72,7 +72,8 @@ class ProjectBrowser(FilesBrowser):
         self.model().endResetModel()
         self.layoutDisplay()
 
-    def __onPluginDeactivated(self, plugin):
+    # Arguments: plugin
+    def __onPluginDeactivated(self, _):
         """Triggered when a plugin is deactivated"""
         if self.__mainWindow.vcsManager.activePluginCount() == 0:
             for treeItem in self.model().sourceModel().rootItem.childItems:
@@ -158,11 +159,13 @@ class ProjectBrowser(FilesBrowser):
 
     def drawBranches(self, painter, rect, index):
         """Helps to draw the solid highlight line for the project browser.
-           This part is responsible for the beginning of the background line
-           till +/- icon.
-           See also the ProjectBrowserModel::data(...) method which draws
-           the rest of the background
-           http://stackoverflow.com/questions/14255224/changing-the-row-background-color-of-a-qtreeview-does-not-work
+
+        This part is responsible for the beginning of the background line
+        till +/- icon.
+        See also the ProjectBrowserModel::data(...) method which draws
+        the rest of the background
+        http://stackoverflow.com/questions/14255224/
+        changing-the-row-background-color-of-a-qtreeview-does-not-work
         """
         if index.isValid():
             if index != self.currentIndex():

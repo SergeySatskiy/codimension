@@ -26,7 +26,7 @@ import gc
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.misc import (getDefaultTemplate, getIDETemplateFile,
-                        getProjectTemplateFile)
+                        getProjectTemplateFile, extendInstance)
 from utils.pixmapcache import getIcon
 from utils.settings import THIRDPARTY_DIR
 from utils.fileutils import (getFileProperties, isImageViewable, isImageFile,
@@ -88,6 +88,7 @@ from .findname import FindNameDialog
 from .findfile import FindFileDialog
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .runparams import RunDialog
+from .mainstatusbar import MainWindowStatusBarMixin
 
 
 class EditorsManagerWidget(QWidget):
@@ -133,6 +134,9 @@ class CodimensionMainWindow(QMainWindow):
 
     def __init__(self, splash, settings):
         QMainWindow.__init__(self)
+
+        extendInstance(self, MainWindowStatusBarMixin)
+        MainWindowStatusBarMixin.__init__(self)
 
         self.debugMode = False
         # Last position the IDE received control from the debugger
@@ -188,17 +192,6 @@ class CodimensionMainWindow(QMainWindow):
             self.resize(settings['width'], settings['height'])
             self.move(settings['xpos'] + settings['xdelta'],
                       settings['ypos'] + settings['ydelta'])
-
-        splash.showMessage("Initializing status bar...")
-        self.__statusBar = None
-        self.sbLanguage = None
-        self.sbFile = None
-        self.sbEol = None
-        self.sbPos = None
-        self.sbLine = None
-        self.sbWritable = None
-        self.sbEncoding = None
-        self.__createStatusBar()
 
         splash.showMessage("Creating toolbar...")
         self.__createToolBar()
@@ -449,100 +442,6 @@ class CodimensionMainWindow(QMainWindow):
         self.__horizontalSplitterSizes[1] = sum(newSizes) - \
             self.__horizontalSplitterSizes[0] - \
             self.__horizontalSplitterSizes[2]
-
-    def __createStatusBar(self):
-        """Creates status bar"""
-        self.__statusBar = self.statusBar()
-        self.__statusBar.setSizeGripEnabled(True)
-
-        sbPalette = QPalette(self.__statusBar.palette())
-        sbPalette.setColor(QPalette.Foreground, QColor(220, 0, 0))
-        self.__statusBar.setPalette(sbPalette)
-        font = self.__statusBar.font()
-        font.setItalic(True)
-        self.__statusBar.setFont(font)
-
-        self.sbVCSStatus = FitPathLabel(self.__statusBar)
-        self.__statusBar.addPermanentWidget(self.sbVCSStatus)
-        self.sbVCSStatus.setVisible(False)
-        self.sbVCSStatus.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.sbVCSStatus.customContextMenuRequested.connect(
-            self.__showVCSLabelContextMenu)
-
-        self.dbgState = QLabel("Debugger: unknown", self.__statusBar)
-        self.dbgState.setFrameStyle(QFrame.StyledPanel)
-        self.dbgState.setAutoFillBackground(True)
-        dbgPalette = self.dbgState.palette()
-        dbgPalette.setColor(QPalette.Background, QColor(255, 255, 127))
-        self.dbgState.setPalette(dbgPalette)
-        self.__statusBar.addPermanentWidget(self.dbgState)
-        self.dbgState.setToolTip("Debugger status")
-        self.dbgState.setVisible(False)
-
-        self.sbLanguage = QLabel(self.__statusBar)
-        self.sbLanguage.setFrameStyle(QFrame.StyledPanel)
-        self.__statusBar.addPermanentWidget(self.sbLanguage)
-        self.sbLanguage.setToolTip("Editor language/image format")
-
-        self.sbEncoding = QLabel(self.__statusBar)
-        self.sbEncoding.setFrameStyle(QFrame.StyledPanel)
-        self.__statusBar.addPermanentWidget(self.sbEncoding)
-        self.sbEncoding.setToolTip("Editor encoding/image size")
-
-        self.sbEol = QLabel(self.__statusBar)
-        self.sbEol.setFrameStyle(QFrame.StyledPanel)
-        self.__statusBar.addPermanentWidget(self.sbEol)
-        self.sbEol.setToolTip("Editor EOL setting")
-
-        self.sbWritable = QLabel(self.__statusBar)
-        self.sbWritable.setFrameStyle(QFrame.StyledPanel)
-        self.__statusBar.addPermanentWidget(self.sbWritable)
-        self.sbWritable.setToolTip("Editor file read/write mode")
-
-        # FitPathLabel has support for double click event,
-        # so it is used here. Purely it would be better to have another
-        # class for a pixmap label. But I am lazy.
-        self.sbPyflakes = FitPathLabel(self.__statusBar)
-        self.__statusBar.addPermanentWidget(self.sbPyflakes)
-
-        self.sbFile = FitPathLabel(self.__statusBar)
-        self.sbFile.setMaximumWidth(512)
-        self.sbFile.setMinimumWidth(128)
-        self.sbFile.setFrameStyle(QFrame.StyledPanel)
-        self.__statusBar.addPermanentWidget(self.sbFile, True)
-        self.sbFile.setToolTip("Editor file name (double click to copy path)")
-        self.sbFile.doubleClicked.connect(self.__onPathLabelDoubleClick)
-        self.sbFile.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.sbFile.customContextMenuRequested.connect(
-            self.__showPathLabelContextMenu)
-
-        self.sbLine = QLabel(self.__statusBar)
-        self.sbLine.setMinimumWidth(72)
-        self.sbLine.setAlignment(Qt.AlignCenter)
-        self.sbLine.setFrameStyle(QFrame.StyledPanel)
-        self.__statusBar.addPermanentWidget(self.sbLine)
-        self.sbLine.setToolTip("Editor line number")
-
-        self.sbPos = QLabel(self.__statusBar)
-        self.sbPos.setMinimumWidth(72)
-        self.sbPos.setAlignment(Qt.AlignCenter)
-        self.sbPos.setFrameStyle(QFrame.StyledPanel)
-        self.__statusBar.addPermanentWidget(self.sbPos)
-        self.sbPos.setToolTip("Editor cursor position")
-
-        # Adjust the font size
-        font = self.sbLanguage.font()
-
-        # No need to increase the status bar font in most of the cases.
-        # It's better only in case of XServer on PC (Xming in my experience)
-        # font.setPointSize( font.pointSize() + 1 )
-        self.sbLanguage.setFont(font)
-        self.sbEncoding.setFont(font)
-        self.sbEol.setFont(font)
-        self.sbWritable.setFont(font)
-        self.sbFile.setFont(font)
-        self.sbLine.setFont(font)
-        self.sbPos.setFont(font)
 
     def __initMainMenu(self):
         """Initializes the main menu bar"""
@@ -2205,14 +2104,6 @@ class CodimensionMainWindow(QMainWindow):
 
         logging.info("Please restart codimension to apply the new font")
 
-    def showStatusBarMessage(self, msg, timeout=10000):
-        """Shows a temporary status bar message, default 10sec"""
-        self.__statusBar.showMessage(msg, timeout)
-
-    def clearStatusBarMessage(self):
-        """Clears the status bar message in the given slot"""
-        self.__statusBar.clearMessage()
-
     def checkOutsideFileChanges(self):
         """Checks if there are changes in the files
            currently loaded by codimension"""
@@ -2225,7 +2116,7 @@ class CodimensionMainWindow(QMainWindow):
             txt = txt.replace("File: ", "")
         return txt
 
-    def __onPathLabelDoubleClick(self):
+    def _onPathLabelDoubleClick(self):
         """Double click on the status bar path label"""
         txt = self.__getPathLabelFilePath()
         if txt not in ["", "N/A"]:
@@ -2257,12 +2148,12 @@ class CodimensionMainWindow(QMainWindow):
         if dlg.exec_() == QDialog.Accepted:
             self.settings.vcsstatusupdateinterval = dlg.interval
 
-    def __showPathLabelContextMenu(self, pos):
+    def _showPathLabelContextMenu(self, pos):
         """Triggered when a context menu is requested for the path label"""
         contextMenu = QMenu(self)
         contextMenu.addAction(getIcon("copytoclipboard.png"),
                               "Copy full path to clipboard (double click)",
-                              self.__onPathLabelDoubleClick)
+                              self._onPathLabelDoubleClick)
         contextMenu.addSeparator()
         contextMenu.addAction(getIcon(""), "Copy directory path to clipboard",
                               self.__onCopyDirToClipboard)
@@ -2270,7 +2161,7 @@ class CodimensionMainWindow(QMainWindow):
                               self.__onCopyFileNameToClipboard)
         contextMenu.popup(self.sbFile.mapToGlobal(pos))
 
-    def __showVCSLabelContextMenu(self, pos):
+    def _showVCSLabelContextMenu(self, pos):
         """Triggered when a context menu is requested for a VCS label"""
         contextMenu = QMenu(self)
         contextMenu.addAction(getIcon("vcsintervalmenu.png"),
@@ -2288,7 +2179,7 @@ class CodimensionMainWindow(QMainWindow):
         clearValidBreakpointLinesCache()
 
         # Satatus bar
-        self.dbgState.setVisible(newState)
+        self.sbDebugState.setVisible(newState)
         self.sbLanguage.setVisible(not newState)
         self.sbEncoding.setVisible(not newState)
         self.sbEol.setVisible(not newState)
@@ -2360,7 +2251,7 @@ class CodimensionMainWindow(QMainWindow):
             self.__dbgRestart.setEnabled(False)
             self.__debugRestartAct.setEnabled(False)
             self.__setDebugControlFlowButtonsState(False)
-            self.dbgState.setText("Debugger: stopped")
+            self.sbDebugState.setText("Debugger: stopped")
             self.redirectedIOConsole.sessionStopped()
         elif newState == CodimensionDebugger.STATE_PROLOGUE:
             self.__dbgStopBrutal.setEnabled(True)
@@ -2372,7 +2263,7 @@ class CodimensionMainWindow(QMainWindow):
             self.__dbgRestart.setEnabled(False)
             self.__debugRestartAct.setEnabled(False)
             self.__setDebugControlFlowButtonsState(False)
-            self.dbgState.setText("Debugger: prologue")
+            self.sbDebugState.setText("Debugger: prologue")
         elif newState == CodimensionDebugger.STATE_IN_IDE:
             self.__dbgStopBrutal.setEnabled(True)
             self.__dbgStopAndClearIO.setEnabled(True)
@@ -2383,7 +2274,7 @@ class CodimensionMainWindow(QMainWindow):
             self.__dbgRestart.setEnabled(True)
             self.__debugRestartAct.setEnabled(True)
             self.__setDebugControlFlowButtonsState(True)
-            self.dbgState.setText("Debugger: idle")
+            self.sbDebugState.setText("Debugger: idle")
         elif newState == CodimensionDebugger.STATE_IN_CLIENT:
             self.__dbgStopBrutal.setEnabled(True)
             self.__dbgStopAndClearIO.setEnabled(True)
@@ -2394,7 +2285,7 @@ class CodimensionMainWindow(QMainWindow):
             self.__dbgRestart.setEnabled(True)
             self.__debugRestartAct.setEnabled(True)
             self.__setDebugControlFlowButtonsState(False)
-            self.dbgState.setText("Debugger: running")
+            self.sbDebugState.setText("Debugger: running")
         elif newState == CodimensionDebugger.STATE_FINISHING:
             self.__dbgStopBrutal.setEnabled(True)
             self.__dbgStopAndClearIO.setEnabled(True)
@@ -2405,7 +2296,7 @@ class CodimensionMainWindow(QMainWindow):
             self.__dbgRestart.setEnabled(False)
             self.__debugRestartAct.setEnabled(False)
             self.__setDebugControlFlowButtonsState(False)
-            self.dbgState.setText("Debugger: finishing")
+            self.sbDebugState.setText("Debugger: finishing")
         elif newState == CodimensionDebugger.STATE_BRUTAL_FINISHING:
             self.__dbgStopBrutal.setEnabled(False)
             self.__dbgStopAndClearIO.setEnabled(False)
@@ -2415,7 +2306,7 @@ class CodimensionMainWindow(QMainWindow):
             self.__dbgRestart.setEnabled(False)
             self.__debugRestartAct.setEnabled(False)
             self.__setDebugControlFlowButtonsState(False)
-            self.dbgState.setText("Debugger: force finishing")
+            self.sbDebugState.setText("Debugger: force finishing")
         QApplication.processEvents()
 
     def __onDebuggerCurrentLine(self, fileName, lineNumber,

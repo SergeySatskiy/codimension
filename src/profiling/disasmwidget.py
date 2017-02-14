@@ -54,10 +54,13 @@ class DisasmWidget(QTextEdit):
     def wheelEvent(self, event):
         """Mouse wheel event"""
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
-            if event.delta() > 0:
-                self.parent().onZoomIn()
-            else:
-                self.parent().onZoomOut()
+            angleDelta = event.angleDelta()
+            if not angleDelta.isNull():
+                if angleDelta.y() > 0:
+                    self.parent().onZoomIn()
+                else:
+                    self.parent().onZoomOut()
+            event.accept()
         else:
             QTextEdit.wheelEvent(self, event)
 
