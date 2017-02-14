@@ -39,7 +39,7 @@ from utils.encoding import detectEolString, detectWriteEncoding
 from diagram.importsdgmgraphics import ImportDgmTabWidget
 from profiling.disasmwidget import DisassemblerResultsWidget
 from editor.vcsannotateviewer import VCSAnnotateViewerTabWidget
-from editor.texteditor import TextEditorTabWidget
+from editor.texteditortabwidget import TextEditorTabWidget
 from .qt import (Qt, QDir, QUrl, pyqtSignal, QIcon, QTabWidget,
                  QDialog, QMessageBox, QWidget, QHBoxLayout, QMenu,
                  QToolButton, QShortcut, QFileDialog, QApplication, QTabBar)

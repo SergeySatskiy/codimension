@@ -106,6 +106,7 @@ class DebuggerSettings:
 _DEFAULT_SETTINGS = {
     # general
     'zoom': 0,
+    'flowZoom': 0,
     'xpos': 50,
     'ypos': 50,
     'width': 750,

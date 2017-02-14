@@ -135,7 +135,7 @@ class GotoLineWidget(QWidget):
         txt = self.linenumberEdit.currentText()
         self.__updateHistory(txt)
         editor = currentWidget.getEditor()
-        line = min(int(txt), editor.lines()) - 1
+        line = min(int(txt), len(editor.lines)) - 1
 
         editor.cursorPosition = line, 0
         editor.ensureLineOnScreen(line)
