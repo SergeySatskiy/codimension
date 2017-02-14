@@ -22,46 +22,29 @@
 
 import os.path
 import logging
-from ui.qt import (Qt, QFileInfo, QSize, QTimer, pyqtSignal,
-                   QRect, QEvent, QPoint, QModelIndex, QCursor, QFontMetrics,
-                   QFont, QApplication, QToolBar,
-                   QHBoxLayout, QWidget, QAction, QMenu,
-                   QSizePolicy, QToolButton, QDialog, QToolTip,
-                   QVBoxLayout, QSplitter, QTextOption)
+from ui.qt import (Qt, QFileInfo, QSize, pyqtSignal, QToolBar, QHBoxLayout,
+                   QWidget, QAction, QMenu, QSizePolicy, QToolButton, QDialog,
+                   QVBoxLayout, QSplitter)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from ui.completer import CodeCompleter
 from ui.runparams import RunDialog
-from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
 from ui.linecounter import LineCounterDialog
-from ui.calltip import Calltip
 from ui.importlist import ImportListWidget
 from ui.outsidechanges import OutsideChangeWidget
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
-from utils.encoding import (readEncodedFile, detectEolString,
-                            detectWriteEncoding, writeEncodedFile)
-from utils.fileutils import getFileProperties, isPythonMime
-from utils.diskvaluesrelay import (getRunParameters, addRunParams,
-                                   setFileEncoding, getFileEncoding)
+from utils.fileutils import isPythonMime
+from utils.diskvaluesrelay import getRunParameters, addRunParams
 from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
                                getImportedNameDefinitionLine, resolveImports)
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
-from autocomplete.bufferutils import (getContext, getPrefixAndObject,
-                                      getEditorTags, isImportLine,
-                                      isStringLiteral, getCallPosition,
-                                      getCommaCount)
-from autocomplete.completelists import (getCompletionList, getCalltipAndDoc,
-                                        getDefinitionLocation, getOccurrences)
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from autocomplete.bufferutils import isImportLine
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from profiling.profui import ProfilingProgressDialog
 from debugger.bputils import getBreakpointLines
-from debugger.breakpoint import Breakpoint
 from .flowuiwidget import FlowUIWidget
 from .navbar import NavigationBar
-from .qpartwrap import QutepartWrapper
 from .texteditor import TextEditor
 
 
@@ -289,10 +272,10 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         self.__splitter.splitterMoved.connect(self.flowSplitterMoved)
         Settings().sigFlowSplitterChanged.connect(self.otherFlowSplitterMoved)
 
-    def flowSplitterMoved(self, pos, index):
+    # Arguments: pos, index
+    def flowSplitterMoved(self, _, __):
         """Splitter has been moved"""
-        newSizes = list(self.__splitter.sizes())
-        Settings()['flowSplitterSizes'] = newSizes
+        Settings()['flowSplitterSizes'] = list(self.__splitter.sizes())
 
     def otherFlowSplitterMoved(self):
         """Other window has changed the splitter position"""
@@ -324,19 +307,23 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         pass
 
     def __redoAvailable(self, available):
+        """Reports redo ops available"""
         self.__redoButton.setEnabled(available)
+
     def __undoAvailable(self, available):
+        """Reports undo ops available"""
         self.__undoButton.setEnabled(available)
 
-    def modificationChanged(self, modified=False):
+    # Arguments: modified
+    def modificationChanged(self, _=None):
         """Triggered when the content is changed"""
         self.__updateRunDebugButtons()
 
     def __updateRunDebugButtons(self):
         """Enables/disables the run and debug buttons as required"""
         enable = isPythonMime(self.__editor.mime) and \
-                 self.isModified() == False and \
-                 self.__debugMode == False and \
+                 not self.isModified() and \
+                 not self.__debugMode and \
                  os.path.isabs(self.__fileName)
 
         if enable != self.runScriptButton.isEnabled():
@@ -410,7 +397,8 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
             # Should proceed with the diagram generation
             self.__generateImportDiagram(what, dlg.options)
 
-    def onImportDgm(self, action=None):
+    # Arguments: action
+    def onImportDgm(self, _=None):
         """Runs the generation process with default options"""
         if self.isModified():
             what = ImportsDiagramDialog.SingleBuffer
@@ -554,12 +542,11 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         self.setReloadDialogShown(False)
 
     def reloadAllNonModified(self):
-        """Triggered when a request to reload all the
-           non-modified files is received
-        """
+        """Request to reload all the non-modified files"""
         self.reloadAllNonModifiedRequest.emit()
 
-    def onRunScriptSettings(self):
+    @staticmethod
+    def onRunScriptSettings():
         """Shows the run parameters dialogue"""
         GlobalData().mainWindow.onRunTabDlg()
 
@@ -580,11 +567,13 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
                 Settings().setProfilerSettings(dlg.profilerParams)
             self.onProfileScript()
 
-    def onRunScript(self, action=False):
+    # Arguments: action
+    def onRunScript(self, _=None):
         """Runs the script"""
         GlobalData().mainWindow.onRunTab()
 
-    def onProfileScript(self, action=False):
+    # Arguments: action
+    def onProfileScript(self, _=None):
         """Profiles the script"""
         try:
             ProfilingProgressDialog(self.getFileName(), self).exec_()
@@ -593,30 +582,29 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def onDebugScriptSettings(self):
         """Shows the debug parameters dialogue"""
-        if self.__checkDebugPrerequisites() == False:
-            return
-
-        fileName = self.getFileName()
-        params = getRunParameters(fileName)
-        termType = Settings()['terminalType']
-        profilerParams = Settings().getProfilerSettings()
-        debuggerParams = Settings().getDebuggerSettings()
-        dlg = RunDialog(fileName, params, termType,
-                        profilerParams, debuggerParams, "Debug", self)
-        if dlg.exec_() == QDialog.Accepted:
-            addRunParams(fileName, dlg.runParams)
-            if dlg.termType != termType:
-                Settings()['terminalType'] = dlg.termType
-            if dlg.debuggerParams != debuggerParams:
-                Settings().setDebuggerSettings(dlg.debuggerParams)
-            self.onDebugScript()
+        if self.__checkDebugPrerequisites():
+            fileName = self.getFileName()
+            params = getRunParameters(fileName)
+            termType = Settings()['terminalType']
+            profilerParams = Settings().getProfilerSettings()
+            debuggerParams = Settings().getDebuggerSettings()
+            dlg = RunDialog(fileName, params, termType,
+                            profilerParams, debuggerParams, "Debug", self)
+            if dlg.exec_() == QDialog.Accepted:
+                addRunParams(fileName, dlg.runParams)
+                if dlg.termType != termType:
+                    Settings()['terminalType'] = dlg.termType
+                if dlg.debuggerParams != debuggerParams:
+                    Settings().setDebuggerSettings(dlg.debuggerParams)
+                self.onDebugScript()
 
     def onDebugScript(self):
         """Starts debugging"""
         if self.__checkDebugPrerequisites():
             GlobalData().mainWindow.debugScript(self.getFileName())
 
-    def __checkDebugPrerequisites(self):
+    @staticmethod
+    def __checkDebugPrerequisites():
         """Returns True if should continue"""
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
@@ -737,7 +725,8 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def getReloadDialogShown(self):
         """Tells if the reload dialog has already been shown"""
-        return self.__reloadDlgShown and not self.__outsideChangesBar.isVisible()
+        return self.__reloadDlgShown and \
+            not self.__outsideChangesBar.isVisible()
 
     def updateModificationTime(self, fileName):
         """Updates the modification time"""
@@ -745,13 +734,13 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         self.__diskModTime = os.path.getmtime(path)
         self.__diskSize = os.path.getsize(path)
 
-    def setDebugMode(self, mode, disableEditing):
+    def setDebugMode(self, debugOn, disableEditing):
         """Called to switch debug/development"""
         skin = GlobalData().skin
-        self.__debugMode = mode
+        self.__debugMode = debugOn
         self.__breakableLines = None
 
-        if mode == True:
+        if debugOn:
             if disableEditing:
                 self.__editor.setMarginsBackgroundColor(
                     skin['marginPaperDebug'])
@@ -789,22 +778,22 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
         """Returns True if a breakpoint could be placed on the current line"""
         if self.__fileName is None or \
            self.__fileName == "" or \
-           os.path.isabs(self.__fileName) == False:
+           not os.path.isabs(self.__fileName):
             return False
         if not isPythonMime(self.getMime()):
             return False
 
         if line is None:
             line = self.getLine() + 1
-        if self.__breakableLines is not None and enforceRecalc == False:
+        if self.__breakableLines is not None and not enforceRecalc:
             return line in self.__breakableLines
 
         self.__breakableLines = getBreakpointLines(self.getFileName(),
                                                    self.__editor.text,
                                                    enforceRecalc)
 
-        if self.__breakableLines is None :
-            if enforceSure == False:
+        if self.__breakableLines is None:
+            if not enforceSure:
                 # Be on the safe side - if there is a problem of
                 # getting the breakable lines, let the user decide
                 return True

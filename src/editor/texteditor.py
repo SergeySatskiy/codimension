@@ -22,44 +22,29 @@
 
 import os.path
 import logging
-from ui.qt import (Qt, QTimer, pyqtSignal,
-                   QRect, QEvent, QPoint, QModelIndex, QCursor, QFontMetrics,
-                   QFont, QApplication, QToolBar,
-                   QHBoxLayout, QWidget, QAction, QMenu,
-                   QSizePolicy, QToolButton, QDialog, QToolTip,
-                   QVBoxLayout, QSplitter, QTextOption)
+from ui.qt import (Qt, QTimer, pyqtSignal, QRect, QEvent, QPoint, QModelIndex,
+                   QCursor, QFontMetrics, QFont, QApplication, QWidget,
+                   QTextOption)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.completer import CodeCompleter
 from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
-from ui.linecounter import LineCounterDialog
 from ui.calltip import Calltip
-from ui.importlist import ImportListWidget
-from ui.outsidechanges import OutsideChangeWidget
-from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.encoding import (readEncodedFile, detectEolString,
                             detectWriteEncoding, writeEncodedFile)
 from utils.fileutils import getFileProperties, isPythonMime
-from utils.diskvaluesrelay import (getRunParameters, addRunParams,
-                                   setFileEncoding, getFileEncoding)
+from utils.diskvaluesrelay import setFileEncoding, getFileEncoding
 from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
                                getImportedNameDefinitionLine, resolveImports)
-from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
-                                ImportsDiagramProgress)
 from autocomplete.bufferutils import (getContext, getPrefixAndObject,
-                                      getEditorTags, isImportLine,
-                                      isStringLiteral, getCallPosition,
-                                      getCommaCount)
+                                      getEditorTags, isStringLiteral,
+                                      getCallPosition, getCommaCount)
 from autocomplete.completelists import (getCompletionList, getCalltipAndDoc,
                                         getDefinitionLocation, getOccurrences)
 from cdmbriefparser import getBriefModuleInfoFromMemory
-from debugger.modifiedunsaved import ModifiedUnsavedDialog
-from profiling.profui import ProfilingProgressDialog
 from debugger.bputils import getBreakpointLines
 from debugger.breakpoint import Breakpoint
-from .flowuiwidget import FlowUIWidget
-from .navbar import NavigationBar
 from .qpartwrap import QutepartWrapper
 from .editorcontextmenus import EditorContextMenuMixin
 
