@@ -208,6 +208,8 @@ class Skin:
         self.__appCSS = None
         self.__values = {}
         self.__cfValues = {}
+        self.minTextZoom = None
+        self.minCFlowZoom = None
         self.__reset()
 
     def __reset(self):
@@ -227,6 +229,9 @@ class Skin:
                 self.__cfValues[key] = QFont(_DEFAULT_CFLOW_SETTINGS[key])
 
         self.__appCSS = deepcopy(_DEFAULT_APP_CSS)
+
+        self.minTextZoom = self.__calculateMinTextZoom()
+        self.minCFlowZoom = self.__calculateMinCFlowZoom()
 
     def __getitem__(self, key):
         if key == 'appCSS':
@@ -348,6 +353,8 @@ class Skin:
                           '\nThe file will be updated with '
                           'default skin settings')
             return False
+
+        self.minTextZoom = self.__calculateMinTextZoom()
         return True
 
     def __loadCFlow(self, fName):
@@ -361,7 +368,21 @@ class Skin:
                           '\nThe file will be updated with '
                           'default control flow settings')
             return False
+
+        self.minCFlowZoom = self.__calculateMinCFlowZoom()
         return True
+
+    def __calculateMinTextZoom(self):
+        """Calculates the minimum text zoom"""
+        marginPointSize = self.__values['lineNumFont'].pointSize()
+        mainAreaPointSize = self.__values['monoFont'].pointSize()
+        return (min(marginPointSize, mainAreaPointSize) - 1) * -1
+
+    def __calculateMinCFlowZoom(self):
+        """Calculates the minimum control flow zoom"""
+        badgePointSize = self.__cfValues['badgeFont'].pointSize()
+        monoPointSize = self.__cfValues['monoFont'].pointSize()
+        return (min(badgePointSize, monoPointSize) - 1) * -1
 
 
 def getThemesList(localSkinsDir):

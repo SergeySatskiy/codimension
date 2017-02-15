@@ -82,7 +82,6 @@ class CDMLineNumberMargin(QWidget):
         top = int(self._qpart.blockBoundingGeometry(block).
                   translated(self._qpart.contentOffset()).top())
         bottom = top + int(self._qpart.blockBoundingRect(block).height())
-        singleBlockHeight = self._qpart.cursorRect().height()
 
         boundingRect = self._qpart.blockBoundingRect(block)
         availableWidth = self.__width - self._RIGHT_MARGIN - self._LEFT_MARGIN
@@ -108,6 +107,7 @@ class CDMLineNumberMargin(QWidget):
             blockNumber += 1
 
     def __calculateWidth(self):
+        """Calculates the margin width"""
         digits = len(str(max(1, self._qpart.blockCount())))
         digitsWidth = self.fontMetrics().width('9') * digits
         return self._LEFT_MARGIN + digitsWidth + self._RIGHT_MARGIN

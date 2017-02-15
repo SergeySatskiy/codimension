@@ -46,10 +46,6 @@ class QutepartWrapper(Qutepart):
 
         # The minimum possible zoom not to make the margin disappear
         skin = GlobalData().skin
-        marginPointSize = skin['lineNumFont'].pointSize()
-        mainAreaPointSize = skin['monoFont'].pointSize()
-        self.__minZoom = (min(marginPointSize, mainAreaPointSize) - 1) * -1
-
         self.setFont(QFont(skin['monoFont']))
 
     def setPaper(self, paperColor):
@@ -73,7 +69,7 @@ class QutepartWrapper(Qutepart):
     def onZoomOut(self):
         """Decreases the font"""
         newZoom = Settings()['zoom'] - 1
-        if newZoom >= self.__minZoom:
+        if newZoom >= GlobalData().skin.minTextZoom:
             self.sigTextEditorZoom.emit(newZoom)
 
     def onZoomReset(self):
@@ -85,7 +81,7 @@ class QutepartWrapper(Qutepart):
         """Sets the zoom to a certain value if possible"""
         # zoomVal is an integer: > 0 => larger, < 0 => smaller than the base
         font = QFont(GlobalData().skin['monoFont'])
-        zoomVal = max(zoomVal, self.__minZoom)
+        zoomVal = max(zoomVal, GlobalData().skin.minTextZoom)
         fontSize = font.pointSize() + zoomVal
         font.setPointSize(fontSize)
         self.setFont(font)
@@ -163,7 +159,7 @@ class QutepartWrapper(Qutepart):
             lStripped = self.lines[line].lstrip()
             if lStripped:
                 calcPos = len(self.lines[line]) - len(lStripped)
-                newPos = 0 if calcPos <= pos else pos
+                newPos = 0 if pos <= calcPos else calcPos
         self.cursorPosition = line, newPos
 
     def _onHome(self):
