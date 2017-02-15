@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2015-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2015-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,8 @@
 """Various items used to represent a control flow on a virtual canvas"""
 
 from sys import maxsize
-from math import sqrt
 from cgi import escape
-import os.path
-from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QPainter, QColor,
+from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
                    QFont, QGraphicsRectItem, QGraphicsPathItem, QGraphicsItem,
                    QStyleOptionGraphicsItem, QStyle)
 from .auxitems import SVGItem, Connector, Text, CMLLabel
@@ -32,25 +30,25 @@ from .cml import CMLVersion, CMLsw, CMLcc, CMLrt
 
 def getBorderColor(color):
     """Creates a darker version of the color"""
-    r = color.red()
-    g = color.green()
-    b = color.blue()
+    red = color.red()
+    green = color.green()
+    blue = color.blue()
 
     delta = 60
-    if isDark(r, g, b):
+    if isDark(red, green, blue):
         # Need lighter color
-        return QColor(min(r + delta, 255),
-                      min(g + delta, 255),
-                      min(b + delta, 255), color.alpha())
+        return QColor(min(red + delta, 255),
+                      min(green + delta, 255),
+                      min(blue + delta, 255), color.alpha())
     # Need darker color
-    return QColor(max(r - delta, 0),
-                  max(g - delta, 0),
-                  max(b - delta, 0), color.alpha())
+    return QColor(max(red - delta, 0),
+                  max(green - delta, 0),
+                  max(blue - delta, 0), color.alpha())
 
 
-def isDark(r, g, b):
+def isDark(red, green, blue):
     """True if the color is dark"""
-    yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000
+    yiq = ((red * 299) + (green * 587) + (blue * 114)) / 1000
     return yiq < 128
 
 
@@ -147,13 +145,12 @@ class CellElement:
 
     def getTooltip(self):
         """Provides the tooltip"""
-        s = self.canvas.settings
         parts = []
         canvas = self.canvas
         while canvas is not None:
             parts.insert(0, canvas.getScopeName())
             canvas = canvas.canvas
-        if s.debug:
+        if self.canvas.settings.debug:
             return "::".join(parts) + "<br>Size: " + \
                 str(self.width) + "x" + str(self.height) + \
                 " (" + str(self.minWidth) + "x" + str(self.minHeight) + ")" + \
@@ -162,7 +159,6 @@ class CellElement:
 
     def getCanvasTooltip(self):
         """Provides the canvas tooltip"""
-        s = self.canvas.settings
         parts = []
         canvas = self.canvas
         while canvas is not None:
@@ -172,7 +168,7 @@ class CellElement:
         path = " :: ".join(parts)
         if not path:
             path = " ::"
-        if s.debug:
+        if self.canvas.settings.debug:
             return path + "<br>Size: " + str(self.canvas.width) + "x" + \
                    str(self.canvas.height) + \
                    " (" + str(self.canvas.minWidth) + "x" + \
