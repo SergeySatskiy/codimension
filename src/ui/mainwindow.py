@@ -52,7 +52,6 @@ from debugger.bputils import clearValidBreakpointLinesCache
 from utils.colorfont import getMonospaceFontList
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
-from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
 from editor.redirectedioconsole import IOConsoleTabWidget
 from utils.skin import getThemesList
 from utils.config import CONFIG_DIR
@@ -135,6 +134,8 @@ class CodimensionMainWindow(QMainWindow):
     def __init__(self, splash, settings):
         QMainWindow.__init__(self)
 
+        self.settings = settings
+
         extendInstance(self, MainWindowStatusBarMixin)
         MainWindowStatusBarMixin.__init__(self)
 
@@ -169,7 +170,6 @@ class CodimensionMainWindow(QMainWindow):
         self.__debugger.getBreakPointModel().sigBreakpoinsChanged.connect(
             self.__onBreakpointsModelChanged)
 
-        self.settings = settings
         self.__initialisation = True
 
         # This prevents context menu on the main window toolbar.
@@ -2108,66 +2108,6 @@ class CodimensionMainWindow(QMainWindow):
         """Checks if there are changes in the files
            currently loaded by codimension"""
         self.editorsManagerWidget.editorsManager.checkOutsideFileChanges()
-
-    def __getPathLabelFilePath(self):
-        """Provides undecorated path label content"""
-        txt = str(self.sbFile.getPath())
-        if txt.startswith("File: "):
-            txt = txt.replace("File: ", "")
-        return txt
-
-    def _onPathLabelDoubleClick(self):
-        """Double click on the status bar path label"""
-        txt = self.__getPathLabelFilePath()
-        if txt not in ["", "N/A"]:
-            QApplication.clipboard().setText(txt)
-
-    def __onCopyDirToClipboard(self):
-        """Copies the dir path of the current file into the clipboard"""
-        txt = self.__getPathLabelFilePath()
-        if txt not in ["", "N/A"]:
-            try:
-                QApplication.clipboard().setText(os.path.dirname(txt) +
-                                                 os.path.sep)
-            except:
-                pass
-
-    def __onCopyFileNameToClipboard(self):
-        """Copies the file name of the current file into the clipboard"""
-        txt = self.__getPathLabelFilePath()
-        if txt not in ["", "N/A"]:
-            try:
-                QApplication.clipboard().setText(os.path.basename(txt))
-            except:
-                pass
-
-    def __onVCSMonitorInterval(self):
-        """Runs the VCS monitor interval setting dialog"""
-        dlg = VCSUpdateIntervalConfigDialog(
-            self.settings.vcsstatusupdateinterval, self)
-        if dlg.exec_() == QDialog.Accepted:
-            self.settings.vcsstatusupdateinterval = dlg.interval
-
-    def _showPathLabelContextMenu(self, pos):
-        """Triggered when a context menu is requested for the path label"""
-        contextMenu = QMenu(self)
-        contextMenu.addAction(getIcon("copytoclipboard.png"),
-                              "Copy full path to clipboard (double click)",
-                              self._onPathLabelDoubleClick)
-        contextMenu.addSeparator()
-        contextMenu.addAction(getIcon(""), "Copy directory path to clipboard",
-                              self.__onCopyDirToClipboard)
-        contextMenu.addAction(getIcon(""), "Copy file name to clipboard",
-                              self.__onCopyFileNameToClipboard)
-        contextMenu.popup(self.sbFile.mapToGlobal(pos))
-
-    def _showVCSLabelContextMenu(self, pos):
-        """Triggered when a context menu is requested for a VCS label"""
-        contextMenu = QMenu(self)
-        contextMenu.addAction(getIcon("vcsintervalmenu.png"),
-                              "Configure monitor interval",
-                              self.__onVCSMonitorInterval)
-        contextMenu.popup(self.sbVCSStatus.mapToGlobal(pos))
 
     def switchDebugMode(self, newState):
         """Switches the debug mode to the desired"""

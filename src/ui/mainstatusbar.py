@@ -19,8 +19,11 @@
 
 """Codimension main window status bar"""
 
+import os.path
 from utils.colorfont import colorAsString
-from .qt import Qt, QLabel, QPalette, QColor
+from utils.pixmapcache import getIcon
+from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
+from .qt import Qt, QLabel, QPalette, QColor, QMenu, QDialog, QApplication
 from .fitlabel import FitPathLabel
 
 
@@ -64,28 +67,23 @@ class MainWindowStatusBarMixin:
         dbgPalette.setColor(QPalette.Background, QColor(255, 255, 127))
         self.sbDebugState.setPalette(dbgPalette)
         self.__statusBar.addPermanentWidget(self.sbDebugState)
-        self.sbDebugState.setToolTip("Debugger status")
         self.sbDebugState.setVisible(False)
 
         self.sbLanguage = QLabel(self.__statusBar)
         self.sbLanguage.setStyleSheet(labelStylesheet)
         self.__statusBar.addPermanentWidget(self.sbLanguage)
-        self.sbLanguage.setToolTip("Editor language/image format")
 
         self.sbEncoding = QLabel(self.__statusBar)
         self.sbEncoding.setStyleSheet(labelStylesheet)
         self.__statusBar.addPermanentWidget(self.sbEncoding)
-        self.sbEncoding.setToolTip("Editor encoding/image size")
 
         self.sbEol = QLabel(self.__statusBar)
         self.sbEol.setStyleSheet(labelStylesheet)
         self.__statusBar.addPermanentWidget(self.sbEol)
-        self.sbEol.setToolTip("Editor EOL setting")
 
         self.sbWritable = QLabel(self.__statusBar)
         self.sbWritable.setStyleSheet(labelStylesheet)
         self.__statusBar.addPermanentWidget(self.sbWritable)
-        self.sbWritable.setToolTip("Editor file read/write mode")
 
         # FitPathLabel has support for double click event,
         # so it is used here. Purely it would be better to have another
@@ -98,7 +96,6 @@ class MainWindowStatusBarMixin:
         self.sbFile.setMinimumWidth(128)
         self.sbFile.setStyleSheet(labelStylesheet)
         self.__statusBar.addPermanentWidget(self.sbFile, True)
-        self.sbFile.setToolTip("Editor file name (double click to copy path)")
         self.sbFile.doubleClicked.connect(self._onPathLabelDoubleClick)
         self.sbFile.setContextMenuPolicy(Qt.CustomContextMenu)
         self.sbFile.customContextMenuRequested.connect(
@@ -109,14 +106,12 @@ class MainWindowStatusBarMixin:
         self.sbLine.setAlignment(Qt.AlignCenter)
         self.sbLine.setStyleSheet(labelStylesheet)
         self.__statusBar.addPermanentWidget(self.sbLine)
-        self.sbLine.setToolTip("Editor line number")
 
         self.sbPos = QLabel(self.__statusBar)
         self.sbPos.setMinimumWidth(72)
         self.sbPos.setAlignment(Qt.AlignCenter)
         self.sbPos.setStyleSheet(labelStylesheet)
         self.__statusBar.addPermanentWidget(self.sbPos)
-        self.sbPos.setToolTip("Editor cursor position")
 
     def __getLabelStylesheet(self):
         """Generates the status bar labels stylesheet"""
@@ -149,3 +144,63 @@ class MainWindowStatusBarMixin:
     def clearStatusBarMessage(self):
         """Clears the status bar message in the given slot"""
         self.__statusBar.clearMessage()
+
+    def _showVCSLabelContextMenu(self, pos):
+        """Triggered when a context menu is requested for a VCS label"""
+        contextMenu = QMenu(self)
+        contextMenu.addAction(getIcon("vcsintervalmenu.png"),
+                              "Configure monitor interval",
+                              self.__onVCSMonitorInterval)
+        contextMenu.popup(self.sbVCSStatus.mapToGlobal(pos))
+
+    def __onVCSMonitorInterval(self):
+        """Runs the VCS monitor interval setting dialog"""
+        dlg = VCSUpdateIntervalConfigDialog(
+            self.settings['vcsstatusupdateinterval'], self)
+        if dlg.exec_() == QDialog.Accepted:
+            self.settings['vcsstatusupdateinterval'] = dlg.interval
+
+    def _showPathLabelContextMenu(self, pos):
+        """Triggered when a context menu is requested for the path label"""
+        contextMenu = QMenu(self)
+        contextMenu.addAction(getIcon('copytoclipboard.png'),
+                              'Copy full path to clipboard (double click)',
+                              self._onPathLabelDoubleClick)
+        contextMenu.addSeparator()
+        contextMenu.addAction(getIcon(''), 'Copy directory path to clipboard',
+                              self._onCopyDirToClipboard)
+        contextMenu.addAction(getIcon(''), 'Copy file name to clipboard',
+                              self._onCopyFileNameToClipboard)
+        contextMenu.popup(self.sbFile.mapToGlobal(pos))
+
+    def _onPathLabelDoubleClick(self):
+        """Double click on the status bar path label"""
+        txt = self.__getPathLabelFilePath()
+        if txt.lower() not in ['', 'n/a']:
+            QApplication.clipboard().setText(txt)
+
+    def _onCopyDirToClipboard(self):
+        """Copies the dir path of the current file into the clipboard"""
+        txt = self.__getPathLabelFilePath()
+        if txt.lower() not in ['', 'n/a']:
+            try:
+                QApplication.clipboard().setText(os.path.dirname(txt) +
+                                                 os.path.sep)
+            except:
+                pass
+
+    def _onCopyFileNameToClipboard(self):
+        """Copies the file name of the current file into the clipboard"""
+        txt = self.__getPathLabelFilePath()
+        if txt.lower() not in ['', 'n/a']:
+            try:
+                QApplication.clipboard().setText(os.path.basename(txt))
+            except:
+                pass
+
+    def __getPathLabelFilePath(self):
+        """Provides undecorated path label content"""
+        txt = str(self.sbFile.getPath())
+        if txt.startswith('File: '):
+            txt = txt.replace('File: ', '')
+        return txt

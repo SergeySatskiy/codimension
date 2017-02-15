@@ -1808,8 +1808,6 @@ class EditorsManager(QTabWidget):
                 mainWindow.sbLanguage.setToolTip('Mime type: ' + mime)
             else:
                 mainWindow.sbLanguage.setToolTip('Mime type: unknown')
-        elif currentWidget.getType() in [MainWindowTabWidgetBase.PictureViewer]:
-            mainWindow.sbLanguage.setToolTip('Image format')
         else:
             mainWindow.sbLanguage.setToolTip('')
 
