@@ -45,6 +45,7 @@ from debugger.bputils import getBreakpointLines
 from debugger.breakpoint import Breakpoint
 from .qpartwrap import QutepartWrapper
 from .editorcontextmenus import EditorContextMenuMixin
+from .linenomargin import CDMLineNumberMargin
 
 
 CTRL_SHIFT = int(Qt.ShiftModifier | Qt.ControlModifier)
@@ -68,6 +69,8 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self._parent = parent
         QutepartWrapper.__init__(self, parent)
         EditorContextMenuMixin.__init__(self)
+
+        self.addMargin(CDMLineNumberMargin(self))
 
         self.setAttribute(Qt.WA_KeyCompression)
 
