@@ -99,20 +99,20 @@ class IDEAccess():
         self.settings = None
         self.globalData = None
 
-    def showStatusBarMessage(self, message, slot=0, timeout=10000):
-        """Shows a temporary status bar message
-           default for 10sec in virtual message slot #0"""
-        self.mainWindow.showStatusBarMessage(message, slot, timeout)
+    def showStatusBarMessage(self, message, timeout=10000):
+        """Shows a temporary status bar message (default for 10sec)"""
+        self.mainWindow.showStatusBarMessage(message, timeout)
 
-    def clearStatusBarMessage(self, slot=0):
-        """Clears a temporary status bar message
-           in the given virtual message slot"""
-        self.mainWindow.clearStatusBarMessage(slot)
+    def clearStatusBarMessage(self):
+        """Clears a temporary status bar message"""
+        self.mainWindow.clearStatusBarMessage()
 
     @property
     def application(self):
         """Reference to the codimension application.
-           See details in src/ui/application.py"""
+
+        See details in src/ui/application.py
+        """
         if self.globalData is None:
             raise Exception("Plugin is not active")
         return self.globalData.application
@@ -128,7 +128,9 @@ class IDEAccess():
     @property
     def skin(self):
         """Reference to the current skin.
-           See details in src/utils/skin.py"""
+
+        See details in src/utils/skin.py
+        """
         if self.globalData is None:
             raise Exception("Plugin is not active")
         return self.globalData.skin
@@ -136,10 +138,12 @@ class IDEAccess():
     @property
     def project(self):
         """Reference to the current project.
-           See details in src/utils/project.py
-           Note: an object is provided even if there is no project loaded.
-                 To check if a project is loaded use
-                 getProject().isLoaded()"""
+
+        See details in src/utils/project.py
+        Note: an object is provided even if there is no project loaded.
+              To check if a project is loaded use
+              getProject().isLoaded()
+        """
         if self.globalData is None:
             raise Exception("Plugin is not active")
         return self.globalData.project
@@ -147,8 +151,10 @@ class IDEAccess():
     @property
     def settingsDir(self):
         """The directory where the IDE setting files are stored.
-           The directory is individual for each user and it is usually
-           ~/.codimension3/"""
+
+        The directory is individual for each user and it is usually
+        ~/.codimension3/
+        """
         return SETTINGS_DIR
 
     @property
@@ -180,28 +186,32 @@ class IDEAccess():
     @property
     def editorsManager(self):
         """Reference to the editors manager (it derives QTabWidget)
-           See details in src/ui/editorsmanager.py"""
+
+        See details in src/ui/editorsmanager.py
+        """
         return self.mainWindow.editorsManagerWidget.editorsManager
 
     @property
     def currentEditorWidget(self):
         """Reference to the current main area widget.
-           Note: the widget could be of various types e.g. pixmap viewer,
-                 html viewer, text editor etc. All of them derive from
-                 MainWindowTabWidgetBase (see details in
-                 src/ui/mainwindowtabwidgetbase.py)
-                 The getCurrentEditorWidget().getType() call provides the
-                 current widget type.
-                 The known widget types are described in
-                 src/ui/mainwindowtabwidgetbase.py
-                 Depending on the widget type various functionality is
-                 avalable. See the certain widget implementation files:
-                 PlainTextEditor     src/editor/texteditor.py
-                 PictureViewer       src/ui/pixmapwidget.py
-                 HTMLViewer          src/ui/htmltabwidget.py
-                 GeneratedDiagram    src/diagram/importsdgmgraphics.py
-                 ProfileViewer       src/profiling/profwidget.py
-                 DisassemblerViewer  src/profiling/disasmwidget.py"""
+
+        Note: the widget could be of various types e.g. pixmap viewer,
+              html viewer, text editor etc. All of them derive from
+              MainWindowTabWidgetBase (see details in
+              src/ui/mainwindowtabwidgetbase.py)
+              The getCurrentEditorWidget().getType() call provides the
+              current widget type.
+              The known widget types are described in
+              src/ui/mainwindowtabwidgetbase.py
+              Depending on the widget type various functionality is
+              avalable. See the certain widget implementation files:
+              PlainTextEditor     src/editor/texteditor.py
+              PictureViewer       src/ui/pixmapwidget.py
+              HTMLViewer          src/ui/htmltabwidget.py
+              GeneratedDiagram    src/diagram/importsdgmgraphics.py
+              ProfileViewer       src/profiling/profwidget.py
+              DisassemblerViewer  src/profiling/disasmwidget.py
+        """
         return self.editorsManager.currentWidget()
 
     @property

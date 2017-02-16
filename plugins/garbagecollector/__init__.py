@@ -22,10 +22,11 @@
 
 import gc
 import logging
+import os.path
 from ui.qt import QDialog
 from utils.fileutils import loadJSON, saveJSON
 from plugins.categories.wizardiface import WizardInterface
-from configdlg import GCPluginConfigDialog
+from .configdlg import GCPluginConfigDialog
 
 
 class GCPlugin(WizardInterface):
@@ -61,8 +62,8 @@ class GCPlugin(WizardInterface):
 
         self.__where = self.__getConfiguredWhere()
 
-        self.ide.editorsManager.tabClosed.connect(self.__collectGarbage)
-        self.ide.project.projectChanged.connect(self.__collectGarbage)
+        self.ide.editorsManager.sigTabClosed.connect(self.__collectGarbage)
+        self.ide.project.sigProjectChanged.connect(self.__collectGarbage)
 
     def deactivate(self):
         """The plugin may override the method to do specific
@@ -70,8 +71,8 @@ class GCPlugin(WizardInterface):
            Note: if overriden do not forget to call the
                  base class deactivate() """
 
-        self.ide.project.projectChanged.disconnect(self.__collectGarbage)
-        self.ide.editorsManager.tabClosed.disconnect(self.__collectGarbage)
+        self.ide.project.sigProjectChanged.disconnect(self.__collectGarbage)
+        self.ide.editorsManager.sigTabClosed.disconnect(self.__collectGarbage)
 
         WizardInterface.deactivate(self)
 
@@ -156,9 +157,14 @@ class GCPlugin(WizardInterface):
 
     def __getConfiguredWhere(self):
         """Provides the saved configured value"""
-        values = loadJSON(self.__getConfigFile(),
-                          'garbage collector plugin settings',
-                          {'where': GCPluginConfigDialog.SILENT})
+        defaultSettings = {'where': GCPluginConfigDialog.SILENT}
+        configFile = self.__getConfigFile()
+        if not os.path.exists(configFile):
+            values = defaultSettings
+        else:
+            values = loadJSON(configFile,
+                              'garbage collector plugin settings',
+                              defaultSettings)
         try:
             value = values['where']
             if value < GCPluginConfigDialog.SILENT or \
@@ -206,7 +212,6 @@ class GCPlugin(WizardInterface):
             return
 
         if self.__where == GCPluginConfigDialog.STATUS_BAR:
-            # Display it for 5 seconds
             self.ide.showStatusBarMessage(message)
         else:
             logging.info(message)
