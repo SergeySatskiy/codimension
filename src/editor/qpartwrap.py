@@ -151,6 +151,14 @@ class QutepartWrapper(Qutepart):
         line, _ = self.cursorPosition
         self.cursorPosition = line, len(self.lines[line])
 
+    @staticmethod
+    def firstNonSpaceIndex(text):
+        """Provides a pos (0-based of a first non-space char in the text"""
+        lStripped = text.lstrip()
+        if lStripped:
+            return len(text) - len(lStripped)
+        return None
+
     def moveToLineBegin(self, toFirstNonSpace):
         """Jumps to the first non-space or to position 0"""
         line, pos = self.cursorPosition
@@ -210,3 +218,15 @@ class QutepartWrapper(Qutepart):
         if self.explicitUserEncoding:
             return self.explicitUserEncoding
         return self.encoding
+
+    def isCommentLine(self, line):
+        """True if it is a comment line. line is 0-based"""
+        if line >= len(self.lines):
+            return False
+        txt = self.lines[line]
+        nonSpaceIndex = self.firstNonSpaceIndex(txt)
+        if nonSpaceIndex is None:
+            return False
+        if txt[nonSpaceIndex] != '#':
+            return False
+        return not self.isStringLiteral(line, nonSpaceIndex)

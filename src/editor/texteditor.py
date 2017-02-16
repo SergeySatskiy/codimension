@@ -597,15 +597,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def onCommentUncomment(self):
         """Triggered when Ctrl+M is received"""
-        if self.isReadOnly():
-            return True
-        if self.lexer_ is None or not self.lexer_.canBlockComment():
-            return True
-
-        commentStr = self.lexer_.commentStr()
+        if self.isReadOnly() or not self.isPythonBuffer():
+            return
 
         with self:
-            if self.hasSelectedText():
+            if self.selectedText:
                 lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
                 if indexTo == 0:
                     endLine = lineTo - 1
@@ -628,19 +624,33 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             else:
                 # Detect what we need - comment or uncomment
                 line, index = self.cursorPosition
-                if self.text( line ).startswith(commentStr):
+                txt = self.lines[line]
+                nonSpaceIndex = self.firstNonSpaceIndex(txt)
+                if self.isCommentLine(line):
                     # need to uncomment
-                    self.setSelection(line, 0, line, len(commentStr))
-                    self.removeSelectedText()
+                    if nonSpaceIndex == len(txt) - 1:
+                        # Strip the only '#' character
+                        stripCount = 1
+                    else:
+                        # Strip up to two characters if the next char is a ' '
+                        if txt[nonSpaceIndex + 1] == ' ':
+                            stripCount = 2
+                        else:
+                            stripCount = 1
+                    newTxt = txt[:nonSpaceIndex] + txt[nonSpaceIndex +
+                                                       stripCount:]
+                    if not newTxt.strip():
+                        newTxt = ''
+                    self.lines[line] = newTxt
                 else:
                     # need to comment
-                    self.insertAt(commentStr, line, 0)
+                    pass
+
                 # Jump to the beginning of the next line
-                if self.lines() != line + 1:
+                if line + 1 < len(self.lines):
                     line += 1
                 self.cursorPosition = line, 0
                 self.ensureLineOnScreen(line)
-        return True
 
     def _onShiftHome(self):
         """Triggered when Shift+HOME is received"""
