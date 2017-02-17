@@ -37,6 +37,10 @@ _DEFAULT_SKIN_SETTINGS = {
     'marginPaperDebug': QColor(255, 228, 228, 255),
     'marginColor': QColor(128, 128, 128, 255),
     'marginColorDebug': QColor(128, 128, 128, 255),
+
+    'flakesMarginPaper': QColor(208, 208, 208, 255),
+    'flakesMarginPaperDebug':  QColor(255, 228, 228, 255),
+
     'revisionMarginPaper': QColor(228, 228, 228, 255),
     'revisionMarginColor': QColor(0, 128, 0, 255),
     'revisionAlterPaper': QColor(238, 240, 241, 255),

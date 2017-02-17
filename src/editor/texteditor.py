@@ -601,104 +601,44 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             return
 
         with self:
-            if self.selectedText:
-                lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
-                if indexTo == 0:
-                    endLine = lineTo - 1
+            # Detect what we need - comment or uncomment
+            line, _ = self.cursorPosition
+            txt = self.lines[line]
+            nonSpaceIndex = self.firstNonSpaceIndex(txt)
+            if self.isCommentLine(line):
+                # need to uncomment
+                if nonSpaceIndex == len(txt) - 1:
+                    # Strip the only '#' character
+                    stripCount = 1
                 else:
-                    endLine = lineTo
-
-                if self.text(lineFrom).startswith(commentStr):
-                    # need to uncomment
-                    for line in range(lineFrom, endLine + 1):
-                        if not self.text(line).startswith(commentStr):
-                            continue
-                        self.setSelection(line, 0, line, len(commentStr))
-                        self.removeSelectedText()
-                    self.setSelection(lineFrom, 0, endLine + 1, 0)
-                else:
-                    # need to comment
-                    for line in range(lineFrom, endLine + 1):
-                        self.insertAt(commentStr, line, 0)
-                    self.setSelection(lineFrom, 0, endLine + 1, 0)
-            else:
-                # Detect what we need - comment or uncomment
-                line, index = self.cursorPosition
-                txt = self.lines[line]
-                nonSpaceIndex = self.firstNonSpaceIndex(txt)
-                if self.isCommentLine(line):
-                    # need to uncomment
-                    if nonSpaceIndex == len(txt) - 1:
-                        # Strip the only '#' character
-                        stripCount = 1
+                    # Strip up to two characters if the next char is a ' '
+                    if txt[nonSpaceIndex + 1] == ' ':
+                        stripCount = 2
                     else:
-                        # Strip up to two characters if the next char is a ' '
-                        if txt[nonSpaceIndex + 1] == ' ':
-                            stripCount = 2
-                        else:
-                            stripCount = 1
-                    newTxt = txt[:nonSpaceIndex] + txt[nonSpaceIndex +
-                                                       stripCount:]
-                    if not newTxt.strip():
-                        newTxt = ''
-                    self.lines[line] = newTxt
+                        stripCount = 1
+                newTxt = txt[:nonSpaceIndex] + txt[nonSpaceIndex +
+                                                   stripCount:]
+                if not newTxt.strip():
+                    newTxt = ''
+                self.lines[line] = newTxt
+            else:
+                # need to comment
+                if nonSpaceIndex is None:
+                    self.lines[line] = '# '
                 else:
-                    # need to comment
-                    pass
+                    newTxt = '# '.join((txt[:nonSpaceIndex],
+                                        txt[nonSpaceIndex:]))
+                    self.lines[line] = newTxt
 
-                # Jump to the beginning of the next line
-                if line + 1 < len(self.lines):
-                    line += 1
-                self.cursorPosition = line, 0
-                self.ensureLineOnScreen(line)
+            # Jump to the beginning of the next line
+            if line + 1 < len(self.lines):
+                line += 1
+            self.cursorPosition = line, 0
+            self.ensureLineOnScreen(line)
 
     def _onShiftHome(self):
         """Triggered when Shift+HOME is received"""
         self.selectTillLineBegin(Settings()['jumpToFirstNonSpace'])
-
-    def __detectLineHeight(self):
-        """Sets the self._lineHeight"""
-        firstVisible = self.firstVisibleLine()
-        lastVisible = firstVisible + self.linesOnScreen()
-        line, pos = self.cursorPosition
-        xPos, yPos = self.getCurrentPixelPosition()
-        if line > 0 and (line - 1) >= firstVisible \
-                    and (line - 1) <= lastVisible:
-            self.cursorPosition = line - 1, 0
-            xPos1, yPos1 = self.getCurrentPixelPosition()
-            self._lineHeight = yPos - yPos1
-        else:
-            if self.lines() > line + 1 and (line + 1) >= firstVisible \
-                                       and (line + 1) <= lastVisible:
-                self.cursorPosition = line + 1, 0
-                xPos1, yPos1 = self.getCurrentPixelPosition()
-                self._lineHeight = yPos1 -yPos
-            else:
-                # This is the last resort, it provides wrong values
-                currentPosFont = self.getCurrentPosFont()
-                metric = QFontMetrics(currentPosFont)
-                self._lineHeight = metric.lineSpacing()
-        self.cursorPosition = line, pos
-
-    def __detectCharWidth(self):
-        """Sets the self._charWidth"""
-        line, pos = self.cursorPosition
-        xPos, yPos = self.getCurrentPixelPosition()
-        if pos > 0:
-            self.cursorPosition = line, pos - 1
-            xPos1, yPos1 = self.getCurrentPixelPosition()
-            self._charWidth = xPos - xPos1
-        else:
-            if len(self.text(line)) > 1:
-                self.cursorPosition = line, pos + 1
-                xPos1, yPos1 = self.getCurrentPixelPosition()
-                self._charWidth = xPos1 - xPos
-            else:
-                # This is the last resort, it provides wrong values
-                currentPosFont = self.getCurrentPosFont()
-                metric = QFontMetrics(currentPosFont)
-                self._charWidth = metric.boundingRect("W").width()
-        self.cursorPosition = line, pos
 
     def onAutoComplete(self):
         """Triggered when ctrl+space or TAB is clicked"""
@@ -1035,12 +975,14 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             self.__completer.hide()
 
     def insertLines(self, text, line):
-        """Inserts the given text into new lines starting from 1-based line
-           Adds the trailing \n
-           All is done in a single undo block
-        """
+        """Inserts the given text into new lines starting from 1-based line"""
+        toInsert = text.splitlines()
         with self:
-            self.insertAt(text + "\n", line - 1, 0)
+            if line > 0:
+                line -= 1
+            for item in toInsert:
+                self.lines.insert(line, item)
+                line += 1
 
     def hideCompleter(self):
         """Hides the completer if visible"""
