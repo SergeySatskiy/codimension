@@ -25,8 +25,9 @@
 # accordingly.
 
 
-from ui.qt import QColor, QFont, QFontMetrics
+from ui.qt import QFont, QFontMetrics
 from utils.globals import GlobalData
+from utils.settings import Settings
 
 
 class CFlowSettings:
@@ -40,20 +41,25 @@ class CFlowSettings:
         for key, value in params.items():
             setattr(self, key, value)
 
-        self.monoFontMetrics = QFontMetrics(params['monoFont'], paintDevice)
-        self.badgeFontMetrics = QFontMetrics(params['badgeFont'], paintDevice)
+        self.__zoom = None
+        self.zoomTo(Settings()['flowZoom'])
 
-    def setMonoFont(self, font):
-        """Sets the mono font"""
-        self.monoFont = font
+    def zoomTo(self, zoomValue):
+        """Sets the new zoom"""
+        if self.__zoom == zoomValue:
+            return
+
+        monoFont = QFont(GlobalData().skin.cflowSettings['monoFont'])
+        monoFont.setPointSize(monoFont.pointSize() + zoomValue)
+        self.monoFont = monoFont
         self.monoFontMetrics = QFontMetrics(self.monoFont,
                                             self.__paintDevice)
-
-    def setBadgeFont(self, font):
-        """Sets the badge font"""
-        self.badgeFont = font
+        badgeFont = QFont(GlobalData().skin.cflowSettings['badgeFont'])
+        badgeFont.setPointSize(badgeFont.pointSize() + zoomValue)
+        self.badgeFont = badgeFont
         self.badgeFontMetrics = QFontMetrics(self.badgeFont,
                                              self.__paintDevice)
+        self.__zoom = zoomValue
 
 
 def getCflowSettings(paintDevice):
