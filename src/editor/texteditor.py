@@ -46,6 +46,7 @@ from debugger.breakpoint import Breakpoint
 from .qpartwrap import QutepartWrapper
 from .editorcontextmenus import EditorContextMenuMixin
 from .linenomargin import CDMLineNumberMargin
+from .flakesmargin import CDMFlakesMargin
 
 
 CTRL_SHIFT = int(Qt.ShiftModifier | Qt.ControlModifier)
@@ -70,14 +71,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         QutepartWrapper.__init__(self, parent)
         EditorContextMenuMixin.__init__(self)
 
-        self.addMargin(CDMLineNumberMargin(self))
-
         self.setAttribute(Qt.WA_KeyCompression)
 
         self.__debugger = debugger
 
         self.__initMargins()
-        self.__initDebuggerMarkers()
 
         # self.SCN_DOUBLECLICK.connect(self.__onDoubleClick)
         # self.cursorPositionChanged.connect(self._onCursorPositionChanged)
@@ -254,11 +252,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def __initMargins(self):
         """Initializes the editor margins"""
-        # The supported margins: line numbers, break points, flakes messages
-
-    def __initDebuggerMarkers(self):
-        """Initializes debugger related markers"""
-        # skin = GlobalData().skin
+        self.addMargin(CDMLineNumberMargin(self))
+        self.addMargin(CDMFlakesMargin(self))
+        self.getMargin('cdm_flakes_margin').setVisible(False)
 
     def highlightCurrentDebuggerLine(self, line, asException):
         """Highlights the current debugger line"""

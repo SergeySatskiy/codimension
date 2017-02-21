@@ -33,6 +33,7 @@ from ui.outsidechanges import OutsideChangeWidget
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
+from utils.misc import extendInstance
 from utils.fileutils import isPythonMime
 from utils.diskvaluesrelay import getRunParameters, addRunParams
 from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
@@ -48,7 +49,7 @@ from .navbar import NavigationBar
 from .texteditor import TextEditor
 
 
-class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
+class TextEditorTabWidget(QWidget):
 
     """Plain text editor tab widget"""
 
@@ -58,8 +59,10 @@ class TextEditorTabWidget(QWidget, MainWindowTabWidgetBase):
     sigTabRunChanged = pyqtSignal(bool)
 
     def __init__(self, parent, debugger):
-        MainWindowTabWidgetBase.__init__(self)
         QWidget.__init__(self, parent)
+
+        extendInstance(self, MainWindowTabWidgetBase)
+        MainWindowTabWidgetBase.__init__(self)
 
         self.__navigationBar = None
         self.__editor = TextEditor(self, debugger)

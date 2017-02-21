@@ -25,6 +25,7 @@ from qutepart.margins import MarginBase
 from utils.misc import extendInstance
 from utils.globals import GlobalData
 from utils.settings import Settings
+from utils.fileutils import isPythonMime
 
 
 class CDMFlakesMargin(QWidget):
@@ -43,12 +44,12 @@ class CDMFlakesMargin(QWidget):
 
         self.__bgColor = GlobalData().skin['flakesMarginPaper']
 
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
+
     def paintEvent(self, event):
         """Paints the margin"""
-        if self.__firstTime:
-            self.__updateWidth()
-            self.__firstTime = False
-
         painter = QPainter(self)
         painter.fillRect(event.rect(), self.__bgColor)
 
@@ -61,3 +62,13 @@ class CDMFlakesMargin(QWidget):
         if self.__bgColor != color:
             self.__bgColor = color
             self.update()
+
+    def __onFileTypeChanged(self, fileName, uuid, newFileType):
+        """Triggered on the changed file type"""
+        if hasattr(self._qpart._parent, 'getUUID'):
+            myUUID = self._qpart._parent.getUUID()
+            if uuid == myUUID:
+                if isPythonMime(newFileType):
+                    self.setVisible(True)
+                else:
+                    self.setVisible(False)
