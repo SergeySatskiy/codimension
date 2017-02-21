@@ -23,7 +23,12 @@ from _ast import PyCF_ONLY_AST
 from pyflakes.checker import Checker
 
 
-def getFileErrors(sourceCode):
+# Returns a dictionary:
+# {lineno1: [msg1, msg2, ...],
+#  lineno2: [msg3, ...]}
+
+
+def getBufferErrors(sourceCode):
     """Provides a list of warnings/errors for the given source code"""
     sourceCode += '\n'
 
@@ -33,8 +38,8 @@ def getFileErrors(sourceCode):
     except SyntaxError as value:
         # If there's an encoding problem with the file, the text is None.
         if value.text is None:
-            return []
-        return [(value.args[0], value.lineno)]
+            return {}
+        return {value.lineno: [value.args[0]]}
     except (ValueError, TypeError) as value:
         # ValueError may happened in case of invalid \x escape character
         # E.g. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=674797
@@ -42,12 +47,12 @@ def getFileErrors(sourceCode):
         # E.g. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=674796
         msg = str(value)
         if msg == "":
-            return [("Could not compile buffer: unknown error", -1)]
-        return [("Could not compile buffer: " + msg, -1)]
+            return {-1: ["Could not compile buffer: unknown error"]}
+        return {-1: ["Could not compile buffer: " + msg]}
 
     # Okay, it's syntactically valid.  Now check it.
     check = Checker(tree, "<string>")
-    results = []
+    results = {}
     lines = sourceCode.splitlines()
     for warning in check.messages:
         if isinstance(warning.lineno, int):
@@ -56,6 +61,8 @@ def getFileErrors(sourceCode):
             # By some reasons I see ast NAME node here (pyflakes 0.7.3)
             lineno = warning.lineno.lineno
         if 'analysis:ignore' not in lines[lineno - 1]:
-            results.append((warning.message % warning.message_args, lineno))
-    results.sort(key=lambda x: x[1])
+            if lineno in results:
+                results[lineno].append(warning.message % warning.message_args)
+            else:
+                results[lineno] = [warning.message % warning.message_args]
     return results

@@ -986,20 +986,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def clearPyflakesMessages(self):
         """Clears all the pyflakes markers"""
-        self.ignoreBufferChangedSignal = True
-        # self.markerDeleteAll(self.__pyflakesMsgMarker)
-        self.__pyflakesMessages = {}
-        self.ignoreBufferChangedSignal = False
+        self.getMargin('cdm_flakes_margin').clearPyflakesMessages()
 
-    def addPyflakesMessage(self, line, message):
-        """Shows up a pyflakes message"""
-        self.ignoreBufferChangedSignal = True
-        if line <= 0:
-            line = 1    # Sometimes line is reported as 0
-
-        # handle = self.markerAdd(line - 1, self.__pyflakesMsgMarker)
-        # self.__pyflakesMessages[handle] = message
-        self.ignoreBufferChangedSignal = False
+    def setPyflakesMessages(self, messages):
+        """Shows up a pyflakes messages"""
+        self.getMargin('cdm_flakes_margin').setPyflakesMessages(messages)
 
     def highlightInCFlow(self):
         """Triggered when highlight in the control flow is requested"""

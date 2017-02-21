@@ -40,9 +40,14 @@ class CDMFlakesMargin(QWidget):
         extendInstance(self, MarginBase)
         MarginBase.__init__(self, parent, "cdm_flakes_margin",
                             self.RESERVED_BITS)
-        self.__maxMarks = 2 ** self.RESERVED_BITS - 1
 
+        self.__maxMarks = 2 ** self.RESERVED_BITS - 1
+        self.__messages = {}
         self.__bgColor = GlobalData().skin['flakesMarginPaper']
+
+        self.myUUID = None
+        if hasattr(self._qpart._parent, 'getUUID'):
+            self.myUUID = self._qpart._parent.getUUID()
 
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
@@ -65,10 +70,37 @@ class CDMFlakesMargin(QWidget):
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered on the changed file type"""
-        if hasattr(self._qpart._parent, 'getUUID'):
-            myUUID = self._qpart._parent.getUUID()
-            if uuid == myUUID:
-                if isPythonMime(newFileType):
-                    self.setVisible(True)
-                else:
-                    self.setVisible(False)
+        if uuid == self.myUUID:
+            if isPythonMime(newFileType):
+                self.setVisible(True)
+            else:
+                self.setVisible(False)
+
+    def clearPyflakesMessages(self):
+        """Clears all the messages"""
+        self.__messages = {}
+        self.clear()
+
+    def setPyflakesMessages(self, messages):
+        """Sets a new set of messages"""
+        self.__messages = dict(messages)
+        lineNumbers = list(self.__messages.keys())
+        lineNumbers.sort()
+
+        while lineNumbers:
+            if lineNumbers[0] == -1:
+                lineNumbers.pop()
+            else:
+                break
+
+        current = 1
+        for lineno in lineNumbers:
+            if lineno > 0:
+                self.setBlockValue(
+                    self._qpart.document().findBlockByNumber(lineno - 1),
+                    current)
+                current += 1
+                if current > self.__maxMarks:
+                    break
+        if current > 1:
+            self.update()

@@ -18,11 +18,11 @@
 #
 
 """Pyflakes results viewer"""
- 
+
 import cgi
 from utils.pixmapcache import getIcon, getPixmap
 from utils.fileutils import isPythonMime, isPythonFile
-from analysis.ierrors import getFileErrors
+from analysis.ierrors import getBufferErrors
 from .qt import QTimer, QObject, Qt, QMenu
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
@@ -56,7 +56,8 @@ class PyflakesViewer(QObject):
         self.__editorsManager.currentChanged.connect(self.__onTabChanged)
         self.__editorsManager.sigTabClosed.connect(self.__onTabClosed)
         self.__editorsManager.sigBufferSavedAs.connect(self.__onSavedBufferAs)
-        self.__editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
+        self.__editorsManager.sigFileTypeChanged.connect(
+            self.__onFileTypeChanged)
 
         self.__flakesResults = {}  # UUID -> PyflakesAttributes
         self.__currentUUID = None
@@ -96,7 +97,7 @@ class PyflakesViewer(QObject):
             return
 
         # This is text editor, detect the file type
-        if isPythonMime(widget.getMime()):
+        if not isPythonMime(widget.getMime()):
             self.__currentUUID = None
             self.setFlakesNotAvailable(self.__uiLabel)
             return
@@ -116,7 +117,7 @@ class PyflakesViewer(QObject):
         editor.textChanged.connect(self.__onBufferChanged)
         editor.cursorPositionChanged.connect(self.__cursorPositionChanged)
 
-        results = getFileErrors(editor.text)
+        results = getBufferErrors(editor.text)
         attributes = PyflakesAttributes()
         attributes.messages = results
         attributes.changed = False
@@ -166,7 +167,7 @@ class PyflakesViewer(QObject):
             return
 
         editor = widget.getEditor()
-        results = getFileErrors(editor.text)
+        results = getBufferErrors(editor.text)
 
         self.__flakesResults[self.__currentUUID].messages = results
         self.__flakesResults[self.__currentUUID].changed = False
@@ -273,31 +274,31 @@ class PyflakesViewer(QObject):
     @staticmethod
     def setFlakesResults(label, results, editor):
         """Displays the appropriate icon:
-           - pyflakes has no complains
-           - pyflakes found errors
+
+        - pyflakes has no complains
+        - pyflakes found errors
         """
         if editor is not None:
             editor.clearPyflakesMessages()
 
         if results:
             # There are complains
-            complains = "File checked: there are pyflakes complains<br>"
-            for item in results:
-                if complains:
-                    complains += "<br/>"
-                msg = item[0]
-                lineno = item[1]
-                if lineno == -1:
-                    # Special case: compilation error
-                    complains += cgi.escape(msg)
-                else:
-                    complains += "Line " + str(lineno) + ": " + cgi.escape(msg)
-                if editor is not None and lineno != -1:
-                    # item[ 1 ] -> lineno, -1 is a special case for the
-                    # buffer compilation problems
-                    editor.addPyflakesMessage(lineno, msg)
+            complains = "Buffer checked: there are pyflakes complains<br/>"
+            lineNumbers = list(results.keys())
+            lineNumbers.sort()
+            for lineNo in lineNumbers:
+                for item in results[lineNo]:
+                    complains += '<br/>'
+                    if lineNo == -1:
+                        # Special case: compilation error
+                        complains += cgi.escape(item)
+                    else:
+                        complains += "Line " + str(lineNo) + \
+                                     ": " + cgi.escape(item)
             label.setToolTip(complains.replace(' ', '&nbsp;'))
             label.setPixmap(getPixmap('flakeserrors.png'))
+            if editor is not None:
+                editor.setPyflakesMessages(results)
         else:
             # There are no complains
             label.setToolTip("File checked: no pyflakes complains")
