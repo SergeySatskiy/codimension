@@ -124,10 +124,10 @@ class CFGraphicsView(QGraphicsView):
 
     def getVisibleRect(self):
         """Provides the visible rectangle"""
-        A = self.mapToScene(QPoint(0, 0))
-        B = self.mapToScene(QPoint(self.viewport().width(),
-                                   self.viewport().height()))
-        return QRectF(A, B)
+        topLeft = self.mapToScene(QPoint(0, 0))
+        bottomRight = self.mapToScene(QPoint(self.viewport().width(),
+                                             self.viewport().height()))
+        return QRectF(topLeft, bottomRight)
 
     def scrollTo(self, item):
         """Scrolls the view to the item"""
@@ -312,10 +312,10 @@ class ControlFlowNavigationBar(QFrame):
         """Sets the path label content"""
         self.__pathLabel.setText(txt)
 
-    def setPathVisible(self, on):
+    def setPathVisible(self, switchOn):
         """Sets the path visible"""
-        self.__pathLabel.setVisible(on)
-        self.__spacer.setVisible(not on)
+        self.__pathLabel.setVisible(switchOn)
+        self.__spacer.setVisible(not switchOn)
 
     def setSelectionLabel(self, text, tooltip):
         """Sets selection label"""
@@ -494,7 +494,6 @@ class FlowUIWidget(QWidget):
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when a buffer content type has changed"""
-
         if self.__parentWidget.getUUID() != uuid:
             return
 
@@ -563,9 +562,10 @@ class FlowUIWidget(QWidget):
 
     def highlightAtAbsPos(self, absPos, line, pos):
         """Scrolls the view to the item closest to absPos and selects it.
-           line and pos are 1-based
+
+        line and pos are 1-based
         """
-        item, distance = self.scene.getNearestItem(absPos, line, pos)
+        item, _ = self.scene.getNearestItem(absPos, line, pos)
         if item:
             self.scene.clearSelection()
             item.setSelected(True)
@@ -576,7 +576,8 @@ class FlowUIWidget(QWidget):
         """Sets the focus"""
         self.view.setFocus()
 
-    def __getDefaultSaveDir(self):
+    @staticmethod
+    def __getDefaultSaveDir():
         """Provides the default directory to save files to"""
         project = GlobalData().project
         if project.isLoaded():

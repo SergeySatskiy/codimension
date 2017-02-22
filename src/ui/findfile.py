@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ from cdmbriefparser import getBriefModuleInfoFromMemory
 from utils.globals import GlobalData
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.settings import Settings
+from utils.diskvaluesrelay import getFindFileHistory, setFindFileHistory
 from .qt import (Qt, QAbstractItemModel, QRegExp, QModelIndex,
                  QTreeView, QAbstractItemView, QDialog, QVBoxLayout,
                  QCursor, QSizePolicy, QHeaderView, QComboBox,
@@ -148,18 +149,18 @@ class FindFileModel(QAbstractItemModel):
     def __populateFromProject(self):
         """Populates find name dialog from the project files"""
         mainWindow = GlobalData().mainWindow
-        showTooltips = Settings().findFileTooltips
+        showTooltips = Settings()['findFileTooltips']
         for fname in GlobalData().project.filesList:
             if fname.endswith(os.path.sep):
                 continue
-            mime, icon, _ = getFileProperties(fName)
+            mime, icon, _ = getFileProperties(fname)
             tooltip = ""
             if showTooltips and isPythonMime(mime):
                 widget = mainWindow.getWidgetForFileName(fname)
                 if widget is None:
                     info = GlobalData().briefModinfoCache.get(fname)
                 else:
-                    content = widget.getEditor().text()
+                    content = widget.getEditor().text
                     info = getBriefModuleInfoFromMemory(content)
                 if info.docstring is not None:
                     tooltip = info.docstring.text
@@ -171,7 +172,7 @@ class FindFileModel(QAbstractItemModel):
         """Populates the name dialog from the opened files"""
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
-        showTooltips = Settings().findFileTooltips
+        showTooltips = Settings()['findFileTooltips']
         for record in editorsManager.getTextEditors():
             # uuid = record[0]
             fname = record[1]
@@ -179,7 +180,7 @@ class FindFileModel(QAbstractItemModel):
             mime, icon, _ = getFileProperties(fname)
             tooltip = ""
             if isPythonMime(mime):
-                content = widget.getEditor().text()
+                content = widget.getEditor().text
                 info = getBriefModuleInfoFromMemory(content)
                 if info.docstring is not None:
                     tooltip = info.docstring.text
@@ -292,8 +293,9 @@ class FindFileModel(QAbstractItemModel):
 
     def clear(self):
         """Clears the model"""
+        self.beginResetModel()
         self.rootItem.removeChildren()
-        self.reset()
+        self.endResetModel()
 
     def item(self, index):
         """Provides a reference to an item"""
@@ -391,7 +393,7 @@ class FilesBrowser(QTreeView):
         header = self.header()
         header.setSortIndicator(0, Qt.AscendingOrder)
         header.setSortIndicatorShown(True)
-        header.setClickable(True)
+        header.setSectionsClickable(True)
 
         self.setSortingEnabled(True)
 
@@ -465,10 +467,7 @@ class FindFileDialog(QDialog):
         QApplication.restoreOverrideCursor()
 
         # Set the window title and restore the previous searches
-        if self.__projectLoaded:
-            self.__findFileHistory = GlobalData().project.findFileHistory
-        else:
-            self.__findFileHistory = Settings().findFileHistory
+        self.__findFileHistory = getFindFileHistory()
         self.findCombo.addItems(self.__findFileHistory)
         self.findCombo.setEditText("")
 
@@ -547,11 +546,7 @@ class FindFileDialog(QDialog):
             if len(self.__findFileHistory) > 32:
                 self.__findFileHistory = self.__findFileHistory[:32]
 
-            if GlobalData().project.isLoaded():
-                GlobalData().project.setFindFileHistory(
-                    self.__findFileHistory)
-            else:
-                Settings().findFileHistory = self.__findFileHistory
+            setFindFileHistory(self.__findFileHistory)
         self.close()
 
     def __enterInFilter(self):

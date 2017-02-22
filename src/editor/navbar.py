@@ -50,7 +50,8 @@ class NavBarComboBox(QComboBox):
 
         self.pathIndex = None
 
-    def eventFilter(self, obj, event):
+    # Arguments: obj, event
+    def eventFilter(self, _, event):
         """Event filter for the qcombobox list view"""
         if event.type() == QEvent.KeyPress:
             key = event.key()
@@ -110,8 +111,9 @@ class NavigationBar(QFrame):
         self.__currentInfo = None
         self.__currentIconState = self.STATE_UNKNOWN
         self.__connected = False
-        self.__path = []    # List of PathElement starting after the
-                            # global scope
+
+        # List of PathElement starting after the global scope
+        self.__path = []
 
         self.__createLayout()
 
@@ -194,7 +196,8 @@ class NavigationBar(QFrame):
         """Editor has resized"""
         QFrame.resizeEvent(self, event)
 
-    def __onFileTypeChanged(self, fileName, uuid, newFileType):
+    # Arguments: fileName, uuid, newFileType
+    def __onFileTypeChanged(self, _, uuid, newFileType):
         """Triggered when a buffer content type has changed"""
         if self.__parentWidget.getUUID() != uuid:
             return
@@ -338,9 +341,7 @@ class NavigationBar(QFrame):
 
     @staticmethod
     def __populateClassesAndFunctions(infoObj, combo):
-        """Populates the given combo with classes and
-           functions from the info object
-        """
+        """Populates the combo with classes and functions from the infoObj"""
         for klass in infoObj.classes:
             combo.addItem(getIcon('class.png'), klass.name, klass.line)
         for func in infoObj.functions:

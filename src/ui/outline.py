@@ -293,8 +293,6 @@ class FileOutlineViewer(QWidget):
         widget = self.__editorsManager.getWidgetByUUID(self.__currentUUID)
         if widget is None:
             return
-        if widget.getEditor().ignoreBufferChangedSignal:
-            return
         if self.__mainWindow.debugMode:
             return
 

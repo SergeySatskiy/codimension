@@ -75,6 +75,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
         self.__debugger = debugger
 
+        skin = GlobalData().skin
+        self.setPaper(skin['nolexerPaper'])
+        self.setColor(skin['nolexerColor'])
+        self.setFont(skin['monoFont'])
+
         self.__initMargins()
 
         # self.SCN_DOUBLECLICK.connect(self.__onDoubleClick)
@@ -83,20 +88,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         # self.SCN_MODIFIED.connect(self.__onSceneModified)
         self.__skipChangeCursor = False
 
-        skin = GlobalData().skin
         self.__openedLine = None
 
-        self.__pyflakesMessages = {}    # marker handle -> error message
-        self.ignoreBufferChangedSignal = False  # Changing margin icons also
-                                                # generates BufferChanged
-                                                # signal which is extra
-        self.__pyflakesTooltipShown = False
-
         self.__breakpoints = {}         # marker handle -> Breakpoint
-
-        self.setPaper(skin['nolexerPaper'])
-        self.setColor(skin['nolexerColor'])
-        self.setFont(skin['monoFont'])
 
         self.setFocusPolicy(Qt.StrongFocus)
         self.indentWidth = 4
@@ -1175,9 +1169,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         for handle, bpoint in self.__breakpoints.items():
             if self.markerLine(handle) == line - 1:
                 del self.__breakpoints[handle]
-                self.ignoreBufferChangedSignal = True
                 self.markerDeleteHandle(handle)
-                self.ignoreBufferChangedSignal = False
                 return
         # Ignore the request if not found
 
@@ -1213,9 +1205,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
         line = bpoint.getLineNumber()
         if self.markersAtLine(line - 1) & self.__bpointMarginMask == 0:
-            self.ignoreBufferChangedSignal = True
             handle = self.markerAdd(line - 1, marker)
-            self.ignoreBufferChangedSignal = False
             self.__breakpoints[handle] = bpoint
 
     def isLineEmpty(self, line):
@@ -1224,11 +1214,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def restoreBreakpoints(self):
         """Restores the breakpoints"""
-        self.ignoreBufferChangedSignal = True
         # self.markerDeleteAll(self.__bpointMarker)
         # self.markerDeleteAll(self.__tempbpointMarker)
         # self.markerDeleteAll(self.__disbpointMarker)
-        self.ignoreBufferChangedSignal = False
         self.__addBreakPoints(QModelIndex(), 0,
                               self.__debugger.getBreakPointModel().rowCount() - 1)
 
@@ -1320,8 +1308,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
            startFrom is 1 based
         """
         if self.__breakpoints:
-            self.ignoreBufferChangedSignal = True
-
             bpointModel = self.__debugger.getBreakPointModel()
             bps = []    # list of breakpoints
             for handle, bpoint in self.__breakpoints.items():
@@ -1340,7 +1326,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                                                        bp.getLineNumber())
                 bpointModel.updateLineNumberByIndex(index, newLineNumber)
             self.__inLinesChanged = False
-            self.ignoreBufferChangedSignal = False
 
     def isPythonBuffer(self):
         """True if it is a python buffer"""

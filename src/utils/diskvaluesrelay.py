@@ -94,6 +94,23 @@ def updateFilePosition(fileName, line, pos, firstLine,
         Settings().updateFilePosition(fileName, line, pos, firstLine,
                                       horizontalPos, verticalPos)
 
+
+def getFindFileHistory():
+    """Provides the find file history"""
+    project = GlobalData().project
+    if project.isLoaded():
+        return project.findFileHistory
+    return Settings().findFileHistory
+
+
+def setFindFileHistory(values):
+    """Updates the find file history"""
+    project = GlobalData().project
+    if project.isLoaded():
+        project.findFileHistory = values
+    else:
+        Settings().findFileHistory = values
+
 ##DebuggerEnvironment
 ##SearchEnvironment
 ##FileSystemEnvironment

@@ -526,7 +526,7 @@ class RunDialog(QDialog):
         header = table.header()
         header.setSortIndicator(0, Qt.AscendingOrder)
         header.setSortIndicatorShown(True)
-        header.setClickable(True)
+        header.setSectionsClickable(True)
         table.setSortingEnabled(True)
 
     def __scriptWDirClicked(self):

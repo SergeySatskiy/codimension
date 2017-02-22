@@ -100,7 +100,7 @@ class FindNameModel(QAbstractItemModel):
 
         self.rootItem = NameItem(None, None, "Name", "", "", "")
         self.count = 0
-        self.showTooltips = Settings().findNameTooltips
+        self.showTooltips = Settings()['findNameTooltips']
         self.__populateModel()
 
     def __populateModel(self):
@@ -309,8 +309,9 @@ class FindNameModel(QAbstractItemModel):
 
     def clear(self):
         """Clears the model"""
+        self.beginResetModel()
         self.rootItem.removeChildren()
-        self.reset()
+        self.endResetModel()
 
     def item(self, index):
         """Provides a reference to an item"""
@@ -408,7 +409,7 @@ class NamesBrowser(QTreeView):
         header = self.header()
         header.setSortIndicator(0, Qt.AscendingOrder)
         header.setSortIndicatorShown(True)
-        header.setClickable(True)
+        header.setSectionsClickable(True)
 
         self.setSortingEnabled(True)
 

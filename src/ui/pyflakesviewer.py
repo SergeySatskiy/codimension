@@ -142,8 +142,6 @@ class PyflakesViewer(QObject):
         widget = self.__editorsManager.getWidgetByUUID(self.__currentUUID)
         if widget is None:
             return
-        if widget.getEditor().ignoreBufferChangedSignal:
-            return
         if self.parent().debugMode:
             return
 
