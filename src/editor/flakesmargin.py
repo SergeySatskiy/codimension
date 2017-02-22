@@ -20,30 +20,31 @@
 
 """Pyflakes margin"""
 
-from ui.qt import QWidget, QPainter, Qt, QFont
+import qutepart
+from cgi import escape
+from ui.qt import QWidget, QPainter, Qt, QFont, QToolTip
 from qutepart.margins import MarginBase
 from utils.misc import extendInstance
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import isPythonMime
+from utils.pixmapcache import getPixmap
 
 
 class CDMFlakesMargin(QWidget):
 
     """Pyflakes area widget"""
 
-    RESERVED_BITS = 6
-
     def __init__(self, parent):
         QWidget.__init__(self, parent)
 
         extendInstance(self, MarginBase)
-        MarginBase.__init__(self, parent, "cdm_flakes_margin",
-                            self.RESERVED_BITS)
+        MarginBase.__init__(self, parent, "cdm_flakes_margin", 1)
+        self.setMouseTracking(True)
 
-        self.__maxMarks = 2 ** self.RESERVED_BITS - 1
         self.__messages = {}
         self.__bgColor = GlobalData().skin['flakesMarginPaper']
+        self.__mark = getPixmap('pyflakesmsgmarker.png')
 
         self.myUUID = None
         if hasattr(self._qpart._parent, 'getUUID'):
@@ -52,11 +53,44 @@ class CDMFlakesMargin(QWidget):
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
+        self._qpart.blockCountChanged.connect(self.update)
 
     def paintEvent(self, event):
         """Paints the margin"""
         painter = QPainter(self)
         painter.fillRect(event.rect(), self.__bgColor)
+
+        block = self._qpart.firstVisibleBlock()
+        blockBoundingGeometry = self._qpart.blockBoundingGeometry(block).translated(self._qpart.contentOffset())
+        top = blockBoundingGeometry.top()
+        bottom = top + blockBoundingGeometry.height()
+
+        for block in qutepart.iterateBlocksFrom(block):
+            height = self._qpart.blockBoundingGeometry(block).height()
+            if top > event.rect().bottom():
+                break
+            if block.isVisible() and bottom >= event.rect().top():
+                if self.isBlockMarked(block):
+                    yPos = top + ((height - self.__mark.height()) / 2)  # centered
+                    painter.drawPixmap(0, yPos, self.__mark)
+
+            top += height
+
+    def mouseMoveEvent(self, event):
+        """Tooltips for the marks"""
+        blockNumber = self._qpart.cursorForPosition(event.pos()).blockNumber()
+        lineno = blockNumber + 1
+        if lineno in self.__messages:
+            msg = ''
+            for part in self.__messages[lineno]:
+                if msg:
+                    msg += '<br/>'
+                msg += escape(part)
+            msg = "<p style='white-space:pre'>" + msg + "</p>"
+            QToolTip.showText(event.globalPos(), msg)
+        else:
+            QToolTip.hideText()
+        return QWidget.mouseMoveEvent(self, event)
 
     def width(self):
         """Desired width"""
@@ -84,23 +118,9 @@ class CDMFlakesMargin(QWidget):
     def setPyflakesMessages(self, messages):
         """Sets a new set of messages"""
         self.__messages = dict(messages)
-        lineNumbers = list(self.__messages.keys())
-        lineNumbers.sort()
 
-        while lineNumbers:
-            if lineNumbers[0] == -1:
-                lineNumbers.pop()
-            else:
-                break
-
-        current = 1
-        for lineno in lineNumbers:
+        for lineno in self.__messages.keys():
             if lineno > 0:
                 self.setBlockValue(
-                    self._qpart.document().findBlockByNumber(lineno - 1),
-                    current)
-                current += 1
-                if current > self.__maxMarks:
-                    break
-        if current > 1:
-            self.update()
+                    self._qpart.document().findBlockByNumber(lineno - 1), 1)
+        self.update()
