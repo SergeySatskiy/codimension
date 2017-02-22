@@ -215,21 +215,23 @@ class PyflakesViewer(QObject):
             return
 
         # Check that there is at least one non -1 lineno message
-        foundLinedMessage = False
-        for item in messages:
-            if item[1] != -1:
-                foundLinedMessage = True
+        lineNumbers = list(messages.keys())
+        for lineno in lineNumbers:
+            if lineno > 0:
                 break
-        if not foundLinedMessage:
+        else:
             return
 
         # OK, we have something to show
+        lineNumbers.sort()
         contextMenu = QMenu(self.__uiLabel)
-        for item in messages:
-            act = contextMenu.addAction(
-                getIcon('pyflakesmsgmarker.png'),
-                "Line " + str(item[1]) + ": " + item[0])
-            act.setData(item[1])
+        for lineno in lineNumbers:
+            if lineno > 0:
+                for item in messages[lineno]:
+                    act = contextMenu.addAction(
+                        getIcon('pyflakesmsgmarker.png'),
+                        "Line " + str(lineno) + ": " + item)
+                    act.setData(lineno)
         contextMenu.triggered.connect(self.__onContextMenu)
         contextMenu.popup(self.__uiLabel.mapToGlobal(pos))
 
@@ -238,14 +240,8 @@ class PyflakesViewer(QObject):
         if self.__currentUUID is None:
             return
         widget = self.__editorsManager.getWidgetByUUID(self.__currentUUID)
-        if widget is None:
-            return
-
-        lineNum, isOK = act.data().toInt()
-        if not isOK:
-            return
-
-        self.__editorsManager.jumpToLine(lineNum)
+        if widget:
+            self.__editorsManager.jumpToLine(act.data())
 
     def __jumpToFirstMessage(self):
         """Double click on the icon"""
@@ -259,17 +255,13 @@ class PyflakesViewer(QObject):
             return
 
         widget = self.__editorsManager.getWidgetByUUID(self.__currentUUID)
-        if widget is None:
-            return
-
-        linedIndex = -1
-        for index in range(len(messages)):
-            if messages[index][1] != -1:
-                linedIndex = index
-                break
-
-        if linedIndex != -1:
-            self.__editorsManager.jumpToLine(messages[linedIndex][1])
+        if widget:
+            lineNumbers = list(messages.keys())
+            lineNumbers.sort()
+            for lineno in lineNumbers:
+                if lineno > 0:
+                    self.__editorsManager.jumpToLine(lineno)
+                    break
 
     @staticmethod
     def setFlakesResults(label, results, editor):

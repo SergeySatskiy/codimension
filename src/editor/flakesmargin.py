@@ -45,6 +45,8 @@ class CDMFlakesMargin(QWidget):
         self.__messages = {}
         self.__bgColor = GlobalData().skin['flakesMarginPaper']
         self.__mark = getPixmap('pyflakesmsgmarker.png')
+        self.__markHeight = self.__mark.height()
+        self.__noTooltip = True
 
         self.myUUID = None
         if hasattr(self._qpart._parent, 'getUUID'):
@@ -59,9 +61,12 @@ class CDMFlakesMargin(QWidget):
         """Paints the margin"""
         painter = QPainter(self)
         painter.fillRect(event.rect(), self.__bgColor)
+        oneLineHeight = self._qpart.fontMetrics().height()
 
         block = self._qpart.firstVisibleBlock()
-        blockBoundingGeometry = self._qpart.blockBoundingGeometry(block).translated(self._qpart.contentOffset())
+        geometry = self._qpart.blockBoundingGeometry(block)
+        blockBoundingGeometry = geometry.translated(
+            self._qpart.contentOffset())
         top = blockBoundingGeometry.top()
         bottom = top + blockBoundingGeometry.height()
 
@@ -69,27 +74,29 @@ class CDMFlakesMargin(QWidget):
             height = self._qpart.blockBoundingGeometry(block).height()
             if top > event.rect().bottom():
                 break
-            if block.isVisible() and bottom >= event.rect().top():
+            if block.isVisible():
                 if self.isBlockMarked(block):
-                    yPos = top + ((height - self.__mark.height()) / 2)  # centered
+                    yPos = top + ((oneLineHeight - self.__markHeight) / 2)
                     painter.drawPixmap(0, yPos, self.__mark)
 
             top += height
 
     def mouseMoveEvent(self, event):
         """Tooltips for the marks"""
-        blockNumber = self._qpart.cursorForPosition(event.pos()).blockNumber()
-        lineno = blockNumber + 1
-        if lineno in self.__messages:
-            msg = ''
-            for part in self.__messages[lineno]:
-                if msg:
-                    msg += '<br/>'
-                msg += escape(part)
-            msg = "<p style='white-space:pre'>" + msg + "</p>"
-            QToolTip.showText(event.globalPos(), msg)
-        else:
-            QToolTip.hideText()
+        if not self.__noTooltip:
+            blockNumber = self._qpart.cursorForPosition(
+                event.pos()).blockNumber()
+            lineno = blockNumber + 1
+            if lineno in self.__messages:
+                msg = ''
+                for part in self.__messages[lineno]:
+                    if msg:
+                        msg += '<br/>'
+                    msg += escape(part)
+                msg = "<p style='white-space:pre'>" + msg + "</p>"
+                QToolTip.showText(event.globalPos(), msg)
+            else:
+                QToolTip.hideText()
         return QWidget.mouseMoveEvent(self, event)
 
     def width(self):
@@ -110,6 +117,11 @@ class CDMFlakesMargin(QWidget):
             else:
                 self.setVisible(False)
 
+    def __onBlockCountChanged(self):
+        """Triggered when the block count changed"""
+        self.__noTooltip = True
+        self.update()
+
     def clearPyflakesMessages(self):
         """Clears all the messages"""
         self.__messages = {}
@@ -123,4 +135,5 @@ class CDMFlakesMargin(QWidget):
             if lineno > 0:
                 self.setBlockValue(
                     self._qpart.document().findBlockByNumber(lineno - 1), 1)
+        self.__noTooltip = False
         self.update()
