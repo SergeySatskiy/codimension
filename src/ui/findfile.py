@@ -72,11 +72,13 @@ class FileItemRoot():
         """Provides a reference to a child"""
         return self.childItems[row]
 
-    def parent(self):
+    @staticmethod
+    def parent():
         """Provides a reference to the parent item"""
         return None
 
-    def lessThan(self, other, column, order):
+    # Arguments: other, column, order
+    def lessThan(self, other, column, _):
         """Check, if the item is less than another"""
         try:
             self.itemData[column] < other.itemData[column]
@@ -97,7 +99,8 @@ class FileItem():
         self.dirname = os.path.dirname(fullname) + os.path.sep
         self.tooltip = tooltip
 
-    def columnCount(self):
+    @staticmethod
+    def columnCount():
         """Provides the number of columns"""
         return 2    # Base name and full path
 
@@ -109,7 +112,8 @@ class FileItem():
             return self.dirname + self.basename
         return ""
 
-    def childCount(self):
+    @staticmethod
+    def childCount():
         """Provides the number of children"""
         return 0
 
@@ -117,7 +121,8 @@ class FileItem():
         """Provides a reference to the parent item"""
         return self.parentItem
 
-    def lessThan(self, other, column, order):
+    # Arguments: other, column, order
+    def lessThan(self, other, column, _):
         """Check, if the item is less than another"""
         if column == 0:
             return self.basename < other.basename
@@ -179,7 +184,7 @@ class FindFileModel(QAbstractItemModel):
             widget = record[2]
             mime, icon, _ = getFileProperties(fname)
             tooltip = ""
-            if isPythonMime(mime):
+            if showTooltips and isPythonMime(mime):
                 content = widget.getEditor().text
                 info = getBriefModuleInfoFromMemory(content)
                 if info.docstring is not None:
@@ -229,7 +234,8 @@ class FindFileModel(QAbstractItemModel):
                 return item.tooltip
         return None
 
-    def flags(self, index):
+    @staticmethod
+    def flags(index):
         """Provides the item flags"""
         if not index.isValid():
             return Qt.ItemIsEnabled
@@ -297,7 +303,8 @@ class FindFileModel(QAbstractItemModel):
         self.rootItem.removeChildren()
         self.endResetModel()
 
-    def item(self, index):
+    @staticmethod
+    def item(index):
         """Provides a reference to an item"""
         if not index.isValid():
             return None
@@ -356,7 +363,8 @@ class FindFileSortFilterProxyModel(QSortFilterProxyModel):
             self.__filtersCount += 1
         self.__sourceModelRoot = self.sourceModel().rootItem
 
-    def filterAcceptsRow(self, sourceRow, sourceParent):
+    # Arguments: sourceRow, sourceParent
+    def filterAcceptsRow(self, sourceRow, _):
         """Filters rows"""
         if self.__filtersCount == 0 or self.__sourceModelRoot is None:
             return True     # No filters
@@ -534,9 +542,7 @@ class FindFileDialog(QDialog):
         self.__updateTitle()
 
     def onClose(self):
-        """Called when an item has been selected and
-           the cursor jumped where it should
-        """
+        """Called when an item has been selected"""
         # Save the current filter if needed
         filterText = self.findCombo.currentText().strip()
         if filterText != "":

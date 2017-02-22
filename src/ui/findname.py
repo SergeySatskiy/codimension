@@ -25,6 +25,7 @@ from utils.pixmapcache import getIcon
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from utils.settings import Settings
 from utils.fileutils import isPythonFile
+from utils.diskvaluesrelay import getFindNameHistory, setFindNameHistory
 from .qt import (Qt, QAbstractItemModel, QRegExp, QModelIndex,
                  QTreeView, QAbstractItemView, QDialog, QVBoxLayout, QCursor,
                  QComboBox, QSizePolicy, QSortFilterProxyModel, QApplication)
@@ -52,7 +53,8 @@ class NameItem():
             else:
                 self.tooltip = tooltip + "\n\n" + fileName + ":" + str(line)
 
-    def columnCount(self):
+    @staticmethod
+    def columnCount():
         """Provides the number of columns"""
         return 1
 
@@ -84,7 +86,8 @@ class NameItem():
         """Provides a reference to the parent item"""
         return self.parentItem
 
-    def lessThan(self, other, column, order):
+    # Arguments: other, column, order
+    def lessThan(self, other, column, _):
         """Check, if the item is less than another"""
         if column == 0:
             return self.name < other.name
@@ -245,7 +248,8 @@ class FindNameModel(QAbstractItemModel):
                 return item.tooltip
         return None
 
-    def flags(self, index):
+    @staticmethod
+    def flags(index):
         """Provides the item flags"""
         if not index.isValid():
             return Qt.ItemIsEnabled
@@ -313,7 +317,8 @@ class FindNameModel(QAbstractItemModel):
         self.rootItem.removeChildren()
         self.endResetModel()
 
-    def item(self, index):
+    @staticmethod
+    def item(index):
         """Provides a reference to an item"""
         if not index.isValid():
             return None
@@ -372,7 +377,8 @@ class FindNameSortFilterProxyModel(QSortFilterProxyModel):
             self.__filtersCount += 1
         self.__sourceModelRoot = self.sourceModel().rootItem
 
-    def filterAcceptsRow(self, sourceRow, sourceParent):
+    # Arguments: sourceRow, sourceParent
+    def filterAcceptsRow(self, sourceRow, _):
         """Filters rows"""
         if self.__filtersCount == 0 or self.__sourceModelRoot is None:
             return True     # No filters
@@ -486,10 +492,7 @@ class FindNameDialog(QDialog):
         QApplication.restoreOverrideCursor()
 
         # Set the window title and restore the previous searches
-        if self.__projectLoaded:
-            self.__findNameHistory = GlobalData().project.findNameHistory
-        else:
-            self.__findNameHistory = Settings().findNameHistory
+        self.__findNameHistory = getFindNameHistory()
         self.findCombo.addItems(self.__findNameHistory)
         self.findCombo.setEditText(what)
 
@@ -556,9 +559,7 @@ class FindNameDialog(QDialog):
         self.__updateTitle()
 
     def onClose(self):
-        """Called when an item has been selected and
-           the cursor jumped where it should
-        """
+        """Called when an item has been selected"""
         # Save the current filter if needed
         filterText = self.findCombo.currentText().strip()
         if filterText != "":
@@ -567,12 +568,7 @@ class FindNameDialog(QDialog):
             self.__findNameHistory.insert(0, filterText)
             if len(self.__findNameHistory) > 32:
                 self.__findNameHistory = self.__findNameHistory[:32]
-
-            if GlobalData().project.isLoaded():
-                GlobalData().project.setFindNameHistory(
-                    self.__findNameHistory)
-            else:
-                Settings().findNameHistory = self.__findNameHistory
+            setFindNameHistory(self.__findNameHistory)
         self.close()
 
     def __enterInFilter(self):
