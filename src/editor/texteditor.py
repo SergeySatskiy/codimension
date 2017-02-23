@@ -23,8 +23,7 @@
 import os.path
 import logging
 from ui.qt import (Qt, QTimer, pyqtSignal, QRect, QEvent, QModelIndex,
-                   QCursor, QFontMetrics, QFont, QApplication, QWidget,
-                   QTextOption)
+                   QCursor, QApplication, QTextOption)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.completer import CodeCompleter
 from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
@@ -644,7 +643,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             words = list( getEditorTags(self, self.__completionPrefix))
             isModName = False
         else:
-            text = self.text()
+            text = self.text
             info = getBriefModuleInfoFromMemory(text)
             context = getContext(self, info)
 
@@ -1207,10 +1206,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         if self.markersAtLine(line - 1) & self.__bpointMarginMask == 0:
             handle = self.markerAdd(line - 1, marker)
             self.__breakpoints[handle] = bpoint
-
-    def isLineEmpty(self, line):
-        """Returns True if the line is empty. Line is 1 based"""
-        return self.text(line - 1).strip() == ""
 
     def restoreBreakpoints(self):
         """Restores the breakpoints"""

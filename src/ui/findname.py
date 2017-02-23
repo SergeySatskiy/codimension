@@ -126,8 +126,8 @@ class FindNameModel(QAbstractItemModel):
                 if widget is None:
                     info = GlobalData().briefModinfoCache.get(fname)
                 else:
-                    content = widget.getEditor().text()
-                    info = getBriefModuleInfoFromMemory(content)
+                    info = getBriefModuleInfoFromMemory(
+                        widget.getEditor().text)
                 self.__populateInfo(info, fname)
 
     def __populateInfo(self, info, fname):

@@ -230,3 +230,7 @@ class QutepartWrapper(Qutepart):
         if txt[nonSpaceIndex] != '#':
             return False
         return not self.isStringLiteral(line, nonSpaceIndex)
+
+    def isLineEmpty(self, line):
+        """Returns True if the line is empty. Line is 0 based"""
+        return self.lines[line].strip() == ""
