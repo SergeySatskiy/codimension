@@ -455,46 +455,6 @@ class ScintillaWrapper( QsciScintilla ):
         self.setCursorPosition( line, pos )
         return
 
-    def getSearchText( self, selectionOnly = False ):
-        " Provides the guessed text for searching "
-        if self.hasSelectedText():
-            text = self.selectedText()
-            if '\r' in text or '\n' in text:
-                # the selection contains at least a newline, it is
-                # unlikely to be the expression to search for
-                return ""
-            return text
-
-        if not selectionOnly:
-            # no selected text, determine the word at the current position
-            return self.getCurrentWord()
-        return ""
-
-    def getWordBoundaries( self, line, col,
-                           useWordChars = True, addChars = "" ):
-        " Provides the word boundaries at a position "
-
-        text = self.text( line )
-        if self.caseSensitive():
-            flags = 0
-        else:
-            flags = re.IGNORECASE
-
-        wChars = self.wordCharacters()
-        if wChars is None or not useWordChars:
-            regExp = re.compile( r'\b\[w_]+\b', flags )
-        else:
-            wChars += addChars
-            wChars = re.sub( r'\w', '', wChars )
-            regExp = re.compile( r'\b[\w%s]+\b' % re.escape( wChars ), flags )
-
-        for m in regExp.finditer( text ):
-            start = m.start()
-            end = m.end()
-            if start <= col and end >= col:
-                return ( start, end )
-        return ( col, col )
-
     def getTextAtPos( self, line, col, length ):
         " Provides the text of the given length under the cursor "
         text = self.text( line )
@@ -513,16 +473,6 @@ class ScintillaWrapper( QsciScintilla ):
     def dedentLine( self ):
         " Dedent the current line "
         self.SendScintilla( self.SCI_BACKTAB )
-        return
-
-    def copyLine( self ):
-        " Copies the current line "
-        self.SendScintilla( self.SCI_LINECOPY )
-        return
-
-    def deleteLine( self ):
-        " Deletes the current line "
-        self.SendScintilla( self.SCI_LINEDELETE )
         return
 
     def selectTillDisplayEnd( self ):

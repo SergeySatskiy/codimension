@@ -212,7 +212,7 @@ class SearchEnvironment:
 
     @findInFilesHistory.setter
     def findInFilesHistory(self, history):
-        self.__setContainer('findinfile', history)
+        self.__setContainer('findinfiles', history)
 
     def addToFindInFilesHistory(self, item):
         """Adds an item to the file history"""

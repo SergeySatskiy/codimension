@@ -1412,8 +1412,7 @@ class CodimensionMainWindow(QMainWindow):
            [MainWindowTabWidgetBase.PlainTextEditor]:
             searchText = currentWidget.getEditor().getSearchText()
 
-        dlg = FindInFilesDialog(FindInFilesDialog.inProject, searchText,
-                                "", [], self)
+        dlg = FindInFilesDialog(FindInFilesDialog.inProject, searchText, "")
         dlg.exec_()
         if dlg.searchResults:
             self.displayFindInFiles(dlg.searchRegexp, dlg.searchResults)
@@ -1455,8 +1454,9 @@ class CodimensionMainWindow(QMainWindow):
         self.editorsManagerWidget.editorsManager.openDiagram(scene, tooltip)
 
     def detectTypeAndOpenFile(self, path, lineNo=-1):
-        """Detects the file type and opens the corresponding editor / browser"""
-        self.openFileByType(detectFileType(path), path, lineNo)
+        """Detects the file type and opens the corresponding editor/browser"""
+        mime, _, _ = getFileProperties(path)
+        self.openFileByType(mime, path, lineNo)
 
     def openFileByType(self, mime, path, lineNo=-1):
         """Opens editor/browser suitable for the file type"""
