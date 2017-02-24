@@ -47,7 +47,9 @@ class Tooltip(QFrame):
         QFrame.__init__(self)
 
         # Avoid the border around the window
-        self.setWindowFlags(Qt.SplashScreen)
+        self.setWindowFlags(Qt.SplashScreen |
+                            Qt.WindowStaysOnTopHint |
+                            Qt.X11BypassWindowManagerHint)
 
         # Make the frame nice looking
         self.setFrameShape(QFrame.StyledPanel)
@@ -187,8 +189,8 @@ class MatchTableItem(QTreeWidgetItem):
         searchTooltip.setModified(self.__fileModified)
         searchTooltip.setText(self.__tooltip)
 
-        fileName = str(self.parent().data(0, Qt.DisplayRole).toString())
-        lineNumber = str(self.data(0, Qt.DisplayRole).toString())
+        fileName = self.parent().data(0, Qt.DisplayRole)
+        lineNumber = self.data(0, Qt.DisplayRole)
         searchTooltip.setLocation(" " + fileName + ":" + lineNumber)
 
     def itemEntered(self):
@@ -237,7 +239,7 @@ class FindResultsTreeWidget(QTreeWidget):
         index = self.topLevelItemCount() - 1
         while index >= 0:
             item = self.topLevelItem(index)
-            fileName = str(item.data(0, Qt.DisplayRole).toString())
+            fileName = item.data(0, Qt.DisplayRole)
             self.__fNameCache.add(fileName)
             self.__uuidCache.add(str(item.uuid))
             index -= 1
@@ -278,7 +280,7 @@ class FindResultsTreeWidget(QTreeWidget):
         index = self.topLevelItemCount() - 1
         while index >= 0:
             item = self.topLevelItem(index)
-            if str(item.data(0, Qt.DisplayRole).toString()) == fileName:
+            if item.data(0, Qt.DisplayRole) == fileName:
                 self.__markItem(item)
                 break
             index -= 1
@@ -435,7 +437,7 @@ class FindInFilesViewer(QWidget):
             self.__bufferChangeconnected = False
             mainWindow = GlobalData().mainWindow
             editorsManager = mainWindow.editorsManagerWidget.editorsManager
-            editorsManager.bufferModified.disconnect(
+            editorsManager.sigBufferModified.disconnect(
                 self.__resultsTree.onBufferModified)
 
         self.__resultsTree.resetCache()
@@ -502,7 +504,7 @@ class FindInFilesViewer(QWidget):
             self.__bufferChangeconnected = True
             mainWindow = GlobalData().mainWindow
             editorsManager = mainWindow.editorsManagerWidget.editorsManager
-            editorsManager.bufferModified.connect(
+            editorsManager.sigBufferModified.connect(
                 self.__resultsTree.onBufferModified)
 
     def __resultClicked(self, item, column):
@@ -512,8 +514,8 @@ class FindInFilesViewer(QWidget):
     def __resultActivated(self, item, column):
         """Handles the double click (or Enter) on a match"""
         if isinstance(item, MatchTableItem):
-            fileName = str(item.parent().data(0, Qt.DisplayRole).toString())
-            lineNumber = int(item.data(0, Qt.DisplayRole).toString())
+            fileName = item.parent().data(0, Qt.DisplayRole)
+            lineNumber = int(item.data(0, Qt.DisplayRole))
             GlobalData().mainWindow.openFile(fileName, lineNumber)
             hideSearchTooltip()
 

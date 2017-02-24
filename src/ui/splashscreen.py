@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,12 @@ class SplashScreen(QSplashScreen):
                                            Qt.AlignRight |
                                            Qt.AlignAbsolute)
 
-        QSplashScreen.__init__(self, None, getPixmap('splash.png'))
+        # The window flags are needed for some X Servers. E.g. Xwin-32
+        # on windows draws a normal window outline if the flags are not here
+        QSplashScreen.__init__(self, None, getPixmap('splash.png'),
+                               Qt.SplashScreen |
+                               Qt.WindowStaysOnTopHint |
+                               Qt.X11BypassWindowManagerHint)
 
         self.show()
         QApplication.flush()

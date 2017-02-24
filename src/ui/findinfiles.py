@@ -28,7 +28,7 @@ from cgi import escape
 from os.path import sep, isabs, exists, isdir, normpath, isfile, realpath
 from utils.globals import GlobalData
 from utils.settings import Settings
-from utils.fileutils import isFileSearchable
+from utils.fileutils import isFileSearchable, isPythonFile, getFileContent
 from utils.diskvaluesrelay import getFindInFilesHistory, setFindInFilesHistory
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from autocomplete.listmodules import resolveLink
@@ -89,7 +89,7 @@ class ItemToSearchIn:
                 else:
                     raise Exception('Inconsistency. Buffer disappeared.')
             else:
-                content = getFileContent(fileName).splitlines()
+                content = getFileContent(self.fileName).splitlines()
             self.__fillInMatch(match, content, name, lineNumber)
         except Exception as exc:
             logging.error('Error adding match: ' + str(exc))
@@ -124,8 +124,7 @@ class ItemToSearchIn:
             if widget is not None:
                 # Search in the buffer
 
-                content = widget.getEditor().text().splitlines()
-                self.__lookThroughLines(content, expression)
+                self.__lookThroughLines(widget.getEditor().lines, expression)
                 return
 
         # Here: there were no buffer or have not found it
@@ -261,6 +260,9 @@ class FindInFilesDialog(QDialog):
         # [term + dir + filt, ...]
         self.__history = getFindInFilesHistory()
         self.__populateHistory()
+        self.findCombo.setEditText('')
+        self.dirEditCombo.setEditText('')
+        self.filterCombo.setEditText('')
 
         if where == self.inProject:
             self.setSearchInProject(what)
@@ -276,12 +278,9 @@ class FindInFilesDialog(QDialog):
             self.findCombo.addItem(term, index)
             if directory:
                 self.dirEditCombo.addItem(directory)
-            if mask:
+            if filt:
                 self.filterCombo.addItem(self.__normalizeFilters(filt))
             index += 1
-        self.findCombo.setEditText('')
-        self.dirEditCombo.setEditText('')
-        self.filterCombo.setEditText('')
 
     def __createLayout(self):
         """Creates the dialog layout"""
@@ -299,6 +298,8 @@ class FindInFilesDialog(QDialog):
         self.findCombo.lineEdit().setToolTip(
             "Regular expression to search for")
         self.findCombo.editTextChanged.connect(self.__someTextChanged)
+        self.findCombo.currentIndexChanged[int].connect(
+            self.__whatIndexChanged)
 
         gridLayout.addWidget(findLabel, 0, 0, 1, 1)
         gridLayout.addWidget(self.findCombo, 0, 1, 1, 1)
@@ -414,8 +415,8 @@ class FindInFilesDialog(QDialog):
         if what:
             for index in range(self.findCombo.count()):
                 if self.findCombo.itemText(index) == what:
-                    return self.findCombo.itemData(index)
-        return None
+                    return index, self.findCombo.itemData(index)
+        return None, None
 
     def setSearchInProject(self, what=None):
         """Set search ready for the whole project"""
@@ -435,11 +436,11 @@ class FindInFilesDialog(QDialog):
 
         if what:
             # Pick up the history values if so
-            historyIndex = self.__historyIndexByWhat(what)
+            comboIndex, historyIndex = self.__historyIndexByWhat(what)
             if historyIndex is not None:
-                what, directory, filt = self.__history[historyIndex]
-                self.findCombo.
-                self.filterCombo.
+                what, _, filt = self.__history[historyIndex]
+                self.findCombo.setCurrentIndex(comboIndex)
+                self.filterCombo.setEditText(filt)
             else:
                 self.findCombo.setCurrentText(what)
             self.findCombo.lineEdit().selectAll()
@@ -448,15 +449,12 @@ class FindInFilesDialog(QDialog):
         # Check searchability
         self.__testSearchability()
 
-    def setSearchInOpenFiles(self, what="", filters=None):
+    def setSearchInOpenFiles(self, what=None):
         """Sets search ready for the opened files"""
-        if filters is None:
-            filters = []
-
         openedFiles = self.editorsManager.getTextEditors()
         if not openedFiles:
             # No opened files, fallback to search in dir
-            self.setSearchInDirectory(what, "", filters)
+            self.setSearchInDirectory(what, None)
             return
 
         # Select the radio buttons
@@ -466,20 +464,23 @@ class FindInFilesDialog(QDialog):
         self.dirEditCombo.setEnabled(False)
         self.dirSelectButton.setEnabled(False)
 
-        self.setFilters(filters)
-
-        self.findCombo.setEditText(what)
-        self.findCombo.lineEdit().selectAll()
+        if what:
+            # Pick up the history values if so
+            comboIndex, historyIndex = self.__historyIndexByWhat(what)
+            if historyIndex is not None:
+                what, _, filt = self.__history[historyIndex]
+                self.findCombo.setCurrentIndex(comboIndex)
+                self.filterCombo.setEditText(filt)
+            else:
+                self.findCombo.setCurrentText(what)
+            self.findCombo.lineEdit().selectAll()
         self.findCombo.setFocus()
 
         # Check searchability
         self.__testSearchability()
 
-    def setSearchInDirectory(self, what="", dirPath="", filters=None):
+    def setSearchInDirectory(self, what=None, dirPath=None):
         """Sets search ready for the given directory"""
-        if filters is None:
-            filters = []
-
         # Select radio buttons
         self.projectRButton.setEnabled(GlobalData().project.isLoaded())
         openedFiles = self.editorsManager.getTextEditors()
@@ -488,18 +489,26 @@ class FindInFilesDialog(QDialog):
         self.dirRButton.setChecked(True)
         self.dirEditCombo.setEnabled(True)
         self.dirSelectButton.setEnabled(True)
-        self.dirEditCombo.setEditText(dirPath)
 
-        self.setFilters(filters)
-
-        self.findCombo.setEditText(what)
-        self.findCombo.lineEdit().selectAll()
+        if what:
+            # Pick up the history values if so
+            comboIndex, historyIndex = self.__historyIndexByWhat(what)
+            if historyIndex is not None:
+                what, directory, filt = self.__history[historyIndex]
+                self.findCombo.setCurrentIndex(comboIndex)
+                self.filterCombo.setEditText(filt)
+                self.dirEditCombo.setEditText(directory)
+            else:
+                self.findCombo.setCurrentText(what)
+                if dirPath:
+                    self.dirEditCombo.setEditText(dirPath)
+            self.findCombo.lineEdit().selectAll()
         self.findCombo.setFocus()
 
         # Check searchability
         self.__testSearchability()
 
-    @staticmetod
+    @staticmethod
     def __normalizeFilters(text):
         """Normalizes the filters string"""
         if isinstance(text, str):
@@ -545,9 +554,7 @@ class FindInFilesDialog(QDialog):
 
         # Need to check the files match
         try:
-            for filt in filtersText.split(';'):
-                filt = filt.strip()
-                filt = re.compile(filt, re.IGNORECASE)
+            filters = self.__compileFilters()
         except:
             self.findButton.setEnabled(False)
             self.findButton.setToolTip("Incorrect files "
@@ -561,7 +568,7 @@ class FindInFilesDialog(QDialog):
             for fname in GlobalData().project.filesList:
                 if fname.endswith(sep):
                     continue
-                matched = filterRe.match(fname)
+                matched = self.__filterMatch(filters, fname)
                 if matched:
                     break
                 # Check the time, it might took too long
@@ -573,7 +580,7 @@ class FindInFilesDialog(QDialog):
             # Opened files
             openedFiles = self.editorsManager.getTextEditors()
             for record in openedFiles:
-                matched = filterRe.match(record[1])
+                matched = self.__filterMatch(filters, record[1])
                 if matched:
                     break
                 # Check the time, it might took too long
@@ -585,7 +592,7 @@ class FindInFilesDialog(QDialog):
             # Search in the dir
             if not dirname.endswith(sep):
                 dirname += sep
-            matched, tooLong = self.__matchInDir(dirname, filterRe, startTime)
+            matched, tooLong = self.__matchInDir(dirname, filters, startTime)
 
         if matched:
             self.findButton.setEnabled(True)
@@ -599,7 +606,7 @@ class FindInFilesDialog(QDialog):
                 self.findButton.setToolTip("No files matched to search in")
 
     @staticmethod
-    def __matchInDir(path, filterRe, startTime):
+    def __matchInDir(path, filters, startTime):
         """Provides the 'match' and 'too long' statuses"""
         matched = False
         tooLong = False
@@ -610,12 +617,12 @@ class FindInFilesDialog(QDialog):
             if isdir(path + item):
                 dname = path + item + sep
                 matched, tooLong = FindInFilesDialog.__matchInDir(dname,
-                                                                  filterRe,
+                                                                  filters,
                                                                   startTime)
                 if matched or tooLong:
                     return matched, tooLong
                 continue
-            if filterRe.match(path + item):
+            if FindInFilesDialog.__filterMatch(filters, path + item):
                 matched = True
                 return matched, tooLong
         return matched, tooLong
@@ -644,6 +651,16 @@ class FindInFilesDialog(QDialog):
         """Text to search, filter or dir name has been changed"""
         self.__testSearchability()
 
+    def __whatIndexChanged(self, index):
+        """Index in history has changed"""
+        if index != -1:
+            historyIndex = self.findCombo.itemData(index)
+            what, directory, filt = self.__history[historyIndex]
+            self.filterCombo.setEditText(filt)
+            if self.dirRButton.isChecked():
+                self.dirEditCombo.setEditText(directory)
+        self.__testSearchability()
+
     def __selectDirClicked(self):
         """The user selects a directory"""
         dirName = QFileDialog.getExistingDirectory(
@@ -655,14 +672,24 @@ class FindInFilesDialog(QDialog):
             self.dirEditCombo.setEditText(normpath(dirName))
         self.__testSearchability()
 
-    def __projectFiles(self, filterRe):
+    @staticmethod
+    def __filterMatch(filters, fname):
+        """True if the file should be taken into consideration"""
+        if filters:
+            for filt in filters:
+                if filt.match(fname):
+                    return True
+            return False
+        return True
+
+    def __projectFiles(self, filters):
         """Project files list respecting the mask"""
         mainWindow = GlobalData().mainWindow
         files = []
         for fname in GlobalData().project.filesList:
             if fname.endswith(sep):
                 continue
-            if filterRe is None or filterRe.match(fname):
+            if self.__filterMatch(filters, fname):
                 widget = mainWindow.getWidgetForFileName(fname)
                 if widget is None:
                     # Do not check for broken symlinks
@@ -678,21 +705,21 @@ class FindInFilesDialog(QDialog):
                 raise Exception("Cancel request")
         return files
 
-    def __openedFiles(self, filterRe):
+    def __openedFiles(self, filters):
         """Currently opened editor buffers"""
         files = []
         openedFiles = self.editorsManager.getTextEditors()
         for record in openedFiles:
             uuid = record[0]
             fname = record[1]
-            if filterRe is None or filterRe.match(fname):
+            if self.__filterMatch(filters, fname):
                 files.append(ItemToSearchIn(fname, uuid))
             QApplication.processEvents()
             if self.__cancelRequest:
                 raise Exception("Cancel request")
         return files
 
-    def __dirFiles(self, path, filterRe, files):
+    def __dirFiles(self, path, filters, files):
         """Files recursively for the dir"""
         for item in os.listdir(path):
             QApplication.processEvents()
@@ -705,14 +732,14 @@ class FindInFilesDialog(QDialog):
                 anotherDir, isLoop = resolveLink(path + item)
                 if not isLoop:
                     self.__dirFiles(anotherDir + sep,
-                                    filterRe, files)
+                                    filters, files)
                 continue
             if not isfile(path + item):
                 continue
             realItem, isLoop = resolveLink(path + item)
             if isLoop:
                 continue
-            if filterRe is None or filterRe.match(realItem):
+            if self.__filterMatch(filters, realItem):
                 found = False
                 for itm in files:
                     if itm.fileName == realItem:
@@ -730,58 +757,59 @@ class FindInFilesDialog(QDialog):
                             files.append(ItemToSearchIn(realItem,
                                                         widget.getUUID()))
 
+    def __compileFilters(self):
+        """Compiles the filters"""
+        filtersText = self.filterCombo.currentText().strip()
+        filtersRe = []
+        if filtersText != "":
+            for filt in filtersText.split(';'):
+                filtersRe.append(re.compile(filt.strip(), re.IGNORECASE))
+        return filtersRe
+
     def __buildFilesList(self):
         """Builds the list of files to search in"""
-        filtersText = self.filterCombo.currentText().strip()
-        if filtersText != "":
-            filterRe = re.compile(filtersText, re.IGNORECASE)
-        else:
-            filterRe = None
+        filtersRe = self.__compileFilters()
 
         if self.projectRButton.isChecked():
-            return self.__projectFiles(filterRe)
+            return self.__projectFiles(filtersRe)
 
         if self.openFilesRButton.isChecked():
-            return self.__openedFiles(filterRe)
+            return self.__openedFiles(filtersRe)
 
         dirname = realpath(self.dirEditCombo.currentText().strip())
         files = []
-        self.__dirFiles(dirname + sep, filterRe, files)
+        self.__dirFiles(dirname + sep, filtersRe, files)
         return files
 
-    def __process(self):
-        """Search process"""
+    def __updateHistory(self):
+        """Updates history if needed"""
         # Add entries to the combo box if required
         regexpText = self.findCombo.currentText()
-        if regexpText in self.findFilesWhat:
-            self.findFilesWhat.remove(regexpText)
-        self.findFilesWhat.insert(0, regexpText)
-        if len(self.findFilesWhat) > 32:
-            self.findFilesWhat = self.findFilesWhat[:32]
-        self.findCombo.clear()
-        self.findCombo.addItems(self.findFilesWhat)
-
-        filtersText = self.filterCombo.currentText().strip()
-        if filtersText in self.findFilesMasks:
-            self.findFilesMasks.remove(filtersText)
-        self.findFilesMasks.insert(0, filtersText)
-        if len(self.findFilesMasks) > 32:
-            self.findFilesMasks = self.findFilesMasks[:32]
-        self.filterCombo.clear()
-        self.filterCombo.addItems(self.findFilesMasks)
-
+        filtersText = self.__normalizeFilters(
+            self.filterCombo.currentText().strip())
+        dirText = ''
         if self.dirRButton.isChecked():
             dirText = self.dirEditCombo.currentText().strip()
-            if dirText in self.findFilesDirs:
-                self.findFilesDirs.remove(dirText)
-            self.findFilesDirs.insert(0, dirText)
-            if len(self.findFilesDirs) > 32:
-                self.findFilesDirs = self.findFilesDirs[:32]
-            self.dirEditCombo.clear()
-            self.dirEditCombo.addItems(self.findFilesDirs)
+
+        _, historyIndex = self.__historyIndexByWhat(regexpText)
+        if historyIndex is not None:
+            self.__history[historyIndex] = [regexpText, dirText, filtersText]
+        else:
+            self.__history.insert(0, [regexpText, dirText, filtersText])
+            if len(self.__history) > self.__maxEntries:
+                self.__history = self.__history[:self.__maxEntries]
+
+        self.findCombo.clear()
+        self.filterCombo.clear()
+        self.dirEditCombo.clear()
+        self.__populateHistory()
 
         # Save the combo values for further usage
         setFindInFilesHistory(self.__history)
+
+    def __process(self):
+        """Search process"""
+        self.__updateHistory()
 
         self.__inProgress = True
         numberOfMatches = 0
@@ -789,6 +817,7 @@ class FindInFilesDialog(QDialog):
         self.searchRegexp = None
 
         # Form the regexp to search
+        regexpText = self.findCombo.currentText()
         if not self.regexpCheckBox.isChecked():
             regexpText = re.escape(regexpText)
         if self.wordCheckBox.isChecked():
