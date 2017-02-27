@@ -59,10 +59,8 @@ DebugClientInstance = None
 
 
 def debugClientRawInput(prompt='', echo=True):
-    """Replacement for the standard raw_input builtin.
-       This function works with the split debugger.
-    """
-    if DebugClientInstance is None or DebugClientInstance.redirect == 0:
+    """Replacement for the standard raw_input builtin"""
+    if DebugClientInstance is None or not DebugClientInstance.redirect:
         return DebugClientOrigRawInput(prompt)
     return DebugClientInstance.raw_input(prompt, echo)
 
@@ -139,44 +137,23 @@ if 'setrecursionlimit' in dir(sys):
 class DebugClientBase():
     """Class implementing the client side of the debugger.
 
-       It provides access to the Python interpeter from a debugger running in
-       another process whether or not the Qt event loop is running.
+    It provides access to the Python interpeter from a debugger running in
+    another process.
 
-       The protocol between the debugger and the client assumes that there will
-       be a single source of debugger commands and a single source of Python
-       statements.  Commands and statement are always exactly one line and may
-       be interspersed.
+    The protocol between the debugger and the client is based on JSONRPC 2.0
+    PDUs. Each one is sent on a single line, i.e. commands or responses are
+    separated by a linefeed character.
 
-       The protocol is as follows.  First the client opens a connection to the
-       debugger and then sends a series of one line commands. A command is either
-       &gt;Load&lt;, &gt;Step&lt;, &gt;StepInto&lt;, ... or a Python statement.
-       See DebugProtocol.py for a listing of valid protocol tokens.
+    If the debugger closes the session there is no response from the client.
+    The client may close the session at any time as a result of the script
+    being debugged closing or crashing.
 
-       A Python statement consists of the statement to execute, followed (in a
-       separate line) by &gt;OK?&lt;.  If the statement was incomplete then the
-       response is &gt;Continue&lt;.  If there was an exception then the response
-       is &gt;Exception&lt;.
-       Otherwise the response is &gt;OK&lt;.  The reason for the &gt;OK?&lt; part
-       is to provide a sentinal (ie. the responding &gt;OK&lt;) after any
-       possible output as a result of executing the command.
-
-       The client may send any other lines at any other time which should be
-       interpreted as program output.
-
-       If the debugger closes the session there is no response from the client.
-       The client may close the session at any time as a result of the script
-       being debugged closing or crashing.
-
-       <b>Note</b>: This class is meant to be subclassed by individual
-       DebugClient classes. Do not instantiate it directly."""
+    Note: This class is meant to be subclassed by individual
+    DebugClient classes. Do not instantiate it directly."""
 
     def __init__(self):
         self.breakpoints = {}
         self.redirect = True
-
-        # The next couple of members are needed for the threaded version.
-        # For this base class they contain static values for the non threaded
-        # debugger
 
         # dictionary of all threads running
         self.threads = {}
@@ -192,6 +169,7 @@ class DebugClientBase():
 
         # The context to run the debugged program in.
         self.debugMod = imp.new_module('__main__')
+        self.debugMod.__dict__['__builtins__'] = __builtins__
 
         # The list of complete lines to execute.
         self.buffer = ''
@@ -235,7 +213,7 @@ class DebugClientBase():
         if self.noencoding:
             self.__coding = sys.getdefaultencoding()
         else:
-            default = 'latin-1'
+            default = 'utf-8'
             try:
                 f = open(filename, 'rb')
                 # read the first and second line

@@ -312,7 +312,7 @@ class FilesBrowser(QTreeView):
         index = self.currentIndex()
         searchDir = self.model().item(index).getPath()
 
-        dlg = FindInFilesDialog(FindInFilesDialog.inDirectory, "", searchDir)
+        dlg = FindInFilesDialog(FindInFilesDialog.IN_DIRECTORY, "", searchDir)
         dlg.exec_()
         if dlg.searchResults:
             GlobalData().mainWindow.displayFindInFiles(dlg.searchRegexp,

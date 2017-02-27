@@ -60,7 +60,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     """Text editor implementation"""
 
-    textToIterate = ""
 
     sigEscapePressed = pyqtSignal()
     cflowSyncRequested = pyqtSignal(int, int, int)
@@ -112,6 +111,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.__calltipTimer = QTimer(self)
         self.__calltipTimer.setSingleShot(True)
         self.__calltipTimer.timeout.connect(self.__onCalltipTimer)
+
+        # Incremental text highlight and iterate support
+        self.textToIterate = None
+
 
         # Breakpoint support
         self.__inLinesChanged = False
@@ -451,10 +454,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def __onDoubleClick(self, position, line, modifier):
         """Triggered when the user double clicks in the editor"""
         text = self.getCurrentWord()
-        if text == "" or '\r' in text or '\n' in text:
-            TextEditor.textToIterate = ""
+        if not text or '\r' in text or '\n' in text:
+            self.textToIterate = None
         else:
-            TextEditor.textToIterate = text
+            self.textToIterate = text
         self.highlightWord(text)
 
     def onFirstChar(self):
@@ -478,7 +481,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.clearAllIndicators(self.matchIndicator)
         self.clearAllIndicators(self.searchIndicator)
 
-        if text == "" or '\r' in text or '\n' in text:
+        if not text or '\r' in text or '\n' in text:
             return
 
         self.markOccurrences(self.searchIndicator, text,
@@ -487,22 +490,22 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def _onHighlight(self):
         """Triggered when Ctrl+' is clicked"""
         text = self.getCurrentWord()
-        if text == "" or '\r' in text or '\n' in text:
-            TextEditor.textToIterate = ""
+        if not text or '\r' in text or '\n' in text:
+            self.textToIterate = None
         else:
-            if str(TextEditor.textToIterate).lower() == str(text).lower():
+            if self.textToIterate and \
+               self.textToIterate.lower() == text.lower():
                 return self._onNextHighlight()
-            TextEditor.textToIterate = text
+            self.textToIterate = text
         self.highlightWord(text)
-        return True
 
     def _onNextHighlight(self):
         """Triggered when Ctrl+. is clicked"""
-        if TextEditor.textToIterate == "":
+        if self.textToIterate is None:
             return self._onHighlight()
 
         targets = self.markOccurrences(self.searchIndicator,
-                                       TextEditor.textToIterate,
+                                       self.textToIterate,
                                        False, False, False, True)
         foundCount = len(targets)
         if foundCount == 0:
@@ -546,11 +549,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def _onPrevHighlight(self):
         """Triggered when Ctrl+, is clicked"""
-        if TextEditor.textToIterate == "":
+        if self.textToIterate is None:
             return self._onHighlight()
 
         targets = self.markOccurrences(self.searchIndicator,
-                                       TextEditor.textToIterate,
+                                       self.textToIterate,
                                        False, False, False, True)
         foundCount = len(targets)
         if foundCount == 0:

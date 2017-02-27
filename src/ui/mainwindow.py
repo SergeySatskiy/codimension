@@ -1412,7 +1412,7 @@ class CodimensionMainWindow(QMainWindow):
            [MainWindowTabWidgetBase.PlainTextEditor]:
             searchText = currentWidget.getEditor().getSearchText()
 
-        dlg = FindInFilesDialog(FindInFilesDialog.inProject, searchText, "")
+        dlg = FindInFilesDialog(FindInFilesDialog.IN_PROJECT, searchText, "")
         dlg.exec_()
         if dlg.searchResults:
             self.displayFindInFiles(dlg.searchRegexp, dlg.searchResults)

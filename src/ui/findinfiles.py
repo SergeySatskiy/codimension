@@ -221,9 +221,9 @@ class FindInFilesDialog(QDialog):
 
     """find in files dialog implementation"""
 
-    inProject = 0
-    inDirectory = 1
-    inOpenFiles = 2
+    IN_PROJECT = 0
+    IN_DIRECTORY = 1
+    IN_OPEN_FILES = 2
 
     def __init__(self, where, what=None, dirPath=None):
         QDialog.__init__(self, GlobalData().mainWindow)
@@ -266,9 +266,9 @@ class FindInFilesDialog(QDialog):
         self.dirEditCombo.setEditText('')
         self.filterCombo.setEditText('')
 
-        if where == self.inProject:
+        if where == self.IN_PROJECT:
             self.setSearchInProject(what)
-        elif where == self.inDirectory:
+        elif where == self.IN_DIRECTORY:
             self.setSearchInDirectory(what, dirPath)
         else:
             self.setSearchInOpenFiles(what)
