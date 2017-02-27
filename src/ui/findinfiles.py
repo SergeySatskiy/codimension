@@ -257,7 +257,9 @@ class FindInFilesDialog(QDialog):
         self.__maxEntries = Settings()['maxSearchEntries']
 
         # Restore the combo box values
-        # [term + dir + filt, ...]
+        # [ {'term': ., 'dir': ., 'filters': .,
+        #    'cbCase': ., 'cbWord': ., 'cbRegexp': .,
+        #    'rbProject': ., 'rbOpen': ., 'rbDir': .}, ... ]
         self.__history = getFindInFilesHistory()
         self.__populateHistory()
         self.findCombo.setEditText('')
@@ -271,16 +273,58 @@ class FindInFilesDialog(QDialog):
         else:
             self.setSearchInOpenFiles(what)
 
+    def __serialize(self):
+        """Serializes the current search parameters"""
+        termText = self.findCombo.currentText()
+        filtText = self.__normalizeFilters(self.filterCombo.currentText())
+        dirText = ''
+        if self.dirRButton.isChecked():
+            dirText = self.dirEditCombo.currentText().strip()
+
+        return {'term': termText,
+                'dir': dirText,
+                'filters': filtText,
+                'cbCase': self.caseCheckBox.isChecked(),
+                'cbWord': self.wordCheckBox.isChecked(),
+                'cbRegexp': self.regexpCheckBox.isChecked(),
+                'rbProject': self.projectRButton.isChecked(),
+                'rbOpen': self.openFilesRButton.isChecked(),
+                'rbDir': self.dirRButton.isChecked()}
+
+    def __deserialize(self, item):
+        """Deserializes the history item"""
+        self.findCombo.setEditText(item['term'])
+        self.dirEditCombo.setEditText(item['dir'])
+        self.filterCombo.setEditText(item['filters'])
+        self.caseCheckBox.setChecked(item['cbCase'])
+        self.wordCheckBox.setChecked(item['cbWord'])
+        self.regexpCheckBox.setChecked(item['cbRegexp'])
+
+        self.projectRButton.setChecked(item['rbProject'])
+        self.openFilesRButton.setChecked(item['rbOpen'])
+        self.dirRButton.setChecked(item['rbDir'])
+
+        self.dirEditCombo.setEnabled(item['rbDir'])
+        self.dirSelectButton.setEnabled(item['rbDir'])
+
     def __populateHistory(self):
         """Populates the search history in the combo boxes"""
+        # No need to react to the change of the current index
+        self.findCombo.currentIndexChanged[int].disconnect(
+            self.__whatIndexChanged)
         index = 0
-        for term, directory, filt in self.__history:
-            self.findCombo.addItem(term, index)
+        for props in self.__history:
+            self.findCombo.addItem(props['term'], index)
+            directory = props['dir']
             if directory:
                 self.dirEditCombo.addItem(directory)
+            filt = props['filters']
             if filt:
-                self.filterCombo.addItem(self.__normalizeFilters(filt))
+                self.filterCombo.addItem(filt)
             index += 1
+        # Restore the handler
+        self.findCombo.currentIndexChanged[int].connect(
+            self.__whatIndexChanged)
 
     def __createLayout(self):
         """Creates the dialog layout"""
@@ -438,9 +482,8 @@ class FindInFilesDialog(QDialog):
             # Pick up the history values if so
             comboIndex, historyIndex = self.__historyIndexByWhat(what)
             if historyIndex is not None:
-                what, _, filt = self.__history[historyIndex]
+                self.__deserialize(self.__history[historyIndex])
                 self.findCombo.setCurrentIndex(comboIndex)
-                self.filterCombo.setEditText(filt)
             else:
                 self.findCombo.setCurrentText(what)
             self.findCombo.lineEdit().selectAll()
@@ -468,9 +511,8 @@ class FindInFilesDialog(QDialog):
             # Pick up the history values if so
             comboIndex, historyIndex = self.__historyIndexByWhat(what)
             if historyIndex is not None:
-                what, _, filt = self.__history[historyIndex]
+                self.__deserialize(self.__history[historyIndex])
                 self.findCombo.setCurrentIndex(comboIndex)
-                self.filterCombo.setEditText(filt)
             else:
                 self.findCombo.setCurrentText(what)
             self.findCombo.lineEdit().selectAll()
@@ -494,15 +536,15 @@ class FindInFilesDialog(QDialog):
             # Pick up the history values if so
             comboIndex, historyIndex = self.__historyIndexByWhat(what)
             if historyIndex is not None:
-                what, directory, filt = self.__history[historyIndex]
+                self.__deserialize(self.__history[historyIndex])
                 self.findCombo.setCurrentIndex(comboIndex)
-                self.filterCombo.setEditText(filt)
-                self.dirEditCombo.setEditText(directory)
             else:
                 self.findCombo.setCurrentText(what)
-                if dirPath:
-                    self.dirEditCombo.setEditText(dirPath)
             self.findCombo.lineEdit().selectAll()
+
+        if dirPath:
+            self.dirEditCombo.setEditText(dirPath)
+
         self.findCombo.setFocus()
 
         # Check searchability
@@ -511,20 +553,12 @@ class FindInFilesDialog(QDialog):
     @staticmethod
     def __normalizeFilters(text):
         """Normalizes the filters string"""
-        if isinstance(text, str):
-            parts = text.split(';')
-        else:
-            parts = text
-        normParts = [part.strip() for part in parts]
+        normParts = []
+        for part in text.strip().split(';'):
+            part = part.strip()
+            if part:
+                normParts.append(part)
         return '; '.join(normParts)
-
-    def setFilters(self, filters):
-        """Sets up the filters"""
-        # Set filters if provided
-        if filters:
-            self.filterCombo.setEditText('; '.join(filters))
-        else:
-            self.filterCombo.setEditText('')
 
     def __testSearchability(self):
         """Tests the searchability and sets the Find button status"""
@@ -655,10 +689,7 @@ class FindInFilesDialog(QDialog):
         """Index in history has changed"""
         if index != -1:
             historyIndex = self.findCombo.itemData(index)
-            what, directory, filt = self.__history[historyIndex]
-            self.filterCombo.setEditText(filt)
-            if self.dirRButton.isChecked():
-                self.dirEditCombo.setEditText(directory)
+            self.__deserialize(self.__history[historyIndex])
         self.__testSearchability()
 
     def __selectDirClicked(self):
@@ -784,18 +815,13 @@ class FindInFilesDialog(QDialog):
     def __updateHistory(self):
         """Updates history if needed"""
         # Add entries to the combo box if required
-        regexpText = self.findCombo.currentText()
-        filtersText = self.__normalizeFilters(
-            self.filterCombo.currentText().strip())
-        dirText = ''
-        if self.dirRButton.isChecked():
-            dirText = self.dirEditCombo.currentText().strip()
-
-        _, historyIndex = self.__historyIndexByWhat(regexpText)
+        historyItem = self.__serialize()
+        _, historyIndex = self.__historyIndexByWhat(
+            self.findCombo.currentText())
         if historyIndex is not None:
-            self.__history[historyIndex] = [regexpText, dirText, filtersText]
+            self.__history[historyIndex] = historyItem
         else:
-            self.__history.insert(0, [regexpText, dirText, filtersText])
+            self.__history.insert(0, historyItem)
             if len(self.__history) > self.__maxEntries:
                 self.__history = self.__history[:self.__maxEntries]
 
