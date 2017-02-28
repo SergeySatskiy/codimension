@@ -201,8 +201,17 @@ class QutepartWrapper(Qutepart):
         """Provides the current word"""
         cursor = self.textCursor()
         cursor.select(QTextCursor.WordUnderCursor)
-        word = cursor.selectedText()
-        return word
+        return cursor.selectedText()
+
+    def getCurrentOrSelection(self):
+        """Provides the selection if the cursor has it or current word"""
+        cursor = self.textCursor()
+        if cursor.hasSelection():
+            word = cursor.selectedText()
+            if '\r' not in word and '\n' not in word:
+                return word
+        cursor.select(QTextCursor.WordUnderCursor)
+        return cursor.selectedText()
 
     def removeTrailingWhitespaces(self):
         """Removes trailing whitespaces"""

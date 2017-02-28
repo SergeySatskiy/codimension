@@ -478,9 +478,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def highlightWord(self, text):
         """Highlights the given word with the searchIndicator"""
-        self.clearAllIndicators(self.matchIndicator)
-        self.clearAllIndicators(self.searchIndicator)
-
+        self.setExtraSelections([])
         if not text or '\r' in text or '\n' in text:
             return
 
