@@ -112,10 +112,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.__calltipTimer.setSingleShot(True)
         self.__calltipTimer.timeout.connect(self.__onCalltipTimer)
 
-        # Incremental text highlight and iterate support
-        self.textToIterate = None
-
-
         # Breakpoint support
         self.__inLinesChanged = False
         if self.__debugger:
@@ -149,9 +145,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             CTRL: {Qt.Key_X: self.onShiftDel,
                    Qt.Key_C: self.onCtrlC,
                    Qt.Key_Insert: self.onCtrlC,
-                   Qt.Key_Apostrophe: self._onHighlight,
-                   Qt.Key_Period: self._onNextHighlight,
-                   Qt.Key_Comma: self._onPrevHighlight,
+                   Qt.Key_Apostrophe: self.onHighlight,
+                   Qt.Key_Period: self.onNextHighlight,
+                   Qt.Key_Comma: self.onPrevHighlight,
                    Qt.Key_M: self.onCommentUncomment,
                    Qt.Key_Space: self.onAutoComplete,
                    Qt.Key_F1: self.onTagHelp,
@@ -475,115 +471,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.cursorPosition = line, pos
         self.ensureLineOnScreen(line)
         self.setHScrollOffset(0)
-
-    def highlightWord(self, text):
-        """Highlights the given word with the searchIndicator"""
-        self.setExtraSelections([])
-        if not text or '\r' in text or '\n' in text:
-            return
-
-        self.markOccurrences(self.searchIndicator, text,
-                             False, False, False, True)
-
-    def _onHighlight(self):
-        """Triggered when Ctrl+' is clicked"""
-        text = self.getCurrentWord()
-        if not text or '\r' in text or '\n' in text:
-            self.textToIterate = None
-        else:
-            if self.textToIterate and \
-               self.textToIterate.lower() == text.lower():
-                return self._onNextHighlight()
-            self.textToIterate = text
-        self.highlightWord(text)
-
-    def _onNextHighlight(self):
-        """Triggered when Ctrl+. is clicked"""
-        if self.textToIterate is None:
-            return self._onHighlight()
-
-        targets = self.markOccurrences(self.searchIndicator,
-                                       self.textToIterate,
-                                       False, False, False, True)
-        foundCount = len(targets)
-        if foundCount == 0:
-            return True
-
-        line, index = self.cursorPosition
-        if foundCount == 1:
-            if line == targets[0][0] and \
-               index >= targets[0][1] and \
-               index <= targets[0][1] + targets[0][2]:
-                # The only match and we are within it
-                GlobalData().mainWindow.showStatusBarMessage(
-                    "Highlighted occurrences: 1 of 1")
-                return True
-
-        count = 0
-        for target in targets:
-            count += 1
-            if target[0] < line:
-                continue
-            if target[0] == line:
-                lastPos = target[1] + target[2]
-                if index > lastPos:
-                    continue
-                if index >= target[1] and index <= lastPos:
-                    # Cursor within this target, we need the next one
-                    continue
-            # Move the cursor to the target
-            self.cursorPosition = target[0], target[1]
-            self.ensureLineOnScreen(target[0])
-            GlobalData().mainWindow.showStatusBarMessage(
-                "Highlighted occurrences: " + str(count) +
-                " of " + str(foundCount))
-            return True
-
-        self.cursorPosition = targets[0][0], targets[0][1]
-        self.ensureLineOnScreen(targets[0][0])
-        GlobalData().mainWindow.showStatusBarMessage(
-            "Highlighted occurrences: 1 of " + str(foundCount))
-        return True
-
-    def _onPrevHighlight(self):
-        """Triggered when Ctrl+, is clicked"""
-        if self.textToIterate is None:
-            return self._onHighlight()
-
-        targets = self.markOccurrences(self.searchIndicator,
-                                       self.textToIterate,
-                                       False, False, False, True)
-        foundCount = len(targets)
-        if foundCount == 0:
-            return True
-
-        line, index = self.cursorPosition
-        if foundCount == 1:
-            if line == targets[0][0] and \
-               index >= targets[0][1] and \
-               index <= targets[0][1] + targets[0][2]:
-                # The only match and we are within it
-                return True
-
-        for idx in range(foundCount - 1, -1, -1):
-            target = targets[idx]
-            if target[0] > line:
-                continue
-            if target[0] == line:
-                if index < target[1]:
-                    continue
-                if index >= target[1] and index <= target[1] + target[2]:
-                    # Cursor within this target, we need the previous one
-                    continue
-            # Move the cursor to the target
-            self.cursorPosition = target[0], target[1]
-            self.ensureLineOnScreen(target[0])
-            return True
-
-        last = foundCount - 1
-        self.cursorPosition = targets[last][0], targets[last][1]
-        self.ensureLineOnScreen(targets[last][0])
-        return True
 
     def onCommentUncomment(self):
         """Triggered when Ctrl+M is received"""

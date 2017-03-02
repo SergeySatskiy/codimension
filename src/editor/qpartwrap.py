@@ -20,6 +20,7 @@
 """qutepart text editor component wrapper"""
 
 
+import re
 from qutepart import Qutepart
 from ui.qt import QPalette, pyqtSignal, QFont, QTextCursor
 from utils.globals import GlobalData
@@ -47,6 +48,12 @@ class QutepartWrapper(Qutepart):
         # The minimum possible zoom not to make the margin disappear
         skin = GlobalData().skin
         self.setFont(QFont(skin['monoFont']))
+
+        # Search/replace support
+        self.__matchesCache = None
+        self.__matchesRegexp = None
+        self.textToIterate = None
+        self.textChanged.connect(self.__resetMatchCache)
 
     def setPaper(self, paperColor):
         """Sets the new paper color"""
@@ -203,16 +210,6 @@ class QutepartWrapper(Qutepart):
         cursor.select(QTextCursor.WordUnderCursor)
         return cursor.selectedText()
 
-    def getCurrentOrSelection(self):
-        """Provides the selection if the cursor has it or current word"""
-        cursor = self.textCursor()
-        if cursor.hasSelection():
-            word = cursor.selectedText()
-            if '\r' not in word and '\n' not in word:
-                return word
-        cursor.select(QTextCursor.WordUnderCursor)
-        return cursor.selectedText()
-
     def removeTrailingWhitespaces(self):
         """Removes trailing whitespaces"""
         with self:
@@ -254,3 +251,119 @@ class QutepartWrapper(Qutepart):
             return self.selectedText
 
         return '' if selectionOnly else self.getCurrentWord()
+
+    # Search supporting members
+
+    def __resetMatchCache(self):
+        """Resets the cached search results"""
+        self.__matchesCache = None
+        self.__matchesRegexp = None
+
+    def __searchInText(self, regExp, startPoint, forward):
+        """Search in text and return the nearest match"""
+        self.findAllMatches(regExp)
+        if self.__matchesCache:
+            if forward:
+                for match in self.__matchesCache:
+                    if match.start() >= startPoint:
+                        break
+                else:  # wrap, search from start
+                    match = self.__matchesCache[0]
+            else:  # reverse search
+                for match in self.__matchesCache[::-1]:
+                    if match.start() < startPoint:
+                        break
+                else:  # wrap, search from end
+                    match = self.__matchesCache[-1]
+            return match
+        return None
+
+    def getCurrentOrSelection(self):
+        """Provides what should be used for search.
+
+        Returns a tuple:
+        - word
+        - True if it was a selection
+        - start abs pos
+        - end abs pos
+        """
+        cursor = self.textCursor()
+        if cursor.hasSelection():
+            word = cursor.selectedText()
+            if '\r' not in word and '\n' not in word:
+                return word, True, cursor.anchor(), cursor.position()
+        cursor.select(QTextCursor.WordUnderCursor)
+        return cursor.selectedText(), False, cursor.anchor(), cursor.position()
+
+    def findAllMatches(self, regExp):
+        """Find all matches of regExp"""
+        if self.__matchesRegexp != regExp or self.__matchesCache is None:
+            self.__matchesRegexp = regExp
+            self.__matchesCache = [match
+                                   for match in regExp.finditer(self.text)]
+        return self.__matchesCache
+
+    def updateFoundItemsHighlighting(self, regExp):
+        """Updates the highlight. Returns False if there were too many."""
+        matches = self.findAllMatches(regExp)
+        count = len(matches)
+        if count > Settings()['maxHighlightedMatches']:
+            self.setExtraSelections([])
+            return False
+
+        self.setExtraSelections([(match.start(), len(match.group(0)))
+                                for match in matches])
+        return True
+
+    def __highlightRegexp(self, regExp, searchPos, forward):
+        """Highlights the matches, moves cursor, displays message"""
+        highlighted = self.updateFoundItemsHighlighting(regExp)
+        match = self.__searchInText(regExp, searchPos, forward)
+        if match is not None:
+            matchIndex = self.__matchesCache.index(match) + 1
+            totalMatches = len(self.__matchesCache)
+            self.absCursorPosition = match.start()
+            self.ensureCursorVisible()
+
+        if highlighted:
+            if self.__matchesCache:
+                msg = 'Match %d of %d' % (matchIndex, totalMatches)
+            else:
+                msg = 'No matches'
+        else:
+            msg = 'Too many matches to highlight (%d exceeds the limit of %d' + \
+                '). Match %d of %d' % \
+                (len(self.__matchesCache), Settings()['maxHighlightedMatches'],
+                 matchIndex, totalMatches)
+
+        mainWindow = GlobalData().mainWindow
+        mainWindow.showStatusBarMessage(msg, 5000)
+
+    def onHighlight(self):
+        """Triggered when Ctrl+' is clicked"""
+        word, wasSelection, _, absEnd = self.getCurrentOrSelection()
+        if not word or '\r' in word or '\n' in word:
+            return
+
+        if wasSelection:
+            regExp = re.compile('%s' % re.escape(word), re.IGNORECASE)
+        else:
+            regExp = re.compile('\\b%s\\b' % re.escape(word), re.IGNORECASE)
+
+        self.__highlightRegexp(regExp, absEnd, False)
+
+    def onNextHighlight(self):
+        """Triggered when Ctrl+. is clicked"""
+        if self.__matchesRegexp is None or self.__matchesCache is None:
+            self.onHighlight()
+        else:
+            self.__highlightRegexp(self.__matchesRegexp,
+                                   self.absCursorPosition + 1, True)
+
+    def onPrevHighlight(self):
+        """Triggered when Ctrl+, is clicked"""
+        if self.__matchesRegexp is None or self.__matchesCache is None:
+            self.onHighlight()
+        else:
+            self.__highlightRegexp(self.__matchesRegexp,
+                                   self.absCursorPosition - 1, False)
