@@ -316,12 +316,8 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def clearSearchIndicators(self):
         """Hides the search indicator"""
-        # Removes the 'highlighted occurrences: ...' if so
+        self.resetHighlight()
         GlobalData().mainWindow.clearStatusBarMessage()
-
-    def setSearchIndicator(self, startPos, indicLength):
-        """Sets a single search indicator"""
-        self.setIndicatorRange(self.searchIndicator, startPos, indicLength)
 
     def keyPressEvent(self, event):
         """Handles the key press events"""
@@ -449,12 +445,8 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def __onDoubleClick(self, position, line, modifier):
         """Triggered when the user double clicks in the editor"""
-        text = self.getCurrentWord()
-        if not text or '\r' in text or '\n' in text:
-            self.textToIterate = None
-        else:
-            self.textToIterate = text
-        self.highlightWord(text)
+        QApplication.processEvents()
+        self.onHighlight()
 
     def onFirstChar(self):
         """Jump to the first character in the buffer"""

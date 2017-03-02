@@ -149,9 +149,9 @@ class QutepartWrapper(Qutepart):
 
     def setHScrollOffset(self, value):
         """Sets the new horizontal scroll bar value"""
-        bar = self.horizontalScrollBar()
-        if bar:
-            bar.setValue(value)
+        hBar = self.horizontalScrollBar()
+        if hBar:
+            hBar.setValue(value)
 
     def moveToLineEnd(self):
         """Moves the cursor to the end of the line"""
@@ -254,6 +254,11 @@ class QutepartWrapper(Qutepart):
 
     # Search supporting members
 
+    def resetHighlight(self):
+        """Resets the highlight if so"""
+        self.__resetMatchCache()
+        self.setExtraSelections([])
+
     def __resetMatchCache(self):
         """Resets the cached search results"""
         self.__matchesCache = None
@@ -312,7 +317,7 @@ class QutepartWrapper(Qutepart):
             return False
 
         self.setExtraSelections([(match.start(), len(match.group(0)))
-                                for match in matches])
+                                 for match in matches])
         return True
 
     def __highlightRegexp(self, regExp, searchPos, forward):
@@ -331,7 +336,7 @@ class QutepartWrapper(Qutepart):
             else:
                 msg = 'No matches'
         else:
-            msg = 'Too many matches to highlight (%d exceeds the limit of %d' + \
+            msg = 'Too many matches to highlight (%d exceeds the limit of %d' \
                 '). Match %d of %d' % \
                 (len(self.__matchesCache), Settings()['maxHighlightedMatches'],
                  matchIndex, totalMatches)
