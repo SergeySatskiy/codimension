@@ -241,17 +241,6 @@ class QutepartWrapper(Qutepart):
         """Returns True if the line is empty. Line is 0 based"""
         return self.lines[line].strip() == ""
 
-    def getSearchText(self, selectionOnly=False):
-        """Provides the guessed text for searching"""
-        if self.selectedText:
-            if '\r' in self.selectedText or '\n' in self.selectedText:
-                # The selection contains at least a newline, it is
-                # unlikely to be the expression to search for
-                return ''
-            return self.selectedText
-
-        return '' if selectionOnly else self.getCurrentWord()
-
     # Search supporting members
 
     def resetHighlight(self):

@@ -17,17 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#
-# The file was taken from eric 4.4.3 and adopted for codimension.
-# Original copyright:
-# Copyright (c) 2007 - 2010 Detlev Offenbach <detlev@die-offenbachs.de>
-#
-
 """Find and replace widgets implementation"""
 
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
+from utils.diskvaluesrelay import (getFindHistory, setFindHistory)
 from .qt import (QHBoxLayout, QToolButton, QLabel, QSizePolicy, QComboBox,
                  QGridLayout, QWidget, QCheckBox, QKeySequence, Qt, QSize,
                  QEvent, pyqtSignal)
@@ -102,19 +97,21 @@ class FindReplaceBase(QWidget):
 
     """Base class for both find and replace widgets"""
 
-    maxHistory = 32
-    incSearchDone = pyqtSignal(bool)
+    sigIncSearchDone = pyqtSignal(bool)
 
     def __init__(self, editorsManager, parent=None):
         QWidget.__init__(self, parent)
         self._skip = True
 
+        self.__maxHistory = Settings()['maxSearchEntries']
+
         self.editorsManager = editorsManager
         self._currentWidget = None
         self._isTextEditor = False
         self._editor = None
-        self._editorUUID = False
-        self.findHistory = GlobalData().project.findHistory
+        self.findHistory = getFindHistory()
+        self.__populateHistory()
+
         self._findBackward = False
 
         # Incremental search support
@@ -200,7 +197,7 @@ class FindReplaceBase(QWidget):
         self.findtextCombo.setFocus()
 
     def show(self, text=''):
-        """Overridden show() method"""
+        """Overridden show method"""
         self._skip = True
         self.findtextCombo.clear()
         self.findtextCombo.addItems(self.findHistory)
@@ -216,32 +213,18 @@ class FindReplaceBase(QWidget):
 
         self._performSearch(True)
 
-    def startHiddenSearch(self, text):
-        """Initiates search without activating the widget"""
-        self._skip = True
-        self.findtextCombo.clear()
-        self.findtextCombo.addItems(self.findHistory)
-        self.findtextCombo.setEditText(text)
-        self.findtextCombo.lineEdit().selectAll()
-        self.regexpCheckBox.setChecked(False)
-        self._findBackward = False
-        self._skip = False
-
-        self._performSearch(True)
-
     def updateStatus(self):
         """Triggered when the current tab is changed"""
         # Memorize the current environment
         self._currentWidget = self.editorsManager.currentWidget()
-        self._isTextEditor = self._currentWidget.getType() in \
-                                [MainWindowTabWidgetBase.PlainTextEditor,
-                                 MainWindowTabWidgetBase.VCSAnnotateViewer]
+        validWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
+                        MainWindowTabWidgetBase.VCSAnnotateViewer]
+        self._isTextEditor = self._currentWidget.getType() in validWidgets
+
         if self._isTextEditor:
             self._editor = self._currentWidget.getEditor()
-            self._editorUUID = self._currentWidget.getUUID()
         else:
             self._editor = None
-            self._editorUUID = ""
 
         self.findtextCombo.setEnabled(self._isTextEditor)
 
@@ -253,37 +236,14 @@ class FindReplaceBase(QWidget):
         self.wordCheckBox.setEnabled(self._isTextEditor)
         self.regexpCheckBox.setEnabled(self._isTextEditor)
 
-    def _resetHighlightOtherEditors(self, uuid):
-        """Resets all the highlights in other editors except of the given"""
-        searchAttributes = None
-        if self._searchSupport.hasEditor(uuid):
-            searchAttributes = self._searchSupport.get(uuid)
-
-        for key in self._searchSupport.editorSearchAttributes:
-            if key == uuid:
-                continue
-            widget = self.editorsManager.getWidgetByUUID(key)
-            if widget is None:
-                continue
-            editor = widget.getEditor()
-            editor.clearSearchIndicators()
-
-        # Clear what is memorized about the other editors
-        self._searchSupport.editorSearchAttributes = {}
-
-        if searchAttributes is not None:
-            self._searchSupport.add(uuid, searchAttributes)
-
     def _onCheckBoxChange(self, newState):
         """Triggered when a search check box state is changed"""
         if not self._skip:
-            self._resetHighlightOtherEditors(self._editorUUID)
             self._performSearch(False)
 
     def _onEditTextChanged(self, text):
         """Triggered when the search text has been changed"""
         if not self._skip:
-            self._resetHighlightOtherEditors(self._editorUUID)
             self._performSearch(False)
 
     def _performSearch(self, fromScratch):
@@ -317,7 +277,7 @@ class FindReplaceBase(QWidget):
                                               searchAttributes.pos
                 self._editor.ensureLineOnScreen(searchAttributes.firstLine)
                 searchAttributes.match = [-1, -1, -1]
-                self.incSearchDone.emit(False)
+                self.sigIncSearchDone.emit(False)
                 return
 
             matchTarget = self._editor.highlightMatch(text,
@@ -336,19 +296,19 @@ class FindReplaceBase(QWidget):
                 self._editor.setSelection(eLine, ePos,
                                           matchTarget[0], matchTarget[1])
                 self._editor.ensureLineOnScreen(matchTarget[0])
-                self.incSearchDone.emit(True)
+                self.sigIncSearchDone.emit(True)
             else:
                 # Nothing is found, so scroll back to the original
                 self._editor.cursorPosition = searchAttributes.line, \
                                               searchAttributes.pos
                 self._editor.ensureLineOnScreen(searchAttributes.firstLine)
-                self.incSearchDone.emit(False)
+                self.sigIncSearchDone.emit(False)
 
             return
 
         # Brand new editor to search in
         if text == "":
-            self.incSearchDone.emit(False)
+            self.sigIncSearchDone.emit(False)
             return
 
         matchTarget = self._editor.highlightMatch(text,
@@ -368,10 +328,10 @@ class FindReplaceBase(QWidget):
             self._editor.setSelection(eLine, ePos,
                                       matchTarget[0], matchTarget[1])
             self._editor.ensureLineOnScreen(matchTarget[0])
-            self.incSearchDone.emit(True)
+            self.sigIncSearchDone.emit(True)
             return
 
-        self.incSearchDone.emit(False)
+        self.sigIncSearchDone.emit(False)
 
     def _initialiseSearchAttributes(self, uuid):
         """Creates a record if none existed"""
@@ -432,9 +392,9 @@ class FindReplaceBase(QWidget):
         self._findBackward = False
         if not self.__findNextPrev(clearSBMessage):
             GlobalData().mainWindow.showStatusBarMessage("No matches found", 0)
-            self.incSearchDone.emit(False)
+            self.sigIncSearchDone.emit(False)
         else:
-            self.incSearchDone.emit(True)
+            self.sigIncSearchDone.emit(True)
 
     def onPrev(self, clearSBMessage=True):
         """Triggered when the find prev is clicked"""
@@ -444,9 +404,9 @@ class FindReplaceBase(QWidget):
         self._findBackward = True
         if not self.__findNextPrev(clearSBMessage):
             GlobalData().mainWindow.showStatusBarMessage("No matches found", 0)
-            self.incSearchDone.emit(False)
+            self.sigIncSearchDone.emit(False)
         else:
-            self.incSearchDone.emit(True)
+            self.sigIncSearchDone.emit(True)
 
     def onPrevNext(self):
         """Checks prerequisites, saves the history and
@@ -603,9 +563,9 @@ class FindReplaceBase(QWidget):
             changes = True
             history.insert(0, text)
 
-        if len(history) > self.maxHistory:
+        if len(history) > self.__maxHistory:
             changes = True
-            history = history[:self.maxHistory]
+            history = history[:self.__maxHistory]
 
         self._skip = True
         combo.clear()
@@ -765,7 +725,7 @@ class ReplaceWidget(FindReplaceBase):
         GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
         self.findNextButton.clicked.connect(self.onNext)
         self.findPrevButton.clicked.connect(self.onPrev)
-        self.incSearchDone.connect(self.__onSearchDone)
+        self.sigIncSearchDone.connect(self.__onSearchDone)
         self.replaceCombo.editTextChanged.connect(self.__onReplaceTextChanged)
         self.replaceCombo.lineEdit().returnPressed.connect(
             self.__onReplaceAndMove)

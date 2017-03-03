@@ -378,8 +378,6 @@ class EditorsManager(QTabWidget):
         """Installs various key combinations handlers"""
         findAction = QShortcut('Ctrl+F', self)
         findAction.activated.connect(self.onFind)
-        hiddenFindAction = QShortcut('Ctrl+F3', self)
-        hiddenFindAction.activated.connect(self.onHiddenFind)
         replaceAction = QShortcut('Ctrl+R', self)
         replaceAction.activated.connect(self.onReplace)
         closeTabAction = QShortcut('Ctrl+F4', self)
@@ -1549,39 +1547,21 @@ class EditorsManager(QTabWidget):
 
     def onFind(self):
         """Triggered when Ctrl+F is received"""
-        if self.currentWidget().getType() not in \
-                [MainWindowTabWidgetBase.PlainTextEditor,
-                 MainWindowTabWidgetBase.VCSAnnotateViewer]:
-            return
-
-        if self.replaceWidget.isVisible():
+        validWidgets = [MainWindowTabWidgetBase.PlainTextEditor
+                        MainWindowTabWidgetBase.VCSAnnotateViewer]
+        if self.currentWidget().getType() in validWidgets:
             self.replaceWidget.hide()
-        if self.gotoWidget.isVisible():
             self.gotoWidget.hide()
 
-        searchText = self.currentWidget().getEditor().getSearchText()
-        if self.findWidget.isHidden():
-            self.findWidget.show(searchText)
-        else:
-            if searchText:
-                self.findWidget.show(searchText)
-        self.findWidget.setFocus()
-        self.__lastDisplayedWasFindWidget = True
-
-    def onHiddenFind(self):
-        """Triggered when Ctrl+F3 is received"""
-        if self.currentWidget().getType() not in \
-                [MainWindowTabWidgetBase.PlainTextEditor,
-                 MainWindowTabWidgetBase.VCSAnnotateViewer]:
-            return
-
-        searchText = self.currentWidget().getEditor().getSearchText()
-        if searchText:
-            self.findWidget.startHiddenSearch(searchText)
+            editor = self.currentWidget().getEditor()
+            word, _, _, _ = editor.getCurrentOrSelection()
+            if self.findWidget.isHidden():
+                self.findWidget.show(word)
+            else:
+                if word:
+                    self.findWidget.show(word)
+            self.findWidget.setFocus()
             self.__lastDisplayedWasFindWidget = True
-        else:
-            GlobalData().mainWindow.showStatusBarMessage(
-                "No current word to start searching.", 0)
 
     def onReplace(self):
         """Triggered when Ctrl+R is received"""

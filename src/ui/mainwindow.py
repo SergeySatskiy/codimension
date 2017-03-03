@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -594,8 +594,6 @@ class CodimensionMainWindow(QMainWindow):
             self.__onFindOccurences)
         self.__findAct = self.__searchMenu.addAction(
             getIcon('findindir.png'), '&Find...', self.__onFind)
-        self.__findCurrentAct = self.__searchMenu.addAction(
-            getIcon('find.png'), 'Find current &word', self.__onFindCurrent)
         self.__findNextAct = self.__searchMenu.addAction(
             getIcon('1rightarrow.png'), "Find &next", self.__onFindNext)
         self.__findPrevAct = self.__searchMenu.addAction(
@@ -2923,11 +2921,6 @@ class CodimensionMainWindow(QMainWindow):
         editorsManager = self.editorsManagerWidget.editorsManager
         editorsManager.onFind()
 
-    def __onFindCurrent(self):
-        """Triggered when find of the current identifier is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.onHiddenFind()
-
     def __onReplace(self):
         """Triggered when replace is requested"""
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -3064,7 +3057,6 @@ class CodimensionMainWindow(QMainWindow):
                                             os.path.isabs(currentWidget.getFileName()))
         self.__goToLineAct.setEnabled(isPlainTextBuffer)
         self.__findAct.setEnabled(isPlainTextBuffer)
-        self.__findCurrentAct.setEnabled(isPlainTextBuffer)
         self.__replaceAct.setEnabled(isPlainTextBuffer and
                                      currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer)
         self.__findNextAct.setEnabled(isPlainTextBuffer)
@@ -3073,7 +3065,6 @@ class CodimensionMainWindow(QMainWindow):
         self.__findOccurencesAct.setShortcut("Ctrl+]")
         self.__goToLineAct.setShortcut("Ctrl+G")
         self.__findAct.setShortcut("Ctrl+F")
-        self.__findCurrentAct.setShortcut("Ctrl+F3")
         self.__replaceAct.setShortcut("Ctrl+R")
         self.__findNextAct.setShortcut("F3")
         self.__findPrevAct.setShortcut("Shift+F3")
@@ -3205,7 +3196,6 @@ class CodimensionMainWindow(QMainWindow):
         self.__findOccurencesAct.setShortcut("")
         self.__goToLineAct.setShortcut("")
         self.__findAct.setShortcut("")
-        self.__findCurrentAct.setShortcut("")
         self.__replaceAct.setShortcut("")
         self.__findNextAct.setShortcut("")
         self.__findPrevAct.setShortcut("")

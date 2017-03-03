@@ -40,14 +40,19 @@ from .fileutils import loadJSON, saveJSON
 #   'case': <bool>, 'word': <bool>, 'regexp': <bool>,
 #   'inproject': <bool>, 'inopened': <bool>, 'indir': <bool>, 'dir': <string>,
 #   'filter': <string> }
-_DEFAULT_SEARCH_HISTORY = {'class': [],        # [term, ...]
-                           'function': [],     # [term, ...]
-                           'global': [],       # [term, ...]
-                           'findname': [],     # [term, ...]
-                           'findfile': [],     # [term, ...]
-                           'find': [],         # [term + options, ...]
-                           'replace': [],      # [term + term + options, ...]
-                           'findinfiles': []}  # [term + dir + mask, ...]
+_DEFAULT_SEARCH_HISTORY = {
+    'class': [],        # [term, ...]
+    'function': [],     # [term, ...]
+    'global': [],       # [term, ...]
+    'findname': [],     # [term, ...]
+    'findfile': [],     # [term, ...]
+    'find': [],         # [ {'term': ,
+                        #    'cbCase': , 'cbWord': , 'cbRegexp': }, ... ]
+    'replace': [],      # [ {'term': , 'replace': ,
+                        #    'cbCase': , 'cbWord': , 'cbRegexp': }, ... ]
+    'findinfiles': []}  # [ {'term': , 'dir': , 'filters': ,
+                        #    'cbCase': , 'cbWord': , 'cbRegexp': ,
+                        #    'rbProject': , 'rbOpen': , 'rbDir': }, ... ]
 
 class SearchEnvironment:
 
