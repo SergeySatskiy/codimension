@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,9 +46,7 @@ _DEFAULT_SEARCH_HISTORY = {
     'global': [],       # [term, ...]
     'findname': [],     # [term, ...]
     'findfile': [],     # [term, ...]
-    'find': [],         # [ {'term': ,
-                        #    'cbCase': , 'cbWord': , 'cbRegexp': }, ... ]
-    'replace': [],      # [ {'term': , 'replace': ,
+    'find': [],         # [ {'term': , 'replace': ,
                         #    'cbCase': , 'cbWord': , 'cbRegexp': }, ... ]
     'findinfiles': []}  # [ {'term': , 'dir': , 'filters': ,
                         #    'cbCase': , 'cbWord': , 'cbRegexp': ,
@@ -196,19 +194,6 @@ class SearchEnvironment:
     def addToFindHistory(self, item):
         """Adds an item to the file history"""
         self.__addToContainer('find', item)
-
-    @property
-    def replaceHistory(self):
-        """Provides the replace history"""
-        return self.__props['replace']
-
-    @replaceHistory.setter
-    def replaceHistory(self, history):
-        self.__setContainer('replace', history)
-
-    def addToReplaceHistory(self, item):
-        """Adds an item to the replace history"""
-        self.__addToContainer('replace', item)
 
     @property
     def findInFilesHistory(self):

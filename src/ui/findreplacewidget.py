@@ -109,6 +109,7 @@ class FindReplaceBase(QWidget):
         self._currentWidget = None
         self._isTextEditor = False
         self._editor = None
+
         self.findHistory = getFindHistory()
         self.__populateHistory()
 

@@ -146,6 +146,23 @@ def setFindInFilesHistory(values):
         Settings().findInFilesHistory = values
 
 
+def getFindHistory():
+    """Provides the find history"""
+    project = GlobalData().project
+    if project.isLoaded():
+        return project.findHistory
+    return Settings().findHistory
+
+
+def setFindHistory(values):
+    """Updates the find history"""
+    project = GlobalData().project
+    if project.isLoaded():
+        project.findHistory = values
+    else:
+        Settings().findHistory = values
+
+
 ##DebuggerEnvironment
 ##SearchEnvironment
 ##FileSystemEnvironment
