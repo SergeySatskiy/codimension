@@ -309,7 +309,7 @@ class QutepartWrapper(Qutepart):
                                  for match in matches])
         return True
 
-    def __highlightRegexp(self, regExp, searchPos, forward):
+    def highlightRegexp(self, regExp, searchPos, forward):
         """Highlights the matches, moves cursor, displays message"""
         highlighted = self.updateFoundItemsHighlighting(regExp)
         match = self.__searchInText(regExp, searchPos, forward)
@@ -332,6 +332,7 @@ class QutepartWrapper(Qutepart):
 
         mainWindow = GlobalData().mainWindow
         mainWindow.showStatusBarMessage(msg, 5000)
+        return len(self.__matchesCache)
 
     def onHighlight(self):
         """Triggered when Ctrl+' is clicked"""
@@ -344,20 +345,20 @@ class QutepartWrapper(Qutepart):
         else:
             regExp = re.compile('\\b%s\\b' % re.escape(word), re.IGNORECASE)
 
-        self.__highlightRegexp(regExp, absEnd, False)
+        self.highlightRegexp(regExp, absEnd, False)
 
     def onNextHighlight(self):
         """Triggered when Ctrl+. is clicked"""
         if self.__matchesRegexp is None or self.__matchesCache is None:
             self.onHighlight()
         else:
-            self.__highlightRegexp(self.__matchesRegexp,
-                                   self.absCursorPosition + 1, True)
+            self.highlightRegexp(self.__matchesRegexp,
+                                 self.absCursorPosition + 1, True)
 
     def onPrevHighlight(self):
         """Triggered when Ctrl+, is clicked"""
         if self.__matchesRegexp is None or self.__matchesCache is None:
             self.onHighlight()
         else:
-            self.__highlightRegexp(self.__matchesRegexp,
-                                   self.absCursorPosition - 1, False)
+            self.highlightRegexp(self.__matchesRegexp,
+                                 self.absCursorPosition - 1, False)

@@ -117,10 +117,8 @@ class EditorsManager(QTabWidget):
         self.__mainWindow.debugModeChanged.connect(self.__onDebugMode)
 
         # Auxiliary widgets - they are created in the main window
-        self.findWidget = None
-        self.replaceWidget = None
+        self.findReplaceWidget = None
         self.gotoWidget = None
-        self.__lastDisplayedWasFindWidget = True
 
         self.history = TabsHistory(self)
         self.history.historyChanged.connect(self.__onHistoryChanged)
@@ -391,10 +389,9 @@ class EditorsManager(QTabWidget):
         gotoAction = QShortcut('Ctrl+G', self)
         gotoAction.activated.connect(self.onGoto)
 
-    def registerAuxWidgets(self, find, replace, goto):
+    def registerAuxWidgets(self, findReplace, goto):
         """Memorizes references to the auxiliary widgets"""
-        self.findWidget = find
-        self.replaceWidget = replace
+        self.findReplaceWidget = findReplace
         self.gotoWidget = goto
 
     def getNewName(self):
@@ -619,8 +616,7 @@ class EditorsManager(QTabWidget):
                         self.__welcomeWidget.getShortName())
             self.__welcomeWidget.setFocus()
             self.gotoWidget.hide()
-            self.findWidget.hide()
-            self.replaceWidget.hide()
+            self.findReplaceWidget.hide()
             self.history.clear()
         else:
             # Need to identify a tab for displaying
@@ -793,8 +789,7 @@ class EditorsManager(QTabWidget):
         self.updateStatusBar()
 
         self.gotoWidget.updateStatus()
-        self.findWidget.updateStatus()
-        self.replaceWidget.updateStatus()
+        self.findReplaceWidget.updateStatus()
 
         widget = self.currentWidget()
         widget.setFocus()
@@ -1547,95 +1542,57 @@ class EditorsManager(QTabWidget):
 
     def onFind(self):
         """Triggered when Ctrl+F is received"""
-        validWidgets = [MainWindowTabWidgetBase.PlainTextEditor
+        validWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
                         MainWindowTabWidgetBase.VCSAnnotateViewer]
         if self.currentWidget().getType() in validWidgets:
-            self.replaceWidget.hide()
             self.gotoWidget.hide()
 
             editor = self.currentWidget().getEditor()
             word, _, _, _ = editor.getCurrentOrSelection()
-            if self.findWidget.isHidden():
-                self.findWidget.show(word)
+            if self.findReplaceWidget.isHidden():
+                self.findReplaceWidget.show(
+                    self.findReplaceWidget.MODE_FIND, word)
             else:
                 if word:
-                    self.findWidget.show(word)
-            self.findWidget.setFocus()
-            self.__lastDisplayedWasFindWidget = True
+                    self.findReplaceWidget.show(
+                        self.findReplaceWidget.MODE_FIND, word)
+            self.findReplaceWidget.setFocus()
 
     def onReplace(self):
         """Triggered when Ctrl+R is received"""
-        if self.currentWidget().getType() not in \
-                [MainWindowTabWidgetBase.PlainTextEditor]:
+        validWidgets = [MainWindowTabWidgetBase.PlainTextEditor]
+        if self.currentWidget().getType() not in validWidgets:
             return
 
-        if self.findWidget.isVisible():
-            self.findWidget.hide()
-        if self.gotoWidget.isVisible():
-            self.gotoWidget.hide()
+        self.gotoWidget.hide()
 
         searchText = self.currentWidget().getEditor().getSearchText()
-        if self.replaceWidget.isHidden():
-            self.replaceWidget.show(searchText)
+        if self.findReplaceWidget.isHidden():
+            self.findReplaceWidget.show(
+                self.findReplaceWidget.MODE_REPLACE, searchText)
         else:
             if searchText:
-                self.replaceWidget.show(searchText)
-        self.replaceWidget.setFocus()
-        self.__lastDisplayedWasFindWidget = False
+                self.findReplaceWidget.show(
+                    self.findReplaceWidget.MODE_REPLACE, searchText)
+        self.findReplaceWidget.setFocus()
 
     def onGoto(self):
         """Triggered when Ctrl+G is received"""
-        if self.currentWidget().getType() not in \
-                [MainWindowTabWidgetBase.PlainTextEditor,
-                 MainWindowTabWidgetBase.VCSAnnotateViewer]:
-            return
-
-        if self.replaceWidget.isVisible():
-            self.replaceWidget.hide()
-        if self.findWidget.isVisible():
-            self.findWidget.hide()
-        if self.gotoWidget.isHidden():
+        validWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
+                        MainWindowTabWidgetBase.VCSAnnotateViewer]
+        if self.currentWidget().getType() in validWidgets:
+            self.findReplaceWidget.hide()
             self.gotoWidget.show()
-        self.gotoWidget.setFocus()
-        self.gotoWidget.selectAll()
+            self.gotoWidget.setFocus()
+            self.gotoWidget.selectAll()
 
     def findNext(self):
-        """triggered when F3 is received"""
-        if self.__lastDisplayedWasFindWidget:
-            if self.findWidget.getLastSearchString() != "":
-                self.findWidget.onNext()
-                return
-            if self.replaceWidget.getLastSearchString() != "":
-                self.replaceWidget.onNext()
-                return
-            return  # Nothing to search for
-
-        # The last on the screen was the replace widget
-        if self.replaceWidget.getLastSearchString() != "":
-            self.replaceWidget.onNext()
-            return
-        if self.findWidget.getLastSearchString() != "":
-            self.findWidget.onNext()
-            return
+        """triggered when Ctrl+. is received"""
+        self.findReplaceWidget.onNext()
 
     def findPrev(self):
-        """Triggered when Shift+F3 is received"""
-        if self.__lastDisplayedWasFindWidget:
-            if self.findWidget.getLastSearchString() != "":
-                self.findWidget.onPrev()
-                return
-            if self.replaceWidget.getLastSearchString() != "":
-                self.replaceWidget.onPrev()
-                return
-            return  # Nothing to search for
-
-        # The last on the screen was the replace widget
-        if self.replaceWidget.getLastSearchString() != "":
-            self.replaceWidget.onPrev()
-            return
-        if self.findWidget.getLastSearchString() != "":
-            self.findWidget.onPrev()
-            return
+        """Triggered when Ctrl+, is received"""
+        self.findReplaceWidget.onPrev()
 
     def __addHistoryMenuItem(self, menu, index, currentHistoryIndex):
         """Prepares the history menu item"""
@@ -1752,11 +1709,9 @@ class EditorsManager(QTabWidget):
 
     def __onESC(self):
         """The editor detected ESC pressed"""
-        if self.gotoWidget.isVisible() or self.findWidget.isVisible() or \
-           self.replaceWidget.isVisible():
+        if self.gotoWidget.isVisible() or self.findReplaceWidget.isVisible():
             self.gotoWidget.hide()
-            self.findWidget.hide()
-            self.replaceWidget.hide()
+            self.findReplaceWidget.hide()
             return
         # No aux on screen, remove the indicators then if it is an editor
         # widget
@@ -1781,8 +1736,9 @@ class EditorsManager(QTabWidget):
         mainWindow = self.__mainWindow
 
         mainWindow.sbLanguage.setText(currentWidget.getLanguage())
-        if currentWidget.getType() in [MainWindowTabWidgetBase.PlainTextEditor,
-                                       MainWindowTabWidgetBase.VCSAnnotateViewer]:
+        editorWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
+                        MainWindowTabWidgetBase.VCSAnnotateViewer]
+        if currentWidget.getType() in editorWidgets:
             mime = currentWidget.getMime()
             if mime:
                 mainWindow.sbLanguage.setToolTip('Mime type: ' + mime)
@@ -1832,9 +1788,10 @@ class EditorsManager(QTabWidget):
             mainWindow.sbVCSStatus.setVisible(True)
             vcsManager.drawStatus(mainWindow.sbVCSStatus, currentVCSStatus)
 
-        if currentWidget.getType() in [MainWindowTabWidgetBase.PlainTextEditor,
-                                       MainWindowTabWidgetBase.PictureViewer,
-                                       MainWindowTabWidgetBase.PythonGraphicsEditor]:
+        validWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
+                        MainWindowTabWidgetBase.PictureViewer,
+                        MainWindowTabWidgetBase.PythonGraphicsEditor]
+        if currentWidget.getType() in validWidgets:
             fileName = currentWidget.getFileName()
             if fileName.startswith(os.path.sep):
                 # File exists
@@ -1879,9 +1836,9 @@ class EditorsManager(QTabWidget):
         if self.closeRequest():
             # Need to call terminate for all the text editors if so
             for index in range(self.count()):
-                if self.widget(index).getType() in [
-                    MainWindowTabWidgetBase.PlainTextEditor,
-                    MainWindowTabWidgetBase.VCSAnnotateViewer]:
+                editorWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
+                                 MainWindowTabWidgetBase.VCSAnnotateViewer]
+                if self.widget(index).getType() in editorWidgets:
                     self.widget(index).getEditor().terminate()
 
             event.accept()

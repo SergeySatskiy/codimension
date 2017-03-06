@@ -78,7 +78,7 @@ from .pyflakesviewer import PyflakesViewer
 from .editorsmanager import EditorsManager
 from .linecounter import LineCounterDialog
 from .projectproperties import ProjectPropertiesDialog
-from .findreplacewidget import FindWidget, ReplaceWidget
+from .findreplacewidget import FindReplaceWidget
 from .gotolinewidget import GotoLineWidget
 from .diffviewer import DiffViewer
 from .findinfiles import FindInFilesDialog, ItemToSearchIn, getSearchItemIndex
@@ -99,11 +99,9 @@ class EditorsManagerWidget(QWidget):
         QWidget.__init__(self, parent)
 
         self.editorsManager = EditorsManager(parent, debugger)
-        self.findWidget = FindWidget(self.editorsManager)
-        self.replaceWidget = ReplaceWidget(self.editorsManager)
+        self.findReplaceWidget = FindReplaceWidget(self.editorsManager)
         self.gotoLineWidget = GotoLineWidget(self.editorsManager)
-        self.editorsManager.registerAuxWidgets(self.findWidget,
-                                               self.replaceWidget,
+        self.editorsManager.registerAuxWidgets(self.findReplaceWidget,
                                                self.gotoLineWidget)
 
         self.editorsManager.setSizePolicy(QSizePolicy.Preferred,
@@ -112,8 +110,7 @@ class EditorsManagerWidget(QWidget):
         self.layout.setContentsMargins(1, 1, 1, 1)
 
         self.layout.addWidget(self.editorsManager)
-        self.layout.addWidget(self.findWidget)
-        self.layout.addWidget(self.replaceWidget)
+        self.layout.addWidget(self.findReplaceWidget)
         self.layout.addWidget(self.gotoLineWidget)
 
         self.setLayout(self.layout)
@@ -267,8 +264,7 @@ class CodimensionMainWindow(QMainWindow):
         self.editorsManagerWidget.editorsManager.sigTabRunChanged.connect(
             self.setDebugTabAvailable)
 
-        self.editorsManagerWidget.findWidget.hide()
-        self.editorsManagerWidget.replaceWidget.hide()
+        self.editorsManagerWidget.findReplaceWidget.hide()
         self.editorsManagerWidget.gotoLineWidget.hide()
 
         # The layout is a sidebar-style one
