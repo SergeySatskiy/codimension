@@ -114,6 +114,10 @@ class QutepartWrapper(Qutepart):
         """Provides the first visible line. 0-based"""
         return self.firstVisibleBlock().blockNumber()
 
+    def setFirstVisible(self, lineno):
+        """Scrolls the editor to make sure the first visible line is lineno"""
+        pass
+
     def lastVisibleLine(self):
         """Provides the last visible line. 0-based"""
         editorHeight = self.height()
@@ -338,27 +342,25 @@ class QutepartWrapper(Qutepart):
         """Triggered when Ctrl+' is clicked"""
         word, wasSelection, _, absEnd = self.getCurrentOrSelection()
         if not word or '\r' in word or '\n' in word:
-            return
+            return 0
 
         if wasSelection:
             regExp = re.compile('%s' % re.escape(word), re.IGNORECASE)
         else:
             regExp = re.compile('\\b%s\\b' % re.escape(word), re.IGNORECASE)
 
-        self.highlightRegexp(regExp, absEnd, False)
+        return self.highlightRegexp(regExp, absEnd, False)
 
     def onNextHighlight(self):
         """Triggered when Ctrl+. is clicked"""
         if self.__matchesRegexp is None or self.__matchesCache is None:
-            self.onHighlight()
-        else:
-            self.highlightRegexp(self.__matchesRegexp,
-                                 self.absCursorPosition + 1, True)
+            return self.onHighlight()
+        return self.highlightRegexp(self.__matchesRegexp,
+                                    self.absCursorPosition + 1, True)
 
     def onPrevHighlight(self):
         """Triggered when Ctrl+, is clicked"""
         if self.__matchesRegexp is None or self.__matchesCache is None:
-            self.onHighlight()
-        else:
-            self.highlightRegexp(self.__matchesRegexp,
-                                 self.absCursorPosition - 1, False)
+            return self.onHighlight()
+        return self.highlightRegexp(self.__matchesRegexp,
+                                    self.absCursorPosition - 1, False)
