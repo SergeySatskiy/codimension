@@ -56,6 +56,7 @@ class FindReplaceWidget(QWidget):
     """Find and replace widgets"""
 
     sigIncSearchDone = pyqtSignal(bool)
+
     MODE_FIND = 0
     MODE_REPLACE = 1
 
@@ -78,6 +79,7 @@ class FindReplaceWidget(QWidget):
         self.__startPoint = None    # {'absPos': int, 'firstVisible': int}
 
         self.__skip = False
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
     def __createLayout(self):
         """Creates the layout of the widget"""
@@ -218,6 +220,14 @@ class FindReplaceWidget(QWidget):
             activeWindow = self.editorsManager.currentWidget()
             if activeWindow:
                 activeWindow.setFocus()
+
+    def __onProjectChanged(self, what):
+        """Triggered when a project is changed"""
+        if what == CodimensionProject.CompleteProject:
+            self.__skip = True
+            self.findHistory = getFindHistory()
+            self.__populateHistory()
+            self.__skip = False
 
     def __populateHistory(self):
         """Populates the history"""
@@ -513,61 +523,6 @@ class FindReplaceWidget(QWidget):
             count = self.__editor.onPrevHighlight()
         return count > 0
 
-    def _addToHistory(self, combo, history, text):
-        """Adds the item to the history. Returns true if need to add."""
-        changes = False
-
-        if text in history:
-            if history[0] != text:
-                changes = True
-                history.remove(text)
-                history.insert(0, text)
-        else:
-            changes = True
-            history.insert(0, text)
-
-        if len(history) > self.__maxHistory:
-            changes = True
-            history = history[:self.__maxHistory]
-
-        self.__skip = True
-        combo.clear()
-        combo.addItems(history)
-        self.__skip = False
-        return changes
-
-    def getLastSearchString(self):
-        """Provides the string which was searched last time"""
-        return self.findtextCombo.currentText()
-
-
-class FindWidget():
-
-    """Find in the current file widget"""
-
-    def __init__(self, editorsManager, parent=None):
-        FindReplaceBase.__init__(self, editorsManager, parent)
-        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
-
-    def __onProjectChanged(self, what):
-        """Triggered when a project is changed"""
-        if what == CodimensionProject.CompleteProject:
-            self._skip = True
-            self.findHistory = GlobalData().project.findHistory
-            self.findtextCombo.setEditText("")
-            self.findtextCombo.clear()
-            self.findtextCombo.addItems(self.findHistory)
-            self._skip = False
-
-    def __updateFindHistory(self):
-        """Updates the find history if required"""
-        if self.findtextCombo.currentText() != "":
-            if self._addToHistory(self.findtextCombo,
-                                  self.findHistory,
-                                  self.findtextCombo.currentText()):
-                prj = GlobalData().project
-                prj.setFindHistory(self.findHistory)
-
 
 class ReplaceWidget():
 
@@ -605,21 +560,6 @@ class ReplaceWidget():
         if self.__connected:
             self.__unsubscribeFromCursorChange()
         FindReplaceBase.hide(self)
-
-    def __onProjectChanged(self, what):
-        """Triggered when a project is changed"""
-        if what == CodimensionProject.CompleteProject:
-            prj = GlobalData().project
-            self._skip = True
-            self.findHistory = prj.findHistory
-            self.findtextCombo.clear()
-            self.findtextCombo.setEditText('')
-            self.findtextCombo.addItems(self.findHistory)
-            self.replaceHistory = prj.replaceHistory
-            self.replaceCombo.clear()
-            self.replaceCombo.setEditText('')
-            self.replaceCombo.addItems(self.replaceHistory)
-            self._skip = False
 
     def __onSearchDone(self, found):
         """Triggered when incremental search is done"""

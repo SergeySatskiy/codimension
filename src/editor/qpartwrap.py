@@ -116,7 +116,27 @@ class QutepartWrapper(Qutepart):
 
     def setFirstVisible(self, lineno):
         """Scrolls the editor to make sure the first visible line is lineno"""
-        pass
+        currentVisible = self.firstVisibleLine()
+        if currentVisible == lineno:
+            return
+
+        # Initial setting
+        self.verticalScrollBar().setValue(lineno)
+        currentVisible = self.firstVisibleLine()
+
+        while currentVisible != lineno:
+            vbValue = self.verticalScrollBar().value()
+            distance = lineno - currentVisible
+            if distance > 0:
+                distance = min(2, distance)
+            else:
+                distance = max(-2, distance)
+            self.verticalScrollBar().setValue(vbValue + distance)
+            vbValueAfter = self.verticalScrollBar().value()
+            if vbValueAfter == vbValue:
+                break
+            currentVisible = self.firstVisibleLine()
+        self.setHScrollOffset(0)
 
     def lastVisibleLine(self):
         """Provides the last visible line. 0-based"""

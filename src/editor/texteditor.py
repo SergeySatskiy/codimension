@@ -903,26 +903,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             editorFirstVisible = 0
 
         self.cursorPosition = editorLine, editorPos
-        self.setHScrollOffset(0) # avoid unwanted scrolling
-
-        return
-
-        # The loop below is required because in line wrap mode a line could
-        # occupy a few lines while the scroll is done in formal lines.
-        # In practice the desirable scroll is done in up to 5 iterations or so!
-        currentFirstVisible = self.firstVisibleLine()
-        while currentFirstVisible != editorFirstVisible:
-            if editorFirstVisible - currentFirstVisible > 0:
-                self.scrollDownAction.activate(None)
-            else:
-                self.scrollUpAction.activate(None)
-            newFirstVisible = self.firstVisibleLine()
-            if newFirstVisible == currentFirstVisible:
-                # The editor refuses to scroll any further, e.g.
-                # The memorized position was below the current file size (file
-                # was reduced outside of codimension)
-                break
-            currentFirstVisible = newFirstVisible
+        self.setFirstVisible(editorFirstVisible)
 
     ## Break points support
 

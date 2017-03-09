@@ -1119,11 +1119,11 @@ class EditorsManager(QTabWidget):
             self.activateTab(0)
 
             editor = newWidget.getEditor()
-            if lineNo > 0:
-                # Jump to the asked line
-                editor.gotoLine(lineNo, pos)
-            else:
-                self.restoreFilePosition(None)
+#            if lineNo > 0:
+#                # Jump to the asked line
+#                editor.gotoLine(lineNo, pos)
+#            else:
+#                self.restoreFilePosition(None)
 
             self._updateIconAndTooltip(self.currentIndex(), editor.mime)
             self.__updateControls()
@@ -1139,6 +1139,13 @@ class EditorsManager(QTabWidget):
 
             self.sigFileTypeChanged.emit(fileName, newWidget.getUUID(),
                                          editor.mime if editor.mime else '')
+            QApplication.processEvents()
+            if lineNo > 0:
+                # Jump to the asked line
+                editor.gotoLine(lineNo, pos)
+            else:
+                self.restoreFilePosition(None)
+            
         except Exception as exc:
             logging.error(str(exc))
             return False
