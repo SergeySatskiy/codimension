@@ -257,6 +257,8 @@ class FindReplaceWidget(QWidget):
             return
 
         self.__editor = currentWidget.getEditor()
+        self.__startPoint = None
+        self.__forward = True
 
         self.findtextCombo.setEnabled(True)
         self.caseCheckBox.setEnabled(True)
@@ -448,6 +450,9 @@ class FindReplaceWidget(QWidget):
         if self.__editor is None:
             return
 
+        if self.__startPoint is None:
+            self.__setStartPoint()
+
         valid, err = self.__isSearchRegexpValid()
         if not valid:
             self.__onInvalidCriteria(fromScratch)
@@ -464,10 +469,7 @@ class FindReplaceWidget(QWidget):
 
         if fromScratch:
             # Brand new editor to search in
-            self.__startPoint = {
-                'absPos': self.__editor.absCursorPosition,
-                'firstVisible': self.__editor.firstVisibleLine()}
-
+            self.__setStartPoint()
             count = self.__editor.highlightRegexp(
                 self.__getRegexp(), self.__editor.absCursorPosition, True)
         else:
@@ -482,17 +484,15 @@ class FindReplaceWidget(QWidget):
 
     def __onNext(self):
         """Triggered when the find next is clicked"""
-        if not self.__onPrevNext():
-            return
-        self.__forward = True
-        self.sigIncSearchDone.emit(self.__findNextPrev())
+        if self.__onPrevNext():
+            self.__forward = True
+            self.sigIncSearchDone.emit(self.__findNextPrev())
 
     def __onPrev(self):
         """Triggered when the find prev is clicked"""
-        if not self.__onPrevNext():
-            return
-        self.__forward = False
-        self.sigIncSearchDone.emit(self.__findNextPrev())
+        if self.__onPrevNext():
+            self.__forward = False
+            self.sigIncSearchDone.emit(self.__findNextPrev())
 
     def __onPrevNext(self):
         """Checks prerequisites. Returns True if the search could be done"""
@@ -508,9 +508,9 @@ class FindReplaceWidget(QWidget):
     def __findByReturnPressed(self):
         """Triggered when 'Enter' or 'Return' is clicked"""
         if self.__forward:
-            self.onNext()
+            self.__onNext()
         else:
-            self.onPrev()
+            self.__onPrev()
 
     def __findNextPrev(self):
         """Finds the next occurrence of the search text"""
@@ -522,6 +522,13 @@ class FindReplaceWidget(QWidget):
         else:
             count = self.__editor.onPrevHighlight()
         return count > 0
+
+    def __setStartPoint(self):
+        """Sets the new start point"""
+        if self.__editor:
+            self.__startPoint = {
+                'absPos': self.__editor.absCursorPosition,
+                'firstVisible': self.__editor.firstVisibleLine()}
 
 
 class ReplaceWidget():
