@@ -689,7 +689,8 @@ class FindInFilesDialog(QDialog):
         """Index in history has changed"""
         if index != -1:
             historyIndex = self.findCombo.itemData(index)
-            self.__deserialize(self.__history[historyIndex])
+            if historyIndex is not None:
+                self.__deserialize(self.__history[historyIndex])
         self.__testSearchability()
 
     def __selectDirClicked(self):

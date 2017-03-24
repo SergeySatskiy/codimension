@@ -24,10 +24,10 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
-from utils.diskvaluesrelay import (getFindHistory, setFindHistory)
+from utils.diskvaluesrelay import getFindHistory, setFindHistory
 from .qt import (QHBoxLayout, QToolButton, QLabel, QSizePolicy, QComboBox,
                  QGridLayout, QWidget, QCheckBox, QKeySequence, Qt, QSize,
-                 QEvent, pyqtSignal)
+                 QEvent, pyqtSignal, QPalette)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -60,26 +60,51 @@ class FindReplaceWidget(QWidget):
     MODE_FIND = 0
     MODE_REPLACE = 1
 
+    # Background colors
+    BG_IDLE = 0
+    BG_NOMATCH = 1
+    BG_MATCH = 2
+    BG_BROKEN = 3
+
     def __init__(self, editorsManager, parent=None):
         QWidget.__init__(self, parent)
         self.__skip = True
 
-        self.__maxHistory = Settings()['maxSearchEntries']
+        self.__maxEntries = Settings()['maxSearchEntries']
 
         self.editorsManager = editorsManager
         self.__editor = None
 
         self.__createLayout()
-        self.findHistory = getFindHistory()
+        self.__history = getFindHistory()
         self.__populateHistory()
-
-        self.__forward = True
 
         # Incremental search support
         self.__startPoint = None    # {'absPos': int, 'firstVisible': int}
 
         self.__skip = False
         GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
+
+        self.__stateColors = {
+            self.BG_IDLE:
+                self.findtextCombo.lineEdit().palette().color(QPalette.Base),
+            self.BG_NOMATCH:
+                GlobalData().skin['findNoMatchPaper'],
+            self.BG_MATCH:
+                GlobalData().skin['findMatchPaper'],
+            self.BG_BROKEN:
+                GlobalData().skin['findInvalidPaper']}
+
+    def __setBackgroundColor(self, state):
+        """Sets the search combo background color to reflect the state"""
+        widget = self.findtextCombo.lineEdit()
+        color = self.__stateColors[state]
+        if state != self.BG_IDLE:
+            color.setAlpha(100)
+
+        palette = widget.palette()
+        palette.setColor(widget.backgroundRole(), color)
+        widget.setPalette(palette)
 
     def __createLayout(self):
         """Creates the layout of the widget"""
@@ -141,6 +166,8 @@ class FindReplaceWidget(QWidget):
 
         self.findtextCombo.lineEdit().returnPressed.connect(
             self.__findByReturnPressed)
+        self.findtextCombo.currentIndexChanged[int].connect(
+            self.__onfindIndexChanged)
 
         # Replace UI elements
         self.replaceLabel = QLabel("Replace:", self)
@@ -225,13 +252,83 @@ class FindReplaceWidget(QWidget):
         """Triggered when a project is changed"""
         if what == CodimensionProject.CompleteProject:
             self.__skip = True
-            self.findHistory = getFindHistory()
+            self.__history = getFindHistory()
             self.__populateHistory()
             self.__skip = False
 
+    def __serialize(self):
+        """Sirializes a current search/replace parameters"""
+        termText = self.findtextCombo.currentText()
+        if self.replaceCombo.isVisible():
+            replaceText = self.replaceCombo.currentText()
+        else:
+            replaceText = ''
+
+        return {'term': termText,
+                'replace': replaceText,
+                'cbCase': self.caseCheckBox.isChecked(),
+                'cbWord': self.wordCheckBox.isChecked(),
+                'cbRegexp': self.regexpCheckBox.isChecked()}
+
+    def __deserialize(self, item):
+        """Deserializes the history item"""
+        self.findtextCombo.setEditText(item['term'])
+        self.replaceCombo.setEditText(item['replace'])
+        self.caseCheckBox.setChecked(item['cbCase'])
+        self.wordCheckBox.setChecked(item['cbWord'])
+        self.regexpCheckBox.setChecked(item['cbRegexp'])
+
     def __populateHistory(self):
         """Populates the history"""
+        # No need to react to the change of the current index
+        self.findtextCombo.currentIndexChanged[int].disconnect(
+            self.__onfindIndexChanged)
+        index = 0
+        for props in self.__history:
+            self.findtextCombo.addItem(props['term'], index)
+            self.replaceCombo.addItem(props['replace'])
+            index += 1
+        # Restore the handler
+        self.findtextCombo.currentIndexChanged[int].connect(
+            self.__onfindIndexChanged)
 
+    def __historyIndexByFindText(self, text):
+        """Provides the history index by the find text"""
+        if text:
+            for index in range(self.findtextCombo.count()):
+                if self.findtextCombo.itemText(index) == text:
+                    return index, self.findtextCombo.itemData(index)
+        return None, None
+
+    def __updateHistory(self):
+        """Updates history if needed"""
+        # Add entries to the combo box if required
+        currentText = self.findtextCombo.currentText()
+        historyItem = self.__serialize()
+        _, historyIndex = self.__historyIndexByFindText(currentText)
+        if historyIndex is not None:
+            self.__history[historyIndex] = historyItem
+        else:
+            self.__history.insert(0, historyItem)
+            if len(self.__history) > self.__maxEntries:
+                self.__history = self.__history[:self.__maxEntries]
+
+        self.__skip = True
+        self.findtextCombo.clear()
+        self.replaceCombo.clear()
+        self.__populateHistory()
+
+        self.findtextCombo.currentIndexChanged[int].disconnect(
+            self.__onfindIndexChanged)
+        comboIndex, _ = self.__historyIndexByFindText(currentText)
+        self.findtextCombo.setCurrentIndex(comboIndex)
+        self.findtextCombo.currentIndexChanged[int].connect(
+            self.__onfindIndexChanged)
+
+        self.__skip = False
+
+        # Save the combo values for further usage
+        setFindHistory(self.__history)
 
     def __disableAll(self):
         """Disables all the controls"""
@@ -258,7 +355,6 @@ class FindReplaceWidget(QWidget):
 
         self.__editor = currentWidget.getEditor()
         self.__startPoint = None
-        self.__forward = True
 
         self.findtextCombo.setEnabled(True)
         self.caseCheckBox.setEnabled(True)
@@ -270,6 +366,8 @@ class FindReplaceWidget(QWidget):
             valid, _ = self.__isSearchRegexpValid()
             if valid:
                 criteriaValid = True
+        if criteriaValid:
+            self.__setBackgroundColor(self.BG_IDLE)
 
         self.findPrevButton.setEnabled(criteriaValid)
         self.findNextButton.setEnabled(criteriaValid)
@@ -286,12 +384,16 @@ class FindReplaceWidget(QWidget):
         """Overridden show method"""
         self.__skip = True
         self.findtextCombo.clear()
-        self.findtextCombo.addItems(self.findHistory)
+        self.replaceCombo.clear()
+        self.regexpCheckBox.setChecked(False)
+        self.caseCheckBox.setChecked(False)
+        self.wordCheckBox.setChecked(False)
+
+        self.__populateHistory()
+
         self.findtextCombo.setEditText(text)
         self.findtextCombo.lineEdit().selectAll()
-        self.regexpCheckBox.setChecked(False)
         self.findtextCombo.setFocus()
-        self.__forward = True
         self.__skip = False
 
         replaceVisible = mode == self.MODE_REPLACE
@@ -304,17 +406,23 @@ class FindReplaceWidget(QWidget):
         QWidget.show(self)
         self.activateWindow()
 
-        self.__performSearch(True)
+        if self.__editor is not None:
+            # Prevent jumping to the next word right away
+            if text:
+                startPos = self.__editor.absCursorPosition + 1
+                self.__performSearch(True, False, startPos)
+            else:
+                self.__performSearch(True, True)
 
     def __onCheckBoxChange(self, newState):
         """Triggered when a search check box state is changed"""
         if not self.__skip:
-            self.__performSearch(False)
+            self.__performSearch(False, True)
 
     def __onEditTextChanged(self, text):
         """Triggered when the search text has been changed"""
         if not self.__skip:
-            self.__performSearch(False)
+            self.__performSearch(False, True)
 
     def __onReplaceAll(self):
         """Triggered when replace all button is clicked"""
@@ -420,6 +528,7 @@ class FindReplaceWidget(QWidget):
         try:
             re.compile(pattern, flags)
         except re.error as ex:
+            self.__setBackgroundColor(self.BG_BROKEN)
             return False, str(ex)
         return True, None
 
@@ -445,7 +554,13 @@ class FindReplaceWidget(QWidget):
         self.replaceAndMoveButton.setEnabled(True)
         self.replaceAllButton.setEnabled(True)
 
-    def __performSearch(self, fromScratch):
+    def __moveToStartPoint(self):
+        """Moves the editor cursor to the start point"""
+        if self.__editor is not None and self.__startPoint is not None:
+            self.__editor.absCursorPosition = self.__startPoint['absPos']
+            self.__editor.setFirstVisible(self.__startPoint['firstVisible'])
+
+    def __performSearch(self, fromScratch, forward, absPos=None):
         """Performs the incremental search"""
         if self.__editor is None:
             return
@@ -456,13 +571,16 @@ class FindReplaceWidget(QWidget):
         valid, err = self.__isSearchRegexpValid()
         if not valid:
             self.__onInvalidCriteria(fromScratch)
-            GlobalData().mainWindow.showStatusBarMessage(err, 3000)
+            GlobalData().mainWindow.showStatusBarMessage(err, 8000)
             self.sigIncSearchDone.emit(False)
+            self.__moveToStartPoint()
             return
 
         if self.findtextCombo.currentText() == '':
             self.__onInvalidCriteria(fromScratch)
             self.sigIncSearchDone.emit(False)
+            self.__setBackgroundColor(self.BG_IDLE)
+            self.__moveToStartPoint()
             return
 
         self.__onValidCriteria()
@@ -470,29 +588,36 @@ class FindReplaceWidget(QWidget):
         if fromScratch:
             # Brand new editor to search in
             self.__setStartPoint()
-            count = self.__editor.highlightRegexp(
-                self.__getRegexp(), self.__editor.absCursorPosition, True)
-        else:
+            startPos = self.__editor.absCursorPosition
+            if absPos is not None:
+                startPos = absPos
             count = self.__editor.highlightRegexp(self.__getRegexp(),
-                                                  self.__startPoint['absPos'],
-                                                  True)
+                                                  startPos, forward)
+        else:
+            startPos = self.__startPoint['absPos']
+            if absPos is not None:
+                startPos = absPos
+            count = self.__editor.highlightRegexp(self.__getRegexp(),
+                                                  startPos, forward)
             if count == 0:
-                self.__editor.absCursorPosition = self.__startPoint['absPos']
-                self.__editor.setFirstVisible(
-                    self.__startPoint['firstVisible'])
+                self.__moveToStartPoint()
         self.sigIncSearchDone.emit(count > 0)
+        self.__setBackgroundColor(self.BG_MATCH if count > 0
+                                  else self.BG_NOMATCH)
 
     def __onNext(self):
         """Triggered when the find next is clicked"""
         if self.__onPrevNext():
-            self.__forward = True
-            self.sigIncSearchDone.emit(self.__findNextPrev())
+            self.__performSearch(False, True,
+                                 self.__editor.absCursorPosition + 1)
+            self.__updateHistory()
 
     def __onPrev(self):
         """Triggered when the find prev is clicked"""
         if self.__onPrevNext():
-            self.__forward = False
-            self.sigIncSearchDone.emit(self.__findNextPrev())
+            self.__performSearch(False, False,
+                                 self.__editor.absCursorPosition - 1)
+            self.__updateHistory()
 
     def __onPrevNext(self):
         """Checks prerequisites. Returns True if the search could be done"""
@@ -507,21 +632,7 @@ class FindReplaceWidget(QWidget):
 
     def __findByReturnPressed(self):
         """Triggered when 'Enter' or 'Return' is clicked"""
-        if self.__forward:
-            self.__onNext()
-        else:
-            self.__onPrev()
-
-    def __findNextPrev(self):
-        """Finds the next occurrence of the search text"""
-        if self.__editor is None:
-            return False
-
-        if self.__forward:
-            count = self.__editor.onNextHighlight()
-        else:
-            count = self.__editor.onPrevHighlight()
-        return count > 0
+        self.__onNext()
 
     def __setStartPoint(self):
         """Sets the new start point"""
@@ -529,6 +640,16 @@ class FindReplaceWidget(QWidget):
             self.__startPoint = {
                 'absPos': self.__editor.absCursorPosition,
                 'firstVisible': self.__editor.firstVisibleLine()}
+
+    def __onfindIndexChanged(self, index):
+        """Index in history has changed"""
+        if index != -1:
+            historyIndex = self.findtextCombo.itemData(index)
+            if historyIndex is not None:
+                self.__deserialize(self.__history[historyIndex])
+            else:
+                self.__updateHistory()
+            self.__performSearch(True, True)
 
 
 class ReplaceWidget():

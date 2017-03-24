@@ -41,6 +41,10 @@ _DEFAULT_SKIN_SETTINGS = {
     'flakesMarginPaper': QColor(208, 208, 208, 255),
     'flakesMarginPaperDebug':  QColor(255, 228, 228, 255),
 
+    'findNoMatchPaper': QColor(255, 193, 204, 100),
+    'findMatchPaper': QColor(164, 198, 57, 100),
+    'findInvalidPaper': QColor(228, 208, 10, 100),
+
     'revisionMarginPaper': QColor(228, 228, 228, 255),
     'revisionMarginColor': QColor(0, 128, 0, 255),
     'revisionAlterPaper': QColor(238, 240, 241, 255),
@@ -350,7 +354,7 @@ class Skin:
         """Loads the general settings file"""
         try:
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
-                self.__values = json.load(diskfile, object_hook=fromJSON)
+                self.__values.update(json.load(diskfile, object_hook=fromJSON))
         except Exception as exc:
             logging.error('Cannot read skin settings from ' + fName +
                           ': ' + str(exc) +
@@ -365,7 +369,8 @@ class Skin:
         """Loads control flow settings file"""
         try:
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
-                self.__cfValues = json.load(diskfile, object_hook=fromJSON)
+                self.__cfValues.update(json.load(diskfile,
+                                                 object_hook=fromJSON))
         except Exception as exc:
             logging.error('Cannot read control flow settings from ' + fName +
                           ': ' + str(exc) +

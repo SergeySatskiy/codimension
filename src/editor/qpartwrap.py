@@ -355,7 +355,7 @@ class QutepartWrapper(Qutepart):
                  matchIndex, totalMatches)
 
         mainWindow = GlobalData().mainWindow
-        mainWindow.showStatusBarMessage(msg, 5000)
+        mainWindow.showStatusBarMessage(msg, 8000)
         return len(self.__matchesCache)
 
     def onHighlight(self):
