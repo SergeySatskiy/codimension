@@ -103,6 +103,8 @@ def __getXmlSyntaxFileByMime(mime):
     try:
         return Qutepart._globalSyntaxManager._mimeTypeToXmlFileName[mime]
     except KeyError:
+        if mime == 'text/x-c++':
+            return 'cpp.xml'
         return None
 
 

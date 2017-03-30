@@ -127,7 +127,7 @@ class FindReplaceWidget(QWidget):
         self.findtextCombo.setCompleter(None)
         self.findtextCombo.setDuplicatesEnabled(False)
         self.findtextCombo.setEnabled(False)
-        self.findtextCombo.editTextChanged.connect(self.__onEditTextChanged)
+        self.findtextCombo.editTextChanged.connect(self.__onCriteriaChanged)
 
         self.findPrevButton = QToolButton(self)
         self.findPrevButton.setToolTip("Previous occurrence (Ctrl+,)")
@@ -150,19 +150,19 @@ class FindReplaceWidget(QWidget):
         self.caseCheckBox.setText("Match case")
         self.caseCheckBox.setFocusPolicy(Qt.NoFocus)
         self.caseCheckBox.setEnabled(False)
-        self.caseCheckBox.stateChanged.connect(self.__onCheckBoxChange)
+        self.caseCheckBox.stateChanged.connect(self.__onCriteriaChanged)
 
         self.wordCheckBox = QCheckBox(self)
         self.wordCheckBox.setText("Whole word")
         self.wordCheckBox.setFocusPolicy(Qt.NoFocus)
         self.wordCheckBox.setEnabled(False)
-        self.wordCheckBox.stateChanged.connect(self.__onCheckBoxChange)
+        self.wordCheckBox.stateChanged.connect(self.__onCriteriaChanged)
 
         self.regexpCheckBox = QCheckBox(self)
         self.regexpCheckBox.setText("Regexp")
         self.regexpCheckBox.setFocusPolicy(Qt.NoFocus)
         self.regexpCheckBox.setEnabled(False)
-        self.regexpCheckBox.stateChanged.connect(self.__onCheckBoxChange)
+        self.regexpCheckBox.stateChanged.connect(self.__onCriteriaChanged)
 
         self.findtextCombo.lineEdit().returnPressed.connect(
             self.__findByReturnPressed)
@@ -414,15 +414,10 @@ class FindReplaceWidget(QWidget):
             else:
                 self.__performSearch(True, True)
 
-    def __onCheckBoxChange(self, newState):
-        """Triggered when a search check box state is changed"""
+    def __onCriteriaChanged(self, _):
+        """Triggered when the search text or a checkbox state changed"""
         if not self.__skip:
-            self.__performSearch(False, True)
-
-    def __onEditTextChanged(self, text):
-        """Triggered when the search text has been changed"""
-        if not self.__skip:
-            self.__performSearch(False, True)
+            self.__performSearch(True, True)
 
     def __onReplaceAll(self):
         """Triggered when replace all button is clicked"""

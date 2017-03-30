@@ -353,8 +353,11 @@ class Skin:
     def __loadSkin(self, fName):
         """Loads the general settings file"""
         try:
+            origLength = len(self.__values)
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
                 self.__values.update(json.load(diskfile, object_hook=fromJSON))
+            if origLength != len(self.__values):
+                self.flush()
         except Exception as exc:
             logging.error('Cannot read skin settings from ' + fName +
                           ': ' + str(exc) +
@@ -368,9 +371,12 @@ class Skin:
     def __loadCFlow(self, fName):
         """Loads control flow settings file"""
         try:
+            origLength = len(self.__cfValues)
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
                 self.__cfValues.update(json.load(diskfile,
                                                  object_hook=fromJSON))
+            if origLength != len(self.__cfValues):
+                self.flushCFlow()
         except Exception as exc:
             logging.error('Cannot read control flow settings from ' + fName +
                           ': ' + str(exc) +
