@@ -51,6 +51,7 @@ class ComboBoxNoUndo(QComboBox):
         return QComboBox.event(self, event)
 
 
+
 class FindReplaceWidget(QWidget):
 
     """Find and replace widgets"""
@@ -164,8 +165,6 @@ class FindReplaceWidget(QWidget):
         self.regexpCheckBox.setEnabled(False)
         self.regexpCheckBox.stateChanged.connect(self.__onCriteriaChanged)
 
-        self.findtextCombo.lineEdit().returnPressed.connect(
-            self.__findByReturnPressed)
         self.findtextCombo.currentIndexChanged[int].connect(
             self.__onfindIndexChanged)
 
@@ -248,6 +247,22 @@ class FindReplaceWidget(QWidget):
             if activeWindow:
                 activeWindow.setFocus()
 
+    def keyReleaseEvent(self, event):
+        """Handles Ctrl+,. Enter and Shift+Enter"""
+        key = event.key()
+        modifiers = event.modifiers()
+        if modifiers == Qt.ControlModifier:
+            if key == Qt.Key_Comma:
+                self.__onPrev()
+            elif key == Qt.Key_Period:
+                self.__onNext()
+        elif modifiers == Qt.ShiftModifier:
+            if key in [Qt.Key_Enter, Qt.Key_Return]:
+                self.__onPrev()
+        elif modifiers == Qt.NoModifier:
+            if key in [Qt.Key_Enter, Qt.Key_Return]:
+                self.__onNext()
+
     def __onProjectChanged(self, what):
         """Triggered when a project is changed"""
         if what == CodimensionProject.CompleteProject:
@@ -320,10 +335,14 @@ class FindReplaceWidget(QWidget):
 
         self.findtextCombo.currentIndexChanged[int].disconnect(
             self.__onfindIndexChanged)
+        print("index disconnected")
         comboIndex, _ = self.__historyIndexByFindText(currentText)
+        print("setting new history index")
         self.findtextCombo.setCurrentIndex(comboIndex)
+        print("new history index set")
         self.findtextCombo.currentIndexChanged[int].connect(
             self.__onfindIndexChanged)
+        print("index connected")
 
         self.__skip = False
 
@@ -407,12 +426,12 @@ class FindReplaceWidget(QWidget):
         self.activateWindow()
 
         if self.__editor is not None:
-            # Prevent jumping to the next word right away
-            if text:
-                startPos = self.__editor.absCursorPosition + 1
-                self.__performSearch(True, False, startPos)
-            else:
-                self.__performSearch(True, True)
+            # Even if the cursor is in a middle of a word, the Ctrl+F does not
+            # move to the next match. It is done in the editorsmanager handler.
+            # When a search is initiated the cursor is moved to the begiining
+            # of a word if so. Thus, here we always start to search forward
+            # without jumping to the next match.
+            self.__performSearch(True, True)
 
     def __onCriteriaChanged(self, _):
         """Triggered when the search text or a checkbox state changed"""
@@ -557,6 +576,7 @@ class FindReplaceWidget(QWidget):
 
     def __performSearch(self, fromScratch, forward, absPos=None):
         """Performs the incremental search"""
+        print("Perform search: scratch: " + str(fromScratch) + " forward: " + str(forward) + " start pos: " + str(absPos))
         if self.__editor is None:
             return
 
@@ -624,10 +644,6 @@ class FindReplaceWidget(QWidget):
         validWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
                         MainWindowTabWidgetBase.VCSAnnotateViewer]
         return currentWidget.getType() in validWidgets
-
-    def __findByReturnPressed(self):
-        """Triggered when 'Enter' or 'Return' is clicked"""
-        self.__onNext()
 
     def __setStartPoint(self):
         """Sets the new start point"""

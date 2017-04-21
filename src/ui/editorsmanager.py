@@ -1555,7 +1555,9 @@ class EditorsManager(QTabWidget):
             self.gotoWidget.hide()
 
             editor = self.currentWidget().getEditor()
-            word, _, _, _ = editor.getCurrentOrSelection()
+            word, _, startPos, _ = editor.getCurrentOrSelection()
+            if word:
+                editor.absCursorPosition = startPos
             if self.findReplaceWidget.isHidden():
                 self.findReplaceWidget.show(
                     self.findReplaceWidget.MODE_FIND, word)
