@@ -296,6 +296,21 @@ class QutepartWrapper(Qutepart):
             return match
         return None
 
+    def isCursorOnMatch(self):
+        """True if the cursor is on the first pos of any match"""
+        if self.__matchesCache:
+            pos = self.absCursorPosition
+            for match in self.__matchesCache:
+                if match.start() == pos:
+                    return True
+        return False
+
+    def getCurrentMatchesCount(self):
+        """Provides the number of the current matches"""
+        if self.__matchesCache:
+            return len(self.__matchesCache)
+        return 0
+
     def getCurrentOrSelection(self):
         """Provides what should be used for search.
 
@@ -384,3 +399,22 @@ class QutepartWrapper(Qutepart):
             return self.onHighlight()
         return self.highlightRegexp(self.__matchesRegexp,
                                     self.absCursorPosition - 1, False)
+
+    def replaceAllMatches(self, replaceText):
+        """Replaces all the current matches with the other text"""
+        count = 0
+        if self.__matchesCache:
+            count = len(self.__matchesCache)
+            with self:
+                # reverse order, because replacement may move indexes
+                for match in self.__matchesCache[::-1]:
+                    self.replaceText(match.start(), len(match.group(0)),
+                                     replaceText)
+            self.resetHighlight()
+
+        if count == 1:
+            msg = '1 match replaced'
+        else:
+            msg = '%d matches replaced' % count
+        mainWindow = GlobalData().mainWindow
+        mainWindow.showStatusBarMessage(msg, 8000)

@@ -27,7 +27,7 @@ from utils.project import CodimensionProject
 from utils.diskvaluesrelay import getFindHistory, setFindHistory
 from .qt import (QHBoxLayout, QToolButton, QLabel, QSizePolicy, QComboBox,
                  QGridLayout, QWidget, QCheckBox, QKeySequence, Qt, QSize,
-                 QEvent, pyqtSignal, QPalette)
+                 QEvent, pyqtSignal, QPalette, QObject)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -35,9 +35,13 @@ class ComboBoxNoUndo(QComboBox):
 
     """Combo box which allows application wide Ctrl+Z etc."""
 
+    sigNext = pyqtSignal()
+    sigPrevious = pyqtSignal()
+
     def __init__(self, parent=None):
         QComboBox.__init__(self, parent)
         self.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
+        self.setEditable(True)
 
     def event(self, event):
         """Skips the Undo/Redo shortcuts.
@@ -48,8 +52,23 @@ class ComboBoxNoUndo(QComboBox):
                 return False
             if event.matches(QKeySequence.Redo):
                 return False
+        if event.type() == QEvent.KeyPress:
+            key = event.key()
+            modifiers = event.modifiers()
+            if key in [Qt.Key_Enter, Qt.Key_Return]:
+                if modifiers == Qt.NoModifier:
+                    self.sigNext.emit()
+                else:
+                    self.sigPrevious.emit()
+                return False
+            if modifiers == Qt.ControlModifier:
+                if key == Qt.Key_Comma:
+                    self.sigPrevious.emit()
+                    return False
+                if key == Qt.Key_Period:
+                    self.sigNext.emit()
+                    return False
         return QComboBox.event(self, event)
-
 
 
 class FindReplaceWidget(QWidget):
@@ -69,21 +88,23 @@ class FindReplaceWidget(QWidget):
 
     def __init__(self, editorsManager, parent=None):
         QWidget.__init__(self, parent)
-        self.__skip = True
 
         self.__maxEntries = Settings()['maxSearchEntries']
 
         self.editorsManager = editorsManager
         self.__editor = None
+        self.__subscribedToCursor = False
 
         self.__createLayout()
+        self.__changesConnected = False
+        self.__connectOnChanges()
+
         self.__history = getFindHistory()
         self.__populateHistory()
 
         # Incremental search support
         self.__startPoint = None    # {'absPos': int, 'firstVisible': int}
 
-        self.__skip = False
         GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
         self.__stateColors = {
@@ -123,24 +144,23 @@ class FindReplaceWidget(QWidget):
         sizePolicy.setHeightForWidth(
             self.findtextCombo.sizePolicy().hasHeightForWidth())
         self.findtextCombo.setSizePolicy(sizePolicy)
-        self.findtextCombo.setEditable(True)
         self.findtextCombo.setInsertPolicy(QComboBox.InsertAtTop)
         self.findtextCombo.setCompleter(None)
         self.findtextCombo.setDuplicatesEnabled(False)
         self.findtextCombo.setEnabled(False)
-        self.findtextCombo.editTextChanged.connect(self.__onCriteriaChanged)
+        self.findtextCombo.sigNext.connect(self.__onNext)
+        self.findtextCombo.sigPrevious.connect(self.__onPrev)
 
         self.findPrevButton = QToolButton(self)
-        self.findPrevButton.setToolTip("Previous occurrence (Ctrl+,)")
+        self.findPrevButton.setToolTip("Previous match (Ctrl+,)")
         self.findPrevButton.setIcon(getIcon("1leftarrow.png"))
         self.findPrevButton.setIconSize(QSize(24, 16))
         self.findPrevButton.setFocusPolicy(Qt.NoFocus)
         self.findPrevButton.setEnabled(False)
         self.findPrevButton.clicked.connect(self.__onPrev)
 
-
         self.findNextButton = QToolButton(self)
-        self.findNextButton.setToolTip("Next occurrence (Ctrl+.)")
+        self.findNextButton.setToolTip("Next match (Ctrl+.)")
         self.findNextButton.setIcon(getIcon("1rightarrow.png"))
         self.findNextButton.setIconSize(QSize(24, 16))
         self.findNextButton.setFocusPolicy(Qt.NoFocus)
@@ -151,22 +171,17 @@ class FindReplaceWidget(QWidget):
         self.caseCheckBox.setText("Match case")
         self.caseCheckBox.setFocusPolicy(Qt.NoFocus)
         self.caseCheckBox.setEnabled(False)
-        self.caseCheckBox.stateChanged.connect(self.__onCriteriaChanged)
 
         self.wordCheckBox = QCheckBox(self)
         self.wordCheckBox.setText("Whole word")
         self.wordCheckBox.setFocusPolicy(Qt.NoFocus)
         self.wordCheckBox.setEnabled(False)
-        self.wordCheckBox.stateChanged.connect(self.__onCriteriaChanged)
 
         self.regexpCheckBox = QCheckBox(self)
         self.regexpCheckBox.setText("Regexp")
         self.regexpCheckBox.setFocusPolicy(Qt.NoFocus)
         self.regexpCheckBox.setEnabled(False)
-        self.regexpCheckBox.stateChanged.connect(self.__onCriteriaChanged)
 
-        self.findtextCombo.currentIndexChanged[int].connect(
-            self.__onfindIndexChanged)
 
         # Replace UI elements
         self.replaceLabel = QLabel("Replace:", self)
@@ -179,21 +194,20 @@ class FindReplaceWidget(QWidget):
         sizePolicy.setHeightForWidth(
             self.replaceCombo.sizePolicy().hasHeightForWidth())
         self.replaceCombo.setSizePolicy(sizePolicy)
-        self.replaceCombo.setEditable(True)
         self.replaceCombo.setInsertPolicy(QComboBox.InsertAtTop)
         self.replaceCombo.setCompleter(None)
         self.replaceCombo.setDuplicatesEnabled(False)
         self.replaceCombo.setEnabled(False)
 
         self.replaceButton = QToolButton(self)
-        self.replaceButton.setToolTip("Replace current occurrence")
+        self.replaceButton.setToolTip("Replace current match")
         self.replaceButton.setIcon(getIcon("replace.png"))
         self.replaceButton.setEnabled(False)
         self.replaceButton.clicked.connect(self.__onReplace)
         self.replaceButton.setIconSize(QSize(24, 16))
 
         self.replaceAllButton = QToolButton(self)
-        self.replaceAllButton.setToolTip("Replace all occurrences")
+        self.replaceAllButton.setToolTip("Replace all matches")
         self.replaceAllButton.setIcon(getIcon("replace-all.png"))
         self.replaceAllButton.setIconSize(QSize(24, 16))
         self.replaceAllButton.setEnabled(False)
@@ -201,7 +215,7 @@ class FindReplaceWidget(QWidget):
 
         self.replaceAndMoveButton = QToolButton(self)
         self.replaceAndMoveButton.setToolTip(
-            "Replace current occurrence and move to the next match")
+            "Replace current match and move to the next one")
         self.replaceAndMoveButton.setIcon(getIcon("replace-move.png"))
         self.replaceAndMoveButton.setIconSize(QSize(24, 16))
         self.replaceAndMoveButton.setEnabled(False)
@@ -247,29 +261,11 @@ class FindReplaceWidget(QWidget):
             if activeWindow:
                 activeWindow.setFocus()
 
-    def keyReleaseEvent(self, event):
-        """Handles Ctrl+,. Enter and Shift+Enter"""
-        key = event.key()
-        modifiers = event.modifiers()
-        if modifiers == Qt.ControlModifier:
-            if key == Qt.Key_Comma:
-                self.__onPrev()
-            elif key == Qt.Key_Period:
-                self.__onNext()
-        elif modifiers == Qt.ShiftModifier:
-            if key in [Qt.Key_Enter, Qt.Key_Return]:
-                self.__onPrev()
-        elif modifiers == Qt.NoModifier:
-            if key in [Qt.Key_Enter, Qt.Key_Return]:
-                self.__onNext()
-
     def __onProjectChanged(self, what):
         """Triggered when a project is changed"""
         if what == CodimensionProject.CompleteProject:
-            self.__skip = True
             self.__history = getFindHistory()
             self.__populateHistory()
-            self.__skip = False
 
     def __serialize(self):
         """Sirializes a current search/replace parameters"""
@@ -287,25 +283,48 @@ class FindReplaceWidget(QWidget):
 
     def __deserialize(self, item):
         """Deserializes the history item"""
+        self.__disconnectOnChanges()
         self.findtextCombo.setEditText(item['term'])
         self.replaceCombo.setEditText(item['replace'])
         self.caseCheckBox.setChecked(item['cbCase'])
         self.wordCheckBox.setChecked(item['cbWord'])
         self.regexpCheckBox.setChecked(item['cbRegexp'])
+        self.__connectOnChanges()
+
+    def __connectOnChanges(self):
+        """Connects all the UI controls to their on change handlers"""
+        if not self.__changesConnected:
+            self.findtextCombo.editTextChanged.connect(
+                self.__onCriteriaChanged)
+            self.findtextCombo.currentIndexChanged[int].connect(
+                self.__onfindIndexChanged)
+            self.caseCheckBox.stateChanged.connect(self.__onCriteriaChanged)
+            self.wordCheckBox.stateChanged.connect(self.__onCriteriaChanged)
+            self.regexpCheckBox.stateChanged.connect(self.__onCriteriaChanged)
+            self.__changesConnected = True
+
+    def __disconnectOnChanges(self):
+        """Disconnects all the UI controls from their on change handlers"""
+        if self.__changesConnected:
+            self.findtextCombo.editTextChanged.disconnect(
+                self.__onCriteriaChanged)
+            self.findtextCombo.currentIndexChanged[int].disconnect(
+                self.__onfindIndexChanged)
+            self.caseCheckBox.stateChanged.disconnect(self.__onCriteriaChanged)
+            self.wordCheckBox.stateChanged.disconnect(self.__onCriteriaChanged)
+            self.regexpCheckBox.stateChanged.disconnect(
+                self.__onCriteriaChanged)
+            self.__changesConnected = False
 
     def __populateHistory(self):
         """Populates the history"""
-        # No need to react to the change of the current index
-        self.findtextCombo.currentIndexChanged[int].disconnect(
-            self.__onfindIndexChanged)
+        self.__disconnectOnChanges()
         index = 0
         for props in self.__history:
             self.findtextCombo.addItem(props['term'], index)
             self.replaceCombo.addItem(props['replace'])
             index += 1
-        # Restore the handler
-        self.findtextCombo.currentIndexChanged[int].connect(
-            self.__onfindIndexChanged)
+        self.__connectOnChanges()
 
     def __historyIndexByFindText(self, text):
         """Provides the history index by the find text"""
@@ -318,6 +337,7 @@ class FindReplaceWidget(QWidget):
     def __updateHistory(self):
         """Updates history if needed"""
         # Add entries to the combo box if required
+        self.__disconnectOnChanges()
         currentText = self.findtextCombo.currentText()
         historyItem = self.__serialize()
         _, historyIndex = self.__historyIndexByFindText(currentText)
@@ -328,23 +348,14 @@ class FindReplaceWidget(QWidget):
             if len(self.__history) > self.__maxEntries:
                 self.__history = self.__history[:self.__maxEntries]
 
-        self.__skip = True
         self.findtextCombo.clear()
         self.replaceCombo.clear()
         self.__populateHistory()
 
-        self.findtextCombo.currentIndexChanged[int].disconnect(
-            self.__onfindIndexChanged)
-        print("index disconnected")
+        self.__disconnectOnChanges()
         comboIndex, _ = self.__historyIndexByFindText(currentText)
-        print("setting new history index")
         self.findtextCombo.setCurrentIndex(comboIndex)
-        print("new history index set")
-        self.findtextCombo.currentIndexChanged[int].connect(
-            self.__onfindIndexChanged)
-        print("index connected")
-
-        self.__skip = False
+        self.__connectOnChanges()
 
         # Save the combo values for further usage
         setFindHistory(self.__history)
@@ -364,6 +375,7 @@ class FindReplaceWidget(QWidget):
 
     def updateStatus(self):
         """Triggered when the current tab is changed"""
+        self.__unsubscribeFromCursorChangePos()
         currentWidget = self.editorsManager.currentWidget()
         validWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
                         MainWindowTabWidgetBase.VCSAnnotateViewer]
@@ -373,6 +385,7 @@ class FindReplaceWidget(QWidget):
             return
 
         self.__editor = currentWidget.getEditor()
+        self.__editor.resetHighlight()
         self.__startPoint = None
 
         self.findtextCombo.setEnabled(True)
@@ -380,28 +393,29 @@ class FindReplaceWidget(QWidget):
         self.wordCheckBox.setEnabled(True)
         self.regexpCheckBox.setEnabled(True)
 
-        criteriaValid = False
-        if self.findtextCombo.currentText() != "":
-            valid, _ = self.__isSearchRegexpValid()
-            if valid:
-                criteriaValid = True
+        criteriaValid = self.__isCriteriaValid()
         if criteriaValid:
             self.__setBackgroundColor(self.BG_IDLE)
 
         self.findPrevButton.setEnabled(criteriaValid)
         self.findNextButton.setEnabled(criteriaValid)
-        self.replaceButton.setEnabled(criteriaValid)
-        self.replaceAndMoveButton.setEnabled(criteriaValid)
+
+        self.replaceCombo.setEnabled(True)
+        self.replaceButton.setEnabled(False)
+        self.replaceAndMoveButton.setEnabled(False)
         self.replaceAllButton.setEnabled(criteriaValid)
 
-    def setFocus(self):
-        """Overridded setFocus"""
-        self.findtextCombo.lineEdit().selectAll()
-        self.findtextCombo.setFocus()
+    def __isCriteriaValid(self):
+        """True if the search criteria is valid"""
+        if self.findtextCombo.currentText() != "":
+            valid, _ = self.__isSearchRegexpValid()
+            if valid:
+                return True
+        return False
 
     def show(self, mode, text=''):
         """Overridden show method"""
-        self.__skip = True
+        self.__disconnectOnChanges()
         self.findtextCombo.clear()
         self.replaceCombo.clear()
         self.regexpCheckBox.setChecked(False)
@@ -410,10 +424,10 @@ class FindReplaceWidget(QWidget):
 
         self.__populateHistory()
 
+        self.__disconnectOnChanges()
         self.findtextCombo.setEditText(text)
         self.findtextCombo.lineEdit().selectAll()
-        self.findtextCombo.setFocus()
-        self.__skip = False
+        self.__connectOnChanges()
 
         replaceVisible = mode == self.MODE_REPLACE
         self.replaceLabel.setVisible(replaceVisible)
@@ -433,50 +447,38 @@ class FindReplaceWidget(QWidget):
             # without jumping to the next match.
             self.__performSearch(True, True)
 
+        if mode == self.MODE_REPLACE:
+            self.replaceCombo.setFocus()
+        else:
+            self.findtextCombo.setFocus()
+
+        self.__subscribeToCursorChangePos()
+
+    def hide(self):
+        """Overriden hide method"""
+        self.__unsubscribeFromCursorChangePos()
+        QWidget.hide(self)
+
     def __onCriteriaChanged(self, _):
         """Triggered when the search text or a checkbox state changed"""
-        if not self.__skip:
-            self.__performSearch(True, True)
+        self.__performSearch(True, True)
 
     def __onReplaceAll(self):
         """Triggered when replace all button is clicked"""
-        text = self.findtextCombo.currentText()
-        isRegexp = self.regexpCheckBox.isChecked()
-        isCase = self.caseCheckBox.isChecked()
-        isWord = self.wordCheckBox.isChecked()
-        replaceText = self.replaceCombo.currentText()
-
-        self.__updateReplaceHistory(text, replaceText)
-
-        # Check that there is at least one target to replace
-        found = self._editor.findFirstTarget(text,
-                                             isRegexp, isCase, isWord, 0, 0)
-        if not found:
-            GlobalData().mainWindow.showStatusBarMessage(
-                "No matches found. Nothing is replaced.")
-            return
-
-        # There is something matching
-        count = 0
-        self._editor.beginUndoAction()
-        while found:
-            self._editor.replaceTarget(str(replaceText))
-            count += 1
-            found = self._editor.findNextTarget()
-        self._editor.endUndoAction()
-        self.replaceButton.setEnabled(False)
-        self.replaceAndMoveButton.setEnabled(False)
-        self.__replaceCouldBeEnabled = False
-
-        suffix = ""
-        if count > 1:
-            suffix = "s"
-        GlobalData().mainWindow.showStatusBarMessage(
-            str(count) + " occurrence" + suffix + " replaced.")
-        GlobalData().mainWindow.clearStatusBarMessage(1)
+        if self.replaceCombo.isVisible():
+            if self.replaceAllButton.isEnabled():
+                replaceText = self.replaceCombo.currentText()
+                self.__editor.replaceAllMatches(replaceText)
+                self.__cursorPositionChanged()
+                self.__updateHistory()
 
     def __onReplace(self):
-        """Triggered when replace current occurrence button is clicked"""
+        """Triggered when replace current match button is clicked"""
+        if not self.replaceCombo.isVisible():
+            return
+        if not self.replaceButton.isEnabled():
+            return
+
         replaceText = self.replaceCombo.currentText()
         text = self.findtextCombo.currentText()
         isRegexp = self.regexpCheckBox.isChecked()
@@ -509,6 +511,11 @@ class FindReplaceWidget(QWidget):
 
     def __onReplaceAndMove(self):
         """Triggered when replace-and-move button is clicked"""
+        if not self.replaceCombo.isVisible():
+            return
+        if not self.replaceAndMoveButton.isEnabled():
+            return
+
         buttonFocused = self.replaceAndMoveButton.hasFocus()
         self.__onReplace()
         self.onNext(False)
@@ -577,6 +584,8 @@ class FindReplaceWidget(QWidget):
     def __performSearch(self, fromScratch, forward, absPos=None):
         """Performs the incremental search"""
         print("Perform search: scratch: " + str(fromScratch) + " forward: " + str(forward) + " start pos: " + str(absPos))
+        import traceback
+        traceback.print_stack()
         if self.__editor is None:
             return
 
@@ -660,114 +669,34 @@ class FindReplaceWidget(QWidget):
                 self.__deserialize(self.__history[historyIndex])
             else:
                 self.__updateHistory()
-            self.__performSearch(True, True)
-
-
-class ReplaceWidget():
-
-    """Find and replace in the current file widget"""
-
-    def __init__(self, editorsManager, parent=None):
-        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
-        self.sigIncSearchDone.connect(self.__onSearchDone)
-        self.replaceCombo.editTextChanged.connect(self.__onReplaceTextChanged)
-        self.replaceCombo.lineEdit().returnPressed.connect(
-            self.__onReplaceAndMove)
-        self.__connected = False
-        self.__replaceCouldBeEnabled = False
-        self._skip = False
-
-    def __updateReplaceAllButtonStatus(self):
-        """Updates the replace all button status"""
-        self.replaceCombo.setEnabled(self._isTextEditor)
-        textAvailable = self.findtextCombo.currentText() != ""
-        self.replaceAllButton.setEnabled(self._isTextEditor and textAvailable)
-
-    def show(self, text=''):
-        """Overriden show method"""
-        self._skip = True
-        self.replaceCombo.clear()
-        self.replaceCombo.addItems(self.replaceHistory)
-        self.replaceCombo.setEditText('')
-        self._skip = False
-
-        FindReplaceBase.show(self, text)
-        self.__subscribeToCursorChangePos()
-
-    def hide(self):
-        """Overriden hide method"""
-        if self.__connected:
-            self.__unsubscribeFromCursorChange()
-        FindReplaceBase.hide(self)
-
-    def __onSearchDone(self, found):
-        """Triggered when incremental search is done"""
-        self.replaceButton.setEnabled(found)
-        self.replaceAndMoveButton.setEnabled(found)
-        self.replaceAllButton.setEnabled(found)
-        self.__replaceCouldBeEnabled = True
-
-    def __onReplaceTextChanged(self, text):
-        """Triggered when replace with text is changed"""
-        self.__updateReplaceAllButtonStatus()
-        self.replaceButton.setEnabled(self.__replaceCouldBeEnabled)
-        self.replaceAndMoveButton.setEnabled(self.__replaceCouldBeEnabled)
 
     def __subscribeToCursorChangePos(self):
         """Subscribes for the cursor position notification"""
-        if self._editor is not None:
-            self._editor.cursorPositionChanged.connect(
-                self.__cursorPositionChanged)
-            self.__connected = True
-
-    def __unsubscribeFromCursorChange(self):
-        """Unsubscribes from the cursor position notification"""
-        if self._editor is not None:
-            try:
-                self._editor.cursorPositionChanged.disconnect(
+        if not self.__subscribedToCursor:
+            if self.__editor:
+                self.__editor.cursorPositionChanged.connect(
                     self.__cursorPositionChanged)
-            except:
-                pass
-            self.__connected = False
+                self.__subscribedToCursor = True
+
+    def __unsubscribeFromCursorChangePos(self):
+        """Unsubscribes from the cursor position notification"""
+        if self.__subscribedToCursor:
+            if self.__editor:
+                try:
+                    self.__editor.cursorPositionChanged.disconnect(
+                        self.__cursorPositionChanged)
+                except:
+                    pass
+            self.__subscribedToCursor = False
 
     def __cursorPositionChanged(self):
         """Triggered when the cursor position is changed"""
-        if self._searchSupport.hasEditor(self._editorUUID):
-            line, pos = self._editor.cursorPosition
-            searchAttributes = self._searchSupport.get(self._editorUUID)
-            enable = line == searchAttributes.match[0] and \
-                     pos == searchAttributes.match[1]
-        else:
-            enable = False
+        if self.replaceCombo.isVisible():
+            onMatch = self.__editor.isCursorOnMatch()
 
-        self.replaceButton.setEnabled(enable)
-        self.replaceAndMoveButton.setEnabled(enable)
-        self.__replaceCouldBeEnabled = enable
+            self.replaceButton.setEnabled(onMatch)
+            self.replaceAndMoveButton.setEnabled(onMatch)
 
-    def __updateReplaceHistory(self, text, replaceText):
-        """Updates the history in the project and in the combo boxes"""
-        changedWhat = self._addToHistory(self.findtextCombo,
-                                         self.findHistory, text)
-        changedReplace = self._addToHistory(self.replaceCombo,
-                                            self.replaceHistory, replaceText)
-        if changedWhat or changedReplace:
-            prj = GlobalData().project
-            prj.setReplaceHistory(self.findHistory, self.replaceHistory)
-
-    def onNext(self, clearSBMessage=True):
-        """Triggered when the find next button is clicked"""
-        oldLine = self._currentWidget.getLine()
-        oldPos = self._currentWidget.getPos()
-        FindReplaceBase.onNext(self, clearSBMessage)
-        if oldLine == self._currentWidget.getLine() and \
-           oldPos == self._currentWidget.getPos():
-            FindReplaceBase.onNext(self, clearSBMessage)
-
-        self.__updateReplaceHistory(self.findtextCombo.currentText(),
-                                    self.replaceCombo.currentText())
-
-    def onPrev(self):
-        """Triggered when the find previous button is clicked"""
-        FindReplaceBase.onPrev(self)
-        self.__updateReplaceHistory(self.findtextCombo.currentText(),
-                                    self.replaceCombo.currentText())
+            self.replaceAllButton.setEnabled(
+                self.__isCriteriaValid() and
+                self.__editor.getCurrentMatchesCount() > 0)

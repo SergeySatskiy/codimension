@@ -1558,32 +1558,20 @@ class EditorsManager(QTabWidget):
             word, _, startPos, _ = editor.getCurrentOrSelection()
             if word:
                 editor.absCursorPosition = startPos
-            if self.findReplaceWidget.isHidden():
-                self.findReplaceWidget.show(
-                    self.findReplaceWidget.MODE_FIND, word)
-            else:
-                if word:
-                    self.findReplaceWidget.show(
-                        self.findReplaceWidget.MODE_FIND, word)
-            self.findReplaceWidget.setFocus()
+            self.findReplaceWidget.show(self.findReplaceWidget.MODE_FIND, word)
 
     def onReplace(self):
         """Triggered when Ctrl+R is received"""
         validWidgets = [MainWindowTabWidgetBase.PlainTextEditor]
-        if self.currentWidget().getType() not in validWidgets:
-            return
+        if self.currentWidget().getType() in validWidgets:
+            self.gotoWidget.hide()
 
-        self.gotoWidget.hide()
-
-        searchText = self.currentWidget().getEditor().getSearchText()
-        if self.findReplaceWidget.isHidden():
-            self.findReplaceWidget.show(
-                self.findReplaceWidget.MODE_REPLACE, searchText)
-        else:
-            if searchText:
-                self.findReplaceWidget.show(
-                    self.findReplaceWidget.MODE_REPLACE, searchText)
-        self.findReplaceWidget.setFocus()
+            editor = self.currentWidget().getEditor()
+            word, _, startPos, _ = editor.getCurrentOrSelection()
+            if word:
+                editor.absCursorPosition = startPos
+            self.findReplaceWidget.show(self.findReplaceWidget.MODE_REPLACE,
+                                        word)
 
     def onGoto(self):
         """Triggered when Ctrl+G is received"""
