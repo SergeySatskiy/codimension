@@ -369,8 +369,7 @@ class QutepartWrapper(Qutepart):
                 (len(self.__matchesCache), Settings()['maxHighlightedMatches'],
                  matchIndex, totalMatches)
 
-        mainWindow = GlobalData().mainWindow
-        mainWindow.showStatusBarMessage(msg, 8000)
+        self.__showStatusBarMessage(msg)
         return len(self.__matchesCache)
 
     def onHighlight(self):
@@ -404,6 +403,7 @@ class QutepartWrapper(Qutepart):
         """Replaces all the current matches with the other text"""
         count = 0
         if self.__matchesCache:
+            regExp = self.__matchesRegexp
             count = len(self.__matchesCache)
             with self:
                 # reverse order, because replacement may move indexes
@@ -411,10 +411,37 @@ class QutepartWrapper(Qutepart):
                     self.replaceText(match.start(), len(match.group(0)),
                                      replaceText)
             self.resetHighlight()
+            self.updateFoundItemsHighlighting(regExp)
 
         if count == 1:
             msg = '1 match replaced'
         else:
             msg = '%d matches replaced' % count
+        self.__showStatusBarMessage(msg)
+
+    def replaceMatch(self, replaceText):
+        """Replaces the match on which the cursor is"""
+        if self.__matchesCache:
+            pos = self.absCursorPosition
+            for match in self.__matchesCache:
+                if match.start() == pos:
+                    regExp = self.__matchesRegexp
+                    self.replaceText(match.start(), len(match.group(0)),
+                                     replaceText)
+                    self.__matchesCache = None
+                    self.updateFoundItemsHighlighting(regExp)
+                    count = len(self.__matchesCache)
+                    if count == 0:
+                        msg = "No matches left"
+                    elif count == 1:
+                        msg = "1 match left"
+                    else:
+                        msg = '%d matches left' % count
+                    self.__showStatusBarMessage(msg)
+                    break
+
+    @staticmethod
+    def __showStatusBarMessage(msg):
+        """Shows a main window status bar message"""
         mainWindow = GlobalData().mainWindow
         mainWindow.showStatusBarMessage(msg, 8000)
