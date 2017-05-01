@@ -120,7 +120,9 @@ Codimension home page</a>.<br> Happy coding with Codimension!
              patched, license, licenseLink, localPath) in components:
             text += "<li><a href='" + homeURL + "'>" + prettyName + "</a><br>" \
                     "Version: "
-            if version is not None and version[ 0 ].isdigit():
+            if version is not None and len( version ) == 0:
+                text += "n/a"
+            elif version is not None and version[ 0 ].isdigit():
                 text += version
             elif version is not None and version.lower() == "not installed":
                 text += version.lower()
