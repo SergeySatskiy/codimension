@@ -145,6 +145,10 @@ class MainWindowStatusBarMixin:
         """Clears the status bar message in the given slot"""
         self.__statusBar.clearMessage()
 
+    def getCurrentStatusBarMessage(self):
+        """Provides the current status bar message"""
+        return self.__statusBar.currentMessage()
+
     def _showVCSLabelContextMenu(self, pos):
         """Triggered when a context menu is requested for a VCS label"""
         contextMenu = QMenu(self)

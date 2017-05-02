@@ -32,6 +32,7 @@ class QutepartWrapper(Qutepart):
     """Convenience qutepart wrapper"""
 
     sigTextEditorZoom = pyqtSignal(int)
+    sigHighlighted = pyqtSignal(str, int, int)
 
     def __init__(self, parent):
         Qutepart.__init__(self, parent)
@@ -311,6 +312,19 @@ class QutepartWrapper(Qutepart):
             return len(self.__matchesCache)
         return 0
 
+    def getMatchesInfo(self):
+        """Returns match number or None and total number of matches"""
+        matchNumber = None
+        totalMatches = None
+        if self.__matchesCache:
+            pos = self.absCursorPosition
+            totalMatches = 0
+            for match in self.__matchesCache:
+                totalMatches += 1
+                if match.start() == pos:
+                    matchNumber = totalMatches
+        return matchNumber, totalMatches
+
     def getCurrentOrSelection(self):
         """Provides what should be used for search.
 
@@ -348,7 +362,7 @@ class QutepartWrapper(Qutepart):
                                  for match in matches])
         return True
 
-    def highlightRegexp(self, regExp, searchPos, forward):
+    def highlightRegexp(self, regExp, searchPos, forward, needMessage=True):
         """Highlights the matches, moves cursor, displays message"""
         highlighted = self.updateFoundItemsHighlighting(regExp)
         match = self.__searchInText(regExp, searchPos, forward)
@@ -358,18 +372,17 @@ class QutepartWrapper(Qutepart):
             self.absCursorPosition = match.start()
             self.ensureCursorVisible()
 
-        if highlighted:
-            if self.__matchesCache:
-                msg = 'Match %d of %d' % (matchIndex, totalMatches)
+        if needMessage:
+            if highlighted:
+                if self.__matchesCache:
+                    msg = 'match %d of %d' % (matchIndex, totalMatches)
+                else:
+                    msg = 'no matches'
             else:
-                msg = 'No matches'
-        else:
-            msg = 'Too many matches to highlight (%d exceeds the limit of %d' \
-                '). Match %d of %d' % \
-                (len(self.__matchesCache), Settings()['maxHighlightedMatches'],
-                 matchIndex, totalMatches)
-
-        self.__showStatusBarMessage(msg)
+                msg = 'match %d of %d (too many to highlight, ' \
+                    'exceeds the limit of %d)' % (matchIndex, totalMatches,
+                        Settings()['maxHighlightedMatches'])
+            self.__showStatusBarMessage(msg)
         return len(self.__matchesCache)
 
     def onHighlight(self):
@@ -378,12 +391,16 @@ class QutepartWrapper(Qutepart):
         if not word or '\r' in word or '\n' in word:
             return 0
 
+        wordFlag = 0
         if wasSelection:
             regExp = re.compile('%s' % re.escape(word), re.IGNORECASE)
         else:
             regExp = re.compile('\\b%s\\b' % re.escape(word), re.IGNORECASE)
+            wordFlag = 1
 
-        return self.highlightRegexp(regExp, absEnd, False)
+        count = self.highlightRegexp(regExp, absEnd, False)
+        self.sigHighlighted.emit(word, wordFlag, count)
+        return count
 
     def onNextHighlight(self):
         """Triggered when Ctrl+. is clicked"""
@@ -401,22 +418,51 @@ class QutepartWrapper(Qutepart):
 
     def replaceAllMatches(self, replaceText):
         """Replaces all the current matches with the other text"""
-        count = 0
-        if self.__matchesCache:
+        if not self.__matchesCache:
+            return
+
+        replaceCount = 0
+        noReplaceCount = 0
+        for match in self.__matchesCache[::-1]:
+            textToReplace = self.text[match.start():
+                                      match.start() + len(match.group(0))]
+            if textToReplace == replaceText:
+                noReplaceCount += 1
+            else:
+                replaceCount += 1
+
+        if replaceCount > 0:
+            cursorPos = None
+            delta = 0
             regExp = self.__matchesRegexp
-            count = len(self.__matchesCache)
             with self:
                 # reverse order, because replacement may move indexes
                 for match in self.__matchesCache[::-1]:
-                    self.replaceText(match.start(), len(match.group(0)),
-                                     replaceText)
+                    textToReplace = self.text[match.start():
+                                              match.start() +
+                                              len(match.group(0))]
+                    if textToReplace != replaceText:
+                        self.replaceText(match.start(), len(match.group(0)),
+                                         replaceText)
+
+                    if cursorPos is None:
+                        cursorPos = self.absCursorPosition
+                    else:
+                        delta += len(replaceText) - len(textToReplace)
+
             self.resetHighlight()
             self.updateFoundItemsHighlighting(regExp)
+            self.absCursorPosition = cursorPos + delta
 
-        if count == 1:
+        if replaceCount == 1:
             msg = '1 match replaced'
         else:
-            msg = '%d matches replaced' % count
+            msg = '%d matches replaced' % replaceCount
+
+        if noReplaceCount > 0:
+            msg += '; %d skipped ' \
+                   '(the highlight matches replacement)' % noReplaceCount
+
         self.__showStatusBarMessage(msg)
 
     def replaceMatch(self, replaceText):
@@ -426,17 +472,18 @@ class QutepartWrapper(Qutepart):
             for match in self.__matchesCache:
                 if match.start() == pos:
                     regExp = self.__matchesRegexp
-                    self.replaceText(match.start(), len(match.group(0)),
-                                     replaceText)
-                    self.__matchesCache = None
-                    self.updateFoundItemsHighlighting(regExp)
-                    count = len(self.__matchesCache)
-                    if count == 0:
-                        msg = "No matches left"
-                    elif count == 1:
-                        msg = "1 match left"
+                    textToReplace = self.text[match.start():
+                                              match.start() +
+                                              len(match.group(0))]
+                    if textToReplace == replaceText:
+                        msg = "no replace: the highlight matches replacement"
                     else:
-                        msg = '%d matches left' % count
+                        self.replaceText(match.start(), len(match.group(0)),
+                                         replaceText)
+                        self.__matchesCache = None
+                        self.updateFoundItemsHighlighting(regExp)
+                        msg = "1 match replaced"
+
                     self.__showStatusBarMessage(msg)
                     break
 
