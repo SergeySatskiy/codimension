@@ -127,8 +127,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def dedentLine(self):
         pass
-    def selectTillDisplayEnd(self):
-        pass
 
     def __initHotKeys(self):
         """Initializes a map for the hot keys event filter"""
@@ -140,8 +138,8 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             SHIFT: {Qt.Key_Delete: self.onShiftDel,
                     Qt.Key_Tab: self.dedentLine,
                     Qt.Key_Backtab: self.dedentLine,
-                    Qt.Key_End: self.selectTillDisplayEnd,
-                    Qt.Key_Home: self._onShiftHome},
+                    Qt.Key_End: self.onShiftEnd,
+                    Qt.Key_Home: self.onShiftHome},
             CTRL: {Qt.Key_X: self.onShiftDel,
                    Qt.Key_C: self.onCtrlC,
                    Qt.Key_Insert: self.onCtrlC,
@@ -165,7 +163,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             CTRL_KEYPAD: {Qt.Key_Minus: self.onZoomOut,
                           Qt.Key_Plus: self.onZoomIn,
                           Qt.Key_0: self.onZoomReset},
-            NO_MODIFIER: {Qt.Key_Home: self._onHome,
+            NO_MODIFIER: {Qt.Key_Home: self.onHome,
                           Qt.Key_End: self.moveToLineEnd,
                           Qt.Key_F12: self.makeLineFirst}}
 
@@ -505,10 +503,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             self.cursorPosition = line, 0
             self.ensureLineOnScreen(line)
 
-    def _onShiftHome(self):
-        """Triggered when Shift+HOME is received"""
-        self.selectTillLineBegin(Settings()['jumpToFirstNonSpace'])
-
     def onAutoComplete(self):
         """Triggered when ctrl+space or TAB is clicked"""
         if self.isReadOnly():
@@ -697,6 +691,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             return True
         if not self.isPythonBuffer():
             return True
+
+        # Temporary
+        return True
 
         if self.styleAt(self.currentPosition()) in [
             QsciLexerPython.TripleDoubleQuotedString,

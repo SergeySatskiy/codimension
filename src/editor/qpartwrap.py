@@ -191,8 +191,8 @@ class QutepartWrapper(Qutepart):
             return len(text) - len(lStripped)
         return None
 
-    def moveToLineBegin(self, toFirstNonSpace):
-        """Jumps to the first non-space or to position 0"""
+    def __getNewHomePos(self, toFirstNonSpace):
+        """Provides the new cursor position for a HOME click"""
         line, pos = self.cursorPosition
         newPos = 0
         if toFirstNonSpace:
@@ -200,11 +200,34 @@ class QutepartWrapper(Qutepart):
             if lStripped:
                 calcPos = len(self.lines[line]) - len(lStripped)
                 newPos = 0 if pos <= calcPos else calcPos
-        self.cursorPosition = line, newPos
+        return line, newPos
 
-    def _onHome(self):
+    def moveToLineBegin(self, toFirstNonSpace):
+        """Jumps to the first non-space or to position 0"""
+        newLine, newPos = self.__getNewHomePos(toFirstNonSpace)
+        self.cursorPosition = newLine, newPos
+
+    def selectTillLineBegin(self, toFirstNonSpace):
+        """Selects consistently with HOME behavior"""
+        newLine, newPos = self.__getNewHomePos(toFirstNonSpace)
+        cursor = self.textCursor()
+        cursor.setPosition(self.mapToAbsPosition(newLine, newPos),
+                           QTextCursor.KeepAnchor)
+        self.setTextCursor(cursor)
+
+    def onHome(self):
         """Triggered when HOME is received"""
         self.moveToLineBegin(Settings()['jumpToFirstNonSpace'])
+
+    def onShiftHome(self):
+        """Triggered when Shift+HOME is received"""
+        self.selectTillLineBegin(Settings()['jumpToFirstNonSpace'])
+
+    def onShiftEnd(self):
+        """Selects till the end of line"""
+        cursor = self.textCursor()
+        cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+        self.setTextCursor(cursor)
 
     def printUserData(self):
         """Debug purpose member to print the highlight data"""
@@ -238,7 +261,7 @@ class QutepartWrapper(Qutepart):
     def removeTrailingWhitespaces(self):
         """Removes trailing whitespaces"""
         with self:
-            for index in len(self.lines):
+            for index in range(len(self.lines)):
                 orig = self.lines[index]
                 stripped = orig.rstrip()
                 if orig != stripped:

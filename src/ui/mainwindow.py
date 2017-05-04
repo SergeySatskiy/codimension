@@ -28,9 +28,8 @@ from utils.project import CodimensionProject
 from utils.misc import (getDefaultTemplate, getIDETemplateFile,
                         getProjectTemplateFile, extendInstance)
 from utils.pixmapcache import getIcon
-from utils.settings import THIRDPARTY_DIR
 from utils.fileutils import (getFileProperties, isImageViewable, isImageFile,
-                             isFileSearchable, isCDMProjectFile, isPythonMime)
+                             isFileSearchable, isCDMProjectFile)
 from utils.diskvaluesrelay import getRunParameters, addRunParams
 from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
                                 ImportDiagramOptions)
@@ -38,6 +37,7 @@ from utils.run import (getWorkingDir,
                        parseCommandLineArguments, getNoArgsEnvironment,
                        TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM,
                        TERM_REDIRECT)
+from utils.fileutils import isPythonMime
 from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from debugger.server import CodimensionDebugger
@@ -49,21 +49,15 @@ from autocomplete.completelists import getOccurrences
 from profiling.profui import ProfilingProgressDialog
 from profiling.disasm import getDisassembled
 from debugger.bputils import clearValidBreakpointLinesCache
-from utils.colorfont import getMonospaceFontList
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
 from editor.redirectedioconsole import IOConsoleTabWidget
-from utils.skin import getThemesList
-from utils.config import CONFIG_DIR
-from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QLabel,
-                 QToolBar, QWidget, QMessageBox, QVBoxLayout, QSplitter,
-                 QSizePolicy, QAction, QMainWindow, QShortcut, QFrame,
-                 QApplication, QMenu, QToolButton, QToolTip, QFileDialog,
-                 QDialog, QStyleFactory, QActionGroup, QFont, QCursor,
-                 QPalette, QColor, QDesktopServices)
+from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QToolBar, QWidget,
+                 QMessageBox, QVBoxLayout, QSplitter, QSizePolicy, QAction,
+                 QMainWindow, QShortcut, QApplication, QCursor, QToolButton,
+                 QToolTip, QFileDialog, QDialog, QFont, QMenu, QDesktopServices)
 from .about import AboutDialog
 from .runmanager import RunManager
-from .fitlabel import FitPathLabel
 from .sidebar import SideBar
 from .logviewer import LogViewer
 from .taghelpviewer import TagHelpViewer
@@ -88,6 +82,7 @@ from .findfile import FindFileDialog
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .runparams import RunDialog
 from .mainstatusbar import MainWindowStatusBarMixin
+from .mainmenu import MainWindowMenuMixin
 
 
 class EditorsManagerWidget(QWidget):
@@ -135,6 +130,9 @@ class CodimensionMainWindow(QMainWindow):
 
         extendInstance(self, MainWindowStatusBarMixin)
         MainWindowStatusBarMixin.__init__(self)
+
+        extendInstance(self, MainWindowMenuMixin)
+        MainWindowMenuMixin.__init__(self)
 
         self.debugMode = False
         # Last position the IDE received control from the debugger
@@ -194,9 +192,9 @@ class CodimensionMainWindow(QMainWindow):
         self.__createToolBar()
 
         splash.showMessage("Creating layout...")
-        self.__leftSideBar = None
-        self.__bottomSideBar = None
-        self.__rightSideBar = None
+        self._leftSideBar = None
+        self._bottomSideBar = None
+        self._rightSideBar = None
 
         # Setup output redirectors
         sys.stdout = Redirector(True)
@@ -213,17 +211,15 @@ class CodimensionMainWindow(QMainWindow):
 
         splash.showMessage("Initializing main menu bar...")
         self.__initPluginSupport()
-        self.__initMainMenu()
+        self._initMainMenu()
 
         self.updateWindowTitle()
         self.__printThirdPartyAvailability()
 
         findNextAction = QShortcut('F3', self)
-        findNextAction.activated.connect(
-            self.editorsManagerWidget.editorsManager.findNext)
+        findNextAction.activated.connect(self.em.findNext)
         findPrevAction = QShortcut('Shift+F3', self)
-        findPrevAction.activated.connect(
-            self.editorsManagerWidget.editorsManager.findPrev)
+        findPrevAction.activated.connect(self.em.findPrev)
 
         self.__runManager = RunManager(self)
 
@@ -252,29 +248,29 @@ class CodimensionMainWindow(QMainWindow):
                 self.settings['ypos'] = self.y()
         self.__initialisation = False
 
-    def __onMaximizeEditor(self):
+    def _onMaximizeEditor(self):
         """Triggered when F11 is pressed"""
-        self.__leftSideBar.shrink()
-        self.__bottomSideBar.shrink()
-        self.__rightSideBar.shrink()
+        self._leftSideBar.shrink()
+        self._bottomSideBar.shrink()
+        self._rightSideBar.shrink()
 
     def __createLayout(self):
         """Creates the UI layout"""
         self.editorsManagerWidget = EditorsManagerWidget(self, self.__debugger)
-        self.editorsManagerWidget.editorsManager.sigTabRunChanged.connect(
-            self.setDebugTabAvailable)
+        self.em = self.editorsManagerWidget.editorsManager
+        self.em.sigTabRunChanged.connect(self.setDebugTabAvailable)
 
         self.editorsManagerWidget.findReplaceWidget.hide()
         self.editorsManagerWidget.gotoLineWidget.hide()
 
         # The layout is a sidebar-style one
-        self.__bottomSideBar = SideBar(SideBar.South, self)
-        self.__leftSideBar = SideBar(SideBar.West, self)
-        self.__rightSideBar = SideBar(SideBar.East, self)
+        self._bottomSideBar = SideBar(SideBar.South, self)
+        self._leftSideBar = SideBar(SideBar.West, self)
+        self._rightSideBar = SideBar(SideBar.East, self)
 
         # Create tabs on bars
         self.logViewer = LogViewer()
-        self.__bottomSideBar.addTab(self.logViewer, getIcon('logviewer.png'),
+        self._bottomSideBar.addTab(self.logViewer, getIcon('logviewer.png'),
                                     'Log', 'log', 0)
         sys.stdout.appendToStdout.connect(self.toStdout)
         sys.stderr.appendToStderr.connect(self.toStderr)
@@ -284,92 +280,84 @@ class CodimensionMainWindow(QMainWindow):
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(
             logging.Formatter("%(levelname) -10s %(asctime)s %(message)s",
-            None))
+                              None))
         logging.root.addHandler(handler)
 
         self.projectViewer = ProjectViewer(self)
-        self.__leftSideBar.addTab(self.projectViewer, getIcon(''),
-                                  'Project', 'project', 0)
-        self.editorsManagerWidget.editorsManager.sigFileUpdated.connect(
-            self.projectViewer.onFileUpdated)
+        self._leftSideBar.addTab(self.projectViewer, getIcon(''),
+                                 'Project', 'project', 0)
+        self.em.sigFileUpdated.connect(self.projectViewer.onFileUpdated)
         self.recentProjectsViewer = RecentProjectsViewer(self)
-        self.__leftSideBar.addTab(self.recentProjectsViewer, getIcon(''),
-                                  "Recent", 'recent', 1)
-        self.editorsManagerWidget.editorsManager.sigFileUpdated.connect(
-            self.recentProjectsViewer.onFileUpdated)
-        self.editorsManagerWidget.editorsManager.sigBufferSavedAs.connect(
+        self._leftSideBar.addTab(self.recentProjectsViewer, getIcon(''),
+                                 'Recent', 'recent', 1)
+        self.em.sigFileUpdated.connect(self.recentProjectsViewer.onFileUpdated)
+        self.em.sigBufferSavedAs.connect(
             self.recentProjectsViewer.onFileUpdated)
         self.projectViewer.sigFileUpdated.connect(
             self.recentProjectsViewer.onFileUpdated)
 
         self.classesViewer = ClassesViewer()
-        self.editorsManagerWidget.editorsManager.sigFileUpdated.connect(
-            self.classesViewer.onFileUpdated)
-        self.__leftSideBar.addTab(self.classesViewer, getIcon(''),
-                                  'Classes', 'classes', 2)
+        self.em.sigFileUpdated.connect(self.classesViewer.onFileUpdated)
+        self._leftSideBar.addTab(self.classesViewer, getIcon(''),
+                                 'Classes', 'classes', 2)
         self.functionsViewer = FunctionsViewer()
-        self.editorsManagerWidget.editorsManager.sigFileUpdated.connect(
-            self.functionsViewer.onFileUpdated)
-        self.__leftSideBar.addTab(self.functionsViewer, getIcon(''),
-                                  'Functions', 'functions', 3)
+        self.em.sigFileUpdated.connect(self.functionsViewer.onFileUpdated)
+        self._leftSideBar.addTab(self.functionsViewer, getIcon(''),
+                                 'Functions', 'functions', 3)
         self.globalsViewer = GlobalsViewer()
-        self.editorsManagerWidget.editorsManager.sigFileUpdated.connect(
-            self.globalsViewer.onFileUpdated)
-        self.__leftSideBar.addTab(self.globalsViewer, getIcon(''),
-                                  'Globals', 'globals', 4)
+        self.em.sigFileUpdated.connect(self.globalsViewer.onFileUpdated)
+        self._leftSideBar.addTab(self.globalsViewer, getIcon(''),
+                                 'Globals', 'globals', 4)
 
         # Create search results viewer
         self.findInFilesViewer = FindInFilesViewer()
-        self.__bottomSideBar.addTab(self.findInFilesViewer,
+        self._bottomSideBar.addTab(self.findInFilesViewer,
             getIcon('findindir.png'), 'Search results', 'search', 1)
 
         # Create tag help viewer
         self.tagHelpViewer = TagHelpViewer()
-        self.__bottomSideBar.addTab(self.tagHelpViewer,
+        self._bottomSideBar.addTab(self.tagHelpViewer,
             getIcon('helpviewer.png'), 'Context help', 'contexthelp', 2)
-        self.__bottomSideBar.setTabToolTip('contexthelp',
+        self._bottomSideBar.setTabToolTip('contexthelp',
                                            "Ctrl+F1 in python file")
 
         # Create diff viewer
         self.diffViewer = DiffViewer()
-        self.__bottomSideBar.addTab(self.diffViewer,
+        self._bottomSideBar.addTab(self.diffViewer,
             getIcon('diffviewer.png'), 'Diff viewer', 'diff', 3)
-        self.__bottomSideBar.setTabToolTip('diff', 'No diff shown')
+        self._bottomSideBar.setTabToolTip('diff', 'No diff shown')
 
         # Create outline viewer
-        self.outlineViewer = FileOutlineViewer(
-            self.editorsManagerWidget.editorsManager, self)
-        self.__rightSideBar.addTab(self.outlineViewer,
-            getIcon(''), 'File outline', 'fileoutline', 0)
+        self.outlineViewer = FileOutlineViewer(self.em, self)
+        self._rightSideBar.addTab(self.outlineViewer, getIcon(''),
+                                  'File outline', 'fileoutline', 0)
 
         # Create the pyflakes viewer
-        self.__pyflakesViewer = PyflakesViewer(
-            self.editorsManagerWidget.editorsManager,
-            self.sbPyflakes, self)
+        self.__pyflakesViewer = PyflakesViewer(self.em, self.sbPyflakes, self)
 
         self.debuggerContext = DebuggerContext(self.__debugger)
-        self.__rightSideBar.addTab(self.debuggerContext,
+        self._rightSideBar.addTab(self.debuggerContext,
             getIcon(''), 'Debugger', 'debugger', 1)
-        self.__rightSideBar.setTabEnabled('debugger', False)
+        self._rightSideBar.setTabEnabled('debugger', False)
 
         self.debuggerExceptions = DebuggerExceptions()
-        self.__rightSideBar.addTab(self.debuggerExceptions,
+        self._rightSideBar.addTab(self.debuggerExceptions,
             getIcon(''), 'Exceptions', 'exceptions', 2)
         self.debuggerExceptions.sigClientExceptionsCleared.connect(
             self.__onClientExceptionsCleared)
 
         self.debuggerBreakWatchPoints = DebuggerBreakWatchPoints(
             self, self.__debugger)
-        self.__rightSideBar.addTab(self.debuggerBreakWatchPoints,
+        self._rightSideBar.addTab(self.debuggerBreakWatchPoints,
             getIcon(''), 'Breakpoints', 'breakpoints', 3)
 
         # Create splitters
         self.__horizontalSplitter = QSplitter(Qt.Horizontal)
         self.__verticalSplitter = QSplitter(Qt.Vertical)
 
-        self.__horizontalSplitter.addWidget(self.__leftSideBar)
+        self.__horizontalSplitter.addWidget(self._leftSideBar)
         self.__horizontalSplitter.addWidget(self.editorsManagerWidget)
-        self.__horizontalSplitter.addWidget(self.__rightSideBar)
+        self.__horizontalSplitter.addWidget(self._rightSideBar)
 
         # This prevents changing the size of the side panels
         self.__horizontalSplitter.setCollapsible(0, False)
@@ -379,7 +367,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__horizontalSplitter.setStretchFactor(2, 0)
 
         self.__verticalSplitter.addWidget(self.__horizontalSplitter)
-        self.__verticalSplitter.addWidget(self.__bottomSideBar)
+        self.__verticalSplitter.addWidget(self._bottomSideBar)
         # This prevents changing the size of the side panels
         self.__verticalSplitter.setCollapsible(1, False)
         self.__verticalSplitter.setStretchFactor(0, 1)
@@ -387,20 +375,20 @@ class CodimensionMainWindow(QMainWindow):
 
         self.setCentralWidget(self.__verticalSplitter)
 
-        self.__leftSideBar.setSplitter(self.__horizontalSplitter)
-        self.__bottomSideBar.setSplitter(self.__verticalSplitter)
-        self.__rightSideBar.setSplitter(self.__horizontalSplitter)
+        self._leftSideBar.setSplitter(self.__horizontalSplitter)
+        self._bottomSideBar.setSplitter(self.__verticalSplitter)
+        self._rightSideBar.setSplitter(self.__horizontalSplitter)
 
     def restoreSplitterSizes(self):
         """Restore the side bar state"""
         self.__horizontalSplitter.setSizes(self.settings['hSplitterSizes'])
         self.__verticalSplitter.setSizes(self.settings['vSplitterSizes'])
         if self.settings['leftBarMinimized']:
-            self.__leftSideBar.shrink()
+            self._leftSideBar.shrink()
         if self.settings['bottomBarMinimized']:
-            self.__bottomSideBar.shrink()
+            self._bottomSideBar.shrink()
         if self.settings['rightBarMinimized']:
-            self.__rightSideBar.shrink()
+            self._rightSideBar.shrink()
 
         # Setup splitters movement handlers
         self.__verticalSplitter.splitterMoved.connect(self.vSplitterMoved)
@@ -420,7 +408,7 @@ class CodimensionMainWindow(QMainWindow):
         """Vertical splitter moved handler"""
         newSizes = list(self.__verticalSplitter.sizes())
 
-        if not self.__bottomSideBar.isMinimized():
+        if not self._bottomSideBar.isMinimized():
             self.__verticalSplitterSizes[0] = newSizes[0]
 
         self.__verticalSplitterSizes[1] = sum(newSizes) - \
@@ -430,632 +418,14 @@ class CodimensionMainWindow(QMainWindow):
         """Horizontal splitter moved handler"""
         newSizes = list(self.__horizontalSplitter.sizes())
 
-        if not self.__leftSideBar.isMinimized():
+        if not self._leftSideBar.isMinimized():
             self.__horizontalSplitterSizes[0] = newSizes[0]
-        if not self.__rightSideBar.isMinimized():
+        if not self._rightSideBar.isMinimized():
             self.__horizontalSplitterSizes[2] = newSizes[2]
 
         self.__horizontalSplitterSizes[1] = sum(newSizes) - \
             self.__horizontalSplitterSizes[0] - \
             self.__horizontalSplitterSizes[2]
-
-    def __initMainMenu(self):
-        """Initializes the main menu bar"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-
-        # The Project menu
-        self.__projectMenu = QMenu("&Project", self)
-        self.__projectMenu.aboutToShow.connect(self.__prjAboutToShow)
-        self.__projectMenu.aboutToHide.connect(self.__prjAboutToHide)
-        self.__newProjectAct = self.__projectMenu.addAction(
-            getIcon('createproject.png'), "&New project",
-            self.__createNewProject, 'Ctrl+Shift+N')
-        self.__openProjectAct = self.__projectMenu.addAction(
-            getIcon('project.png'), '&Open project',
-            self.__openProject, 'Ctrl+Shift+O')
-        self.__unloadProjectAct = self.__projectMenu.addAction(
-            getIcon('unloadproject.png'), '&Unload project',
-            self.projectViewer.unloadProject)
-        self.__projectPropsAct = self.__projectMenu.addAction(
-            getIcon('smalli.png'), '&Properties',
-            self.projectViewer.projectProperties)
-        self.__projectMenu.addSeparator()
-        self.__prjTemplateMenu = QMenu("Project-specific &template", self)
-        self.__createPrjTemplateAct = self.__prjTemplateMenu.addAction(
-            getIcon('generate.png'), '&Create')
-        self.__createPrjTemplateAct.triggered.connect(
-            self.__onCreatePrjTemplate)
-        self.__editPrjTemplateAct = self.__prjTemplateMenu.addAction(
-            getIcon('edit.png'), '&Edit')
-        self.__editPrjTemplateAct.triggered.connect(self.__onEditPrjTemplate)
-        self.__prjTemplateMenu.addSeparator()
-        self.__delPrjTemplateAct = self.__prjTemplateMenu.addAction(
-            getIcon('trash.png'), '&Delete')
-        self.__delPrjTemplateAct.triggered.connect(self.__onDelPrjTemplate)
-        self.__projectMenu.addMenu(self.__prjTemplateMenu)
-        self.__projectMenu.addSeparator()
-        self.__recentPrjMenu = QMenu("&Recent projects", self)
-        self.__recentPrjMenu.triggered.connect(self.__onRecentPrj)
-        self.__projectMenu.addMenu(self.__recentPrjMenu)
-        self.__projectMenu.addSeparator()
-        self.__quitAct = self.__projectMenu.addAction(
-            getIcon('exitmenu.png'), "E&xit codimension",
-            QApplication.closeAllWindows, "Ctrl+Q")
-
-        # The Tab menu
-        self.__tabMenu = QMenu("&Tab", self)
-        self.__tabMenu.aboutToShow.connect(self.__tabAboutToShow)
-        self.__tabMenu.aboutToHide.connect(self.__tabAboutToHide)
-        self.__newTabAct = self.__tabMenu.addAction(
-            getIcon('filemenu.png'), "&New tab",
-            editorsManager.newTabClicked, 'Ctrl+N')
-        self.__openFileAct = self.__tabMenu.addAction(
-            getIcon('filemenu.png'), '&Open file', self.__openFile, 'Ctrl+O')
-        self.__cloneTabAct = self.__tabMenu.addAction(
-            getIcon('clonetabmenu.png'), '&Clone tab', editorsManager.onClone)
-        self.__closeOtherTabsAct = self.__tabMenu.addAction(
-            getIcon(''), 'Close oth&er tabs', editorsManager.onCloseOther)
-        self.__closeTabAct = self.__tabMenu.addAction(
-            getIcon('closetabmenu.png'), 'Close &tab',
-            editorsManager.onCloseTab)
-        self.__tabMenu.addSeparator()
-        self.__saveFileAct = self.__tabMenu.addAction(
-            getIcon('savemenu.png'), '&Save', editorsManager.onSave, 'Ctrl+S')
-        self.__saveFileAsAct = self.__tabMenu.addAction(
-            getIcon('saveasmenu.png'),
-            'Save &as...', editorsManager.onSaveAs, "Ctrl+Shift+S")
-        self.__tabJumpToDefAct = self.__tabMenu.addAction(
-            getIcon('definition.png'), "&Jump to definition",
-            self.__onTabJumpToDef)
-        self.__calltipAct = self.__tabMenu.addAction(
-            getIcon('calltip.png'), 'Show &calltip', self.__onShowCalltip)
-        self.__tabJumpToScopeBeginAct = self.__tabMenu.addAction(
-            getIcon('jumpupscopemenu.png'),
-            'Jump to scope &begin', self.__onTabJumpToScopeBegin)
-        self.__tabOpenImportAct = self.__tabMenu.addAction(
-            getIcon('imports.png'), 'Open &import(s)', self.__onTabOpenImport)
-        self.__openAsFileAct = self.__tabMenu.addAction(
-            getIcon('filemenu.png'), 'O&pen as file', self.__onOpenAsFile)
-        self.__downloadAndShowAct = self.__tabMenu.addAction(
-            getIcon('filemenu.png'), 'Download and show',
-            self.__onDownloadAndShow)
-        self.__openInBrowserAct = self.__tabMenu.addAction(
-            getIcon('homepagemenu.png'), 'Open in browser',
-            self.__onOpenInBrowser)
-        self.__tabMenu.addSeparator()
-        self.__highlightInPrjAct = self.__tabMenu.addAction(
-            getIcon('highlightmenu.png'), 'Highlight in project browser',
-            editorsManager.onHighlightInPrj)
-        self.__highlightInFSAct = self.__tabMenu.addAction(
-            getIcon('highlightmenu.png'), 'Highlight in file system browser',
-            editorsManager.onHighlightInFS)
-        self.__highlightInOutlineAct = self.__tabMenu.addAction(
-            getIcon('highlightmenu.png'), 'Highlight in outline browser',
-            self.__onHighlightInOutline)
-        self.__tabMenu.addSeparator()
-        self.__recentFilesMenu = QMenu("&Recent files", self)
-        self.__recentFilesMenu.triggered.connect(self.__onRecentFile)
-        self.__tabMenu.addMenu(self.__recentFilesMenu)
-
-        # The Edit menu
-        self.__editMenu = QMenu("&Edit", self)
-        self.__editMenu.aboutToShow.connect(self.__editAboutToShow)
-        self.__editMenu.aboutToHide.connect(self.__editAboutToHide)
-        self.__undoAct = self.__editMenu.addAction(
-            getIcon('undo.png'), '&Undo', self.__onUndo)
-        self.__redoAct = self.__editMenu.addAction(
-            getIcon('redo.png'), '&Redo', self.__onRedo)
-        self.__editMenu.addSeparator()
-        self.__cutAct = self.__editMenu.addAction(
-            getIcon('cutmenu.png'), 'Cu&t', self.__onCut)
-        self.__copyAct = self.__editMenu.addAction(
-            getIcon('copymenu.png'), '&Copy', editorsManager.onCopy)
-        self.__pasteAct = self.__editMenu.addAction(
-            getIcon('pastemenu.png'), '&Paste', self.__onPaste)
-        self.__selectAllAct = self.__editMenu.addAction(
-            getIcon('selectallmenu.png'), 'Select &all', self.__onSelectAll)
-        self.__editMenu.addSeparator()
-        self.__commentAct = self.__editMenu.addAction(
-            getIcon('commentmenu.png'), 'C&omment/uncomment', self.__onComment)
-        self.__duplicateAct = self.__editMenu.addAction(
-            getIcon('duplicatemenu.png'), '&Duplicate line',
-            self.__onDuplicate)
-        self.__autocompleteAct = self.__editMenu.addAction(
-            getIcon('autocompletemenu.png'), 'Autoco&mplete',
-            self.__onAutocomplete)
-        self.__expandTabsAct = self.__editMenu.addAction(
-            getIcon('expandtabs.png'), 'Expand tabs (&4 spaces)',
-            self.__onExpandTabs)
-        self.__trailingSpacesAct = self.__editMenu.addAction(
-            getIcon('trailingws.png'), 'Remove trailing &spaces',
-            self.__onRemoveTrailingSpaces)
-
-        # The Search menu
-        self.__searchMenu = QMenu("&Search", self)
-        self.__searchMenu.aboutToShow.connect(self.__searchAboutToShow)
-        self.__searchMenu.aboutToHide.connect(self.__searchAboutToHide)
-        self.__searchInFilesAct = self.__searchMenu.addAction(
-            getIcon('findindir.png'), "Find in file&s",
-            self.findInFilesClicked, "Ctrl+Shift+F")
-        self.__searchMenu.addSeparator()
-        self.__findNameMenuAct = self.__searchMenu.addAction(
-            getIcon('findname.png'), 'Find &name in project',
-            self.findNameClicked, 'Alt+Shift+S')
-        self.__fileProjectFileAct = self.__searchMenu.addAction(
-            getIcon('findfile.png'), 'Find &project file',
-            self.findFileClicked, 'Alt+Shift+O')
-        self.__searchMenu.addSeparator()
-        self.__findOccurencesAct = self.__searchMenu.addAction(
-            getIcon('findindir.png'), 'Find &occurrences',
-            self.__onFindOccurences)
-        self.__findAct = self.__searchMenu.addAction(
-            getIcon('findindir.png'), '&Find...', self.__onFind)
-        self.__findNextAct = self.__searchMenu.addAction(
-            getIcon('1rightarrow.png'), "Find &next", self.__onFindNext)
-        self.__findPrevAct = self.__searchMenu.addAction(
-            getIcon('1leftarrow.png'), "Find pre&vious", self.__onFindPrevious)
-        self.__replaceAct = self.__searchMenu.addAction(
-            getIcon('replace.png'), '&Replace...', self.__onReplace)
-        self.__goToLineAct = self.__searchMenu.addAction(
-            getIcon('gotoline.png'), '&Go to line...', self.__onGoToLine)
-
-        # The Tools menu
-        self.__toolsMenu = QMenu("T&ools", self)
-        self.__toolsMenu.aboutToShow.connect(self.__toolsAboutToShow)
-        self.__toolsMenu.aboutToHide.connect(self.__toolsAboutToHide)
-        self.__toolsMenu.addSeparator()
-        self.__toolsMenu.addSeparator()
-        self.__prjLineCounterAct = self.__toolsMenu.addAction(
-            getIcon('linecounter.png'), "&Line counter for project",
-            self.linecounterButtonClicked)
-        self.__tabLineCounterAct = self.__toolsMenu.addAction(
-            getIcon('linecounter.png'), "L&ine counter for tab",
-            self.__onTabLineCounter)
-        self.__toolsMenu.addSeparator()
-        self.__unusedClassesAct = self.__toolsMenu.addAction(
-            getIcon('notused.png'), 'Unused class analysis',
-            self.onNotUsedClasses)
-        self.__unusedFunctionsAct = self.__toolsMenu.addAction(
-            getIcon('notused.png'), 'Unused function analysis',
-            self.onNotUsedFunctions)
-        self.__unusedGlobalsAct = self.__toolsMenu.addAction(
-            getIcon('notused.png'), 'Unused global variable analysis',
-            self.onNotUsedGlobals)
-
-        # The Run menu
-        self.__runMenu = QMenu("&Run", self)
-        self.__runMenu.aboutToShow.connect(self.__runAboutToShow)
-        self.__prjRunAct = self.__runMenu.addAction(
-            getIcon('run.png'), 'Run &project main script',
-            self.__onRunProject)
-        self.__prjRunDlgAct = self.__runMenu.addAction(
-            getIcon('detailsdlg.png'), 'Run p&roject main script...',
-            self.__onRunProjectSettings)
-        self.__tabRunAct = self.__runMenu.addAction(
-            getIcon('run.png'), 'Run &tab script', self.onRunTab)
-        self.__tabRunDlgAct = self.__runMenu.addAction(
-            getIcon('detailsdlg.png'), 'Run t&ab script...', self.onRunTabDlg)
-        self.__runMenu.addSeparator()
-        self.__prjProfileAct = self.__runMenu.addAction(
-            getIcon('profile.png'), 'Profile project main script',
-            self.__onProfileProject)
-        self.__prjProfileDlgAct = self.__runMenu.addAction(
-            getIcon('profile.png'), 'Profile project main script...',
-            self.__onProfileProjectSettings)
-        self.__tabProfileAct = self.__runMenu.addAction(
-            getIcon('profile.png'), 'Profile tab script', self.__onProfileTab)
-        self.__tabProfileDlgAct = self.__runMenu.addAction(
-            getIcon('profile.png'), 'Profile tab script...',
-            self.__onProfileTabDlg)
-
-        # The Debug menu
-        self.__debugMenu = QMenu("Debu&g", self)
-        self.__debugMenu.aboutToShow.connect(self.__debugAboutToShow)
-        self.__prjDebugAct = self.__debugMenu.addAction(
-            getIcon('debugger.png'), 'Debug &project main script',
-            self.__onDebugProject, "Shift+F5")
-        self.__prjDebugDlgAct = self.__debugMenu.addAction(
-            getIcon('detailsdlg.png'), 'Debug p&roject main script...',
-            self.__onDebugProjectSettings, "Ctrl+Shift+F5")
-        self.__tabDebugAct = self.__debugMenu.addAction(
-            getIcon('debugger.png'), 'Debug &tab script',
-            self.__onDebugTab, "F5")
-        self.__tabDebugDlgAct = self.__debugMenu.addAction(
-            getIcon('detailsdlg.png'), 'Debug t&ab script...',
-            self.__onDebugTabDlg, "Ctrl+F5")
-        self.__debugMenu.addSeparator()
-        self.__debugStopBrutalAct = self.__debugMenu.addAction(
-            getIcon('dbgstopbrutal.png'), 'Stop session and kill console',
-            self.__onBrutalStopDbgSession, "Ctrl+F10")
-        self.__debugStopBrutalAct.setEnabled(False)
-        self.__debugStopAct = self.__debugMenu.addAction(
-            getIcon('dbgstop.png'), 'Stop session and keep console if so',
-            self.__onStopDbgSession, "F10")
-        self.__debugStopAct.setEnabled(False)
-        self.__debugRestartAct = self.__debugMenu.addAction(
-            getIcon('dbgrestart.png'), 'Restart session',
-            self.__onRestartDbgSession, "F4")
-        self.__debugRestartAct.setEnabled(False)
-        self.__debugMenu.addSeparator()
-        self.__debugContinueAct = self.__debugMenu.addAction(
-            getIcon('dbggo.png'), 'Continue', self.__onDbgGo, "F6")
-        self.__debugContinueAct.setEnabled(False)
-        self.__debugStepInAct = self.__debugMenu.addAction(
-            getIcon('dbgstepinto.png'), 'Step in', self.__onDbgStepInto, "F7")
-        self.__debugStepInAct.setEnabled(False)
-        self.__debugStepOverAct = self.__debugMenu.addAction(
-            getIcon('dbgnext.png'), 'Step over', self.__onDbgNext, "F8")
-        self.__debugStepOverAct.setEnabled(False)
-        self.__debugStepOutAct = self.__debugMenu.addAction(
-            getIcon('dbgreturn.png'), 'Step out', self.__onDbgReturn, "F9")
-        self.__debugStepOutAct.setEnabled(False)
-        self.__debugRunToCursorAct = self.__debugMenu.addAction(
-            getIcon('dbgruntoline.png'), 'Run to cursor',
-            self.__onDbgRunToLine, "Shift+F6")
-        self.__debugRunToCursorAct.setEnabled(False)
-        self.__debugJumpToCurrentAct = self.__debugMenu.addAction(
-            getIcon('dbgtocurrent.png'), 'Show current line',
-            self.__onDbgJumpToCurrent, "Ctrl+W")
-        self.__debugJumpToCurrentAct.setEnabled(False)
-        self.__debugMenu.addSeparator()
-
-        self.__dumpDbgSettingsMenu = QMenu("Dump debug settings", self)
-        self.__debugMenu.addMenu(self.__dumpDbgSettingsMenu)
-        self.__debugDumpSettingsAct = self.__dumpDbgSettingsMenu.addAction(
-            getIcon('dbgsettings.png'), 'Debug session settings',
-            self.__onDumpDebugSettings)
-        self.__debugDumpSettingsAct.setEnabled(False)
-        self.__debugDumpSettingsEnvAct = self.__dumpDbgSettingsMenu.addAction(
-            getIcon('detailsdlg.png'),
-            'Session settings with complete environment',
-            self.__onDumpFullDebugSettings)
-        self.__debugDumpSettingsEnvAct.setEnabled(False)
-        self.__dumpDbgSettingsMenu.addSeparator()
-        self.__debugDumpScriptSettingsAct = \
-            self.__dumpDbgSettingsMenu.addAction(
-                getIcon('dbgsettings.png'), 'Current script settings',
-                self.__onDumpScriptDebugSettings)
-        self.__debugDumpScriptSettingsAct.setEnabled(False)
-        self.__debugDumpScriptSettingsEnvAct = \
-            self.__dumpDbgSettingsMenu.addAction(
-                getIcon('detailsdlg.png'),
-                'Current script settings with complete environment',
-                self.__onDumpScriptFullDebugSettings)
-        self.__debugDumpScriptSettingsEnvAct.setEnabled(False)
-        self.__dumpDbgSettingsMenu.addSeparator()
-        self.__debugDumpProjectSettingsAct = \
-            self.__dumpDbgSettingsMenu.addAction(
-                getIcon('dbgsettings.png'), 'Project main script settings',
-                self.__onDumpProjectDebugSettings)
-        self.__debugDumpProjectSettingsAct.setEnabled(False)
-        self.__debugDumpProjectSettingsEnvAct = \
-            self.__dumpDbgSettingsMenu.addAction(
-                getIcon('detailsdlg.png'),
-                'Project script settings with complete environment',
-                self.__onDumpProjectFullDebugSettings)
-        self.__debugDumpProjectSettingsEnvAct.setEnabled(False)
-        self.__dumpDbgSettingsMenu.aboutToShow.connect(
-            self.__onDumpDbgSettingsAboutToShow)
-
-        # The Diagrams menu
-        self.__diagramsMenu = QMenu("&Diagrams", self)
-        self.__diagramsMenu.aboutToShow.connect(self.__diagramsAboutToShow)
-        self.__prjImportDgmAct = self.__diagramsMenu.addAction(
-            getIcon('importsdiagram.png'), '&Project imports diagram',
-            self.__onImportDgm)
-        self.__prjImportsDgmDlgAct = self.__diagramsMenu.addAction(
-            getIcon('detailsdlg.png'), 'P&roject imports diagram...',
-            self.__onImportDgmTuned)
-        self.__tabImportDgmAct = self.__diagramsMenu.addAction(
-            getIcon('importsdiagram.png'), '&Tab imports diagram',
-            self.__onTabImportDgm)
-        self.__tabImportDgmDlgAct = self.__diagramsMenu.addAction(
-            getIcon('detailsdlg.png'), 'T&ab imports diagram...',
-            self.__onTabImportDgmTuned)
-
-        # The View menu
-        self.__viewMenu = QMenu("&View", self)
-        self.__viewMenu.aboutToShow.connect(self.__viewAboutToShow)
-        self.__viewMenu.aboutToHide.connect(self.__viewAboutToHide)
-        self.__shrinkBarsAct = self.__viewMenu.addAction(
-            getIcon('shrinkmenu.png'), "&Hide sidebars",
-            self.__onMaximizeEditor, 'F11')
-        self.__leftSideBarMenu = QMenu("&Left sidebar", self)
-        self.__leftSideBarMenu.triggered.connect(self.__activateSideTab)
-        self.__prjBarAct = self.__leftSideBarMenu.addAction(
-            getIcon('project.png'), 'Activate &project tab')
-        self.__prjBarAct.setData('project')
-        self.__recentBarAct = self.__leftSideBarMenu.addAction(
-            getIcon('project.png'), 'Activate &recent tab')
-        self.__recentBarAct.setData('recent')
-        self.__classesBarAct = self.__leftSideBarMenu.addAction(
-            getIcon('class.png'), 'Activate &classes tab')
-        self.__classesBarAct.setData('classes')
-        self.__funcsBarAct = self.__leftSideBarMenu.addAction(
-            getIcon('fx.png'), 'Activate &functions tab')
-        self.__funcsBarAct.setData('functions')
-        self.__globsBarAct = self.__leftSideBarMenu.addAction(
-            getIcon('globalvar.png'), 'Activate &globals tab')
-        self.__globsBarAct.setData('globals')
-        self.__leftSideBarMenu.addSeparator()
-        self.__hideLeftSideBarAct = self.__leftSideBarMenu.addAction(
-            getIcon(""), '&Hide left sidebar', self.__leftSideBar.shrink)
-        self.__viewMenu.addMenu(self.__leftSideBarMenu)
-
-        self.__rightSideBarMenu = QMenu("&Right sidebar", self)
-        self.__rightSideBarMenu.triggered.connect(self.__activateSideTab)
-        self.__outlineBarAct = self.__rightSideBarMenu.addAction(
-            getIcon('filepython.png'), 'Activate &outline tab')
-        self.__outlineBarAct.setData('fileoutline')
-        self.__debugBarAct = self.__rightSideBarMenu.addAction(
-            getIcon(''), 'Activate &debug tab')
-        self.__debugBarAct.setData('debugger')
-        self.__excptBarAct = self.__rightSideBarMenu.addAction(
-            getIcon(''), 'Activate &exceptions tab')
-        self.__excptBarAct.setData('excptions')
-        self.__bpointBarAct = self.__rightSideBarMenu.addAction(
-            getIcon(''), 'Activate &breakpoints tab')
-        self.__bpointBarAct.setData('breakpoints')
-        self.__rightSideBarMenu.addSeparator()
-        self.__hideRightSideBarAct = self.__rightSideBarMenu.addAction(
-            getIcon(""), '&Hide right sidebar', self.__rightSideBar.shrink)
-        self.__viewMenu.addMenu(self.__rightSideBarMenu)
-
-        self.__bottomSideBarMenu = QMenu("&Bottom sidebar", self)
-        self.__bottomSideBarMenu.triggered.connect(self.__activateSideTab)
-        self.__logBarAct = self.__bottomSideBarMenu.addAction(
-            getIcon('logviewer.png'), 'Activate &log tab')
-        self.__logBarAct.setData('log')
-        self.__searchBarAct = self.__bottomSideBarMenu.addAction(
-            getIcon('findindir.png'), 'Activate &search tab')
-        self.__searchBarAct.setData('search')
-        self.__contextHelpBarAct = self.__bottomSideBarMenu.addAction(
-            getIcon('helpviewer.png'), 'Activate context &help tab')
-        self.__contextHelpBarAct.setData('contexthelp')
-        self.__diffBarAct = self.__bottomSideBarMenu.addAction(
-            getIcon('diffviewer.png'), 'Activate &diff tab')
-        self.__diffBarAct.setData('diff')
-        self.__bottomSideBarMenu.addSeparator()
-        self.__hideBottomSideBarAct = self.__bottomSideBarMenu.addAction(
-            getIcon(""), '&Hide bottom sidebar', self.__bottomSideBar.shrink)
-        self.__viewMenu.addMenu(self.__bottomSideBarMenu)
-        self.__viewMenu.addSeparator()
-        self.__zoomInAct = self.__viewMenu.addAction(
-            getIcon('zoomin.png'), 'Zoom &in', self.__onZoomIn)
-        self.__zoomOutAct = self.__viewMenu.addAction(
-            getIcon('zoomout.png'), 'Zoom &out', self.__onZoomOut)
-        self.__zoom11Act = self.__viewMenu.addAction(
-            getIcon('zoomreset.png'), 'Zoom r&eset', self.__onZoomReset)
-
-        # Options menu
-        self.__optionsMenu = QMenu("Optio&ns", self)
-        self.__optionsMenu.aboutToShow.connect(self.__optionsAboutToShow)
-
-        self.__ideTemplateMenu = QMenu("IDE-wide &template", self)
-        self.__ideCreateTemplateAct = self.__ideTemplateMenu.addAction(
-            getIcon('generate.png'), '&Create')
-        self.__ideCreateTemplateAct.triggered.connect(
-            self.__onCreateIDETemplate)
-        self.__ideEditTemplateAct = self.__ideTemplateMenu.addAction(
-            getIcon('edit.png'), '&Edit')
-        self.__ideEditTemplateAct.triggered.connect(self.__onEditIDETemplate)
-        self.__ideTemplateMenu.addSeparator()
-        self.__ideDelTemplateAct = self.__ideTemplateMenu.addAction(
-            getIcon('trash.png'), '&Delete')
-        self.__ideDelTemplateAct.triggered.connect(self.__onDelIDETemplate)
-        self.__optionsMenu.addMenu(self.__ideTemplateMenu)
-
-        self.__optionsMenu.addSeparator()
-
-        verticalEdgeAct = self.__optionsMenu.addAction('Show vertical edge')
-        verticalEdgeAct.setCheckable(True)
-        verticalEdgeAct.setChecked(self.settings['verticalEdge'])
-        verticalEdgeAct.changed.connect(self.__verticalEdgeChanged)
-        showSpacesAct = self.__optionsMenu.addAction('Show whitespaces')
-        showSpacesAct.setCheckable(True)
-        showSpacesAct.setChecked(self.settings['showSpaces'])
-        showSpacesAct.changed.connect(self.__showSpacesChanged)
-        lineWrapAct = self.__optionsMenu.addAction('Wrap long lines')
-        lineWrapAct.setCheckable(True)
-        lineWrapAct.setChecked(self.settings['lineWrap'])
-        lineWrapAct.changed.connect(self.__lineWrapChanged)
-        showEOLAct = self.__optionsMenu.addAction('Show EOL')
-        showEOLAct.setCheckable(True)
-        showEOLAct.setChecked(self.settings['showEOL'])
-        showEOLAct.changed.connect(self.__showEOLChanged)
-        showBraceMatchAct = self.__optionsMenu.addAction(
-            'Show brace matching')
-        showBraceMatchAct.setCheckable(True)
-        showBraceMatchAct.setChecked(self.settings['showBraceMatch'])
-        showBraceMatchAct.changed.connect(self.__showBraceMatchChanged)
-        autoIndentAct = self.__optionsMenu.addAction('Auto indent')
-        autoIndentAct.setCheckable(True)
-        autoIndentAct.setChecked(self.settings['autoIndent'])
-        autoIndentAct.changed.connect(self.__autoIndentChanged)
-        backspaceUnindentAct = self.__optionsMenu.addAction(
-            'Backspace unindent')
-        backspaceUnindentAct.setCheckable(True)
-        backspaceUnindentAct.setChecked(self.settings['backspaceUnindent'])
-        backspaceUnindentAct.changed.connect(self.__backspaceUnindentChanged)
-        tabIndentsAct = self.__optionsMenu.addAction('TAB indents')
-        tabIndentsAct.setCheckable(True)
-        tabIndentsAct.setChecked(self.settings['tabIndents'])
-        tabIndentsAct.changed.connect(self.__tabIndentsChanged)
-        indentationGuidesAct = self.__optionsMenu.addAction(
-            'Show indentation guides')
-        indentationGuidesAct.setCheckable(True)
-        indentationGuidesAct.setChecked(self.settings['indentationGuides'])
-        indentationGuidesAct.changed.connect(self.__indentationGuidesChanged)
-        currentLineVisibleAct = self.__optionsMenu.addAction(
-            'Highlight current line')
-        currentLineVisibleAct.setCheckable(True)
-        currentLineVisibleAct.setChecked(self.settings['currentLineVisible'])
-        currentLineVisibleAct.changed.connect(self.__currentLineVisibleChanged)
-        jumpToFirstNonSpaceAct = self.__optionsMenu.addAction(
-            'HOME to first non-space')
-        jumpToFirstNonSpaceAct.setCheckable(True)
-        jumpToFirstNonSpaceAct.setChecked(self.settings['jumpToFirstNonSpace'])
-        jumpToFirstNonSpaceAct.changed.connect(
-            self.__homeToFirstNonSpaceChanged)
-        removeTrailingOnSpaceAct = self.__optionsMenu.addAction(
-            'Auto remove trailing spaces on save')
-        removeTrailingOnSpaceAct.setCheckable(True)
-        removeTrailingOnSpaceAct.setChecked(
-            self.settings['removeTrailingOnSave'])
-        removeTrailingOnSpaceAct.changed.connect(self.__removeTrailingChanged)
-        editorCalltipsAct = self.__optionsMenu.addAction('Editor calltips')
-        editorCalltipsAct.setCheckable(True)
-        editorCalltipsAct.setChecked(self.settings['editorCalltips'])
-        editorCalltipsAct.changed.connect(self.__editorCalltipsChanged)
-        clearDebugIOAct = self.__optionsMenu.addAction(
-            'Clear debug IO console on new session')
-        clearDebugIOAct.setCheckable(True)
-        clearDebugIOAct.setChecked(self.settings['clearDebugIO'])
-        clearDebugIOAct.changed.connect(self.__clearDebugIOChanged)
-        showNavBarAct = self.__optionsMenu.addAction('Show navigation bar')
-        showNavBarAct.setCheckable(True)
-        showNavBarAct.setChecked(self.settings['showNavigationBar'])
-        showNavBarAct.changed.connect(self.__showNavBarChanged)
-        showCFNavBarAct = self.__optionsMenu.addAction(
-            'Show control flow navigation bar')
-        showCFNavBarAct.setCheckable(True)
-        showCFNavBarAct.setChecked(self.settings['showCFNavigationBar'])
-        showCFNavBarAct.changed.connect(self.__showCFNavBarChanged)
-        showMainToolBarAct = self.__optionsMenu.addAction('Show main toolbar')
-        showMainToolBarAct.setCheckable(True)
-        showMainToolBarAct.setChecked(self.settings['showMainToolBar'])
-        showMainToolBarAct.changed.connect(self.__showMainToolbarChanged)
-        self.__optionsMenu.addSeparator()
-        tooltipsMenu = self.__optionsMenu.addMenu("Tooltips")
-        projectTooltipsAct = tooltipsMenu.addAction("&Project tab")
-        projectTooltipsAct.setCheckable(True)
-        projectTooltipsAct.setChecked(self.settings['projectTooltips'])
-        projectTooltipsAct.changed.connect(self.__projectTooltipsChanged)
-        recentTooltipsAct = tooltipsMenu.addAction("&Recent tab")
-        recentTooltipsAct.setCheckable(True)
-        recentTooltipsAct.setChecked(self.settings['recentTooltips'])
-        recentTooltipsAct.changed.connect(self.__recentTooltipsChanged)
-        classesTooltipsAct = tooltipsMenu.addAction("&Classes tab")
-        classesTooltipsAct.setCheckable(True)
-        classesTooltipsAct.setChecked(self.settings['classesTooltips'])
-        classesTooltipsAct.changed.connect(self.__classesTooltipsChanged)
-        functionsTooltipsAct = tooltipsMenu.addAction("&Functions tab")
-        functionsTooltipsAct.setCheckable(True)
-        functionsTooltipsAct.setChecked(self.settings['functionsTooltips'])
-        functionsTooltipsAct.changed.connect(self.__functionsTooltipsChanged)
-        outlineTooltipsAct = tooltipsMenu.addAction("&Outline tab")
-        outlineTooltipsAct.setCheckable(True)
-        outlineTooltipsAct.setChecked(self.settings['outlineTooltips'])
-        outlineTooltipsAct.changed.connect(self.__outlineTooltipsChanged)
-        findNameTooltipsAct = tooltipsMenu.addAction("Find &name dialog")
-        findNameTooltipsAct.setCheckable(True)
-        findNameTooltipsAct.setChecked(self.settings['findNameTooltips'])
-        findNameTooltipsAct.changed.connect(self.__findNameTooltipsChanged)
-        findFileTooltipsAct = tooltipsMenu.addAction("Find fi&le dialog")
-        findFileTooltipsAct.setCheckable(True)
-        findFileTooltipsAct.setChecked(self.settings['findFileTooltips'])
-        findFileTooltipsAct.changed.connect(self.__findFileTooltipsChanged)
-        editorTooltipsAct = tooltipsMenu.addAction("&Editor tabs")
-        editorTooltipsAct.setCheckable(True)
-        editorTooltipsAct.setChecked(self.settings['editorTooltips'])
-        editorTooltipsAct.changed.connect(self.__editorTooltipsChanged)
-
-        openTabsMenu = self.__optionsMenu.addMenu("Open tabs button")
-        self.__navigationSortGroup = QActionGroup(self)
-        self.__alphasort = openTabsMenu.addAction("Sort alphabetically")
-        self.__alphasort.setCheckable(True)
-        self.__alphasort.setData(-1)
-        self.__alphasort.setActionGroup(self.__navigationSortGroup)
-        self.__tabsort = openTabsMenu.addAction("Tab order sort")
-        self.__tabsort.setCheckable(True)
-        self.__tabsort.setData(-2)
-        self.__tabsort.setActionGroup(self.__navigationSortGroup)
-        if self.settings['tablistsortalpha']:
-            self.__alphasort.setChecked(True)
-        else:
-            self.__tabsort.setChecked(True)
-        openTabsMenu.addSeparator()
-        tabOrderPreservedAct = openTabsMenu.addAction(
-            "Tab order preserved on selection")
-        tabOrderPreservedAct.setCheckable(True)
-        tabOrderPreservedAct.setData(0)
-        tabOrderPreservedAct.setChecked(self.settings['taborderpreserved'])
-        tabOrderPreservedAct.changed.connect(self.__tabOrderPreservedChanged)
-        openTabsMenu.triggered.connect(self.__openTabsMenuTriggered)
-
-        self.__optionsMenu.addSeparator()
-        themesMenu = self.__optionsMenu.addMenu("Themes")
-        availableThemes = self.__buildThemesList()
-        for theme in availableThemes:
-            themeAct = themesMenu.addAction(theme[1])
-            themeAct.setData(theme[0])
-            if theme[0] == self.settings['skin']:
-                font = themeAct.font()
-                font.setBold(True)
-                themeAct.setFont(font)
-        themesMenu.triggered.connect(self.__onTheme)
-
-        styleMenu = self.__optionsMenu.addMenu("Styles")
-        availableStyles = QStyleFactory.keys()
-        self.__styles = []
-        for style in availableStyles:
-            styleAct = styleMenu.addAction(style)
-            styleAct.setData(style)
-            self.__styles.append((str(style), styleAct))
-        styleMenu.triggered.connect(self.__onStyle)
-        styleMenu.aboutToShow.connect(self.__styleAboutToShow)
-
-        fontFaceMenu = self.__optionsMenu.addMenu("Mono font face")
-        for fontFace in getMonospaceFontList():
-            faceAct = fontFaceMenu.addAction(fontFace)
-            faceAct.setData(fontFace)
-            f = faceAct.font()
-            f.setFamily(fontFace)
-            faceAct.setFont(f)
-        fontFaceMenu.triggered.connect(self.__onMonoFont)
-
-        # The plugins menu
-        self.__pluginsMenu = QMenu("P&lugins", self)
-        self.__recomposePluginMenu()
-
-        # The Help menu
-        self.__helpMenu = QMenu("&Help", self)
-        self.__helpMenu.aboutToShow.connect(self.__helpAboutToShow)
-        self.__helpMenu.aboutToHide.connect(self.__helpAboutToHide)
-        self.__shortcutsAct = self.__helpMenu.addAction(
-            getIcon('shortcutsmenu.png'),
-            '&Major shortcuts', editorsManager.onHelp, 'F1')
-        self.__contextHelpAct = self.__helpMenu.addAction(
-            getIcon('helpviewer.png'),
-            'Current &word help', self.__onContextHelp)
-        self.__callHelpAct = self.__helpMenu.addAction(
-            getIcon('helpviewer.png'),
-            '&Current call help', self.__onCallHelp)
-        self.__helpMenu.addSeparator()
-        self.__allShotcutsAct = self.__helpMenu.addAction(
-            getIcon('allshortcutsmenu.png'),
-            '&All shortcuts (web page)', self.__onAllShortcurs)
-        self.__homePageAct = self.__helpMenu.addAction(
-            getIcon('homepagemenu.png'),
-            'Codimension &home page', self.__onHomePage)
-        self.__helpMenu.addSeparator()
-        self.__aboutAct = self.__helpMenu.addAction(
-            getIcon("logo.png"),
-            "A&bout codimension", self.__onAbout)
-
-        menuBar = self.menuBar()
-        menuBar.addMenu(self.__projectMenu)
-        menuBar.addMenu(self.__tabMenu)
-        menuBar.addMenu(self.__editMenu)
-        menuBar.addMenu(self.__searchMenu)
-        menuBar.addMenu(self.__runMenu)
-        menuBar.addMenu(self.__debugMenu)
-        menuBar.addMenu(self.__toolsMenu)
-        menuBar.addMenu(self.__diagramsMenu)
-        menuBar.addMenu(self.__viewMenu)
-        menuBar.addMenu(self.__optionsMenu)
-        menuBar.addMenu(self.__pluginsMenu)
-        menuBar.addMenu(self.__helpMenu)
 
     def __createToolBar(self):
         """creates the buttons bar"""
@@ -1063,53 +433,53 @@ class CodimensionMainWindow(QMainWindow):
         importsMenu = QMenu(self)
         importsDlgAct = importsMenu.addAction(
             getIcon('detailsdlg.png'), 'Fine tuned imports diagram')
-        importsDlgAct.triggered.connect(self.__onImportDgmTuned)
+        importsDlgAct.triggered.connect(self._onImportDgmTuned)
         self.importsDiagramButton = QToolButton(self)
         self.importsDiagramButton.setIcon(getIcon('importsdiagram.png'))
         self.importsDiagramButton.setToolTip('Generate imports diagram')
         self.importsDiagramButton.setPopupMode(QToolButton.DelayedPopup)
         self.importsDiagramButton.setMenu(importsMenu)
         self.importsDiagramButton.setFocusPolicy(Qt.NoFocus)
-        self.importsDiagramButton.clicked.connect(self.__onImportDgm)
+        self.importsDiagramButton.clicked.connect(self._onImportDgm)
 
         # Run project button and its menu
         runProjectMenu = QMenu(self)
         runProjectAct = runProjectMenu.addAction(
             getIcon('detailsdlg.png'), 'Set run parameters')
-        runProjectAct.triggered.connect(self.__onRunProjectSettings)
+        runProjectAct.triggered.connect(self._onRunProjectSettings)
         self.runProjectButton = QToolButton(self)
         self.runProjectButton.setIcon(getIcon('run.png'))
         self.runProjectButton.setToolTip('Project is not loaded')
         self.runProjectButton.setPopupMode(QToolButton.DelayedPopup)
         self.runProjectButton.setMenu(runProjectMenu)
         self.runProjectButton.setFocusPolicy(Qt.NoFocus)
-        self.runProjectButton.clicked.connect(self.__onRunProject)
+        self.runProjectButton.clicked.connect(self._onRunProject)
 
         # profile project button and its menu
         profileProjectMenu = QMenu(self)
         profileProjectAct = profileProjectMenu.addAction(
             getIcon('detailsdlg.png'), 'Set profile parameters')
-        profileProjectAct.triggered.connect(self.__onProfileProjectSettings)
+        profileProjectAct.triggered.connect(self._onProfileProjectSettings)
         self.profileProjectButton = QToolButton(self)
         self.profileProjectButton.setIcon(getIcon('profile.png'))
         self.profileProjectButton.setToolTip('Project is not loaded')
         self.profileProjectButton.setPopupMode(QToolButton.DelayedPopup)
         self.profileProjectButton.setMenu(profileProjectMenu)
         self.profileProjectButton.setFocusPolicy(Qt.NoFocus)
-        self.profileProjectButton.clicked.connect(self.__onProfileProject)
+        self.profileProjectButton.clicked.connect(self._onProfileProject)
 
         # Debug project button and its menu
         debugProjectMenu = QMenu(self)
         debugProjectAct = debugProjectMenu.addAction(
             getIcon('detailsdlg.png'), 'Set debug parameters')
-        debugProjectAct.triggered.connect(self.__onDebugProjectSettings)
+        debugProjectAct.triggered.connect(self._onDebugProjectSettings)
         self.debugProjectButton = QToolButton(self)
         self.debugProjectButton.setIcon(getIcon('debugger.png'))
         self.debugProjectButton.setToolTip('Project is not loaded')
         self.debugProjectButton.setPopupMode(QToolButton.DelayedPopup)
         self.debugProjectButton.setMenu(debugProjectMenu)
         self.debugProjectButton.setFocusPolicy(Qt.NoFocus)
-        self.debugProjectButton.clicked.connect(self.__onDebugProject)
+        self.debugProjectButton.clicked.connect(self._onDebugProject)
         self.debugProjectButton.setVisible(True)
 
         packageDiagramButton = QAction(
@@ -1145,53 +515,53 @@ class CodimensionMainWindow(QMainWindow):
         self.__dbgStopBrutal = QAction(
             getIcon('dbgstopbrutal.png'), 'Stop debugging session and '
             'kill console (Ctrl+F10)', self)
-        self.__dbgStopBrutal.triggered.connect(self.__onBrutalStopDbgSession)
+        self.__dbgStopBrutal.triggered.connect(self._onBrutalStopDbgSession)
         self.__dbgStopBrutal.setVisible(False)
         self.__dbgStopAndClearIO = QAction(
             getIcon('dbgstopcleario.png'),
             'Stop debugging session and clear IO console', self)
         self.__dbgStopAndClearIO.triggered.connect(
-            self.__onBrutalStopDbgSession)
+            self._onBrutalStopDbgSession)
         self.__dbgStopAndClearIO.setVisible(False)
         self.__dbgStop = QAction(
             getIcon('dbgstop.png'),
             'Stop debugging session and keep console if so (F10)', self)
-        self.__dbgStop.triggered.connect(self.__onStopDbgSession)
+        self.__dbgStop.triggered.connect(self._onStopDbgSession)
         self.__dbgStop.setVisible(False)
         self.__dbgRestart = QAction(
             getIcon('dbgrestart.png'), 'Restart debugging section (F4)', self)
-        self.__dbgRestart.triggered.connect(self.__onRestartDbgSession)
+        self.__dbgRestart.triggered.connect(self._onRestartDbgSession)
         self.__dbgRestart.setVisible(False)
         self.__dbgGo = QAction(getIcon('dbggo.png'), 'Continue (F6)', self)
-        self.__dbgGo.triggered.connect(self.__onDbgGo)
+        self.__dbgGo.triggered.connect(self._onDbgGo)
         self.__dbgGo.setVisible(False)
         self.__dbgNext = QAction(
             getIcon('dbgnext.png'), 'Step over (F8)', self)
-        self.__dbgNext.triggered.connect(self.__onDbgNext)
+        self.__dbgNext.triggered.connect(self._onDbgNext)
         self.__dbgNext.setVisible(False)
         self.__dbgStepInto = QAction(
             getIcon('dbgstepinto.png'), 'Step into (F7)', self)
-        self.__dbgStepInto.triggered.connect(self.__onDbgStepInto)
+        self.__dbgStepInto.triggered.connect(self._onDbgStepInto)
         self.__dbgStepInto.setVisible(False)
         self.__dbgRunToLine = QAction(
             getIcon('dbgruntoline.png'), 'Run to cursor (Shift+F6)', self)
-        self.__dbgRunToLine.triggered.connect(self.__onDbgRunToLine)
+        self.__dbgRunToLine.triggered.connect(self._onDbgRunToLine)
         self.__dbgRunToLine.setVisible(False)
         self.__dbgReturn = QAction(
             getIcon('dbgreturn.png'), 'Step out (F9)', self)
-        self.__dbgReturn.triggered.connect(self.__onDbgReturn)
+        self.__dbgReturn.triggered.connect(self._onDbgReturn)
         self.__dbgReturn.setVisible(False)
         self.__dbgJumpToCurrent = QAction(
             getIcon('dbgtocurrent.png'),
             'Show current debugger line (Ctrl+W)', self)
-        self.__dbgJumpToCurrent.triggered.connect(self.__onDbgJumpToCurrent)
+        self.__dbgJumpToCurrent.triggered.connect(self._onDbgJumpToCurrent)
         self.__dbgJumpToCurrent.setVisible(False)
 
         dumpDebugSettingsMenu = QMenu(self)
         dumpDebugSettingsAct = dumpDebugSettingsMenu.addAction(
             getIcon('detailsdlg.png'),
             'Dump settings with complete environment')
-        dumpDebugSettingsAct.triggered.connect(self.__onDumpFullDebugSettings)
+        dumpDebugSettingsAct.triggered.connect(self._onDumpFullDebugSettings)
         self.__dbgDumpSettingsButton = QToolButton(self)
         self.__dbgDumpSettingsButton.setIcon(getIcon('dbgsettings.png'))
         self.__dbgDumpSettingsButton.setToolTip('Dump debug session settings')
@@ -1199,7 +569,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__dbgDumpSettingsButton.setMenu(dumpDebugSettingsMenu)
         self.__dbgDumpSettingsButton.setFocusPolicy(Qt.NoFocus)
         self.__dbgDumpSettingsButton.clicked.connect(
-            self.__onDumpDebugSettings)
+            self._onDumpDebugSettings)
 
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -1299,14 +669,14 @@ class CodimensionMainWindow(QMainWindow):
             self.updateWindowTitle()
 
             projectLoaded = GlobalData().project.isLoaded()
-            self.__unloadProjectAct.setEnabled(projectLoaded)
-            self.__projectPropsAct.setEnabled(projectLoaded)
-            self.__prjTemplateMenu.setEnabled(projectLoaded)
-            self.__findNameMenuAct.setEnabled(projectLoaded)
-            self.__fileProjectFileAct.setEnabled(projectLoaded)
-            self.__prjLineCounterAct.setEnabled(projectLoaded)
-            self.__prjImportDgmAct.setEnabled(projectLoaded)
-            self.__prjImportsDgmDlgAct.setEnabled(projectLoaded)
+            self._unloadProjectAct.setEnabled(projectLoaded)
+            self._projectPropsAct.setEnabled(projectLoaded)
+            self._prjTemplateMenu.setEnabled(projectLoaded)
+            self._findNameMenuAct.setEnabled(projectLoaded)
+            self._fileProjectFileAct.setEnabled(projectLoaded)
+            self._prjLineCounterAct.setEnabled(projectLoaded)
+            self._prjImportDgmAct.setEnabled(projectLoaded)
+            self._prjImportsDgmDlgAct.setEnabled(projectLoaded)
 
             self.settings['projectLoaded'] = projectLoaded
             if projectLoaded:
@@ -1318,8 +688,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def __delayedEditorsTabRestore(self):
         """Delayed restore editor tabs"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.restoreTabs(GlobalData().project.tabStatus)
+        self.em.restoreTabs(GlobalData().project.tabStatus)
 
     def updateWindowTitle(self):
         """Updates the main window title with the current so file"""
@@ -1349,10 +718,10 @@ class CodimensionMainWindow(QMainWindow):
             self.debugProjectButton.setEnabled(False)
             self.debugProjectButton.setToolTip("Cannot debug project - "
                                                "debug in progress")
-            self.__prjDebugAct.setEnabled(False)
-            self.__prjDebugDlgAct.setEnabled(False)
-            self.__tabDebugAct.setEnabled(False)
-            self.__tabDebugDlgAct.setEnabled(False)
+            self._prjDebugAct.setEnabled(False)
+            self._prjDebugDlgAct.setEnabled(False)
+            self._tabDebugAct.setEnabled(False)
+            self._tabDebugDlgAct.setEnabled(False)
             self.profileProjectButton.setEnabled(False)
             self.profileProjectButton.setToolTip("Cannot profile project - "
                                                  "debug in progress")
@@ -1363,8 +732,8 @@ class CodimensionMainWindow(QMainWindow):
             self.runProjectButton.setToolTip("Run project")
             self.debugProjectButton.setEnabled(False)
             self.debugProjectButton.setToolTip("Debug project")
-            self.__prjDebugAct.setEnabled(False)
-            self.__prjDebugDlgAct.setEnabled(False)
+            self._prjDebugAct.setEnabled(False)
+            self._prjDebugDlgAct.setEnabled(False)
             self.profileProjectButton.setEnabled(False)
             self.profileProjectButton.setToolTip("Profile project")
             return
@@ -1376,8 +745,8 @@ class CodimensionMainWindow(QMainWindow):
             self.debugProjectButton.setEnabled(False)
             self.debugProjectButton.setToolTip(
                 "Cannot debug project - script is not specified or invalid")
-            self.__prjDebugAct.setEnabled(False)
-            self.__prjDebugDlgAct.setEnabled(False)
+            self._prjDebugAct.setEnabled(False)
+            self._prjDebugDlgAct.setEnabled(False)
             self.profileProjectButton.setEnabled(False)
             self.profileProjectButton.setToolTip(
                 "Cannot profile project - script is not specified or invalid")
@@ -1387,8 +756,8 @@ class CodimensionMainWindow(QMainWindow):
         self.runProjectButton.setToolTip("Run project")
         self.debugProjectButton.setEnabled(True)
         self.debugProjectButton.setToolTip("Debug project")
-        self.__prjDebugAct.setEnabled(True)
-        self.__prjDebugDlgAct.setEnabled(True)
+        self._prjDebugAct.setEnabled(True)
+        self._prjDebugDlgAct.setEnabled(True)
         self.profileProjectButton.setEnabled(True)
         self.profileProjectButton.setToolTip("Profile project")
 
@@ -1400,8 +769,7 @@ class CodimensionMainWindow(QMainWindow):
     def findInFilesClicked(self):
         """Triggered when the find in files button is clicked"""
         searchText = ""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
+        currentWidget = self.em.currentWidget()
         if currentWidget.getType() in \
            [MainWindowTabWidgetBase.PlainTextEditor]:
             searchText = currentWidget.getEditor().getSearchText()
@@ -1423,29 +791,29 @@ class CodimensionMainWindow(QMainWindow):
 
     def showLogTab(self):
         """Makes sure that the log tab is visible"""
-        self.__activateSideTab('log')
+        self._activateSideTab('log')
 
     def openFile(self, path, lineNo, pos=0):
         """User double clicked on a file or an item in a file"""
-        self.editorsManagerWidget.editorsManager.openFile(path, lineNo, pos)
+        self.em.openFile(path, lineNo, pos)
 
     def gotoInBuffer(self, uuid, lineNo):
         """Usually needs when an item is clicked in the file outline browser"""
-        self.editorsManagerWidget.editorsManager.gotoInBuffer(uuid, lineNo)
+        self.em.gotoInBuffer(uuid, lineNo)
 
     def jumpToLine(self, lineNo):
         """Usually needs when rope provided definition
            in the current unsaved buffer
         """
-        self.editorsManagerWidget.editorsManager.jumpToLine(lineNo)
+        self.em.jumpToLine(lineNo)
 
     def openPixmapFile(self, path):
         """User double clicked on a file"""
-        self.editorsManagerWidget.editorsManager.openPixmapFile(path)
+        self.em.openPixmapFile(path)
 
     def openDiagram(self, scene, tooltip):
         """Show a generated diagram"""
-        self.editorsManagerWidget.editorsManager.openDiagram(scene, tooltip)
+        self.em.openDiagram(scene, tooltip)
 
     def detectTypeAndOpenFile(self, path, lineNo=-1):
         """Detects the file type and opens the corresponding editor/browser"""
@@ -1486,53 +854,6 @@ class CodimensionMainWindow(QMainWindow):
 
         self.openFile(path, lineNo)
 
-    def __createNewProject(self):
-        """Create new action"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        if not editorsManager.closeRequest():
-            return
-
-        dialog = ProjectPropertiesDialog(None, self)
-        if dialog.exec_() != QDialog.Accepted:
-            return
-
-        # Request accepted
-        baseDir = os.path.dirname(dialog.absProjectFileName) + os.path.sep
-        importDirs = []
-        index = 0
-        while index < dialog.importDirList.count():
-            dirName = dialog.importDirList.item(index).text()
-            if dirName.startswith(baseDir):
-                # Replace paths with relative if needed
-                dirName = dirName[len(baseDir):]
-                if dirName == "":
-                    dirName = "."
-            importDirs.append(dirName)
-            index += 1
-
-        QApplication.processEvents()
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-
-        prj = GlobalData().project
-        prj.tabxsStatus = editorsManager.getTabsStatus()
-        editorsManager.closeAll()
-
-        GlobalData().project.createNew(
-            dialog.absProjectFileName,
-            {'scriptname': dialog.scriptEdit.text().strip(),
-             'creationdate': dialog.creationDateEdit.text().strip(),
-             'author': dialog.authorEdit.text().strip(),
-             'license': dialog.licenseEdit.text().strip(),
-             'copyright': dialog.copyrightEdit.text().strip(),
-             'version': dialog.versionEdit.text().strip(),
-             'email': dialog.emailEdit.text().strip(),
-             'description': dialog.descriptionEdit.toPlainText().strip(),
-             'encoding': dialog.encodingCombo.currentText().strip(),
-             'importdirs': importDirs})
-
-        QApplication.restoreOverrideCursor()
-        self.settings.addRecentProject(dialog.absProjectFileName)
-
     def notImplementedYet(self):
         """Shows a dummy window"""
         QMessageBox.about(self, 'Not implemented yet',
@@ -1543,24 +864,23 @@ class CodimensionMainWindow(QMainWindow):
         # Save the side bars status
         self.settings['vSplitterSizes'] = self.__verticalSplitterSizes
         self.settings['hSplitterSizes'] = self.__horizontalSplitterSizes
-        self.settings['bottomBarMinimized'] = self.__bottomSideBar.isMinimized()
-        self.settings['leftBarMinimized'] = self.__leftSideBar.isMinimized()
-        self.settings['rightBarMinimized'] = self.__rightSideBar.isMinimized()
+        self.settings['bottomBarMinimized'] = self._bottomSideBar.isMinimized()
+        self.settings['leftBarMinimized'] = self._leftSideBar.isMinimized()
+        self.settings['rightBarMinimized'] = self._rightSideBar.isMinimized()
 
         # Ask the editors manager to close all the editors
-        editorsManager = self.editorsManagerWidget.editorsManager
-        if editorsManager.getUnsavedCount() == 0:
+        if self.em.getUnsavedCount() == 0:
             project = GlobalData().project
             if project.isLoaded():
-                project.tabsStatus = editorsManager.getTabsStatus()
+                project.tabsStatus = self.em.getTabsStatus()
                 self.settings.tabsStatus = []
             else:
-                self.settings.tabsStatus = editorsManager.getTabsStatus()
+                self.settings.tabsStatus = self.em.getTabsStatus()
 
-        if editorsManager.closeEvent(event):
+        if self.em.closeEvent(event):
             # The IDE is going to be closed just now
             if self.debugMode:
-                self.__onBrutalStopDbgSession()
+                self._onBrutalStopDbgSession()
 
             project = GlobalData().project
             project.fsBrowserExpandedDirs = self.getProjectExpandedPaths()
@@ -1617,20 +937,20 @@ class CodimensionMainWindow(QMainWindow):
            not self.__docstringDisplayable(docstring):
             return
 
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentTab('contexthelp')
-        self.__bottomSideBar.raise_()
+        self._bottomSideBar.show()
+        self._bottomSideBar.setCurrentTab('contexthelp')
+        self._bottomSideBar.raise_()
 
         self.tagHelpViewer.display(calltip, docstring)
 
     def showDiff(self, diff, tooltip):
         """Shows the diff"""
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentTab('diff')
-        self.__bottomSideBar.raise_()
+        self._bottomSideBar.show()
+        self._bottomSideBar.setCurrentTab('diff')
+        self._bottomSideBar.raise_()
 
         try:
-            self.__bottomSideBar.setTabToolTip('diff', tooltip)
+            self._bottomSideBar.setTabToolTip('diff', tooltip)
             self.diffViewer.setHTML(parse_from_memory(diff, False, True),
                                     tooltip)
         except Exception as exc:
@@ -1638,7 +958,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def showDiffInMainArea(self, content, tooltip):
         """Shows the given diff in the main editing area"""
-        self.editorsManagerWidget.editorsManager.showDiff(content, tooltip)
+        self.em.showDiff(content, tooltip)
 
     def zoomDiff(self, zoomValue):
         """Zooms the diff view at the bottom"""
@@ -1647,9 +967,9 @@ class CodimensionMainWindow(QMainWindow):
     def zoomIOconsole(self, zoomValue):
         """Zooms the IO console"""
         # Handle run/profile IO consoles and the debug IO console
-        index = self.__bottomSideBar.count - 1
+        index = self._bottomSideBar.count - 1
         while index >= 0:
-            widget = self.__bottomSideBar.widget(index)
+            widget = self._bottomSideBar.widget(index)
             if hasattr(widget, "getType"):
                 if widget.getType() == MainWindowTabWidgetBase.IOConsole:
                     widget.zoomTo(zoomValue)
@@ -1657,9 +977,9 @@ class CodimensionMainWindow(QMainWindow):
 
     def onIOConsoleSettingUpdated(self):
         """Initiates updating all the IO consoles settings"""
-        index = self.__bottomSideBar.count() - 1
+        index = self._bottomSideBar.count() - 1
         while index >= 0:
-            widget = self.__bottomSideBar.widget(index)
+            widget = self._bottomSideBar.widget(index)
             if hasattr(widget, "getType"):
                 if widget.getType() == MainWindowTabWidgetBase.IOConsole:
                     widget.consoleSettingsUpdated()
@@ -1667,53 +987,21 @@ class CodimensionMainWindow(QMainWindow):
 
     def showProfileReport(self, widget, tooltip):
         """Shows the given profile report"""
-        self.editorsManagerWidget.editorsManager.showProfileReport(widget,
-                                                                   tooltip)
+        self.em.showProfileReport(widget, tooltip)
 
     def getWidgetByUUID(self, uuid):
         """Provides the widget found by the given UUID"""
-        return self.editorsManagerWidget.editorsManager.getWidgetByUUID(uuid)
+        return self.em.getWidgetByUUID(uuid)
 
     def getWidgetForFileName(self, fname):
         """Provides the widget found by the given file name"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        return editorsManager.getWidgetForFileName(fname)
+        return self.em.getWidgetForFileName(fname)
 
     def editorsManager(self):
         """Provides the editors manager"""
-        return self.editorsManagerWidget.editorsManager
+        return self.em
 
-    @staticmethod
-    def __buildPythonFilesList():
-        """Builds the list of python project files"""
-        QApplication.processEvents()
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        filesToProcess = []
-        for item in GlobalData().project.filesList:
-            if isPythonFile(item):
-                filesToProcess.append(item)
-        QApplication.restoreOverrideCursor()
-        QApplication.processEvents()
-        return filesToProcess
-
-    def __onCreatePrjTemplate(self):
-        """Triggered when project template should be created"""
-        self.createTemplateFile(getProjectTemplateFile())
-
-    def __onEditPrjTemplate(self):
-        """Triggered when project template should be edited"""
-        self.editTemplateFile(getProjectTemplateFile())
-
-    @staticmethod
-    def __onDelPrjTemplate():
-        """Triggered when project template should be deleted"""
-        fileName = getProjectTemplateFile()
-        if fileName is not None:
-            if os.path.exists(fileName):
-                os.unlink(fileName)
-                logging.info("Project new file template deleted")
-
-    def __onCreateIDETemplate(self):
+    def _onCreateIDETemplate(self):
         """Triggered to create IDE template"""
         self.createTemplateFile(getIDETemplateFile())
 
@@ -1728,7 +1016,7 @@ class CodimensionMainWindow(QMainWindow):
             return
         self.openFile(fileName, -1)
 
-    def __onEditIDETemplate(self):
+    def _onEditIDETemplate(self):
         """Triggered to edit IDE template"""
         self.editTemplateFile(getIDETemplateFile())
 
@@ -1742,7 +1030,7 @@ class CodimensionMainWindow(QMainWindow):
             self.openFile(fileName, -1)
 
     @staticmethod
-    def __onDelIDETemplate():
+    def _onDelIDETemplate():
         """Triggered to del IDE template"""
         fileName = getIDETemplateFile()
         if fileName is not None:
@@ -1754,16 +1042,16 @@ class CodimensionMainWindow(QMainWindow):
         """Displays the results on a tab"""
         self.findInFilesViewer.showReport(searchRegexp, searchResults)
 
-        if self.__bottomSideBar.height() == 0:
+        if self._bottomSideBar.height() == 0:
             # It was hidden completely, so need to move the slider
             splitterSizes = self.settings.vSplitterSizes
             splitterSizes[0] -= 200
             splitterSizes[1] += 200
             self.__verticalSplitter.setSizes(splitterSizes)
 
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentTab('search')
-        self.__bottomSideBar.raise_()
+        self._bottomSideBar.show()
+        self._bottomSideBar.setCurrentTab('search')
+        self._bottomSideBar.raise_()
 
     def findNameClicked(self):
         """Find name dialog should come up"""
@@ -1785,14 +1073,14 @@ class CodimensionMainWindow(QMainWindow):
         QToolTip.hideText()
         hideSearchTooltip()
 
-    def __onImportDgmTuned(self):
+    def _onImportDgmTuned(self):
         """Runs the settings dialog first"""
         dlg = ImportsDiagramDialog(ImportsDiagramDialog.ProjectFiles,
                                    "", self)
         if dlg.exec_() == QDialog.Accepted:
             self.__generateImportDiagram(dlg.options)
 
-    def __onImportDgm(self, action=False):
+    def _onImportDgm(self, action=False):
         """Runs the generation process"""
         self.__generateImportDiagram(ImportDiagramOptions())
 
@@ -1803,13 +1091,13 @@ class CodimensionMainWindow(QMainWindow):
         if progressDlg.exec_() == QDialog.Accepted:
             self.openDiagram(progressDlg.scene, "Generated for the project")
 
-    def __onRunProjectSettings(self):
+    def _onRunProjectSettings(self):
         """Brings up the dialog with run script settings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
             self.__runManager.run(fileName, True)
 
-    def __onProfileProjectSettings(self):
+    def _onProfileProjectSettings(self):
         """Brings up the dialog with profile script settings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
@@ -1825,9 +1113,9 @@ class CodimensionMainWindow(QMainWindow):
                     self.settings.terminalType = dlg.termType
                 if dlg.profilerParams != profilerParams:
                     self.settings.setProfilerSettings(dlg.profilerParams)
-                self.__onProfileProject()
+                self._onProfileProject()
 
-    def __onDebugProjectSettings(self):
+    def _onDebugProjectSettings(self):
         """Brings up the dialog with debug script settings"""
         if self.__checkDebugPrerequisites():
             fileName = GlobalData().project.getProjectScript()
@@ -1843,15 +1131,15 @@ class CodimensionMainWindow(QMainWindow):
                     self.settings.terminalType = dlg.termType
                 if dlg.debuggerParams != debuggerParams:
                     self.settings.setDebuggerSettings(dlg.debuggerParams)
-                self.__onDebugProject()
+                self._onDebugProject()
 
-    def __onRunProject(self, action=False):
+    def _onRunProject(self, action=False):
         """Runs the project with saved sattings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
             self.__runManager.run(fileName, False)
 
-    def __onProfileProject(self, action=False):
+    def _onProfileProject(self, action=False):
         """Profiles the project with saved settings"""
         if self.__checkProjectScriptValidity():
             try:
@@ -1861,7 +1149,7 @@ class CodimensionMainWindow(QMainWindow):
             except Exception as exc:
                 logging.error(str(exc))
 
-    def __onDebugProject(self, action=False):
+    def _onDebugProject(self, action=False):
         """Debugging is requested"""
         if not self.debugMode:
             if self.__checkDebugPrerequisites():
@@ -1877,8 +1165,7 @@ class CodimensionMainWindow(QMainWindow):
         if not self.__checkProjectScriptValidity():
             return False
 
-        editorsManager = self.editorsManagerWidget.editorsManager
-        modifiedFiles = editorsManager.getModifiedList(True)
+        modifiedFiles = self.em.getModifiedList(True)
         if len(modifiedFiles) == 0:
             return True
 
@@ -1888,7 +1175,7 @@ class CodimensionMainWindow(QMainWindow):
             return False
 
         # Need to save the modified project files
-        return editorsManager.saveModified(True)
+        return self.em.saveModified(True)
 
     def __checkProjectScriptValidity(self):
         """Checks and logs error message if so. Returns True if all is OK"""
@@ -1900,149 +1187,158 @@ class CodimensionMainWindow(QMainWindow):
             return False
         return True
 
-    def __verticalEdgeChanged(self):
+    def _isPythonBuffer(self):
+        """True if the current tab is a python buffer"""
+        currentWidget = self.em.currentWidget()
+        if currentWidget is None:
+            return False
+        return currentWidget.getType() in \
+            [MainWindowTabWidgetBase.PlainTextEditor,
+             MainWindowTabWidgetBase.VCSAnnotateViewer] and \
+            isPythonMime(currentWidget.getMime())
+
+    def _verticalEdgeChanged(self):
         """Editor setting changed"""
         self.settings['verticalEdge'] = not self.settings['verticalEdge']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __showSpacesChanged(self):
+    def _showSpacesChanged(self):
         """Editor setting changed"""
         self.settings['showSpaces'] = not self.settings['showSpaces']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __lineWrapChanged(self):
+    def _lineWrapChanged(self):
         """Editor setting changed"""
         self.settings['lineWrap'] = not self.settings['lineWrap']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __showEOLChanged(self):
+    def _showEOLChanged(self):
         """Editor setting changed"""
         self.settings['showEOL'] = not self.settings['showEOL']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __showBraceMatchChanged(self):
+    def _showBraceMatchChanged(self):
         """Editor setting changed"""
         self.settings['showBraceMatch'] = not self.settings['showBraceMatch']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __autoIndentChanged(self):
+    def _autoIndentChanged(self):
         """Editor setting changed"""
         self.settings['autoIndent'] = not self.settings['autoIndent']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __backspaceUnindentChanged(self):
+    def _backspaceUnindentChanged(self):
         """Editor setting changed"""
         self.settings['backspaceUnindent'] = \
             not self.settings['backspaceUnindent']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __tabIndentsChanged(self):
+    def _tabIndentsChanged(self):
         """Editor setting changed"""
         self.settings['tabIndents'] = not self.settings['tabIndents']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __indentationGuidesChanged(self):
+    def _indentationGuidesChanged(self):
         """Editor setting changed"""
         self.settings['indentationGuides'] = \
             not self.settings['indentationGuides']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __currentLineVisibleChanged(self):
+    def _currentLineVisibleChanged(self):
         """Editor setting changed"""
         self.settings['currentLineVisible'] = \
             not self.settings['currentLineVisible']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __homeToFirstNonSpaceChanged(self):
+    def _homeToFirstNonSpaceChanged(self):
         """Editor setting changed"""
         self.settings['jumpToFirstNonSpace'] = \
             not self.settings['jumpToFirstNonSpace']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __removeTrailingChanged(self):
+    def _removeTrailingChanged(self):
         """Editor setting changed"""
         self.settings['removeTrailingOnSave'] = \
             not self.settings['removeTrailingOnSave']
 
-    def __editorCalltipsChanged(self):
+    def _editorCalltipsChanged(self):
         """Editor calltips changed"""
         self.settings['editorCalltips'] = not self.settings['editorCalltips']
 
-    def __clearDebugIOChanged(self):
+    def _clearDebugIOChanged(self):
         """Clear debug IO console before a new session changed"""
         self.settings['clearDebugIO'] = not self.settings['clearDebugIO']
 
-    def __showNavBarChanged(self):
+    def _showNavBarChanged(self):
         """Editor setting changed"""
         self.settings['showNavigationBar'] = \
             not self.settings['showNavigationBar']
-        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        self.em.updateEditorsSettings()
 
-    def __showCFNavBarChanged(self):
+    def _showCFNavBarChanged(self):
         """Control flow toolbar visibility changed"""
         self.settings['showCFNavigationBar'] = \
             not self.settings['showCFNavigationBar']
-        self.editorsManagerWidget.editorsManager.updateCFEditorsSettings()
+        self.em.updateCFEditorsSettings()
 
-    def __showMainToolbarChanged(self):
+    def _showMainToolbarChanged(self):
         """Main toolbar visibility changed"""
         self.settings['showMainToolBar'] = \
             not self.settings['showMainToolBar']
         self.__toolbar.setVisible(self.settings['showMainToolBar'])
 
-    def __projectTooltipsChanged(self):
+    def _projectTooltipsChanged(self):
         """Tooltips setting changed"""
         self.settings['projectTooltips'] = \
             not self.settings['projectTooltips']
         self.projectViewer.setTooltips(self.settings['projectTooltips'])
 
-    def __recentTooltipsChanged(self):
+    def _recentTooltipsChanged(self):
         """Tooltips setting changed"""
         self.settings['recentTooltips'] = \
             not self.settings['recentTooltips']
         self.recentProjectsViewer.setTooltips(self.settings['recentTooltips'])
 
-    def __classesTooltipsChanged(self):
+    def _classesTooltipsChanged(self):
         """Tooltips setting changed"""
         self.settings['classesTooltips'] = \
             not self.settings['classesTooltips']
         self.classesViewer.setTooltips(self.settings['classesTooltips'])
 
-    def __functionsTooltipsChanged(self):
+    def _functionsTooltipsChanged(self):
         """Tooltips setting changed"""
         self.settings['functionsTooltips'] = \
             not self.settings['functionsTooltips']
         self.functionsViewer.setTooltips(self.settings['functionsTooltips'])
 
-    def __outlineTooltipsChanged(self):
+    def _outlineTooltipsChanged(self):
         """Tooltips setting changed"""
         self.settings.outlineTooltips = \
             not self.settings['outlineTooltips']
         self.outlineViewer.setTooltips(self.settings['outlineTooltips'])
 
-    def __findNameTooltipsChanged(self):
+    def _findNameTooltipsChanged(self):
         """Tooltips setting changed"""
         self.settings['findNameTooltips'] = \
             not self.settings['findNameTooltips']
 
-    def __findFileTooltipsChanged(self):
+    def _findFileTooltipsChanged(self):
         """Tooltips setting changed"""
         self.settings['findFileTooltips'] = \
             not self.settings['findFileTooltips']
 
-    def __editorTooltipsChanged(self):
+    def _editorTooltipsChanged(self):
         """Tooltips setting changed"""
         self.settings['editorTooltips'] = \
             not self.settings['editorTooltips']
-        self.editorsManagerWidget.editorsManager.setTooltips(
-            self.settings['editorTooltips'])
+        self.em.setTooltips(self.settings['editorTooltips'])
 
-    def __tabOrderPreservedChanged(self):
+    def _tabOrderPreservedChanged(self):
         """Tab order preserved option changed"""
         self.settings['taborderpreserved'] = \
             not self.settings['taborderpreserved']
 
-    def __openTabsMenuTriggered(self, act):
+    def _openTabsMenuTriggered(self, act):
         """Tab list settings menu triggered"""
         if act == -1:
             self.settings.tablistsortalpha = True
@@ -2053,15 +1349,7 @@ class CodimensionMainWindow(QMainWindow):
             self.__alphasort.setChecked(False)
             self.__tabsort.setChecked(True)
 
-    @staticmethod
-    def __buildThemesList():
-        """Builds a list of themes - system wide and the user local"""
-        localSkinsDir = os.path.normpath(str(QDir.homePath())) + \
-                        os.path.sep + CONFIG_DIR + os.path.sep + "skins" + \
-                        os.path.sep
-        return getThemesList(localSkinsDir)
-
-    def __onTheme(self, skinSubdir):
+    def _onTheme(self, skinSubdir):
         """Triggers when a theme is selected"""
         if self.settings['skin'] == skinSubdir.data():
             return
@@ -2069,23 +1357,12 @@ class CodimensionMainWindow(QMainWindow):
         logging.info("Please restart codimension to apply the new theme")
         self.settings['skin'] = skinSubdir.data()
 
-    def __styleAboutToShow(self):
-        """Style menu is about to show"""
-        currentStyle = self.settings['style'].lower()
-        for item in self.__styles:
-            font = item[1].font()
-            if item[0].lower() == currentStyle:
-                font.setBold(True)
-            else:
-                font.setBold(False)
-            item[1].setFont(font)
-
-    def __onStyle(self, styleName):
+    def _onStyle(self, styleName):
         """Sets the selected style"""
         QApplication.setStyle(styleName)
         self.settings.style = styleName.lower()
 
-    def __onMonoFont(self, fintFace):
+    def _onMonoFont(self, fontFace):
         """Sets the new mono font"""
         try:
             font = QFont()
@@ -2101,7 +1378,7 @@ class CodimensionMainWindow(QMainWindow):
     def checkOutsideFileChanges(self):
         """Checks if there are changes in the files
            currently loaded by codimension"""
-        self.editorsManagerWidget.editorsManager.checkOutsideFileChanges()
+        self.em.checkOutsideFileChanges()
 
     def switchDebugMode(self, newState):
         """Switches the debug mode to the desired"""
@@ -2150,21 +1427,21 @@ class CodimensionMainWindow(QMainWindow):
 
         # Tabs at the right
         if newState:
-            self.__rightSideBar.setTabEnabled(1, True)    # vars etc.
+            self._rightSideBar.setTabEnabled(1, True)    # vars etc.
             self.debuggerContext.clear()
             self.debuggerExceptions.clear()
-            self.__rightSideBar.setTabText(2, "Exceptions")
-            self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentTab('debugger')
-            self.__rightSideBar.raise_()
+            self._rightSideBar.setTabText(2, "Exceptions")
+            self._rightSideBar.show()
+            self._rightSideBar.setCurrentTab('debugger')
+            self._rightSideBar.raise_()
             self.__lastDebugAction = None
             self.__debugDumpSettingsAct.setEnabled(True)
             self.__debugDumpSettingsEnvAct.setEnabled(True)
         else:
-            if not self.__rightSideBar.isMinimized():
-                if self.__rightSideBar.currentIndex() == 1:
-                    self.__rightSideBar.setCurrentTab('fileoutline')
-            self.__rightSideBar.setTabEnabled(1, False)    # vars etc.
+            if not self._rightSideBar.isMinimized():
+                if self._rightSideBar.currentIndex() == 1:
+                    self._rightSideBar.setCurrentTab('fileoutline')
+            self._rightSideBar.setTabEnabled(1, False)    # vars etc.
 
         self.debugModeChanged.emit(newState)
 
@@ -2251,14 +1528,14 @@ class CodimensionMainWindow(QMainWindow):
         self.__lastDebugFileName = fileName
         self.__lastDebugLineNumber = lineNumber
         self.__lastDebugAsException = asException
-        self.__onDbgJumpToCurrent()
+        self._onDbgJumpToCurrent()
 
     def __onDebuggerClientException(self, excType, excMessage, excStackTrace):
         """Debugged program exception handler"""
         self.debuggerExceptions.addException(excType, excMessage,
                                              excStackTrace)
         count = self.debuggerExceptions.getTotalClientExceptionCount()
-        self.__rightSideBar.setTabText(2, "Exceptions (" + str(count) + ")")
+        self._rightSideBar.setTabText(2, "Exceptions (" + str(count) + ")")
 
         # The information about the exception is stored in the exception window
         # regardless whether there is a stack trace or not. So, there is no
@@ -2266,9 +1543,9 @@ class CodimensionMainWindow(QMainWindow):
         # is required).
 
         if excType is None or excType.startswith("unhandled") or not excStackTrace:
-            self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentTab('exceptions')
-            self.__rightSideBar.raise_()
+            self._rightSideBar.show()
+            self._rightSideBar.setCurrentTab('exceptions')
+            self._rightSideBar.raise_()
 
             if not excStackTrace:
                 message = "An exception did not report the stack trace.\n" \
@@ -2294,9 +1571,9 @@ class CodimensionMainWindow(QMainWindow):
             res = dlg.exec_()
 
             if res == QMessageBox.Cancel:
-                QTimer.singleShot(0, self.__onStopDbgSession)
+                QTimer.singleShot(0, self._onStopDbgSession)
             else:
-                QTimer.singleShot(0, self.__onBrutalStopDbgSession)
+                QTimer.singleShot(0, self._onBrutalStopDbgSession)
             self.debuggerExceptions.setFocus()
             return
 
@@ -2317,9 +1594,9 @@ class CodimensionMainWindow(QMainWindow):
             return
 
         # Should stop at the exception
-        self.__rightSideBar.show()
-        self.__rightSideBar.setCurrentTab('exceptions')
-        self.__rightSideBar.raise_()
+        self._rightSideBar.show()
+        self._rightSideBar.setCurrentTab('exceptions')
+        self._rightSideBar.raise_()
 
         fileName = excStackTrace[0][0]
         lineNumber = excStackTrace[0][1]
@@ -2343,9 +1620,8 @@ class CodimensionMainWindow(QMainWindow):
                       "syntax error.\nDebugging session will be closed."
         else:
             # Jump to the source code
-            editorsManager = self.editorsManagerWidget.editorsManager
-            editorsManager.openFile(fileName, lineNo)
-            editor = editorsManager.currentWidget().getEditor()
+            self.em.openFile(fileName, lineNo)
+            editor = self.em.currentWidget().getEditor()
             editor.gotoLine(lineNo, charNo)
 
             message = "The file " + fileName + " contains syntax error: '" + \
@@ -2373,9 +1649,9 @@ class CodimensionMainWindow(QMainWindow):
 
         if res == QMessageBox.Cancel or \
            self.settings.terminalType == TERM_REDIRECT:
-            QTimer.singleShot(0, self.__onStopDbgSession)
+            QTimer.singleShot(0, self._onStopDbgSession)
         else:
-            QTimer.singleShot(0, self.__onBrutalStopDbgSession)
+            QTimer.singleShot(0, self._onBrutalStopDbgSession)
 
     def __onDebuggerClientIDEMessage(self, message):
         """Triggered when the debug server has something to report"""
@@ -2387,9 +1663,7 @@ class CodimensionMainWindow(QMainWindow):
     def __removeCurrenDebugLineHighlight(self):
         """Removes the current debug line highlight"""
         if self.__lastDebugFileName is not None:
-            editorsManager = self.editorsManagerWidget.editorsManager
-            widget = editorsManager.getWidgetForFileName(
-                self.__lastDebugFileName)
+            widget = self.em.getWidgetForFileName(self.__lastDebugFileName)
             if widget is not None:
                 widget.getEditor().clearCurrentDebuggerLine()
             self.__lastDebugFileName = None
@@ -2424,14 +1698,13 @@ class CodimensionMainWindow(QMainWindow):
             self.__dbgRunToLine.setEnabled(False)
             self.__debugRunToCursorAct.setEnabled(False)
             return
-        if not self.__isPythonBuffer():
+        if not self._isPythonBuffer():
             self.__dbgRunToLine.setEnabled(False)
             self.__debugRunToCursorAct.setEnabled(False)
             return
 
         # That's for sure a python buffer, so the widget exists
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
+        currentWidget = self.em.currentWidget()
         if currentWidget.getType() in [MainWindowTabWidgetBase.VCSAnnotateViewer]:
             self.__dbgRunToLine.setEnabled(False)
             self.__debugRunToCursorAct.setEnabled(False)
@@ -2441,119 +1714,84 @@ class CodimensionMainWindow(QMainWindow):
         self.__dbgRunToLine.setEnabled(enabled)
         self.__debugRunToCursorAct.setEnabled(enabled)
 
-    def __onBrutalStopDbgSession(self):
+    def _onBrutalStopDbgSession(self):
         """Stop debugging brutally"""
         self.__debugger.stopDebugging(True)
         if self.settings.terminalType == TERM_REDIRECT:
             self.redirectedIOConsole.clear()
 
-    def __onStopDbgSession(self):
+    def _onStopDbgSession(self):
         """Debugger stop debugging clicked"""
         self.__debugger.stopDebugging(False)
 
-    def __onRestartDbgSession(self):
+    def _onRestartDbgSession(self):
         """Debugger restart session clicked"""
         fileName = self.__debugger.getScriptPath()
-        self.__onBrutalStopDbgSession()
+        self._onBrutalStopDbgSession()
         self.__debugger.startDebugging(fileName)
 
-    def __onDbgGo(self):
+    def _onDbgGo(self):
         """Debugger continue clicked"""
         self.__lastDebugAction = self.DEBUG_ACTION_GO
         self.__debugger.remoteContinue()
 
-    def __onDbgNext(self):
+    def _onDbgNext(self):
         """Debugger step over clicked"""
         self.__lastDebugAction = self.DEBUG_ACTION_NEXT
         self.__debugger.remoteStepOver()
 
-    def __onDbgStepInto(self):
+    def _onDbgStepInto(self):
         """Debugger step into clicked"""
         self.__lastDebugAction = self.DEBUG_ACTION_STEP_INTO
         self.__debugger.remoteStep()
 
-    def __onDbgRunToLine(self):
+    def _onDbgRunToLine(self):
         """Debugger run to cursor clicked"""
         # The run-to-line button state is set approprietly
         if not self.__dbgRunToLine.isEnabled():
             return
 
         self.__lastDebugAction = self.DEBUG_ACTION_RUN_TO_LINE
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
+        currentWidget = self.em.currentWidget()
 
         self.__debugger.remoteBreakpoint(currentWidget.getFileName(),
                                          currentWidget.getLine() + 1,
                                          True, None, True)
         self.__debugger.remoteContinue()
 
-    def __onDbgReturn(self):
+    def _onDbgReturn(self):
         """Debugger step out clicked"""
         self.__lastDebugAction = self.DEBUG_ACTION_STEP_OUT
         self.__debugger.remoteStepOut()
 
-    def __onDbgJumpToCurrent(self):
+    def _onDbgJumpToCurrent(self):
         """Jump to the current debug line"""
         if self.__lastDebugFileName is None or \
            self.__lastDebugLineNumber is None or \
            self.__lastDebugAsException is None:
             return
 
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.openFile(self.__lastDebugFileName,
-                                self.__lastDebugLineNumber)
+        self.em.openFile(self.__lastDebugFileName, self.__lastDebugLineNumber)
 
-        editor = editorsManager.currentWidget().getEditor()
+        editor = self.em.currentWidget().getEditor()
         editor.gotoLine(self.__lastDebugLineNumber)
         editor.highlightCurrentDebuggerLine(self.__lastDebugLineNumber,
                                             self.__lastDebugAsException)
-        editorsManager.currentWidget().setFocus()
-
-    def __openProject(self):
-        """Shows up a dialog to open a project"""
-        if self.debugMode:
-            return
-        dialog = QFileDialog(self, 'Open project')
-        dialog.setFileMode(QFileDialog.ExistingFile)
-        dialog.setNameFilter("Codimension project files (*.cdm3)")
-        urls = []
-        for dname in QDir.drives():
-            urls.append(QUrl.fromLocalFile(dname.absoluteFilePath()))
-        urls.append(QUrl.fromLocalFile(QDir.homePath()))
-        dialog.setDirectory(QDir.homePath())
-        dialog.setSidebarUrls(urls)
-
-        if dialog.exec_() != QDialog.Accepted:
-            return
-
-        fileNames = dialog.selectedFiles()
-        fileName = os.path.realpath(str(fileNames[0]))
-        if fileName == GlobalData().project.fileName:
-            logging.warning("The selected project to load is "
-                            "the currently loaded one.")
-            return
-
-        if not isCDMProjectFile(fileName):
-            logging.warning("Codimension project file "
-                            "must have .cdm3 extension")
-            return
-
-        self.__loadProject(fileName)
+        self.em.currentWidget().setFocus()
 
     def __loadProject(self, projectFile):
         """Loads the given project"""
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        editorsManager = self.editorsManagerWidget.editorsManager
-        if editorsManager.closeRequest():
+        if self.em.closeRequest():
             prj = GlobalData().project
-            prj.tabsStatus = editorsManager.getTabsStatus()
-            editorsManager.closeAll()
+            prj.tabsStatus = self.em.getTabsStatus()
+            self.em.closeAll()
             prj.loadProject(projectFile)
-            if not self.__leftSideBar.isMinimized():
+            if not self._leftSideBar.isMinimized():
                 self.activateProjectTab()
         QApplication.restoreOverrideCursor()
 
-    def __openFile(self):
+    def _openFile(self):
         """Triggers when Ctrl+O is pressed"""
         dialog = QFileDialog(self, 'Open file')
         dialog.setFileMode(QFileDialog.ExistingFiles)
@@ -2562,9 +1800,8 @@ class CodimensionMainWindow(QMainWindow):
             urls.append(QUrl.fromLocalFile(dname.absoluteFilePath()))
         urls.append(QUrl.fromLocalFile(QDir.homePath()))
 
-        editorsManager = self.editorsManagerWidget.editorsManager
         try:
-            fileName = editorsManager.currentWidget().getFileName()
+            fileName = self.em.currentWidget().getFileName()
             if os.path.isabs(fileName):
                 dirName = os.path.dirname(fileName)
                 url = QUrl.fromLocalFile(dirName)
@@ -2591,198 +1828,105 @@ class CodimensionMainWindow(QMainWindow):
             except Exception as exc:
                 logging.error(str(exc))
 
-    def __isPlainTextBuffer(self):
-        """Provides if saving is enabled"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        if currentWidget is None:
-            return False
-        return currentWidget.getType() in \
-            [MainWindowTabWidgetBase.PlainTextEditor,
-             MainWindowTabWidgetBase.VCSAnnotateViewer]
-
-    def __isTemporaryBuffer(self):
-        """True if it is a temporary text buffer"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        if currentWidget is None:
-            return False
-        return currentWidget.getType() in \
-            [MainWindowTabWidgetBase.VCSAnnotateViewer]
-
-    def __isPythonBuffer(self):
-        """True if the current tab is a python buffer"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        if currentWidget is None:
-            return False
-        return currentWidget.getType() in \
-            [MainWindowTabWidgetBase.PlainTextEditor,
-             MainWindowTabWidgetBase.VCSAnnotateViewer] and \
-            isPythonMime(currentWidget.getMime())
-
-    def __isGraphicsBuffer(self):
-        """True if is pictures viewer"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        if currentWidget is None:
-            return False
-        return currentWidget.getType() == MainWindowTabWidgetBase.PictureViewer
-
-    def __isGeneratedDiagram(self):
-        """True if this is a generated diagram"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        if currentWidget is None:
-            return False
-        if currentWidget.getType() == MainWindowTabWidgetBase.GeneratedDiagram:
-            return True
-        if currentWidget.getType() == MainWindowTabWidgetBase.ProfileViewer:
-            if currentWidget.isDiagramActive():
-                return True
-        return False
-
-    def __isProfileViewer(self):
-        """True if this is a profile viewer"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        if currentWidget is None:
-            return False
-        return currentWidget.getType() == MainWindowTabWidgetBase.ProfileViewer
-
-    def __isDiffViewer(self):
-        """True if this is a diff viewer"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        if currentWidget is None:
-            return False
-        return currentWidget.getType() == MainWindowTabWidgetBase.DiffViewer
-
-    def __onTabImportDgm(self):
+    def _onTabImportDgm(self):
         """Triggered when tab imports diagram is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onImportDgm()
+        self.em.currentWidget().onImportDgm()
 
-    def __onTabImportDgmTuned(self):
+    def _onTabImportDgmTuned(self):
         """Triggered when tuned tab imports diagram is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onImportDgmTuned()
+        currentWidget = self.em.currentWidget().onImportDgmTuned()
 
     def onRunTab(self):
         """Triggered when run tab script is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
+        currentWidget = self.em.currentWidget()
         self.__runManager.run(currentWidget.getFileName(), False)
 
-    def __onDebugTab(self):
+    def _onDebugTab(self):
         """Triggered when debug tab is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onDebugScript()
+        self.em.currentWidget().onDebugScript()
 
-    def __onProfileTab(self):
+    def _onProfileTab(self):
         """Triggered when profile script is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onProfileScript()
+        self.em.currentWidget().onProfileScript()
 
     def onRunTabDlg(self):
         """Triggered when run tab script dialog is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
+        currentWidget = self.em.currentWidget()
         self.__runManager.run(currentWidget.getFileName(), True)
 
-    def __onDebugTabDlg(self):
+    def _onDebugTabDlg(self):
         """Triggered when debug tab script dialog is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onDebugScriptSettings()
+        self.em.currentWidget().onDebugScriptSettings()
 
-    def __onProfileTabDlg(self):
+    def _onProfileTabDlg(self):
         """Triggered when profile tab script dialog is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onProfileScriptSettings()
+        self.em.currentWidget().onProfileScriptSettings()
 
-    def __onPluginManager(self):
+    def _onPluginManager(self):
         """Triggered when a plugin manager dialog is requested"""
         dlg = PluginsDialog(GlobalData().pluginManager, self)
         dlg.exec_()
 
-    def __onContextHelp(self):
+    def _onContextHelp(self):
         """Triggered when Ctrl+F1 is clicked"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().onTagHelp()
+        self.em.currentWidget().getEditor().onTagHelp()
 
-    def __onCallHelp(self):
+    def _onCallHelp(self):
         """Triggered when a context help for the current call is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().onCallHelp()
+        self.em.currentWidget().getEditor().onCallHelp()
 
     @staticmethod
-    def __onHomePage():
+    def _onHomePage():
         """Triggered when opening the home page is requested"""
         QDesktopServices.openUrl(QUrl("http://codimension.org"))
 
     @staticmethod
-    def __onAllShortcurs():
+    def _onAllShortcurs():
         """Triggered when opening key bindings page is requested"""
         QDesktopServices.openUrl(
             QUrl("http://codimension.org/documentation/cheatsheet.html"))
 
-    def __onAbout(self):
+    def _onAbout(self):
         """Triggered when 'About' info is requested"""
         dlg = AboutDialog(self)
         dlg.exec_()
 
-    def __activateSideTab(self, act):
+    def _activateSideTab(self, act):
         """Triggered when a side bar should be activated"""
         if isinstance(act, str):
             name = act
         else:
             name = act.data()
         if name in ["project", "recent", "classes", "functions", "globals"]:
-            self.__leftSideBar.show()
-            self.__leftSideBar.setCurrentTab(name)
-            self.__leftSideBar.raise_()
+            self._leftSideBar.show()
+            self._leftSideBar.setCurrentTab(name)
+            self._leftSideBar.raise_()
         elif name in ['fileoutline', 'debugger', 'exceptions', 'breakpoints']:
-            self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentTab(name)
-            self.__rightSideBar.raise_()
+            self._rightSideBar.show()
+            self._rightSideBar.setCurrentTab(name)
+            self._rightSideBar.raise_()
         elif name in ['log', 'search', 'contexthelp', 'diff']:
-            self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentTab(name)
-            self.__bottomSideBar.raise_()
+            self._bottomSideBar.show()
+            self._bottomSideBar.setCurrentTab(name)
+            self._bottomSideBar.raise_()
 
-    def __onTabLineCounter(self):
+    def _onTabLineCounter(self):
         """Triggered when line counter for the current buffer is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onLineCounter()
+        self.em.currentWidget().onLineCounter()
 
-    def __onTabJumpToDef(self):
+    def _onTabJumpToDef(self):
         """Triggered when jump to defenition is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().onGotoDefinition()
+        self.em.currentWidget().getEditor().onGotoDefinition()
 
-    def __onTabJumpToScopeBegin(self):
+    def _onTabJumpToScopeBegin(self):
         """Triggered when jump to the beginning
            of the current scope is requested
         """
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().onScopeBegin()
+        self.em.currentWidget().getEditor().onScopeBegin()
 
-    def __onFindOccurences(self):
+    def _onFindOccurences(self):
         """Triggered when search for occurences is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().onOccurences()
+        self.em.currentWidget().getEditor().onOccurences()
 
     def findWhereUsed(self, fileName, item):
         """Find occurences for c/f/g browsers"""
@@ -2815,455 +1959,214 @@ class CodimensionMainWindow(QMainWindow):
 
         self.displayFindInFiles("", result)
 
-    def __onTabOpenImport(self):
+    def _onTabOpenImport(self):
         """Triggered when open import is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onOpenImport()
+        self.em.currentWidget().onOpenImport()
 
-    def __onShowCalltip(self):
+    def _onShowCalltip(self):
         """Triggered when show calltip is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().onShowCalltip()
+        self.em.currentWidget().getEditor().onShowCalltip()
 
-    def __onOpenAsFile(self):
+    def _onOpenAsFile(self):
         """Triggered when open as file is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().openAsFile()
+        self.em.currentWidget().getEditor().openAsFile()
 
-    def __onDownloadAndShow(self):
+    def _onDownloadAndShow(self):
         """Triggered when a selected string should be treated as URL"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().downloadAndShow()
+        self.em.currentWidget().getEditor().downloadAndShow()
 
-    def __onOpenInBrowser(self):
+    def _onOpenInBrowser(self):
         """Triggered when a selected url should be opened in a browser"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().openInBrowser()
+        self.em.currentWidget().getEditor().openInBrowser()
 
-    def __onHighlightInOutline(self):
+    def _onHighlightInOutline(self):
         """Triggered to highlight the current context in the outline browser"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().highlightInOutline()
+        self.em.currentWidget().getEditor().highlightInOutline()
 
-    def __onUndo(self):
+    def _onUndo(self):
         """Triggered when undo action is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().onUndo()
+        self.em.currentWidget().getEditor().onUndo()
 
-    def __onRedo(self):
+    def _onRedo(self):
         """Triggered when redo action is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().onRedo()
+        self.em.currentWidget().getEditor().onRedo()
 
-    def __onZoomIn(self):
+    def _onZoomIn(self):
         """Triggered when zoom in is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.zoomIn()
+        self.em.zoomIn()
 
-    def __onZoomOut(self):
+    def _onZoomOut(self):
         """Triggered when zoom out is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.zoomOut()
+        self.em.zoomOut()
 
-    def __onZoomReset(self):
+    def _onZoomReset(self):
         """Triggered when zoom 1:1 is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.zoomReset()
+        self.em.zoomReset()
 
-    def __onGoToLine(self):
+    def _onGoToLine(self):
         """Triggered when go to line is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.onGoto()
+        self.em.onGoto()
 
     def __getEditor(self):
         """Provides reference to the editor"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        return editorsManager.currentWidget().getEditor()
+        return self.em.currentWidget().getEditor()
 
-    def __onCut(self):
+    def _onCut(self):
         """Triggered when cut is requested"""
         self.__getEditor().onShiftDel()
 
-    def __onPaste(self):
+    def _onPaste(self):
         """Triggered when paste is requested"""
         self.__getEditor().paste()
 
-    def __onSelectAll(self):
+    def _onSelectAll(self):
         """Triggered when select all is requested"""
         self.__getEditor().selectAll()
 
-    def __onComment(self):
+    def _onComment(self):
         """Triggered when comment/uncomment is requested"""
         self.__getEditor().onCommentUncomment()
 
-    def __onDuplicate(self):
+    def _onDuplicate(self):
         """Triggered when duplicate line is requested"""
         self.__getEditor().duplicateLine()
 
-    def __onAutocomplete(self):
+    def _onAutocomplete(self):
         """Triggered when autocomplete is requested"""
         self.__getEditor().onAutoComplete()
 
-    def __onFind(self):
+    def _onFind(self):
         """Triggered when find is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.onFind()
+        self.em.onFind()
 
-    def __onReplace(self):
+    def _onReplace(self):
         """Triggered when replace is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.onReplace()
+        self.em.onReplace()
 
-    def __onFindNext(self):
+    def _onFindNext(self):
         """Triggered when find next is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.findNext()
+        self.em.findNext()
 
-    def __onFindPrevious(self):
+    def _onFindPrevious(self):
         """Triggered when find previous is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.findPrev()
+        self.em.findPrev()
 
-    def __onExpandTabs(self):
+    def _onExpandTabs(self):
         """Triggered when tabs expansion is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onExpandTabs()
+        self.em.currentWidget().onExpandTabs()
 
-    def __onRemoveTrailingSpaces(self):
+    def _onRemoveTrailingSpaces(self):
         """Triggered when trailing spaces removal is requested"""
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onRemoveTrailingWS()
+        self.em.currentWidget().onRemoveTrailingWS()
 
-    def __editAboutToShow(self):
-        """Triggered when edit menu is about to show"""
-        isPlainBuffer = self.__isPlainTextBuffer()
-        isPythonBuffer = self.__isPythonBuffer()
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        if isPlainBuffer:
-            editor = currentWidget.getEditor()
-
-        self.__undoAct.setShortcut("Ctrl+Z")
-        self.__undoAct.setEnabled(isPlainBuffer and
-                                  editor.document().isUndoAvailable())
-        self.__redoAct.setShortcut("Ctrl+Y")
-        self.__redoAct.setEnabled(isPlainBuffer and
-                                  editor.document().isRedoAvailable())
-        self.__cutAct.setShortcut("Ctrl+X")
-        self.__cutAct.setEnabled(isPlainBuffer and not editor.isReadOnly())
-        self.__copyAct.setShortcut("Ctrl+C")
-        self.__copyAct.setEnabled(editorsManager.isCopyAvailable())
-        self.__pasteAct.setShortcut("Ctrl+V")
-        self.__pasteAct.setEnabled(isPlainBuffer and
-                                   QApplication.clipboard().text() != "" and
-                                   not editor.isReadOnly())
-        self.__selectAllAct.setShortcut("Ctrl+A")
-        self.__selectAllAct.setEnabled(isPlainBuffer)
-        self.__commentAct.setShortcut("Ctrl+M")
-        self.__commentAct.setEnabled(isPythonBuffer and
-                                     not editor.isReadOnly())
-        self.__duplicateAct.setShortcut("Ctrl+D")
-        self.__duplicateAct.setEnabled(isPlainBuffer and
-                                       not editor.isReadOnly())
-        self.__autocompleteAct.setShortcut("Ctrl+Space")
-        self.__autocompleteAct.setEnabled(isPlainBuffer and
-                                          not editor.isReadOnly())
-        self.__expandTabsAct.setEnabled(isPlainBuffer and
-                                        not editor.isReadOnly())
-        self.__trailingSpacesAct.setEnabled(isPlainBuffer and
-                                            not editor.isReadOnly())
-
-    def __tabAboutToShow(self):
-        """Triggered when tab menu is about to show"""
-        plainTextBuffer = self.__isPlainTextBuffer()
-        isPythonBuffer = self.__isPythonBuffer()
-        isGeneratedDiagram = self.__isGeneratedDiagram()
-        isProfileViewer = self.__isProfileViewer()
-        editorsManager = self.editorsManagerWidget.editorsManager
-
-        self.__cloneTabAct.setEnabled(plainTextBuffer)
-        self.__closeOtherTabsAct.setEnabled(
-            editorsManager.closeOtherAvailable())
-        self.__saveFileAct.setEnabled(plainTextBuffer or isGeneratedDiagram or
-                                      isProfileViewer)
-        self.__saveFileAsAct.setEnabled(plainTextBuffer or isGeneratedDiagram or
-                                        isProfileViewer)
-        self.__closeTabAct.setEnabled(editorsManager.isTabClosable())
-        self.__tabJumpToDefAct.setEnabled(isPythonBuffer)
-        self.__calltipAct.setEnabled(isPythonBuffer)
-        self.__tabJumpToScopeBeginAct.setEnabled(isPythonBuffer)
-        self.__tabOpenImportAct.setEnabled(isPythonBuffer)
-        if plainTextBuffer:
-            widget = editorsManager.currentWidget()
-            editor = widget.getEditor()
-            self.__openAsFileAct.setEnabled(
-                editor.openAsFileAvailable())
-            self.__downloadAndShowAct.setEnabled(
-                editor.downloadAndShowAvailable())
-            self.__openInBrowserAct.setEnabled(
-                editor.downloadAndShowAvailable())
+    def _onRecentFile(self, path):
+        """Triggered when a recent file is requested to be loaded"""
+        if isImageFile(path):
+            self.openPixmapFile(path)
         else:
-            self.__openAsFileAct.setEnabled(False)
-            self.__downloadAndShowAct.setEnabled(False)
-            self.__openInBrowserAct.setEnabled(False)
+            self.openFile(path, -1)
 
-        self.__highlightInPrjAct.setEnabled(
-            editorsManager.isHighlightInPrjAvailable())
-        self.__highlightInFSAct.setEnabled(
-            editorsManager.isHighlightInFSAvailable())
-        self.__highlightInOutlineAct.setEnabled(isPythonBuffer)
+    def _createNewProject(self):
+        """Create new action"""
+        if not self.em.closeRequest():
+            return
 
-        self.__closeTabAct.setShortcut("Ctrl+F4")
-        self.__tabJumpToDefAct.setShortcut("Ctrl+\\")
-        self.__calltipAct.setShortcut("Ctrl+/")
-        self.__tabJumpToScopeBeginAct.setShortcut("Alt+U")
-        self.__tabOpenImportAct.setShortcut("Ctrl+I")
-        self.__highlightInOutlineAct.setShortcut("Ctrl+B")
+        dialog = ProjectPropertiesDialog(None, self)
+        if dialog.exec_() != QDialog.Accepted:
+            return
 
-        self.__recentFilesMenu.clear()
-        addedCount = 0
+        # Request accepted
+        baseDir = os.path.dirname(dialog.absProjectFileName) + os.path.sep
+        importDirs = []
+        index = 0
+        while index < dialog.importDirList.count():
+            dirName = dialog.importDirList.item(index).text()
+            if dirName.startswith(baseDir):
+                # Replace paths with relative if needed
+                dirName = dirName[len(baseDir):]
+                if dirName == "":
+                    dirName = "."
+            importDirs.append(dirName)
+            index += 1
 
-        for item in GlobalData().project.recentFiles:
-            addedCount += 1
-            act = self.__recentFilesMenu.addAction(
-                self.__getAccelerator(addedCount) + item)
-            act.setData(item)
-            act.setEnabled(os.path.exists(item))
+        QApplication.processEvents()
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
-        self.__recentFilesMenu.setEnabled(addedCount > 0)
+        prj = GlobalData().project
+        prj.tabxsStatus = self.em.getTabsStatus()
+        self.em.closeAll()
 
-    def __searchAboutToShow(self):
-        """Triggered when search menu is about to show"""
-        isPlainTextBuffer = self.__isPlainTextBuffer()
-        isPythonBuffer = self.__isPythonBuffer()
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
+        GlobalData().project.createNew(
+            dialog.absProjectFileName,
+            {'scriptname': dialog.scriptEdit.text().strip(),
+             'creationdate': dialog.creationDateEdit.text().strip(),
+             'author': dialog.authorEdit.text().strip(),
+             'license': dialog.licenseEdit.text().strip(),
+             'copyright': dialog.copyrightEdit.text().strip(),
+             'version': dialog.versionEdit.text().strip(),
+             'email': dialog.emailEdit.text().strip(),
+             'description': dialog.descriptionEdit.toPlainText().strip(),
+             'encoding': dialog.encodingCombo.currentText().strip(),
+             'importdirs': importDirs})
 
-        self.__findOccurencesAct.setEnabled(isPythonBuffer and
-                                            os.path.isabs(currentWidget.getFileName()))
-        self.__goToLineAct.setEnabled(isPlainTextBuffer)
-        self.__findAct.setEnabled(isPlainTextBuffer)
-        self.__replaceAct.setEnabled(isPlainTextBuffer and
-                                     currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer)
-        self.__findNextAct.setEnabled(isPlainTextBuffer)
-        self.__findPrevAct.setEnabled(isPlainTextBuffer)
+        QApplication.restoreOverrideCursor()
+        self.settings.addRecentProject(dialog.absProjectFileName)
 
-        self.__findOccurencesAct.setShortcut("Ctrl+]")
-        self.__goToLineAct.setShortcut("Ctrl+G")
-        self.__findAct.setShortcut("Ctrl+F")
-        self.__replaceAct.setShortcut("Ctrl+R")
-        self.__findNextAct.setShortcut("F3")
-        self.__findPrevAct.setShortcut("Shift+F3")
+    def _openProject(self):
+        """Shows up a dialog to open a project"""
+        if self.debugMode:
+            return
+        dialog = QFileDialog(self, 'Open project')
+        dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setNameFilter("Codimension project files (*.cdm3)")
+        urls = []
+        for dname in QDir.drives():
+            urls.append(QUrl.fromLocalFile(dname.absoluteFilePath()))
+        urls.append(QUrl.fromLocalFile(QDir.homePath()))
+        dialog.setDirectory(QDir.homePath())
+        dialog.setSidebarUrls(urls)
 
-    def __diagramsAboutToShow(self):
-        """Triggered when the diagrams menu is about to show"""
-        isPythonBuffer = self.__isPythonBuffer()
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
+        if dialog.exec_() != QDialog.Accepted:
+            return
 
-        enabled = isPythonBuffer and \
-            currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer
-        self.__tabImportDgmAct.setEnabled(enabled)
-        self.__tabImportDgmDlgAct.setEnabled(enabled)
+        fileNames = dialog.selectedFiles()
+        fileName = os.path.realpath(str(fileNames[0]))
+        if fileName == GlobalData().project.fileName:
+            logging.warning("The selected project to load is "
+                            "the currently loaded one.")
+            return
 
-    def __runAboutToShow(self):
-        """Triggered when the run menu is about to show"""
-        projectLoaded = GlobalData().project.isLoaded()
-        prjScriptValid = GlobalData().isProjectScriptValid()
+        if not isCDMProjectFile(fileName):
+            logging.warning("Codimension project file "
+                            "must have .cdm3 extension")
+            return
 
-        enabled = projectLoaded and prjScriptValid and not self.debugMode
-        self.__prjRunAct.setEnabled(enabled)
-        self.__prjRunDlgAct.setEnabled(enabled)
+        self.__loadProject(fileName)
 
-        self.__prjProfileAct.setEnabled(enabled)
-        self.__prjProfileDlgAct.setEnabled(enabled)
+    def _onCreatePrjTemplate(self):
+        """Triggered when project template should be created"""
+        self.createTemplateFile(getProjectTemplateFile())
 
-    def __debugAboutToShow(self):
-        """Triggered when the debug menu is about to show"""
-        projectLoaded = GlobalData().project.isLoaded()
-        prjScriptValid = GlobalData().isProjectScriptValid()
-
-        enabled = projectLoaded and prjScriptValid and not self.debugMode
-        self.__prjDebugAct.setEnabled(enabled)
-        self.__prjDebugDlgAct.setEnabled(enabled)
-
-    def __toolsAboutToShow(self):
-        """Triggered when tools menu is about to show"""
-        isPythonBuffer = self.__isPythonBuffer()
-        projectLoaded = GlobalData().project.isLoaded()
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-
-        pythonBufferNonAnnotate = isPythonBuffer and \
-            currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer
-        self.__tabLineCounterAct.setEnabled(isPythonBuffer)
-
-        if projectLoaded:
-            self.__unusedClassesAct.setEnabled(
-                self.classesViewer.getItemCount() > 0)
-            self.__unusedFunctionsAct.setEnabled(
-                self.functionsViewer.getItemCount() > 0)
-            self.__unusedGlobalsAct.setEnabled(
-                self.globalsViewer.getItemCount() > 0)
-        else:
-            self.__unusedClassesAct.setEnabled(False)
-            self.__unusedFunctionsAct.setEnabled(False)
-            self.__unusedGlobalsAct.setEnabled(False)
-
-    def __viewAboutToShow(self):
-        """Triggered when view menu is about to show"""
-        isPlainTextBuffer = self.__isPlainTextBuffer()
-        isGraphicsBuffer = self.__isGraphicsBuffer()
-        isGeneratedDiagram = self.__isGeneratedDiagram()
-        isProfileViewer = self.__isProfileViewer()
-        isDiffViewer = self.__isDiffViewer()
-        zoomEnabled = isPlainTextBuffer or isGraphicsBuffer or \
-                      isGeneratedDiagram or isDiffViewer
-        if not zoomEnabled and isProfileViewer:
-            editorsManager = self.editorsManagerWidget.editorsManager
-            currentWidget = editorsManager.currentWidget()
-            zoomEnabled = currentWidget.isZoomApplicable()
-        self.__zoomInAct.setEnabled(zoomEnabled)
-        self.__zoomOutAct.setEnabled(zoomEnabled)
-        self.__zoom11Act.setEnabled(zoomEnabled)
-
-        self.__zoomInAct.setShortcut("Ctrl+=")
-        self.__zoomOutAct.setShortcut("Ctrl+-")
-        self.__zoom11Act.setShortcut("Ctrl+0")
-
-        self.__debugBarAct.setEnabled(self.debugMode)
-
-    def __optionsAboutToShow(self):
-        """Triggered when the options menu is about to show"""
-        exists = os.path.exists(getIDETemplateFile())
-        self.__ideCreateTemplateAct.setEnabled(not exists)
-        self.__ideEditTemplateAct.setEnabled(exists)
-        self.__ideDelTemplateAct.setEnabled(exists)
-
-    def __helpAboutToShow(self):
-        """Triggered when help menu is about to show"""
-        isPythonBuffer = self.__isPythonBuffer()
-        self.__contextHelpAct.setEnabled(isPythonBuffer)
-        self.__callHelpAct.setEnabled(isPythonBuffer)
-
-        self.__contextHelpAct.setShortcut("Ctrl+F1")
-        self.__callHelpAct.setShortcut("Ctrl+Shift+F1")
-
-    def __editAboutToHide(self):
-        """Triggered when edit menu is about to hide"""
-        self.__undoAct.setShortcut("")
-        self.__redoAct.setShortcut("")
-        self.__cutAct.setShortcut("")
-        self.__copyAct.setShortcut("")
-        self.__pasteAct.setShortcut("")
-        self.__selectAllAct.setShortcut("")
-        self.__commentAct.setShortcut("")
-        self.__duplicateAct.setShortcut("")
-        self.__autocompleteAct.setShortcut("")
-
-    def __prjAboutToHide(self):
-        self.__newProjectAct.setEnabled(True)
-        self.__openProjectAct.setEnabled(True)
-
-    def __tabAboutToHide(self):
-        """Triggered when tab menu is about to hide"""
-        self.__closeTabAct.setShortcut("")
-        self.__tabJumpToDefAct.setShortcut("")
-        self.__calltipAct.setShortcut("")
-        self.__tabJumpToScopeBeginAct.setShortcut("")
-        self.__tabOpenImportAct.setShortcut("")
-        self.__highlightInOutlineAct.setShortcut("")
-
-        self.__saveFileAct.setEnabled(True)
-        self.__saveFileAsAct.setEnabled(True)
-
-    def __searchAboutToHide(self):
-        """Triggered when search menu is about to hide"""
-        self.__findOccurencesAct.setShortcut("")
-        self.__goToLineAct.setShortcut("")
-        self.__findAct.setShortcut("")
-        self.__replaceAct.setShortcut("")
-        self.__findNextAct.setShortcut("")
-        self.__findPrevAct.setShortcut("")
-
-    def __toolsAboutToHide(self):
-        """Triggered when tools menu is about to hide"""
-        pass
-
-    def __viewAboutToHide(self):
-        """Triggered when view menu is about to hide"""
-        self.__zoomInAct.setShortcut("")
-        self.__zoomOutAct.setShortcut("")
-        self.__zoom11Act.setShortcut("")
-
-    def __helpAboutToHide(self):
-        """Triggered when help menu is about to hide"""
-        self.__contextHelpAct.setShortcut("")
-        self.__callHelpAct.setShortcut("")
+    def _onEditPrjTemplate(self):
+        """Triggered when project template should be edited"""
+        self.editTemplateFile(getProjectTemplateFile())
 
     @staticmethod
-    def __getAccelerator(count):
-        """Provides an accelerator text for a menu item"""
-        if count < 10:
-            return "&" + str(count) + ".  "
-        return "&" + chr(count - 10 + ord('a')) + ".  "
+    def _onDelPrjTemplate():
+        """Triggered when project template should be deleted"""
+        fileName = getProjectTemplateFile()
+        if fileName is not None:
+            if os.path.exists(fileName):
+                os.unlink(fileName)
+                logging.info("Project new file template deleted")
 
-    def __prjAboutToShow(self):
-        """Triggered when project menu is about to show"""
-        self.__newProjectAct.setEnabled(not self.debugMode)
-        self.__openProjectAct.setEnabled(not self.debugMode)
-        self.__unloadProjectAct.setEnabled(not self.debugMode)
-
-        # Recent projects part
-        self.__recentPrjMenu.clear()
-        addedCount = 0
-        currentPrj = GlobalData().project.fileName
-        for item in self.settings['recentProjects']:
-            if item == currentPrj:
-                continue
-            addedCount += 1
-            act = self.__recentPrjMenu.addAction(
-                                self.__getAccelerator(addedCount) +
-                                os.path.basename(item).replace(".cdm3", ""))
-            act.setData(item)
-            act.setEnabled(not self.debugMode and os.path.exists(item))
-
-        self.__recentPrjMenu.setEnabled(addedCount > 0)
-
-        if GlobalData().project.isLoaded():
-            # Template part
-            exists = os.path.exists(getProjectTemplateFile())
-            self.__prjTemplateMenu.setEnabled(True)
-            self.__createPrjTemplateAct.setEnabled(not exists)
-            self.__editPrjTemplateAct.setEnabled(exists)
-            self.__delPrjTemplateAct.setEnabled(exists)
-        else:
-            self.__prjTemplateMenu.setEnabled(False)
-
-    def __onRecentPrj(self, path):
+    def _onRecentPrj(self, path):
         """Triggered when a recent project is requested to be loaded"""
         path = path.data()
         if not os.path.exists(path):
             logging.error("Could not find project file: " + path)
         else:
             self.__loadProject(path)
-
-    def __onRecentFile(self, path):
-        """Triggered when a recent file is requested to be loaded"""
-        if isImageFile(path):
-            self.openPixmapFile(path)
-        else:
-            self.openFile(path, -1)
 
     def onNotUsedFunctions(self):
         """Triggered when not used functions analysis requested"""
@@ -3290,8 +2193,7 @@ class CodimensionMainWindow(QMainWindow):
         """Triggered when a disassembler should be shown"""
         try:
             code = getDisassembled(scriptPath, name)
-            editorsManager = self.editorsManagerWidget.editorsManager
-            editorsManager.showDisassembler(scriptPath, name, code)
+            self.em.showDisassembler(scriptPath, name, code)
         except:
             logging.error("Could not get '" + name + "' from " +
                           scriptPath + " disassembled.")
@@ -3329,16 +2231,16 @@ class CodimensionMainWindow(QMainWindow):
 
     def __onClientExceptionsCleared(self):
         """Triggered when the user cleared the client exceptions"""
-        self.__rightSideBar.setTabText(2, "Exceptions")
+        self._rightSideBar.setTabText(2, "Exceptions")
 
     def __onBreakpointsModelChanged(self):
         " Triggered when something is changed in the breakpoints list "
         enabledCount, disabledCount = self.__debugger.getBreakPointModel().getCounts()
         total = enabledCount + disabledCount
         if total == 0:
-            self.__rightSideBar.setTabText(3, "Breakpoints")
+            self._rightSideBar.setTabText(3, "Breakpoints")
         else:
-            self.__rightSideBar.setTabText(3, "Breakpoints (" + str(total) + ")")
+            self._rightSideBar.setTabText(3, "Breakpoints (" + str(total) + ")")
 
     def __onEvalOK(self, message):
         """Triggered when Eval completed successfully"""
@@ -3361,18 +2263,18 @@ class CodimensionMainWindow(QMainWindow):
         """Sets a new status when a tab is changed
            or a content has been changed
         """
-        self.__tabDebugAct.setEnabled(enabled)
-        self.__tabDebugDlgAct.setEnabled(enabled)
+        self._tabDebugAct.setEnabled(enabled)
+        self._tabDebugDlgAct.setEnabled(enabled)
 
-        self.__tabRunAct.setEnabled(enabled)
-        self.__tabRunDlgAct.setEnabled(enabled)
+        self._tabRunAct.setEnabled(enabled)
+        self._tabRunDlgAct.setEnabled(enabled)
 
-        self.__tabProfileAct.setEnabled(enabled)
-        self.__tabProfileDlgAct.setEnabled(enabled)
+        self._tabProfileAct.setEnabled(enabled)
+        self._tabProfileDlgAct.setEnabled(enabled)
 
     def __initPluginSupport(self):
         """Initializes the main window plugin support"""
-        self.__pluginMenus = {}
+        self._pluginMenus = {}
         GlobalData().pluginManager.sigPluginActivated.connect(
             self.__onPluginActivated)
         GlobalData().pluginManager.sigPluginDeactivated.connect(
@@ -3387,30 +2289,20 @@ class CodimensionMainWindow(QMainWindow):
             if pluginMenu.isEmpty():
                 pluginMenu = None
                 return
-            self.__pluginMenus[plugin.getPath()] = pluginMenu
-            self.__recomposePluginMenu()
+            self._pluginMenus[plugin.getPath()] = pluginMenu
+            self._recomposePluginMenu()
         except Exception as exc:
             logging.error("Error populating " + pluginName +
                           " plugin main menu: " +
                           str(exc) + ". Ignore and continue.")
 
-    def __recomposePluginMenu(self):
-        """Recomposes the plugin menu"""
-        self.__pluginsMenu.clear()
-        self.__pluginsMenu.addAction(getIcon('pluginmanagermenu.png'),
-                                     'Plugin &manager', self.__onPluginManager)
-        if self.__pluginMenus:
-            self.__pluginsMenu.addSeparator()
-        for path in self.__pluginMenus:
-            self.__pluginsMenu.addMenu(self.__pluginMenus[path])
-
     def __onPluginDeactivated(self, plugin):
         """Triggered when a plugin is deactivated"""
         try:
             path = plugin.getPath()
-            if path in self.__pluginMenus:
-                del self.__pluginMenus[path]
-                self.__recomposePluginMenu()
+            if path in self._pluginMenus:
+                del self._pluginMenus[path]
+                self._recomposePluginMenu()
         except Exception as exc:
             pluginName = plugin.getName()
             logging.error("Error removing " + pluginName +
@@ -3419,15 +2311,15 @@ class CodimensionMainWindow(QMainWindow):
 
     def activateProjectTab(self):
         """Activates the project tab"""
-        self.__leftSideBar.show()
-        self.__leftSideBar.setCurrentTab('project')
-        self.__leftSideBar.raise_()
+        self._leftSideBar.show()
+        self._leftSideBar.setCurrentTab('project')
+        self._leftSideBar.raise_()
 
     def activateOutlineTab(self):
         """Activates the outline tab"""
-        self.__rightSideBar.show()
-        self.__rightSideBar.setCurrentTab('fileoutline')
-        self.__rightSideBar.raise_()
+        self._rightSideBar.show()
+        self._rightSideBar.setCurrentTab('fileoutline')
+        self._rightSideBar.raise_()
 
     def __dumpDebugSettings(self, fileName, fullEnvironment):
         """Provides common settings except the environment"""
@@ -3505,46 +2397,43 @@ class CodimensionMainWindow(QMainWindow):
              "Debug child process: " + str(debugSettings.followChild),
              "Close terminal upon successfull completion: " + str(runParameters.closeTerminal)]))
 
-    def __onDumpDebugSettings(self, action=None):
+    def _onDumpDebugSettings(self, action=None):
         """Triggered when dumping visible settings was requested"""
         self.__dumpDebugSettings(self.__debugger.getScriptPath(), False)
 
-    def __onDumpFullDebugSettings(self):
+    def _onDumpFullDebugSettings(self):
         """Triggered when dumping complete settings is requested"""
         self.__dumpDebugSettings(self.__debugger.getScriptPath(), True)
 
-    def __onDumpScriptDebugSettings(self):
+    def _onDumpScriptDebugSettings(self):
         """Triggered when dumping current script settings is requested"""
-        if self.__dumpScriptDbgSettingsAvailable():
-            editorsManager = self.editorsManagerWidget.editorsManager
-            currentWidget = editorsManager.currentWidget()
+        if self._dumpScriptDbgSettingsAvailable():
+            currentWidget = self.em.currentWidget()
             self.__dumpDebugSettings(currentWidget.getFileName(), False)
 
-    def __onDumpScriptFullDebugSettings(self):
+    def _onDumpScriptFullDebugSettings(self):
         """Triggered when dumping current script complete settings is requested"""
-        if self.__dumpScriptDbgSettingsAvailable():
-            editorsManager = self.editorsManagerWidget.editorsManager
-            currentWidget = editorsManager.currentWidget()
+        if self._dumpScriptDbgSettingsAvailable():
+            currentWidget = self.em.currentWidget()
             self.__dumpDebugSettings(currentWidget.getFileName(), True)
 
-    def __onDumpProjectDebugSettings(self):
+    def _onDumpProjectDebugSettings(self):
         """Triggered when dumping project script settings is requested"""
         if self.__dumpProjectDbgSettingsAvailable():
             project = GlobalData().project
             self.__dumpDebugSettings(project.getProjectScript(), False)
 
-    def __onDumpProjectFullDebugSettings(self):
+    def _onDumpProjectFullDebugSettings(self):
         """Triggered when dumping project script complete settings is requested"""
         if self.__dumpProjectDbgSettingsAvailable():
             project = GlobalData().project
             self.__dumpDebugSettings(project.getProjectScript(), True)
 
-    def __dumpScriptDbgSettingsAvailable(self):
+    def _dumpScriptDbgSettingsAvailable(self):
         """True if dumping dbg session settings for the script is available"""
-        if not self.__isPythonBuffer():
+        if not self._isPythonBuffer():
             return False
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
+        currentWidget = self.em.currentWidget()
         if currentWidget is None:
             return False
         fileName = currentWidget.getFileName()
@@ -3562,28 +2451,17 @@ class CodimensionMainWindow(QMainWindow):
             return True
         return False
 
-    def __onDumpDbgSettingsAboutToShow(self):
-        """Dump debug settings is about to show"""
-        scriptAvailable = self.__dumpScriptDbgSettingsAvailable()
-        self.__debugDumpScriptSettingsAct.setEnabled(scriptAvailable)
-        self.__debugDumpScriptSettingsEnvAct.setEnabled(scriptAvailable)
-
-        projectAvailable = self.__dumpProjectDbgSettingsAvailable()
-        self.__debugDumpProjectSettingsAct.setEnabled(projectAvailable)
-        self.__debugDumpProjectSettingsEnvAct.setEnabled(projectAvailable)
-
     def installRedirectedIOConsole(self):
         """Create redirected IO console"""
         self.redirectedIOConsole = IOConsoleTabWidget(self)
         self.redirectedIOConsole.sigUserInput.connect(self.__onUserInput)
-        self.redirectedIOConsole.sigTextEditorZoom.connect(
-            self.editorsManagerWidget.editorsManager.onZoom)
+        self.redirectedIOConsole.sigTextEditorZoom.connect(self.em.onZoom)
         self.redirectedIOConsole.sigSettingUpdated.connect(
             self.onIOConsoleSettingUpdated)
-        self.__bottomSideBar.addTab(
+        self._bottomSideBar.addTab(
             self.redirectedIOConsole, getIcon('ioconsole.png'),
             'IO console', 'ioredirect', None)
-        self.__bottomSideBar.setTabToolTip('ioredirect',
+        self._bottomSideBar.setTabToolTip('ioredirect',
                                            'Redirected IO debug console')
 
     def clearDebugIOConsole(self):
@@ -3593,30 +2471,30 @@ class CodimensionMainWindow(QMainWindow):
 
     def __onClientStdout(self, data):
         """Triggered when the client reports stdout"""
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentTab('ioredirect')
-        self.__bottomSideBar.raise_()
+        self._bottomSideBar.show()
+        self._bottomSideBar.setCurrentTab('ioredirect')
+        self._bottomSideBar.raise_()
         self.redirectedIOConsole.appendStdoutMessage(data)
 
     def __onClientStderr(self, data):
         """Triggered when the client reports stderr"""
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentTab('ioredirect')
-        self.__bottomSideBar.raise_()
+        self._bottomSideBar.show()
+        self._bottomSideBar.setCurrentTab('ioredirect')
+        self._bottomSideBar.raise_()
         self.redirectedIOConsole.appendStderrMessage(data)
 
     def __ioconsoleIDEMessage(self, message):
         """Sends an IDE message to the IO console"""
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentTab('ioredirect')
-        self.__bottomSideBar.raise_()
+        self._bottomSideBar.show()
+        self._bottomSideBar.setCurrentTab('ioredirect')
+        self._bottomSideBar.raise_()
         self.redirectedIOConsole.appendIDEMessage(message)
 
     def __onClientRawInput(self, prompt, echo):
         """Triggered when the client input is requested"""
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentTab('ioredirect')
-        self.__bottomSideBar.raise_()
+        self._bottomSideBar.show()
+        self._bottomSideBar.setCurrentTab('ioredirect')
+        self._bottomSideBar.raise_()
         self.redirectedIOConsole.rawInput(prompt, echo)
         self.redirectedIOConsole.setFocus()
 
@@ -3649,31 +2527,30 @@ class CodimensionMainWindow(QMainWindow):
 
         widget.CloseIOConsole.connect(self.__onCloseIOConsole)
         widget.KillIOConsoleProcess.connect(self.__onKillIOConsoleProcess)
-        widget.textEditorZoom.connect(
-            self.editorsManagerWidget.editorsManager.onZoom)
+        widget.textEditorZoom.connect(self.em.onZoom)
         widget.settingUpdated.connect(self.onIOConsoleSettingUpdated)
 
-        self.__bottomSideBar.addTab(
+        self._bottomSideBar.addTab(
             widget, getIcon('ioconsole.png'), caption, name)
-        self.__bottomSideBar.setTabToolTip(name, tooltip)
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentTab(name)
-        self.__bottomSideBar.raise_()
+        self._bottomSideBar.setTabToolTip(name, tooltip)
+        self._bottomSideBar.show()
+        self._bottomSideBar.setCurrentTab(name)
+        self._bottomSideBar.raise_()
         widget.setFocus()
 
     def updateIOConsoleTooltip(self, threadID, msg):
         """Updates the IO console tooltip"""
         index = self.__getIOConsoleIndex(threadID)
         if index is not None:
-            tooltip = self.__bottomSideBar.tabToolTip(index)
+            tooltip = self._bottomSideBar.tabToolTip(index)
             tooltip = tooltip.replace("(running)", "(" + msg + ")")
-            self.__bottomSideBar.setTabToolTip(index, tooltip)
+            self._bottomSideBar.setTabToolTip(index, tooltip)
 
     def __getIOConsoleIndex(self, threadID):
         """Provides the IO console index by the thread ID"""
-        index = self.__bottomSideBar.count() - 1
+        index = self._bottomSideBar.count() - 1
         while index >= 0:
-            widget = self.__bottomSideBar.widget(index)
+            widget = self._bottomSideBar.widget(index)
             if hasattr(widget, "threadID"):
                 if widget.threadID() == threadID:
                     return index
@@ -3684,7 +2561,7 @@ class CodimensionMainWindow(QMainWindow):
         """Closes the tab with the corresponding widget"""
         index = self.__getIOConsoleIndex(threadID)
         if index is not None:
-            self.__bottomSideBar.removeTab(index)
+            self._bottomSideBar.removeTab(index)
 
     def __onKillIOConsoleProcess(self, threadID):
         """Kills the process linked to the IO console"""
@@ -3693,9 +2570,9 @@ class CodimensionMainWindow(QMainWindow):
     def closeAllIOConsoles(self):
         """Closes all IO run/profile tabs and clears the debug IO console"""
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        index = self.__bottomSideBar.count - 1
+        index = self._bottomSideBar.count - 1
         while index >= 0:
-            widget = self.__bottomSideBar.widget(index)
+            widget = self._bottomSideBar.widget(index)
             if hasattr(widget, "getType"):
                 if widget.getType() == MainWindowTabWidgetBase.IOConsole:
                     if hasattr(widget, "stopAndClose"):
@@ -3707,8 +2584,8 @@ class CodimensionMainWindow(QMainWindow):
 
     def passFocusToEditor(self):
         """Passes the focus to the text editor if it is there"""
-        return self.editorsManagerWidget.editorsManager.passFocusToEditor()
+        return self.em.passFocusToEditor()
 
     def passFocusToFlow(self):
         """Passes the focus to the flow UI if it is there"""
-        return self.editorsManagerWidget.editorsManager.passFocusToFlow()
+        return self.em.passFocusToFlow()

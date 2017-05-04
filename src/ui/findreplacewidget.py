@@ -71,8 +71,6 @@ class FindReplaceWidget(QWidget):
 
     """Find and replace widgets"""
 
-    sigIncSearchDone = pyqtSignal(bool)
-
     MODE_FIND = 0
     MODE_REPLACE = 1
 
@@ -631,13 +629,11 @@ class FindReplaceWidget(QWidget):
         if not valid:
             self.__onInvalidCriteria(fromScratch)
             GlobalData().mainWindow.showStatusBarMessage(err, 8000)
-            self.sigIncSearchDone.emit(False)
             self.__moveToStartPoint()
             return
 
         if self.findtextCombo.currentText() == '':
             self.__onInvalidCriteria(fromScratch)
-            self.sigIncSearchDone.emit(False)
             self.__setBackgroundColor(self.BG_IDLE)
             self.__moveToStartPoint()
             return
@@ -662,7 +658,6 @@ class FindReplaceWidget(QWidget):
                                                   forward, needMessage)
             if count == 0:
                 self.__moveToStartPoint()
-        self.sigIncSearchDone.emit(count > 0)
         self.__setBackgroundColor(self.BG_MATCH if count > 0
                                   else self.BG_NOMATCH)
 

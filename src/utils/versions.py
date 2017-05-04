@@ -21,11 +21,12 @@
 
 from os.path import abspath
 from distutils.spawn import find_executable
+from subprocess import getstatusoutput
 
 
 def getCodimensionVersion():
     """Provides the IDE version"""
-    from globals import GlobalData
+    from .globals import GlobalData
     import sys
     return GlobalData().version, abspath(sys.argv[0])
 
@@ -76,7 +77,7 @@ def getFileMagicVersion():
 
 def getGraphvizVersion():
     """Provides the graphviz version"""
-    from globals import GlobalData
+    from .globals import GlobalData
     if not GlobalData().graphvizAvailable:
         return "Not installed", None
 
@@ -84,10 +85,12 @@ def getGraphvizVersion():
     if not path:
         return "Not installed", None
 
-    from misc import safeRunWithStderr
     try:
-        stdOut, stdErr = safeRunWithStderr( [ path, "-V" ] )
-        for line in stdErr.splitlines():
+        status, output = getstatusoutput(path + ' -V')
+        if status != 0:
+            return "Not installed", None
+
+        for line in output.splitlines():
             # E.g. dot - graphviz version 2.26.3 (20100126.1600)
             line = line.strip()
             if line.startswith("dot - graphviz version "):
@@ -102,7 +105,7 @@ def getGraphvizVersion():
 
 def getGprof2dotVersion():
     """Provides gprof2dot version"""
-    from settings import thirdpartyDir
+    from .settings import thirdpartyDir
     from misc import safeRun
     import os.path
     gprof2dot = thirdpartyDir + "gprof2dot" + os.path.sep + "gprof2dot.py"

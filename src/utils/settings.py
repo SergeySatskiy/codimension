@@ -186,7 +186,7 @@ _DEFAULT_SETTINGS = {
 
     'recentProjects': [],
     'projectFilesFilters': ['^\\.', '.*\\~$', '.*\\.pyc$',
-                            '.*\\.swp$', '.*\\.pyo$'],
+                            '.*\\.swp$', '.*\\.pyo$', '__pycache__'],
     'ignoredExceptions': [],
     'disabledPlugins': [],
     'dirSafeModules': ['os', 'sys', 'xml', 'collections',
