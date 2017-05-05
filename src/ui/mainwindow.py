@@ -1351,33 +1351,25 @@ class CodimensionMainWindow(QMainWindow):
 
     def _onTheme(self, skinSubdir):
         """Triggers when a theme is selected"""
-        if self.settings['skin'] == skinSubdir.data():
-            return
-
-        logging.info("Please restart codimension to apply the new theme")
-        self.settings['skin'] = skinSubdir.data()
+        if self.settings['skin'] != skinSubdir.data():
+            logging.info("Please restart codimension to apply the new theme")
+            self.settings['skin'] = skinSubdir.data()
 
     def _onStyle(self, styleName):
         """Sets the selected style"""
-        QApplication.setStyle(styleName)
-        self.settings.style = styleName.lower()
+        QApplication.setStyle(styleName.data())
+        self.settings['style'] = styleName.data().lower()
 
     def _onMonoFont(self, fontFace):
         """Sets the new mono font"""
-        try:
-            font = QFont()
-            font.setFamily(fontFace)
-            GlobalData().skin.setMainEditorFont(font)
-            GlobalData().skin.setBaseMonoFontFace(fontFace)
-        except Exception as exc:
-            logging.error(str(exc))
-            return
-
-        logging.info("Please restart codimension to apply the new font")
+        newFontFamily = fontFace.data()
+        if newFontFamily != GlobalData().skin['monoFont'].family():
+            GlobalData().skin.setMonoFontFamily(newFontFamily)
+            self.em.onMonoFontUpdated()
+            self.logViewer.onMonoFontUpdated()
 
     def checkOutsideFileChanges(self):
-        """Checks if there are changes in the files
-           currently loaded by codimension"""
+        """Checks if there are changes in the currently opened files"""
         self.em.checkOutsideFileChanges()
 
     def switchDebugMode(self, newState):
@@ -1834,7 +1826,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def _onTabImportDgmTuned(self):
         """Triggered when tuned tab imports diagram is requested"""
-        currentWidget = self.em.currentWidget().onImportDgmTuned()
+        self.em.currentWidget().onImportDgmTuned()
 
     def onRunTab(self):
         """Triggered when run tab script is requested"""
@@ -2589,3 +2581,4 @@ class CodimensionMainWindow(QMainWindow):
     def passFocusToFlow(self):
         """Passes the focus to the flow UI if it is there"""
         return self.em.passFocusToFlow()
+

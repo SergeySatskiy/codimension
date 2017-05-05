@@ -60,7 +60,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     """Text editor implementation"""
 
-
     sigEscapePressed = pyqtSignal()
     cflowSyncRequested = pyqtSignal(int, int, int)
 
@@ -76,7 +75,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         skin = GlobalData().skin
         self.setPaper(skin['nolexerPaper'])
         self.setColor(skin['nolexerColor'])
-        self.setFont(skin['monoFont'])
 
         self.__initMargins()
 

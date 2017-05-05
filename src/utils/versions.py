@@ -22,6 +22,18 @@
 from os.path import abspath
 from distutils.spawn import find_executable
 from subprocess import getstatusoutput
+import pkg_resources
+import logging
+
+
+def getPackageVersionAndLocation(name):
+    """Provides a package version"""
+    try:
+        return pkg_resources.get_distribution(name).version, \
+               pkg_resources.get_distribution(name).location
+    except pkg_resources.DistributionNotFound as exc:
+        logging.error(str(exc))
+        return None, None
 
 
 def getCodimensionVersion():
@@ -51,28 +63,10 @@ def getPythonInterpreterVersion():
                      str(sys.version_info.micro)]), sys.executable
 
 
-def getPyQtVersion():
-    """Provides the PyQt version"""
-    import PyQt5.QtCore
-    return str(PyQt5.QtCore.PYQT_VERSION_STR), abspath(PyQt5.QtCore.__file__)
-
-
 def getQtVersion():
     """Provides the Qt version"""
     from ui.qt import QT_VERSION_STR
     return QT_VERSION_STR
-
-
-def getPyFlakesVersion():
-    """Provides the pyflakes library version"""
-    import pyflakes
-    return pyflakes.__version__, abspath(pyflakes.__file__)
-
-
-def getFileMagicVersion():
-    """Provides the file magic library"""
-    import magic
-    return "Unknown", abspath(magic.__file__)
 
 
 def getGraphvizVersion():
@@ -101,31 +95,6 @@ def getGraphvizVersion():
     except:
         return "Not installed", None
     return "could not determine", path
-
-
-def getGprof2dotVersion():
-    """Provides gprof2dot version"""
-    from .settings import thirdpartyDir
-    from misc import safeRun
-    import os.path
-    gprof2dot = thirdpartyDir + "gprof2dot" + os.path.sep + "gprof2dot.py"
-    try:
-        for line in safeRun([gprof2dot, "--version"]).splitlines():
-            # E.g. gprof2dot.py 1.0
-            line = line.strip()
-            if line.startswith("gprof2dot"):
-                parts = line.split(" ")
-                if len(parts) == 2 and parts[1][0].isdigit():
-                    return parts[1], gprof2dot
-    except:
-        return "Not installed", None
-    return "could not determine", gprof2dot
-
-
-def getYapsyVersion():
-    """Provides yapsy version"""
-    import yapsy
-    return yapsy.__version__, abspath(yapsy.__file__)
 
 
 def getComponentInfo():
@@ -160,7 +129,7 @@ def getComponentInfo():
                        "Open source license",
                        "http://www.python.org/psf/license/",
                        path))
-    version, path = getPyQtVersion()
+    version, path = getPackageVersionAndLocation('PyQt5')
     components.append(("PyQt", version,
                        "http://www.riverbankcomputing.com/software/pyqt/intro",
                        None, "GPL-2.0/GPL-3.0/Commercial/Embedded",
@@ -171,16 +140,16 @@ def getComponentInfo():
                        "LGPL-2.1/Commercial",
                        "http://www.gnu.org/licenses/lgpl-2.1.html",
                        None))
-    version, path = getPyFlakesVersion()
+    version, path = getPackageVersionAndLocation('pyflakes')
     components.append(("pyflakes", version,
                        "https://pypi.python.org/pypi/pyflakes", None,
                        "pyflakes license", "see the package",
                        path))
-    version, path = getFileMagicVersion()
-    components.append(("filemagic", version,
-                       "https://pypi.python.org/pypi/filemagic/", None,
-                       "Apache License 2.0",
-                       "http://www.apache.org/licenses/LICENSE-2.0.html",
+    version, path = getPackageVersionAndLocation('python-magic')
+    components.append(("python-magic", version,
+                       "https://pypi.python.org/pypi/python-magic/", None,
+                       "MIT license",
+                       "https://opensource.org/licenses/MIT",
                        path))
     version, path = getGraphvizVersion()
     components.append(("graphviz", version,
@@ -188,12 +157,12 @@ def getComponentInfo():
                        "Eclipse Public License 1.0",
                        "http://www.graphviz.org/License.php",
                        path))
-    version, path = getGprof2dotVersion()
+    version, path = getPackageVersionAndLocation('gprof2dot')
     components.append(("gprof2dot", version,
                        "http://freecode.com/projects/gprof2dot_py", True,
                        "LGPL", "http://www.gnu.org/licenses/lgpl.html",
                        path))
-    version, path = getYapsyVersion()
+    version, path = getPackageVersionAndLocation('yapsy')
     components.append(("yapsy", version,
                        "http://yapsy.sourceforge.net", None,
                        "BSD License",

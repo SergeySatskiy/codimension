@@ -27,7 +27,7 @@ from utils.project import CodimensionProject
 from utils.diskvaluesrelay import getFindHistory, setFindHistory
 from .qt import (QToolButton, QLabel, QSizePolicy, QComboBox,
                  QGridLayout, QWidget, QCheckBox, QKeySequence, Qt, QSize,
-                 QEvent, pyqtSignal, QPalette, QObject)
+                 QEvent, pyqtSignal, QPalette)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -765,3 +765,4 @@ class FindReplaceWidget(QWidget):
             self.replaceAllButton.setEnabled(
                 self.__isCriteriaValid() and
                 self.__editor.getCurrentMatchesCount() > 0)
+

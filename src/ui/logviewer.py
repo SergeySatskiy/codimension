@@ -27,6 +27,7 @@
 
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
+from utils.settings import Settings
 from .qt import (Qt, QSize, QColor, QBrush, QTextCursor, QCursor, QFont,
                  QPlainTextEdit, QMenu, QHBoxLayout, QWidget, QAction,
                  QToolBar, QSizePolicy)
@@ -49,6 +50,7 @@ class LogViewer(QWidget):
         self.copyButton = None
         self.selectAllButton = None
         self.__createLayout(parent)
+        self.onMonoFontUpdated()
 
         # create the context menu
         self.__menu = QMenu(self)
@@ -70,12 +72,19 @@ class LogViewer(QWidget):
         self.cErrorFormat.setForeground(QBrush(QColor(Qt.red)))
         self.__updateToolbarButtons()
 
+    def onMonoFontUpdated(self):
+        """Triggered when a mono font is chosen"""
+        font = QFont(GlobalData().skin['monoFont'])
+        zoom = Settings()['zoom']
+        fontSize = font.pointSize() + zoom
+        font.setPointSize(fontSize)
+        self.messages.setFont(font)
+
     def __createLayout(self, parent):
         """Helper to create the viewer layout"""
         # Messages list area
         self.messages = QPlainTextEdit(parent)
         self.messages.setLineWrapMode(QPlainTextEdit.NoWrap)
-        self.messages.setFont(QFont(GlobalData().skin['monoFont'].family()))
         self.messages.setReadOnly(True)
         self.messages.setMaximumBlockCount(MAX_LINES)
 

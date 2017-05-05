@@ -49,7 +49,7 @@ class CFlowSettings:
         if self.__zoom == zoomValue:
             return
 
-        monoFont = QFont(GlobalData().skin.cflowSettings['monoFont'])
+        monoFont = QFont(GlobalData().skin.cflowSettings['cfMonoFont'])
         monoFont.setPointSize(monoFont.pointSize() + zoomValue)
         self.monoFont = monoFont
         self.monoFontMetrics = QFontMetrics(self.monoFont,

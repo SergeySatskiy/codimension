@@ -46,7 +46,6 @@ class QutepartWrapper(Qutepart):
         self.delMargin('line_numbers')
         self.completionEnabled = False
 
-        # The minimum possible zoom not to make the margin disappear
         skin = GlobalData().skin
         self.setFont(QFont(skin['monoFont']))
 

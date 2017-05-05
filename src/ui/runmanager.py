@@ -69,7 +69,7 @@ class RemoteProcessWrapper(QObject):
         self.__path = path
         self.__serverPort = serverPort
         self.__clientSocket = None
-        self.__needRedirection = Settings().terminalType == TERM_REDIRECT
+        self.__needRedirection = Settings()['terminalType'] == TERM_REDIRECT
         self.__protocolState = self.PROTOCOL_CONTROL
         self.__buffer = ""
         self.__proc = None
@@ -92,12 +92,12 @@ class RemoteProcessWrapper(QObject):
         if self.__needRedirection:
             workingDir, cmd, environment = \
                 getCwdCmdEnv(CMD_TYPE_RUN, self.__path, params,
-                             Settings().terminalType,
+                             Settings()['terminalType'],
                              None, self.__serverPort, self.__procID)
         else:
             workingDir, cmd, environment = \
                 getCwdCmdEnv(CMD_TYPE_RUN, self.__path,
-                             params, Settings().terminalType)
+                             params, Settings()['terminalType'])
 
         try:
             self.__proc = Popen(cmd, shell=True,
@@ -411,7 +411,7 @@ class RunManager(QObject):
         """Runs the given script with redirected IO"""
         if needDialog:
             params = getRunParameters(path)
-            termType = Settings().terminalType
+            termType = Settings()['terminalType']
             profilerParams = Settings().getProfilerSettings()
             debuggerParams = Settings().getDebuggerSettings()
             dlg = RunDialog(path, params, termType,
@@ -421,7 +421,7 @@ class RunManager(QObject):
                 return
             addRunParams(path, dlg.runParams)
             if dlg.termType != termType:
-                Settings().terminalType = dlg.termType
+                Settings()['terminalType'] = dlg.termType
 
         # The parameters for the run are ready.
         # Start the run business.
@@ -429,12 +429,15 @@ class RunManager(QObject):
         remoteProc.isProfiling = False
         remoteProc.procWrapper = RemoteProcessWrapper(path,
             self.__tcpServer.serverPort())
-        if Settings().terminalType == TERM_REDIRECT:
+        if Settings()['terminalType'] == TERM_REDIRECT:
             remoteProc.widget = RunConsoleTabWidget(
                 remoteProc.procWrapper.procID())
-            remoteProc.procWrapper.ClientStdout.connect(remoteProc.widget.appendStdoutMessage)
-            remoteProc.procWrapper.ClientStderr.connect(remoteProc.widget.appendStderrMessage)
-            remoteProc.procWrapper.ClientRawInput.connect(remoteProc.widget.rawInput)
+            remoteProc.procWrapper.ClientStdout.connect(
+                remoteProc.widget.appendStdoutMessage)
+            remoteProc.procWrapper.ClientStderr.connect(
+                remoteProc.widget.appendStderrMessage)
+            remoteProc.procWrapper.ClientRawInput.connect(
+                remoteProc.widget.rawInput)
             remoteProc.widget.UserInput.connect(self.__onUserInput)
         else:
             remoteProc.widget = None
@@ -447,7 +450,7 @@ class RunManager(QObject):
             if procIndex is not None:
                 del self.__processes[procIndex]
         else:
-            if Settings().terminalType != TERM_REDIRECT:
+            if Settings()['terminalType'] != TERM_REDIRECT:
                 if not self.__waitTimer.isActive():
                     self.__waitTimer.start(1000)
 

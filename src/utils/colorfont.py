@@ -121,8 +121,14 @@ def getMonospaceFontList():
     combo.setFontFilters(QFontComboBox.MonospacedFonts)
     for index in range(combo.count()):
         face = str(combo.itemText(index))
-        if face.lower() != "webdings":
-            result.append(face)
+        lowerFace = face.lower()
+        if 'webdings' in lowerFace:
+            continue
+        if 'cursor' in lowerFace:
+            continue
+        if 'mathematical' in lowerFace:
+            continue
+        result.append(face)
     return result
 
 

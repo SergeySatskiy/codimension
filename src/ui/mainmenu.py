@@ -594,14 +594,20 @@ class MainWindowMenuMixin:
         styleMenu.triggered.connect(self._onStyle)
         styleMenu.aboutToShow.connect(self.__styleAboutToShow)
 
-        fontFaceMenu = optionsMenu.addMenu("Mono font face")
+        fontFaceMenu = optionsMenu.addMenu("Mono font family")
+        self.__fontFaceGroup = QActionGroup(self)
+        skin = GlobalData().skin
+        currentFont = skin['monoFont'].family()
+        self.__fonts = []
         for fontFace in getMonospaceFontList():
             faceAct = fontFaceMenu.addAction(fontFace)
             faceAct.setData(fontFace)
-            f = faceAct.font()
-            f.setFamily(fontFace)
-            faceAct.setFont(f)
+            faceAct.setCheckable(True)
+            faceAct.setActionGroup(self.__fontFaceGroup)
+            faceAct.setChecked(currentFont == fontFace)
+            self.__fonts.append((fontFace, faceAct))
         fontFaceMenu.triggered.connect(self._onMonoFont)
+        fontFaceMenu.aboutToShow.connect(self.__fontAboutToShow)
 
         # The plugins menu
         self.__pluginsMenu = QMenu("P&lugins", self)
@@ -677,6 +683,7 @@ class MainWindowMenuMixin:
             self._prjTemplateMenu.setEnabled(False)
 
     def __prjAboutToHide(self):
+        """Triggered when project menu is about to hide"""
         self.__newProjectAct.setEnabled(True)
         self.__openProjectAct.setEnabled(True)
 
@@ -689,10 +696,10 @@ class MainWindowMenuMixin:
 
         self.__cloneTabAct.setEnabled(plainTextBuffer)
         self.__closeOtherTabsAct.setEnabled(self.em.closeOtherAvailable())
-        self.__saveFileAct.setEnabled(plainTextBuffer or isGeneratedDiagram or
-                                      isProfileViewer)
-        self.__saveFileAsAct.setEnabled(plainTextBuffer or isGeneratedDiagram or
-                                        isProfileViewer)
+        self.__saveFileAct.setEnabled(
+            plainTextBuffer or isGeneratedDiagram or isProfileViewer)
+        self.__saveFileAsAct.setEnabled(
+            plainTextBuffer or isGeneratedDiagram or isProfileViewer)
         self.__closeTabAct.setEnabled(self.em.isTabClosable())
         self.__tabJumpToDefAct.setEnabled(isPythonBuffer)
         self.__calltipAct.setEnabled(isPythonBuffer)
@@ -766,7 +773,8 @@ class MainWindowMenuMixin:
         currentWidget = self.em.currentWidget()
 
         enabled = isPythonBuffer and \
-            currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer
+            currentWidget.getType() != \
+            MainWindowTabWidgetBase.VCSAnnotateViewer
         self.__tabImportDgmAct.setEnabled(enabled)
         self.__tabImportDgmDlgAct.setEnabled(enabled)
 
@@ -944,6 +952,13 @@ class MainWindowMenuMixin:
             font = item[1].font()
             font.setBold(item[0].lower() == currentStyle)
             item[1].setFont(font)
+
+    def __fontAboutToShow(self):
+        """Font menu is about to show"""
+        skin = GlobalData().skin
+        currentFont = skin['monoFont'].family().lower()
+        for item in self.__fonts:
+            item[1].setChecked(item[0].lower() == currentFont)
 
     @staticmethod
     def __buildThemesList():

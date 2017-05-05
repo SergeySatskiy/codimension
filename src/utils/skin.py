@@ -137,7 +137,7 @@ QListView
 
 _DEFAULT_CFLOW_SETTINGS = {
     'debug': False,
-    'monoFont':  buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
+    'cfMonoFont':  buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
     'badgeFont': buildFont('Monospace,9,-1,5,50,0,0,0,0,0'),
 
     'hCellPadding': 8,      # in pixels (left and right)
@@ -396,8 +396,13 @@ class Skin:
     def __calculateMinCFlowZoom(self):
         """Calculates the minimum control flow zoom"""
         badgePointSize = self.__cfValues['badgeFont'].pointSize()
-        monoPointSize = self.__cfValues['monoFont'].pointSize()
+        monoPointSize = self.__cfValues['cfMonoFont'].pointSize()
         return (min(badgePointSize, monoPointSize) - 1) * -1
+
+    def setMonoFontFamily(self, fontFamily):
+        """Sets the new mono font family"""
+        self.__values['monoFont'].setFamily(fontFamily)
+        self.flush()
 
 
 def getThemesList(localSkinsDir):

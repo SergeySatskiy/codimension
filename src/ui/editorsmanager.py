@@ -1995,6 +1995,12 @@ class EditorsManager(QTabWidget):
         GlobalData().mainWindow.zoomIOconsole(zoomValue)
         GlobalData().mainWindow.zoomDiff(zoomValue)
 
+    def onMonoFontUpdated(self):
+        """Mono font face changed so the editors need to be notified"""
+        # onZoom() will do because it will lead to the appropriate setFont()
+        # call
+        self.onZoom(Settings()['zoom'])
+
     def getTextEditors(self):
         """Provides a list of the currently opened text editors"""
         result = []

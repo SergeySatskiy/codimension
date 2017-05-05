@@ -1,7 +1,7 @@
 pyflakes==1.2.3
 pylint==1.6.4
 PyQt5~=5.7
-python-magic==0.4.12
+python-magic==0.4.13
 qutepart==3.0.1
 svn~=0.3.44
 yapsy==1.11.223

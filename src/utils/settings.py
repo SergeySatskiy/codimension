@@ -160,7 +160,7 @@ _DEFAULT_SETTINGS = {
     'hSplitterSizes': [200, 450, 575],
     'vSplitterSizes': [400, 150],
     'flowSplitterSizes': [225, 225],
-    'style': 'plastique',
+    'style': 'fusion',
     'vcsstatusupdateinterval': 30,      # seconds
     'tablistsortalpha': True,
     'taborderpreserved': False,
