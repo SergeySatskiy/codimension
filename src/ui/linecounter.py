@@ -25,6 +25,7 @@ from utils.linescounter import LinesCounter
 from utils.globals import GlobalData
 from utils.misc import splitThousands
 from utils.fileutils import isPythonFile
+from utils.colorfont import getZoomedMonoFont
 from .qt import (Qt, QTimer, QFontMetrics, QCursor, QDialog, QTextEdit,
                  QDialogButtonBox, QVBoxLayout, QSizePolicy, QProgressBar,
                  QApplication)
@@ -80,8 +81,9 @@ class LineCounterDialog(QDialog):
         self.resultEdit.setTabChangesFocus(False)
         self.resultEdit.setAcceptRichText(False)
         self.resultEdit.setReadOnly(True)
-        self.resultEdit.setFontFamily(GlobalData().skin.baseMonoFontFace)
-        font = self.resultEdit.font()
+
+        font = getZoomedMonoFont()
+        self.resultEdit.setFont(font)
 
         # Calculate the vertical size
         fontMetrics = QFontMetrics(font)

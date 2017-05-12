@@ -23,6 +23,7 @@ from sys import maxsize
 from ui.qt import Qt, QGraphicsScene
 from flowui.items import CellElement
 from flowui.scopeitems import ScopeCellElement
+from utils.settings import Settings
 
 
 CTRL_SHIFT = int(Qt.ShiftModifier | Qt.ControlModifier)
@@ -44,8 +45,9 @@ class CFSceneKeyboardMixin:
                 Qt.Key_Home: self.scrollToTop,
                 Qt.Key_End: self.scrollToBottom,
                 Qt.Key_A: self.selectAll,
-                Qt.Key_Minus: self.onZoomOut,
-                Qt.Key_Equal: self.onZoomIn},
+                Qt.Key_Minus: Settings().onFlowZoomOut,
+                Qt.Key_Equal: Settings().onFlowZoomIn,
+                Qt.Key_0: Settings().onFlowZoomReset},
             NO_MODIFIER: {
                 Qt.Key_Home: self.scrollToHBegin,
                 Qt.Key_End: self.scrollToHEnd,

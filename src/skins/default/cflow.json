@@ -16,7 +16,7 @@
         "__class__": "QColor",
         "__value__": "192,192,192,255"
     },
-    "monoFont": {
+    "cfMonoFont": {
         "__class__": "QFont",
         "__value__": "Monospace,12,-1,5,50,0,0,0,0,0"
     },

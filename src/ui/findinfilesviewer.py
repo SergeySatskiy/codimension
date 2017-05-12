@@ -23,6 +23,7 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.fileutils import getFileProperties
 from utils.project import CodimensionProject
+from utils.colorfont import getZoomedMonoFont
 from .qt import (Qt, QSize, QTimer, QToolBar, QCursor, QBrush, QHBoxLayout,
                  QWidget, QAction, QLabel, QSizePolicy, QFrame,
                  QTreeWidget, QApplication, QTreeWidgetItem,
@@ -75,9 +76,7 @@ class Tooltip(QFrame):
         verticalLayout = QVBoxLayout(self)
         self.info = QLabel()
         self.info.setAutoFillBackground(True)
-        font = self.info.font()
-        font.setFamily(GlobalData().skin['monoFont'].family())
-        self.info.setFont(font)
+        self.info.setFont(getZoomedMonoFont())
         self.info.setFrameShape(QFrame.StyledPanel)
         verticalLayout.addWidget(self.info)
         verticalLayout.setContentsMargins(0, 0, 0, 0)

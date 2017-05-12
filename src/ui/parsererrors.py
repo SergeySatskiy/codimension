@@ -23,6 +23,7 @@
 from os.path import exists, basename
 from utils.globals import GlobalData
 from utils.fileutils import isPythonFile
+from utils.colorfont import getZoomedMonoFont
 from .qt import (Qt, QDialog, QTextEdit, QDialogButtonBox, QVBoxLayout,
                  QSizePolicy)
 from .fitlabel import FitLabel
@@ -70,7 +71,7 @@ class ParserErrorsDialog(QDialog):
         resultEdit.setTabChangesFocus(False)
         resultEdit.setAcceptRichText(False)
         resultEdit.setReadOnly(True)
-        resultEdit.setFontFamily(GlobalData().skin['monoFont'].family())
+        resultEdit.setFont(getZoomedMonoFont())
         if info is not None:
             modInfo = info
         else:

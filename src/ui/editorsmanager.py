@@ -138,6 +138,9 @@ class EditorsManager(QTabWidget):
         self.tabCloseRequested.connect(self.__onCloseRequest)
         self.currentChanged.connect(self.__currentChanged)
 
+        Settings().sigTextZoomChanged.connect(self.onTextZoomChanged)
+        Settings().sigFlowZoomChanged.connect(self.onFlowZoomChanged)
+
         # Context menu
         self.__tabContextMenu = QMenu(self)
         self.__highlightInPrjAct = self.__tabContextMenu.addAction(
@@ -966,7 +969,6 @@ class EditorsManager(QTabWidget):
         try:
             newWidget = DiffTabWidget()
             newWidget.sigEscapePressed.connect(self.__onESC)
-            newWidget.textEditorZoom.connect(self.onZoom)
 
             newWidget.setHTML(content)
             newWidget.setFileName("")
@@ -1021,7 +1023,6 @@ class EditorsManager(QTabWidget):
             newWidget = DisassemblerResultsWidget(scriptPath, name,
                                                   code, reportTime)
             newWidget.sigEscapePressed.connect(self.__onESC)
-            newWidget.textEditorZoom.connect(self.onZoom)
 
             if self.widget(0) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
@@ -1683,7 +1684,6 @@ class EditorsManager(QTabWidget):
         editor.textChanged.connect(self.__contentChanged)
         editor.cursorPositionChanged.connect(self.__cursorPositionChanged)
         editor.sigEscapePressed.connect(self.__onESC)
-        editor.sigTextEditorZoom.connect(self.onZoom)
 
     # Arguments: modified
     def __modificationChanged(self, _):
@@ -1980,26 +1980,26 @@ class EditorsManager(QTabWidget):
 
         self.sendAllTabsVCSStatusRequest()
 
-    def onZoom(self, zoomValue):
-        """Sets the zoom value for all the opened editor tabs"""
-        Settings()['zoom'] = zoomValue
-
+    def onTextZoomChanged(self):
+        """Triggered when a text zoom is changed"""
+        GlobalData().mainWindow.showStatusBarMessage(
+            "Setting text zoom to " + str(Settings()['zoom']), 10000)
         for index in range(self.count()):
             item = self.widget(index)
             if item.getType() in [MainWindowTabWidgetBase.PlainTextEditor,
-                                  MainWindowTabWidgetBase.VCSAnnotateViewer]:
-                item.getEditor().zoomTo(zoomValue)
-            elif item.getType() in [MainWindowTabWidgetBase.DisassemblerViewer,
-                                    MainWindowTabWidgetBase.DiffViewer]:
-                item.zoomTo(zoomValue)
-        GlobalData().mainWindow.zoomIOconsole(zoomValue)
-        GlobalData().mainWindow.zoomDiff(zoomValue)
+                                  MainWindowTabWidgetBase.VCSAnnotateViewer,
+                                  MainWindowTabWidgetBase.DisassemblerViewer,
+                                  MainWindowTabWidgetBase.DiffViewer]:
+                item.onTextZoomChanged()
 
-    def onMonoFontUpdated(self):
-        """Mono font face changed so the editors need to be notified"""
-        # onZoom() will do because it will lead to the appropriate setFont()
-        # call
-        self.onZoom(Settings()['zoom'])
+    def onFlowZoomChanged(self):
+        """Triggered when a flow diagram zoom is changed"""
+        GlobalData().mainWindow.showStatusBarMessage(
+            "Setting flow zoom to " + str(Settings()['flowZoom']), 10000)
+        for index in range(self.count()):
+            item = self.widget(index)
+            if item.getType() in [MainWindowTabWidgetBase.PlainTextEditor]:
+                item.onFlowZoomChanged()
 
     def getTextEditors(self):
         """Provides a list of the currently opened text editors"""

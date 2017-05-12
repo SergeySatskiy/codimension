@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ class LinesCounter:
     def __processLine(self, line):
         """Process a single line"""
         line = line.strip()
-        if line == "":
+        if not line:
             self.emptyLines += 1
             return
         if line.startswith('#'):
@@ -64,7 +64,7 @@ class LinesCounter:
     def __processDir(self, path, extensions):
         """Accumulates lines from all files in the given dir recursively"""
         for item in os.listdir(path):
-            if item in ('.svn', '.cvs'):
+            if item in ('.svn', '.cvs', '.git', '.hg'):
                 continue
             if os.path.isdir(path + os.path.sep + item):
                 self.__processDir(path + os.path.sep + item, extensions)
@@ -144,3 +144,4 @@ if __name__ == "__main__":
     print("Total lines:       " + str(totalLines))
 
     sys.exit(0)
+

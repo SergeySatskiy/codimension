@@ -25,6 +25,7 @@ import logging
 from ui.qt import (Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                    QCheckBox, QProgressBar, QApplication, QGraphicsScene)
 from utils.globals import GlobalData
+from utils.fileutils import isPythonFile
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from autocomplete.completelists import getSystemWideModules
 from .plaindotparser import getGraphFromDescriptionData
@@ -882,3 +883,4 @@ class ImportsDiagramProgress(QDialog):
 
             raise Exception("Unexpected type of module: " +
                             str(dataModelObj.kind))
+

@@ -21,6 +21,7 @@
 
 import os.path
 from utils.fileutils import getFileContent
+from utils.colorfont import getZoomedMonoFont
 from .qt import (QFrame, QHBoxLayout, QDesktopServices, QFont, QTextBrowser,
                  Qt, pyqtSignal)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
@@ -43,14 +44,11 @@ class HTMLViewer(QTextBrowser):
         else:
             QTextBrowser.keyPressEvent(self, event)
 
-    def zoomTo(self, zoomFactor):
-        """Scales the font in accordance to the given zoom factor.
+    def onTextZoomChanged(self):
+        """Triggered when a text zoom is changed.
            It is mostly used in diff viewers
         """
-        if zoomFactor > 0:
-            self.zoomIn(zoomFactor)
-        elif zoomFactor < 0:
-            self.zoomOut(abs(zoomFactor))
+        self.setFont(getZoomedMonoFont())
 
 
 class HTMLTabWidget(MainWindowTabWidgetBase, QFrame):
@@ -94,9 +92,9 @@ class HTMLTabWidget(MainWindowTabWidgetBase, QFrame):
         self.__fileName = path
         self.__shortName = os.path.basename(path)
 
-    def zoomTo(self, zoomFactor):
-        """Zooms the view to"""
-        self.__editor.zoomTo(zoomFactor)
+    def onTextZoomChanged(self):
+        """Triggered when a text zoom is changed"""
+        self.__editor.onTextZoomChanged()
 
     def getViewer(self):
         """Provides the QWebView"""

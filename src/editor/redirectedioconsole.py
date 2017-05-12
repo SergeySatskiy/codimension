@@ -49,7 +49,6 @@ class RedirectedIOConsole(TextEditor):
 
     def __init__(self, parent):
         TextEditor.__init__(self, parent, None)
-        self.zoomTo(Settings()['zoom'])
 
         # line number -> [ timestamps ]
         self.__marginTooltip = {}
@@ -101,22 +100,22 @@ class RedirectedIOConsole(TextEditor):
                 if key == Qt.Key_Comma:
                     return self._onPrevHighlight() # Ctrl + ,
                 if key == Qt.Key_Minus:
-                    return self.onZoomOut()
+                    return Settings().onTextZoomOut()
                 if key == Qt.Key_Equal:
-                    return self.onZoomIn()
+                    return Settings().onTextZoomIn()
                 if key == Qt.Key_0:
-                    return self.onZoomReset()
+                    return Settings().onTextZoomReset()
                 if key == Qt.Key_Home:
                     return self.onFirstChar()
                 if key == Qt.Key_End:
                     return self.onLastChar()
             if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
                 if key == Qt.Key_Minus:
-                    return self.onZoomOut()
+                    return Settings().onTextZoomOut()
                 if key == Qt.Key_Plus:
-                    return self.onZoomIn()
+                    return Settings().onTextZoomIn()
                 if key == Qt.Key_0:
-                    return self.onZoomReset()
+                    return Settings().onTextZoomReset()
             if modifiers == Qt.NoModifier:
                 if key == Qt.Key_Home:
                     return self._onHome()
@@ -550,7 +549,6 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     """IO console tab widget"""
 
     sigUserInput = pyqtSignal(str)
-    sigTextEditorZoom = pyqtSignal(int)
     sigSettingUpdated = pyqtSignal()
 
     def __init__(self, parent):
@@ -666,24 +664,6 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
         hLayout.addWidget(self.__viewer)
 
         self.setLayout(hLayout)
-
-    def onZoomReset(self):
-        """Triggered when the zoom reset button is pressed"""
-        if self.__viewer.zoom != 0:
-            self.textEditorZoom.emit(0)
-        return True
-
-    def onZoomIn(self):
-        """Triggered when the zoom in button is pressed"""
-        if self.__viewer.zoom < 20:
-            self.textEditorZoom.emit(self.__viewer.zoom + 1)
-        return True
-
-    def onZoomOut(self):
-        """Triggered when the zoom out button is pressed"""
-        if self.__viewer.zoom > -10:
-            self.textEditorZoom.emit(self.__viewer.zoom - 1)
-        return True
 
     def __onPrint(self):
         """Triggered when the print button is pressed"""
@@ -867,9 +847,9 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
             return True
         return False
 
-    def zoomTo(self, zoomValue):
-        """Sets the new zoom value"""
-        self.__viewer.zoomTo(zoomValue)
+    def onTextZoomChanged(self):
+        """Triggered when a text zoom is changed"""
+        self.__viewer.onTextZoomChanged()
         # self.__viewer.setTimestampMarginWidth()
 
     def rawInput(self, prompt, echo):

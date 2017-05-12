@@ -85,42 +85,19 @@ class CFGraphicsView(QGraphicsView):
         self.__currentFactor = 1.0
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.TextAntialiasing)
-        Settings().sigFlowScaleChanged.connect(self.__scaleChanged)
 
     def wheelEvent(self, event):
         """Mouse wheel event"""
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
-            factor = 1.41 ** (-event.angleDelta() / 240.0)
-            self.__currentFactor *= factor
-            self.setTransform(QTransform.fromScale(self.__currentFactor,
-                                                   self.__currentFactor))
-            Settings()['flowScale'] = self.__currentFactor
+            angleDelta = event.angleDelta()
+            if not angleDelta.isNull():
+                if angleDelta.y() > 0:
+                    Settings().onFlowZoomIn()
+                else:
+                    Settings().onFlowZoomOut()
+            event.accept()
         else:
             QGraphicsView.wheelEvent(self, event)
-
-    def zoomTo(self, scale):
-        """Zooms to the specific factor"""
-        self.__currentFactor = scale
-        self.setTransform(QTransform.fromScale(self.__currentFactor,
-                                               self.__currentFactor))
-
-    def zoomIn(self):
-        """Mouse event delta is typically 120"""
-        factor = 1.41 ** (120.0 / 240.0)
-        self.zoomTo(self.__currentFactor * factor)
-        Settings()['flowScale'] = self.__currentFactor
-
-    def zoomOut(self):
-        """Mouse event delta is typically 120"""
-        factor = 1.41 ** (-120.0 / 240.0)
-        self.zoomTo(self.__currentFactor * factor)
-        Settings()['flowScale'] = self.__currentFactor
-
-    def __scaleChanged(self):
-        """When another window made a change"""
-        newScale = Settings()['flowScale']
-        if newScale != self.__currentFactor:
-            self.zoomTo(newScale)
 
     def getVisibleRect(self):
         """Provides the visible rectangle"""
@@ -149,14 +126,14 @@ class CFGraphicsView(QGraphicsView):
         # The item top left is visible
         if visibleRect.contains(itemRect.topLeft()):
             # So far scroll the view vertically anyway
-            val = (float(itemRect.topLeft().y() - 15.0)) * self.__currentFactor
+            val = float(itemRect.topLeft().y() - 15.0)
             self.verticalScrollBar().setValue(val)
             self.__hScrollToItem(item)
             return
 
         # Here: the top left is not visible, so the vertical scrolling is
         # required
-        val = (float(itemRect.topLeft().y() - 15.0)) * self.__currentFactor
+        val = float(itemRect.topLeft().y() - 15.0)
         self.verticalScrollBar().setValue(val)
         self.__hScrollToItem(item)
 
@@ -177,15 +154,14 @@ class CFGraphicsView(QGraphicsView):
 
         if itemRect.width() > visibleRect.width():
             # Does not fit the screen
-            val = (float(itemRect.topLeft().x()) - 15.0) * self.__currentFactor
+            val = float(itemRect.topLeft().x()) - 15.0
             self.horizontalScrollBar().setValue(val)
         else:
             if itemRect.topRight().x() < visibleRect.width():
                 # Fits the screen if the scroll is 0
                 self.horizontalScrollBar().setValue(0)
             else:
-                val = (float(itemRect.topLeft().x()) - 15.0) * \
-                    self.__currentFactor
+                val = float(itemRect.topLeft().x()) - 15.0
                 self.horizontalScrollBar().setValue(val)
 
 
@@ -428,7 +404,6 @@ class FlowUIWidget(QWidget):
         self.scene = CFGraphicsScene(self.__navBar, self)
         self.view = CFGraphicsView(self)
         self.view.setScene(self.scene)
-        self.view.zoomTo(Settings()['flowScale'])
         return self.view
 
     def process(self):
@@ -478,6 +453,10 @@ class FlowUIWidget(QWidget):
         else:
             self.__navBar.clearWarnings()
 
+        self.redrawScene()
+
+    def redrawScene(self):
+        """Redraws the scene"""
         self.scene.clear()
         try:
             # Top level canvas has no adress and no parent canvas
@@ -490,7 +469,12 @@ class FlowUIWidget(QWidget):
         except Exception as exc:
             logging.error(str(exc))
             raise
-        return
+
+    def onFlowZoomChanged(self):
+        """Triggered when a flow zoom is changed"""
+        if self.__cf:
+            self.cflowSettings.onFlowZoomChanged()
+            self.redrawScene()
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when a buffer content type has changed"""
@@ -555,8 +539,7 @@ class FlowUIWidget(QWidget):
 
     def updateSettings(self):
         """Updates settings"""
-        s = Settings()
-        self.__needPathUpdate = s['showCFNavigationBar']
+        self.__needPathUpdate = Settings()['showCFNavigationBar']
         self.__navBar.setPathVisible(self.__needPathUpdate)
         self.__navBar.setPath('')
 

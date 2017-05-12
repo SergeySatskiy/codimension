@@ -25,13 +25,13 @@ from qutepart import Qutepart
 from ui.qt import QPalette, pyqtSignal, QFont, QTextCursor
 from utils.globals import GlobalData
 from utils.settings import Settings
+from utils.colorfont import getZoomedMonoFont
 
 
 class QutepartWrapper(Qutepart):
 
     """Convenience qutepart wrapper"""
 
-    sigTextEditorZoom = pyqtSignal(int)
     sigHighlighted = pyqtSignal(str, int, int)
 
     def __init__(self, parent):
@@ -45,9 +45,6 @@ class QutepartWrapper(Qutepart):
         self.delMargin('mark_area')
         self.delMargin('line_numbers')
         self.completionEnabled = False
-
-        skin = GlobalData().skin
-        self.setFont(QFont(skin['monoFont']))
 
         # Search/replace support
         self.__matchesCache = None
@@ -69,33 +66,12 @@ class QutepartWrapper(Qutepart):
         palette.setColor(QPalette.Inactive, QPalette.Text, textColor)
         self.setPalette(palette)
 
-    def onZoomIn(self):
-        """Increases the font"""
-        self.sigTextEditorZoom.emit(Settings()['zoom'] + 1)
-
-    def onZoomOut(self):
-        """Decreases the font"""
-        newZoom = Settings()['zoom'] - 1
-        if newZoom >= GlobalData().skin.minTextZoom:
-            self.sigTextEditorZoom.emit(newZoom)
-
-    def onZoomReset(self):
-        """Resets zoom"""
-        if Settings()['zoom'] != 0:
-            self.sigTextEditorZoom.emit(0)
-
-    def zoomTo(self, zoomVal):
-        """Sets the zoom to a certain value if possible"""
-        # zoomVal is an integer: > 0 => larger, < 0 => smaller than the base
-        font = QFont(GlobalData().skin['monoFont'])
-        zoomVal = max(zoomVal, GlobalData().skin.minTextZoom)
-        fontSize = font.pointSize() + zoomVal
-        font.setPointSize(fontSize)
-        self.setFont(font)
-
+    def onTextZoomChanged(self):
+        """Triggered when a text zoom is changed"""
+        self.setFont(getZoomedMonoFont())
         for margin in self.getMargins():
-            if hasattr(margin, 'zoomTo'):
-                margin.zoomTo(zoomVal)
+            if hasattr(margin, 'onTextZoomChanged'):
+                margin.onTextZoomChanged()
         self._setSolidEdgeGeometry()
 
     def clearUndoRedoHistory(self):

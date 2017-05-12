@@ -27,7 +27,7 @@
 
 from ui.qt import QFont, QFontMetrics
 from utils.globals import GlobalData
-from utils.settings import Settings
+from utils.colorfont import getZoomedCFMonoFont, getZoomedCFBadgeFont
 
 
 class CFlowSettings:
@@ -41,25 +41,16 @@ class CFlowSettings:
         for key, value in params.items():
             setattr(self, key, value)
 
-        self.__zoom = None
-        self.zoomTo(Settings()['flowZoom'])
+        self.onFlowZoomChanged()
 
-    def zoomTo(self, zoomValue):
-        """Sets the new zoom"""
-        if self.__zoom == zoomValue:
-            return
-
-        monoFont = QFont(GlobalData().skin.cflowSettings['cfMonoFont'])
-        monoFont.setPointSize(monoFont.pointSize() + zoomValue)
-        self.monoFont = monoFont
+    def onFlowZoomChanged(self):
+        """Triggered when a flow zoom is changed"""
+        self.monoFont = getZoomedCFMonoFont()
         self.monoFontMetrics = QFontMetrics(self.monoFont,
                                             self.__paintDevice)
-        badgeFont = QFont(GlobalData().skin.cflowSettings['badgeFont'])
-        badgeFont.setPointSize(badgeFont.pointSize() + zoomValue)
-        self.badgeFont = badgeFont
+        self.badgeFont = getZoomedCFBadgeFont()
         self.badgeFontMetrics = QFontMetrics(self.badgeFont,
                                              self.__paintDevice)
-        self.__zoom = zoomValue
 
 
 def getCflowSettings(paintDevice):

@@ -24,6 +24,7 @@ import sys
 import logging
 import gc
 from utils.globals import GlobalData
+from utils.settings import Settings
 from utils.project import CodimensionProject
 from utils.misc import (getDefaultTemplate, getIDETemplateFile,
                         getProjectTemplateFile, extendInstance)
@@ -55,7 +56,7 @@ from editor.redirectedioconsole import IOConsoleTabWidget
 from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QToolBar, QWidget,
                  QMessageBox, QVBoxLayout, QSplitter, QSizePolicy, QAction,
                  QMainWindow, QShortcut, QApplication, QCursor, QToolButton,
-                 QToolTip, QFileDialog, QDialog, QFont, QMenu, QDesktopServices)
+                 QToolTip, QFileDialog, QDialog, QMenu, QDesktopServices)
 from .about import AboutDialog
 from .runmanager import RunManager
 from .sidebar import SideBar
@@ -216,12 +217,9 @@ class CodimensionMainWindow(QMainWindow):
         self.updateWindowTitle()
         self.__printThirdPartyAvailability()
 
-        findNextAction = QShortcut('F3', self)
-        findNextAction.activated.connect(self.em.findNext)
-        findPrevAction = QShortcut('Shift+F3', self)
-        findPrevAction.activated.connect(self.em.findPrev)
-
         self.__runManager = RunManager(self)
+
+        Settings().sigTextZoomChanged.connect(self.onTextZoomChanged)
 
     def restoreWindowPosition(self):
         """Makes sure that the window frame delta is proper"""
@@ -960,19 +958,18 @@ class CodimensionMainWindow(QMainWindow):
         """Shows the given diff in the main editing area"""
         self.em.showDiff(content, tooltip)
 
-    def zoomDiff(self, zoomValue):
-        """Zooms the diff view at the bottom"""
-        self.diffViewer.zoomTo(zoomValue)
+    def onTextZoomChanged(self):
+        """Triggered when a text zoom is changed"""
+        self.logViewer.onTextZoomChanged()
+        self.diffViewer.onTextZoomChanged()
 
-    def zoomIOconsole(self, zoomValue):
-        """Zooms the IO console"""
         # Handle run/profile IO consoles and the debug IO console
         index = self._bottomSideBar.count - 1
         while index >= 0:
             widget = self._bottomSideBar.widget(index)
             if hasattr(widget, "getType"):
                 if widget.getType() == MainWindowTabWidgetBase.IOConsole:
-                    widget.zoomTo(zoomValue)
+                    widget.onTextZoomChanged()
             index -= 1
 
     def onIOConsoleSettingUpdated(self):
@@ -1360,13 +1357,20 @@ class CodimensionMainWindow(QMainWindow):
         QApplication.setStyle(styleName.data())
         self.settings['style'] = styleName.data().lower()
 
-    def _onMonoFont(self, fontFace):
+    def _onMonoFont(self, fontFamily):
         """Sets the new mono font"""
-        newFontFamily = fontFace.data()
+        newFontFamily = fontFamily.data()
         if newFontFamily != GlobalData().skin['monoFont'].family():
-            GlobalData().skin.setMonoFontFamily(newFontFamily)
-            self.em.onMonoFontUpdated()
-            self.logViewer.onMonoFontUpdated()
+            GlobalData().skin.setTextMonoFontFamily(newFontFamily)
+            self.em.onTextZoomChanged()
+            self.onTextZoomChanged()
+
+    def _onFlowMonoFont(self, fontFamily):
+        """Sets the new flow font"""
+        newFontFamily = fontFamily.data()
+        if newFontFamily != GlobalData().skin['cfMonoFont'].family():
+            GlobalData().skin.setFlowMonoFontFamily(newFontFamily)
+            self.em.onFlowZoomChanged()
 
     def checkOutsideFileChanges(self):
         """Checks if there are changes in the currently opened files"""
@@ -1983,18 +1987,6 @@ class CodimensionMainWindow(QMainWindow):
         """Triggered when redo action is requested"""
         self.em.currentWidget().getEditor().onRedo()
 
-    def _onZoomIn(self):
-        """Triggered when zoom in is requested"""
-        self.em.zoomIn()
-
-    def _onZoomOut(self):
-        """Triggered when zoom out is requested"""
-        self.em.zoomOut()
-
-    def _onZoomReset(self):
-        """Triggered when zoom 1:1 is requested"""
-        self.em.zoomReset()
-
     def _onGoToLine(self):
         """Triggered when go to line is requested"""
         self.em.onGoto()
@@ -2053,6 +2045,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def _onRecentFile(self, path):
         """Triggered when a recent file is requested to be loaded"""
+        path = path.data()
         if isImageFile(path):
             self.openPixmapFile(path)
         else:
@@ -2447,7 +2440,6 @@ class CodimensionMainWindow(QMainWindow):
         """Create redirected IO console"""
         self.redirectedIOConsole = IOConsoleTabWidget(self)
         self.redirectedIOConsole.sigUserInput.connect(self.__onUserInput)
-        self.redirectedIOConsole.sigTextEditorZoom.connect(self.em.onZoom)
         self.redirectedIOConsole.sigSettingUpdated.connect(
             self.onIOConsoleSettingUpdated)
         self._bottomSideBar.addTab(
@@ -2519,7 +2511,6 @@ class CodimensionMainWindow(QMainWindow):
 
         widget.CloseIOConsole.connect(self.__onCloseIOConsole)
         widget.KillIOConsoleProcess.connect(self.__onKillIOConsoleProcess)
-        widget.textEditorZoom.connect(self.em.onZoom)
         widget.settingUpdated.connect(self.onIOConsoleSettingUpdated)
 
         self._bottomSideBar.addTab(
@@ -2581,4 +2572,5 @@ class CodimensionMainWindow(QMainWindow):
     def passFocusToFlow(self):
         """Passes the focus to the flow UI if it is there"""
         return self.em.passFocusToFlow()
+
 

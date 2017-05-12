@@ -107,6 +107,10 @@ Runs codimension UI"""
     globalData.skin.load(SETTINGS_DIR + "skins" +
                          os.path.sep + settings['skin'])
 
+    global __delayedWarnings
+    __delayedWarnings += settings.validateZoom(
+        globalData.skin.minTextZoom, globalData.skin.minCFlowZoom)
+
     # QT on UBUNTU has a bug - the main menu bar does not generate the
     # 'aboutToHide' signal (though 'aboutToShow' is generated properly. This
     # prevents codimension working properly so this hack below disables the

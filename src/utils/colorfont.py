@@ -20,6 +20,8 @@
 """QT color and font general utils"""
 
 from ui.qt import QColor, QFont, QFontComboBox
+from .globals import GlobalData
+from .settings import Settings
 
 
 def checkColorRange(value):
@@ -151,3 +153,31 @@ def fromJSON(jsonObj):
         if jsonObj['__class__'] == 'QFont':
             return buildFont(jsonObj['__value__'])
     return jsonObj
+
+
+def getZoomedMonoFont():
+    """Provides the current mono font respecting zoom"""
+    font = QFont(GlobalData().skin['monoFont'])
+    font.setPointSize(font.pointSize() + Settings()['zoom'])
+    return font
+
+
+def getZoomedCFMonoFont():
+    """Provides the current mono font respecting zoom"""
+    font = QFont(GlobalData().skin['cfMonoFont'])
+    font.setPointSize(font.pointSize() + Settings()['flowZoom'])
+    return font
+
+
+def getZoomedCFBadgeFont():
+    """Provides the current control flow badge font respecting zoom"""
+    font = QFont(GlobalData().skin['badgeFont'])
+    font.setPointSize(font.pointSize() + Settings()['flowZoom'])
+    return font
+
+
+def getZoomedMarginFont():
+    """Provides the current margin font respecting zoom"""
+    font = QFont(GlobalData().skin['lineNumFont'])
+    font.setPointSize(font.pointSize() + Settings()['zoom'])
+    return font

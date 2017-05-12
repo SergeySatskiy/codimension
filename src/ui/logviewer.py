@@ -28,6 +28,7 @@
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
+from utils.colorfont import getZoomedMonoFont
 from .qt import (Qt, QSize, QColor, QBrush, QTextCursor, QCursor, QFont,
                  QPlainTextEdit, QMenu, QHBoxLayout, QWidget, QAction,
                  QToolBar, QSizePolicy)
@@ -50,7 +51,7 @@ class LogViewer(QWidget):
         self.copyButton = None
         self.selectAllButton = None
         self.__createLayout(parent)
-        self.onMonoFontUpdated()
+        self.onTextZoomChanged()
 
         # create the context menu
         self.__menu = QMenu(self)
@@ -72,13 +73,9 @@ class LogViewer(QWidget):
         self.cErrorFormat.setForeground(QBrush(QColor(Qt.red)))
         self.__updateToolbarButtons()
 
-    def onMonoFontUpdated(self):
-        """Triggered when a mono font is chosen"""
-        font = QFont(GlobalData().skin['monoFont'])
-        zoom = Settings()['zoom']
-        fontSize = font.pointSize() + zoom
-        font.setPointSize(fontSize)
-        self.messages.setFont(font)
+    def onTextZoomChanged(self):
+        """Triggered when a mono font is chosen or zoom changed"""
+        self.messages.setFont(getZoomedMonoFont())
 
     def __createLayout(self, parent):
         """Helper to create the viewer layout"""

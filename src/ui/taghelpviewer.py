@@ -21,6 +21,7 @@
 
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
+from utils.colorfont import getZoomedMonoFont
 from .qt import (Qt, QSize, QPlainTextEdit, QMenu, QApplication, QHBoxLayout,
                  QWidget, QAction, QToolBar, QSizePolicy, QLabel, QVBoxLayout,
                  QFrame, QPalette, QCursor, QFont)
@@ -64,12 +65,8 @@ class TagHelpViewer(QWidget):
         # __textEdit list area
         self.__textEdit = QPlainTextEdit(parent)
         self.__textEdit.setLineWrapMode(QPlainTextEdit.NoWrap)
-        self.__textEdit.setFont(QFont(GlobalData().skin['monoFont']))
+        self.__textEdit.setFont(getZoomedMonoFont())
         self.__textEdit.setReadOnly(True)
-
-        # Default font size is good enough for most of the systems.
-        # 12.0 might be good only in case of the XServer on PC (Xming).
-        # self.__textEdit.setFontPointSize( 12.0 )
 
         # Buttons
         self.__selectAllButton = QAction(

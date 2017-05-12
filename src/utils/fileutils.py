@@ -84,6 +84,9 @@ def __getMimeByXmlSyntaxFile(xmlSyntaxFile):
         if xmlFileName == xmlSyntaxFile:
             candidates.append(mime)
     if not candidates:
+        # The qutepart syntax DB misses a markdown mime
+        if xmlSyntaxFile == 'markdown.xml':
+            return 'text/x-markdown'
         return None
     if len(candidates) == 1:
         return candidates[0]

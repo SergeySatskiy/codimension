@@ -31,16 +31,30 @@ from .qt import QDir, QApplication, QMenu, QStyleFactory, QActionGroup
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
+def getAccelerator(count):
+    """Provides an accelerator text for a menu item"""
+    if count < 10:
+        return "&" + str(count) + ".  "
+    return "&" + chr(count - 10 + ord('a')) + ".  "
+
+
 class MainWindowMenuMixin:
 
     """Main window menu mixin"""
 
-    def __init__(self):
-        pass
-
     def _initMainMenu(self):
         """Initializes the main menu bar"""
-        # The Project menu
+        menuBar = self.menuBar()
+        for member in [self.__buildProjectMenu, self.__buildTabMenu,
+                       self.__buildEditMenu, self.__buildSearchMenu,
+                       self.__buildRunMenu, self.__buildDebugMenu,
+                       self.__buildToolsMenu, self.__buildDiagramsMenu,
+                       self.__buildViewMenu, self.__buildOptionsMenu,
+                       self.__buildPluginsMenu, self.__buildHelpMenu]:
+            menuBar.addMenu(member())
+
+    def __buildProjectMenu(self):
+        """Builds a project menu"""
         prjMenu = QMenu("&Project", self)
         prjMenu.aboutToShow.connect(self.__prjAboutToShow)
         prjMenu.aboutToHide.connect(self.__prjAboutToHide)
@@ -78,8 +92,10 @@ class MainWindowMenuMixin:
         self.__quitAct = prjMenu.addAction(
             getIcon('exitmenu.png'), "E&xit codimension",
             QApplication.closeAllWindows, "Ctrl+Q")
+        return prjMenu
 
-        # The Tab menu
+    def __buildTabMenu(self):
+        """Build the tab menu"""
         tabMenu = QMenu("&Tab", self)
         tabMenu.aboutToShow.connect(self.__tabAboutToShow)
         tabMenu.aboutToHide.connect(self.__tabAboutToHide)
@@ -132,8 +148,10 @@ class MainWindowMenuMixin:
         self.__recentFilesMenu = QMenu("&Recent files", self)
         self.__recentFilesMenu.triggered.connect(self._onRecentFile)
         tabMenu.addMenu(self.__recentFilesMenu)
+        return tabMenu
 
-        # The Edit menu
+    def __buildEditMenu(self):
+        """Builds edit menu"""
         editMenu = QMenu("&Edit", self)
         editMenu.aboutToShow.connect(self.__editAboutToShow)
         editMenu.aboutToHide.connect(self.__editAboutToHide)
@@ -164,8 +182,10 @@ class MainWindowMenuMixin:
         self.__trailingSpacesAct = editMenu.addAction(
             getIcon('trailingws.png'), 'Remove trailing &spaces',
             self._onRemoveTrailingSpaces)
+        return editMenu
 
-        # The Search menu
+    def __buildSearchMenu(self):
+        """Build the search menu"""
         searchMenu = QMenu("&Search", self)
         searchMenu.aboutToShow.connect(self.__searchAboutToShow)
         searchMenu.aboutToHide.connect(self.__searchAboutToHide)
@@ -194,54 +214,38 @@ class MainWindowMenuMixin:
             getIcon('replace.png'), '&Replace...', self._onReplace)
         self.__goToLineAct = searchMenu.addAction(
             getIcon('gotoline.png'), '&Go to line...', self._onGoToLine)
+        return searchMenu
 
-        # The Tools menu
-        toolsMenu = QMenu("T&ools", self)
-        toolsMenu.aboutToShow.connect(self.__toolsAboutToShow)
-        self._prjLineCounterAct = toolsMenu.addAction(
-            getIcon('linecounter.png'), "&Line counter for project",
-            self.linecounterButtonClicked)
-        self.__tabLineCounterAct = toolsMenu.addAction(
-            getIcon('linecounter.png'), "L&ine counter for tab",
-            self._onTabLineCounter)
-        toolsMenu.addSeparator()
-        self.__unusedClassesAct = toolsMenu.addAction(
-            getIcon('notused.png'), 'Unused class analysis',
-            self.onNotUsedClasses)
-        self.__unusedFunctionsAct = toolsMenu.addAction(
-            getIcon('notused.png'), 'Unused function analysis',
-            self.onNotUsedFunctions)
-        self.__unusedGlobalsAct = toolsMenu.addAction(
-            getIcon('notused.png'), 'Unused global variable analysis',
-            self.onNotUsedGlobals)
-
-        # The Run menu
-        self.__runMenu = QMenu("&Run", self)
-        self.__runMenu.aboutToShow.connect(self.__runAboutToShow)
-        self.__prjRunAct = self.__runMenu.addAction(
+    def __buildRunMenu(self):
+        """Build the run menu"""
+        runMenu = QMenu("&Run", self)
+        runMenu.aboutToShow.connect(self.__runAboutToShow)
+        self.__prjRunAct = runMenu.addAction(
             getIcon('run.png'), 'Run &project main script',
             self._onRunProject)
-        self.__prjRunDlgAct = self.__runMenu.addAction(
+        self.__prjRunDlgAct = runMenu.addAction(
             getIcon('detailsdlg.png'), 'Run p&roject main script...',
             self._onRunProjectSettings)
-        self._tabRunAct = self.__runMenu.addAction(
+        self._tabRunAct = runMenu.addAction(
             getIcon('run.png'), 'Run &tab script', self.onRunTab)
-        self._tabRunDlgAct = self.__runMenu.addAction(
+        self._tabRunDlgAct = runMenu.addAction(
             getIcon('detailsdlg.png'), 'Run t&ab script...', self.onRunTabDlg)
-        self.__runMenu.addSeparator()
-        self.__prjProfileAct = self.__runMenu.addAction(
+        runMenu.addSeparator()
+        self.__prjProfileAct = runMenu.addAction(
             getIcon('profile.png'), 'Profile project main script',
             self._onProfileProject)
-        self.__prjProfileDlgAct = self.__runMenu.addAction(
+        self.__prjProfileDlgAct = runMenu.addAction(
             getIcon('profile.png'), 'Profile project main script...',
             self._onProfileProjectSettings)
-        self._tabProfileAct = self.__runMenu.addAction(
+        self._tabProfileAct = runMenu.addAction(
             getIcon('profile.png'), 'Profile tab script', self._onProfileTab)
-        self._tabProfileDlgAct = self.__runMenu.addAction(
+        self._tabProfileDlgAct = runMenu.addAction(
             getIcon('profile.png'), 'Profile tab script...',
             self._onProfileTabDlg)
+        return runMenu
 
-        # The Debug menu
+    def __buildDebugMenu(self):
+        """Build the debug menu"""
         dbgMenu = QMenu("Debu&g", self)
         dbgMenu.aboutToShow.connect(self.__debugAboutToShow)
         self._prjDebugAct = dbgMenu.addAction(
@@ -321,16 +325,40 @@ class MainWindowMenuMixin:
                 getIcon('dbgsettings.png'), 'Project main script settings',
                 self._onDumpProjectDebugSettings)
         self.__debugDumpProjectSettingsAct.setEnabled(False)
-        self.__debugDumpProjectSettingsEnvAct = \
+        self.__debugDumpPrjSettingsEnvAct = \
             self.__dumpDbgSettingsMenu.addAction(
                 getIcon('detailsdlg.png'),
                 'Project script settings with complete environment',
                 self._onDumpProjectFullDebugSettings)
-        self.__debugDumpProjectSettingsEnvAct.setEnabled(False)
+        self.__debugDumpPrjSettingsEnvAct.setEnabled(False)
         self.__dumpDbgSettingsMenu.aboutToShow.connect(
             self.__onDumpDbgSettingsAboutToShow)
+        return dbgMenu
 
-        # The Diagrams menu
+    def __buildToolsMenu(self):
+        """Build the tools menu"""
+        toolsMenu = QMenu("T&ools", self)
+        toolsMenu.aboutToShow.connect(self.__toolsAboutToShow)
+        self._prjLineCounterAct = toolsMenu.addAction(
+            getIcon('linecounter.png'), "&Line counter for project",
+            self.linecounterButtonClicked)
+        self.__tabLineCounterAct = toolsMenu.addAction(
+            getIcon('linecounter.png'), "L&ine counter for tab",
+            self._onTabLineCounter)
+        toolsMenu.addSeparator()
+        self.__unusedClassesAct = toolsMenu.addAction(
+            getIcon('notused.png'), 'Unused class analysis',
+            self.onNotUsedClasses)
+        self.__unusedFunctionsAct = toolsMenu.addAction(
+            getIcon('notused.png'), 'Unused function analysis',
+            self.onNotUsedFunctions)
+        self.__unusedGlobalsAct = toolsMenu.addAction(
+            getIcon('notused.png'), 'Unused global variable analysis',
+            self.onNotUsedGlobals)
+        return toolsMenu
+
+    def __buildDiagramsMenu(self):
+        """Builds the diagram menu"""
         diagramsMenu = QMenu("&Diagrams", self)
         diagramsMenu.aboutToShow.connect(self.__diagramsAboutToShow)
         self._prjImportDgmAct = diagramsMenu.addAction(
@@ -345,8 +373,10 @@ class MainWindowMenuMixin:
         self.__tabImportDgmDlgAct = diagramsMenu.addAction(
             getIcon('detailsdlg.png'), 'T&ab imports diagram...',
             self._onTabImportDgmTuned)
+        return diagramsMenu
 
-        # The View menu
+    def __buildViewMenu(self):
+        """Build the view menu"""
         viewMenu = QMenu("&View", self)
         viewMenu.aboutToShow.connect(self.__viewAboutToShow)
         viewMenu.aboutToHide.connect(self.__viewAboutToHide)
@@ -414,13 +444,15 @@ class MainWindowMenuMixin:
         viewMenu.addMenu(self.__bottomSideBarMenu)
         viewMenu.addSeparator()
         self.__zoomInAct = viewMenu.addAction(
-            getIcon('zoomin.png'), 'Zoom &in', self._onZoomIn)
+            getIcon('zoomin.png'), 'Zoom &in', self.em.zoomIn)
         self.__zoomOutAct = viewMenu.addAction(
-            getIcon('zoomout.png'), 'Zoom &out', self._onZoomOut)
+            getIcon('zoomout.png'), 'Zoom &out', self.em.zoomOut)
         self.__zoom11Act = viewMenu.addAction(
-            getIcon('zoomreset.png'), 'Zoom r&eset', self._onZoomReset)
+            getIcon('zoomreset.png'), 'Zoom r&eset', self.em.zoomReset)
+        return viewMenu
 
-        # Options menu
+    def __buildOptionsMenu(self):
+        """Build the options menu"""
         optionsMenu = QMenu("Optio&ns", self)
         optionsMenu.aboutToShow.connect(self.__optionsAboutToShow)
 
@@ -439,115 +471,61 @@ class MainWindowMenuMixin:
         optionsMenu.addMenu(self.__ideTemplateMenu)
 
         optionsMenu.addSeparator()
+        optionItems = [
+            ('Show vertical edge', 'verticalEdge', self._verticalEdgeChanged),
+            ('Show whitespaces', 'showSpaces', self._showSpacesChanged),
+            ('Wrap long lines', 'lineWrap', self._lineWrapChanged),
+            ('Show EOL', 'showEOL', self._showEOLChanged),
+            ('Show brace matching', 'showBraceMatch',
+             self._showBraceMatchChanged),
+            ('Auto indent', 'autoIndent', self._autoIndentChanged),
+            ('Backspace unindent', 'backspaceUnindent',
+             self._backspaceUnindentChanged),
+            ('TAB indents', 'tabIndents', self._tabIndentsChanged),
+            ('Show indentation guides', 'indentationGuides',
+             self._indentationGuidesChanged),
+            ('Highlight current line', 'currentLineVisible',
+             self._currentLineVisibleChanged),
+            ('HOME to first non-space', 'jumpToFirstNonSpace',
+             self._homeToFirstNonSpaceChanged),
+            ('Auto remove trailing spaces on save', 'removeTrailingOnSave',
+             self._removeTrailingChanged),
+            ('Editor calltips', 'editorCalltips', self._editorCalltipsChanged),
+            ('Clear debug IO console on new session', 'clearDebugIO',
+             self._clearDebugIOChanged),
+            ('Show navigation bar', 'showNavigationBar',
+             self._showNavBarChanged),
+            ('Show control flow navigation bar', 'showCFNavigationBar',
+             self._showCFNavBarChanged),
+            ('Show main toolbar', 'showMainToolBar',
+             self._showMainToolbarChanged)]
 
-        verticalEdgeAct = optionsMenu.addAction('Show vertical edge')
-        verticalEdgeAct.setCheckable(True)
-        verticalEdgeAct.setChecked(self.settings['verticalEdge'])
-        verticalEdgeAct.changed.connect(self._verticalEdgeChanged)
-        showSpacesAct = optionsMenu.addAction('Show whitespaces')
-        showSpacesAct.setCheckable(True)
-        showSpacesAct.setChecked(self.settings['showSpaces'])
-        showSpacesAct.changed.connect(self._showSpacesChanged)
-        lineWrapAct = optionsMenu.addAction('Wrap long lines')
-        lineWrapAct.setCheckable(True)
-        lineWrapAct.setChecked(self.settings['lineWrap'])
-        lineWrapAct.changed.connect(self._lineWrapChanged)
-        showEOLAct = optionsMenu.addAction('Show EOL')
-        showEOLAct.setCheckable(True)
-        showEOLAct.setChecked(self.settings['showEOL'])
-        showEOLAct.changed.connect(self._showEOLChanged)
-        showBraceMatchAct = optionsMenu.addAction('Show brace matching')
-        showBraceMatchAct.setCheckable(True)
-        showBraceMatchAct.setChecked(self.settings['showBraceMatch'])
-        showBraceMatchAct.changed.connect(self._showBraceMatchChanged)
-        autoIndentAct = optionsMenu.addAction('Auto indent')
-        autoIndentAct.setCheckable(True)
-        autoIndentAct.setChecked(self.settings['autoIndent'])
-        autoIndentAct.changed.connect(self._autoIndentChanged)
-        backspaceUnindentAct = optionsMenu.addAction('Backspace unindent')
-        backspaceUnindentAct.setCheckable(True)
-        backspaceUnindentAct.setChecked(self.settings['backspaceUnindent'])
-        backspaceUnindentAct.changed.connect(self._backspaceUnindentChanged)
-        tabIndentsAct = optionsMenu.addAction('TAB indents')
-        tabIndentsAct.setCheckable(True)
-        tabIndentsAct.setChecked(self.settings['tabIndents'])
-        tabIndentsAct.changed.connect(self._tabIndentsChanged)
-        indentationGuidesAct = optionsMenu.addAction('Show indentation guides')
-        indentationGuidesAct.setCheckable(True)
-        indentationGuidesAct.setChecked(self.settings['indentationGuides'])
-        indentationGuidesAct.changed.connect(self._indentationGuidesChanged)
-        currentLineVisibleAct = optionsMenu.addAction('Highlight current line')
-        currentLineVisibleAct.setCheckable(True)
-        currentLineVisibleAct.setChecked(self.settings['currentLineVisible'])
-        currentLineVisibleAct.changed.connect(self._currentLineVisibleChanged)
-        jumpToFirstNonSpaceAct = optionsMenu.addAction(
-            'HOME to first non-space')
-        jumpToFirstNonSpaceAct.setCheckable(True)
-        jumpToFirstNonSpaceAct.setChecked(self.settings['jumpToFirstNonSpace'])
-        jumpToFirstNonSpaceAct.changed.connect(
-            self._homeToFirstNonSpaceChanged)
-        removeTrailingOnSpaceAct = optionsMenu.addAction(
-            'Auto remove trailing spaces on save')
-        removeTrailingOnSpaceAct.setCheckable(True)
-        removeTrailingOnSpaceAct.setChecked(
-            self.settings['removeTrailingOnSave'])
-        removeTrailingOnSpaceAct.changed.connect(self._removeTrailingChanged)
-        editorCalltipsAct = optionsMenu.addAction('Editor calltips')
-        editorCalltipsAct.setCheckable(True)
-        editorCalltipsAct.setChecked(self.settings['editorCalltips'])
-        editorCalltipsAct.changed.connect(self._editorCalltipsChanged)
-        clearDebugIOAct = optionsMenu.addAction(
-            'Clear debug IO console on new session')
-        clearDebugIOAct.setCheckable(True)
-        clearDebugIOAct.setChecked(self.settings['clearDebugIO'])
-        clearDebugIOAct.changed.connect(self._clearDebugIOChanged)
-        showNavBarAct = optionsMenu.addAction('Show navigation bar')
-        showNavBarAct.setCheckable(True)
-        showNavBarAct.setChecked(self.settings['showNavigationBar'])
-        showNavBarAct.changed.connect(self._showNavBarChanged)
-        showCFNavBarAct = optionsMenu.addAction(
-            'Show control flow navigation bar')
-        showCFNavBarAct.setCheckable(True)
-        showCFNavBarAct.setChecked(self.settings['showCFNavigationBar'])
-        showCFNavBarAct.changed.connect(self._showCFNavBarChanged)
-        showMainToolBarAct = optionsMenu.addAction('Show main toolbar')
-        showMainToolBarAct.setCheckable(True)
-        showMainToolBarAct.setChecked(self.settings['showMainToolBar'])
-        showMainToolBarAct.changed.connect(self._showMainToolbarChanged)
+        for (name, valueName, handler) in optionItems:
+            act = optionsMenu.addAction(name)
+            act.setCheckable(True)
+            act.setChecked(self.settings[valueName])
+            act.changed.connect(handler)
+
         optionsMenu.addSeparator()
         tooltipsMenu = optionsMenu.addMenu("Tooltips")
-        projectTooltipsAct = tooltipsMenu.addAction("&Project tab")
-        projectTooltipsAct.setCheckable(True)
-        projectTooltipsAct.setChecked(self.settings['projectTooltips'])
-        projectTooltipsAct.changed.connect(self._projectTooltipsChanged)
-        recentTooltipsAct = tooltipsMenu.addAction("&Recent tab")
-        recentTooltipsAct.setCheckable(True)
-        recentTooltipsAct.setChecked(self.settings['recentTooltips'])
-        recentTooltipsAct.changed.connect(self._recentTooltipsChanged)
-        classesTooltipsAct = tooltipsMenu.addAction("&Classes tab")
-        classesTooltipsAct.setCheckable(True)
-        classesTooltipsAct.setChecked(self.settings['classesTooltips'])
-        classesTooltipsAct.changed.connect(self._classesTooltipsChanged)
-        functionsTooltipsAct = tooltipsMenu.addAction("&Functions tab")
-        functionsTooltipsAct.setCheckable(True)
-        functionsTooltipsAct.setChecked(self.settings['functionsTooltips'])
-        functionsTooltipsAct.changed.connect(self._functionsTooltipsChanged)
-        outlineTooltipsAct = tooltipsMenu.addAction("&Outline tab")
-        outlineTooltipsAct.setCheckable(True)
-        outlineTooltipsAct.setChecked(self.settings['outlineTooltips'])
-        outlineTooltipsAct.changed.connect(self._outlineTooltipsChanged)
-        findNameTooltipsAct = tooltipsMenu.addAction("Find &name dialog")
-        findNameTooltipsAct.setCheckable(True)
-        findNameTooltipsAct.setChecked(self.settings['findNameTooltips'])
-        findNameTooltipsAct.changed.connect(self._findNameTooltipsChanged)
-        findFileTooltipsAct = tooltipsMenu.addAction("Find fi&le dialog")
-        findFileTooltipsAct.setCheckable(True)
-        findFileTooltipsAct.setChecked(self.settings['findFileTooltips'])
-        findFileTooltipsAct.changed.connect(self._findFileTooltipsChanged)
-        editorTooltipsAct = tooltipsMenu.addAction("&Editor tabs")
-        editorTooltipsAct.setCheckable(True)
-        editorTooltipsAct.setChecked(self.settings['editorTooltips'])
-        editorTooltipsAct.changed.connect(self._editorTooltipsChanged)
+        optionItems = [
+            ('&Project tab', 'projectTooltips', self._projectTooltipsChanged),
+            ('&Recent tab', 'recentTooltips', self._recentTooltipsChanged),
+            ('&Classes tab', 'classesTooltips', self._classesTooltipsChanged),
+            ('&Functions tab', 'functionsTooltips',
+             self._functionsTooltipsChanged),
+            ('&Outline tab', 'outlineTooltips', self._outlineTooltipsChanged),
+            ('Find &name dialog', 'findNameTooltips',
+             self._findNameTooltipsChanged),
+            ('Find fi&le dialog', 'findFileTooltips',
+             self._findFileTooltipsChanged),
+            ('&Editor tabs', 'editorTooltips', self._editorTooltipsChanged)]
+
+        for (name, valueName, handler) in optionItems:
+            act = tooltipsMenu.addAction(name)
+            act.setCheckable(True)
+            act.setChecked(self.settings[valueName])
+            act.changed.connect(handler)
 
         openTabsMenu = optionsMenu.addMenu("Open tabs button")
         self.__navigationSortGroup = QActionGroup(self)
@@ -574,46 +552,65 @@ class MainWindowMenuMixin:
 
         optionsMenu.addSeparator()
         themesMenu = optionsMenu.addMenu("Themes")
+        self.__themesGroup = QActionGroup(self)
         availableThemes = self.__buildThemesList()
+        self.__themes = []
         for theme in availableThemes:
             themeAct = themesMenu.addAction(theme[1])
             themeAct.setData(theme[0])
-            if theme[0] == self.settings['skin']:
-                font = themeAct.font()
-                font.setBold(True)
-                themeAct.setFont(font)
+            themeAct.setCheckable(True)
+            themeAct.setActionGroup(self.__themesGroup)
+            self.__themes.append((theme[0], themeAct))
         themesMenu.triggered.connect(self._onTheme)
+        themesMenu.aboutToShow.connect(self.__themeAboutToShow)
 
         styleMenu = optionsMenu.addMenu("Styles")
+        self.__styleGroup = QActionGroup(self)
         availableStyles = QStyleFactory.keys()
         self.__styles = []
         for style in availableStyles:
             styleAct = styleMenu.addAction(style)
             styleAct.setData(style)
+            styleAct.setCheckable(True)
+            styleAct.setActionGroup(self.__styleGroup)
             self.__styles.append((str(style), styleAct))
         styleMenu.triggered.connect(self._onStyle)
         styleMenu.aboutToShow.connect(self.__styleAboutToShow)
 
-        fontFaceMenu = optionsMenu.addMenu("Mono font family")
-        self.__fontFaceGroup = QActionGroup(self)
-        skin = GlobalData().skin
-        currentFont = skin['monoFont'].family()
-        self.__fonts = []
-        for fontFace in getMonospaceFontList():
-            faceAct = fontFaceMenu.addAction(fontFace)
-            faceAct.setData(fontFace)
-            faceAct.setCheckable(True)
-            faceAct.setActionGroup(self.__fontFaceGroup)
-            faceAct.setChecked(currentFont == fontFace)
-            self.__fonts.append((fontFace, faceAct))
-        fontFaceMenu.triggered.connect(self._onMonoFont)
-        fontFaceMenu.aboutToShow.connect(self.__fontAboutToShow)
+        textFontFamilyMenu = optionsMenu.addMenu("Text mono font family")
+        self.__textFontFamilyGroup = QActionGroup(self)
+        self.__textFonts = []
+        for fontFamily in getMonospaceFontList():
+            fontFamilyAct = textFontFamilyMenu.addAction(fontFamily)
+            fontFamilyAct.setData(fontFamily)
+            fontFamilyAct.setCheckable(True)
+            fontFamilyAct.setActionGroup(self.__textFontFamilyGroup)
+            self.__textFonts.append((fontFamily, fontFamilyAct))
+        textFontFamilyMenu.triggered.connect(self._onMonoFont)
+        textFontFamilyMenu.aboutToShow.connect(self.__fontAboutToShow)
 
-        # The plugins menu
+        flowFontFamilyMenu = optionsMenu.addMenu("Flow mono font family")
+        self.__flowFontFamilyGroup = QActionGroup(self)
+        self.__flowFonts = []
+        for fontFamily in getMonospaceFontList():
+            fontFamilyAct = flowFontFamilyMenu.addAction(fontFamily)
+            fontFamilyAct.setData(fontFamily)
+            fontFamilyAct.setCheckable(True)
+            fontFamilyAct.setActionGroup(self.__flowFontFamilyGroup)
+            self.__flowFonts.append((fontFamily, fontFamilyAct))
+        flowFontFamilyMenu.triggered.connect(self._onFlowMonoFont)
+        flowFontFamilyMenu.aboutToShow.connect(self.__flowFontAboutToShow)
+
+        return optionsMenu
+
+    def __buildPluginsMenu(self):
+        """Build the plugins menu"""
         self.__pluginsMenu = QMenu("P&lugins", self)
         self._recomposePluginMenu()
+        return self.__pluginsMenu
 
-        # The Help menu
+    def __buildHelpMenu(self):
+        """Build the help menu"""
         helpMenu = QMenu("&Help", self)
         helpMenu.aboutToShow.connect(self.__helpAboutToShow)
         helpMenu.aboutToHide.connect(self.__helpAboutToHide)
@@ -636,20 +633,7 @@ class MainWindowMenuMixin:
         helpMenu.addSeparator()
         self.__aboutAct = helpMenu.addAction(
             getIcon("logo.png"), "A&bout codimension", self._onAbout)
-
-        menuBar = self.menuBar()
-        menuBar.addMenu(prjMenu)
-        menuBar.addMenu(tabMenu)
-        menuBar.addMenu(editMenu)
-        menuBar.addMenu(searchMenu)
-        menuBar.addMenu(self.__runMenu)
-        menuBar.addMenu(dbgMenu)
-        menuBar.addMenu(toolsMenu)
-        menuBar.addMenu(diagramsMenu)
-        menuBar.addMenu(viewMenu)
-        menuBar.addMenu(optionsMenu)
-        menuBar.addMenu(self.__pluginsMenu)
-        menuBar.addMenu(helpMenu)
+        return helpMenu
 
     def __prjAboutToShow(self):
         """Triggered when project menu is about to show"""
@@ -665,11 +649,10 @@ class MainWindowMenuMixin:
             if item != currentPrj:
                 addedCount += 1
                 act = self.__recentPrjMenu.addAction(
-                    self.__getAccelerator(addedCount) +
+                    getAccelerator(addedCount) +
                     os.path.basename(item).replace(".cdm3", ""))
                 act.setData(item)
                 act.setEnabled(not self.debugMode and os.path.exists(item))
-
         self.__recentPrjMenu.setEnabled(addedCount > 0)
 
         if GlobalData().project.isLoaded():
@@ -706,8 +689,7 @@ class MainWindowMenuMixin:
         self.__tabJumpToScopeBeginAct.setEnabled(isPythonBuffer)
         self.__tabOpenImportAct.setEnabled(isPythonBuffer)
         if plainTextBuffer:
-            widget = self.em.currentWidget()
-            editor = widget.getEditor()
+            editor = self.em.currentWidget().getEditor()
             self.__openAsFileAct.setEnabled(editor.openAsFileAvailable())
             self.__downloadAndShowAct.setEnabled(
                 editor.downloadAndShowAvailable())
@@ -737,11 +719,22 @@ class MainWindowMenuMixin:
         for item in GlobalData().project.recentFiles:
             addedCount += 1
             act = self.__recentFilesMenu.addAction(
-                self.__getAccelerator(addedCount) + item)
+                getAccelerator(addedCount) + item)
             act.setData(item)
             act.setEnabled(os.path.exists(item))
 
         self.__recentFilesMenu.setEnabled(addedCount > 0)
+
+    def __tabAboutToHide(self):
+        """Triggered when tab menu is about to hide"""
+        self.__closeTabAct.setShortcut("")
+        self.__tabJumpToDefAct.setShortcut("")
+        self.__calltipAct.setShortcut("")
+        self.__tabJumpToScopeBeginAct.setShortcut("")
+        self.__tabOpenImportAct.setShortcut("")
+        self.__highlightInOutlineAct.setShortcut("")
+        self.__saveFileAct.setEnabled(True)
+        self.__saveFileAsAct.setEnabled(True)
 
     def __searchAboutToShow(self):
         """Triggered when search menu is about to show"""
@@ -754,8 +747,7 @@ class MainWindowMenuMixin:
         self.__goToLineAct.setEnabled(isPlainTextBuffer)
         self.__findAct.setEnabled(isPlainTextBuffer)
         self.__replaceAct.setEnabled(
-            isPlainTextBuffer and
-            currentWidget.getType() !=
+            isPlainTextBuffer and currentWidget.getType() !=
             MainWindowTabWidgetBase.VCSAnnotateViewer)
         self.__findNextAct.setEnabled(isPlainTextBuffer)
         self.__findPrevAct.setEnabled(isPlainTextBuffer)
@@ -767,14 +759,22 @@ class MainWindowMenuMixin:
         self.__findNextAct.setShortcut("Ctrl+.")
         self.__findPrevAct.setShortcut("Ctrl+,")
 
+    def __searchAboutToHide(self):
+        """Triggered when search menu is about to hide"""
+        self.__findOccurencesAct.setShortcut("")
+        self.__goToLineAct.setShortcut("")
+        self.__findAct.setShortcut("")
+        self.__replaceAct.setShortcut("")
+        self.__findNextAct.setShortcut("")
+        self.__findPrevAct.setShortcut("")
+
     def __diagramsAboutToShow(self):
         """Triggered when the diagrams menu is about to show"""
         isPythonBuffer = self._isPythonBuffer()
-        currentWidget = self.em.currentWidget()
+        widget = self.em.currentWidget()
 
         enabled = isPythonBuffer and \
-            currentWidget.getType() != \
-            MainWindowTabWidgetBase.VCSAnnotateViewer
+            widget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer
         self.__tabImportDgmAct.setEnabled(enabled)
         self.__tabImportDgmDlgAct.setEnabled(enabled)
 
@@ -825,8 +825,7 @@ class MainWindowMenuMixin:
         zoomEnabled = isPlainTextBuffer or isGraphicsBuffer or \
                       isGeneratedDiagram or isDiffViewer
         if not zoomEnabled and isProfileViewer:
-            currentWidget = self.em.currentWidget()
-            zoomEnabled = currentWidget.isZoomApplicable()
+            zoomEnabled = self.em.currentWidget().isZoomApplicable()
         self.__zoomInAct.setEnabled(zoomEnabled)
         self.__zoomOutAct.setEnabled(zoomEnabled)
         self.__zoom11Act.setEnabled(zoomEnabled)
@@ -836,6 +835,12 @@ class MainWindowMenuMixin:
         self.__zoom11Act.setShortcut("Ctrl+0")
 
         self.__debugBarAct.setEnabled(self.debugMode)
+
+    def __viewAboutToHide(self):
+        """Triggered when view menu is about to hide"""
+        self.__zoomInAct.setShortcut("")
+        self.__zoomOutAct.setShortcut("")
+        self.__zoom11Act.setShortcut("")
 
     def __optionsAboutToShow(self):
         """Triggered when the options menu is about to show"""
@@ -849,9 +854,44 @@ class MainWindowMenuMixin:
         isPythonBuffer = self._isPythonBuffer()
         self.__contextHelpAct.setEnabled(isPythonBuffer)
         self.__callHelpAct.setEnabled(isPythonBuffer)
-
         self.__contextHelpAct.setShortcut("Ctrl+F1")
         self.__callHelpAct.setShortcut("Ctrl+Shift+F1")
+
+    def __helpAboutToHide(self):
+        """Triggered when help menu is about to hide"""
+        self.__contextHelpAct.setShortcut("")
+        self.__callHelpAct.setShortcut("")
+
+    def __editAboutToShow(self):
+        """Triggered when edit menu is about to show"""
+        isPlainBuffer = self.__isPlainTextBuffer()
+        if isPlainBuffer:
+            editor = self.em.currentWidget().getEditor()
+
+        editable = isPlainBuffer and not editor.isReadOnly()
+        self.__undoAct.setShortcut("Ctrl+Z")
+        self.__undoAct.setEnabled(isPlainBuffer and
+                                  editor.document().isUndoAvailable())
+        self.__redoAct.setShortcut("Ctrl+Y")
+        self.__redoAct.setEnabled(isPlainBuffer and
+                                  editor.document().isRedoAvailable())
+        self.__cutAct.setShortcut("Ctrl+X")
+        self.__cutAct.setEnabled(editable)
+        self.__copyAct.setShortcut("Ctrl+C")
+        self.__copyAct.setEnabled(self.em.isCopyAvailable())
+        self.__pasteAct.setShortcut("Ctrl+V")
+        self.__pasteAct.setEnabled(editable and
+                                   QApplication.clipboard().text() != "")
+        self.__selectAllAct.setShortcut("Ctrl+A")
+        self.__selectAllAct.setEnabled(isPlainBuffer)
+        self.__commentAct.setShortcut("Ctrl+M")
+        self.__commentAct.setEnabled(editable)
+        self.__duplicateAct.setShortcut("Ctrl+D")
+        self.__duplicateAct.setEnabled(editable)
+        self.__autocompleteAct.setShortcut("Ctrl+Space")
+        self.__autocompleteAct.setEnabled(editable)
+        self.__expandTabsAct.setEnabled(editable)
+        self.__trailingSpacesAct.setEnabled(editable)
 
     def __editAboutToHide(self):
         """Triggered when edit menu is about to hide"""
@@ -865,76 +905,6 @@ class MainWindowMenuMixin:
         self.__duplicateAct.setShortcut("")
         self.__autocompleteAct.setShortcut("")
 
-    def __tabAboutToHide(self):
-        """Triggered when tab menu is about to hide"""
-        self.__closeTabAct.setShortcut("")
-        self.__tabJumpToDefAct.setShortcut("")
-        self.__calltipAct.setShortcut("")
-        self.__tabJumpToScopeBeginAct.setShortcut("")
-        self.__tabOpenImportAct.setShortcut("")
-        self.__highlightInOutlineAct.setShortcut("")
-
-        self.__saveFileAct.setEnabled(True)
-        self.__saveFileAsAct.setEnabled(True)
-
-    def __searchAboutToHide(self):
-        """Triggered when search menu is about to hide"""
-        self.__findOccurencesAct.setShortcut("")
-        self.__goToLineAct.setShortcut("")
-        self.__findAct.setShortcut("")
-        self.__replaceAct.setShortcut("")
-        self.__findNextAct.setShortcut("")
-        self.__findPrevAct.setShortcut("")
-
-    def __viewAboutToHide(self):
-        """Triggered when view menu is about to hide"""
-        self.__zoomInAct.setShortcut("")
-        self.__zoomOutAct.setShortcut("")
-        self.__zoom11Act.setShortcut("")
-
-    def __helpAboutToHide(self):
-        """Triggered when help menu is about to hide"""
-        self.__contextHelpAct.setShortcut("")
-        self.__callHelpAct.setShortcut("")
-
-    def __editAboutToShow(self):
-        """Triggered when edit menu is about to show"""
-        isPlainBuffer = self.__isPlainTextBuffer()
-        isPythonBuffer = self._isPythonBuffer()
-        currentWidget = self.em.currentWidget()
-        if isPlainBuffer:
-            editor = currentWidget.getEditor()
-
-        self.__undoAct.setShortcut("Ctrl+Z")
-        self.__undoAct.setEnabled(isPlainBuffer and
-                                  editor.document().isUndoAvailable())
-        self.__redoAct.setShortcut("Ctrl+Y")
-        self.__redoAct.setEnabled(isPlainBuffer and
-                                  editor.document().isRedoAvailable())
-        self.__cutAct.setShortcut("Ctrl+X")
-        self.__cutAct.setEnabled(isPlainBuffer and not editor.isReadOnly())
-        self.__copyAct.setShortcut("Ctrl+C")
-        self.__copyAct.setEnabled(self.em.isCopyAvailable())
-        self.__pasteAct.setShortcut("Ctrl+V")
-        self.__pasteAct.setEnabled(isPlainBuffer and
-                                   QApplication.clipboard().text() != "" and
-                                   not editor.isReadOnly())
-        self.__selectAllAct.setShortcut("Ctrl+A")
-        self.__selectAllAct.setEnabled(isPlainBuffer)
-        self.__commentAct.setShortcut("Ctrl+M")
-        self.__commentAct.setEnabled(isPythonBuffer and
-                                     not editor.isReadOnly())
-        self.__duplicateAct.setShortcut("Ctrl+D")
-        self.__duplicateAct.setEnabled(isPlainBuffer and
-                                       not editor.isReadOnly())
-        self.__autocompleteAct.setShortcut("Ctrl+Space")
-        self.__autocompleteAct.setEnabled(isPlainBuffer and
-                                          not editor.isReadOnly())
-        self.__expandTabsAct.setEnabled(isPlainBuffer and
-                                        not editor.isReadOnly())
-        self.__trailingSpacesAct.setEnabled(isPlainBuffer and
-                                            not editor.isReadOnly())
-
     def __onDumpDbgSettingsAboutToShow(self):
         """Dump debug settings is about to show"""
         scriptAvailable = self._dumpScriptDbgSettingsAvailable()
@@ -943,22 +913,31 @@ class MainWindowMenuMixin:
 
         projectAvailable = self.__dumpProjectDbgSettingsAvailable()
         self.__debugDumpProjectSettingsAct.setEnabled(projectAvailable)
-        self.__debugDumpProjectSettingsEnvAct.setEnabled(projectAvailable)
+        self.__debugDumpPrjSettingsEnvAct.setEnabled(projectAvailable)
 
     def __styleAboutToShow(self):
         """Style menu is about to show"""
         currentStyle = self.settings['style'].lower()
         for item in self.__styles:
-            font = item[1].font()
-            font.setBold(item[0].lower() == currentStyle)
-            item[1].setFont(font)
+            item[1].setChecked(item[0].lower() == currentStyle)
 
     def __fontAboutToShow(self):
         """Font menu is about to show"""
-        skin = GlobalData().skin
-        currentFont = skin['monoFont'].family().lower()
-        for item in self.__fonts:
+        currentFont = GlobalData().skin['monoFont'].family().lower()
+        for item in self.__textFonts:
             item[1].setChecked(item[0].lower() == currentFont)
+
+    def __flowFontAboutToShow(self):
+        """Flow font menu is about to show"""
+        currentFont = GlobalData().skin['cfMonoFont'].family().lower()
+        for item in self.__flowFonts:
+            item[1].setChecked(item[0].lower() == currentFont)
+
+    def __themeAboutToShow(self):
+        """Themes menu is about to show"""
+        currentTheme = self.settings['skin'].lower()
+        for item in self.__themes:
+            item[1].setChecked(item[0].lower() == currentTheme)
 
     @staticmethod
     def __buildThemesList():
@@ -977,13 +956,6 @@ class MainWindowMenuMixin:
             self.__pluginsMenu.addSeparator()
         for path in self._pluginMenus:
             self.__pluginsMenu.addMenu(self._pluginMenus[path])
-
-    @staticmethod
-    def __getAccelerator(count):
-        """Provides an accelerator text for a menu item"""
-        if count < 10:
-            return "&" + str(count) + ".  "
-        return "&" + chr(count - 10 + ord('a')) + ".  "
 
     def __isPlainTextBuffer(self):
         """Provides if saving is enabled"""

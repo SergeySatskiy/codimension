@@ -164,7 +164,6 @@ _DEFAULT_SETTINGS = {
     'vcsstatusupdateinterval': 30,      # seconds
     'tablistsortalpha': True,
     'taborderpreserved': False,
-    'flowScale': 1.0,
     'maxRecentProjects': 32,
     'maxRecentFiles': 32,
     'maxSearchEntries': 32,
@@ -232,7 +231,8 @@ class SettingsWrapper(QObject,
 
     sigRecentListChanged = pyqtSignal()
     sigFlowSplitterChanged = pyqtSignal()
-    sigFlowScaleChanged = pyqtSignal()
+    sigFlowZoomChanged = pyqtSignal()
+    sigTextZoomChanged = pyqtSignal()
 
     def __init__(self):
         QObject.__init__(self)
@@ -242,6 +242,9 @@ class SettingsWrapper(QObject,
         RunParametersCache.__init__(self)
         FilePositions.__init__(self)
         FileEncodings.__init__(self)
+
+        self.minTextZoom = None
+        self.minCFlowZoom = None
 
         self.__values = deepcopy(_DEFAULT_SETTINGS)
 
@@ -385,6 +388,27 @@ class SettingsWrapper(QObject,
             if needFlush:
                 self.flush()
 
+    def validateZoom(self, minTextZoom, minCFlowZoom):
+        """Validates the min zoom values"""
+        self.minTextZoom = minTextZoom
+        self.minCFlowZoom = minCFlowZoom
+        warnings = []
+        if self.__values['zoom'] < minTextZoom:
+            warnings.append("The current text zoom (" +
+                            str(self.__values['zoom']) +
+                            ") will be adjusted to " + str(minTextZoom) +
+                            " due to it is less than min fonts allowed.")
+            self.__values['zoom'] = minTextZoom
+        if self.__values['flowZoom'] < minCFlowZoom:
+            warnings.append("The current flow zoom (" +
+                            str(self.__values['flowZoom']) +
+                            ") will be adjusted to " + str(minCFlowZoom) +
+                            " due to it is less than min fonts allowed.")
+            self.__values['flowZoom'] = minCFlowZoom
+        if warnings:
+            self.flush()
+        return warnings
+
     def __getitem__(self, key):
         return self.__values[key]
 
@@ -392,9 +416,51 @@ class SettingsWrapper(QObject,
         self.__values[key] = value
         if key == 'flowSplitterSizes':
             self.sigFlowSplitterChanged.emit()
-        elif key == 'flowScale':
-            self.sigFlowScaleChanged.emit()
+        elif key == 'flowZoom':
+            self.sigFlowZoomChanged.emit()
+        elif key == 'zoom':
+            self.sigTextZoomChanged.emit()
         self.flush()
+
+    def onTextZoomIn(self):
+        """Triggered when the text is zoomed in"""
+        self.__values['zoom'] += 1
+        self.flush()
+        self.sigTextZoomChanged.emit()
+
+    def onTextZoomOut(self):
+        """Triggered when the text is zoomed out"""
+        if self.__values['zoom'] > self.minTextZoom:
+            self.__values['zoom'] -= 1
+            self.flush()
+            self.sigTextZoomChanged.emit()
+
+    def onTextZoomReset(self):
+        """Triggered when the text zoom is reset"""
+        if self.__values['zoom'] != 0:
+            self.__values['zoom'] = 0
+            self.flush()
+            self.sigTextZoomChanged.emit()
+
+    def onFlowZoomIn(self):
+        """Triggered when the flow is zoomed in"""
+        self.__values['flowZoom'] += 1
+        self.flush()
+        self.sigFlowZoomChanged.emit()
+
+    def onFlowZoomOut(self):
+        """Triggered when the flow is zoomed out"""
+        if self.__values['flowZoom'] > self.minCFlowZoom:
+            self.__values['flowZoom'] -= 1
+            self.flush()
+            self.sigFlowZoomChanged.emit()
+
+    def onFlowZoomReset(self):
+        """Triggered when the flow zoom is reset"""
+        if self.__values['flowZoom'] != 0:
+            self.__values['flowZoom'] = 0
+            self.flush()
+            self.sigFlowZoomChanged.emit()
 
 
 SETTINGS_SINGLETON = SettingsWrapper()

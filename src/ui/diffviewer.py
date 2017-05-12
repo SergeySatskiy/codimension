@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2011-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2011-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
 
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
-from utils.settings import Settings
 from .qt import (Qt, QSize, QHBoxLayout, QWidget, QAction, QToolBar,
                  QSizePolicy, QVBoxLayout)
 from .htmltabwidget import HTMLTabWidget
@@ -91,21 +90,21 @@ class DiffViewer(QWidget):
         """Shows the given content"""
         if self.__inClear:
             self.viewer.setHTML(content)
-            self.viewer.zoomTo(Settings().zoom)
+            self.viewer.onTextZoomChanged()
             return
 
         if content == '' or content is None:
             self.__clear()
         else:
             self.viewer.setHTML(content)
-            self.viewer.zoomTo(Settings().zoom)
+            self.viewer.onTextZoomChanged()
             self.__isEmpty = False
             self.__updateToolbarButtons()
             self.__tooltip = tooltip
 
-    def zoomTo(self, zoomValue):
-        """Sets the required zoom"""
-        self.viewer.zoomTo(zoomValue)
+    def onTextZoomChanged(self):
+        """Triggered when a text zoom is changed"""
+        self.viewer.onTextZoomChanged()
 
     def __sendUp(self):
         """Triggered when the content should be sent to the main editor area"""

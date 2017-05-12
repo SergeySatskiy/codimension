@@ -30,6 +30,7 @@ from qutepart.margins import MarginBase
 from utils.misc import extendInstance
 from utils.globals import GlobalData
 from utils.settings import Settings
+from utils.colorfont import getZoomedMarginFont
 
 
 class CDMLineNumberMargin(QWidget):
@@ -49,7 +50,7 @@ class CDMLineNumberMargin(QWidget):
         self.__fgColor = GlobalData().skin['marginColor']
 
         self.__width = self.__calculateWidth()
-        self.zoomTo(Settings()['zoom'])
+        self.onTextZoomChanged()
 
         # The width needs to be re-calculated when the margin is drawn the
         # first time. The problem is that if the widget is not on the screen
@@ -133,8 +134,6 @@ class CDMLineNumberMargin(QWidget):
             self.__fgColor = color
             self.update()
 
-    def zoomTo(self, zoomVal):
-        """Sets the new font for the lineno widget"""
-        font = QFont(GlobalData().skin['lineNumFont'])
-        font.setPointSize(font.pointSize() + zoomVal)
-        self.setFont(font)
+    def onTextZoomChanged(self):
+        """Triggered when a zoom has been changed"""
+        self.setFont(getZoomedMarginFont())

@@ -53,7 +53,6 @@ class TextEditorTabWidget(QWidget):
 
     """Plain text editor tab widget"""
 
-    textEditorZoom = pyqtSignal(int)
     reloadRequest = pyqtSignal()
     reloadAllNonModifiedRequest = pyqtSignal()
     sigTabRunChanged = pyqtSignal(bool)
@@ -70,7 +69,6 @@ class TextEditorTabWidget(QWidget):
         self.__shortName = ""
 
         self.__createLayout()
-        self.__editor.zoomTo(Settings()['zoom'])
 
         self.__editor.redoAvailable.connect(self.__redoAvailable)
         self.__editor.undoAvailable.connect(self.__undoAvailable)
@@ -85,6 +83,14 @@ class TextEditorTabWidget(QWidget):
         self.__breakableLines = None
 
         self.__vcsStatus = None
+
+    def onTextZoomChanged(self):
+        """Triggered when a text zoom is changed"""
+        self.__editor.onTextZoomChanged()
+
+    def onFlowZoomChanged(self):
+        """Triggered when a flow zoom is changed"""
+        self.__flowUI.onFlowZoomChanged()
 
     def getNavigationBar(self):
         """Provides a reference to the navigation bar"""

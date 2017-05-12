@@ -76,6 +76,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.setPaper(skin['nolexerPaper'])
         self.setColor(skin['nolexerColor'])
 
+        self.onTextZoomChanged()
         self.__initMargins()
 
         # self.SCN_DOUBLECLICK.connect(self.__onDoubleClick)
@@ -150,17 +151,17 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                    Qt.Key_Backslash: self.onGotoDefinition,
                    Qt.Key_BracketRight: self.onOccurences,
                    Qt.Key_Slash: self.onShowCalltip,
-                   Qt.Key_Minus: self.onZoomOut,
-                   Qt.Key_Equal: self.onZoomIn,
-                   Qt.Key_0: self.onZoomReset,
+                   Qt.Key_Minus: Settings().onTextZoomOut,
+                   Qt.Key_Equal: Settings().onTextZoomIn,
+                   Qt.Key_0: Settings().onTextZoomReset,
                    Qt.Key_Home: self.onFirstChar,
                    Qt.Key_End: self.onLastChar,
                    Qt.Key_B: self.highlightInOutline,
                    Qt.Key_QuoteLeft: self.highlightInCFlow},
             ALT: {Qt.Key_U: self.onScopeBegin},
-            CTRL_KEYPAD: {Qt.Key_Minus: self.onZoomOut,
-                          Qt.Key_Plus: self.onZoomIn,
-                          Qt.Key_0: self.onZoomReset},
+            CTRL_KEYPAD: {Qt.Key_Minus: Settings().onTextZoomOut,
+                          Qt.Key_Plus: Settings().onTextZoomIn,
+                          Qt.Key_0: Settings().onTextZoomReset},
             NO_MODIFIER: {Qt.Key_Home: self.onHome,
                           Qt.Key_End: self.moveToLineEnd,
                           Qt.Key_F12: self.makeLineFirst}}
@@ -193,9 +194,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             angleDelta = event.angleDelta()
             if not angleDelta.isNull():
                 if angleDelta.y() > 0:
-                    self.onZoomIn()
+                    Settings().onTextZoomIn()
                 else:
-                    self.onZoomOut()
+                    Settings().onTextZoomOut()
             event.accept()
         else:
             QutepartWrapper.wheelEvent(self, event)

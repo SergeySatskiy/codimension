@@ -399,10 +399,14 @@ class Skin:
         monoPointSize = self.__cfValues['cfMonoFont'].pointSize()
         return (min(badgePointSize, monoPointSize) - 1) * -1
 
-    def setMonoFontFamily(self, fontFamily):
+    def setTextMonoFontFamily(self, fontFamily):
         """Sets the new mono font family"""
         self.__values['monoFont'].setFamily(fontFamily)
         self.flush()
+
+    def setFlowMonoFontFamily(self, fontFamily):
+        self.__cfValues['cfMonoFont'].setFamily(fontFamily)
+        self.flushCFlow()
 
 
 def getThemesList(localSkinsDir):
