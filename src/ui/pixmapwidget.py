@@ -220,7 +220,7 @@ class PixmapTabWidget(QWidget, MainWindowTabWidgetBase):
         hLayout.addWidget(toolbar)
 
         self.__outsideChangesBar = OutsideChangeWidget(self.__viewer)
-        self.__outsideChangesBar.reloadRequest.connect(self.__onReload)
+        self.__outsideChangesBar.sigReloadRequest.connect(self.__onReload)
         self.__outsideChangesBar.reloadAllNonModifiedRequest.connect(
             self.reloadAllNonModified)
         self.__outsideChangesBar.hide()

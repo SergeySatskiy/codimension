@@ -231,7 +231,6 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
 
     """VCS annotate viewer tab widget"""
 
-    textEditorZoom = pyqtSignal(int)
     sigEscapePressed = pyqtSignal()
 
     def __init__(self, parent):
@@ -300,24 +299,6 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
     def updateStatus(self):
         """Updates the toolbar buttons status"""
         self.lineCounterButton.setEnabled(isPythonMime(self.mime))
-
-    def onZoomReset(self):
-        """Triggered when the zoom reset button is pressed"""
-        if self.__viewer.zoom != 0:
-            self.textEditorZoom.emit(0)
-        return True
-
-    def onZoomIn(self):
-        """Triggered when the zoom in button is pressed"""
-        if self.__viewer.zoom < 20:
-            self.textEditorZoom.emit(self.__viewer.zoom + 1)
-        return True
-
-    def onZoomOut(self):
-        """Triggered when the zoom out button is pressed"""
-        if self.__viewer.zoom > -10:
-            self.textEditorZoom.emit(self.__viewer.zoom - 1)
-        return True
 
     def __onPrint(self):
         """Triggered when the print button is pressed"""

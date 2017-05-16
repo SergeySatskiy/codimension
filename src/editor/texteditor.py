@@ -61,7 +61,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     """Text editor implementation"""
 
     sigEscapePressed = pyqtSignal()
-    cflowSyncRequested = pyqtSignal(int, int, int)
+    sigCFlowSyncRequested = pyqtSignal(int, int, int)
 
     def __init__(self, parent, debugger):
         self._parent = parent
@@ -866,7 +866,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         if self.isPythonBuffer():
             line, pos = self.cursorPosition
             absPos = self.positionFromLineIndex(line, pos)
-            self.cflowSyncRequested.emit(absPos, line + 1, pos + 1)
+            self.sigCFlowSyncRequested.emit(absPos, line + 1, pos + 1)
 
     def gotoLine(self, line, pos=None, firstVisible=None):
         """Jumps to the given position and scrolls if needed.

@@ -457,7 +457,7 @@ class EditorsManager(QTabWidget):
             self.setTabsClosable(True)
 
         newWidget = TextEditorTabWidget(self, self.__debugger)
-        newWidget.reloadRequest.connect(self.onReload)
+        newWidget.sigReloadRequest.connect(self.onReload)
         newWidget.reloadAllNonModifiedRequest.connect(
             self.onReloadAllNonModified)
         newWidget.sigTabRunChanged.connect(self.onTabRunChanged)
@@ -1105,7 +1105,7 @@ class EditorsManager(QTabWidget):
 
             # Not found - create a new one
             newWidget = TextEditorTabWidget(self, self.__debugger)
-            newWidget.reloadRequest.connect(self.onReload)
+            newWidget.sigReloadRequest.connect(self.onReload)
             newWidget.reloadAllNonModifiedRequest.connect(
                 self.onReloadAllNonModified)
             newWidget.sigTabRunChanged.connect(self.onTabRunChanged)

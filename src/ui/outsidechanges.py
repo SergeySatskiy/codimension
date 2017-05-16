@@ -29,7 +29,7 @@ class OutsideChangeWidget(QFrame):
 
     """Frameless dialogue to deal with outside changes"""
 
-    reloadRequest = pyqtSignal()
+    sigReloadRequest = pyqtSignal()
     reloadAllNonModifiedRequest = pyqtSignal()
 
     def __init__(self, parent):
@@ -191,7 +191,7 @@ class OutsideChangeWidget(QFrame):
 
     def __reload(self):
         """Reloads the file from the disk"""
-        self.reloadRequest.emit()
+        self.sigReloadRequest.emit()
 
     def __reloadAllNonModified(self):
         """Reloads all the non-modified buffers"""

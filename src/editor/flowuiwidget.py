@@ -36,6 +36,7 @@ from utils.globals import GlobalData
 from utils.fileutils import isPythonMime
 from utils.settings import Settings
 from utils.diskvaluesrelay import getFilePosition
+from utils.colorfont import getLabelStyle
 from .flowuicontextmenus import CFSceneContextMenuMixin
 from .flowuimouse import CFSceneMouseMixin
 from .flowuikeyboard import CFSceneKeyboardMixin
@@ -190,6 +191,8 @@ class ControlFlowNavigationBar(QFrame):
         self.__layout = QHBoxLayout(self)
         self.__layout.setContentsMargins(0, 0, 0, 0)
 
+        labelStylesheet = getLabelStyle(self)
+
         # Create info icon
         self.__infoIcon = QLabel()
         self.__infoIcon.setPixmap(getPixmap('cfunknown.png'))
@@ -203,10 +206,12 @@ class ControlFlowNavigationBar(QFrame):
 
         # Create the path label
         self.__pathLabel = QLabel(self)
+        self.__pathLabel.setStyleSheet(labelStylesheet)
+        self.__pathLabel.setAutoFillBackground(True)
         self.__pathLabel.setTextFormat(Qt.PlainText)
         self.__pathLabel.setAlignment(Qt.AlignLeft)
         self.__pathLabel.setWordWrap(False)
-        self.__pathLabel.setFrameStyle(QFrame.StyledPanel)
+#        self.__pathLabel.setFrameStyle(QFrame.StyledPanel)
         self.__pathLabel.setTextInteractionFlags(Qt.NoTextInteraction)
         self.__pathLabel.setSizePolicy(QSizePolicy.Expanding,
                                        QSizePolicy.Fixed)
@@ -219,10 +224,12 @@ class ControlFlowNavigationBar(QFrame):
 
         # Create the selection label
         self.__selectionLabel = QLabel(self)
+        self.__selectionLabel.setStyleSheet(labelStylesheet)
+        self.__selectionLabel.setAutoFillBackground(True)
         self.__selectionLabel.setTextFormat(Qt.PlainText)
         self.__selectionLabel.setAlignment(Qt.AlignCenter)
         self.__selectionLabel.setWordWrap(False)
-        self.__selectionLabel.setFrameStyle(QFrame.StyledPanel)
+ #       self.__selectionLabel.setFrameStyle(QFrame.StyledPanel)
         self.__selectionLabel.setTextInteractionFlags(Qt.NoTextInteraction)
         self.__selectionLabel.setSizePolicy(QSizePolicy.Fixed,
                                             QSizePolicy.Fixed)
@@ -475,6 +482,7 @@ class FlowUIWidget(QWidget):
         if self.__cf:
             self.cflowSettings.onFlowZoomChanged()
             self.redrawScene()
+            self.updateNavigationToolbar('')
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when a buffer content type has changed"""

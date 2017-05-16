@@ -22,9 +22,11 @@
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.qt import (Qt, QSize, QEvent, pyqtSignal, QWidget, QToolBar,
                    QHBoxLayout, QAction, QLabel, QFrame, QPalette, QVBoxLayout,
-                   QTextEdit, QSizePolicy, QApplication, QFont)
+                   QTextEdit, QSizePolicy, QApplication)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
+from utils.misc import extendInstance
+from utils.colorfont import getZoomedMonoFont
 from utils.settings import Settings
 
 
@@ -43,11 +45,14 @@ class DisasmWidget(QTextEdit):
             modifiers = event.modifiers()
             if modifiers == Qt.ControlModifier:
                 if key == Qt.Key_Minus:
-                    return self.parent().onZoomOut()
+                    Settings().onTextZoomOut()
+                    return True
                 if key == Qt.Key_Equal:
-                    return self.parent().onZoomIn()
+                    Settings().onTextZoomIn()
+                    return True
                 if key == Qt.Key_0:
-                    return self.parent().onZoomReset()
+                    Settings().onTextZoomReset()
+                    return True
 
         return QTextEdit.eventFilter(self, obj, event)
 
@@ -57,27 +62,32 @@ class DisasmWidget(QTextEdit):
             angleDelta = event.angleDelta()
             if not angleDelta.isNull():
                 if angleDelta.y() > 0:
-                    self.parent().onZoomIn()
+                    Settings().onTextZoomIn()
                 else:
-                    self.parent().onZoomOut()
+                    Settings().onTextZoomOut()
             event.accept()
         else:
             QTextEdit.wheelEvent(self, event)
 
+    def onTextZoomChanged(self):
+        """Triggered when a text zoom is changed"""
+        self.setFont(getZoomedMonoFont())
 
-class DisassemblerResultsWidget(QWidget, MainWindowTabWidgetBase):
+
+class DisassemblerResultsWidget(QWidget):
 
     """Disassembling results widget"""
 
     sigEscapePressed = pyqtSignal()
-    textEditorZoom = pyqtSignal(int)
 
     def __init__(self, scriptName, name, code, reportTime, parent=None):
-
-        MainWindowTabWidgetBase.__init__(self)
         QWidget.__init__(self, parent)
 
+        extendInstance(self, MainWindowTabWidgetBase)
+        MainWindowTabWidgetBase.__init__(self)
+
         self.__createLayout(scriptName, name, code, reportTime)
+        self.onTextZoomChanged()
 
     def __createLayout(self, scriptName, name, code, reportTime):
         """Creates the toolbar and layout"""
@@ -143,7 +153,6 @@ class DisassemblerResultsWidget(QWidget, MainWindowTabWidgetBase):
         self.__text.setAcceptRichText(False)
         self.__text.setLineWrapMode(QTextEdit.NoWrap)
         self.__text.setFont(GlobalData().skin.nolexerFont)
-        self.zoomTo(Settings().zoom)
         self.__text.setReadOnly(True)
         self.__text.setPlainText(code)
 
@@ -171,27 +180,6 @@ class DisassemblerResultsWidget(QWidget, MainWindowTabWidgetBase):
         """Triggered on the 'print preview' button"""
         pass
 
-    def onZoomReset(self):
-        """Triggered when the zoom reset button is pressed"""
-        zoom = Settings().zoom
-        if zoom != 0:
-            self.textEditorZoom.emit(0)
-        return True
-
-    def onZoomIn(self):
-        """Triggered when the zoom in button is pressed"""
-        zoom = Settings().zoom
-        if zoom < 20:
-            self.textEditorZoom.emit(zoom + 1)
-        return True
-
-    def onZoomOut(self):
-        """Triggered when the zoom out button is pressed"""
-        zoom = Settings().zoom
-        if zoom > -10:
-            self.textEditorZoom.emit(zoom - 1)
-        return True
-
     def keyPressEvent(self, event):
         """Handles the key press events"""
         if event.key() == Qt.Key_Escape:
@@ -200,12 +188,9 @@ class DisassemblerResultsWidget(QWidget, MainWindowTabWidgetBase):
         else:
             QWidget.keyPressEvent(self, event)
 
-    def zoomTo(self, zoomFactor):
-        """Scales the font in accordance to the given zoom factor"""
-        font = QFont(GlobalData().skin.nolexerFont)
-        newPointSize = font.pointSize() + zoomFactor
-        font.setPointSize(newPointSize)
-        self.__text.setFont(font)
+    def onTextZoomChanged(self):
+        """Triggered when a text zoom is changed"""
+        self.__text.onTextZoomChanged()
 
     # Mandatory interface part is below
 
@@ -244,3 +229,4 @@ class DisassemblerResultsWidget(QWidget, MainWindowTabWidgetBase):
         """Sets the display name - not applicable"""
         raise Exception("Setting a file name for disassembler "
                         "results is not applicable")
+

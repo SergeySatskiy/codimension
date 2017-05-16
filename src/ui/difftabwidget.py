@@ -29,8 +29,6 @@ class DiffTabWidget(HTMLTabWidget):
 
     """The widget which displays a RO diff page"""
 
-    textEditorZoom = pyqtSignal(int)
-
     def __init__(self, parent=None):
         HTMLTabWidget.__init__(self, parent)
         self.installEventFilter(self)
@@ -42,18 +40,24 @@ class DiffTabWidget(HTMLTabWidget):
             modifiers = event.modifiers()
             if modifiers == Qt.ControlModifier:
                 if key == Qt.Key_Minus:
-                    return self.onZoomOut()
+                    Settings().onZoomOut()
+                    return True
                 if key == Qt.Key_Equal:
-                    return self.onZoomIn()
+                    Settings().onZoomIn()
+                    return True
                 if key == Qt.Key_0:
-                    return self.onZoomReset()
+                    Settings().onZoomReset()
+                    return True
             if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
                 if key == Qt.Key_Minus:
-                    return self.onZoomOut()
+                    Settings().onZoomOut()
+                    return True
                 if key == Qt.Key_Plus:
-                    return self.onZoomIn()
+                    Settings().onZoomIn()
+                    return True
                 if key == Qt.Key_0:
-                    return self.onZoomReset()
+                    Settings().onZoomReset()
+                    return True
         return HTMLTabWidget.eventFilter(self, obj, event)
 
     def wheelEvent(self, event):
@@ -62,9 +66,9 @@ class DiffTabWidget(HTMLTabWidget):
             angleDelta = event.angleDelta()
             if not angleDelta.isNull():
                 if angleDelta.y() > 0:
-                    self.onZoomIn()
+                    Settings().onZoomIn()
                 else:
-                    self.onZoomOut()
+                    Settings().onZoomOut()
             event.accept()
         else:
             HTMLTabWidget.wheelEvent(self, event)
@@ -72,7 +76,7 @@ class DiffTabWidget(HTMLTabWidget):
     def setHTML(self, content):
         """Sets the content from the given string"""
         HTMLTabWidget.setHTML(self, content)
-        self.zoomTo(Settings().zoom)
+        self.onTextZoomChanged()
 
     def loadFormFile(self, path):
         """Loads the content from the given file"""
@@ -86,21 +90,3 @@ class DiffTabWidget(HTMLTabWidget):
     def getLanguage(self):
         """Tells the content language"""
         return "diff"
-
-    def onZoomReset(self):
-        """Triggered when the zoom reset button is pressed"""
-        if Settings().zoom != 0:
-            self.textEditorZoom.emit(0)
-        return True
-
-    def onZoomIn(self):
-        """Triggered when the zoom in button is pressed"""
-        if Settings().zoom < 20:
-            self.textEditorZoom.emit(Settings().zoom + 1)
-        return True
-
-    def onZoomOut(self):
-        """Triggered when the zoom out button is pressed"""
-        if Settings().zoom > -10:
-            self.textEditorZoom.emit(Settings().zoom - 1)
-        return True

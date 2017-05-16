@@ -53,7 +53,7 @@ class TextEditorTabWidget(QWidget):
 
     """Plain text editor tab widget"""
 
-    reloadRequest = pyqtSignal()
+    sigReloadRequest = pyqtSignal()
     reloadAllNonModifiedRequest = pyqtSignal()
     sigTabRunChanged = pyqtSignal(bool)
 
@@ -73,7 +73,7 @@ class TextEditorTabWidget(QWidget):
         self.__editor.redoAvailable.connect(self.__redoAvailable)
         self.__editor.undoAvailable.connect(self.__undoAvailable)
         self.__editor.modificationChanged.connect(self.modificationChanged)
-        self.__editor.cflowSyncRequested.connect(self.cflowSyncRequested)
+        self.__editor.sigCFlowSyncRequested.connect(self.cflowSyncRequested)
 
         self.__diskModTime = None
         self.__diskSize = None
@@ -244,7 +244,7 @@ class TextEditorTabWidget(QWidget):
         self.__importsBar.hide()
 
         self.__outsideChangesBar = OutsideChangeWidget(self.__editor)
-        self.__outsideChangesBar.reloadRequest.connect(self.__onReload)
+        self.__outsideChangesBar.sigReloadRequest.connect(self.__onReload)
         self.__outsideChangesBar.reloadAllNonModifiedRequest.connect(
             self.reloadAllNonModified)
         self.__outsideChangesBar.hide()
@@ -534,7 +534,7 @@ class TextEditorTabWidget(QWidget):
 
     def __onReload(self):
         """Triggered when a request to reload the file is received"""
-        self.reloadRequest.emit()
+        self.sigReloadRequest.emit()
 
     def reload(self):
         """Called (from the editors manager) to reload the file"""

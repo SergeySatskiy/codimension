@@ -32,7 +32,6 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     """IO console tab widget"""
 
-    textEditorZoom = pyqtSignal(int)
     settingUpdated = pyqtSignal()
 
     def __init__(self, threadID, parent=None):
@@ -172,24 +171,6 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
         hLayout.addWidget(self.__viewer)
 
         self.setLayout(hLayout)
-
-    def onZoomReset(self):
-        """Triggered when the zoom reset button is pressed"""
-        if self.__viewer.zoom != 0:
-            self.textEditorZoom.emit(0)
-        return True
-
-    def onZoomIn(self):
-        """Triggered when the zoom in button is pressed"""
-        if self.__viewer.zoom < 20:
-            self.textEditorZoom.emit(self.__viewer.zoom + 1)
-        return True
-
-    def onZoomOut(self):
-        """Triggered when the zoom out button is pressed"""
-        if self.__viewer.zoom > -10:
-            self.textEditorZoom.emit(self.__viewer.zoom - 1)
-        return True
 
     def __onPrint(self):
         """Triggered when the print button is pressed"""

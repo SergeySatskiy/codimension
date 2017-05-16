@@ -19,7 +19,7 @@
 
 """QT color and font general utils"""
 
-from ui.qt import QColor, QFont, QFontComboBox
+from ui.qt import QColor, QFont, QFontComboBox, QLabel
 from .globals import GlobalData
 from .settings import Settings
 
@@ -181,3 +181,28 @@ def getZoomedMarginFont():
     font = QFont(GlobalData().skin['lineNumFont'])
     font.setPointSize(font.pointSize() + Settings()['zoom'])
     return font
+
+
+def getLabelStyle(owner):
+    """Creates a label stylesheet for the given owner widget"""
+    modelLabel = QLabel(owner)
+    bgColor = modelLabel.palette().color(modelLabel.backgroundRole())
+    del modelLabel
+
+    red = bgColor.red()
+    green = bgColor.green()
+    blue = bgColor.blue()
+    delta = 60
+
+    borderColor = QColor(max(red - delta, 0),
+                         max(green - delta, 0),
+                         max(blue - delta, 0))
+    bgColor = QColor(min(red + delta, 255),
+                     min(green + delta, 255),
+                     min(blue + delta, 255))
+
+    props = ['border-radius: 3px',
+             'padding: 2px',
+             'background-color: ' + colorAsString(bgColor, True),
+             'border: 1px solid ' + colorAsString(borderColor, True)]
+    return '; '.join(props)
