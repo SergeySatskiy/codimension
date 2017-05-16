@@ -32,7 +32,6 @@ from utils.settings import Settings
 from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
                                getImportedNameDefinitionLine, resolveImports)
 from ui.importlist import ImportListWidget
-from ui.linecounter import LineCounterDialog
 from autocomplete.bufferutils import isImportLine
 from .texteditor import TextEditor
 
@@ -267,10 +266,6 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        self.lineCounterButton = QAction(
-            getIcon('linecounter.png'), 'Line counter', self)
-        self.lineCounterButton.triggered.connect(self.onLineCounter)
-
         # The toolbar
         toolbar = QToolBar(self)
         toolbar.setOrientation(Qt.Vertical)
@@ -283,7 +278,6 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
         toolbar.addAction(printPreviewButton)
         toolbar.addAction(printButton)
         toolbar.addWidget(spacer)
-        toolbar.addAction(self.lineCounterButton)
 
         self.__importsBar = ImportListWidget(self.__viewer)
         self.__importsBar.hide()
@@ -298,7 +292,7 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def updateStatus(self):
         """Updates the toolbar buttons status"""
-        self.lineCounterButton.setEnabled(isPythonMime(self.mime))
+        pass
 
     def __onPrint(self):
         """Triggered when the print button is pressed"""
@@ -307,10 +301,6 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
     def __onPrintPreview(self):
         """triggered when the print preview button is pressed"""
         pass
-
-    def onLineCounter(self):
-        """Triggered when line counter button is clicked"""
-        LineCounterDialog(None, self.__viewer).exec_()
 
     def setFocus(self):
         """Overridden setFocus"""

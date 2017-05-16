@@ -27,7 +27,6 @@ from ui.qt import (Qt, QFileInfo, QSize, pyqtSignal, QToolBar, QHBoxLayout,
                    QVBoxLayout, QSplitter)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.runparams import RunDialog
-from ui.linecounter import LineCounterDialog
 from ui.importlist import ImportListWidget
 from ui.outsidechanges import OutsideChangeWidget
 from utils.pixmapcache import getIcon
@@ -206,10 +205,6 @@ class TextEditorTabWidget(QWidget):
         self.__redoButton.triggered.connect(self.__editor.onRedo)
         self.__redoButton.setEnabled(False)
 
-        self.lineCounterButton = QAction(
-            getIcon('linecounter.png'), 'Line counter', self)
-        self.lineCounterButton.triggered.connect(self.onLineCounter)
-
         self.removeTrailingSpacesButton = QAction(
             getIcon('trailingws.png'), 'Remove trailing spaces', self)
         self.removeTrailingSpacesButton.triggered.connect(
@@ -236,7 +231,6 @@ class TextEditorTabWidget(QWidget):
         toolbar.addAction(self.__undoButton)
         toolbar.addAction(self.__redoButton)
         toolbar.addWidget(spacer)
-        toolbar.addAction(self.lineCounterButton)
         toolbar.addAction(self.removeTrailingSpacesButton)
         toolbar.addAction(self.expandTabsButton)
 
@@ -299,7 +293,6 @@ class TextEditorTabWidget(QWidget):
         self.__editor.diagramsMenu.setEnabled(
             self.importsDiagramButton.isEnabled())
         self.__editor.toolsMenu.setEnabled(self.runScriptButton.isEnabled())
-        self.lineCounterButton.setEnabled(isPythonFile)
 
     def onNavigationBar(self):
         """Triggered when navigation bar focus is requested"""
@@ -370,10 +363,6 @@ class TextEditorTabWidget(QWidget):
             self.__editor.cursorPosition = origLine, origPos + 1
             self.__editor.deleteBack()
             self.__editor.cursorPosition = origLine, origPos
-
-    def onLineCounter(self):
-        """Triggered when line counter button is clicked"""
-        LineCounterDialog(None, self.__editor).exec_()
 
     def onRemoveTrailingWS(self):
         """Triggers when the trailing spaces should be wiped out"""

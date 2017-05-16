@@ -340,13 +340,6 @@ class MainWindowMenuMixin:
         """Build the tools menu"""
         toolsMenu = QMenu("T&ools", self)
         toolsMenu.aboutToShow.connect(self.__toolsAboutToShow)
-        self._prjLineCounterAct = toolsMenu.addAction(
-            getIcon('linecounter.png'), "&Line counter for project",
-            self.linecounterButtonClicked)
-        self.__tabLineCounterAct = toolsMenu.addAction(
-            getIcon('linecounter.png'), "L&ine counter for tab",
-            self._onTabLineCounter)
-        toolsMenu.addSeparator()
         self.__unusedClassesAct = toolsMenu.addAction(
             getIcon('notused.png'), 'Unused class analysis',
             self.onNotUsedClasses)
@@ -830,8 +823,6 @@ class MainWindowMenuMixin:
 
     def __toolsAboutToShow(self):
         """Triggered when tools menu is about to show"""
-        self.__tabLineCounterAct.setEnabled(self._isPythonBuffer())
-
         if GlobalData().project.isLoaded():
             self.__unusedClassesAct.setEnabled(
                 self.classesViewer.getItemCount() > 0)

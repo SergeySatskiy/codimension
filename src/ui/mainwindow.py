@@ -71,7 +71,6 @@ from .projectviewer import ProjectViewer
 from .outline import FileOutlineViewer
 from .pyflakesviewer import PyflakesViewer
 from .editorsmanager import EditorsManager
-from .linecounter import LineCounterDialog
 from .projectproperties import ProjectPropertiesDialog
 from .findreplacewidget import FindReplaceWidget
 from .gotolinewidget import GotoLineWidget
@@ -495,9 +494,6 @@ class CodimensionMainWindow(QMainWindow):
         neverUsedButton.setEnabled(False)
         neverUsedButton.setVisible(False)
 
-        self.linecounterButton = QAction(getIcon('linecounter.png'),
-                                         'Project line counter', self)
-        self.linecounterButton.triggered.connect(self.linecounterButtonClicked)
         self.__findInFilesButton = QAction(
             getIcon('findindir.png'), 'Find in files (Ctrl+Shift+F)', self)
         self.__findInFilesButton.triggered.connect(self.findInFilesClicked)
@@ -585,7 +581,6 @@ class CodimensionMainWindow(QMainWindow):
         self.__toolbar.addAction(applicationDiagramButton)
         self.__toolbar.addSeparator()
         self.__toolbar.addAction(neverUsedButton)
-        self.__toolbar.addAction(self.linecounterButton)
         self.__toolbar.addSeparator()
         self.__toolbar.addAction(self.__findInFilesButton)
         self.__toolbar.addAction(self.__findNameButton)
@@ -672,7 +667,6 @@ class CodimensionMainWindow(QMainWindow):
             self._prjTemplateMenu.setEnabled(projectLoaded)
             self._findNameMenuAct.setEnabled(projectLoaded)
             self._fileProjectFileAct.setEnabled(projectLoaded)
-            self._prjLineCounterAct.setEnabled(projectLoaded)
             self._prjImportDgmAct.setEnabled(projectLoaded)
             self._prjImportsDgmDlgAct.setEnabled(projectLoaded)
 
@@ -701,7 +695,6 @@ class CodimensionMainWindow(QMainWindow):
     def updateToolbarStatus(self):
         " Enables/disables the toolbar buttons "
         projectLoaded = GlobalData().project.isLoaded()
-        self.linecounterButton.setEnabled(projectLoaded)
         self.importsDiagramButton.setEnabled(projectLoaded and
                                              GlobalData().graphvizAvailable)
         self.__findNameButton.setEnabled(projectLoaded)
@@ -758,11 +751,6 @@ class CodimensionMainWindow(QMainWindow):
         self._prjDebugDlgAct.setEnabled(True)
         self.profileProjectButton.setEnabled(True)
         self.profileProjectButton.setToolTip("Profile project")
-
-    @staticmethod
-    def linecounterButtonClicked():
-        """Triggered when the line counter button is clicked"""
-        LineCounterDialog().exec_()
 
     def findInFilesClicked(self):
         """Triggered when the find in files button is clicked"""
@@ -1919,10 +1907,6 @@ class CodimensionMainWindow(QMainWindow):
             self._bottomSideBar.show()
             self._bottomSideBar.setCurrentTab(name)
             self._bottomSideBar.raise_()
-
-    def _onTabLineCounter(self):
-        """Triggered when line counter for the current buffer is requested"""
-        self.em.currentWidget().onLineCounter()
 
     def _onTabJumpToDef(self):
         """Triggered when jump to defenition is requested"""
