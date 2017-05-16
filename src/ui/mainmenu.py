@@ -24,7 +24,8 @@ import os.path
 from utils.pixmapcache import getIcon
 from utils.config import CONFIG_DIR
 from utils.skin import getThemesList
-from utils.colorfont import getMonospaceFontList
+from utils.colorfont import (getMonospaceFontList, getScalableFontList,
+                             getProportionalFontList)
 from utils.globals import GlobalData
 from utils.misc import getIDETemplateFile, getProjectTemplateFile
 from .qt import QDir, QApplication, QMenu, QStyleFactory, QActionGroup
@@ -580,7 +581,7 @@ class MainWindowMenuMixin:
         textFontFamilyMenu = optionsMenu.addMenu("Text mono font family")
         self.__textFontFamilyGroup = QActionGroup(self)
         self.__textFonts = []
-        for fontFamily in getMonospaceFontList():
+        for fontFamily in sorted(getMonospaceFontList()):
             fontFamilyAct = textFontFamilyMenu.addAction(fontFamily)
             fontFamilyAct.setData(fontFamily)
             fontFamilyAct.setCheckable(True)
@@ -588,6 +589,20 @@ class MainWindowMenuMixin:
             self.__textFonts.append((fontFamily, fontFamilyAct))
         textFontFamilyMenu.triggered.connect(self._onMonoFont)
         textFontFamilyMenu.aboutToShow.connect(self.__fontAboutToShow)
+
+        marginFontFamilyMenu = optionsMenu.addMenu("Editor margin font family")
+        self.__marginFontFamilyGroup = QActionGroup(self)
+        self.__marginFonts = []
+        fonts = set(getMonospaceFontList() + getScalableFontList() +
+                    getProportionalFontList())
+        for fontFamily in sorted(list(fonts)):
+            fontFamilyAct = marginFontFamilyMenu.addAction(fontFamily)
+            fontFamilyAct.setData(fontFamily)
+            fontFamilyAct.setCheckable(True)
+            fontFamilyAct.setActionGroup(self.__marginFontFamilyGroup)
+            self.__marginFonts.append((fontFamily, fontFamilyAct))
+        marginFontFamilyMenu.triggered.connect(self._onMarginFont)
+        marginFontFamilyMenu.aboutToShow.connect(self.__marginFontAboutToShow)
 
         flowFontFamilyMenu = optionsMenu.addMenu("Flow mono font family")
         self.__flowFontFamilyGroup = QActionGroup(self)
@@ -600,6 +615,20 @@ class MainWindowMenuMixin:
             self.__flowFonts.append((fontFamily, fontFamilyAct))
         flowFontFamilyMenu.triggered.connect(self._onFlowMonoFont)
         flowFontFamilyMenu.aboutToShow.connect(self.__flowFontAboutToShow)
+
+        badgeFontFamilyMenu = optionsMenu.addMenu("Flow badge font family")
+        self.__badgeFontFamilyGroup = QActionGroup(self)
+        self.__badgeFonts = []
+        fonts = set(getMonospaceFontList() + getScalableFontList() +
+                    getProportionalFontList())
+        for fontFamily in sorted(list(fonts)):
+            fontFamilyAct = badgeFontFamilyMenu.addAction(fontFamily)
+            fontFamilyAct.setData(fontFamily)
+            fontFamilyAct.setCheckable(True)
+            fontFamilyAct.setActionGroup(self.__badgeFontFamilyGroup)
+            self.__badgeFonts.append((fontFamily, fontFamilyAct))
+        badgeFontFamilyMenu.triggered.connect(self._onBadgeFont)
+        badgeFontFamilyMenu.aboutToShow.connect(self.__badgeFontAboutToShow)
 
         return optionsMenu
 
@@ -931,6 +960,18 @@ class MainWindowMenuMixin:
         """Flow font menu is about to show"""
         currentFont = GlobalData().skin['cfMonoFont'].family().lower()
         for item in self.__flowFonts:
+            item[1].setChecked(item[0].lower() == currentFont)
+
+    def __marginFontAboutToShow(self):
+        """Margin font menu is about to show"""
+        currentFont = GlobalData().skin['lineNumFont'].family().lower()
+        for item in self.__marginFonts:
+            item[1].setChecked(item[0].lower() == currentFont)
+
+    def __badgeFontAboutToShow(self):
+        """Flow badge font menu s about to show"""
+        currentFont = GlobalData().skin['badgeFont'].family().lower()
+        for item in self.__badgeFonts:
             item[1].setChecked(item[0].lower() == currentFont)
 
     def __themeAboutToShow(self):

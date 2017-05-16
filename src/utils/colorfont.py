@@ -116,22 +116,43 @@ def fontAsString(font):
     return font.toString()
 
 
-def getMonospaceFontList():
-    """Provides a list of strings with the system installed monospace fonts"""
+excludeFontList = ['webdings', 'cursor', 'mathematical', 'dingbats', 'hershey']
+
+
+def isExcludeFont(family):
+    """True if the font needs to be excluded"""
+    lowerFamily = family.lower()
+    for exclusion in excludeFontList:
+        if exclusion in lowerFamily:
+            return True
+    return False
+
+
+def getFontList(fontType):
+    """Provides a list of certain type fonts"""
     result = []
     combo = QFontComboBox()
-    combo.setFontFilters(QFontComboBox.MonospacedFonts)
+    combo.setFontFilters(fontType)
     for index in range(combo.count()):
-        face = str(combo.itemText(index))
-        lowerFace = face.lower()
-        if 'webdings' in lowerFace:
-            continue
-        if 'cursor' in lowerFace:
-            continue
-        if 'mathematical' in lowerFace:
-            continue
-        result.append(face)
+        family = str(combo.itemText(index))
+        if not isExcludeFont(family):
+            result.append(family)
     return result
+
+
+def getMonospaceFontList():
+    """Provides a list of strings with the system installed monospace fonts"""
+    return getFontList(QFontComboBox.MonospacedFonts)
+
+
+def getScalableFontList():
+    """Provides a list of scalable fonts"""
+    return getFontList(QFontComboBox.ScalableFonts)
+
+
+def getProportionalFontList():
+    """Provides a list of proportional fonts"""
+    return getFontList(QFontComboBox.ProportionalFonts)
 
 
 def toJSON(pythonObj):

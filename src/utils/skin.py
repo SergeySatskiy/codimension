@@ -404,8 +404,19 @@ class Skin:
         self.__values['monoFont'].setFamily(fontFamily)
         self.flush()
 
+    def setMarginFontFamily(self, fontFamily):
+        """Sets the new mono font family"""
+        self.__values['lineNumFont'].setFamily(fontFamily)
+        self.flush()
+
     def setFlowMonoFontFamily(self, fontFamily):
+        """Sets the new flow font family"""
         self.__cfValues['cfMonoFont'].setFamily(fontFamily)
+        self.flushCFlow()
+
+    def setFlowBadgeFontFamily(self, fontFamily):
+        """Sets the new flow badge font"""
+        self.__cfValues['badgeFont'].setFamily(fontFamily)
         self.flushCFlow()
 
 

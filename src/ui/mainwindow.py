@@ -1372,6 +1372,20 @@ class CodimensionMainWindow(QMainWindow):
             GlobalData().skin.setFlowMonoFontFamily(newFontFamily)
             self.em.onFlowZoomChanged()
 
+    def _onMarginFont(self, fontFamily):
+        """Sets the new margin font"""
+        newFontFamily = fontFamily.data()
+        if newFontFamily != GlobalData().skin['lineNumFont'].family():
+            GlobalData().skin.setMarginFontFamily(newFontFamily)
+            self.em.onTextZoomChanged()
+
+    def _onBadgeFont(self, fontFamily):
+        """Sets the new badge font"""
+        newFontFamily = fontFamily.data()
+        if newFontFamily != GlobalData().skin['badgeFont'].family():
+            GlobalData().skin.setFlowBadgeFontFamily(newFontFamily)
+            self.em.onFlowZoomChanged()
+
     def checkOutsideFileChanges(self):
         """Checks if there are changes in the currently opened files"""
         self.em.checkOutsideFileChanges()
