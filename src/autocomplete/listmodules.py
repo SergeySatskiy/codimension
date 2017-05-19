@@ -166,6 +166,7 @@ def __getSysPathExceptCurrent():
 
     return filter(__filterCallback, path)
 
+
 if __name__ == "__main__":
     sysModules = getSysModules()
     names = list(sysModules.keys())

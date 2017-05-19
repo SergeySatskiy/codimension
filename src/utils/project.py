@@ -276,7 +276,7 @@ class CodimensionProject(QObject,
     def getImportDirsAsAbsolutePaths(self):
         """Provides a list of import dirs as absolute paths"""
         result = []
-        for path in self.importDirs:
+        for path in self.props['importdirs']:
             if isabs(path):
                 result.append(path)
             else:

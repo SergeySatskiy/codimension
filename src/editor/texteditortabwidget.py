@@ -475,7 +475,7 @@ class TextEditorTabWidget(QWidget):
         fileImports = getImportsList(self.__editor.text)
         if not fileImports:
             GlobalData().mainWindow.showStatusBarMessage(
-                "There are no imports.")
+                "There are no imports")
             return True
         if len(fileImports) == 1:
             path = resolveImport(basePath, fileImports[0])
@@ -493,13 +493,12 @@ class TextEditorTabWidget(QWidget):
         """Works with a list of imports"""
         # It has already been checked that the file is a Python one
         resolvedList = resolveImports(basePath, imports)
-        if not resolvedList:
+        if resolvedList:
+            # Display the import selection widget
+            self.__importsBar.showResolvedList(resolvedList)
+        else:
             GlobalData().mainWindow.showStatusBarMessage(
-                "No imports are resolved.")
-            return
-
-        # Display the import selection widget
-        self.__importsBar.showResolvedList(resolvedList)
+                "Could not resolve any imports")
 
     def resizeEvent(self, event):
         """Resizes the import selection dialogue if necessary"""

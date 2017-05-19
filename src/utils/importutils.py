@@ -112,6 +112,17 @@ def resolveImports(basePath, imports):
 
     result = []
     for item in imports:
+        if item.startswith('.'):
+            # This is a relative import
+            current = item[1:]
+            path = basePath
+            while current.startswith('.'):
+                current = current[1:]
+                path = os.path.dirname(path)
+            if os.path.exists(path + os.path.sep + current + '.py'):
+                result.append([item, path + os.path.sep + current + '.py'])
+            continue
+
         try:
             path = specificModules[item]
             if path is not None:

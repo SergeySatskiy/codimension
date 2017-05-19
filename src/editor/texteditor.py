@@ -23,7 +23,7 @@
 import os.path
 import logging
 from ui.qt import (Qt, QTimer, pyqtSignal, QRect, QEvent, QModelIndex,
-                   QCursor, QApplication, QTextOption)
+                   QCursor, QApplication, QTextOption, QAction)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.completer import CodeCompleter
 from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
@@ -125,17 +125,18 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.installEventFilter(self)
 
     def dedentLine(self):
-        pass
+        """Dedent the current line or selection"""
+        self.decreaseIndentAction.activate(QAction.Trigger)
 
     def __initHotKeys(self):
         """Initializes a map for the hot keys event filter"""
+        self.autoIndentLineAction.setShortcut('Ctrl+Shift+I')
         self.__hotKeys = {
             CTRL_SHIFT: {Qt.Key_F1: self.onCallHelp,
                          Qt.Key_T: self.onJumpToTop,
                          Qt.Key_M: self.onJumpToMiddle,
                          Qt.Key_B: self.onJumpToBottom},
             SHIFT: {Qt.Key_Delete: self.onShiftDel,
-                    Qt.Key_Tab: self.dedentLine,
                     Qt.Key_Backtab: self.dedentLine,
                     Qt.Key_End: self.onShiftEnd,
                     Qt.Key_Home: self.onShiftHome},
@@ -167,8 +168,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                           Qt.Key_F12: self.makeLineFirst}}
 
         # Not all the derived classes need certain tool functionality
-        if hasattr(self._parent, "onOpenImport" ):
-            self.__hotKeys[CTRL][Qt.Key_I] = self._parent.onOpenImport
+        if hasattr(self._parent, "getType" ):
+            widgetType = self._parent.getType()
+            if widgetType in [MainWindowTabWidgetBase.PlainTextEditor]:
+                if hasattr(self._parent, "onOpenImport" ):
+                    self.__hotKeys[CTRL][Qt.Key_I] = self._parent.onOpenImport
         if hasattr(self._parent, "onNavigationBar"):
             self.__hotKeys[NO_MODIFIER][Qt.Key_F2] = \
                 self._parent.onNavigationBar
