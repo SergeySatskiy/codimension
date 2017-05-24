@@ -35,7 +35,7 @@ from debugger.client.protocol_cdm_dbg import (EOT, RequestContinue,
                                               ResponseStderr, RequestExit,
                                               ResponseProcID)
 from .qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
-                 QTcpServer, QHostAddress, QAbstractSocket)
+                 QTcpServer, QHostAddress, QAbstractSocket, pyqtSignal)
 from .runparams import RunDialog
 
 
@@ -58,6 +58,8 @@ def getNextID():
 class RemoteProcessWrapper(QObject):
 
     """Wrapper to control the remote process"""
+
+    sigFinished = pyqtSignal(int, int)
 
     PROTOCOL_CONTROL = 0
     PROTOCOL_STDOUT = 1
@@ -120,7 +122,7 @@ class RemoteProcessWrapper(QObject):
         """Kills the process"""
         self.__disconnectSocket()
         self.__kill()
-        self.Finished.emit(self.__procID, KILLED)
+        self.sigFinished.emit(self.__procID, KILLED)
 
     def __connectSocket(self):
         """Connects the socket slots"""
@@ -216,7 +218,7 @@ class RemoteProcessWrapper(QObject):
     def __disconnected(self):
         """Triggered when the client closed the connection"""
         self.__kill()
-        self.Finished.emit(self.__procID, DISCONNECTED)
+        self.sigFinished.emit(self.__procID, DISCONNECTED)
 
     def __sendStart(self):
         """Sends the start command to the runnee"""
@@ -321,7 +323,7 @@ class RemoteProcessWrapper(QObject):
                 # Must never happened
                 retCode = -1
             self.__sendExit()
-            self.Finished.emit(self.__procID, retCode)
+            self.sigFinished.emit(self.__procID, retCode)
             QApplication.processEvents()
             return self.__buffer != ""
 
@@ -442,7 +444,7 @@ class RunManager(QObject):
         else:
             remoteProc.widget = None
 
-        remoteProc.procWrapper.Finished.connect(self.__onProcessFinished)
+        remoteProc.procWrapper.sigFinished.connect(self.__onProcessFinished)
         self.__processes.append(remoteProc)
         if remoteProc.procWrapper.start() == False:
             # Failed to start - the fact is logged, just remove from the list

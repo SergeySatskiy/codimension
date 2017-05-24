@@ -144,10 +144,10 @@ class RunDialog(QDialog):
 
         # Restore the values
         self.runParams = copy.deepcopy(runParameters)
-        self.__argsEdit.setText(self.runParams.arguments)
+        self.__argsEdit.setText(self.runParams['arguments'])
 
         # Working dir
-        if self.runParams.useScriptLocation:
+        if self.runParams['useScriptLocation']:
             self.__scriptWDRButton.setChecked(True)
             self.__dirEdit.setEnabled(False)
             self.__dirSelectButton.setEnabled(False)
@@ -156,19 +156,19 @@ class RunDialog(QDialog):
             self.__dirEdit.setEnabled(True)
             self.__dirSelectButton.setEnabled(True)
 
-        self.__dirEdit.setText(self.runParams.specificDir)
+        self.__dirEdit.setText(self.runParams['specificDir'])
 
         # Environment
         self.__populateTable(self.__inhPlusEnvTable,
-                             self.runParams.additionToParentEnv)
+                             self.runParams['additionToParentEnv'])
         self.__populateTable(self.__specEnvTable,
-                             self.runParams.specificEnv)
+                             self.runParams['specificEnv'])
 
-        if self.runParams.envType == RunParameters.InheritParentEnv:
+        if self.runParams['envType'] == RunParameters.InheritParentEnv:
             self.__inheritParentRButton.setChecked(True)
             self.__setEnabledInheritedPlusEnv(False)
             self.__setEnabledSpecificEnv(False)
-        elif self.runParams.envType == RunParameters.InheritParentEnvPlus:
+        elif self.runParams['envType'] == RunParameters.InheritParentEnvPlus:
             self.__inheritParentPlusRButton.setChecked(True)
             self.__setEnabledSpecificEnv(False)
         else:
@@ -188,7 +188,7 @@ class RunDialog(QDialog):
             self.__xtermRButton.setChecked(True)
 
         # Close checkbox
-        self.__closeCheckBox.setChecked(self.runParams.closeTerminal)
+        self.__closeCheckBox.setChecked(self.runParams['closeTerminal'])
         if self.termType == TERM_REDIRECT:
             self.__closeCheckBox.setEnabled(False)
 
@@ -533,7 +533,7 @@ class RunDialog(QDialog):
         """The script working dir button is clicked"""
         self.__dirEdit.setEnabled(False)
         self.__dirSelectButton.setEnabled(False)
-        self.runParams.useScriptLocation = True
+        self.runParams['useScriptLocation'] = True
 
         self.__setRunButtonProps()
 
@@ -541,25 +541,25 @@ class RunDialog(QDialog):
         """The script specific working dir button is clicked"""
         self.__dirEdit.setEnabled(True)
         self.__dirSelectButton.setEnabled(True)
-        self.runParams.useScriptLocation = False
+        self.runParams['useScriptLocation'] = False
 
         self.__setRunButtonProps()
 
     def __argsChanged(self, value):
         """Triggered when cmd line args are changed"""
         value = str(value).strip()
-        self.runParams.arguments = value
+        self.runParams['arguments'] = value
         self.__setRunButtonProps()
 
     def __workingDirChanged(self, value):
         """Triggered when a working dir value is changed"""
         value = str(value)
-        self.runParams.specificDir = value
+        self.runParams['specificDir'] = value
         self.__setRunButtonProps()
 
     def __onCloseChanged(self, state):
         """Triggered when the close terminal check box changed"""
-        self.runParams.closeTerminal = state != 0
+        self.runParams['closeTerminal'] = state != 0
 
     def __onReportExceptionChanged(self, state):
         """Triggered when exception report check box changed"""
@@ -585,7 +585,7 @@ class RunDialog(QDialog):
     def __argumentsOK(self):
         """Returns True if the arguments are OK"""
         try:
-            parseCommandLineArguments(self.runParams.arguments)
+            parseCommandLineArguments(self.runParams['arguments'])
             return True
         except:
             return False
@@ -651,13 +651,13 @@ class RunDialog(QDialog):
         """Inerit parent env radio button clicked"""
         self.__setEnabledInheritedPlusEnv(False)
         self.__setEnabledSpecificEnv(False)
-        self.runParams.envType = RunParameters.InheritParentEnv
+        self.runParams['envType'] = RunParameters.InheritParentEnv
 
     def __inhPlusClicked(self):
         """Inherit parent and add radio button clicked"""
         self.__setEnabledInheritedPlusEnv(True)
         self.__setEnabledSpecificEnv(False)
-        self.runParams.envType = RunParameters.InheritParentEnvPlus
+        self.runParams['envType'] = RunParameters.InheritParentEnvPlus
 
         if self.__inhPlusEnvTable.selectedIndexes():
             self.__delInhButton.setEnabled(True)
@@ -670,7 +670,7 @@ class RunDialog(QDialog):
         """Specific env radio button clicked"""
         self.__setEnabledInheritedPlusEnv(False)
         self.__setEnabledSpecificEnv(True)
-        self.runParams.envType = RunParameters.SpecificEnvironment
+        self.runParams['envType'] = RunParameters.SpecificEnvironment
 
         if self.__specEnvTable.selectedIndexes():
             self.__delSpecButton.setEnabled(True)
@@ -700,7 +700,7 @@ class RunDialog(QDialog):
             name = str(dlg.name)
             value = str(dlg.value)
             self.__delAndInsert(self.__inhPlusEnvTable, name, value)
-            self.runParams.additionToParentEnv[name] = value
+            self.runParams['additionToParentEnv'][name] = value
             self.__delInhButton.setEnabled(True)
             self.__editInhButton.setEnabled(True)
 
@@ -711,7 +711,7 @@ class RunDialog(QDialog):
             name = str(dlg.name)
             value = str(dlg.value)
             self.__delAndInsert(self.__specEnvTable, name, value)
-            self.runParams.specificEnv[name] = value
+            self.runParams['specificEnv'][name] = value
             self.__delSpecButton.setEnabled(True)
             self.__editSpecButton.setEnabled(True)
 
@@ -727,7 +727,7 @@ class RunDialog(QDialog):
                 self.__inhPlusEnvTable.takeTopLevelItem(index)
                 break
 
-        del self.runParams.additionToParentEnv[str(name)]
+        del self.runParams['additionToParentEnv'][str(name)]
         if self.__inhPlusEnvTable.topLevelItemCount() == 0:
             self.__delInhButton.setEnabled(False)
             self.__editInhButton.setEnabled(False)
@@ -747,7 +747,7 @@ class RunDialog(QDialog):
                 self.__specEnvTable.takeTopLevelItem(index)
                 break
 
-        del self.runParams.specificEnv[str(name)]
+        del self.runParams['specificEnv'][str(name)]
         if self.__specEnvTable.topLevelItemCount() == 0:
             self.__delSpecButton.setEnabled(False)
             self.__editSpecButton.setEnabled(False)
@@ -766,7 +766,7 @@ class RunDialog(QDialog):
             name = str(dlg.name)
             value = str(dlg.value)
             self.__delAndInsert(self.__inhPlusEnvTable, name, value)
-            self.runParams.additionToParentEnv[name] = value
+            self.runParams['additionToParentEnv'][name] = value
 
     def __inhPlusItemActivated(self, item, column):
         """Triggered when a table item is activated"""
@@ -783,7 +783,7 @@ class RunDialog(QDialog):
             name = str(dlg.name)
             value = str(dlg.value)
             self.__delAndInsert(self.__specEnvTable, name, value)
-            self.runParams.specificEnv[name] = value
+            self.runParams['specificEnv'][name] = value
 
     def __specItemActivated(self, item, column):
         """Triggered when a table item is activated"""

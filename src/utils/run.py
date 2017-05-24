@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -458,18 +458,18 @@ def getCwdCmdEnv(cmdType, path, params, terminalType,
 
     # The arguments parsing is going to pass OK because it
     # was checked in the run parameters dialogue
-    arguments = parseCommandLineArguments(params.arguments)
+    arguments = parseCommandLineArguments(params['arguments'])
     if cmdType == CMD_TYPE_RUN:
         cmd = getTerminalCommandToRun(path, workingDir, arguments,
-                                      terminalType, params.closeTerminal,
+                                      terminalType, params['closeTerminal'],
                                       tcpServerPort, procID)
     elif cmdType == CMD_TYPE_PROFILE:
         cmd = getTerminalCommandToProfile(path, workingDir, arguments,
-                                          terminalType, params.closeTerminal,
+                                          terminalType, params['closeTerminal'],
                                           procFeedbackPort)
     elif cmdType == CMD_TYPE_DEBUG:
         cmd = getTerminalCommandToDebug(path, workingDir, arguments,
-                                        terminalType, params.closeTerminal,
+                                        terminalType, params['closeTerminal'],
                                         procFeedbackPort, tcpServerPort)
     else:
         raise Exception("Unknown command requested. "
@@ -484,22 +484,22 @@ def getCwdCmdEnv(cmdType, path, params, terminalType,
 
 def getWorkingDir(path, params):
     """Provides the working directory"""
-    if params.useScriptLocation:
+    if params['useScriptLocation']:
         return os.path.dirname(path)
-    return params.specificDir
+    return params['specificDir']
 
 
 def getNoArgsEnvironment(params):
     """Provides a copy of the environment"""
-    if params.envType == params.InheritParentEnv:
+    if params['envType'] == params.InheritParentEnv:
         # 'None' does not work here: popen stores last env somewhere and
         # uses it inappropriately
         return os.environ.copy()
-    if params.envType == params.InheritParentEnvPlus:
+    if params['envType'] == params.InheritParentEnvPlus:
         environment = os.environ.copy()
-        environment.update(params.additionToParentEnv)
+        environment.update(params['additionToParentEnv'])
         return environment
-    return params.specificEnv.copy()
+    return params['specificEnv'].copy()
 
 
 if __name__ == '__main__':
