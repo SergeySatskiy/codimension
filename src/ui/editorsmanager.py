@@ -641,7 +641,8 @@ class EditorsManager(QTabWidget):
             widget = self.currentWidget()
         else:
             widget = self.widget(index)
-        if not os.path.isabs(widget.getFileName()):
+        fileName = widget.getFileName()
+        if fileName is None or not os.path.isabs(fileName):
             return
         if widget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
             # Save the current cursor position
@@ -853,7 +854,7 @@ class EditorsManager(QTabWidget):
         widget = self.widget(widgetIndex)
         fileName = widget.getFileName()
 
-        if os.path.isabs(fileName):
+        if fileName and os.path.isabs(fileName):
             # It makes sense to test if a file disappeared or modified
             if not widget.doesFileExist():
                 self.setTabToolTip(widgetIndex,
@@ -1120,11 +1121,6 @@ class EditorsManager(QTabWidget):
             self.activateTab(0)
 
             editor = newWidget.getEditor()
-#            if lineNo > 0:
-#                # Jump to the asked line
-#                editor.gotoLine(lineNo, pos)
-#            else:
-#                self.restoreFilePosition(None)
 
             self._updateIconAndTooltip(self.currentIndex(), editor.mime)
             self.__updateControls()
@@ -1146,7 +1142,7 @@ class EditorsManager(QTabWidget):
                 editor.gotoLine(lineNo, pos)
             else:
                 self.restoreFilePosition(None)
-            
+
         except Exception as exc:
             logging.error(str(exc))
             return False

@@ -22,7 +22,7 @@
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.qt import (Qt, QSize, QEvent, pyqtSignal, QWidget, QToolBar,
                    QHBoxLayout, QAction, QLabel, QFrame, QPalette, QVBoxLayout,
-                   QTextEdit, QSizePolicy, QApplication)
+                   QPlainTextEdit, QSizePolicy, QApplication)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.misc import extendInstance
@@ -30,12 +30,12 @@ from utils.colorfont import getZoomedMonoFont
 from utils.settings import Settings
 
 
-class DisasmWidget(QTextEdit):
+class DisasmWidget(QPlainTextEdit):
 
-    """Wraps QTextEdit to have a keyboard handler"""
+    """Wraps QPlainTextEdit to have a keyboard handler"""
 
     def __init__(self, parent):
-        QTextEdit.__init__(self, parent)
+        QPlainTextEdit.__init__(self, parent)
         self.installEventFilter(self)
 
     def eventFilter(self, obj, event):
@@ -54,7 +54,7 @@ class DisasmWidget(QTextEdit):
                     Settings().onTextZoomReset()
                     return True
 
-        return QTextEdit.eventFilter(self, obj, event)
+        return QPlainTextEdit.eventFilter(self, obj, event)
 
     def wheelEvent(self, event):
         """Mouse wheel event"""
@@ -67,7 +67,7 @@ class DisasmWidget(QTextEdit):
                     Settings().onTextZoomOut()
             event.accept()
         else:
-            QTextEdit.wheelEvent(self, event)
+            QPlainTextEdit.wheelEvent(self, event)
 
     def onTextZoomChanged(self):
         """Triggered when a text zoom is changed"""
@@ -107,15 +107,15 @@ class DisassemblerResultsWidget(QWidget):
         # Zoom buttons
         self.__zoomInButton = QAction(getIcon('zoomin.png'),
                                       'Zoom in (Ctrl+=)', self)
-        self.__zoomInButton.triggered.connect(self.onZoomIn)
+        self.__zoomInButton.triggered.connect(Settings().onTextZoomIn)
 
         self.__zoomOutButton = QAction(getIcon('zoomout.png'),
                                        'Zoom out (Ctrl+-)', self)
-        self.__zoomOutButton.triggered.connect(self.onZoomOut)
+        self.__zoomOutButton.triggered.connect(Settings().onTextZoomOut)
 
         self.__zoomResetButton = QAction(getIcon('zoomreset.png'),
                                          'Zoom reset (Ctrl+0)', self)
-        self.__zoomResetButton.triggered.connect(self.onZoomReset)
+        self.__zoomResetButton.triggered.connect(Settings().onTextZoomReset)
 
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -150,9 +150,7 @@ class DisassemblerResultsWidget(QWidget):
         summary.setPalette(summaryPalette)
 
         self.__text = DisasmWidget(self)
-        self.__text.setAcceptRichText(False)
-        self.__text.setLineWrapMode(QTextEdit.NoWrap)
-        self.__text.setFont(GlobalData().skin.nolexerFont)
+        self.__text.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.__text.setReadOnly(True)
         self.__text.setPlainText(code)
 
@@ -229,4 +227,3 @@ class DisassemblerResultsWidget(QWidget):
         """Sets the display name - not applicable"""
         raise Exception("Setting a file name for disassembler "
                         "results is not applicable")
-

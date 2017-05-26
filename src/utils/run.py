@@ -27,7 +27,8 @@ import os
 import os.path
 import getpass
 import logging
-from subprocess import getstatusoutput
+from subprocess import getstatusoutput, check_output
+from .config import DEFAULT_ENCODING
 
 
 TERM_REDIRECT = -1
@@ -500,6 +501,19 @@ def getNoArgsEnvironment(params):
         environment.update(params['additionToParentEnv'])
         return environment
     return params['specificEnv'].copy()
+
+
+def checkOutput(cmdLine, useShell=False):
+    """Wrapper around Subprocess.check_output which respects encoding"""
+    if useShell:
+        if type(cmdLine) != str:
+            raise Exception("Running via shell requires "
+                            "the command line as a string")
+    else:
+        if type(cmdLine) != list:
+            raise Exception("Running without shell requires "
+                            "the command line as a list")
+    return check_output(cmdLine, shell=useShell).decode(DEFAULT_ENCODING)
 
 
 if __name__ == '__main__':

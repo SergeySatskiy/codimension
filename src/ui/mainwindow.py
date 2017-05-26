@@ -48,7 +48,7 @@ from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
 from profiling.profui import ProfilingProgressDialog
-from profiling.disasm import getDisassembled
+from profiling.disasm import getFileDisassembled
 from debugger.bputils import clearValidBreakpointLinesCache
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
@@ -2175,7 +2175,7 @@ class CodimensionMainWindow(QMainWindow):
     def showDisassembler(self, scriptPath, name):
         """Triggered when a disassembler should be shown"""
         try:
-            code = getDisassembled(scriptPath, name)
+            code = getFileDisassembled(scriptPath)
             self.em.showDisassembler(scriptPath, name, code)
         except:
             logging.error("Could not get '" + name + "' from " +

@@ -32,7 +32,8 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     """IO console tab widget"""
 
-    settingUpdated = pyqtSignal()
+    sigSettingUpdated = pyqtSignal()
+    sigUserInput = pyqtSignal(int, str)
 
     def __init__(self, threadID, parent=None):
 
@@ -40,7 +41,7 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
         QWidget.__init__(self, parent)
 
         self.__viewer = RedirectedIOConsole(self)
-        self.__viewer.UserInput.connect(self.__onUserInput)
+        self.__viewer.sigUserInput.connect(self.__onUserInput)
 
         self.__threadID = threadID
         self.__showstdin = True
@@ -55,7 +56,7 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __onUserInput(self, userInput):
         """Triggered when the user finished input"""
-        self.UserInput.emit(self.__threadID, userInput)
+        self.sigUserInput.emit(self.__threadID, userInput)
         self.__clearButton.setEnabled(True)
 
     def __createLayout(self):
@@ -254,17 +255,17 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def __onWrapLongLines(self):
         """Triggered when long lines setting is changed"""
         Settings().ioconsolelinewrap = not Settings().ioconsolelinewrap
-        self.settingUpdated.emit()
+        self.sigSettingUpdated.emit()
 
     def __onShowEOL(self):
         """Triggered when show EOL is changed"""
         Settings().ioconsoleshoweol = not Settings().ioconsoleshoweol
-        self.settingUpdated.emit()
+        self.sigSettingUpdated.emit()
 
     def __onShowWhitespaces(self):
         """Triggered when show whitespaces is changed"""
         Settings().ioconsoleshowspaces = not Settings().ioconsoleshowspaces
-        self.settingUpdated.emit()
+        self.sigSettingUpdated.emit()
 
     def __onAutoscroll(self):
         """Triggered when autoscroll is changed"""
@@ -273,7 +274,7 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def __onShowMargin(self):
         """Triggered when show margin is changed"""
         Settings().ioconsoleshowmargin = not Settings().ioconsoleshowmargin
-        self.settingUpdated.emit()
+        self.sigSettingUpdated.emit()
 
     def clear(self):
         """Triggered when requested to clear the console"""

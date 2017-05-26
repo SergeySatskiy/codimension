@@ -22,12 +22,13 @@
 import os
 import os.path
 import tempfile
-from subprocess import check_output
-from  utils.fileutils import getFileContent
+from utils.fileutils import getFileContent, saveToFile
+from utils.run import checkOutput
 
 
 def splitWithQuotasRespect(line):
     """Splits the space separated values and respects quoted values"""
+
     def skipSpaces(line, startPos):
         """Provides index of first non-space char"""
         while startPos < len(line):
@@ -301,13 +302,14 @@ def getGraphFromPlainDotFile(fName):
 
 def getGraphFromDescrptionFile(fName):
     """Runs dot and then parses and builds normalized graph"""
-    return getGraphFromPlainDotData(check_output(["dot", "-Tplain", fName]))
+    return getGraphFromPlainDotData(checkOutput(["dot", "-Tplain", fName]))
+
 
 def getGraphFromDescriptionData(content):
     """Runs dot and then parses and builds normalized graph"""
     graphtmp = tempfile.mkstemp()
-    os.write(graphtmp[0], content)
     os.close(graphtmp[0])
+    saveToFile(graphtmp[1], content)
 
     try:
         graph = getGraphFromDescrptionFile(graphtmp[1])

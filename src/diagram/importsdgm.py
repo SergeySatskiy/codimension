@@ -483,7 +483,6 @@ class ImportsDiagramProgress(QDialog):
         self.__cancelRequest = True
         if not self.__inProgress:
             self.close()
-        return
 
     def __buildParticipants(self):
         """Builds a list of participating files and dirs"""
@@ -647,8 +646,7 @@ class ImportsDiagramProgress(QDialog):
 
     def __addSingleFileToDataModel(self, info, fName):
         """Adds a single file to the data model"""
-        if fName.endswith("__init__.py") or \
-           fName.endswith("__init__.py3"):
+        if fName.endswith("__init__.py"):
             if not info.classes and not info.functions and \
                not info.globals and not info.imports:
                 # Skip dummy init files
@@ -767,7 +765,6 @@ class ImportsDiagramProgress(QDialog):
             self.__participantFiles = None
             self.__projectImportDirs = None
             self.__projectImportsCache = None
-
 
             # Generating the graphviz layout
             self.infoLabel.setText('Generating layout using graphviz...')

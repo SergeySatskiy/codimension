@@ -60,6 +60,9 @@ class RemoteProcessWrapper(QObject):
     """Wrapper to control the remote process"""
 
     sigFinished = pyqtSignal(int, int)
+    sigClientStdout = pyqtSignal(str)
+    sigClientStderr = pyqtSignal(str)
+    sigClientRawInput = pyqtSignal(str, int)
 
     PROTOCOL_CONTROL = 0
     PROTOCOL_STDOUT = 1
@@ -98,8 +101,8 @@ class RemoteProcessWrapper(QObject):
                              None, self.__serverPort, self.__procID)
         else:
             workingDir, cmd, environment = \
-                getCwdCmdEnv(CMD_TYPE_RUN, self.__path,
-                             params, Settings()['terminalType'])
+                getCwdCmdEnv(CMD_TYPE_RUN, self.__path, params,
+                             Settings()['terminalType'])
 
         try:
             self.__proc = Popen(cmd, shell=True,
@@ -313,7 +316,7 @@ class RemoteProcessWrapper(QObject):
 
         if cmd == ResponseRaw:
             prompt, echo = eval(content)
-            self.ClientRawInput.emit(prompt, echo)
+            self.sigClientRawInput.emit(prompt, echo)
             return self.__buffer != ""
 
         if cmd == ResponseExit:
@@ -434,13 +437,13 @@ class RunManager(QObject):
         if Settings()['terminalType'] == TERM_REDIRECT:
             remoteProc.widget = RunConsoleTabWidget(
                 remoteProc.procWrapper.procID())
-            remoteProc.procWrapper.ClientStdout.connect(
+            remoteProc.procWrapper.sigClientStdout.connect(
                 remoteProc.widget.appendStdoutMessage)
-            remoteProc.procWrapper.ClientStderr.connect(
+            remoteProc.procWrapper.sigClientStderr.connect(
                 remoteProc.widget.appendStderrMessage)
-            remoteProc.procWrapper.ClientRawInput.connect(
+            remoteProc.procWrapper.sigClientRawInput.connect(
                 remoteProc.widget.rawInput)
-            remoteProc.widget.UserInput.connect(self.__onUserInput)
+            remoteProc.widget.sigUserInput.connect(self.__onUserInput)
         else:
             remoteProc.widget = None
 

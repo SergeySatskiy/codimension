@@ -136,7 +136,7 @@ class QuickHelpWidget(TextTabWidget):
           <td bgcolor="#E9E9F3">F3 or Shift+F3</td>
           <td bgcolor="#F6F4E4">Search next or previous</td>
           <td bgcolor="#E9E9F3">Ctrl+'</td>
-          <td bgcolor="#F6F4E4">Highlight current word and iterate over matches</td>
+          <td bgcolor="#F6F4E4">Highlight current word</td>
         </tr>
         <tr>
           <td bgcolor="#E9E9F3">Ctrl+, or .</td>
@@ -153,8 +153,8 @@ class QuickHelpWidget(TextTabWidget):
         <tr>
           <td bgcolor="#E9E9F3">Ctrl+back slash</td>
           <td bgcolor="#F6F4E4">Goto definition</td>
-          <td bgcolor="#E9E9F3">Ctrl+F3</td>
-          <td bgcolor="#F6F4E4">Initiate search of the current word or selection without showing find dialog</td>
+          <td bgcolor="#E9E9F3">Ctrl+Shift+I</td>
+          <td bgcolor="#F6F4E4">Invoke auto indenter</td>
         </tr>
         <tr>
           <td bgcolor="#E9E9F3">Ctrl+]</td>
