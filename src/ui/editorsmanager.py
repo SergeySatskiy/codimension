@@ -409,6 +409,20 @@ class EditorsManager(QTabWidget):
             if not os.path.exists(dirName + candidate):
                 return candidate
 
+    def getNewDisassemblyName(self, path):
+        """Provides a dummy name for a new tab disassembly"""
+        basename = os.path.basename(path)
+        candidate = basename + '.dis'
+        index = -1
+        while True:
+            for uuid, fName, editor in self.getTextEditors():
+                if os.path.basename(fName) == candidate:
+                    break
+            else:
+                return candidate
+            index += 1
+            candidate = basename + '.' + str(index) + '.dis'
+
     def getNewCloneName(self, shortName):
         """Provides a new name for a cloned file"""
         self.newCloneIndex += 1
@@ -1014,32 +1028,46 @@ class EditorsManager(QTabWidget):
         except Exception as exc:
             logging.error(str(exc))
 
-    def showDisassembler(self, scriptPath, name, code):
+    def showDisassembly(self, scriptPath, disassembly):
         """Shows the disassembled code"""
-        try:
-            reportTime = getLocaleDateTime()
-            tooltip = "Disassembling '" + name + "' from " + \
-                      os.path.basename(scriptPath) + \
-                      " at " + reportTime
-            newWidget = DisassemblerResultsWidget(scriptPath, name,
-                                                  code, reportTime)
-            newWidget.sigEscapePressed.connect(self.__onESC)
+        if self.widget(0) == self.__welcomeWidget:
+            # It is the only welcome widget on the screen
+            self.removeTab(0)
+            self.setTabsClosable(True)
 
-            if self.widget(0) == self.__welcomeWidget:
-                # It is the only welcome widget on the screen
-                self.removeTab(0)
-                self.setTabsClosable(True)
+        newWidget = TextEditorTabWidget(self, self.__debugger)
+        newWidget.sigReloadRequest.connect(self.onReload)
+        newWidget.reloadAllNonModifiedRequest.connect(
+            self.onReloadAllNonModified)
+        newWidget.sigTabRunChanged.connect(self.onTabRunChanged)
+        editor = newWidget.getEditor()
 
-            self.insertTab(0, newWidget, newWidget.getShortName())
-            self.setTabToolTip(0, tooltip)
-            newWidget.setTooltip(tooltip)
-            self.activateTab(0)
-            self.__updateControls()
-            self.updateStatusBar()
-            newWidget.setFocus()
-            self.saveTabsStatus()
-        except Exception as exc:
-            logging.error(str(exc))
+        newWidget.setShortName(self.getNewDisassemblyName(scriptPath))
+
+        editor.mime = 'text/plain'
+        editor.text = disassembly
+        editor.eol = detectEolString(editor.text)
+        editor.encoding = None
+
+        editor.document().setModified(False)
+
+        self.insertTab(0, newWidget, newWidget.getShortName())
+        self.setTabToolTip(0, 'Disassembly for ' +
+                           os.path.basename(scriptPath))
+        self.activateTab(0)
+
+        self.__updateControls()
+        self.__connectEditorWidget(newWidget)
+        self.updateStatusBar()
+        self.__cursorPositionChanged()
+        editor.setFocus()
+        newWidget.updateStatus()
+        self.setWidgetDebugMode(newWidget)
+
+        # Here: mime will always be text/plain
+        self.sigFileTypeChanged.emit(newWidget.getShortName(),
+                                     newWidget.getUUID(),
+                                     editor.mime if editor.mime else '')
 
     def showAnnotated(self, fileName, text, lineRevisions, revisionInfo):
         """Shows the annotated text widget"""
@@ -2056,7 +2084,7 @@ class EditorsManager(QTabWidget):
         return None
 
     def checkOutsideFileChanges(self):
-        """Checks all the tabs if the files were changed / disappeared outside"""
+        """Checks all the tabs if the files were changed/disappeared outside"""
         for index in range(self.count()):
             if self.__welcomeWidget != self.widget(index):
                 self._updateIconAndTooltip(index)

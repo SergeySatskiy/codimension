@@ -48,7 +48,8 @@ from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
 from profiling.profui import ProfilingProgressDialog
-from profiling.disasm import getFileDisassembled
+from profiling.disasm import (getFileDisassembled, getCompiledfileDisassembled,
+                              getBufferDisassembled)
 from debugger.bputils import clearValidBreakpointLinesCache
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
@@ -2172,14 +2173,31 @@ class CodimensionMainWindow(QMainWindow):
             self.classesViewer.clViewer.model().sourceModel(), self)
         dlg.exec_()
 
-    def showDisassembler(self, scriptPath, name):
+    def showFileDisassembly(self, path, optimization):
         """Triggered when a disassembler should be shown"""
         try:
-            code = getFileDisassembled(scriptPath)
-            self.em.showDisassembler(scriptPath, name, code)
-        except:
-            logging.error("Could not get '" + name + "' from " +
-                          scriptPath + " disassembled.")
+            code = getFileDisassembled(path, optimization)
+            self.em.showDisassembly(path, code)
+        except Exception as exc:
+            logging.error('Cannot disassemble ' + path + ': ' + str(exc))
+
+    def showBufferDisassembly(self, content, encoding, path, optimization):
+        """Triggered when a disassembler for a buffer is requested"""
+        try:
+            code = getBufferDisassembled(content, encoding, path, optimization)
+            self.em.showDisassembly(path, code)
+        except Exception as exc:
+            logging.error('Cannot disassemble buffer ' + path +
+                          ': ' + str(exc))
+
+    def showPycDisassembly(self, path):
+        """Triggered when a disassembly for a .pyc file is requested"""
+        try:
+            code = getCompiledfileDisassembled(
+                path, os.path.basename(path).replace('.pyc', '.py'), None)
+            self.em.showDisassembly(path, code)
+        except Exception as exc:
+            logging.error('Cannot disassemble pyc file: ' + str(exc))
 
     def highlightInPrj(self, path):
         """Triggered when the file is to be highlighted in a project tree"""

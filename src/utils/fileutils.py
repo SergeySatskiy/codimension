@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,12 @@
 
 """file related utils"""
 
+import os
 from os.path import islink, exists, split, join, sep, basename, realpath
 import logging
 import json
 import magic
+import tempfile
 from errno import EACCES
 from ui.qt import QImageReader
 
@@ -696,3 +698,10 @@ def saveToFile(fileName, content, allowException=True, enc=DEFAULT_ENCODING):
         logging.error('Error writing to file ' + fileName + ': ' +
                       str(exc))
     return False
+
+
+def makeTempFile(prefix='cdm_', suffix=None):
+    """Creates a temporary file"""
+    fileHandle, fileName = tempfile.mkstemp(suffix, prefix)
+    os.close(fileHandle)
+    return fileName

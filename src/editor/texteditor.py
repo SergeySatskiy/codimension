@@ -269,6 +269,13 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             content, self.encoding = readEncodedFile(fileName)
             self.eol = detectEolString(content)
 
+            # Copied from enki (enki/core/document.py: _readFile()):
+            # Strip last EOL. Qutepart adds it when saving file
+            if content.endswith('\r\n'):
+                content = content[:-2]
+            elif content.endswith('\n') or content.endswith('\r'):
+                content = content[:-1]
+
             # Hack to avoid breakpoints reset when a file is reload
             self.__breakpoints = {}
             self.text = content
@@ -295,6 +302,8 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             encoding = detectWriteEncoding(self, fileName)
             if encoding is None:
                 QApplication.restoreOverrideCursor()
+                logging.error('Could not detect write encoding for ' +
+                              fileName)
                 return False
 
             writeEncodedFile(fileName, self.textForSaving(), encoding)

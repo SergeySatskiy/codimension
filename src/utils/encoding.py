@@ -394,6 +394,34 @@ def detectNewFileWriteEncoding(editor, fName):
                         editor.explicitUserEncoding + " is used")
         return editor.explicitUserEncoding
 
+    # This is rather paranoic. The user could have a file with a specific
+    # encoding assigned. Then the file was deleted and the buffer is saved
+    # again.
+    userAssignedEncoding = getFileEncoding(fName)
+    if userAssignedEncoding:
+        if not isValidEncoding(userAssignedEncoding):
+            logging.error(
+                "User assigned encoding " + userAssignedEncoding + " is "
+                "invalid. Please assign a valid one and try again.")
+            return None
+        if isPython:
+            encFromText = getCodingFromText(editor.text)
+            if encFromText:
+                if not isValidEncoding(encFromText):
+                    logging.warning(
+                        "Encoding from the buffer (" + encFromText +
+                        ") is invalid and does not match the explicitly "
+                        "set encoding " + userAssignedEncoding + ". The " +
+                        userAssignedEncoding + " is used")
+                elif not areEncodingsEqual(userAssignedEncoding,
+                                           encFromText):
+                    logging.warning(
+                        "Encoding from the buffer (" + encFromText + ") "
+                        "does not match the explicitly set encoding " +
+                        userAssignedEncoding + ". The " +
+                        userAssignedEncoding + " is used")
+        return userAssignedEncoding
+
     # Check the buffer
     if isPython:
         encFromText = getCodingFromText(editor.text)
@@ -484,7 +512,7 @@ def detectExistingFileWriteEncoding(editor, fName):
 
 def detectWriteEncoding(editor, fName):
     """Detects the write encoding for a buffer"""
-    if os.path.isabs(fName):
+    if os.path.isabs(fName) and os.path.exists(fName):
         return detectExistingFileWriteEncoding(editor, fName)
     return detectNewFileWriteEncoding(editor, fName)
 

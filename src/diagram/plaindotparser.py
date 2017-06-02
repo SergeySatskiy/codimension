@@ -21,8 +21,7 @@
 
 import os
 import os.path
-import tempfile
-from utils.fileutils import getFileContent, saveToFile
+from utils.fileutils import getFileContent, saveToFile, makeTempFile
 from utils.run import checkOutput
 
 
@@ -307,12 +306,11 @@ def getGraphFromDescrptionFile(fName):
 
 def getGraphFromDescriptionData(content):
     """Runs dot and then parses and builds normalized graph"""
-    graphtmp = tempfile.mkstemp()
-    os.close(graphtmp[0])
-    saveToFile(graphtmp[1], content)
+    tempFileName = makeTempFile()
+    saveToFile(tempFileName, content)
 
     try:
-        graph = getGraphFromDescrptionFile(graphtmp[1])
+        graph = getGraphFromDescrptionFile(tempFileName)
     finally:
-        os.unlink(graphtmp[1])
+        os.unlink(tempFileName)
     return graph

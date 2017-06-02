@@ -524,9 +524,7 @@ class ImportsDiagramProgress(QDialog):
             return self.__projectImportsCache[importString]
 
         subpath = importString.replace('.', os.path.sep)
-        candidates = [subpath + ".py", subpath + ".py3",
-                      subpath + os.path.sep + "__init__.py",
-                      subpath + os.path.sep + "__init__.py3"]
+        candidates = [subpath + ".py", subpath + os.path.sep + "__init__.py"]
         for path in self.__projectImportDirs:
             for item in candidates:
                 fName = path + os.path.sep + item
@@ -545,9 +543,7 @@ class ImportsDiagramProgress(QDialog):
                 return importsDict[importString]
 
         subpath = importString.replace('.', os.path.sep)
-        candidates = [subpath + ".py", subpath + ".py3",
-                      subpath + os.path.sep + "__init__.py",
-                      subpath + os.path.sep + "__init__.py3"]
+        candidates = [subpath + ".py", subpath + os.path.sep + "__init__.py"]
         for item in candidates:
             fName = dirName + os.path.sep + item
             if os.path.isfile(fName):
@@ -568,8 +564,6 @@ class ImportsDiagramProgress(QDialog):
             if path is None:
                 return True, None
             if path.endswith(".py"):
-                return True, path
-            if path.endswith(".py3"):
                 return True, path
             return True, None
         except:
@@ -621,7 +615,7 @@ class ImportsDiagramProgress(QDialog):
 
     def __getSytemWideImportDocstring(self, path):
         """Provides the system wide module docstring"""
-        if not path.endswith('.py') and not path.endswith('.py3'):
+        if not path.endswith('.py'):
             return ""
 
         try:

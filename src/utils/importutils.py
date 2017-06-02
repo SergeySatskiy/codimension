@@ -133,8 +133,7 @@ def resolveImports(basePath, imports):
                         if not os.path.exists(path):
                             continue
                 else:
-                    if not path.endswith(".py") and \
-                       not path.endswith(".py3"):
+                    if not path.endswith(".py"):
                         continue
                 result.append([item, path])
             continue
@@ -151,8 +150,7 @@ def resolveImports(basePath, imports):
                         if not os.path.exists(path):
                             continue
                 else:
-                    if not path.endswith(".py") and \
-                       not path.endswith(".py3"):
+                    if not path.endswith(".py"):
                         continue
                 result.append([item, path])
         except:

@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -25,60 +24,139 @@ import dis
 import os
 import os.path
 import py_compile
-from _ast import PyCF_ONLY_AST
-from utils.run import checkOutput
+import marshal
+import platform
+import binascii
+import struct
+import time
+from types import CodeType
+from io import StringIO
+from utils.fileutils import makeTempFile, saveToFile
 
 
-DIS_MODULE_PATH = dis.__file__
-PYTHON_INTERPRETER_PATH = sys.executable
+OPT_NO_OPTIMIZATION = 0
+OPT_OPTIMIZE_ASSERT = 1
+OPT_OPTIMIZE_DOCSTRINGS = 2
 
+_CONVERSION = {OPT_NO_OPTIMIZATION: 'no optimization',
+               OPT_OPTIMIZE_ASSERT: 'assert optimization',
+               OPT_OPTIMIZE_DOCSTRINGS: 'assert + docstring optimization'}
 
-def isFileSyntacticallyCorrect(path):
-    """True if the file could be compiled"""
+def optToString(optimization):
+    """Converts optimization into a string"""
     try:
-        py_compile.compile(path)
-        return True
-    except:
-        return False
+        return _CONVERSION[optimization]
+    except KeyError:
+        return 'unknown optimization'
 
-def isBufferSyntacticallyCorrect(content):
-    """True if the buffer is syntactically correct"""
+
+def safeUnlink(path):
+    """No exception unlink"""
     try:
-        compile(content, "<string>", "exec", PyCF_ONLY_AST)
-        return True
+        os.unlink(path)
     except:
-        return False
+        pass
 
 
-def getFileDisassembled(path):
+def getCodeDisassembly(code):
+    """Provides disassembly of a code object"""
+    fileLikeObject = StringIO()
+    dis.dis(code, file=fileLikeObject)
+    fileLikeObject.seek(0)
+    return fileLikeObject.read()
+
+
+def recursiveDisassembly(codeObject, name=None):
+    what = 'module' if name is None else name
+    res = '\n\nDisassembly of ' + what + ':\n' + getCodeDisassembly(codeObject)
+    for item in codeObject.co_consts:
+        if type(item) == CodeType:
+            itemName = item.co_name
+            if name:
+                itemName = name + '.' + itemName
+            res += recursiveDisassembly(item, itemName)
+    return res
+
+
+# The idea is taken from here:
+# https://stackoverflow.com/questions/11141387/given-a-python-pyc-file-is-there-a-tool-that-let-me-view-the-bytecode
+# https://stackoverflow.com/questions/32562163/how-can-i-understand-a-pyc-file-content
+def getCompiledfileDisassembled(pycPath, pyPath, optimization):
+    """Reads the .pyc file and provides the plain text disassembly"""
+    pycFile = open(pycPath, 'rb')
+
+    magic = pycFile.read(4)
+    timestamp = pycFile.read(4)
+
+    size = None
+    if sys.version_info.major == 3 and sys.version_info.minor >= 3:
+        size = pycFile.read(4)
+        size = struct.unpack('I', size)[0]
+
+    code = marshal.load(pycFile)
+    magic = binascii.hexlify(magic).decode('utf-8')
+    timestamp = time.asctime(
+        time.localtime(struct.unpack('I', b'D\xa5\xc2X')[0]))
+
+    return '\n'.join(
+        ['-' * 80,
+         'Python version: ' + platform.python_version(),
+         'Python interpreter path: ' + sys.executable,
+         'Python module: ' + pyPath,
+         'Optimization: ' + optToString(optimization),
+         'Code magic: ' + magic,
+         'Code timestamp: ' + timestamp,
+         'Code size: ' + str(size),
+         '-' * 80,
+         recursiveDisassembly(code)])
+
+
+def getFileDisassembled(path, optimization):
     """Dsassembles a file"""
     if not os.path.exists(path):
         raise Exception("Cannot find " + path + " to disassemble")
     if not os.access(path, os.R_OK):
         raise Exception("No read permissions for " + path)
 
-    cmd = [PYTHON_INTERPRETER_PATH, DIS_MODULE_PATH, path]
+    tempPycFile = makeTempFile(suffix='.pyc')
     try:
-        return checkOutput(cmd)
+        py_compile.compile(path, tempPycFile,
+                           doraise=True, optimize=optimization)
+    except Exception as exc:
+        safeUnlink(tempPycFile)
+        raise Exception("Cannot disassemble file " + path + ': ' + str(exc))
+
+    try:
+        result = getCompiledfileDisassembled(tempPycFile, path, optimization)
     except:
-        if not isFileSyntacticallyCorrect(path):
-            raise Exception("Cannot disassemble "
-                            "syntactically incorrect file " + path)
-    raise Exception("Could not get " + path + " disassembled")
+        safeUnlink(tempPycFile)
+        raise
+
+    safeUnlink(tempPycFile)
+    return result
 
 
-def getBufferDisassembled(content):
+def getBufferDisassembled(content, encoding, path, optimization):
     """Disassembles a memory buffer"""
-    os.environ['CDM_DISASM_CONTENT'] = content
-    cmd = 'echo $CDM_DISASM_CONTENT | ' + PYTHON_INTERPRETER_PATH
-    cmd += ' ' + DIS_MODULE_PATH
+    tempSrcFile = makeTempFile(suffix='.py')
+    tempPycFile = makeTempFile(suffix='.pyc')
+
     try:
-        output = checkOutput(cmd, useShell=True)
-        del os.environ['CDM_DISASM_CONTENT']
-        return output
+        saveToFile(tempSrcFile, content, allowException=True, enc=encoding)
+        py_compile.compile(tempSrcFile, tempPycFile, path,
+                           doraise=True, optimize=optimization)
+    except Exception as exc:
+        safeUnlink(tempSrcFile)
+        safeUnlink(tempPycFile)
+        raise
+
+    try:
+        result = getCompiledfileDisassembled(tempPycFile, path, optimization)
     except:
-        del os.environ['CDM_DISASM_CONTENT']
-        if isBufferSyntacticallyCorrect(content):
-            raise Exception("Cannot disassemble "
-                            "syntactically incorrect buffer")
-    raise Exception("Could not get the buffer disassembled")
+        safeUnlink(tempSrcFile)
+        safeUnlink(tempPycFile)
+        raise
+
+    safeUnlink(tempSrcFile)
+    safeUnlink(tempPycFile)
+    return result

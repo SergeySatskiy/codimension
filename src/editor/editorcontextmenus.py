@@ -35,6 +35,8 @@ from utils.encoding import (SUPPORTED_CODECS, decodeURLContent,
                             detectEncodingOnCrearExplicit)
 from utils.diskvaluesrelay import getFileEncoding, setFileEncoding
 from autocomplete.bufferutils import isImportLine, getContext
+from profiling.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
+                              OPT_OPTIMIZE_DOCSTRINGS)
 
 
 class EditorContextMenuMixin:
@@ -142,7 +144,7 @@ class EditorContextMenuMixin:
 
     def __initToolsMenu(self):
         """Creates the tools menu"""
-        self.toolsMenu = QMenu("Too&ls")
+        self.toolsMenu = QMenu('Python too&ls')
         self.runAct = self.toolsMenu.addAction(
             getIcon('run.png'), 'Run script', self._parent.onRunScript)
         self.runParamAct = self.toolsMenu.addAction(
@@ -155,6 +157,19 @@ class EditorContextMenuMixin:
         self.profileParamAct = self.toolsMenu.addAction(
             getIcon('paramsmenu.png'), 'Set parameters and profile',
             self._parent.onProfileScriptSettings)
+        self.toolsMenu.addSeparator()
+        self.disasmMenu = QMenu('Disassembly')
+        self.disasmMenu.setIcon(getIcon('disassembly.png'))
+        self.disasmAct0 = self.disasmMenu.addAction(
+            getIcon(''), 'Disassembly (no optimization)',
+            self.__onDisasm0)
+        self.disasmAct1 = self.disasmMenu.addAction(
+            getIcon(''), 'Disassembly (optimization level 1)',
+            self.__onDisasm1)
+        self.disasmAct2 = self.disasmMenu.addAction(
+            getIcon(''), 'Disassembly (optimization level 2)',
+            self.__onDisasm2)
+        self.toolsMenu.addMenu(self.disasmMenu)
         return self.toolsMenu
 
     def __initDiagramsMenu(self):
@@ -192,8 +207,14 @@ class EditorContextMenuMixin:
         self._menuHighlightInOutline.setEnabled(isPython)
         self._menuHighlightInOutline.setEnabled(isPython)
 
-        runEnabled = self._parent.runScriptButton.isEnabled()
-        self.toolsMenu.setEnabled(runEnabled)
+        if isPython:
+            runEnabled = self._parent.runScriptButton.isEnabled()
+            self.runAct.setEnabled(runEnabled)
+            self.runParamAct.setEnabled(runEnabled)
+            self.profileAct.setEnabled(runEnabled)
+            self.profileParamAct.setEnabled(runEnabled)
+        else:
+            self.toolsMenu.setEnabled(False)
 
         if absFileName:
             self.__menuClearEncoding.setEnabled(
@@ -386,6 +407,23 @@ class EditorContextMenuMixin:
         """Triggered when a new menu was added"""
         self._menu.addMenu(menu)
         self.__pluginMenuSeparator.setVisible(True)
+
+    def __onDisasm0(self):
+        """Triggered to disassemble the buffer without optimization"""
+        if self.isPythonBuffer():
+            if os.path.isabs(self._parent.getFileName()):
+                if not self._parent.isModified():
+                    GlobalData().mainWindow.showFileDisassembly(
+                        self._parent.getFileName(), OPT_NO_OPTIMIZATION)
+            print("No optimization disassembly")
+
+    def __onDisasm1(self):
+        """Triggered to disassemble the buffer with optimization level 1"""
+        print("Optimization 1 disassembly")
+
+    def __onDisasm2(self):
+        """Triggered to disassemble the buffer with optimization level 2"""
+        print("Optimization 2 disassembly")
 
     def __onPluginMenuRemoved(self, menu, count):
         """Triggered when a menu was deleted"""
