@@ -32,7 +32,8 @@ from utils.globals import GlobalData
 from utils.encoding import (SUPPORTED_CODECS, decodeURLContent,
                             getNormalizedEncoding,
                             detectExistingFileWriteEncoding,
-                            detectEncodingOnCrearExplicit)
+                            detectEncodingOnClearExplicit,
+                            detectNewFileWriteEncoding)
 from utils.diskvaluesrelay import getFileEncoding, setFileEncoding
 from autocomplete.bufferutils import isImportLine, getContext
 from profiling.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
@@ -207,14 +208,13 @@ class EditorContextMenuMixin:
         self._menuHighlightInOutline.setEnabled(isPython)
         self._menuHighlightInOutline.setEnabled(isPython)
 
+        self.toolsMenu.setEnabled(isPython)
         if isPython:
             runEnabled = self._parent.runScriptButton.isEnabled()
             self.runAct.setEnabled(runEnabled)
             self.runParamAct.setEnabled(runEnabled)
             self.profileAct.setEnabled(runEnabled)
             self.profileParamAct.setEnabled(runEnabled)
-        else:
-            self.toolsMenu.setEnabled(False)
 
         if absFileName:
             self.__menuClearEncoding.setEnabled(
@@ -306,7 +306,7 @@ class EditorContextMenuMixin:
         absFileName = os.path.isabs(fileName)
         if absFileName:
             setFileEncoding(fileName, None)
-            self.encoding = detectEncodingOnCrearExplicit(fileName, self.text)
+            self.encoding = detectEncodingOnClearExplicit(fileName, self.text)
         self.__updateMainWindowStatusBar()
 
     def onUndo(self):
@@ -408,22 +408,34 @@ class EditorContextMenuMixin:
         self._menu.addMenu(menu)
         self.__pluginMenuSeparator.setVisible(True)
 
-    def __onDisasm0(self):
-        """Triggered to disassemble the buffer without optimization"""
+    def __onDisasm(self, optimization):
+        """Common implementation"""
         if self.isPythonBuffer():
             if os.path.isabs(self._parent.getFileName()):
                 if not self._parent.isModified():
                     GlobalData().mainWindow.showFileDisassembly(
-                        self._parent.getFileName(), OPT_NO_OPTIMIZATION)
-            print("No optimization disassembly")
+                        self._parent.getFileName(), optimization)
+                    return
+            fileName = self._parent.getFileName()
+            if not fileName:
+                fileName = self._parent.getShortName()
+            encoding = self.encoding
+            if not encoding:
+                encoding = detectNewFileWriteEncoding(self, fileName)
+            GlobalData().mainWindow.showBufferDisassembly(
+                self.text, encoding, fileName, optimization)
+
+    def __onDisasm0(self):
+        """Triggered to disassemble the buffer without optimization"""
+        self.__onDisasm(OPT_NO_OPTIMIZATION)
 
     def __onDisasm1(self):
         """Triggered to disassemble the buffer with optimization level 1"""
-        print("Optimization 1 disassembly")
+        self.__onDisasm(OPT_OPTIMIZE_ASSERT)
 
     def __onDisasm2(self):
         """Triggered to disassemble the buffer with optimization level 2"""
-        print("Optimization 2 disassembly")
+        self.__onDisasm(OPT_OPTIMIZE_DOCSTRINGS)
 
     def __onPluginMenuRemoved(self, menu, count):
         """Triggered when a menu was deleted"""

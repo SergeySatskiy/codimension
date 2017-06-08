@@ -182,7 +182,7 @@ def encodingSanityCheck(fName, decodedText, expectedEncoding):
     return True
 
 
-def detectEncodingOnCrearExplicit(fName, content):
+def detectEncodingOnClearExplicit(fName, content):
     """Provides the reading encoding as a file would be read"""
     # The function is used in case the user reset the explicit encoding
     # so the current encoding needs to be set as if the file would be

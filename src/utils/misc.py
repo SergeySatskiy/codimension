@@ -26,7 +26,7 @@ import locale
 import datetime
 from .globals import GlobalData
 from .settings import SETTINGS_DIR
-from .config import DEFAULT_ENCODING
+from .fileutils import getFileContent
 
 
 # File name of the template for any new file.
@@ -102,12 +102,12 @@ def getNewFileTemplate():
     if not os.path.exists(templateFile):
         return ""
 
-    # read the file content
-    content = []
-    f = open(templateFile, 'r', encoding=DEFAULT_ENCODING)
-    for line in f:
-        content.append(line.rstrip())
-    f.close()
+    # read the file content: splitlines() eats the trailing \n
+    content = getFileContent(templateFile)
+    if content.endswith('\n') or content.endswith('\r\n'):
+        content = content.splitlines() + ['']
+    else:
+        content = content.splitlines()
 
     # substitute the fields
     project = GlobalData().project
@@ -159,7 +159,7 @@ def getNewFileTemplate():
         else:
             result.append(line)
 
-    return "\n".join(result)
+    return '\n'.join(result)
 
 
 def getDefaultTemplate():

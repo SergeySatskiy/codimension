@@ -415,8 +415,8 @@ class EditorsManager(QTabWidget):
         candidate = basename + '.dis'
         index = -1
         while True:
-            for uuid, fName, editor in self.getTextEditors():
-                if os.path.basename(fName) == candidate:
+            for _, _, editor in self.getTextEditors():
+                if os.path.basename(editor.getShortName()) == candidate:
                     break
             else:
                 return candidate

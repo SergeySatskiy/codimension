@@ -558,6 +558,8 @@ def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
         # Special case: this could be a QT supported image
         if fileExtension in __QTSupportedImageFormats:
             mime = 'image/' + fileExtension
+        elif 'readme' in fBaseName.lower():
+            mime = 'text/plain'
         else:
             mime, denied = __getMagicMime(fName)
             if mime is not None:

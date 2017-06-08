@@ -81,7 +81,8 @@ def recursiveDisassembly(codeObject, name=None):
 # The idea is taken from here:
 # https://stackoverflow.com/questions/11141387/given-a-python-pyc-file-is-there-a-tool-that-let-me-view-the-bytecode
 # https://stackoverflow.com/questions/32562163/how-can-i-understand-a-pyc-file-content
-def getCompiledfileDisassembled(pycPath, pyPath, optimization):
+def getCompiledfileDisassembled(pycPath, pyPath, optimization,
+                                forBuffer=False):
     """Reads the .pyc file and provides the plain text disassembly"""
     pycFile = open(pycPath, 'rb')
 
@@ -98,14 +99,17 @@ def getCompiledfileDisassembled(pycPath, pyPath, optimization):
     timestamp = time.asctime(
         time.localtime(struct.unpack('I', b'D\xa5\xc2X')[0]))
 
+    bufferSpec = ''
+    if forBuffer:
+        bufferSpec = ' (unsaved buffer)'
     return '\n'.join(
         ['-' * 80,
          'Python version: ' + platform.python_version(),
          'Python interpreter path: ' + sys.executable,
-         'Python module: ' + pyPath,
+         'Interpreter magic: ' + magic,
+         'Interpreter timestamp: ' + timestamp,
+         'Python module: ' + pyPath + bufferSpec,
          'Optimization: ' + optToString(optimization),
-         'Code magic: ' + magic,
-         'Code timestamp: ' + timestamp,
          'Code size: ' + str(size),
          '-' * 80,
          recursiveDisassembly(code)])
@@ -151,7 +155,8 @@ def getBufferDisassembled(content, encoding, path, optimization):
         raise
 
     try:
-        result = getCompiledfileDisassembled(tempPycFile, path, optimization)
+        result = getCompiledfileDisassembled(tempPycFile, path,
+                                             optimization, True)
     except:
         safeUnlink(tempSrcFile)
         safeUnlink(tempPycFile)
@@ -159,4 +164,7 @@ def getBufferDisassembled(content, encoding, path, optimization):
 
     safeUnlink(tempSrcFile)
     safeUnlink(tempPycFile)
+    if path:
+        return result.replace('file "' + path + '",',
+                              'unsaved buffer "' + path + '",')
     return result
