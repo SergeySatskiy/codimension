@@ -55,10 +55,6 @@ class FunctionsViewer(QWidget):
             getIcon('findusage.png'), 'Find occurences',
             self.__findWhereUsed)
         self.__menu.addSeparator()
-        self.__disasmMenuItem = self.__menu.addAction(
-            getIcon('disasmmenu.png'), 'Disassemble',
-            self.__onDisassemble)
-        self.__menu.addSeparator()
         self.__copyMenuItem = self.__menu.addAction(
             getIcon('copytoclipboard.png'), 'Copy path to clipboard',
             self.funcViewer.copyToClipboard)
@@ -198,17 +194,11 @@ class FunctionsViewer(QWidget):
         # This will update the __contextItem
         self.__selectionChanged(index)
 
-        if self.__contextItem is None:
-            return
-
-        self.__jumpMenuItem.setEnabled(self.definitionButton.isEnabled())
-        self.__findMenuItem.setEnabled(self.findButton.isEnabled())
-        self.__copyMenuItem.setEnabled(self.copyPathButton.isEnabled())
-
-        canDisassemble = self.__contextItem.canGetDisassembler()
-        self.__disasmMenuItem.setEnabled(canDisassemble)
-
-        self.__menu.popup(QCursor.pos())
+        if self.__contextItem is not None:
+            self.__jumpMenuItem.setEnabled(self.definitionButton.isEnabled())
+            self.__findMenuItem.setEnabled(self.findButton.isEnabled())
+            self.__copyMenuItem.setEnabled(self.copyPathButton.isEnabled())
+            self.__menu.popup(QCursor.pos())
 
     def __goToDefinition(self):
         """Jump to definition context menu handler"""
@@ -255,8 +245,3 @@ class FunctionsViewer(QWidget):
         """Triggered when the source model has files added or deleted"""
         self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
                                           self.getItemCount() > 0)
-
-    def __onDisassemble(self):
-        """Disassembling has been requested"""
-        if self.__contextItem is not None:
-            self.funcViewer.getDisassembled(self.__contextItem)

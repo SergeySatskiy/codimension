@@ -28,9 +28,11 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
-from utils.fileutils import isPythonMime, isPythonFile
+from utils.fileutils import isPythonMime, isPythonFile, isPythonCompiledFile
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
+from analysis.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
+                             OPT_OPTIMIZE_DOCSTRINGS)
 from .qt import (QSize, Qt, QWidget, QVBoxLayout, QSplitter,
                  QToolBar, QAction, QToolButton, QHBoxLayout, QLabel,
                  QSpacerItem, QSizePolicy, QDialog, QMenu, QFrame,
@@ -226,9 +228,6 @@ class ProjectViewer(QWidget):
         self.prjUsageAct = self.prjPythonMenu.addAction(
             getIcon('findusage.png'), 'Find occurences', self.__findWhereUsed)
         self.prjPythonMenu.addSeparator()
-        self.__disasmMenuItem = self.prjPythonMenu.addAction(
-            getIcon('disasmmenu.png'), 'Disassemble', self.__onPrjDisassemble)
-        self.prjPythonMenu.addSeparator()
         self.prjCopyAct = self.prjPythonMenu.addAction(
             getIcon('copytoclipboard.png'),
             'Copy path to clipboard', self.projectTreeView.copyToClipboard)
@@ -275,6 +274,22 @@ class ProjectViewer(QWidget):
         self.prjFileShowErrorsAct = self.prjFileMenu.addAction(
             getIcon('showparsingerrors.png'),
             'Show lexer/parser errors', self.showPrjParserError)
+
+        self.prjDisasmMenu = self.prjFileMenu.addMenu(
+            getIcon('disassembly.png'), 'Disassembly')
+        self.prjDisasmAct0 = self.prjDisasmMenu.addAction(
+            getIcon(''), 'Disassembly (no optimization)',
+            self.onPrjDisasm0)
+        self.prjDisasmAct1 = self.prjDisasmMenu.addAction(
+            getIcon(''), 'Disassembly (optimization level 1)',
+            self.onPrjDisasm1)
+        self.prjDisasmAct2 = self.prjDisasmMenu.addAction(
+            getIcon(''), 'Disassembly (optimization level 2)',
+            self.onPrjDisasm2)
+#        self.prjFileMenu.addMenu(self.prjDisasmMenu)
+        self.prjDisasmPycAct = self.prjFileMenu.addAction(
+            getIcon('disassembly.png'), 'Disassembly',
+            self.onPrjDisasm0)
         self.prjFileMenu.addSeparator()
         self.prjFileRemoveFromDiskAct = self.prjFileMenu.addAction(
             getIcon('trash.png'),
@@ -441,10 +456,6 @@ class ProjectViewer(QWidget):
         self.fsUsageAct = self.fsPythonMenu.addAction(
             getIcon('findusage.png'),
             'Find occurences', self.__fsFindWhereUsed)
-        self.fsPythonMenu.addSeparator()
-        self.fsDisasmMenuItem = self.fsPythonMenu.addAction(
-            getIcon('disasmmenu.png'), 'Disassemble', self.__onFSDisassemble)
-        self.fsPythonMenu.addSeparator()
         self.fsCopyAct = self.fsPythonMenu.addAction(
             getIcon('copytoclipboard.png'),
             'Copy path to clipboard', self.filesystemView.copyToClipboard)
@@ -654,9 +665,6 @@ class ProjectViewer(QWidget):
         self.fsDirCopyPathAct.setEnabled(
             self.fsCopyToClipboardButton.isEnabled())
 
-        canDisassemble = self.__fsContextItem.canGetDisassembler()
-        self.fsDisasmMenuItem.setEnabled(canDisassemble)
-
         # Add more conditions
         self.fsUsageAct.setEnabled(
             self.__fsContextItem.itemType in [FunctionItemType,
@@ -731,9 +739,6 @@ class ProjectViewer(QWidget):
         self.prjFileShowErrorsAct.setEnabled(
             self.prjShowParsingErrorsButton.isEnabled())
 
-        canDisassemble = self.__prjContextItem.canGetDisassembler()
-        self.__disasmMenuItem.setEnabled(canDisassemble)
-
         # Imports diagram menu
         enabled = False
         if self.__prjContextItem.itemType == DirectoryItemType:
@@ -747,6 +752,25 @@ class ProjectViewer(QWidget):
         self.prjFileImportDgmTunedAct.setEnabled(enabled)
         self.prjDirImportDgmAct.setEnabled(enabled)
         self.prjDirImportDgmTunedAct.setEnabled(enabled)
+
+        # Disassembling menu
+#        self.prjDisasmMenu.setEnabled(False)
+#        self.prjDisasmMenu.setVisible(False)
+#        self.prjDisasmPycAct.setEnabled(False)
+#        self.prjDisasmPycAct.setVisible(True)
+#        self.prjDisasmMenu.hide()
+#        self.prjDisasmPycAct.setVisible(False)
+        if self.__prjContextItem.itemType == FileItemType:
+            if isPythonMime(self.__prjContextItem.fileType):
+#                self.prjDisasmMenu.show()
+#                self.prjDisasmPycAct.setVisible(False)
+#                self.prjDisasmMenu.setEnabled(True)
+#                self.prjDisasmMenu.setVisible(True)
+                pass
+            elif isPythonCompiledFile(self.__prjContextItem.getPath()):
+#                self.prjDisasmPycAct.ssetVisible(True)
+#                self.prjDisasmPycAct.setEnabled(True)
+                pass
 
         if self.__prjContextItem.itemType == FileItemType:
             if self.__prjContextItem.isLink:
@@ -791,24 +815,6 @@ class ProjectViewer(QWidget):
                 self.__fsContextItem.getPath(),
                 self.__fsContextItem.sourceObj)
 
-    def __onPrjDisassemble(self):
-        """Triggers disassembling the selected project item"""
-        if self.__prjContextItem is not None:
-            self.__onDisasm(self.__prjContextItem)
-
-    def __onFSDisassemble(self):
-        """Triggers disassembling the selected FS item"""
-        if self.__fsContextItem is not None:
-            self.__onDisasm(self.__fsContextItem)
-
-    def __onDisasm(self, item):
-        """Disassembles the required item"""
-        if item.itemType not in [FunctionItemType, ClassItemType]:
-            return
-        path = item.getPath()
-        qualifiedName = item.getQualifiedName()
-        GlobalData().mainWindow.showDisassembler(path, qualifiedName)
-
     def __createDir(self):
         """Triggered when a new subdir should be created"""
         if self.__prjContextItem is None:
@@ -832,6 +838,25 @@ class ProjectViewer(QWidget):
         if not isPythonMime(self.__prjContextItem.fileType):
             return
         self.projectTreeView.showParsingErrors(self.__prjContextItem.getPath())
+
+    def onDisasm(self, path, opt):
+        """Disassemble a file"""
+        if path.endswith('.pyc') or path.endswith('.pyo'):
+            GlobalData().mainWindow.showPycDisassembly(path)
+        else:
+            GlobalData().mainWindow.showFileDisassembly(path, opt)
+
+    def onPrjDisasm0(self):
+        """Disassemble without optimization"""
+        self.onDisasm(self.__prjContextItem.getPath(), OPT_NO_OPTIMIZATION)
+
+    def onPrjDisasm1(self):
+        """Disassemble with optimization level 1"""
+        self.onDisasm(self.__prjContextItem.getPath(), OPT_OPTIMIZE_ASSERT)
+
+    def onPrjDisasm2(self):
+        """Disassemble with optimization level 2"""
+        self.onDisasm(self.__prjContextItem.getPath(), OPT_OPTIMIZE_DOCSTRINGS)
 
     def showFsParserError(self):
         """Triggered when parsing errors must be displayed"""

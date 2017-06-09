@@ -2173,6 +2173,18 @@ class CodimensionMainWindow(QMainWindow):
             self.classesViewer.clViewer.model().sourceModel(), self)
         dlg.exec_()
 
+    def onDisasm0(self):
+        """Disassemble without optimization"""
+        self.em.currentWidget().getEditor()._onDisasm0()
+
+    def onDisasm1(self):
+        """Disassemble with optimization level 1"""
+        self.em.currentWidget().getEditor()._onDisasm1()
+
+    def onDisasm2(self):
+        """Disassemble with optimization level 2"""
+        self.em.currentWidget().getEditor()._onDisasm2()
+
     def showFileDisassembly(self, path, optimization):
         """Triggered when a disassembler should be shown"""
         try:

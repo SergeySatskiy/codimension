@@ -349,6 +349,19 @@ class MainWindowMenuMixin:
         self.__unusedGlobalsAct = toolsMenu.addAction(
             getIcon('notused.png'), 'Unused global variable analysis',
             self.onNotUsedGlobals)
+        toolsMenu.addSeparator()
+        self.disasmMenu = QMenu('Disassembly', self)
+        self.disasmMenu.setIcon(getIcon('disassembly.png'))
+        self.disasmAct0 = self.disasmMenu.addAction(
+            getIcon(''), 'Disassembly (no optimization)',
+            self.onDisasm0)
+        self.disasmAct1 = self.disasmMenu.addAction(
+            getIcon(''), 'Disassembly (optimization level 1)',
+            self.onDisasm1)
+        self.disasmAct2 = self.disasmMenu.addAction(
+            getIcon(''), 'Disassembly (optimization level 2)',
+            self.onDisasm2)
+        toolsMenu.addMenu(self.disasmMenu)
         return toolsMenu
 
     def __buildDiagramsMenu(self):
@@ -834,6 +847,8 @@ class MainWindowMenuMixin:
             self.__unusedClassesAct.setEnabled(False)
             self.__unusedFunctionsAct.setEnabled(False)
             self.__unusedGlobalsAct.setEnabled(False)
+
+        self.disasmMenu.setEnabled(self._isPythonBuffer())
 
     def __viewAboutToShow(self):
         """Triggered when view menu is about to show"""
