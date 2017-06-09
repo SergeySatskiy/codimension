@@ -48,8 +48,8 @@ from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
 from profiling.profui import ProfilingProgressDialog
-from profiling.disasm import (getFileDisassembled, getCompiledfileDisassembled,
-                              getBufferDisassembled)
+from analysis.disasm import (getFileDisassembled, getCompiledfileDisassembled,
+                             getBufferDisassembled)
 from debugger.bputils import clearValidBreakpointLinesCache
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager

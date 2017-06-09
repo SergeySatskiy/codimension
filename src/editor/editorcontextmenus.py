@@ -36,8 +36,8 @@ from utils.encoding import (SUPPORTED_CODECS, decodeURLContent,
                             detectNewFileWriteEncoding)
 from utils.diskvaluesrelay import getFileEncoding, setFileEncoding
 from autocomplete.bufferutils import isImportLine, getContext
-from profiling.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
-                              OPT_OPTIMIZE_DOCSTRINGS)
+from analysis.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
+                             OPT_OPTIMIZE_DOCSTRINGS)
 
 
 class EditorContextMenuMixin:
