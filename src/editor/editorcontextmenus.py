@@ -163,13 +163,13 @@ class EditorContextMenuMixin:
         self.disasmMenu.setIcon(getIcon('disassembly.png'))
         self.disasmAct0 = self.disasmMenu.addAction(
             getIcon(''), 'Disassembly (no optimization)',
-            self.__onDisasm0)
+            self._onDisasm0)
         self.disasmAct1 = self.disasmMenu.addAction(
             getIcon(''), 'Disassembly (optimization level 1)',
-            self.__onDisasm1)
+            self._onDisasm1)
         self.disasmAct2 = self.disasmMenu.addAction(
             getIcon(''), 'Disassembly (optimization level 2)',
-            self.__onDisasm2)
+            self._onDisasm2)
         self.toolsMenu.addMenu(self.disasmMenu)
         return self.toolsMenu
 
@@ -425,15 +425,15 @@ class EditorContextMenuMixin:
             GlobalData().mainWindow.showBufferDisassembly(
                 self.text, encoding, fileName, optimization)
 
-    def __onDisasm0(self):
+    def _onDisasm0(self):
         """Triggered to disassemble the buffer without optimization"""
         self.__onDisasm(OPT_NO_OPTIMIZATION)
 
-    def __onDisasm1(self):
+    def _onDisasm1(self):
         """Triggered to disassemble the buffer with optimization level 1"""
         self.__onDisasm(OPT_OPTIMIZE_ASSERT)
 
-    def __onDisasm2(self):
+    def _onDisasm2(self):
         """Triggered to disassemble the buffer with optimization level 2"""
         self.__onDisasm(OPT_OPTIMIZE_DOCSTRINGS)
 

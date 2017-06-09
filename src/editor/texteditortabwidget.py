@@ -73,6 +73,7 @@ class TextEditorTabWidget(QWidget):
         self.__editor.undoAvailable.connect(self.__undoAvailable)
         self.__editor.modificationChanged.connect(self.modificationChanged)
         self.__editor.sigCFlowSyncRequested.connect(self.cflowSyncRequested)
+        self.__editor.languageChanged.connect(self.__languageChanged)
 
         self.__diskModTime = None
         self.__diskSize = None
@@ -192,6 +193,26 @@ class TextEditorTabWidget(QWidget):
         self.debugScriptButton.clicked.connect(self.onDebugScript)
         self.debugScriptButton.setEnabled(False)
 
+        # Disassembling
+        disasmScriptMenu = QMenu(self)
+        disasmAct0 = disasmScriptMenu.addAction(
+            getIcon(''), 'Disassembly (no optimization)',
+            self.__editor._onDisasm0)
+        disasmAct0 = disasmScriptMenu.addAction(
+            getIcon(''), 'Disassembly (optimization level 1)',
+            self.__editor._onDisasm1)
+        disasmAct0 = disasmScriptMenu.addAction(
+            getIcon(''), 'Disassembly (optimization level 2)',
+            self.__editor._onDisasm2)
+        self.disasmScriptButton = QToolButton(self)
+        self.disasmScriptButton.setIcon(getIcon('disassembly.png'))
+        self.disasmScriptButton.setToolTip('Disassembly script')
+        self.disasmScriptButton.setPopupMode(QToolButton.DelayedPopup)
+        self.disasmScriptButton.setMenu(disasmScriptMenu)
+        self.disasmScriptButton.setFocusPolicy(Qt.NoFocus)
+        self.disasmScriptButton.clicked.connect(self.__editor._onDisasm0)
+        self.disasmScriptButton.setEnabled(False)
+
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -213,6 +234,7 @@ class TextEditorTabWidget(QWidget):
             getIcon('expandtabs.png'), 'Expand tabs (4 spaces)', self)
         self.expandTabsButton.triggered.connect(self.onExpandTabs)
 
+
         # The toolbar
         toolbar = QToolBar(self)
         toolbar.setOrientation(Qt.Vertical)
@@ -228,6 +250,7 @@ class TextEditorTabWidget(QWidget):
         toolbar.addWidget(self.runScriptButton)
         toolbar.addWidget(self.profileScriptButton)
         toolbar.addWidget(self.debugScriptButton)
+        toolbar.addWidget(self.disasmScriptButton)
         toolbar.addAction(self.__undoButton)
         toolbar.addAction(self.__redoButton)
         toolbar.addWidget(spacer)
@@ -315,6 +338,10 @@ class TextEditorTabWidget(QWidget):
     def __undoAvailable(self, available):
         """Reports undo ops available"""
         self.__undoButton.setEnabled(available)
+
+    def __languageChanged(self, _):
+        """Language changed"""
+        self.disasmScriptButton.setEnabled(self.__editor.isPythonBuffer())
 
     # Arguments: modified
     def modificationChanged(self, _=None):
