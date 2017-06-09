@@ -33,7 +33,6 @@ class MainWindowTabWidgetBase():
     HTMLViewer = 3
     GeneratedDiagram = 4
     ProfileViewer = 5
-    DisassemblerViewer = 6
     VCSAnnotateViewer = 7
     DiffViewer = 8
     IOConsole = 9

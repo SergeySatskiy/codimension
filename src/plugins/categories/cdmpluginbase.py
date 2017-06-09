@@ -210,7 +210,6 @@ class IDEAccess():
               HTMLViewer          src/ui/htmltabwidget.py
               GeneratedDiagram    src/diagram/importsdgmgraphics.py
               ProfileViewer       src/profiling/profwidget.py
-              DisassemblerViewer  src/profiling/disasmwidget.py
         """
         return self.editorsManager.currentWidget()
 

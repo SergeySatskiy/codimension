@@ -37,7 +37,6 @@ from utils.fileutils import (getFileProperties, isImageViewable,
 from utils.diskvaluesrelay import getFilePosition, updateFilePosition
 from utils.encoding import detectEolString, detectWriteEncoding
 from diagram.importsdgmgraphics import ImportDgmTabWidget
-from profiling.disasmwidget import DisassemblerResultsWidget
 from editor.vcsannotateviewer import VCSAnnotateViewerTabWidget
 from editor.texteditortabwidget import TextEditorTabWidget
 from .qt import (Qt, QDir, QUrl, pyqtSignal, QIcon, QTabWidget,
@@ -2012,7 +2011,6 @@ class EditorsManager(QTabWidget):
             item = self.widget(index)
             if item.getType() in [MainWindowTabWidgetBase.PlainTextEditor,
                                   MainWindowTabWidgetBase.VCSAnnotateViewer,
-                                  MainWindowTabWidgetBase.DisassemblerViewer,
                                   MainWindowTabWidgetBase.DiffViewer]:
                 item.onTextZoomChanged()
 
