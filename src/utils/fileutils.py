@@ -637,6 +637,17 @@ def isPythonMime(mime):
     return 'python' in mime
 
 
+def isPythonCompiledFile(fName):
+    """True if it is a python compiled file"""
+    mime, _, _ = getFileProperties(fName)
+    if mime is None:
+        return False
+    if 'octet-stream' in mime:
+        if fName.endswith('.pyc') or fName.endswith('.pyo'):
+            return True
+    return False
+
+
 def isCDMProjectMime(mime):
     """True if it is a codimension project mime"""
     if mime is None:
