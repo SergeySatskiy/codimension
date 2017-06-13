@@ -310,9 +310,6 @@ class ProfileTableViewer(QWidget):
         self.__contextMenu.addSeparator()
         self.__contextMenu.addMenu(self.__calleesMenu)
         self.__contextMenu.addMenu(self.__outsideCalleesMenu)
-        self.__contextMenu.addSeparator()
-        self.__disasmAct = self.__contextMenu.addAction(
-            getIcon('disasmmenu.png'), "Disassemble", self.__onDisassemble)
 
         self.__callersMenu.triggered.connect(self.__onCallContextMenu)
         self.__outsideCallersMenu.triggered.connect(self.__onCallContextMenu)
@@ -331,10 +328,7 @@ class ProfileTableViewer(QWidget):
 
         # Detect what the item was clicked
         item = self.__table.itemAt(point)
-
         funcName = item.getFunctionName()
-        self.__disasmAct.setEnabled(item.getFileName() != "" and
-                                    not funcName.startswith("<"))
 
         # Build the context menu
         if item.callersCount() == 0:
@@ -380,12 +374,6 @@ class ProfileTableViewer(QWidget):
                 not self.__outsideCalleesMenu.isEmpty())
 
         self.__contextMenu.popup(QCursor.pos())
-
-    def __onDisassemble(self):
-        """On disassemble something"""
-        item = self.__table.selectedItems()[0]
-        GlobalData().mainWindow.showDisassembler(item.getFileName(),
-                                                 item.getFunctionName())
 
     def __resize(self):
         """Resizes columns to the content"""

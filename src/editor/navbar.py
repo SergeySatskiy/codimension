@@ -215,14 +215,15 @@ class NavigationBar(QFrame):
 
     def updateSettings(self):
         """Called when navigation bar settings have been updated"""
-        if not Settings()['showNavigationBar']:
+        textMime = self.__parentWidget.getMime()
+        if Settings()['showNavigationBar'] and isPythonMime(textMime):
+            self.setVisible(True)
+            self.updateBar()
+        else:
             self.__disconnectEditorSignals()
             self.__updateTimer.stop()
             self.__currentInfo = None
             self.setVisible(False)
-        else:
-            self.setVisible(True)
-            self.updateBar()
 
     def updateBar(self):
         """Triggered when the timer is fired"""

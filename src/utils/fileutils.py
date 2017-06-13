@@ -26,7 +26,7 @@ import logging
 import json
 import magic
 import tempfile
-from errno import EACCES
+from errno import EACCES, ENOENT
 from ui.qt import QImageReader
 
 # Qutepart has a few maps which halp to map a file to a syntax.
@@ -100,7 +100,7 @@ def __getMimeByXmlSyntaxFile(xmlSyntaxFile):
     return candidates[0]
 
 
-def __getXmlSyntaxFileByMime(mime):
+def getXmlSyntaxFileByMime(mime):
     """Checks the Qutepart mapping of a mime type to a syntax file.
 
     Returns an xml syntax file or None
@@ -483,6 +483,8 @@ def __getMagicMime(fName):
     except OSError as exc:
         if exc.errno == EACCES:
             return None, True
+        if exc.errno == ENOENT:
+            return None, False
         logging.error(str(exc))
         return None, False
     except Exception as exc:
@@ -563,7 +565,7 @@ def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
         else:
             mime, denied = __getMagicMime(fName)
             if mime is not None:
-                syntaxFile = __getXmlSyntaxFileByMime(mime)
+                syntaxFile = getXmlSyntaxFileByMime(mime)
 
         cacheValue = [mime,
                       getIcon('filedenied.png') if denied else

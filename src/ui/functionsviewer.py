@@ -152,7 +152,7 @@ class FunctionsViewer(QWidget):
         """The filter item has been added"""
         project = GlobalData().project
         if project.isLoaded():
-            project.setFindFuncHistory(self.filterEdit.getItems())
+            project.findFunctionHistory = self.filterEdit.getItems()
 
     def __enterInFilter(self):
         """ENTER key has been clicked in the filter"""

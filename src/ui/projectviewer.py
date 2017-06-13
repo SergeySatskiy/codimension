@@ -274,7 +274,6 @@ class ProjectViewer(QWidget):
         self.prjFileShowErrorsAct = self.prjFileMenu.addAction(
             getIcon('showparsingerrors.png'),
             'Show lexer/parser errors', self.showPrjParserError)
-
         self.prjDisasmMenu = self.prjFileMenu.addMenu(
             getIcon('disassembly.png'), 'Disassembly')
         self.prjDisasmAct0 = self.prjDisasmMenu.addAction(
@@ -286,9 +285,9 @@ class ProjectViewer(QWidget):
         self.prjDisasmAct2 = self.prjDisasmMenu.addAction(
             getIcon(''), 'Disassembly (optimization level 2)',
             self.onPrjDisasm2)
-#        self.prjFileMenu.addMenu(self.prjDisasmMenu)
+        self.prjFileMenu.addMenu(self.prjDisasmMenu)
         self.prjDisasmPycAct = self.prjFileMenu.addAction(
-            getIcon('disassembly.png'), 'Disassembly',
+            getIcon('disassembly.png'), 'Disassembly .pyc',
             self.onPrjDisasm0)
         self.prjFileMenu.addSeparator()
         self.prjFileRemoveFromDiskAct = self.prjFileMenu.addAction(
@@ -416,6 +415,21 @@ class ProjectViewer(QWidget):
         self.fsFileShowErrorsAct = self.fsFileMenu.addAction(
             getIcon('showparsingerrors.png'),
             'Show lexer/parser errors', self.showFsParserError)
+        self.fsDisasmMenu = self.fsFileMenu.addMenu(
+            getIcon('disassembly.png'), 'Disassembly')
+        self.fsDisasmAct0 = self.fsDisasmMenu.addAction(
+            getIcon(''), 'Disassembly (no optimization)',
+            self.onFsDisasm0)
+        self.fsDisasmAct1 = self.fsDisasmMenu.addAction(
+            getIcon(''), 'Disassembly (optimization level 1)',
+            self.onFsDisasm1)
+        self.fsDisasmAct2 = self.fsDisasmMenu.addAction(
+            getIcon(''), 'Disassembly (optimization level 2)',
+            self.onFsDisasm2)
+        self.fsFileMenu.addMenu(self.fsDisasmMenu)
+        self.fsDisasmPycAct = self.fsFileMenu.addAction(
+            getIcon('disassembly.png'), 'Disassembly .pyc',
+            self.onFsDisasm0)
         self.fsFileMenu.addSeparator()
         self.fsFileRemoveAct = self.fsFileMenu.addAction(
             getIcon('trash.png'), 'Remove file from the disk', self.__removeFs)
@@ -665,6 +679,14 @@ class ProjectViewer(QWidget):
         self.fsDirCopyPathAct.setEnabled(
             self.fsCopyToClipboardButton.isEnabled())
 
+        self.fsDisasmMenu.setEnabled(False)
+        self.fsDisasmPycAct.setEnabled(False)
+        if self.__fsContextItem.itemType == FileItemType:
+            if isPythonMime(self.__fsContextItem.fileType):
+                self.fsDisasmMenu.setEnabled(True)
+            elif isPythonCompiledFile(self.__fsContextItem.getPath()):
+                self.fsDisasmPycAct.setEnabled(True)
+
         # Add more conditions
         self.fsUsageAct.setEnabled(
             self.__fsContextItem.itemType in [FunctionItemType,
@@ -754,23 +776,13 @@ class ProjectViewer(QWidget):
         self.prjDirImportDgmTunedAct.setEnabled(enabled)
 
         # Disassembling menu
-#        self.prjDisasmMenu.setEnabled(False)
-#        self.prjDisasmMenu.setVisible(False)
-#        self.prjDisasmPycAct.setEnabled(False)
-#        self.prjDisasmPycAct.setVisible(True)
-#        self.prjDisasmMenu.hide()
-#        self.prjDisasmPycAct.setVisible(False)
+        self.prjDisasmMenu.setEnabled(False)
+        self.prjDisasmPycAct.setEnabled(False)
         if self.__prjContextItem.itemType == FileItemType:
             if isPythonMime(self.__prjContextItem.fileType):
-#                self.prjDisasmMenu.show()
-#                self.prjDisasmPycAct.setVisible(False)
-#                self.prjDisasmMenu.setEnabled(True)
-#                self.prjDisasmMenu.setVisible(True)
-                pass
+                self.prjDisasmMenu.setEnabled(True)
             elif isPythonCompiledFile(self.__prjContextItem.getPath()):
-#                self.prjDisasmPycAct.ssetVisible(True)
-#                self.prjDisasmPycAct.setEnabled(True)
-                pass
+                self.prjDisasmPycAct.setEnabled(True)
 
         if self.__prjContextItem.itemType == FileItemType:
             if self.__prjContextItem.isLink:
@@ -817,27 +829,33 @@ class ProjectViewer(QWidget):
 
     def __createDir(self):
         """Triggered when a new subdir should be created"""
-        if self.__prjContextItem is None:
-            return
-        if self.__prjContextItem.itemType != DirectoryItemType:
-            return
+        if self.__isValidPrjItem(DirectoryItemType):
+            dlg = NewProjectDirDialog(self)
+            if dlg.exec_() == QDialog.Accepted:
+                try:
+                    os.mkdir(self.__prjContextItem.getPath() +
+                             dlg.getDirName())
+                except Exception as exc:
+                    logging.error(str(exc))
 
-        dlg = NewProjectDirDialog(self)
-        if dlg.exec_() == QDialog.Accepted:
-            try:
-                os.mkdir(self.__prjContextItem.getPath() + dlg.getDirName())
-            except Exception as exc:
-                logging.error(str(exc))
+    def __isValidPrjItem(self, itemType):
+        """True if it is a valid project item"""
+        if self.__prjContextItem is None:
+            return False
+        return self.__prjContextItem.itemType == itemType
+
+    def __isValidPrjPythonFile(self):
+        """True if it is a valid project python file item"""
+        if self.__isValidPrjItem(FileItemType):
+            if isPythonMime(self.__prjContextItem.fileType):
+                return True
+        return False
 
     def showPrjParserError(self):
         """Triggered when parsing errors must be displayed"""
-        if self.__prjContextItem is None:
-            return
-        if self.__prjContextItem.itemType != FileItemType:
-            return
-        if not isPythonMime(self.__prjContextItem.fileType):
-            return
-        self.projectTreeView.showParsingErrors(self.__prjContextItem.getPath())
+        if self.__isValidPrjPythonFile():
+            self.projectTreeView.showParsingErrors(
+                self.__prjContextItem.getPath())
 
     def onDisasm(self, path, opt):
         """Disassemble a file"""
@@ -848,25 +866,62 @@ class ProjectViewer(QWidget):
 
     def onPrjDisasm0(self):
         """Disassemble without optimization"""
-        self.onDisasm(self.__prjContextItem.getPath(), OPT_NO_OPTIMIZATION)
+        # This one is also called for .pyc files
+        if self.__isValidPrjItem(FileItemType):
+            if isPythonMime(self.__prjContextItem.fileType) or \
+               isPythonCompiledFile(self.__prjContextItem.getPath()):
+                self.onDisasm(self.__prjContextItem.getPath(),
+                              OPT_NO_OPTIMIZATION)
 
     def onPrjDisasm1(self):
         """Disassemble with optimization level 1"""
-        self.onDisasm(self.__prjContextItem.getPath(), OPT_OPTIMIZE_ASSERT)
+        if self.__isValidPrjPythonFile():
+            self.onDisasm(self.__prjContextItem.getPath(), OPT_OPTIMIZE_ASSERT)
 
     def onPrjDisasm2(self):
         """Disassemble with optimization level 2"""
-        self.onDisasm(self.__prjContextItem.getPath(), OPT_OPTIMIZE_DOCSTRINGS)
+        if self.__isValidPrjPythonFile():
+            self.onDisasm(self.__prjContextItem.getPath(),
+                          OPT_OPTIMIZE_DOCSTRINGS)
+
+    def __isValidFsItem(self, itemType):
+        """True if it is a valid filesystem item"""
+        if self.__fsContextItem is None:
+            return False
+        return self.__fsContextItem.itemType == itemType
+
+    def __isValidFsPythonFile(self):
+        """True if it is a valid filesystem python file item"""
+        if self.__isValidFsItem(FileItemType):
+            if isPythonMime(self.__fsContextItem.fileType):
+                return True
+        return False
+
+    def onFsDisasm0(self):
+        """Disassemble without optimization"""
+        # This one is also called for .pyc files
+        if self.__isValidFsItem(FileItemType):
+            if isPythonMime(self.__fsContextItem.fileType) or \
+               isPythonCompiledFile(self.__fsContextItem.getPath()):
+                self.onDisasm(self.__fsContextItem.getPath(),
+                              OPT_NO_OPTIMIZATION)
+
+    def onFsDisasm1(self):
+        """Disassemble with optimization level 1"""
+        if self.__isValidFsPythonFile():
+            self.onDisasm(self.__fsContextItem.getPath(), OPT_OPTIMIZE_ASSERT)
+
+    def onFsDisasm2(self):
+        """Disassemble with optimization level 2"""
+        if self.__isValidFsPythonFile():
+            self.onDisasm(self.__fsContextItem.getPath(),
+                          OPT_OPTIMIZE_DOCSTRINGS)
 
     def showFsParserError(self):
         """Triggered when parsing errors must be displayed"""
-        if self.__fsContextItem is None:
-            return
-        if self.__fsContextItem.itemType != FileItemType:
-            return
-        if not isPythonMime(self.__fsContextItem.fileType):
-            return
-        self.filesystemView.showParsingErrors(self.__fsContextItem.getPath())
+        if self.__isValidFsPythonFile():
+            self.filesystemView.showParsingErrors(
+                self.__fsContextItem.getPath())
 
     def addToplevelDir(self):
         """Triggered for adding a new top level directory"""

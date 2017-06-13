@@ -148,7 +148,7 @@ class GlobalsViewer(QWidget):
         """The filter item has been added"""
         project = GlobalData().project
         if project.isLoaded():
-            project.setFindGlobalHistory(self.filterEdit.getItems())
+            project.findGlobalHistory = self.filterEdit.getItems()
 
     def __enterInFilter(self):
         """ENTER key has been clicked in the filter"""

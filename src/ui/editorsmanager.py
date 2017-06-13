@@ -33,7 +33,8 @@ from utils.misc import getNewFileTemplate, getLocaleDateTime
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import (getFileProperties, isImageViewable,
-                             isPythonMime, isPythonFile)
+                             isPythonMime, isPythonFile,
+                             getXmlSyntaxFileByMime)
 from utils.diskvaluesrelay import getFilePosition, updateFilePosition
 from utils.encoding import detectEolString, detectWriteEncoding
 from diagram.importsdgmgraphics import ImportDgmTabWidget
@@ -462,7 +463,8 @@ class EditorsManager(QTabWidget):
                 newIndex = count - 1
             self.activateTab(newIndex)
 
-    def newTabClicked(self, initialContent=None, shortName=None):
+    def newTabClicked(self, initialContent=None, shortName=None,
+                      mime=None):
         """new tab click handler"""
         if self.widget(0) == self.__welcomeWidget:
             # It is the only welcome widget on the screen
@@ -480,13 +482,17 @@ class EditorsManager(QTabWidget):
         else:
             newWidget.setShortName(shortName)
 
-        editor.mime, _, xmlSyntaxFile = \
-            getFileProperties(newWidget.getShortName())
+        if mime is None:
+            editor.mime, _, xmlSyntaxFile = \
+                getFileProperties(newWidget.getShortName())
+        else:
+            editor.mime = mime
+            xmlSyntaxFile = getXmlSyntaxFileByMime(mime)
 
         if initialContent is None or isinstance(initialContent, bool):
             # Load a template content if available
             initialContent = getNewFileTemplate()
-            if initialContent != "":
+            if initialContent:
                 editor.text = initialContent
                 lineNo = len(editor.lines)
                 editor.gotoLine(lineNo, len(editor.lines[lineNo - 1]) + 1)
@@ -509,10 +515,10 @@ class EditorsManager(QTabWidget):
         self.updateStatusBar()
         self.__cursorPositionChanged()
         editor.setFocus()
+        editor.updateSettings()
         newWidget.updateStatus()
         self.setWidgetDebugMode(newWidget)
 
-        # Here: mime will always be x-python
         self.sigFileTypeChanged.emit(newWidget.getShortName(),
                                      newWidget.getUUID(),
                                      editor.mime if editor.mime else '')
@@ -756,7 +762,7 @@ class EditorsManager(QTabWidget):
         for index in range(self.count()):
             items.append([self.tabIcon(index), self.tabText(index), index])
 
-        if Settings().tablistsortalpha:
+        if Settings()['tablistsortalpha']:
             items.sort(key=lambda c: c[1])
         else:
             items.sort(key=lambda c: c[2])
@@ -772,11 +778,11 @@ class EditorsManager(QTabWidget):
 
     def __navigationMenuTriggered(self, act):
         """Handles the navigation button menu selection"""
-        index, isOK = act.data().toInt()
-        if not isOK or self.currentIndex() == index:
+        index = act.data()
+        if self.currentIndex() == index:
             return
 
-        if Settings().taborderpreserved:
+        if Settings()['taborderpreserved']:
             self.activateTab(index)
         else:
             if index != 0:
@@ -1029,44 +1035,9 @@ class EditorsManager(QTabWidget):
 
     def showDisassembly(self, scriptPath, disassembly):
         """Shows the disassembled code"""
-        if self.widget(0) == self.__welcomeWidget:
-            # It is the only welcome widget on the screen
-            self.removeTab(0)
-            self.setTabsClosable(True)
-
-        newWidget = TextEditorTabWidget(self, self.__debugger)
-        newWidget.sigReloadRequest.connect(self.onReload)
-        newWidget.reloadAllNonModifiedRequest.connect(
-            self.onReloadAllNonModified)
-        newWidget.sigTabRunChanged.connect(self.onTabRunChanged)
-        editor = newWidget.getEditor()
-
-        newWidget.setShortName(self.getNewDisassemblyName(scriptPath))
-
-        editor.mime = 'text/plain'
-        editor.text = disassembly
-        editor.eol = detectEolString(editor.text)
-        editor.encoding = None
-
-        editor.document().setModified(False)
-
-        self.insertTab(0, newWidget, newWidget.getShortName())
-        self.setTabToolTip(0, 'Disassembly for ' +
-                           os.path.basename(scriptPath))
-        self.activateTab(0)
-
-        self.__updateControls()
-        self.__connectEditorWidget(newWidget)
-        self.updateStatusBar()
-        self.__cursorPositionChanged()
-        editor.setFocus()
-        newWidget.updateStatus()
-        self.setWidgetDebugMode(newWidget)
-
-        # Here: mime will always be text/plain
-        self.sigFileTypeChanged.emit(newWidget.getShortName(),
-                                     newWidget.getUUID(),
-                                     editor.mime if editor.mime else '')
+        self.newTabClicked(disassembly,
+                           self.getNewDisassemblyName(scriptPath),
+                           mime = 'text/plain')
 
     def showAnnotated(self, fileName, text, lineRevisions, revisionInfo):
         """Shows the annotated text widget"""
@@ -1782,10 +1753,21 @@ class EditorsManager(QTabWidget):
             mainWindow.sbLine.setText('Line: n/a')
 
         rwMode = currentWidget.getRWMode()
-        mainWindow.sbWritable.setText(rwMode if rwMode else 'n/a')
+        if rwMode:
+            mainWindow.sbWritable.setText(rwMode)
+            mainWindow.sbWritable.setToolTip('')
+        else:
+            mainWindow.sbWritable.setText('   ')
+            mainWindow.sbWritable.setToolTip('RW mode: unknown')
 
         enc = currentWidget.getEncoding()
-        mainWindow.sbEncoding.setText(enc if enc else 'n/a')
+        if enc:
+            mainWindow.sbEncoding.setText(enc)
+            mainWindow.sbEncoding.setToolTip('')
+        else:
+            mainWindow.sbEncoding.setText('   ')
+            mainWindow.sbEncoding.setToolTip('Encoding: unknown')
+
         fName = currentWidget.getFileName()
         if fName:
             mainWindow.sbFile.setPath("File: " + fName)
@@ -1893,7 +1875,7 @@ class EditorsManager(QTabWidget):
         if GlobalData().project.isLoaded():
             GlobalData().project.tabStatus = self.getTabsStatus()
         else:
-            Settings().tabsStatus = self.getTabsStatus()
+            Settings().tabStatus = self.getTabsStatus()
 
     def getTabsStatus(self):
         """Provides all the tabs status and cursor positions"""
