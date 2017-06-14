@@ -49,48 +49,49 @@ class BreakPointModel(QAbstractItemModel):
             Qt.Alignment(Qt.AlignRight)]
         self.__columnCount = len(self.header)
 
-    def columnCount(self, parent=QModelIndex()):
+    def columnCount(self, parent=None):
         """Provides the current column count"""
         return self.__columnCount
 
-    def rowCount(self, parent=QModelIndex()):
+    def rowCount(self, parent=None):
         """Provides the current row count"""
         # we do not have a tree, parent should always be invalid
-        if not parent.isValid():
+        if parent is None or not parent.isValid():
             return len(self.breakpoints)
         return 0
 
-    def data(self, index, role):
+    def data(self, index, role=Qt.DisplayRole):
         """Provides the requested data"""
         if not index.isValid():
             return None
 
+        column = index.column()
         if role == Qt.DisplayRole:
-            column = index.column()
+            if column in [0, 1, 4]:
+                return self.breakpoints[index.row()][column]
+        elif role == Qt.CheckStateRole:
+            if column in [2, 3]:
+                return self.breakpoints[index.row()][column]
+        elif role == Qt.ToolTipRole:
+            if column in [0, 1]:
+                return self.breakpoints[index.row()][column]
+        elif role == Qt.TextAlignmentRole:
             if column < self.__columnCount:
-                bpoint = self.breakpoints[index.row()]
-                if column == 0:
-                    value = bpoint.getLocation()
-                elif column == 1:
-                    value = bpoint.getCondition()
-                elif column == 2:
-                    value = bpoint.isTemporary()
-                elif column == 3:
-                    value = bpoint.isEnabled()
-                else:
-                    value = bpoint.getIgnoreCount()
-                return value
-        if role == Qt.ToolTipRole:
-            column = index.column()
-            if column < self.__columnCount:
-                return self.breakpoints[index.row()].getTooltip()
-            return None
-
-        if role == Qt.TextAlignmentRole:
-            if index.column() < self.__columnCount:
-                return self.alignments[index.column()]
-
+                return self.alignments[column]
         return None
+
+    def setData(self, index, value, role=Qt.EditRole):
+        """Changes data in the model"""
+        if not index.isValid() or \
+           index.column() >= self.__columnCount or \
+           index.row() >= len(self.breakpints):
+            return False
+
+        self.sigDataAboutToBeChanged.emit(index, index)
+        self.breakpoints[index.row()][index.column()] = value
+        self.dataChanged.emit(index, index)
+        self.sigBreakpoinsChanged.emit()
+        return True
 
     def flags(self, index):
         """Provides the item flags"""
@@ -106,9 +107,9 @@ class BreakPointModel(QAbstractItemModel):
             return ""
         return None
 
-    def index(self, row, column, parent=QModelIndex()):
+    def index(self, row, column, parent=None):
         """Creates an index"""
-        if parent.isValid() or \
+        if (parent and parent.isValid()) or \
            row < 0 or row >= len(self.breakpoints) or \
            column < 0 or column >= len(self.header):
             return QModelIndex()
@@ -119,9 +120,9 @@ class BreakPointModel(QAbstractItemModel):
         """Provides the parent index"""
         return QModelIndex()
 
-    def hasChildren(self, parent=QModelIndex()):
+    def hasChildren(self, parent=None):
         """Checks if there are child items"""
-        if not parent.isValid():
+        if parent is None or not parent.isValid():
             return len(self.breakpoints) > 0
         return False
 
