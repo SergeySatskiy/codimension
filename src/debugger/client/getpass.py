@@ -59,12 +59,8 @@ def getuser():
 
 
 def getpass(prompt='Password: '):
-    """Function to prompt for a password, with echo turned off.
-
-    @param prompt Prompt to be shown to the user (string)
-    @return Password entered by the user (string)
-    """
-    return raw_input(prompt, 0)
+    """Function to prompt for a password, with echo turned off"""
+    return input(prompt, False)
 
 
 unix_getpass = getpass
