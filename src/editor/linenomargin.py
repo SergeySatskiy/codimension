@@ -44,7 +44,7 @@ class CDMLineNumberMargin(QWidget):
         QWidget.__init__(self, parent)
 
         extendInstance(self, MarginBase)
-        MarginBase.__init__(self, parent, "cdm_line_number_margin", 0)
+        MarginBase.__init__(self, parent, 'cdm_line_number_margin', 0)
 
         self.__bgColor = GlobalData().skin['marginPaper']
         self.__fgColor = GlobalData().skin['marginColor']

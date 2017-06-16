@@ -22,7 +22,7 @@
 
 import os.path
 import logging
-from ui.qt import (Qt, QTimer, pyqtSignal, QRect, QEvent, QModelIndex,
+from ui.qt import (Qt, QTimer, pyqtSignal, QRect, QEvent,
                    QCursor, QApplication, QTextOption, QAction)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.completer import CodeCompleter
@@ -35,17 +35,16 @@ from utils.encoding import (readEncodedFile, detectEolString,
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.diskvaluesrelay import setFileEncoding, getFileEncoding
 from autocomplete.bufferutils import (getContext, getPrefixAndObject,
-                                      getEditorTags, isStringLiteral,
+                                      getEditorTags,
                                       getCallPosition, getCommaCount)
 from autocomplete.completelists import (getCompletionList, getCalltipAndDoc,
                                         getDefinitionLocation, getOccurrences)
 from cdmbriefparser import getBriefModuleInfoFromMemory
-from debugger.bputils import getBreakpointLines
-from debugger.breakpoint import Breakpoint
 from .qpartwrap import QutepartWrapper
 from .editorcontextmenus import EditorContextMenuMixin
 from .linenomargin import CDMLineNumberMargin
 from .flakesmargin import CDMFlakesMargin
+from .bpmargin import CDMBreakpointMargin
 
 
 CTRL_SHIFT = int(Qt.ShiftModifier | Qt.ControlModifier)
@@ -70,24 +69,19 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
         self.setAttribute(Qt.WA_KeyCompression)
 
-        self.__debugger = debugger
-
         skin = GlobalData().skin
         self.setPaper(skin['nolexerPaper'])
         self.setColor(skin['nolexerColor'])
 
         self.onTextZoomChanged()
-        self.__initMargins()
+        self.__initMargins(debugger)
 
         # self.SCN_DOUBLECLICK.connect(self.__onDoubleClick)
         # self.cursorPositionChanged.connect(self._onCursorPositionChanged)
 
-        # self.SCN_MODIFIED.connect(self.__onSceneModified)
         self.__skipChangeCursor = False
 
         self.__openedLine = None
-
-        self.__breakpoints = {}         # marker handle -> Breakpoint
 
         self.setFocusPolicy(Qt.StrongFocus)
         self.indentWidth = 4
@@ -110,16 +104,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.__calltipTimer = QTimer(self)
         self.__calltipTimer.setSingleShot(True)
         self.__calltipTimer.timeout.connect(self.__onCalltipTimer)
-
-        # Breakpoint support
-        self.__inLinesChanged = False
-        if self.__debugger:
-            bpointModel = self.__debugger.getBreakPointModel()
-            bpointModel.rowsAboutToBeRemoved.connect(self.__deleteBreakPoints)
-            bpointModel.sigDataAboutToBeChanged.connect(
-                self.__breakPointDataAboutToBeChanged)
-            bpointModel.dataChanged.connect(self.__changeBreakPoints)
-            bpointModel.rowsInserted.connect(self.__addBreakPoints)
 
         self.__initHotKeys()
         self.installEventFilter(self)
@@ -243,11 +227,15 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             if navBar:
                 navBar.updateSettings()
 
-    def __initMargins(self):
+    def __initMargins(self, debugger):
         """Initializes the editor margins"""
         self.addMargin(CDMLineNumberMargin(self))
         self.addMargin(CDMFlakesMargin(self))
         self.getMargin('cdm_flakes_margin').setVisible(False)
+
+        if debugger:
+            self.addMargin(CDMBreakpointMargin(self, debugger))
+            self.getMargin('cdm_bpoint_margin').setVisible(False)
 
     def highlightCurrentDebuggerLine(self, line, asException):
         """Highlights the current debugger line"""
@@ -276,8 +264,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             elif content.endswith('\n') or content.endswith('\r'):
                 content = content[:-1]
 
-            # Hack to avoid breakpoints reset when a file is reload
-            self.__breakpoints = {}
             self.text = content
 
             self.mime, _, xmlSyntaxFile = getFileProperties(fileName)
@@ -914,292 +900,54 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.cursorPosition = editorLine, editorPos
         self.setFirstVisible(editorFirstVisible)
 
-    ## Break points support
-
-    def __breakpointMarginClicked(self, line):
-        """Margin has been clicked. Line is 1 - based"""
-        for handle, bpoint in self.__breakpoints.items():
-            if self.markerLine(handle) == line - 1:
-                # Breakpoint marker is set for this line already
-                self.__toggleBreakpoint(line)
-                return
-
-        # Check if it is a python file
-        if not self.isPythonBuffer():
-            return
-
-        fileName = self._parent.getFileName()
-        if fileName is None or fileName == "" or not os.path.isabs(fileName):
-            logging.warning("The buffer has to be saved "
-                            "before breakpoints could be set")
-            return
-
-
-        breakableLines = getBreakpointLines("", self.text, True, False)
-        if breakableLines is None:
-            logging.warning("The breakable lines could not be identified "
-                            "due to the file compilation errors. Fix the code "
-                            "first and try again.")
-            return
-
-        breakableLines = list(breakableLines)
-        breakableLines.sort()
-        if not breakableLines:
-            # There are no breakable lines
-            return
-
-        if line in breakableLines:
-            self.__toggleBreakpoint(line)
-            return
-
-        # There are breakable lines however the user requested a line which
-        # is not breakable
-        candidateLine = breakableLines[0]
-        if line < breakableLines[0]:
-            candidateLine = breakableLines[0]
-        elif line > breakableLines[-1]:
-            candidateLine = breakableLines[-1]
+    def setDebugMode(self, debugOn, disableEditing):
+        """Called to switch between debug/development"""
+        skin = GlobalData().skin
+        if debugOn:
+            if disableEditing:
+                self.setLinenoMarginBackgroundColor(skin['marginPaperDebug'])
+                self.setLinenoMarginForegroundColor(skin['marginColorDebug'])
+                self.setReadOnly(True)
         else:
-            direction = 0
-            if isStringLiteral(self,
-                               self.positionFromLineIndex(line - 1, 0)):
-                direction = 1
-            elif self.isLineEmpty(line):
-                direction = 1
-            else:
-                direction = -1
+            self.setLinenoMarginBackgroundColor(skin['marginPaper'])
+            self.setLinenoMarginForegroundColor(skin['marginColor'])
+            self.setReadOnly(False)
 
-            for breakableLine in breakableLines[1:]:
-                if direction > 0:
-                    if breakableLine > line:
-                        candidateLine = breakableLine
-                        break
-                else:
-                    if breakableLine < line:
-                        candidateLine = breakableLine
-                    else:
-                        break
-
-        if not self.isLineOnScreen(candidateLine - 1):
-            # The redirected breakpoint line is not on the screen, scroll it
-            self.ensureLineOnScreen(candidateLine - 1)
-            currentFirstVisible = self.firstVisibleLine()
-            requiredVisible = candidateLine - 2
-            if requiredVisible < 0:
-                requiredVisible = 0
-            self.scrollVertical(requiredVisible - currentFirstVisible)
-        self.__toggleBreakpoint(candidateLine)
-
-    def __toggleBreakpoint(self, line, temporary=False):
-        """Toggles the line breakpoint"""
-        fileName = self._parent.getFileName()
-        model = self.__debugger.getBreakPointModel()
-        for handle, bpoint in self.__breakpoints.items():
-            if self.markerLine(handle) == line - 1:
-                index = model.getBreakPointIndex(fileName, line)
-                if not model.isBreakPointTemporaryByIndex(index):
-                    model.deleteBreakPointByIndex(index)
-                    self.__addBreakpoint(line, True)
-                else:
-                    model.deleteBreakPointByIndex(index)
-                return
-        self.__addBreakpoint(line, temporary)
-
-    def __addBreakpoint(self, line, temporary):
-        """Adds a new breakpoint"""
-        # The prerequisites:
-        # - it is saved buffer
-        # - it is a python buffer
-        # - it is a breakable line
-        # are checked in the function
-        if not self._parent.isLineBreakable(line, True, True):
-            return
-
-        bpoint = Breakpoint(self._parent.getFileName(),
-                            line, "", temporary, True, 0)
-        self.__debugger.getBreakPointModel().addBreakpoint(bpoint)
-
-    def __deleteBreakPoints(self, parentIndex, start, end):
-        """Deletes breakpoints"""
-        bpointModel = self.__debugger.getBreakPointModel()
-        for row in range(start, end + 1):
-            index = bpointModel.index(row, 0, parentIndex)
-            bpoint = bpointModel.getBreakPointByIndex(index)
-            fileName = bpoint.getAbsoluteFileName()
-
-            if fileName == self._parent.getFileName():
-                self.clearBreakpoint(bpoint.getLineNumber())
-
-    def clearBreakpoint(self, line):
-        """Clears a breakpoint"""
-        if self.__inLinesChanged:
-            return
-
-        for handle, bpoint in self.__breakpoints.items():
-            if self.markerLine(handle) == line - 1:
-                del self.__breakpoints[handle]
-                self.markerDeleteHandle(handle)
-                return
-        # Ignore the request if not found
-
-    def __breakPointDataAboutToBeChanged(self, startIndex, endIndex):
-        """Handles the dataAboutToBeChanged signal of the breakpoint model"""
-        self.__deleteBreakPoints(QModelIndex(),
-                                 startIndex.row(), endIndex.row())
-
-    def __changeBreakPoints(self, startIndex, endIndex):
-        """Sets changed breakpoints"""
-        self.__addBreakPoints(QModelIndex(),
-                              startIndex.row(), endIndex.row())
-
-    def __addBreakPoints(self, parentIndex, start, end):
-        """Adds breakpoints"""
-        bpointModel = self.__debugger.getBreakPointModel()
-        for row in range(start, end + 1):
-            index = bpointModel.index(row, 0, parentIndex)
-            bpoint = bpointModel.getBreakPointByIndex(index)
-            fileName = bpoint.getAbsoluteFileName()
-
-            if fileName == self._parent.getFileName():
-                self.newBreakpointWithProperties(bpoint)
-
-    def newBreakpointWithProperties(self, bpoint):
-        """Sets a new breakpoint and its properties"""
-        if not bpoint.isEnabled():
-            marker = self.__disbpointMarker
-        elif bpoint.isTemporary():
-            marker = self.__tempbpointMarker
-        else:
-            marker = self.__bpointMarker
-
-        line = bpoint.getLineNumber()
-        if self.markersAtLine(line - 1) & self.__bpointMarginMask == 0:
-            handle = self.markerAdd(line - 1, marker)
-            self.__breakpoints[handle] = bpoint
+        bpointMargin = self.getMargin('cdm_bpoint_margin')
+        if bpointMargin:
+            bpointMargin.setDebugMode(debugOn, disableEditing)
 
     def restoreBreakpoints(self):
         """Restores the breakpoints"""
-        # self.markerDeleteAll(self.__bpointMarker)
-        # self.markerDeleteAll(self.__tempbpointMarker)
-        # self.markerDeleteAll(self.__disbpointMarker)
-        self.__addBreakPoints(QModelIndex(), 0,
-                              self.__debugger.getBreakPointModel().rowCount() - 1)
+        bpointMargin = self.getMargin('cdm_bpoint_margin')
+        if bpointMargin:
+            bpointMargin.restoreBreakpoints()
 
-    def __onSceneModified(self, position, modificationType, text,
-                          length, linesAdded, line, foldLevelNow,
-                          foldLevelPrev, token, annotationLinesAdded):
-        if not self.__breakpoints:
-            return
-
-        opLine, opIndex = self.lineIndexFromPosition(position)
-
-        if linesAdded == 0:
-            if self.isLineEmpty(opLine + 1):
-                self.__deleteBreakPointsInLineRange(opLine + 1, 1)
-            return
-
-        # We are interested in inserted or deleted lines
-        if linesAdded < 0:
-            # Some lines were deleted
-            linesDeleted = abs(linesAdded)
-            if opIndex != 0:
-                linesDeleted -= 1
-                if self.isLineEmpty(opLine + 1):
-                    self.__deleteBreakPointsInLineRange(opLine + 1, 1)
-                if linesDeleted == 0:
-                    self.__onLinesChanged(opLine + 1)
-                    return
-                opLine += 1
-
-            # Some lines were fully deleted
-            self.__deleteBreakPointsInLineRange(opLine + 1, linesDeleted)
-            self.__onLinesChanged(opLine + 1)
-        else:
-            # Some lines were added
-            self.__onLinesChanged(opLine + 1)
-
-    def __deleteBreakPointsInLineRange(self, startFrom, count):
-        """Deletes breakpoints which fall into the given lines range"""
-        toBeDeleted = []
-        limit = startFrom + count - 1
-        for handle, bpoint in self.__breakpoints.items():
-            bpointLine = bpoint.getLineNumber()
-            if bpointLine >= startFrom and bpointLine <= limit:
-                toBeDeleted.append(bpointLine)
-
-        if toBeDeleted:
-            model = self.__debugger.getBreakPointModel()
-            fileName = self._parent.getFileName()
-            for line in toBeDeleted:
-                index = model.getBreakPointIndex(fileName, line)
-                model.deleteBreakPointByIndex(index)
-
-    def deleteAllBreakpoints(self):
-        """Deletes all the breakpoints in the buffer"""
-        self.__deleteBreakPointsInLineRange(1, self.lines())
+    def isLineBreakable(self):
+        """True if a line is breakable"""
+        bpointMargin = self.getMargin('cdm_bpoint_margin')
+        if bpointMargin:
+            return bpointMargin.isLineBreakable()
+        return False
 
     def validateBreakpoints(self):
         """Checks breakpoints and deletes those which are invalid"""
-        if not self.__breakpoints:
-            return
-
-        fileName = self._parent.getFileName()
-        breakableLines = getBreakpointLines(fileName, self.text,
-                                            True, False)
-
-        toBeDeleted = []
-        for handle, bpoint in self.__breakpoints.items():
-            bpointLine = bpoint.getLineNumber()
-            if breakableLines is None or bpointLine not in breakableLines:
-                toBeDeleted.append(bpointLine)
-
-        if toBeDeleted:
-            model = self.__debugger.getBreakPointModel()
-            for line in toBeDeleted:
-                if breakableLines is None:
-                    logging.warning("Breakpoint at " + fileName + ":" +
-                                    str(line) + " does not point to a "
-                                    "breakable line (file is not compilable). "
-                                    "The breakpoint is deleted.")
-                else:
-                    logging.warning("Breakpoint at " + fileName + ":" +
-                                    str(line) + " does not point to a breakable "
-                                    "line anymore. The breakpoint is deleted.")
-                index = model.getBreakPointIndex(fileName, line)
-                model.deleteBreakPointByIndex(index)
-
-    def __onLinesChanged(self, startFrom):
-        """Tracks breakpoints when some lines were inserted.
-           startFrom is 1 based
-        """
-        if self.__breakpoints:
-            bpointModel = self.__debugger.getBreakPointModel()
-            bps = []    # list of breakpoints
-            for handle, bpoint in self.__breakpoints.items():
-                line = self.markerLine(handle) + 1
-                if line < startFrom:
-                    continue
-
-                self.markerDeleteHandle(handle)
-                bps.append((bpoint, line, handle))
-
-            self.__inLinesChanged = True
-            for bp, newLineNumber, oldHandle in bps:
-                del self.__breakpoints[oldHandle]
-
-                index = bpointModel.getBreakPointIndex(bp.getAbsoluteFileName(),
-                                                       bp.getLineNumber())
-                bpointModel.updateLineNumberByIndex(index, newLineNumber)
-            self.__inLinesChanged = False
+        bpointMargin = self.getMargin('cdm_bpoint_margin')
+        if bpointMargin:
+            bpointMargin.validateBreakpoints()
 
     def isPythonBuffer(self):
         """True if it is a python buffer"""
         return isPythonMime(self.mime)
 
-    def setMarginsBackgroundColor(self, color):
+    def setLinenoMarginBackgroundColor(self, color):
         """Sets the margins background"""
-        pass
+        linenoMargin = self.getMargin('cdm_line_number_margin')
+        if linenoMargin:
+            linenoMargin.setBackgroundColor(color)
 
-    def setMarginsForegroundColor(self, color):
-        """Sets the margins foreground"""
-        pass
+    def setLinenoMarginForegroundColor(self, color):
+        """Sets the lineno margin foreground color"""
+        linenoMargin = self.getMargin('cdm_line_number_margin')
+        if linenoMargin:
+            linenoMargin.setForegroundColor(color)

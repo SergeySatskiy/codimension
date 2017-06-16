@@ -41,6 +41,8 @@ _DEFAULT_SKIN_SETTINGS = {
     'flakesMarginPaper': QColor(208, 208, 208, 255),
     'flakesMarginPaperDebug':  QColor(255, 228, 228, 255),
 
+    'bpointsMarginPaper': QColor(192, 192, 192, 255),
+
     'findNoMatchPaper': QColor(255, 193, 204, 100),
     'findMatchPaper': QColor(164, 198, 57, 100),
     'findInvalidPaper': QColor(228, 208, 10, 100),

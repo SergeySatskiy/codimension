@@ -168,6 +168,7 @@ _DEFAULT_SETTINGS = {
     'maxRecentFiles': 32,
     'maxSearchEntries': 32,
     'maxHighlightedMatches': 256,
+    'maxBreakpoints': 63,               # per file
     'encoding': 'utf-8',
 
     # The IO redirect console

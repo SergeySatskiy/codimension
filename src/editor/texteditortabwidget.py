@@ -42,7 +42,6 @@ from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
 from autocomplete.bufferutils import isImportLine
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from profiling.profui import ProfilingProgressDialog
-from debugger.bputils import getBreakpointLines
 from .flowuiwidget import FlowUIWidget
 from .navbar import NavigationBar
 from .texteditor import TextEditor
@@ -80,7 +79,6 @@ class TextEditorTabWidget(QWidget):
         self.__reloadDlgShown = False
 
         self.__debugMode = False
-        self.__breakableLines = None
 
         self.__vcsStatus = None
 
@@ -195,13 +193,13 @@ class TextEditorTabWidget(QWidget):
 
         # Disassembling
         disasmScriptMenu = QMenu(self)
-        disasmAct0 = disasmScriptMenu.addAction(
+        disasmScriptMenu.addAction(
             getIcon(''), 'Disassembly (no optimization)',
             self.__editor._onDisasm0)
-        disasmAct0 = disasmScriptMenu.addAction(
+        disasmScriptMenu.addAction(
             getIcon(''), 'Disassembly (optimization level 1)',
             self.__editor._onDisasm1)
-        disasmAct0 = disasmScriptMenu.addAction(
+        disasmScriptMenu.addAction(
             getIcon(''), 'Disassembly (optimization level 2)',
             self.__editor._onDisasm2)
         self.disasmScriptButton = QToolButton(self)
@@ -762,16 +760,10 @@ class TextEditorTabWidget(QWidget):
         """Called to switch debug/development"""
         skin = GlobalData().skin
         self.__debugMode = debugOn
-        self.__breakableLines = None
+        self.__editor.setDebugMode(debugOn, disableEditing)
 
         if debugOn:
             if disableEditing:
-                self.__editor.setMarginsBackgroundColor(
-                    skin['marginPaperDebug'])
-                self.__editor.setMarginsForegroundColor(
-                    skin['marginColorDebug'])
-                self.__editor.setReadOnly(True)
-
                 # Undo/redo
                 self.__undoButton.setEnabled(False)
                 self.__redoButton.setEnabled(False)
@@ -780,10 +772,6 @@ class TextEditorTabWidget(QWidget):
                 self.removeTrailingSpacesButton.setEnabled(False)
                 self.expandTabsButton.setEnabled(False)
         else:
-            self.__editor.setMarginsBackgroundColor(skin['marginPaper'])
-            self.__editor.setMarginsForegroundColor(skin['marginColor'])
-            self.__editor.setReadOnly(False)
-
             # Undo/redo
             self.__undoButton.setEnabled(
                 self.__editor.document().isUndoAvailable())
@@ -799,31 +787,8 @@ class TextEditorTabWidget(QWidget):
 
     def isLineBreakable(self, line=None, enforceRecalc=False,
                         enforceSure=False):
-        """Returns True if a breakpoint could be placed on the current line"""
-        if self.__fileName is None or \
-           self.__fileName == "" or \
-           not os.path.isabs(self.__fileName):
-            return False
-        if not isPythonMime(self.getMime()):
-            return False
-
-        if line is None:
-            line = self.getLine() + 1
-        if self.__breakableLines is not None and not enforceRecalc:
-            return line in self.__breakableLines
-
-        self.__breakableLines = getBreakpointLines(self.getFileName(),
-                                                   self.__editor.text,
-                                                   enforceRecalc)
-
-        if self.__breakableLines is None:
-            if not enforceSure:
-                # Be on the safe side - if there is a problem of
-                # getting the breakable lines, let the user decide
-                return True
-            return False
-
-        return line in self.__breakableLines
+        """True if a breakpoint could be placed on the current line"""
+        return self.__editor.isLineBreakable()
 
     def getVCSStatus(self):
         """Provides the VCS status"""
