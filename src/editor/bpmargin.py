@@ -24,7 +24,7 @@ import os.path
 import qutepart
 import logging
 from sys import maxsize
-from ui.qt import QWidget, QPainter, QModelIndex
+from ui.qt import QWidget, QPainter, QModelIndex, QToolTip
 from qutepart.margins import MarginBase
 from utils.misc import extendInstance
 from utils.pixmapcache import getPixmap
@@ -149,6 +149,35 @@ class CDMBreakpointMargin(QWidget):
                     painter.drawPixmap(0, yPos, pixmap)
 
             top += height
+
+    def mouseMoveEvent(self, event):
+        """Tooltips for the marks"""
+        if self.__breakpoints or self.excptionLine or self.currentDebugLine:
+            textCursor = self._qpart.cursorForPosition(event.pos())
+            block = textCursor.block()
+            blockNumber = textCursor.blockNumber()
+            lineNo = blockNumber + 1
+            msg = None
+            if lineNo == self.excptionLine:
+                msg = 'Exception line'
+            elif lineNo == self.currentDebugLine:
+                msg = 'Current debugger line'
+            else:
+                blockValue = self.getBlockValue(block)
+                if blockValue != 0:
+                    bpoint = self.__breakpoints[blockValue]
+                    if not bpoint.isEnabled():
+                        msg = 'Disabled breakpoint'
+                    elif bpoint.isTemporary():
+                        msg = 'Temporary breakpoint'
+                    else:
+                        msg = 'Regular breakpoint'
+            if msg:
+                QToolTip.showText(event.globalPos(), msg)
+            else:
+                QToolTip.hideText()
+        return QWidget.mouseMoveEvent(self, event)
+
 
     def width(self):
         """Desired width"""
@@ -298,7 +327,7 @@ class CDMBreakpointMargin(QWidget):
                 return vacantHandle
             vacantHandle += 1
 
-    def __addBreakpoint(self, line, temporary):
+    def __addBreakpoint(self, line, temporary, enabled=True):
         """Adds a new breakpoint"""
         # The prerequisites:
         # - it is saved buffer
@@ -309,7 +338,7 @@ class CDMBreakpointMargin(QWidget):
             return
 
         fileName = self._qpart._parent.getFileName()
-        bpoint = Breakpoint(fileName, line, "", temporary, True, 0)
+        bpoint = Breakpoint(fileName, line, "", temporary, enabled, 0)
         self.__debugger.getBreakPointModel().addBreakpoint(bpoint)
 
     def __addBreakPoints(self, parentIndex, start, end):
@@ -351,18 +380,21 @@ class CDMBreakpointMargin(QWidget):
 
     def __toggleBreakpoint(self, line, temporary=False):
         """Toggles the line breakpoint"""
+
+        # Clicking loop: none->regular->temporary->disabled->none
         fileName = self._qpart._parent.getFileName()
         model = self.__debugger.getBreakPointModel()
         for _, bpoint in self.__breakpoints.items():
             if bpoint.getLineNumber() == line:
                 index = model.getBreakPointIndex(fileName, line)
-                if not model.isBreakPointTemporaryByIndex(index):
-                    model.deleteBreakPointByIndex(index)
-                    self.__addBreakpoint(line, True)
-                else:
-                    model.deleteBreakPointByIndex(index)
+                model.deleteBreakPointByIndex(index)
+                if not bpoint.isEnabled():
                     self.setBlockValue(
                         self._qpart.document().findBlockByNumber(line - 1), 0)
+                elif bpoint.isTemporary():
+                    self.__addBreakpoint(line, False, False)
+                else:
+                    self.__addBreakpoint(line, True)
                 return
         self.__addBreakpoint(line, temporary)
 

@@ -28,6 +28,13 @@
 from ui.qt import pyqtSignal, QAbstractItemModel, Qt, QModelIndex
 
 
+COLUMN_LOCATION = 0
+COLUMN_CONDITION = 1
+COLUMN_TEMPORARY = 2
+COLUMN_ENABLED = 3
+COLUMN_IGNORE_COUNT = 4
+
+
 class BreakPointModel(QAbstractItemModel):
 
     """Class implementing a custom model for breakpoints"""
@@ -87,10 +94,34 @@ class BreakPointModel(QAbstractItemModel):
                 return self.alignments[column]
         return None
 
+    def setData(self, index, _, role=Qt.EditRole):
+        """Change data in the model"""
+        if index.isValid():
+            if role == Qt.CheckStateRole:
+                column = index.column()
+                if column in [COLUMN_TEMPORARY, COLUMN_ENABLED]:
+                    # Flip the boolean
+                    row = index.row()
+                    bp = self.breakpoints[row]
+
+                    self.sigDataAboutToBeChanged.emit(index, index)
+                    if column == COLUMN_TEMPORARY:
+                        bp.setTemporary(not bp.isTemporary())
+                    else:
+                        bp.setEnabled(not bp.isEnabled())
+                    self.dataChanged.emit(index, index)
+                    self.sigBreakpoinsChanged.emit()
+                    return True
+        return False
+
     def flags(self, index):
         """Provides the item flags"""
         if not index.isValid():
             return Qt.ItemIsEnabled
+
+        column = index.column()
+        if column in [COLUMN_TEMPORARY, COLUMN_ENABLED]:
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsUserCheckable
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):

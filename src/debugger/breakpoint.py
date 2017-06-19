@@ -115,6 +115,10 @@ class Breakpoint:
         """True if temporary"""
         return self.__temporary
 
+    def setTemporary(self, temp):
+        """Sets the new value"""
+        self.__temporary = temp
+
     def isEnabled(self):
         """True if enabled"""
         return self.__enabled
