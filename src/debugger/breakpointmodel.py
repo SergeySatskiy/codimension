@@ -28,10 +28,10 @@
 from ui.qt import pyqtSignal, QAbstractItemModel, Qt, QModelIndex
 
 
-COLUMN_LOCATION = 0
-COLUMN_CONDITION = 1
-COLUMN_TEMPORARY = 2
-COLUMN_ENABLED = 3
+COLUMN_LOCATION = 2
+COLUMN_CONDITION = 3
+COLUMN_TEMPORARY = 1
+COLUMN_ENABLED = 0
 COLUMN_IGNORE_COUNT = 4
 
 
@@ -46,15 +46,14 @@ class BreakPointModel(QAbstractItemModel):
         QAbstractItemModel.__init__(self, parent)
 
         self.breakpoints = []
-        self.header = ['File:line', 'Condition', 'Temporary',
-                       'Enabled', 'Ignore Count']
-        self.alignments = [
-            Qt.Alignment(Qt.AlignLeft),
-            Qt.Alignment(Qt.AlignLeft),
-            Qt.Alignment(Qt.AlignHCenter),
-            Qt.Alignment(Qt.AlignHCenter),
-            Qt.Alignment(Qt.AlignRight)]
-        self.__columnCount = len(self.header)
+
+        self.__fields = {
+            COLUMN_LOCATION: ['File:line', Qt.Alignment(Qt.AlignLeft)],
+            COLUMN_CONDITION: ['Condition', Qt.Alignment(Qt.AlignLeft)],
+            COLUMN_TEMPORARY: ['T', Qt.Alignment(Qt.AlignHCenter)],
+            COLUMN_ENABLED: ['E', Qt.Alignment(Qt.AlignHCenter)],
+            COLUMN_IGNORE_COUNT: ['Ignore Count', Qt.Alignment(Qt.AlignRight)]}
+        self.__columnCount = len(self.__fields)
 
     def columnCount(self, parent=None):
         """Provides the current column count"""
@@ -75,23 +74,23 @@ class BreakPointModel(QAbstractItemModel):
         column = index.column()
         row = index.row()
         if role == Qt.DisplayRole:
-            if column == 0:
+            if column == COLUMN_LOCATION:
                 return self.breakpoints[row].getLocation()
-            if column == 1:
+            if column == COLUMN_CONDITION:
                 return self.breakpoints[row].getCondition()
-            if column == 4:
+            if column == COLUMN_IGNORE_COUNT:
                 return self.breakpoints[row].getIgnoreCount()
         elif role == Qt.CheckStateRole:
-            if column == 2:
+            if column == COLUMN_TEMPORARY:
                 return self.breakpoints[row].isTemporary()
-            if column == 3:
+            if column == COLUMN_ENABLED:
                 return self.breakpoints[row].isEnabled()
         elif role == Qt.ToolTipRole:
             if column < self.__columnCount:
                 return self.breakpoints[row].getTooltip()
         elif role == Qt.TextAlignmentRole:
             if column < self.__columnCount:
-                return self.alignments[column]
+                return self.__fields[column][1]
         return None
 
     def setData(self, index, _, role=Qt.EditRole):
@@ -128,7 +127,7 @@ class BreakPointModel(QAbstractItemModel):
         """Provides header data"""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             if section < self.__columnCount:
-                return self.header[section]
+                return self.__fields[section][0]
             return ""
         return None
 
@@ -136,7 +135,7 @@ class BreakPointModel(QAbstractItemModel):
         """Creates an index"""
         if (parent and parent.isValid()) or \
            row < 0 or row >= len(self.breakpoints) or \
-           column < 0 or column >= len(self.header):
+           column < 0 or column >= self.__columnCount:
             return QModelIndex()
 
         return self.createIndex(row, column, self.breakpoints[row])

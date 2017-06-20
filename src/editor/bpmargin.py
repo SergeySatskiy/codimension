@@ -23,6 +23,7 @@
 import os.path
 import qutepart
 import logging
+import math
 from sys import maxsize
 from ui.qt import QWidget, QPainter, QModelIndex, QToolTip
 from qutepart.margins import MarginBase
@@ -145,8 +146,13 @@ class CDMBreakpointMargin(QWidget):
                     pixmap, height = self.__marks[markType]
 
                 if pixmap:
-                    yPos = top + ((oneLineHeight - height) / 2)
-                    painter.drawPixmap(0, yPos, pixmap)
+                    if height <= oneLineHeight:
+                        yPos = top + ((oneLineHeight - height) / 2)
+                        painter.drawPixmap(0, yPos, pixmap)
+                    else:
+                        xPos = math.ceil((16 - oneLineHeight) / 2)
+                        painter.drawPixmap(xPos, top, oneLineHeight,
+                                           oneLineHeight, pixmap)
 
             top += height
 
@@ -488,10 +494,21 @@ class CDMBreakpointMargin(QWidget):
         oldSet = set(self.__breakpoints.keys())
 
         currentSet = set()
+        currentHandleToLine = {}
         startBlock = self._qpart.document().firstBlock()
         for block in qutepart.iterateBlocksFrom(startBlock):
-            currentSet.add(self.getBlockValue(block))
+            handle = self.getBlockValue(block)
+            if handle != 0:
+                currentSet.add(handle)
+                currentHandleToLine[handle] = block.blockNumber() + 1
 
         deletedHandles = oldSet - currentSet
-        print('Deleted breakpoints: ' + str(deletedHandles))
+
+        changedLineHandles = set()
+        for cHandle, cLine in currentHandleToLine.items():
+            if self.__breakpoints[cHandle].getLineNumber() != cLine:
+                changedLineHandles.add(cHandle)
+
+        print('Deleted breakpoint handles: ' + str(deletedHandles))
+        print('changed line breakpoint handles: ' + str(changedLineHandles))
 

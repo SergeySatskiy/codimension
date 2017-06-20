@@ -33,6 +33,7 @@ from utils.project import CodimensionProject
 from .editbreakpoint import BreakpointEditDialog
 from .breakpoint import Breakpoint
 from .bputils import getBreakpointLines
+from .breakpointmodel import COLUMN_TEMPORARY, COLUMN_ENABLED, COLUMN_LOCATION
 
 
 class BreakPointView(QTreeView):
@@ -70,7 +71,7 @@ class BreakPointView(QTreeView):
         QTreeView.setModel(self, self.sortingModel)
 
         header = self.header()
-        header.setSortIndicator(0, Qt.AscendingOrder)
+        header.setSortIndicator(COLUMN_LOCATION, Qt.AscendingOrder)
         header.setSortIndicatorShown(True)
         header.setSectionsClickable(True)
 
@@ -84,8 +85,10 @@ class BreakPointView(QTreeView):
 
     def __resizeColumns(self):
         """Resizes the view when items get added, edited or deleted"""
-        self.header().resizeSections(QHeaderView.ResizeToContents)
         self.header().setStretchLastSection(True)
+        self.header().resizeSections(QHeaderView.ResizeToContents)
+        self.header().resizeSection(COLUMN_TEMPORARY, 22)
+        self.header().resizeSection(COLUMN_ENABLED, 22)
 
     def __resort(self):
         """Resorts the tree"""
