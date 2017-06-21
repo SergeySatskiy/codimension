@@ -29,6 +29,16 @@
 # The address used for debugger/client communications.
 DebugAddress = '127.0.0.1'
 
+METHOD_CLIENT_OUTPUT = 'ClientOutput'
+
+
+
+
+
+
+
+
+
 # The protocol "words".
 RequestOK = '>OK?<'
 RequestContinue = '>Continue<'
