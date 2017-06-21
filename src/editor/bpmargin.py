@@ -75,6 +75,7 @@ class CDMBreakpointMargin(QWidget):
         self.__debugger = debugger
         self.__breakpoints = {}     # block handle -> Breakpoint instance
         self.__breakableLines = None
+        self.__maxBreakpoints = Settings()['maxBreakpoints']
 
         self.currentDebugLine = None
         self.excptionLine = None
@@ -402,7 +403,12 @@ class CDMBreakpointMargin(QWidget):
                 else:
                     self.__addBreakpoint(line, True)
                 return
-        self.__addBreakpoint(line, temporary)
+        if len(self.__breakpoints) < self.__maxBreakpoints:
+            self.__addBreakpoint(line, temporary)
+        else:
+            logging.error('Max breakpoint number per file (' +
+                          str(self.__maxBreakpoints) +
+                          ') has been reached. The breakpoint is not added.')
 
     def __deleteBreakPointsInLineRange(self, startFrom, count):
         """Deletes breakpoints which fall into the given lines range"""
@@ -509,6 +515,19 @@ class CDMBreakpointMargin(QWidget):
             if self.__breakpoints[cHandle].getLineNumber() != cLine:
                 changedLineHandles.add(cHandle)
 
-        print('Deleted breakpoint handles: ' + str(deletedHandles))
-        print('changed line breakpoint handles: ' + str(changedLineHandles))
+        if deletedHandles or changedLineHandles:
+            fileName = self._qpart._parent.getFileName()
+            model = self.__debugger.getBreakPointModel()
 
+            for deletedHandle in deletedHandles:
+                deletedBP = self.__breakpoints[deletedHandle]
+                deletedLine = deletedBP.getLineNumber()
+                del self.__breakpoints[deletedHandle]
+                index = model.getBreakPointIndex(fileName, deletedLine)
+                model.deleteBreakPointByIndex(index)
+
+            for changedHandle in changedLineHandles:
+                newLineNo = currentHandleToLine[changedHandle]
+                self.__breakpoints[changedHandle].updateLineNumber(newLineNo)
+                index = model.getBreakPointIndex(fileName, newLineNo)
+                model.updateLineNumberByIndex(index, newLineNo)
