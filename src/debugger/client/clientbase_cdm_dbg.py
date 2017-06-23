@@ -54,68 +54,50 @@ from .base_cdm_dbg import setRecursionLimit
 from .asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
 from .outredir_cdm_dbg import OutStreamRedirector, OutStreamCollector
 
-DebugClientInstance = None
+
+DEBUG_CLIENT_INSTANCE = None
 
 
-def debugClientRawInput(prompt='', echo=True):
-    """Replacement for the standard raw_input builtin"""
-    if DebugClientInstance is None or not DebugClientInstance.redirect:
-        return DebugClientOrigRawInput(prompt)
-    return DebugClientInstance.raw_input(prompt, echo)
-
-
-# Use our own raw_input().
-try:
-    DebugClientOrigRawInput = __builtins__.__dict__['raw_input']
-    __builtins__.__dict__['raw_input'] = debugClientRawInput
-except (AttributeError, KeyError):
-    import __main__
-    DebugClientOrigRawInput = __main__.__builtins__.__dict__['raw_input']
-    __main__.__builtins__.__dict__['raw_input'] = debugClientRawInput
-
-
-def debugClientInput(prompt=""):
-    """Replacement for the standard input builtin.
-       This function works with the split debugger.
-    """
-    if DebugClientInstance is None or DebugClientInstance.redirect == 0:
-        return DebugClientOrigInput(prompt)
-    return DebugClientInstance.input(prompt)
+def debugClientInput(prompt="", echo=True):
+    """Replacement for the standard input builtin"""
+    if DEBUG_CLIENT_INSTANCE is None or not DEBUG_CLIENT_INSTANCE.redirect:
+        return DEBUG_CLIENT_ORIG_INPUT(prompt)
+    return DEBUG_CLIENT_INSTANCE.input(prompt, echo)
 
 
 # Use our own input().
 try:
-    DebugClientOrigInput = __builtins__.__dict__['input']
+    DEBUG_CLIENT_ORIG_INPUT = __builtins__.__dict__['input']
     __builtins__.__dict__['input'] = debugClientInput
 except (AttributeError, KeyError):
     import __main__
-    DebugClientOrigInput = __main__.__builtins__.__dict__['input']
+    DEBUG_CLIENT_ORIG_INPUT = __main__.__builtins__.__dict__['input']
     __main__.__builtins__.__dict__['input'] = debugClientInput
 
 
 def debugClientFork():
     """Replacement for the standard os.fork()"""
-    if DebugClientInstance is None:
-        return DebugClientOrigFork()
-    return DebugClientInstance.fork()
+    if DEBUG_CLIENT_INSTANCE is None:
+        return DEBUG_CLIENT_ORIG_FORK()
+    return DEBUG_CLIENT_INSTANCE.fork()
 
 
 # use our own fork().
 if 'fork' in dir(os):
-    DebugClientOrigFork = os.fork
+    DEBUG_CLIENT_ORIG_FORK = os.fork
     os.fork = debugClientFork
 
 
 def debugClientClose(filedesc):
     """Replacement for the standard os.close(fd)"""
-    if DebugClientInstance is None:
-        DebugClientOrigClose(filedesc)
-    DebugClientInstance.close(filedesc)
+    if DEBUG_CLIENT_INSTANCE is None:
+        return DEBUG_CLIENT_ORIG_CLOSE(filedesc)
+    return DEBUG_CLIENT_INSTANCE.close(filedesc)
 
 
 # use our own close()
 if 'close' in dir(os):
-    DebugClientOrigClose = os.close
+    DEBUG_CLIENT_ORIG_CLOSE = os.close
     os.close = debugClientClose
 
 
@@ -123,17 +105,18 @@ def debugClientSetRecursionLimit(limit):
     """Replacement for the standard sys.setrecursionlimit(limit)"""
     rlimit = max(limit, 64)
     setRecursionLimit(rlimit)
-    DebugClientOrigSetRecursionLimit(rlimit + 64)
+    DEBUG_CLIENT_ORIG_SET_RECURSION_LIMIT(rlimit + 64)
 
 
 # use our own setrecursionlimit().
 if 'setrecursionlimit' in dir(sys):
-    DebugClientOrigSetRecursionLimit = sys.setrecursionlimit
+    DEBUG_CLIENT_ORIG_SET_RECURSION_LIMIT = sys.setrecursionlimit
     sys.setrecursionlimit = debugClientSetRecursionLimit
     debugClientSetRecursionLimit(sys.getrecursionlimit())
 
 
-class DebugClientBase():
+class DebugClientBase(object):
+
     """Class implementing the client side of the debugger.
 
     It provides access to the Python interpeter from a debugger running in
@@ -148,22 +131,19 @@ class DebugClientBase():
     being debugged closing or crashing.
 
     Note: This class is meant to be subclassed by individual
-    DebugClient classes. Do not instantiate it directly."""
+    DebugClient classes. Do not instantiate it directly.
+    """
+
+    # keep these in sync with VariablesViewer.VariableItem.Indicators
+    Indicators = ['()', '[]', '{:}', '{}']
 
     def __init__(self):
         self.breakpoints = {}
         self.redirect = True
-
-        # dictionary of all threads running
-        self.threads = {}
-
-        # the "current" thread, basically the thread we are at a
-        # breakpoint for.
-        self.currentThread = self
+        self.__receiveBuffer = ''
 
         # special objects representing the main scripts thread and frame
         self.mainThread = self
-        self.mainFrame = None
         self.framenr = 0
 
         # The context to run the debugged program in.
@@ -173,32 +153,32 @@ class DebugClientBase():
         # The list of complete lines to execute.
         self.buffer = ''
 
-        self.pendingResponse = ResponseOK
+        # The list of regexp objects to filter variables against
+        self.globalsFilterObjects = []
+        self.localsFilterObjects = []
+
         self._fncache = {}
         self.dircache = []
-        self.inRawMode = 0
-        self.mainProcStr = None     # used for the passive mode
-        self.passive = 0            # used to indicate the passive mode
+        self.passive = None     # used to indicate the passive mode
         self.running = None
         self.test = None
-        self.tracePython = 0
-        self.debugging = 0
+        self.debugging = False
 
-        self.fork_auto = False
-        self.fork_child = False
+        self.forkAuto = False
+        self.forkChild = False
 
         self.readstream = None
         self.writestream = None
         self.errorstream = None
         self.pollingDisabled = False
 
-        self.skipdirs = sys.path[:]
+        self.callTraceEnabled = None
 
         self.variant = 'You should not see this'
 
-        self.compile_command = codeop.CommandCompiler()
+        self.compileCommand = codeop.CommandCompiler()
 
-        self.coding_re = re.compile(r"coding[:=]\s*([-\w_.]+)")
+        self.codingRegexp = re.compile(r"coding[:=]\s*([-\w_.]+)")
         self.defaultCoding = 'utf-8'
         self.__coding = self.defaultCoding
         self.noencoding = False
@@ -217,18 +197,589 @@ class DebugClientBase():
                 f = open(filename, 'rb')
                 # read the first and second line
                 text = f.readline()
-                text = "%s%s" % (text, f.readline())
+                text = "{0}{1}".format(text, f.readline())
                 f.close()
             except IOError:
                 self.__coding = default
                 return
 
             for line in text.splitlines():
-                match = self.coding_re.search(line)
+                match = self.codingRegexp.search(line)
                 if match:
                     self.__coding = match.group(1)
                     return
             self.__coding = default
+
+    def rawInput(self, prompt, echo):
+        """raw_input() / input() using the event loop"""
+        self.sendJsonCommand(
+            METHOD_REQUEST_RAW, {'prompt': prompt, 'echo': echo})
+        self.eventLoop(True)
+        return self.rawLine
+
+    def input(self, prompt):
+        """input() (Python 2) using the event loop"""
+        return eval(self.rawInput(prompt, True))
+
+    def sessionClose(self, terminate=True):
+        """Closes the session with the debugger and optionally terminate"""
+        try:
+            self.setQuit()
+        except:
+            pass
+
+        self.debugging = False
+
+        # make sure we close down our end of the socket
+        # might be overkill as normally stdin, stdout and stderr
+        # SHOULD be closed on exit, but it does not hurt to do it here
+        self.readstream.close(True)
+        self.writestream.close(True)
+        self.errorstream.close(True)
+
+        if terminate:
+            # Ok, go away.
+            sys.exit()
+
+    def __compileFileSource(self, filename, mode='exec'):
+        """Compiles source code read from a file"""
+        with codecs.open(filename, encoding=self.__coding) as fp:
+            statement = fp.read()
+
+        try:
+            code = compile(statement + '\n', filename, mode)
+        except SyntaxError:
+            exctype, excval, exctb = sys.exc_info()
+            try:
+                message = str(excval)
+                filename = excval.filename
+                lineno = excval.lineno
+                charno = excval.offset
+                if charno is None:
+                    charno = 0
+
+            except (AttributeError, ValueError):
+                message = ""
+                filename = ""
+                lineno = 0
+                charno = 0
+
+            self.sendSyntaxError(message, filename, lineno, charno)
+            return None
+
+        return code
+
+    def handleLine(self, line):
+        """Handles the receipt of a complete line"""
+        # Remove any newline
+        if line[-1] == '\n':
+            line = line[:-1]
+        self.handleJsonCommand(line)
+
+    def handleJsonCommand(self, jsonStr):
+        """Handle a command serialized as a JSON string"""
+        try:
+            commandDict = json.loads(jsonStr.strip())
+        except (TypeError, ValueError) as err:
+            printerr(str(err))
+            return
+
+        method = commandDict['method']
+        params = commandDict['params']
+
+        if method == METHOD_REQUEST_VARIABLES:
+            self.__dumpVariables(
+                params['frameNumber'], params['scope'], params['filters'])
+
+        elif method == METHOD_REQUEST_VARIABLE:
+            self.__dumpVariable(
+                params['variable'], params['frameNumber'],
+                params['scope'], params['filters'])
+
+        elif method == METHOD_REQUEST_THREAD_LIST:
+            self.dumpThreadList()
+
+        elif method == METHOD_REQUEST_THREAD_SET:
+            if params['threadID'] in self.threads:
+                self.setCurrentThread(params['threadID'])
+                self.sendJsonCommand(METHOD_RESPONSE_THREAD_SET, {})
+                stack = self.currentThread.getStack()
+                self.sendJsonCommand(METHOD_RESPONSE_STACK, {'stack': stack})
+
+        elif method == METHOD_REQUEST_BANNER:
+            self.sendJsonCommand(
+                METHOD_RESPONSE_BANNER,
+                {'version': 'Python {0}'.format(sys.version),
+                 'platform': socket.gethostname(),
+                 'dbgclient': self.variant})
+
+        elif method == METHOD_REQUEST_SET_FILTER:
+            self.__generateFilterObjects(params['scope'], params['filter'])
+
+        elif method == METHOD_REQUEST_CALL_TRACE:
+            if params['enable']:
+                callTraceEnabled = self.profile
+            else:
+                callTraceEnabled = None
+
+            if self.debugging:
+                sys.setprofile(callTraceEnabled)
+            else:
+                # remember for later
+                self.callTraceEnabled = callTraceEnabled
+
+        elif method == METHOD_REQUEST_ENVIRONMENT:
+            for key, value in params['environment'].items():
+                if key.endswith('+'):
+                    if key[:-1] in os.environ:
+                        os.environ[key[:-1]] += value
+                    else:
+                        os.environ[key[:-1]] = value
+                else:
+                    os.environ[key] = value
+
+        elif method == "RequestLoad":
+            self._fncache = {}
+            self.dircache = []
+            sys.argv = []
+            self.__setCoding(params["filename"])
+            sys.argv.append(params["filename"])
+            sys.argv.extend(params["argv"])
+            sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
+            if params["workdir"] == '':
+                os.chdir(sys.path[1])
+            else:
+                os.chdir(params["workdir"])
+
+            self.running = sys.argv[0]
+            self.debugging = True
+
+            self.fork_auto = params["autofork"]
+            self.fork_child = params["forkChild"]
+
+            self.threads.clear()
+            self.attachThread(mainThread=True)
+
+            # set the system exception handling function to ensure, that
+            # we report on all unhandled exceptions
+            sys.excepthook = self.__unhandled_exception
+            self.__interceptSignals()
+
+            # clear all old breakpoints, they'll get set after we have
+            # started
+            Breakpoint.clear_all_breaks()
+            Watch.clear_all_watches()
+
+            self.mainThread.tracePythonLibs(params["traceInterpreter"])
+
+            # This will eventually enter a local event loop.
+            self.debugMod.__dict__['__file__'] = self.running
+            sys.modules['__main__'] = self.debugMod
+            code = self.__compileFileSource(self.running)
+            if code:
+                sys.setprofile(self.callTraceEnabled)
+                self.mainThread.run(code, self.debugMod.__dict__, debug=True)
+
+        elif method == "RequestRun":
+            sys.argv = []
+            self.__setCoding(params["filename"])
+            sys.argv.append(params["filename"])
+            sys.argv.extend(params["argv"])
+            sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
+            if params["workdir"] == '':
+                os.chdir(sys.path[1])
+            else:
+                os.chdir(params["workdir"])
+
+            self.running = sys.argv[0]
+            self.botframe = None
+            
+            self.fork_auto = params["autofork"]
+            self.fork_child = params["forkChild"]
+            
+            self.threads.clear()
+            self.attachThread(mainThread=True)
+            
+            # set the system exception handling function to ensure, that
+            # we report on all unhandled exceptions
+            sys.excepthook = self.__unhandled_exception
+            self.__interceptSignals()
+            
+            self.mainThread.tracePythonLibs(False)
+            
+            self.debugMod.__dict__['__file__'] = sys.argv[0]
+            sys.modules['__main__'] = self.debugMod
+            res = 0
+            code = self.__compileFileSource(self.running)
+            if code:
+                self.mainThread.run(code, self.debugMod.__dict__, debug=False)
+
+        elif method == "RequestCoverage":
+            from coverage import coverage
+            sys.argv = []
+            self.__setCoding(params["filename"])
+            sys.argv.append(params["filename"])
+            sys.argv.extend(params["argv"])
+            sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
+            if params["workdir"] == '':
+                os.chdir(sys.path[1])
+            else:
+                os.chdir(params["workdir"])
+            
+            # set the system exception handling function to ensure, that
+            # we report on all unhandled exceptions
+            sys.excepthook = self.__unhandled_exception
+            self.__interceptSignals()
+            
+            # generate a coverage object
+            self.cover = coverage(
+                auto_data=True,
+                data_file="{0}.coverage".format(
+                    os.path.splitext(sys.argv[0])[0]))
+            
+            if params["erase"]:
+                self.cover.erase()
+            sys.modules['__main__'] = self.debugMod
+            self.debugMod.__dict__['__file__'] = sys.argv[0]
+            code = self.__compileFileSource(sys.argv[0])
+            if code:
+                self.running = sys.argv[0]
+                self.cover.start()
+                self.mainThread.run(code, self.debugMod.__dict__, debug=False)
+                self.cover.stop()
+                self.cover.save()
+        
+        elif method == "RequestProfile":
+            sys.setprofile(None)
+            import PyProfile
+            sys.argv = []
+            self.__setCoding(params["filename"])
+            sys.argv.append(params["filename"])
+            sys.argv.extend(params["argv"])
+            sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
+            if params["workdir"] == '':
+                os.chdir(sys.path[1])
+            else:
+                os.chdir(params["workdir"])
+
+            # set the system exception handling function to ensure, that
+            # we report on all unhandled exceptions
+            sys.excepthook = self.__unhandled_exception
+            self.__interceptSignals()
+            
+            # generate a profile object
+            self.prof = PyProfile.PyProfile(sys.argv[0])
+            
+            if params["erase"]:
+                self.prof.erase()
+            self.debugMod.__dict__['__file__'] = sys.argv[0]
+            sys.modules['__main__'] = self.debugMod
+            script = ''
+            if sys.version_info[0] == 2:
+                script = 'execfile({0!r})'.format(sys.argv[0])
+            else:
+                with codecs.open(sys.argv[0], encoding=self.__coding) as fp:
+                    script = fp.read()
+                if script and not script.endswith('\n'):
+                        script += '\n'
+            
+            if script:
+                self.running = sys.argv[0]
+                res = 0
+                try:
+                    self.prof.run(script)
+                    atexit._run_exitfuncs()
+                except SystemExit as exc:
+                    res = exc.code
+                    atexit._run_exitfuncs()
+                except Exception:
+                    excinfo = sys.exc_info()
+                    self.__unhandled_exception(*excinfo)
+                
+                self.prof.save()
+                self.progTerminated(res)
+        
+        elif method == "ExecuteStatement":
+            if self.buffer:
+                self.buffer = self.buffer + '\n' + params["statement"]
+            else:
+                self.buffer = params["statement"]
+
+            try:
+                code = self.compile_command(self.buffer, self.readstream.name)
+            except (OverflowError, SyntaxError, ValueError):
+                # Report the exception
+                sys.last_type, sys.last_value, sys.last_traceback = \
+                    sys.exc_info()
+                self.sendJsonCommand("ClientOutput", {
+                    "text": "".join(traceback.format_exception_only(
+                        sys.last_type, sys.last_value))
+                })
+                self.buffer = ''
+            else:
+                if code is None:
+                    self.sendJsonCommand("ResponseContinue", {})
+                    return
+                else:
+                    self.buffer = ''
+
+                    try:
+                        if self.running is None:
+                            exec(code, self.debugMod.__dict__)
+                        else:
+                            if self.currentThread is None:
+                                # program has terminated
+                                self.running = None
+                                _globals = self.debugMod.__dict__
+                                _locals = _globals
+                            else:
+                                cf = self.currentThread.getCurrentFrame()
+                                # program has terminated
+                                if cf is None:
+                                    self.running = None
+                                    _globals = self.debugMod.__dict__
+                                    _locals = _globals
+                                else:
+                                    frmnr = self.framenr
+                                    while cf is not None and frmnr > 0:
+                                        cf = cf.f_back
+                                        frmnr -= 1
+                                    _globals = cf.f_globals
+                                    _locals = \
+                                        self.currentThread.getFrameLocals(
+                                            self.framenr)
+                            # reset sys.stdout to our redirector
+                            # (unconditionally)
+                            if "sys" in _globals:
+                                __stdout = _globals["sys"].stdout
+                                _globals["sys"].stdout = self.writestream
+                                exec(code, _globals, _locals)
+                                _globals["sys"].stdout = __stdout
+                            elif "sys" in _locals:
+                                __stdout = _locals["sys"].stdout
+                                _locals["sys"].stdout = self.writestream
+                                exec(code, _globals, _locals)
+                                _locals["sys"].stdout = __stdout
+                            else:
+                                exec(code, _globals, _locals)
+                            
+                            self.currentThread.storeFrameLocals(self.framenr)
+                    except SystemExit as exc:
+                        self.progTerminated(exc.code)
+                    except Exception:
+                        # Report the exception and the traceback
+                        tlist = []
+                        try:
+                            exc_type, exc_value, exc_tb = sys.exc_info()
+                            sys.last_type = exc_type
+                            sys.last_value = exc_value
+                            sys.last_traceback = exc_tb
+                            tblist = traceback.extract_tb(exc_tb)
+                            del tblist[:1]
+                            tlist = traceback.format_list(tblist)
+                            if tlist:
+                                tlist.insert(
+                                    0, "Traceback (innermost last):\n")
+                                tlist.extend(traceback.format_exception_only(
+                                    exc_type, exc_value))
+                        finally:
+                            tblist = exc_tb = None
+
+                        self.sendJsonCommand("ClientOutput", {
+                            "text": "".join(tlist)
+                        })
+            
+            self.sendJsonCommand("ResponseOK", {})
+        
+        elif method == "RequestStep":
+            self.currentThreadExec.step(True)
+            self.eventExit = True
+
+        elif method == "RequestStepOver":
+            self.currentThreadExec.step(False)
+            self.eventExit = True
+        
+        elif method == "RequestStepOut":
+            self.currentThreadExec.stepOut()
+            self.eventExit = True
+        
+        elif method == "RequestStepQuit":
+            if self.passive:
+                self.progTerminated(42)
+            else:
+                self.set_quit()
+                self.eventExit = True
+        
+        elif method == "RequestMoveIP":
+            newLine = params["newLine"]
+            self.currentThreadExec.move_instruction_pointer(newLine)
+        
+        elif method == "RequestContinue":
+            self.currentThreadExec.go(params["special"])
+            self.eventExit = True
+        
+        elif method == "RawInput":
+            # If we are handling raw mode input then break out of the current
+            # event loop.
+            self.rawLine = params["input"]
+            self.eventExit = True
+        
+        elif method == "RequestBreakpoint":
+            if params["setBreakpoint"]:
+                if params["condition"] in ['None', '']:
+                    cond = None
+                elif params["condition"] is not None:
+                    try:
+                        cond = compile(params["condition"], '<string>', 'eval')
+                    except SyntaxError:
+                        self.sendJsonCommand("ResponseBPConditionError", {
+                            "filename": params["filename"],
+                            "line": params["line"],
+                        })
+                        return
+                else:
+                    cond = None
+                
+                Breakpoint(
+                    params["filename"], params["line"], params["temporary"],
+                    cond)
+            else:
+                Breakpoint.clear_break(params["filename"], params["line"])
+        
+        elif method == "RequestBreakpointEnable":
+            bp = Breakpoint.get_break(params["filename"], params["line"])
+            if bp is not None:
+                if params["enable"]:
+                    bp.enable()
+                else:
+                    bp.disable()
+        
+        elif method == "RequestBreakpointIgnore":
+            bp = Breakpoint.get_break(params["filename"], params["line"])
+            if bp is not None:
+                bp.ignore = params["count"]
+        
+        elif method == "RequestWatch":
+            if params["setWatch"]:
+                if params["condition"].endswith(
+                        ('??created??', '??changed??')):
+                    compiledCond, flag = params["condition"].split()
+                else:
+                    compiledCond = params["condition"]
+                    flag = ''
+                
+                try:
+                    compiledCond = compile(compiledCond, '<string>', 'eval')
+                except SyntaxError:
+                    self.sendJsonCommand("ResponseWatchConditionError", {
+                        "condition": params["condition"],
+                    })
+                    return
+                Watch(
+                    params["condition"], compiledCond, flag,
+                    params["temporary"])
+            else:
+                Watch.clear_watch(params["condition"])
+        
+        elif method == "RequestWatchEnable":
+            wp = Watch.get_watch(params["condition"])
+            if wp is not None:
+                if params["enable"]:
+                    wp.enable()
+                else:
+                    wp.disable()
+        
+        elif method == "RequestWatchIgnore":
+            wp = Watch.get_watch(params["condition"])
+            if wp is not None:
+                wp.ignore = params["count"]
+        
+        elif method == "RequestShutdown":
+            self.sessionClose()
+        
+        elif method == "RequestCompletion":
+            self.__completionList(params["text"])
+        
+        elif method == "RequestUTPrepare":
+            sys.path.insert(
+                0, os.path.dirname(os.path.abspath(params["filename"])))
+            os.chdir(sys.path[0])
+            
+            # set the system exception handling function to ensure, that
+            # we report on all unhandled exceptions
+            sys.excepthook = self.__unhandled_exception
+            self.__interceptSignals()
+            
+            try:
+                import unittest
+                utModule = imp.load_source(
+                    params["testname"], params["filename"])
+                try:
+                    if params["failed"]:
+                        self.test = unittest.defaultTestLoader\
+                            .loadTestsFromNames(params["failed"], utModule)
+                    else:
+                        self.test = unittest.defaultTestLoader\
+                            .loadTestsFromName(params["testfunctionname"],
+                                               utModule)
+                except AttributeError:
+                    self.test = unittest.defaultTestLoader\
+                        .loadTestsFromModule(utModule)
+            except Exception:
+                exc_type, exc_value, exc_tb = sys.exc_info()
+                self.sendJsonCommand("ResponseUTPrepared", {
+                    "count": 0,
+                    "exception": exc_type.__name__,
+                    "message": str(exc_value),
+                })
+                return
+            
+            # generate a coverage object
+            if params["coverage"]:
+                from coverage import coverage
+                self.cover = coverage(
+                    auto_data=True,
+                    data_file="{0}.coverage".format(
+                        os.path.splitext(params["coveragefile"])[0]))
+                if params["coverageerase"]:
+                    self.cover.erase()
+            else:
+                self.cover = None
+            
+            self.sendJsonCommand("ResponseUTPrepared", {
+                "count": self.test.countTestCases(),
+                "exception": "",
+                "message": "",
+            })
+        
+        elif method == "RequestUTRun":
+            from DCTestResult import DCTestResult
+            self.testResult = DCTestResult(self)
+            if self.cover:
+                self.cover.start()
+            self.test.run(self.testResult)
+            if self.cover:
+                self.cover.stop()
+                self.cover.save()
+            self.sendJsonCommand("ResponseUTFinished", {})
+        
+        elif method == "RequestUTStop":
+            self.testResult.stop()
+        
+        elif method == "ResponseForkTo":
+            # this results from a separate event loop
+            self.fork_child = (params["target"] == 'child')
+            self.eventExit = True
+
+
+
+
+
+
+
+
+
+
 
     def attachThread(self, target=None, args=None,
                      kwargs=None, mainThread=0):
@@ -265,445 +816,12 @@ class DebugClientBase():
         self.write('%s%s' % (ResponseThreadList,
                              (currentId, threadList)))
 
-    def raw_input(self, prompt, echo):
-        """raw_input() using the event loop"""
-        self.write("%s%s" % (ResponseRaw, (prompt, echo)))
-        self.inRawMode = 1
-        self.eventLoop(True)
-        return self.rawLine
-
-    def input(self, prompt):
-        """input() using the event loop"""
-        return eval(self.raw_input(prompt, 1))
-
     def __exceptionRaised(self):
         """Called in the case of an exception
            It ensures that the debug server is informed of the raised
            exception"""
         self.pendingResponse = ResponseException
 
-    def sessionClose(self, shouldExit=True, exitCode=0):
-        """Closes the session with the debugger and optionally terminate"""
-        try:
-            self.set_quit()
-        except:
-            pass
-
-        # clean up asyncio.
-        self.disconnect()
-        self.debugging = 0
-
-        # make sure we close down our end of the socket
-        # might be overkill as normally stdin, stdout and stderr
-        # SHOULD be closed on exit, but it does not hurt to do it here
-        self.readstream.close(1)
-        self.writestream.close(1)
-        self.errorstream.close(1)
-
-        if shouldExit:
-            # Ok, go away.
-            sys.exit(exitCode)
-
-    def handleLine(self, line):
-        """Handles the receipt of a complete line"""
-        # Remove any newline.
-        if line[-1] == '\n':
-            line = line[:-1]
-
-        eoc = line.find('<')
-
-        if eoc >= 0 and line[0] == '>':
-            # Get the command part and the arguments
-            cmd = line[:eoc + 1]
-            arg = line[eoc + 1:]
-
-            if cmd == RequestVariables:
-                frmnr, scope = eval(arg)
-                self.__dumpVariables(int(frmnr), int(scope))
-                return
-
-            if cmd == RequestVariable:
-                var, frmnr, scope = eval(arg)
-                self.__dumpVariable(var, int(frmnr), int(scope))
-                return
-
-            if cmd == RequestThreadList:
-                self.__dumpThreadList()
-                return
-
-            if cmd == RequestStack:
-                stack = self.currentThread.getStack()
-                self.write('%s%s' % (ResponseStack, stack))
-                return
-
-            if cmd == RequestThreadSet:
-                tid = eval(arg)
-                if tid in self.threads:
-                    self.setCurrentThread(tid)
-                    self.write(ResponseThreadSet)
-                    stack = self.currentThread.getStack()
-                    self.write('%s%s' % (ResponseStack, stack))
-                return
-
-            if cmd == RequestStep:
-                self.currentThread.step(1)
-                self.eventExit = 1
-                return
-
-            if cmd == RequestStepOver:
-                self.currentThread.step(0)
-                self.eventExit = 1
-                return
-
-            if cmd == RequestStepOut:
-                self.currentThread.stepOut()
-                self.eventExit = 1
-                return
-
-            if cmd == RequestStepQuit:
-                if self.passive:
-                    self.progTerminated(42)
-                else:
-                    self.set_quit()
-                    self.eventExit = 1
-                return
-
-            if cmd == RequestContinue:
-                special = int(arg)
-                self.currentThread.go(special)
-                self.eventExit = 1
-                return
-
-            if cmd == RequestOK:
-                self.write(self.pendingResponse)
-                self.pendingResponse = ResponseOK
-                return
-
-            if cmd == RequestShutdown:
-                self.sessionClose(1, 99)
-                return
-
-            if cmd == RequestBreak:
-                fname, line, temporary, _set, cond = arg.split('@@')
-                line = int(line)
-                _set = int(_set)
-                temporary = int(temporary)
-
-                if _set:
-                    if cond == 'None' or cond == '':
-                        cond = None
-                    else:
-                        try:
-                            compile(cond, '<string>', 'eval')
-                        except SyntaxError:
-                            self.write('%s%s,%d' %
-                                (ResponseBPConditionError, fname, line))
-                            return
-                    self.mainThread.set_break(fname, line, temporary, cond)
-                else:
-                    self.mainThread.clear_break(fname, line)
-                return
-
-            if cmd == RequestBreakEnable:
-                fname, line, enable = arg.split(',')
-                line = int(line)
-                enable = int(enable)
-
-                bpoint = self.mainThread.get_break(fname, line)
-                if bpoint is not None:
-                    if enable:
-                        bpoint.enable()
-                    else:
-                        bpoint.disable()
-                return
-
-            if cmd == RequestBreakIgnore:
-                fname, line, count = arg.split(',')
-                line = int(line)
-                count = int(count)
-
-                bpoint = self.mainThread.get_break(fname, line)
-                if bpoint is not None:
-                    bpoint.ignore = count
-                return
-
-            if cmd == RequestWatch:
-                cond, temporary, _set = arg.split('@@')
-                _set = int(_set)
-                temporary = int(temporary)
-
-                if _set:
-                    if not cond.endswith('??created??') and \
-                       not cond.endswith('??changed??'):
-                        try:
-                            compile(cond, '<string>', 'eval')
-                        except SyntaxError:
-                            self.write('%s%s' % (ResponseWPConditionError,
-                                                 cond))
-                            return
-                    self.mainThread.set_watch(cond, temporary)
-                else:
-                    self.mainThread.clear_watch(cond)
-                return
-
-            if cmd == RequestWatchEnable:
-                cond, enable = arg.split(',')
-                enable = int(enable)
-
-                bpoint = self.mainThread.get_watch(cond)
-                if bpoint is not None:
-                    if enable:
-                        bpoint.enable()
-                    else:
-                        bpoint.disable()
-                return
-
-            if cmd == RequestWatchIgnore:
-                cond, count = arg.split(',')
-                count = int(count)
-
-                bpoint = self.mainThread.get_watch(cond)
-                if bpoint is not None:
-                    bpoint.ignore = count
-                return
-
-            if cmd == RequestEval:
-                parts = arg.split(",", 1)
-                frameNumber = int(parts[0])
-                expression = parts[1].strip()
-
-                f = self.currentThread.getCurrentFrame()
-                while f is not None and frameNumber > 0:
-                    f = f.f_back
-                    frameNumber -= 1
-
-                if f is None:
-                    self.write(ResponseEval)
-                    self.write('Bad frame number\n')
-                    self.write(ResponseEvalError)
-                    return
-
-                _globals = f.f_globals
-                _locals = f.f_locals
-
-                try:
-                    value = eval(expression, _globals, _locals)
-                except SyntaxError as excpt:
-                    # Generic way below reports nothing in case of a syntax
-                    # error
-                    _list = ["Traceback (innermost last):\n"]
-                    _list += traceback.format_exception_only(SyntaxError,
-                                                             excpt)
-
-                    self.write(ResponseEval)
-                    map(self.write, _list)
-                    self.write(ResponseEvalError)
-                except:
-                    # Report the exception and the traceback
-                    try:
-                        valtype, value, tback = sys.exc_info()
-                        sys.last_type = valtype
-                        sys.last_value = value
-                        sys.last_traceback = tback
-                        tblist = traceback.extract_tb(tback)
-                        del tblist[:1]
-                        _list = traceback.format_list(tblist)
-                        if _list:
-                            _list.insert(0, "Traceback (innermost last):\n")
-                            _list[len(_list):] = \
-                                traceback.format_exception_only(valtype,
-                                                                value)
-                    finally:
-                        tblist = tback = None
-
-                    self.write(ResponseEval)
-                    map(self.write, _list)
-                    self.write(ResponseEvalError)
-                else:
-                    self.write(ResponseEval)
-                    self.write(value + '\n')
-                    self.write(ResponseEvalOK)
-                return
-
-            if cmd == RequestExec:
-                parts = arg.split(",", 1)
-                frameNumber = int(parts[0])
-                expression = parts[1].strip()
-
-                f = self.currentThread.getCurrentFrame()
-                while f is not None and frameNumber > 0:
-                    f = f.f_back
-                    frameNumber -= 1
-
-                if f is None:
-                    self.write(ResponseExec)
-                    self.write('Bad frame number\n')
-                    self.write(ResponseExecError)
-                    return
-
-                currentStdout = sys.stdout
-                currentStderr = sys.stderr
-                collector = OutStreamCollector()
-                sys.stdout = collector
-                sys.stderr = collector
-
-                # Locals are copied (not referenced) here!
-                _globals = f.f_globals
-                _locals = f.f_locals
-
-                try:
-                    code = compile(expression + '\n', '<string>', 'exec')
-                    exec(code, _globals, _locals)
-
-                    # These two dict updates do not work. If a local
-                    # variable is changed in the _locals it is not updated
-                    # below. I have no ideas how to fix it.
-                    f.f_globals.update(_globals)
-                    f.f_locals.update(_locals)
-                except SyntaxError as excpt:
-                    # Generic way below reports nothing in case of a syntax
-                    # error
-                    _list = ["Traceback (innermost last):\n"]
-                    _list += traceback.format_exception_only(SyntaxError,
-                                                             excpt)
-
-                    self.write(ResponseExec)
-                    map(self.write, _list)
-                    self.write(ResponseExecError)
-
-                    # Restore the output streams
-                    sys.stdout = currentStdout
-                    sys.stderr = currentStderr
-                    return
-                except:
-                    # Report the exception and the traceback
-                    try:
-                        valtype, value, tback = sys.exc_info()
-                        sys.last_type = valtype
-                        sys.last_value = value
-                        sys.last_traceback = tback
-                        tblist = traceback.extract_tb(tback)
-                        del tblist[:1]
-                        _list = traceback.format_list(tblist)
-                        if _list:
-                            _list.insert(0, "Traceback (innermost last):\n")
-                            _list[len(_list):] = \
-                                traceback.format_exception_only(valtype,
-                                                                value)
-                    finally:
-                        tblist = tback = None
-
-                    self.write(ResponseExec)
-                    map(self.write, _list)
-                    self.write(ResponseExecError)
-
-                    # Restore the output streams
-                    sys.stdout = currentStdout
-                    sys.stderr = currentStderr
-                    return
-
-                self.write(ResponseExec)
-                self.write(collector.buf)
-                self.write(ResponseExecOK)
-
-                # Restore the output streams
-                sys.stdout = currentStdout
-                sys.stderr = currentStderr
-                return
-
-            if cmd == ResponseForkTo:
-                # this results from a separate event loop
-                self.fork_child = (arg == 'child')
-                self.eventExit = 1
-                return
-
-        # If we are handling raw mode input then reset the mode and break out
-        # of the current event loop.
-        if self.inRawMode:
-            self.inRawMode = 0
-            self.rawLine = line
-            self.eventExit = 1
-            return
-
-        if self.buffer:
-            self.buffer = self.buffer + '\n' + line
-        else:
-            self.buffer = line
-
-        try:
-            code = self.compile_command(self.buffer,
-                                        self.readstream.name)
-        except (OverflowError, SyntaxError, ValueError):
-            # Report the exception
-            sys.last_type, sys.last_value, sys.last_traceback = sys.exc_info()
-            map(self.write,
-                traceback.format_exception_only(sys.last_type,
-                                                sys.last_value))
-            self.buffer = ''
-        else:
-            if code is None:
-                self.pendingResponse = ResponseContinue
-            else:
-                self.buffer = ''
-
-                try:
-                    if self.running is None:
-                        exec(code, self.debugMod.__dict__)
-                    else:
-                        if self.currentThread is None:
-                            # program has terminated
-                            self.running = None
-                            _globals = self.debugMod.__dict__
-                            _locals = _globals
-                        else:
-                            cframe = self.currentThread.getCurrentFrame()
-                            # program has terminated
-                            if cframe is None:
-                                self.running = None
-                                _globals = self.debugMod.__dict__
-                                _locals = _globals
-                            else:
-                                frmnr = self.framenr
-                                while cframe is not None and frmnr > 0:
-                                    cframe = cframe.f_back
-                                    frmnr -= 1
-                                _globals = cframe.f_globals
-                                _locals = self.currentThread. \
-                                                    getCurrentFrameLocals()
-                        # reset sys.stdout to our redirector (unconditionally)
-                        if _globals.has_key("sys"):
-                            __stdout = _globals["sys"].stdout
-                            _globals["sys"].stdout = self.writestream
-                            exec(code, _globals, _locals)
-                            _globals["sys"].stdout = __stdout
-                        elif _locals.has_key("sys"):
-                            __stdout = _locals["sys"].stdout
-                            _locals["sys"].stdout = self.writestream
-                            exec(code, _globals, _locals)
-                            _locals["sys"].stdout = __stdout
-                        else:
-                            exec(code, _globals, _locals)
-                except SystemExit as exc:
-                    self.progTerminated(exc.code)
-                except:
-                    # Report the exception and the traceback
-                    try:
-                        _type, value, tback = sys.exc_info()
-                        sys.last_type = _type
-                        sys.last_value = value
-                        sys.last_traceback = tback
-                        tblist = traceback.extract_tb(tback)
-                        del tblist[:1]
-                        _list = traceback.format_list(tblist)
-                        if _list:
-                            _list.insert(0, "Traceback (innermost last):\n")
-                            _list[len(_list):] = \
-                                traceback.format_exception_only(_type,
-                                                                value)
-                    finally:
-                        tblist = tback = None
-
-                    map(self.write, _list)
 
     def write(self, msg):
         """Public method to write data to the output stream"""
@@ -712,10 +830,10 @@ class DebugClientBase():
 
     def __interact(self):
         """Interact with the debugger"""
-        global DebugClientInstance
+        global DEBUG_CLIENT_INSTANCE
 
         self.setDescriptors(self.readstream, self.writestream)
-        DebugClientInstance = self
+        DEBUG_CLIENT_INSTANCE = self
 
         if not self.passive:
             # At this point simulate an event loop.
@@ -1526,7 +1644,7 @@ class DebugClientBase():
         if not self.fork_auto and not isPopen:
             self.write(RequestForkTo)
             self.eventLoop(True)
-        pid = DebugClientOrigFork()
+        pid = DEBUG_CLIENT_ORIG_FORK()
 
         if isPopen:
             # Switch to following parent
@@ -1558,7 +1676,7 @@ class DebugClientBase():
         if fdescriptor not in [self.readstream.fileno(),
                                self.writestream.fileno(),
                                self.errorstream.fileno()]:
-            DebugClientOrigClose(fdescriptor)
+            DEBUG_CLIENT_ORIG_CLOSE(fdescriptor)
 
     @staticmethod
     def __getSysPath(firstEntry):

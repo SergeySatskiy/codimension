@@ -30,9 +30,18 @@
 DebugAddress = '127.0.0.1'
 
 METHOD_CLIENT_OUTPUT = 'ClientOutput'
-
-
-
+METHOD_REQUEST_RAW = 'RequestRaw'
+METHOD_REQUEST_VARIABLES = 'RequestVariables'
+METHOD_REQUEST_VARIABLE = 'RequestVariable'
+METHOD_REQUEST_THREAD_LIST = 'RequestThreadList'
+METHOD_REQUEST_THREAD_SET = 'RequestThreadSet'
+METHOD_RESPONSE_THREAD_SET = 'ResponseThreadSet'
+METHOD_RESPONSE_STACK = 'ResponseStack'
+METHOD_REQUEST_BANNER = 'RequestBanner'
+METHOD_RESPONSE_BANNER = 'ResponseBanner'
+METHOD_REQUEST_SET_FILTER = 'RequestSetFilter'
+METHOD_REQUEST_CALL_TRACE = 'RequestCallTrace'
+METHOD_REQUEST_ENVIRONMENT = 'RequestEnvironment'
 
 
 
@@ -52,10 +61,6 @@ RequestBreakIgnore = '>IgnoreBreak<'
 RequestWatch = '>Watch<'
 RequestWatchEnable = '>EnableWatch<'
 RequestWatchIgnore = '>IgnoreWatch<'
-RequestVariables = '>Variables<'
-RequestVariable = '>Variable<'
-RequestThreadList = '>ThreadList<'
-RequestThreadSet = '>ThreadSet<'
 RequestEval = '>Eval<'
 RequestExec = '>Exec<'
 RequestShutdown = '>Shutdown<'
@@ -74,11 +79,6 @@ ResponseClearBreak = '>ClearBreak<'
 ResponseBPConditionError = '>BPConditionError<'
 ResponseClearWatch = '>ClearWatch<'
 ResponseWPConditionError = '>WPConditionError<'
-ResponseVariables = RequestVariables
-ResponseVariable = RequestVariable
-ResponseThreadList = RequestThreadList
-ResponseThreadSet = RequestThreadSet
-ResponseStack = RequestStack
 ResponseForkTo = RequestForkTo
 ResponseEval = RequestEval
 ResponseEvalOK = '>EvalOK<'
