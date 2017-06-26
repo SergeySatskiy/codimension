@@ -34,27 +34,8 @@ from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.pixmapcache import getIcon
 from utils.diskvaluesrelay import getRunParameters
-from .client.protocol_cdm_dbg import (EOT, RequestStep, RequestStepOver,
-                                      RequestStepOut, RequestShutdown,
-                                      ResponseLine, ResponseStack,
-                                      RequestContinue, RequestThreadList,
-                                      RequestVariables, ResponseThreadList,
-                                      ResponseVariables, RequestVariable,
-                                      ResponseVariable, RequestExec,
-                                      RequestEval, RequestBreak,
-                                      ResponseException, RequestForkTo,
-                                      ResponseForkTo, RequestStack,
-                                      ResponseSyntax, ResponseExit,
-                                      PassiveStartup, RequestBreakEnable,
-                                      RequestBreakIgnore, ResponseClearBreak,
-                                      ResponseBPConditionError, ResponseEval,
-                                      ResponseEvalOK, ResponseEvalError,
-                                      ResponseExec, ResponseExecError,
-                                      RequestThreadSet, ResponseThreadSet,
-                                      ResponseRaw, StdoutStderrEOT,
-                                      ResponseStdout, ResponseStderr,
-                                      ResponseExecOK)
-
+from .client.protocol_cdm_dbg import *
+from .client.cdm_dbg_utils import prepareJSONMessage
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
@@ -355,6 +336,17 @@ class CodimensionDebugger(QObject):
 
         # All the conditions are met, the state can be changed
         self.__changeDebuggerState(self.STATE_IN_CLIENT)
+
+    def __sendJSONCommand(self, method, params):
+        """Sends a command to the debuggee"""
+        cmd = prepareJSONMessage(method, params)
+        if self.__clientSocket:
+            self.__clientSocket.write(cmd.encode('utf8', 'backslashreplace'))
+            self.__clientSocket.flush()
+            return
+
+        raise Exception("Cannot send command to debuggee - "
+                        "no connection established. Command: " + cmd)
 
     def __sendCommand(self, command):
         """Sends a command to the debuggee"""

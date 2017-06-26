@@ -37,6 +37,7 @@ import imp
 import re
 import signal
 import atexit
+import json
 
 from .protocol_cdm_dbg import *
 from .base_cdm_dbg import setRecursionLimit
@@ -46,6 +47,7 @@ from .bp_wp_cdm_dbg import Breakpoint, Watch
 
 
 DEBUG_CLIENT_INSTANCE = None
+VAR_TYPE_STRINGS = list(VAR_TYPE_DISP_STRINGS.keys())
 
 
 def debugClientRawInput(prompt="", echo=True):
@@ -209,7 +211,7 @@ class DebugClientBase(object):
 
     def rawInput(self, prompt, echo):
         """raw_input() / input() using the event loop"""
-        self.sendJsonCommand(
+        self.sendJSONCommand(
             METHOD_REQUEST_RAW, {'prompt': prompt, 'echo': echo})
         self.eventLoop(True)
         return self.rawLine
@@ -1240,7 +1242,7 @@ class DebugClientBase(object):
 
             # filter hidden attributes (filter #0)
             if 0 in filterList and str(key)[:2] == '__' and not (
-                key == "___len___" and
+                    key == "___len___" and
                     DebugVariables.TooLargeAttribute in keylist):
                 continue
 
@@ -1254,20 +1256,20 @@ class DebugClientBase(object):
                 _, valtype = valtypestr.split(' ', 1)
                 valtype = valtype[1:-1]
                 valtypename = type(value).__name__
-                if valtype not in ConfigVarTypeStrings:
+                if valtype not in VAR_TYPE_STRINGS:
                     if valtype in ['numpy.ndarray', 'array.array']:
-                        if ConfigVarTypeStrings.index('list') in filterList:
+                        if VAR_TYPE_STRINGS.index('list') in filterList:
                             continue
                     elif valtypename == 'MultiValueDict':
-                        if ConfigVarTypeStrings.index('dict') in filterList:
+                        if VAR_TYPE_STRINGS.index('dict') in filterList:
                             continue
                     elif valtype == 'sip.methoddescriptor':
-                        if ConfigVarTypeStrings.index('method') in filterList:
+                        if VAR_TYPE_STRINGS.index('method') in filterList:
                             continue
                     elif valtype == 'sip.enumtype':
-                        if ConfigVarTypeStrings.index('class') in filterList:
+                        if VAR_TYPE_STRINGS.index('class') in filterList:
                             continue
-                    elif ConfigVarTypeStrings.index('instance') in filterList:
+                    elif VAR_TYPE_STRINGS.index('instance') in filterList:
                         continue
 
                     if (not valtypestr.startswith('type ') and
@@ -1280,23 +1282,23 @@ class DebugClientBase(object):
                         if valtype == 'instancemethod':
                             valtype = 'method'
 
-                        if ConfigVarTypeStrings.index(valtype) in filterList:
+                        if VAR_TYPE_STRINGS.index(valtype) in filterList:
                             continue
                     except ValueError:
                         if valtype == 'classobj':
-                            if ConfigVarTypeStrings.index(
-                                'instance') in filterList:
+                            if VAR_TYPE_STRINGS.index(
+                                    'instance') in filterList:
                                 continue
                         elif valtype == sip.methoddescriptor:
-                            if ConfigVarTypeStrings.index(
+                            if VAR_TYPE_STRINGS.index(
                                     'method') in filterList:
                                 continue
                         elif valtype == 'sip.enumtype':
-                            if ConfigVarTypeStrings.index('class') in \
+                            if VAR_TYPE_STRINGS.index('class') in \
                                     filterList:
                                 continue
                         elif not valtype.startswith('PySide') and \
-                            (ConfigVarTypeStrings.index('other') in
+                            (VAR_TYPE_STRINGS.index('other') in
                              filterList):
                             continue
 
@@ -1396,87 +1398,13 @@ class DebugClientBase(object):
             except Exception:
                 comp = None
 
-    def startDebugger(self, filename=None, host=None, port=None,
-                      enableTrace=True, exceptions=True, tracePython=False,
-                      redirect=True):
-        """
-        Public method used to start the remote debugger.
-        
-        @param filename the program to be debugged (string)
-        @param host hostname of the debug server (string)
-        @param port portnumber of the debug server (int)
-        @param enableTrace flag to enable the tracing function (boolean)
-        @param exceptions flag to enable exception reporting of the IDE
-            (boolean)
-        @param tracePython flag to enable tracing into the Python library
-            (boolean)
-        @param redirect flag indicating redirection of stdin, stdout and
-            stderr (boolean)
-        """
-        global debugClient
-        if host is None:
-            host = os.getenv('ERICHOST', 'localhost')
-        if port is None:
-            port = os.getenv('ERICPORT', 42424)
-        
-        remoteAddress = self.__resolveHost(host)
-        self.connectDebugger(port, remoteAddress, redirect)
-        if filename is not None:
-            self.running = os.path.abspath(filename)
-        else:
-            try:
-                self.running = os.path.abspath(sys.argv[0])
-            except IndexError:
-                self.running = None
-        if self.running:
-            self.__setCoding(self.running)
-        self.passive = True
-        self.sendPassiveStartup(self.running, exceptions)
-        self.__interact()
-        
-        # setup the debugger variables
-        self._fncache = {}
-        self.dircache = []
-        self.debugging = True
-        
-        self.attachThread(mainThread=True)
-        self.mainThread.tracePythonLibs(tracePython)
-        
-        # set the system exception handling function to ensure, that
-        # we report on all unhandled exceptions
-        sys.excepthook = self.__unhandled_exception
-        self.__interceptSignals()
-        
-        # now start debugging
-        if enableTrace:
-            self.mainThread.set_trace()
-    
-    def startProgInDebugger(self, progargs, wd='', host=None,
-                            port=None, exceptions=True, tracePython=False,
+    def startProgInDebugger(self, progargs, wd, host,
+                            port, exceptions=True, tracePython=False,
                             redirect=True):
-        """
-        Public method used to start the remote debugger.
-        
-        @param progargs commandline for the program to be debugged
-            (list of strings)
-        @param wd working directory for the program execution (string)
-        @param host hostname of the debug server (string)
-        @param port portnumber of the debug server (int)
-        @param exceptions flag to enable exception reporting of the IDE
-            (boolean)
-        @param tracePython flag to enable tracing into the Python library
-            (boolean)
-        @param redirect flag indicating redirection of stdin, stdout and
-            stderr (boolean)
-        """
-        if host is None:
-            host = os.getenv('ERICHOST', 'localhost')
-        if port is None:
-            port = os.getenv('ERICPORT', 42424)
-        
+        """Starts the remote debugger"""
         remoteAddress = self.__resolveHost(host)
         self.connectDebugger(port, remoteAddress, redirect)
-        
+
         self._fncache = {}
         self.dircache = []
         sys.argv = progargs[:]
@@ -1489,19 +1417,19 @@ class DebugClientBase(object):
         self.running = sys.argv[0]
         self.__setCoding(self.running)
         self.debugging = True
-        
+
         self.passive = True
         self.sendPassiveStartup(self.running, exceptions)
         self.__interact()
-        
+
         self.attachThread(mainThread=True)
         self.mainThread.tracePythonLibs(tracePython)
-        
+
         # set the system exception handling function to ensure, that
         # we report on all unhandled exceptions
         sys.excepthook = self.__unhandled_exception
         self.__interceptSignals()
-        
+
         # This will eventually enter a local event loop.
         # Note the use of backquotes to cause a repr of self.running. The
         # need for this is on Windows os where backslash is the path separator.
@@ -1513,13 +1441,6 @@ class DebugClientBase(object):
             'exec(open(' + repr(self.running) + ').read())',
             self.debugMod.__dict__)
         self.progTerminated(res)
-
-    def runCall(self, scriptname, func, *args):
-        """Starts the remote debugger and call a function"""
-        self.startDebugger(scriptname, enableTrace=False)
-        res = self.mainThread.runCall(func, *args)
-        self.progTerminated(res)
-        return res
 
     @staticmethod
     def __resolveHost(host):
@@ -1542,7 +1463,7 @@ class DebugClientBase(object):
             args = sys.argv[1:]
             host = None
             port = None
-            wd = ''
+            wdir = ''
             tracePython = False
             exceptions = True
             redirect = True
@@ -1556,7 +1477,7 @@ class DebugClientBase(object):
                     del args[0]
                     del args[0]
                 elif args[0] == '-w':
-                    wd = args[1]
+                    wdir = args[1]
                     del args[0]
                     del args[0]
                 elif args[0] == '-t':
@@ -1572,12 +1493,12 @@ class DebugClientBase(object):
                     self.noencoding = True
                     del args[0]
                 elif args[0] == '--fork-child':
-                    self.fork_auto = True
-                    self.fork_child = True
+                    self.forkAuto = True
+                    self.forkChild = True
                     del args[0]
                 elif args[0] == '--fork-parent':
-                    self.fork_auto = True
-                    self.fork_child = False
+                    self.forkAuto = True
+                    self.forkChild = False
                     del args[0]
                 elif args[0] == '--':
                     del args[0]
@@ -1585,50 +1506,18 @@ class DebugClientBase(object):
                 else:   # unknown option
                     del args[0]
             if not args:
-                print("No program given. Aborting!")
-                # __IGNORE_WARNING_M801__
+                print("No program given. Aborting...")
+            elif port is None or host is None:
+                print("Network address is not provided. Aborting...")
             else:
                 if not self.noencoding:
                     self.__coding = self.defaultCoding
-                self.startProgInDebugger(args, wd, host, port,
+                self.startProgInDebugger(args, wdir, host, port,
                                          exceptions=exceptions,
                                          tracePython=tracePython,
                                          redirect=redirect)
         else:
-            if sys.argv[1] == '--no-encoding':
-                self.noencoding = True
-                del sys.argv[1]
-            if sys.argv[1] == '':
-                del sys.argv[1]
-            try:
-                port = int(sys.argv[1])
-            except (ValueError, IndexError):
-                port = -1
-            try:
-                redirect = int(sys.argv[2])
-            except (ValueError, IndexError):
-                redirect = True
-            try:
-                ipOrHost = sys.argv[3]
-                if ':' in ipOrHost:
-                    remoteAddress = ipOrHost
-                elif ipOrHost[0] in '0123456789':
-                    remoteAddress = ipOrHost
-                else:
-                    remoteAddress = self.__resolveHost(ipOrHost)
-            except Exception:
-                remoteAddress = None
-            sys.argv = ['']
-            if '' not in sys.path:
-                sys.path.insert(0, '')
-            if port >= 0:
-                if not self.noencoding:
-                    self.__coding = self.defaultCoding
-                self.connectDebugger(port, remoteAddress, redirect)
-                self.__interact()
-            else:
-                print("No network port given. Aborting...")
-                # __IGNORE_WARNING_M801__
+            print("No script to debug. Aborting...")
 
     def fork(self):
         """fork routine deciding which branch to follow"""
@@ -1691,133 +1580,3 @@ class DebugClientBase(object):
         sysPath.insert(0, firstEntry)
         sysPath.insert(0, '')
         return sysPath
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    def startProgInDebugger(self, progargs, wd, host,
-                            port, exceptions=True,
-                            tracePython=False, redirect=True):
-        """start the remote debugger"""
-        remoteAddress = self.__resolveHost(host)
-        self.connectDebugger(port, remoteAddress, redirect)
-
-        self._fncache = {}
-        self.dircache = []
-        sys.argv = progargs[:]
-        sys.argv[0] = os.path.abspath(sys.argv[0])
-        sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
-        if wd == '':
-            os.chdir(sys.path[1])
-        else:
-            os.chdir(wd)
-        self.running = sys.argv[0]
-        self.__setCoding(self.running)
-        self.mainFrame = None
-        self.inRawMode = False
-        self.debugging = True
-
-        self.passive = True
-        self.write("%s%s|%d" % (PassiveStartup,
-                                self.running, exceptions))
-        self.__interact()
-
-        self.attachThread(mainThread=True)
-        self.mainThread.tracePython = tracePython
-
-        # set the system exception handling function to ensure, that
-        # we report on all unhandled exceptions
-        sys.excepthook = self.__unhandled_exception
-
-        # This will eventually enter a local event loop.
-        # Note the use of backquotes to cause a repr of self.running.
-        # The need for this is on Windows os where backslash is the path
-        # separator. They will get inadvertantly stripped away during
-        # the eval causing IOErrors if self.running is passed as a normal str.
-        self.debugMod.__dict__['__file__'] = self.running
-        sys.modules['__main__'] = self.debugMod
-        res = self.mainThread.run(
-            'exec(open(' + repr(self.running) + ').read())',
-            self.debugMod.__dict__)
-        self.progTerminated(res)
-
-    def main(self):
-        """the main method"""
-        if '--' in sys.argv:
-            args = sys.argv[1:]
-            host = None
-            port = None
-            wdir = ''
-            tracePython = False
-            exceptions = True
-            redirect = True
-            while args[0]:
-                if args[0] == '-h':
-                    host = args[1]
-                    del args[0]
-                    del args[0]
-                elif args[0] == '-p':
-                    port = int(args[1])
-                    del args[0]
-                    del args[0]
-                elif args[0] == '-w':
-                    wdir = args[1]
-                    del args[0]
-                    del args[0]
-                elif args[0] == '-t':
-                    tracePython = True
-                    del args[0]
-                elif args[0] == '-e':
-                    exceptions = False
-                    del args[0]
-                elif args[0] == '-n':
-                    redirect = False
-                    del args[0]
-                elif args[0] == '--no-encoding':
-                    self.noencoding = True
-                    del args[0]
-                elif args[0] == '--fork-child':
-                    self.fork_auto = True
-                    self.fork_child = True
-                    del args[0]
-                elif args[0] == '--fork-parent':
-                    self.fork_auto = True
-                    self.fork_child = False
-                    del args[0]
-                elif args[0] == '--':
-                    del args[0]
-                    break
-                else:   # unknown option
-                    del args[0]
-            if not args:
-                print("No program given. Aborting...")
-            elif port is None or host is None:
-                print("Network address is not provided. Aborting...")
-            else:
-                if not self.noencoding:
-                    self.__coding = self.defaultCoding
-                self.startProgInDebugger(args, wdir, host, port,
-                                         exceptions=exceptions,
-                                         tracePython=tracePython,
-                                         redirect=redirect)
-        else:
-            print("No script to debug. Aborting...")

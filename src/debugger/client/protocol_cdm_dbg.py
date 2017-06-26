@@ -80,3 +80,38 @@ METHOD_RESPONSE_VARIABLES = 'ResponseVariables'
 METHOD_RESPONSE_VARIABLE = 'ResponseVariable'
 METHOD_RESPONSE_COMPLETION = 'ResponseCompletion'
 METHOD_REQUEST_FORK_TO = 'RequestForkTo'
+
+VAR_TYPE_DISP_STRINGS = {
+    '__': 'Hidden Attributes',
+    'NoneType': 'None',
+    'type': 'Type',
+    'bool': 'Boolean',
+    'int': 'Integer',
+    'long': 'Long Integer',
+    'float': 'Float',
+    'complex': 'Complex',
+    'str': 'String',
+    'unicode': 'Unicode String',
+    'tuple': 'Tuple',
+    'list': 'List/Array',
+    'dict': 'Dictionary/Hash/Map',
+    'dict-proxy': 'Dictionary Proxy',
+    'set': 'Set',
+    'frozenset': 'Frozen Set',
+    'file': 'File',
+    'xrange': 'X Range',
+    'slice': 'Slice',
+    'buffer': 'Buffer',
+    'class': 'Class',
+    'instance': 'Class Instance',
+    'method': 'Class Method',
+    'property': 'Class Property',
+    'generator': 'Generator',
+    'function': 'Function',
+    'builtin_function_or_method': 'Builtin Function',
+    'code': 'Code',
+    'module': 'Module',
+    'ellipsis': 'Ellipsis',
+    'traceback': 'Traceback',
+    'frame': 'Frame',
+    'other': 'Other'}
