@@ -31,7 +31,14 @@ import json
 
 def prepareJSONMessage(method, params):
     """Prepares a JSON message to be send"""
-    return json.dumps(
+    msg = json.dumps(
         {'jsonrpc': '2.0',
          'method': method,
          'params': params}) + '\n'
+    return msg.encode('utf8', 'backslashreplace')
+
+
+def parseJSONMessage(jsonStr):
+    """Parses a JSON message"""
+    cmdDictionary = json.loads(jsonStr.strip())
+    return cmdDictionary['method'], cmdDictionary['params']

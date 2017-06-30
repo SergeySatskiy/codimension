@@ -755,13 +755,13 @@ class CodimensionMainWindow(QMainWindow):
 
     def findInFilesClicked(self):
         """Triggered when the find in files button is clicked"""
-        searchText = ""
+        txt = ""
         currentWidget = self.em.currentWidget()
         if currentWidget.getType() in \
            [MainWindowTabWidgetBase.PlainTextEditor]:
-            searchText = currentWidget.getEditor().getSearchText()
+            txt, _, _, _ = currentWidget.getEditor().getCurrentOrSelection()
 
-        dlg = FindInFilesDialog(FindInFilesDialog.IN_PROJECT, searchText, "")
+        dlg = FindInFilesDialog(FindInFilesDialog.IN_PROJECT, txt, "")
         dlg.exec_()
         if dlg.searchResults:
             self.displayFindInFiles(dlg.searchRegexp, dlg.searchResults)

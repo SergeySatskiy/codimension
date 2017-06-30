@@ -29,11 +29,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.diskvaluesrelay import getRunParameters, addRunParams
 from editor.redirectedrun import RunConsoleTabWidget
-from debugger.client.protocol_cdm_dbg import (EOT, RequestContinue,
-                                              StdoutStderrEOT, ResponseRaw,
-                                              ResponseExit, ResponseStdout,
-                                              ResponseStderr, RequestExit,
-                                              ResponseProcID)
+from debugger.client.protocol_cdm_dbg import *
 from .qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
                  QTcpServer, QHostAddress, QAbstractSocket, pyqtSignal)
 from .runparams import RunDialog

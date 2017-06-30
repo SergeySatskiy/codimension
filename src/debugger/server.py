@@ -35,7 +35,7 @@ from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.pixmapcache import getIcon
 from utils.diskvaluesrelay import getRunParameters
 from .client.protocol_cdm_dbg import *
-from .client.cdm_dbg_utils import prepareJSONMessage
+from .client.cdm_dbg_utils import prepareJSONMessage, parseJSONMessage
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
@@ -78,11 +78,6 @@ class CodimensionDebugger(QObject):
     STATE_FINISHING = 4
     STATE_BRUTAL_FINISHING = 5
 
-    PROTOCOL_CONTROL = 0
-    PROTOCOL_EVALEXEC = 1
-    PROTOCOL_STDOUT = 2
-    PROTOCOL_STDERR = 3
-
     def __init__(self, mainWindow):
         QObject.__init__(self)
 
@@ -99,9 +94,6 @@ class CodimensionDebugger(QObject):
         self.__disconnectReceived = None
         self.__stopAtFirstLine = None
         self.__translatePath = None
-
-        self.__protocolState = self.PROTOCOL_CONTROL
-        self.__buffer = ""
 
         self.__exitCode = None
         self.__fileName = None
@@ -145,12 +137,11 @@ class CodimensionDebugger(QObject):
     def startDebugging(self, fileName):
         """Starts debugging a script"""
         if self.__state != self.STATE_STOPPED:
-            logging.error("Cannot start debug session. "
-                          "The previous one has not finished yet.")
+            logging.error('Cannot start debug session. '
+                          'The previous one has not finished yet.')
             return
 
         self.__protocolState = self.PROTOCOL_CONTROL
-        self.__buffer = ""
         self.__exitCode = None
         self.__fileName = None
         self.__runParameters = None
@@ -348,57 +339,36 @@ class CodimensionDebugger(QObject):
         raise Exception("Cannot send command to debuggee - "
                         "no connection established. Command: " + cmd)
 
-    def __sendCommand(self, command):
-        """Sends a command to the debuggee"""
-        if self.__clientSocket:
-            self.__clientSocket.write(command.encode('utf8'))
-            self.__clientSocket.flush()
-            return
-
-        raise Exception("Cannot send command to debuggee - "
-                        "no connection established. Command: " + command)
-
     def __parseClientLine(self):
         """Triggered when something has been received from the client"""
-        while self.__clientSocket and self.__clientSocket.bytesAvailable() > 0:
-            qs = self.__clientSocket.readAll()
-            self.__buffer += qs
+        while self.__clientSocket and self.__clientSocket.canReadLine():
+            qs = self.__clientSocket.readLine()
+            jsonStr = bytes(qs).decode()
 
-            # print "Received: '" + str( qs ) + "'"
+            try:
+                method, params = parseJSONMessage(jsonStr)
+            except (TypeError, ValueError) as exc:
+                logging.error(
+                    'The response received from the debugger backend '
+                    'could not be decoded. Please report the issue.\n'
+                    'Exception: ' + str(exc) + '\n'
+                    'Data: ' + jsonStr.strip())
+                continue
 
-            tryAgain = True
-            while tryAgain:
-                if self.__protocolState == self.PROTOCOL_CONTROL:
-                    tryAgain = self.__processControlState()
-                elif self.__protocolState == self.PROTOCOL_EVALEXEC:
-                    tryAgain = self.__processEvalexecState()
-                elif self.__protocolState == self.PROTOCOL_STDOUT:
-                    tryAgain = self.__processStdoutStderrState(True)
-                elif self.__protocolState == self.PROTOCOL_STDERR:
-                    tryAgain = self.__processStdoutStderrState(False)
-                else:
-                    raise Exception("Unexpected protocol state")
+            self.__processMessage(method, params)
+
+    def __processMessage(self, method, params):
+        """Processes one message from the debugger"""
+
+
+
+
+
+
 
     def __processControlState(self):
         """Analyzes receiving buffer in the CONTROL state"""
         # Buffer is going to start with >ZZZ< message and ends with EOT
-        index = self.__buffer.find(EOT)
-        if index == -1:
-            return False
-
-        line = self.__buffer[0:index]
-        self.__buffer = self.__buffer[index + len(EOT):]
-
-        if not line.startswith('>'):
-            print("Unexpected message received (no '>' at the beginning): '" +
-                  line + "'")
-            return self.__buffer != ""
-
-        cmdIndex = line.find('<')
-        if cmdIndex == -1:
-            print("Unexpected message received (no '<' found): '" + line + "'")
-            return self.__buffer != ""
-
         cmd = line[0:cmdIndex + 1]
         content = line[cmdIndex + 1:]
         if cmd == ResponseLine or cmd == ResponseStack:

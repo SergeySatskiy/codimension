@@ -28,47 +28,31 @@ import traceback
 import os
 import imp
 from .outredir_cdm_dbg import OutStreamRedirector, MAX_TRIES
-from .protocol_cdm_dbg import (RequestContinue, EOT, ResponseExit,
-                               ResponseRaw, RequestExit, ResponseProcID)
+from .cdm_dbg_utils import prepareJSONMessage
+from .protocol_cdm_dbg import *
 from errno import EAGAIN
 
 
 WAIT_CONTINUE_TIMEOUT = 10
 WAIT_EXIT_COMMAND = 5
 RUN_WRAPPER = None
+RUN_CLIENT_ORIG_INPUT = None
 
 
-def runClientRawInput(prompt="", echo=True):
+def runClientInput(prompt="", echo=True):
     """Replacement for the standard raw_input builtin"""
     if RUN_WRAPPER is None or not RUN_WRAPPER.redirected():
-        return runClientOrigRawInput(prompt)
-    return RUN_WRAPPER.raw_input(prompt, echo)
-
-
-# Use our own raw_input().
-try:
-    runClientOrigRawInput = __builtins__.__dict__['raw_input']
-    __builtins__.__dict__['raw_input'] = runClientRawInput
-except (AttributeError, KeyError):
-    import __main__
-    runClientOrigRawInput = __main__.__builtins__.__dict__['raw_input']
-    __main__.__builtins__.__dict__['raw_input'] = runClientRawInput
-
-
-def runClientInput(prompt=""):
-    """Replacement for the standard input builtin"""
-    if RUN_WRAPPER is None or not RUN_WRAPPER.redirected():
-        return runClientOrigInput(prompt)
-    return RUN_WRAPPER.input(prompt)
+        return RUN_CLIENT_ORIG_INPUT(prompt)
+    return RUN_WRAPPER.input(prompt, echo)
 
 
 # Use our own input().
 try:
-    runClientOrigInput = __builtins__.__dict__['input']
+    RUN_CLIENT_ORIG_INPUT = __builtins__.__dict__['input']
     __builtins__.__dict__['input'] = runClientInput
 except (AttributeError, KeyError):
     import __main__
-    runClientOrigInput = __main__.__builtins__.__dict__['input']
+    RUN_CLIENT_ORIG_INPUT = __main__.__builtins__.__dict__['input']
     __main__.__builtins__.__dict__['input'] = runClientInput
 
 
@@ -226,6 +210,20 @@ class RedirectedIORunWrapper():
                 continue
         raise socket.error("Too many attempts to send data")
 
+    def sendJSONCommand(self, method, params):
+        """Sends a single command or response to the IDE"""
+        cmd = prepareJSONMessage(method, params)
+        tries = MAX_TRIES
+        while tries > 0:
+            try:
+                if self.__socket:
+                    self.__socket.sendall(cmd)
+                return
+            except socket.error:
+                tries -= 1
+                continue
+        raise socket.error('Too many attempts to send data')
+
     def __runScript(self, workingDir, arguments):
         """Runs the python script"""
         try:
@@ -283,8 +281,8 @@ class RedirectedIORunWrapper():
         except:
             pass
 
-    def raw_input(self, prompt, echo):
-        """Implements raw_input() using the redirected input"""
+    def input(self, prompt, echo):
+        """Implements input() using the redirected input"""
         # self.__flushSocketBuffer()
         self.write("%s%s" % (ResponseRaw, (prompt, echo)))
         return self.__waitInput()
@@ -300,10 +298,6 @@ class RedirectedIORunWrapper():
                     f.close()
         except:
             pass
-
-    def input(self, prompt):
-        """Implement input() using the redirected input"""
-        return self.raw_input(prompt, 1)
 
     def __waitInput(self):
         """Waits for the user input"""

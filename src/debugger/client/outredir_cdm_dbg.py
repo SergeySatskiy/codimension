@@ -118,6 +118,11 @@ class OutStreamRedirector():
         self.write(''.join(lines))
 
 
+# The OutStreamCollector is used in case of the Exec() request.
+# The Exec() supposes that there could be both stdout and stderr
+# printouts. They need to be collected as a combined output and sent back to
+# the IDE. So an instance of the OutStreamCollector is used to temporary
+# substitute the sys.stdout and sys.stderr.
 class OutStreamCollector():
 
     """Collects output with a file interface"""
@@ -135,11 +140,15 @@ class OutStreamCollector():
 
     def isatty(self):
         """Indicates whether a tty interface is supported"""
-        return 0
+        return False
 
     def fileno(self):
         """Provides the file number"""
         return -1
+
+    def readable(self):
+        """Checks if the stream is readable"""
+        return False
 
     def read_p(self, size=-1):
         """Read is not supported"""
@@ -161,6 +170,10 @@ class OutStreamCollector():
         """Read is not supported"""
         raise IOError((9, '[Errno 9] Bad file descriptor'))
 
+    def seekable(self):
+        """Checks if the stream is seekable"""
+        return False
+
     def seek(self, offset, whence=0):
         """Seek is not supported"""
         raise IOError((29, '[Errno 29] Illegal seek'))
@@ -172,6 +185,10 @@ class OutStreamCollector():
     def truncate(self, size=-1):
         """Truncates is not supported"""
         raise IOError((29, '[Errno 29] Illegal seek'))
+
+    def writable(self):
+        """Check if a stream is writable"""
+        return True
 
     def write(self, data):
         """Writes a string to the file"""

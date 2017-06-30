@@ -44,17 +44,12 @@ from .base_cdm_dbg import setRecursionLimit
 from .asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
 from .outredir_cdm_dbg import OutStreamRedirector, OutStreamCollector
 from .bp_wp_cdm_dbg import Breakpoint, Watch
+from .cdm_dbg_utils import prepareJSONMessage
 
 
 DEBUG_CLIENT_INSTANCE = None
 VAR_TYPE_STRINGS = list(VAR_TYPE_DISP_STRINGS.keys())
-
-
-def debugClientRawInput(prompt="", echo=True):
-    """Replacement for the standard raw_input builtin"""
-    if DEBUG_CLIENT_INSTANCE is None or not DEBUG_CLIENT_INSTANCE.redirect:
-        return DEBUG_CLIENT_ORIG_RAW_INPUT(prompt)
-    return DEBUG_CLIENT_INSTANCE.rawInput(prompt, echo)
+DEBUG_CLIENT_ORIG_INPUT = None
 
 
 def debugClientInput(prompt="", echo=True):
@@ -67,11 +62,11 @@ def debugClientInput(prompt="", echo=True):
 # Use our own input().
 try:
     DEBUG_CLIENT_ORIG_INPUT = __builtins__.__dict__['input']
-    __builtins__.__dict__['input'] = debugClientRawInput
+    __builtins__.__dict__['input'] = debugClientInput
 except (AttributeError, KeyError):
     import __main__
     DEBUG_CLIENT_ORIG_INPUT = __main__.__builtins__.__dict__['input']
-    __main__.__builtins__.__dict__['input'] = debugClientRawInput
+    __main__.__builtins__.__dict__['input'] = debugClientInput
 
 
 def debugClientFork():
@@ -209,16 +204,12 @@ class DebugClientBase(object):
                     return
             self.__coding = default
 
-    def rawInput(self, prompt, echo):
-        """raw_input() / input() using the event loop"""
+    def input(self, prompt, echo):
+        """input() using the event loop"""
         self.sendJSONCommand(
-            METHOD_REQUEST_RAW, {'prompt': prompt, 'echo': echo})
+            METHOD_REQUEST_INPUT, {'prompt': prompt, 'echo': echo})
         self.eventLoop(True)
-        return self.rawLine
-
-    def input(self, prompt):
-        """input() (Python 2) using the event loop"""
-        return eval(self.rawInput(prompt, True))
+        return self.userInput
 
     def sessionClose(self, terminate=True):
         """Closes the session with the debugger and optionally terminate"""
@@ -614,10 +605,10 @@ class DebugClientBase(object):
             self.currentThreadExec.go(params['special'])
             self.eventExit = True
 
-        elif method == METHOD_RAW_INPUT:
+        elif method == METHOD_USER_INPUT:
             # If we are handling raw mode input then break out of the current
             # event loop.
-            self.rawLine = params['input']
+            self.userInput = params['input']
             self.eventExit = True
 
         elif method == METHOD_REQUEST_BREAKPOINT:
@@ -701,7 +692,7 @@ class DebugClientBase(object):
 
     def sendJSONCommand(self, method, params):
         """Sends a single command or response to the IDE"""
-        cmd = prepareJSONCommand(method, params)
+        cmd = prepareJSONMessage(method, params)
 
         self.writestream.write_p(cmd)
         self.writestream.flush()
@@ -859,10 +850,6 @@ class DebugClientBase(object):
         self.writestream = AsyncFile(sock, sys.stdout.mode, sys.stdout.name)
         self.errorstream = AsyncFile(sock, sys.stderr.mode, sys.stderr.name)
 
-        #if redirect:
-        #    sys.stdin = self.readstream
-        #    sys.stdout = self.writestream
-        #    sys.stderr = self.errorstream
         if redirect:
             sys.stdout = OutStreamRedirector(sock, True)
             sys.stderr = OutStreamRedirector(sock, False)

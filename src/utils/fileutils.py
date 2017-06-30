@@ -89,6 +89,9 @@ def __getMimeByXmlSyntaxFile(xmlSyntaxFile):
         # The qutepart syntax DB misses a markdown mime
         if xmlSyntaxFile == 'markdown.xml':
             return 'text/x-markdown'
+        # ... and mako mime
+        elif xmlSyntaxFile == 'mako.xml':
+            return 'text/x-mako'
         return None
     if len(candidates) == 1:
         return candidates[0]
