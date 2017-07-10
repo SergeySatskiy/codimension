@@ -50,6 +50,9 @@ from .cdm_dbg_utils import prepareJSONMessage
 DEBUG_CLIENT_INSTANCE = None
 VAR_TYPE_STRINGS = list(VAR_TYPE_DISP_STRINGS.keys())
 DEBUG_CLIENT_ORIG_INPUT = None
+DEBUG_CLIENT_ORIG_FORK = None
+DEBUG_CLIENT_ORIG_CLOSE = None
+DEBUG_CLIENT_ORIG_SET_RECURSION_LIMIT = None
 
 
 def debugClientInput(prompt="", echo=True):
