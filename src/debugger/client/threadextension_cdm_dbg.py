@@ -154,28 +154,28 @@ class ThreadExtension(object):
             threadNames = {t.ident: t.getName() for t in threading.enumerate()}
 
             for threadId, thd in self.threads.items():
-                d = {"id": threadId}
+                threadProps = {"id": threadId}
                 try:
-                    d["name"] = threadNames.get(threadId, thd.name)
-                    d["broken"] = thd.isBroken
+                    threadProps["name"] = threadNames.get(threadId, thd.name)
+                    threadProps["broken"] = thd.isBroken
                 except Exception:
-                    d["name"] = 'UnknownThread'
-                    d["broken"] = False
+                    threadProps["name"] = 'UnknownThread'
+                    threadProps["broken"] = False
 
-                threadList.append(d)
+                threadList.append(threadProps)
         else:
             currentId = -1
-            d = {"id": -1}
-            d["name"] = "MainThread"
-            d["broken"] = self.isBroken
-            threadList.append(d)
+            threadProps = {"id": -1}
+            threadProps["name"] = "MainThread"
+            threadProps["broken"] = self.isBroken
+            threadList.append(threadProps)
 
         self.sendJSONCommand(METHOD_RESPONSE_THREAD_LIST, {
             "currentID": currentId,
-            "threadList": threadList,
-        })
+            "threadList": threadList})
 
-    def getExecutedFrame(self, frame):
+    @staticmethod
+    def getExecutedFrame(frame):
         """Returns the currently executed frame"""
         # to get the currently executed frame, skip all frames belonging to the
         # debugger
@@ -218,7 +218,8 @@ class ThreadExtension(object):
         self.threads = {id_: thrd for id_, thrd in self.threads.items()
                         if id_ in frames}
 
-    def find_module(self, fullname, path=None):
+    # find_module(self, fullname, path=None)
+    def find_module(self, fullname, _=None):
         """Returning the module loader"""
         if fullname in sys.modules or not self.debugging:
             return None

@@ -78,6 +78,10 @@ METHOD_RESPONSE_VARIABLES = 'ResponseVariables'
 METHOD_RESPONSE_VARIABLE = 'ResponseVariable'
 METHOD_REQUEST_FORK_TO = 'RequestForkTo'
 
+METHOD_STDOUT = 'ClientStdout'
+METHOD_STDERR = 'ClientStderr'
+
+
 VAR_TYPE_DISP_STRINGS = {
     '__': 'Hidden Attributes',
     'NoneType': 'None',

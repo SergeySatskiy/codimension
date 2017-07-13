@@ -827,44 +827,44 @@ class DebugClientBase(object):
             {'message': message, 'filename': filename, 'linenumber': linenr,
              'function': ffunc, 'arguments': fargs})
 
-    def absPath(self, fn):
+    def absPath(self, fileName):
         """Converts a filename to an absolute name"""
-        if os.path.isabs(fn):
+        if os.path.isabs(fileName):
             if sys.version_info[0] == 2:
-                fn = fn.decode(sys.getfilesystemencoding())
+                fileName = fileName.decode(sys.getfilesystemencoding())
 
-            return fn
+            return fileName
 
         # Check the cache
-        if fn in self._fncache:
-            return self._fncache[fn]
+        if fileName in self._fncache:
+            return self._fncache[fileName]
 
         # Search sys.path
-        for p in sys.path:
-            afn = os.path.abspath(os.path.join(p, fn))
+        for aPath in sys.path:
+            afn = os.path.abspath(os.path.join(aPath, fileName))
             nafn = os.path.normcase(afn)
 
             if os.path.exists(nafn):
                 if sys.version_info[0] == 2:
                     afn = afn.decode(sys.getfilesystemencoding())
 
-                self._fncache[fn] = afn
-                d = os.path.dirname(afn)
-                if (d not in sys.path) and (d not in self.dircache):
-                    self.dircache.append(d)
+                self._fncache[fileName] = afn
+                aDir = os.path.dirname(afn)
+                if (aDir not in sys.path) and (aDir not in self.dircache):
+                    self.dircache.append(aDir)
                 return afn
 
         # Search the additional directory cache
-        for p in self.dircache:
-            afn = os.path.abspath(os.path.join(p, fn))
+        for aPath in self.dircache:
+            afn = os.path.abspath(os.path.join(aPath, fileName))
             nafn = os.path.normcase(afn)
 
             if os.path.exists(nafn):
-                self._fncache[fn] = afn
+                self._fncache[fileName] = afn
                 return afn
 
         # Nothing found
-        return fn
+        return fileName
 
     def getRunning(self):
         """True if the main script we are currently running"""
@@ -1032,18 +1032,21 @@ class DebugClientBase(object):
             varlist.append(('height', 'float', '{0:g}'.format(value.height())))
         elif qttype == 'QColor':
             varlist.append(('name', 'str', '{0}'.format(value.name())))
-            r, g, b, a = value.getRgb()
+            red, green, blue, alpha = value.getRgb()
             varlist.append(
                 ('rgba', 'int',
-                 '{0:d}, {1:d}, {2:d}, {3:d}'.format(r, g, b, a)))
-            h, s, v, a = value.getHsv()
+                 '{0:d}, {1:d}, {2:d}, {3:d}'.format(red, green, blue, alpha)))
+            hue, saturation, value, alpha = value.getHsv()
             varlist.append(
                 ('hsva', 'int',
-                 '{0:d}, {1:d}, {2:d}, {3:d}'.format(h, s, v, a)))
-            c, m, y, k, a = value.getCmyk()
+                 '{0:d}, {1:d}, {2:d}, {3:d}'.format(hue, saturation,
+                                                     value, alpha)))
+            cyan, magenta, yellow, black, alpha = value.getCmyk()
             varlist.append(
                 ('cmyka', 'int',
-                 '{0:d}, {1:d}, {2:d}, {3:d}, {4:d}'.format(c, m, y, k, a)))
+                 '{0:d}, {1:d}, {2:d}, {3:d}, {4:d}'.format(cyan, magenta,
+                                                            yellow, black,
+                                                            alpha)))
         elif qttype == 'QDate':
             varlist.append(('', 'QDate', '{0}'.format(value.toString())))
         elif qttype == 'QTime':

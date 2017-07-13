@@ -33,8 +33,6 @@ This module is a replacement for the one found in the Python distribution. It
 is to provide a debugger compatible variant of the functions mentioned above.
 """
 
-import sys
-
 __all__ = ["getpass", "getuser"]
 
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,12 @@
 
 """Redirectors for stdout/stderr streams"""
 
+# pylint: disable=no-self-use, unused-argument
+
 import socket
-from protocol_cdm_dbg import (StdoutStderrEOT, ResponseStdout,
-                              ResponseStderr, EOT)
+from .protocol_cdm_dbg import METHOD_STDOUT, METHOD_STDERR
+from .cdm_dbg_utils import prepareJSONMessage
+
 
 MAX_TRIES = 3
 
@@ -101,11 +104,12 @@ class OutStreamRedirector():
         while tries > 0:
             try:
                 if self.isStdout:
-                    message = ResponseStdout
+                    method = METHOD_STDOUT
                 else:
-                    message = ResponseStderr
-                message += EOT + data + StdoutStderrEOT
-                self.sock.sendall(message)
+                    method = METHOD_STDERR
+                msg = prepareJSONMessage(method,
+                                         {'text': data})
+                self.sock.sendall(msg)
                 return
             except socket.error:
                 tries -= 1
