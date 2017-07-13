@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,16 +24,23 @@
 # Copyright (c) 2002 - 2012 Detlev Offenbach <detlev@die-offenbachs.de>
 #
 
-"""Module implementing the debug base class."""
+
+"""
+Module implementing the debug base class
+"""
 
 import sys
-import bdb
 import os
 import types
 import atexit
 import inspect
-from .protocol_cdm_dbg import (ResponseClearWatch, ResponseClearBreak,
-                               ResponseLine, ResponseSyntax, ResponseException)
+import ctypes
+import time
+from inspect import CO_GENERATOR
+from .bp_wp_cdm_dbg import Breakpoint, Watch
+from .cdm_dbg_utils import formatArgValues, getArgValues, printerr
+import _thread
+
 
 RECURSION_LIMIT = 64
 
@@ -44,706 +51,721 @@ def setRecursionLimit(limit):
     RECURSION_LIMIT = limit
 
 
-class DebugBase(bdb.Bdb):
+class DebugBase(object):
 
-    """Base class of the debugger - the part which is external to IDE
-       Provides simple wrapper methods around bdb for the 'owning' client to
-       call to step etc.
+    """
+    Base class of the debugger - the part which is external to IDE.
     """
 
+    # Don't thrust distutils.sysconfig.get_python_lib: possible case mismatch
+    # on Windows
+    lib = os.path.dirname(inspect.__file__)
+
+    # Tuple required because it's accessed a lot of times by startswith method
+    pathsToSkip = ('<', os.path.dirname(__file__), inspect.__file__[:-1])
+    filesToSkip = {}
+
+    # Cache for fixed file names
+    _fnCache = {}
+
+    # Stop all timers, when greenlets are used
+    pollTimerEnabled = True
+
     def __init__(self, dbgClient):
-        bdb.Bdb.__init__(self)
-
         self._dbgClient = dbgClient
-        self._mainThread = 1
 
-        self.breaks = self._dbgClient.breakpoints
+        # Some informations about the thread
+        self.isMainThread = False
+        self.quitting = False
+        self.id = -1
+        self.name = ''
 
-        self.__event = ""
-        self.__isBroken = ""
+        self.tracePythonLibs(0)
+
+        # Special handling of a recursion error
+        self.skipFrames = 0
+
+        self.isBroken = False
         self.cFrame = None
 
         # current frame we are at
         self.currentFrame = None
-        self.currentFrameLocals = None
 
-        # frame that we are stepping in, can be different than currentFrame
-        self.stepFrame = None
-
-        # provide a hook to perform a hard breakpoint
-        # Use it like this:
-        # if hasattr(sys, 'breakpoint'): sys.breakpoint()
-        sys.breakpoint = self.set_trace
-
-        # initialize parent
-        bdb.Bdb.reset( self )
+        # frames, where we want to stop or release debugger
+        self.stopframe = None
+        self.returnframe = None
+        self.stop_everywhere = False
 
         self.__recursionDepth = -1
         self.setRecursionDepth(inspect.currentframe())
 
+        # background task to periodicaly check for client interactions
+        self.eventPollFlag = False
+        self.timer = _thread.start_new_thread(self.__eventPollTimer, ())
+
+        # provide a hook to perform a hard breakpoint
+        # Use it like this:
+        # if hasattr(sys, 'breakpoint): sys.breakpoint()
+        sys.breakpoint = self.set_trace
+
+    def __eventPollTimer(self):
+        """Sets a flag every 0.5 sec to check for new messages"""
+        while DebugBase.pollTimerEnabled:
+            time.sleep(0.5)
+            self.eventPollFlag = True
+
+        self.eventPollFlag = False
+
     def getCurrentFrame(self):
         """Provides the current frame"""
+        if self.quitting:
+            return None
         return self.currentFrame
 
-    def getCurrentFrameLocals(self):
+    def getFrameLocals(self, frmnr=0):
         """Provides the locals dictionary of the current frame"""
-        return self.currentFrameLocals
+        f = self.currentFrame
+        while f is not None and frmnr > 0:
+            f = f.f_back
+            frmnr -= 1
+        return f.f_locals
+
+    def storeFrameLocals(self, frmnr=0):
+        """Stores the locals into the frame.
+
+        Thus an access to frame.f_locals returns the last data
+        """
+        cf = self.currentFrame
+        while cf is not None and frmnr > 0:
+            cf = cf.f_back
+            frmnr -= 1
+
+        try:
+            if '__pypy__' in sys.builtin_module_names:
+                import __pypy__
+                __pypy__.locals_to_fast(cf)
+                return
+        except Exception:
+            pass
+
+        ctypes.pythonapi.PyFrame_LocalsToFast(ctypes.py_object(cf),
+                                              ctypes.c_int(0))
 
     def step(self, traceMode):
-
-        """Performs step in this thread.
-           traceMode: If it is non-zero, then the step is a step into,
-           otherwise it is a step over.
-        """
-
-        self.stepFrame = self.currentFrame
+        """Performs step in this thread"""
         if traceMode:
-            self.currentFrame = None
             self.set_step()
         else:
             self.set_next(self.currentFrame)
 
     def stepOut(self):
         """Performs a step out of the current call"""
-        self.stepFrame = self.currentFrame
         self.set_return(self.currentFrame)
 
     def go(self, special):
-
-        """Resumes the thread.
-           It resumes the thread stopping only at breakpoints or exceptions.
-           special: flag indicating a special continue operation
-        """
-
-        self.currentFrame = None
+        """Resumes the thread"""
         self.set_continue(special)
 
-    def setRecursionDepth( self, frame ):
-        """
-        Determines the current recursion depth
-
-        @param frame The current stack frame.
-        """
+    def setRecursionDepth(self, frame):
+        """Determines the current recursion depth"""
         self.__recursionDepth = 0
         while frame is not None:
             self.__recursionDepth += 1
             frame = frame.f_back
-        return
 
-    def profile( self, frame, event, arg ):
-        """
-        Public method used to trace some stuff independant of the debugger
-        trace function.
-
-        @param frame The current stack frame.
-        @param event The trace event (string)
-        @param arg The arguments
-        """
+    def profileWithRecursion(self, frame, event, arg):
+        """Traces some stuff independent of the debugger trace function"""
         if event == 'return':
             self.cFrame = frame.f_back
             self.__recursionDepth -= 1
+            if self._dbgClient.callTraceEnabled:
+                self.__sendCallTrace(event, frame, self.cFrame)
         elif event == 'call':
+            if self._dbgClient.callTraceEnabled:
+                self.__sendCallTrace(event, self.cFrame, frame)
             self.cFrame = frame
             self.__recursionDepth += 1
             if self.__recursionDepth > RECURSION_LIMIT:
-                raise RuntimeError(
-                        'maximum recursion depth exceeded\n'
-                        '(offending frame is too down the stack)' )
-        return
+                raise RuntimeError('maximum recursion depth exceeded\n'
+                                   '(offending frame is two down the stack)')
 
-    def trace_dispatch( self, frame, event, arg ):
-        """
-        Reimplemented from bdb.py to do some special things.
+    def profile(self, frame, event, arg):
+        """Traces some stuff independant of the debugger trace function"""
+        if event == 'return':
+            self.__sendCallTrace(event, frame, frame.f_back)
+        elif event == 'call':
+            self.__sendCallTrace(event, frame.f_back, frame)
 
-        This specialty is to check the connection to the debug server
-        for new events (i.e. new breakpoints) while we are going through
-        the code.
+    def __sendCallTrace(self, event, fromFrame, toFrame):
+        """Sends a call/return trace"""
+        if not self.__skipFrame(fromFrame) and not self.__skipFrame(toFrame):
+            fromInfo = {
+                "filename": self._dbgClient.absPath(
+                    self.fix_frame_filename(fromFrame)),
+                "linenumber": fromFrame.f_lineno,
+                "codename": fromFrame.f_code.co_name}
+            toInfo = {
+                "filename": self._dbgClient.absPath(
+                    self.fix_frame_filename(toFrame)),
+                "linenumber": toFrame.f_lineno,
+                "codename": toFrame.f_code.co_name}
+            self._dbgClient.sendCallTrace(event, fromInfo, toInfo)
 
-        @param frame The current stack frame.
-        @param event The trace event (string)
-        @param arg The arguments
-        @return local trace function        """
-        if self.quitting:
-            return # None
-
+    def trace_dispatch(self, frame, event, arg):
+        """Reimplemented from bdb.py to do some special things"""
         # give the client a chance to push through new break points.
-        self._dbgClient.eventPoll()
+        if self.eventPollFlag:
+            self._dbgClient.eventPoll()
+            self.eventPollFlag = False
 
-        self.__event = event
-        self.__isBroken = False
+            if self.quitting:
+                raise SystemExit
 
         if event == 'line':
-            return self.dispatch_line( frame )
+            if self.stop_here(frame) or self.break_here(frame):
+                if (self.stop_everywhere and frame.f_back and
+                        frame.f_back.f_code.co_name == "prepareJSONCommand"):
+                    # Just stepped into print statement, so skip these frames
+                    self._set_stopinfo(None, frame.f_back)
+                else:
+                    self.user_line(frame)
+            return self.trace_dispatch
+
         if event == 'call':
-            return self.dispatch_call( frame, arg )
-        if event == 'return':
-            return self.dispatch_return( frame, arg )
-        if event == 'exception':
-            return self.dispatch_exception( frame, arg )
-        if event == 'c_call':
-            return self.trace_dispatch
-        if event == 'c_exception':
-            return self.trace_dispatch
-        if event == 'c_return':
-            return self.trace_dispatch
-
-        print('DebugBase.trace_dispatch: unknown debugging event: ' +
-              str(event))
-        return self.trace_dispatch
-
-    def dispatch_line( self, frame ):
-        """
-        Reimplemented from bdb.py to do some special things.
-
-        This speciality is to check the connection to the debug server
-        for new events (i.e. new breakpoints) while we are going through
-        the code.
-
-        @param frame The current stack frame.
-        @return local trace function
-        """
-        if self.stop_here( frame ) or self.break_here( frame ):
-            self.user_line( frame )
-            if self.quitting:
-                raise bdb.BdbQuit
-        return self.trace_dispatch
-
-    def dispatch_return( self, frame, arg ):
-        """
-        Reimplemented from bdb.py to handle passive mode cleanly.
-
-        @param frame The current stack frame.
-        @param arg The arguments
-        @return local trace function
-        """
-        if self.stop_here( frame ) or frame == self.returnframe:
-            self.user_return( frame, arg )
-            if self.quitting and not self._dbgClient.passive:
-                raise bdb.BdbQuit
-        return self.trace_dispatch
-
-    def dispatch_exception( self, frame, arg ):
-        """
-        Reimplemented from bdb.py to always call user_exception.
-
-        @param frame The current stack frame.
-        @param arg The arguments
-        @return local trace function
-        """
-        if not self.__skip_it( frame ):
-            self.user_exception( frame, arg )
-            if self.quitting:
-                raise bdb.BdbQuit
-        return self.trace_dispatch
-
-    def set_trace( self, frame = None ):
-        """
-        Overridden method of bdb.py to do some special setup.
-
-        @param frame frame to start debugging from
-        """
-        bdb.Bdb.set_trace( self, frame )
-        sys.setprofile( self.profile )
-        return
-
-    def set_continue( self, special ):
-        """
-        Reimplemented from bdb.py to always get informed of exceptions.
-
-        @param special flag indicating a special continue operation
-        """
-        # Modified version of the one found in bdb.py
-        # Here we only set a new stop frame if it is a normal continue.
-        if not special:
-            self.stopframe = self.botframe
-        self.returnframe = None
-        self.quitting = 0
-        return
-
-    def set_quit( self ):
-        """
-        Public method to quit.
-
-        It wraps call to bdb to clear the current frame properly.
-        """
-        self.currentFrame = None
-        sys.setprofile( None )
-        bdb.Bdb.set_quit( self )
-        return
-
-    def fix_frame_filename( self, frame ):
-        """
-        Public method used to fixup the filename for a given frame.
-
-        The logic employed here is that if a module was loaded
-        from a .pyc file, then the correct .py to operate with
-        should be in the same path as the .pyc. The reason this
-        logic is needed is that when a .pyc file is generated, the
-        filename embedded and thus what is readable in the code object
-        of the frame object is the fully qualified filepath when the
-        pyc is generated. If files are moved from machine to machine
-        this can break debugging as the .pyc will refer to the .py
-        on the original machine. Another case might be sharing
-        code over a network... This logic deals with that.
-
-        @param frame the frame object
-        """
-        # get module name from __file__
-        if frame.f_globals.has_key( '__file__' ) and \
-           frame.f_globals[ '__file__' ] and \
-           frame.f_globals[ '__file__' ] == frame.f_code.co_filename:
-            root, ext = os.path.splitext( frame.f_globals[ '__file__' ] )
-            if ext in [ '.pyc', '.py', '.pyo' ]:
-                fixedName = root + '.py'
-                if os.path.exists( fixedName ):
-                    return fixedName
-
-        return frame.f_code.co_filename
-
-    def set_watch( self, cond, temporary = 0 ):
-        """
-        Public method to set a watch expression
-
-        @param cond expression of the watch expression (string)
-        @param temporary flag indicating a temporary watch expression (boolean)
-        """
-        bpoint = bdb.Breakpoint( "Watch", 0, temporary, cond )
-        if cond.endswith( '??created??' ) or cond.endswith( '??changed??' ):
-            bpoint.condition, bpoint.special = cond.split()
-        else:
-            bpoint.condition = cond
-            bpoint.special = ""
-        bpoint.values = {}
-        if not self.breaks.has_key( "Watch" ):
-            self.breaks[ "Watch" ] = 1
-        else:
-            self.breaks[ "Watch" ] += 1
-        return
-
-    def clear_watch( self, cond ):
-        """
-        Public method to clear a watch expression
-
-        @param cond expression of the watch expression to be cleared (string)
-        """
-        try:
-            possibles = bdb.Breakpoint.bplist[ "Watch", 0 ]
-            for i in xrange( 0, len( possibles ) ):
-                b = possibles[ i ]
-                if b.cond == cond:
-                    b.deleteMe()
-                    self.breaks[ "Watch" ] -= 1
-                    if self.breaks[ "Watch" ] == 0:
-                        del self.breaks[ "Watch" ]
-                    break
-        except KeyError:
-            pass
-        return
-
-    def get_watch( self, cond ):
-        """
-        Public method to get a watch expression
-
-        @param cond expression of the watch expression to be cleared (string)
-        """
-        possibles = bdb.Breakpoint.bplist[ "Watch", 0 ]
-        for i in xrange( 0, len( possibles ) ):
-            b = possibles[ i ]
-            if b.cond == cond:
-                return b
-        return
-
-    def __do_clearWatch( self, cond ):
-        """
-        Private method called to clear a temporary watch expression
-
-        @param cond expression of the watch expression to be cleared (string)
-        """
-        self.clear_watch( cond )
-        self._dbgClient.write( '%s%s\n' % ( ResponseClearWatch, cond ) )
-        return
-
-    def __effective( self, frame ):
-        """
-        Determines if a watch expression is effective
-
-        @param frame the current execution frame
-        @return tuple of watch expression and a flag to indicate, that a temporary
-            watch expression may be deleted (bdb.Breakpoint, boolean)
-        """
-        possibles = bdb.Breakpoint.bplist[ "Watch", 0 ]
-        for i in xrange( 0, len( possibles ) ):
-            b = possibles[ i ]
-            if b.enabled == 0:
-                continue
-            if not b.cond:
-                # watch expression without expression shouldn't occur,
-                # just ignore it
-                continue
-            try:
-                val = eval( b.condition, frame.f_globals, frame.f_locals )
-                if b.special:
-                    if b.special == '??created??':
-                        if b.values[ frame ][ 0 ] == 0:
-                            b.values[ frame ][ 0 ] = 1
-                            b.values[ frame ][ 1 ] = val
-                            return ( b, 1 )
-                        else:
-                            continue
-                    b.values[ frame ][ 0 ] = 1
-                    if b.special == '??changed??':
-                        if b.values[ frame ][ 1 ] != val:
-                            b.values[ frame ][ 1 ] = val
-                            if b.values[ frame ][ 2 ] > 0:
-                                b.values[ frame ][ 2 ] -= 1
-                                continue
-                            else:
-                                return ( b, 1 )
-                        else:
-                            continue
-                    continue
-                if val:
-                    if b.ignore > 0:
-                        b.ignore -= 1
-                        continue
-                    else:
-                        return ( b, 1 )
-            except:
-                if b.special:
-                    try:
-                        b.values[ frame ][ 0 ] = 0
-                    except KeyError:
-                        b.values[ frame ] = [ 0, None, b.ignore ]
-                continue
-        return ( None, None )
-
-    def break_here( self, frame ):
-        """ Reimplemented from bdb.py to fix the filename from the frame
-
-        See fix_frame_filename for more info.
-
-        @param frame the frame object
-        @return flag indicating the break status (boolean)
-        """
-        filename = self.canonic( self.fix_frame_filename( frame ) )
-        if not self.breaks.has_key( filename ) and \
-           not self.breaks.has_key( "Watch" ):
-            return 0
-
-        if self.breaks.has_key( filename ):
-            lineno = frame.f_lineno
-            if lineno in self.breaks[ filename ]:
-                # flag says ok to delete temp. bp
-                ( bp, flag ) = bdb.effective( filename, lineno, frame )
-                if bp:
-                    self.currentbp = bp.number
-                    if ( flag and bp.temporary ):
-                        self.__do_clear( filename, lineno )
-                    return 1
-
-        if self.breaks.has_key( "Watch" ):
-            # flag says ok to delete temp. bp
-            ( bp, flag ) = self.__effective( frame )
-            if bp:
-                self.currentbp = bp.number
-                if ( flag and bp.temporary ):
-                    self.__do_clearWatch( bp.cond )
-                return 1
-
-        return 0
-
-    def break_anywhere( self, frame ):
-        """
-        Reimplemented from bdb.py to do some special things.
-
-        These speciality is to fix the filename from the frame
-        (see fix_frame_filename for more info).
-
-        @param frame the frame object
-        @return flag indicating the break status (boolean)
-        """
-        return self.breaks.has_key(
-            self.canonic( self.fix_frame_filename( frame ) ) ) or \
-            ( self.breaks.has_key( "Watch" ) and self.breaks[ "Watch" ] )
-
-    def get_break( self, filename, lineno ):
-        """
-        Reimplemented from bdb.py to get the first
-        breakpoint of a particular line.
-
-        Only one breakpoint per line is supported so this overwritten
-        method will return this one and only breakpoint.
-
-        @param filename the filename of the bp to retrieve (string)
-        @param ineno the linenumber of the bp to retrieve (integer)
-        @return breakpoint or None, if there is no bp
-        """
-        filename = self.canonic( filename )
-        return self.breaks.has_key( filename ) and \
-            lineno in self.breaks[ filename ] and \
-            bdb.Breakpoint.bplist[ filename, lineno ][ 0 ] or None
-
-    def __do_clear( self, filename, lineno ):
-        """
-        Clears a temporary breakpoint
-
-        @param filename name of the file the bp belongs to
-        @param lineno linenumber of the bp
-        """
-        self.clear_break( filename, lineno )
-        self._dbgClient.write( '%s%s,%d\n' % ( ResponseClearBreak,
-                                               filename, lineno ) )
-        return
-
-    def getStack( self ):
-        """
-        Provides the stack
-
-        @return list of lists with file name (string), line number (integer)
-            and function name (string)
-        """
-        frame = self.cFrame
-        stack = []
-        while frame is not None:
-            fname = self._dbgClient.absPath( \
-                                        self.fix_frame_filename( frame ) )
-            fline = frame.f_lineno
-            ffunc = frame.f_code.co_name
-
-            if ffunc == '?':
-                ffunc = ''
-
-            stack.append( [ fname, fline, ffunc ] )
-
-            if frame == self._dbgClient.mainFrame:
-                frame = None
-            else:
-                frame = frame.f_back
-
-        return stack
-
-    def user_line( self, frame ):
-        """
-        Reimplemented to handle the program about to execute
-        a particular line.
-
-        @param frame the frame object
-        """
-        line = frame.f_lineno
-
-        # We never stop on line 0.
-        if line == 0:
+            if (self.stop_here(frame) or
+                    self.__checkBreakInFrame(frame) or
+                    Watch.WATCHES != []):
+                return self.trace_dispatch
+            # No need to trace this function
             return
 
-        fn = self._dbgClient.absPath( self.fix_frame_filename( frame ) )
+        if event == 'return':
+            if frame == self.returnframe:
+                # Only true if we didn't stopped in this frame, because it's
+                # belonging to the eric debugger.
+                self._set_stopinfo(None, frame.f_back)
+            return
 
-        # See if we are skipping at the start of a newly loaded program.
-        if self._dbgClient.mainFrame is None:
-            if fn != self._dbgClient.getRunning():
-                return
-            self._dbgClient.mainFrame = frame
+        if event == 'exception':
+            if not self.__skipFrame(frame):
+                # When stepping with next/until/return in a generator frame,
+                # skip the internal StopIteration exception (with no traceback)
+                # triggered by a subiterator run with the 'yield from'
+                # statement.
+                if not (frame.f_code.co_flags & CO_GENERATOR and
+                        arg[0] is StopIteration and arg[2] is None):
+                    self.user_exception(arg)
+            # Stop at the StopIteration or GeneratorExit exception when the
+            # user has set stopframe in a generator by issuing a return
+            # command, or a next/until command at the last statement in the
+            # generator before the exception.
+            elif (self.stopframe and frame is not self.stopframe and
+                  self.stopframe.f_code.co_flags & CO_GENERATOR and
+                  arg[0] in (StopIteration, GeneratorExit)):
+                self.user_exception(arg)
+            return
 
-        self.currentFrame = frame
-        self.currentFrameLocals = frame.f_locals
-        # remember the locals because it is reinitialized when accessed
+        if event == 'c_call':
+            return
+        if event == 'c_exception':
+            return
+        if event == 'c_return':
+            return
 
-        fr = frame
+        print('DebugBase.trace_dispatch:'
+              ' unknown debugging event: ',
+              repr(event))
+        return self.trace_dispatch
+
+    def set_trace(self, frame=None):
+        """Starts debugging from 'frame'"""
+        if frame is None:
+            frame = sys._getframe().f_back  # Skip set_trace method
+
+        if sys.version_info[0] == 2:
+            stopOnHandleLine = self._dbgClient.handleLine.func_code
+        else:
+            stopOnHandleLine = self._dbgClient.handleLine.__code__
+
+        frame.f_trace = self.trace_dispatch
+        while frame.f_back is not None:
+            # stop at erics debugger frame or a threading bootstrap
+            if (frame.f_back.f_code == stopOnHandleLine):
+                frame.f_trace = self.trace_dispatch
+                break
+
+            frame = frame.f_back
+
+        self.stop_everywhere = True
+        sys.settrace(self.trace_dispatch)
+        sys.setprofile(self._dbgClient.callTraceEnabled)
+
+    def bootstrap(self, target, args, kwargs):
+        """Bootstraps a thread"""
+        try:
+            # Because in the initial run method the "base debug" function is
+            # set up, it's also valid for the threads afterwards.
+            sys.settrace(self.trace_dispatch)
+
+            target(*args, **kwargs)
+        except Exception:
+            excinfo = sys.exc_info()
+            self.user_exception(excinfo, True)
+        finally:
+            sys.settrace(None)
+            sys.setprofile(None)
+
+    def run(self, cmd, globalsDict=None, localsDict=None, debug=True):
+        """Starts a given command under debugger control"""
+        if globalsDict is None:
+            import __main__
+            globalsDict = __main__.__dict__
+
+        if localsDict is None:
+            localsDict = globalsDict
+
+        if not isinstance(cmd, types.CodeType):
+            cmd = compile(cmd, "<string>", "exec")
+
+        if debug:
+            # First time the trace_dispatch function is called, a "base debug"
+            # function has to be returned, which is called at every user code
+            # function call. This is ensured by setting stop_everywhere.
+            self.stop_everywhere = True
+            sys.settrace(self.trace_dispatch)
+
+        try:
+            exec(cmd, globalsDict, localsDict)
+            atexit._run_exitfuncs()
+            self._dbgClient.progTerminated(0)
+        except SystemExit:
+            atexit._run_exitfuncs()
+            excinfo = sys.exc_info()
+            exitcode, message = self.__extractSystemExitMessage(excinfo)
+            self._dbgClient.progTerminated(exitcode, message)
+        except Exception:
+            excinfo = sys.exc_info()
+            self.user_exception(excinfo, True)
+        finally:
+            self.quitting = True
+            sys.settrace(None)
+
+    def _set_stopinfo(self, stopframe, returnframe):
+        """Updates the frame pointers"""
+        self.stopframe = stopframe
+        self.returnframe = returnframe
+        if returnframe is not None:
+            # Ensure to be able to stop on the return frame
+            returnframe.f_trace = self.trace_dispatch
+        self.stop_everywhere = False
+
+    def set_continue(self, special):
+        """Stops only on next breakpoint"""
+        # Here we only set a new stop frame if it is a normal continue.
+        if not special:
+            self._set_stopinfo(None, None)
+
+        # Disable tracing if not started in debug mode
+        if not self._dbgClient.debugging:
+            sys.settrace(None)
+            sys.setprofile(None)
+
+    def set_step(self):
+        """Stops after one line of code"""
+        self._set_stopinfo(None, None)
+        self.stop_everywhere = True
+
+    def set_next(self, frame):
+        """Stops on the next line in or below the given frame"""
+        self._set_stopinfo(frame, frame.f_back)
+        frame.f_trace = self.trace_dispatch
+
+    def set_return(self, frame):
+        """Stops when returning from the given frame"""
+        self._set_stopinfo(None, frame.f_back)
+
+    def move_instruction_pointer(self, lineno):
+        """Moves the instruction pointer to another line"""
+        try:
+            self.currentFrame.f_lineno = lineno
+            stack = self.getStack(self.currentFrame)
+            self._dbgClient.sendResponseLine(stack)
+        except Exception as e:
+            printerr(e)
+
+    def set_quit(self):
+        """Quits"""
+        sys.setprofile(None)
+        self.stopframe = None
+        self.returnframe = None
+        for debugThread in self._dbgClient.threads.values():
+            debugThread.quitting = True
+
+    def fix_frame_filename(self, frame):
+        """Fixups the filename for a given frame"""
+        # get module name from __file__
+        fn = frame.f_globals.get('__file__')
+        try:
+            return self._fnCache[fn]
+        except KeyError:
+            if fn is None:
+                return frame.f_code.co_filename
+
+            absFilename = os.path.abspath(fn)
+            if absFilename.endswith(('.pyc', '.pyo')):
+                fixedName = absFilename[:-1]
+                if not os.path.exists(fixedName):
+                    fixedName = absFilename
+            else:
+                fixedName = absFilename
+            # update cache
+            self._fnCache[fn] = fixedName
+            return fixedName
+
+    def __checkBreakInFrame(self, frame):
+        """Checks if the function/method has a line number which is a bp"""
+        try:
+            return Breakpoint.BREAK_IN_FRAME_CACHE[
+                frame.f_globals.get('__file__'),
+                frame.f_code.co_firstlineno]
+        except KeyError:
+            filename = self.fix_frame_filename(frame)
+            if filename not in Breakpoint.BREAK_IN_FILE:
+                Breakpoint.BREAK_IN_FRAME_CACHE[
+                    frame.f_globals.get('__file__'),
+                    frame.f_code.co_firstlineno] = False
+                return False
+            lineNo = frame.f_code.co_firstlineno
+            lineNumbers = [lineNo]
+
+            if sys.version_info[0] == 2:
+                co_lnotab = map(ord, frame.f_code.co_lnotab[1::2])
+            else:
+                co_lnotab = frame.f_code.co_lnotab[1::2]
+
+            # No need to handle special case if a lot of lines between
+            # (e.g. closure), because the additional lines won't cause a bp
+            for co_lno in co_lnotab:
+                lineNo += co_lno
+                lineNumbers.append(lineNo)
+
+            for bp in Breakpoint.BREAK_IN_FILE[filename]:
+                if bp in lineNumbers:
+                    Breakpoint.BREAK_IN_FRAME_CACHE[
+                        frame.f_globals.get('__file__'),
+                        frame.f_code.co_firstlineno] = True
+                    return True
+            Breakpoint.BREAK_IN_FRAME_CACHE[
+                frame.f_globals.get('__file__'),
+                frame.f_code.co_firstlineno] = False
+            return False
+
+    def break_here(self, frame):
+        """Reimplemented from bdb.py to fix the filename from the frame"""
+        filename = self.fix_frame_filename(frame)
+        if (filename, frame.f_lineno) in Breakpoint.BREAKS:
+            bp, flag = Breakpoint.effectiveBreak(
+                filename, frame.f_lineno, frame)
+            if bp:
+                # flag says ok to delete temp. bp
+                if flag and bp.temporary:
+                    self.__do_clearBreak(filename, frame.f_lineno)
+                return True
+
+        if Watch.WATCHES != []:
+            bp, flag = Watch.effectiveWatch(frame)
+            if bp:
+                # flag says ok to delete temp. watch
+                if flag and bp.temporary:
+                    self.__do_clearWatch(bp.cond)
+                return True
+
+        return False
+
+    def __do_clearBreak(self, filename, lineno):
+        """Clears a temporary breakpoint"""
+        Breakpoint.clear_break(filename, lineno)
+        self._dbgClient.sendClearTemporaryBreakpoint(filename, lineno)
+
+    def __do_clearWatch(self, cond):
+        """Clears a temporary watch expression"""
+        Watch.clear_watch(cond)
+        self._dbgClient.sendClearTemporaryWatch(cond)
+
+    def getStack(self, frame=None, applyTrace=False):
+        """Provides the stack"""
+        if frame is None:
+            fr = self.getCurrentFrame()
+        elif type(frame) == list:
+            fr = frame.pop(0)
+        else:
+            fr = frame
+
         stack = []
         while fr is not None:
-            # Reset the trace function so we can be sure
-            # to trace all functions up the stack... This gets around
-            # problems where an exception/breakpoint has occurred
-            # but we had disabled tracing along the way via a None
-            # return from dispatch_call
-            fr.f_trace = self.trace_dispatch
-            fname = self._dbgClient.absPath( self.fix_frame_filename( fr ) )
+            if applyTrace:
+                # Reset the trace function so we can be sure
+                # to trace all functions up the stack... This gets around
+                # problems where an exception/breakpoint has occurred
+                # but we had disabled tracing along the way via a None
+                # return from dispatch_call
+                fr.f_trace = self.trace_dispatch
+
+            fname = self._dbgClient.absPath(self.fix_frame_filename(fr))
+            # Always show at least one stack frame, even if it's from
+            # codimension
+            if stack and os.path.basename(fname).startswith(
+                    ('base_cdm_dbg.py', "clientbase_cdm_dbg.py",
+                     "threadextension_cdm_dbg.py", "threading.py")):
+                break
+
             fline = fr.f_lineno
             ffunc = fr.f_code.co_name
 
             if ffunc == '?':
                 ffunc = ''
 
-            stack.append( [ fname, fline, ffunc ] )
+            if ffunc and not ffunc.startswith("<"):
+                argInfo = getArgValues(fr)
+                try:
+                    fargs = formatArgValues(
+                        argInfo.args, argInfo.varargs,
+                        argInfo.keywords, argInfo.locals)
+                except Exception:
+                    fargs = ""
+            else:
+                fargs = ""
 
-            if fr == self._dbgClient.mainFrame:
-                fr = None
+            stack.append([fname, fline, ffunc, fargs])
+
+            # is it a stack frame or exception list?
+            if type(frame) == list:
+                if frame != []:
+                    fr = frame.pop(0)
+                else:
+                    fr = None
             else:
                 fr = fr.f_back
+        return stack
 
-        self.__isBroken = True
-
-        self._dbgClient.write( '%s%s\n' % ( ResponseLine, unicode( stack ) ) )
-        self._dbgClient.eventLoop()
-
-    def user_exception( self, frame, exceptInfo,
-                        unhandled = 0 ):
-        """
-        Reimplemented to report an exception to the debug server
-
-        @param frame the frame object
-        @param exctype the type of the exception
-        @param excval data about the exception
-        @param exctb traceback for the exception
-        @param unhandled flag indicating an uncaught exception
-        """
-        (exctype, excval, exctb) = exceptInfo
-        if exctype in [ SystemExit, bdb.BdbQuit ]:
-            atexit._run_exitfuncs()
-            if excval is None:
-                excval = 0
-            elif isinstance( excval, ( unicode, str ) ):
-                self._dbgClient.write( excval )
-                excval = 1
-            if isinstance( excval, int ):
-                self._dbgClient.progTerminated( excval )
-            else:
-                self._dbgClient.progTerminated( excval.code )
+    def user_line(self, frame):
+        """Reimplemented to the execution a particular line"""
+        # We never stop on line 0.
+        if frame.f_lineno == 0:
             return
 
-        elif exctype in [ SyntaxError, IndentationError ]:
+        self.isBroken = True
+        self.currentFrame = frame
+        stack = self.getStack(frame, applyTrace=True)
+
+        self._dbgClient.lockClient()
+        self._dbgClient.currentThread = self
+        self._dbgClient.currentThreadExec = self
+
+        self._dbgClient.sendResponseLine(stack)
+        self._dbgClient.eventLoop()
+
+        self.isBroken = False
+        self._dbgClient.unlockClient()
+
+    def user_exception(self, excinfo, unhandled=False):
+        """Reimplemented to report an exception to the debug server"""
+        exctype, excval, exctb = excinfo
+
+        if ((exctype in [GeneratorExit, StopIteration] and
+             unhandled is False) or
+                exctype == SystemExit):
+            # ignore these
+            return
+
+        if exctype in [SyntaxError, IndentationError]:
             try:
-                message, ( filename, linenr, charnr, text ) = excval
-            except ValueError:
-                exclist = []
-            else:
-                exclist = [ message, [ filename, linenr, charnr ] ]
+                # tuple could only occure on Python 2, but not always!
+                if type(excval) == tuple:
+                    message, details = excval
+                    filename, lineno, charno, text = details
+                else:
+                    message = excval.msg
+                    filename = excval.filename
+                    lineno = excval.lineno
+                    charno = excval.offset
 
-            self._dbgClient.write( "%s%s\n" % ( ResponseSyntax,
-                                                unicode( exclist ) ) )
+                if filename is None:
+                    realSyntaxError = False
+                else:
+                    if charno is None:
+                        charno = 0
 
-        else:
-            if type( exctype ) in [ types.ClassType,   # Python up to 2.4
-                                    types.TypeType ]:  # Python 2.5+
-                exctype = exctype.__name__
+                    filename = os.path.abspath(filename)
+                    realSyntaxError = os.path.exists(filename)
 
-            if excval is None:
-                excval = ''
+            except (AttributeError, ValueError):
+                message = ""
+                filename = ""
+                lineno = 0
+                charno = 0
+                realSyntaxError = True
 
-            if unhandled:
-                exctypetxt = "unhandled %s" % unicode( exctype )
-            else:
-                exctypetxt = unicode( exctype )
-            try:
-                exclist = [ exctypetxt,
-                            unicode( excval ).encode(
-                                            self._dbgClient.getCoding() ) ]
-            except TypeError:
-                exclist = [ exctypetxt, str( excval ) ]
-
-            if exctb:
-                frlist = self.__extract_stack( exctb )
-                frlist.reverse()
-
-                self.currentFrame = frlist[ 0 ]
-                self.currentFrameLocals = frlist[0].f_locals
-                # remember the locals because it is reinitialized when accessed
-
-                for fr in frlist:
-                    filename = self._dbgClient.absPath(
-                                            self.fix_frame_filename( fr ) )
-                    linenr = fr.f_lineno
-
-                    fBasename = os.path.basename( filename )
-                    if fBasename.endswith( "_cdm_dbg.py" ) or \
-                       fBasename == "bdb.py":
-                        break
-
-                    exclist.append( [ filename, linenr ] )
-
-            self._dbgClient.write( "%s%s\n" % ( ResponseException,
-                                                unicode( exclist ) ) )
-
-            if exctb is None:
+            if realSyntaxError:
+                self._dbgClient.sendSyntaxError(
+                    message, filename, lineno, charno)
+                self._dbgClient.eventLoop()
                 return
 
-        self._dbgClient.eventLoop()
-        return
+        self.skipFrames = 0
+        if (exctype == RuntimeError and
+                str(excval).startswith('maximum recursion depth exceeded') or
+                sys.version_info >= (3, 5) and
+                exctype == RecursionError):
+            excval = 'maximum recursion depth exceeded'
+            depth = 0
+            tb = exctb
+            while tb:
+                tb = tb.tb_next
 
-    def __extract_stack( self, exctb ):
-        """
-        Provides a list of stack frames
+                if (tb and tb.tb_frame.f_code.co_name == 'trace_dispatch' and
+                        __file__.startswith(tb.tb_frame.f_code.co_filename)):
+                    depth = 1
+                self.skipFrames += depth
 
-        @param exctb exception traceback
-        @return list of stack frames
-        """
+            # always 1 if running without debugger
+            self.skipFrames = max(1, self.skipFrames)
+
+        exctype = self.__extractExceptionName(exctype)
+
+        if excval is None:
+            excval = ''
+
+        if unhandled:
+            exctypetxt = "unhandled {0!s}".format(str(exctype))
+        else:
+            exctypetxt = str(exctype)
+
+        if sys.version_info[0] == 2:
+            try:
+                excvaltxt = str(excval).encode(self._dbgClient.getCoding())
+            except UnicodeError:
+                excvaltxt = str(excval)
+        else:
+            excvaltxt = str(excval)
+
+        # Don't step into libraries, which are used by our debugger methods
+        if exctb is not None:
+            self.stop_everywhere = False
+
+        self.isBroken = True
+
+        stack = []
+        if exctb:
+            frlist = self.__extract_stack(exctb)
+            frlist.reverse()
+
+            self.currentFrame = frlist[0]
+            stack = self.getStack(frlist[self.skipFrames:])
+
+        self._dbgClient.lockClient()
+        self._dbgClient.currentThread = self
+        self._dbgClient.currentThreadExec = self
+        self._dbgClient.sendException(exctypetxt, excvaltxt, stack)
+        self._dbgClient.dumpThreadList()
+
+        if exctb is not None:
+            # When polling kept enabled, it isn't possible to resume after an
+            # unhandled exception without further user interaction.
+            self._dbgClient.eventLoop(True)
+
+        self.skipFrames = 0
+
+        self.isBroken = False
+        stop_everywhere = self.stop_everywhere
+        self.stop_everywhere = False
+        self.eventPollFlag = False
+        self._dbgClient.unlockClient()
+        self.stop_everywhere = stop_everywhere
+
+    @staticmethod
+    def __extractExceptionName(exctype):
+        """Extracts the exception name given the exception type object"""
+        return str(exctype).replace("<class '", "").replace("'>", "")
+
+    def __extract_stack(self, exctb):
+        """Returns a list of stack frames"""
         tb = exctb
         stack = []
         while tb is not None:
-            stack.append( tb.tb_frame )
+            stack.append(tb.tb_frame)
             tb = tb.tb_next
         tb = None
         return stack
 
-    def user_return( self, frame, retval ):
-        """
-        Reimplemented to report program termination to the debug server.
+    def __extractSystemExitMessage(self, excinfo):
+        """Provides the SystemExit code and message"""
+        exctype, excval, exctb = excinfo
+        if excval is None:
+            exitcode = 0
+            message = ""
+        elif isinstance(excval, str):
+            exitcode = 1
+            message = excval
+        elif isinstance(excval, bytes):
+            exitcode = 1
+            message = excval.decode()
+        elif isinstance(excval, int):
+            exitcode = excval
+            message = ""
+        elif isinstance(excval, SystemExit):
+            code = excval.code
+            if isinstance(code, str):
+                exitcode = 1
+                message = code
+            elif isinstance(code, bytes):
+                exitcode = 1
+                message = code.decode()
+            elif isinstance(code, int):
+                exitcode = code
+                message = ""
+            else:
+                exitcode = 1
+                message = str(code)
+        else:
+            exitcode = 1
+            message = str(excval)
 
-        @param frame the frame object
-        @param retval the return value of the program
-        """
-        # The program has finished if we have just left the first frame.
-        if frame == self._dbgClient.mainFrame and \
-            self._mainThread:
-            atexit._run_exitfuncs()
-            self._dbgClient.progTerminated( retval )
-        elif frame is not self.stepFrame:
-            self.stepFrame = None
-            self.user_line( frame )
-        return
+        return exitcode, message
 
-    def stop_here( self, frame ):
-        """
-        Reimplemented to filter out debugger files.
+    def stop_here(self, frame):
+        """Reimplemented to filter out debugger files"""
+        if self.__skipFrame(frame):
+            return False
 
-        Tracing is turned off for files that are part of the
-        debugger that are called from the application being debugged.
+        return (self.stop_everywhere or
+                frame is self.stopframe or
+                frame is self.returnframe)
 
-        @param frame the frame object
-        @return flag indicating whether the debugger should stop here
-        """
-        if self.__skip_it( frame ):
-            return 0
-        return bdb.Bdb.stop_here( self, frame )
+    def tracePythonLibs(self, enable):
+        """Updates the settings to trace into Python libraries"""
+        pathsToSkip = list(self.pathsToSkip)
+        # don't trace into Python library?
+        if enable:
+            pathsToSkip = [x for x in pathsToSkip if not x.endswith(
+                ("site-packages", "dist-packages", self.lib))]
+        else:
+            pathsToSkip.append(self.lib)
+            localLib = [x for x in sys.path
+                        if x.endswith(("site-packages", "dist-packages")) and
+                        not x.startswith(self.lib)]
+            pathsToSkip.extend(localLib)
 
-    def __skip_it( self, frame ):
-        """
-        Private method to filter out debugger files.
+        self.pathsToSkip = tuple(set(pathsToSkip))
 
-        Tracing is turned off for files that are part of the
-        debugger that are called from the application being debugged.
-
-        @param frame the frame object
-        @return flag indicating whether the debugger should skip this frame
-        """
-        fname = self.fix_frame_filename( frame )
-
-        # Eliminate things like <string> and <stdin>.
-        if fname[ 0 ] == '<':
+    def __skipFrame(self, frame):
+        """Filters out debugger files"""
+        try:
+            return self.filesToSkip[frame.f_code.co_filename]
+        except KeyError:
+            ret = frame.f_code.co_filename.startswith(self.pathsToSkip)
+            self.filesToSkip[frame.f_code.co_filename] = ret
+            return ret
+        except AttributeError:
+            # if frame is None
             return True
-
-        #XXX - think of a better way to do this.  It's only a convience for
-        #debugging the debugger - when the debugger code is in the current
-        #directory.
-        if ( 'debugger' + os.path.sep + 'client' + os.path.sep ) in fname:
-            return True
-
-        if self._dbgClient.shouldSkip( fname ):
-            return True
-
-        return False
-
-    def isBroken( self ):
-        """
-        Public method to return the broken state of the debugger.
-
-        @return flag indicating the broken state (boolean)
-        """
-        return self.__isBroken
-
-    def getEvent( self ):
-        """
-        Public method to return the last debugger event.
-
-        @return last debugger event (string)
-        """
-        return self.__event

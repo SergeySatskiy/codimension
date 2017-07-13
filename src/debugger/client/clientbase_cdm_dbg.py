@@ -32,19 +32,19 @@ import codeop
 import codecs
 import traceback
 import os
-import time
 import imp
 import re
 import signal
-import atexit
 import json
 
 from .protocol_cdm_dbg import *
 from .base_cdm_dbg import setRecursionLimit
 from .asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
-from .outredir_cdm_dbg import OutStreamRedirector, OutStreamCollector
+from .outredir_cdm_dbg import OutStreamRedirector
 from .bp_wp_cdm_dbg import Breakpoint, Watch
-from .cdm_dbg_utils import prepareJSONMessage
+from .cdm_dbg_utils import (prepareJSONMessage, formatArgValues, getArgValues,
+                            printerr)
+from .variables_cdm_dbg import getType, TOO_LARGE_ATTRIBUTE
 
 
 DEBUG_CLIENT_INSTANCE = None
@@ -179,6 +179,7 @@ class DebugClientBase(object):
         self.defaultCoding = 'utf-8'
         self.__coding = self.defaultCoding
         self.noencoding = False
+        self.eventExit = None
 
     def getCoding(self):
         """Provides the current coding"""
@@ -408,88 +409,6 @@ class DebugClientBase(object):
             if code:
                 self.mainThread.run(code, self.debugMod.__dict__, debug=False)
 
-        elif method == METHOD_REQUEST_COVERAGE:
-            from coverage import coverage
-            sys.argv = []
-            self.__setCoding(params['filename'])
-            sys.argv.append(params['filename'])
-            sys.argv.extend(params['argv'])
-            sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
-            if params['workdir'] == '':
-                os.chdir(sys.path[1])
-            else:
-                os.chdir(params['workdir'])
-
-            # set the system exception handling function to ensure, that
-            # we report on all unhandled exceptions
-            sys.excepthook = self.__unhandled_exception
-            self.__interceptSignals()
-
-            # generate a coverage object
-            self.cover = coverage(
-                auto_data=True,
-                data_file="{0}.coverage".format(
-                    os.path.splitext(sys.argv[0])[0]))
-
-            if params['erase']:
-                self.cover.erase()
-            sys.modules['__main__'] = self.debugMod
-            self.debugMod.__dict__['__file__'] = sys.argv[0]
-            code = self.__compileFileSource(sys.argv[0])
-            if code:
-                self.running = sys.argv[0]
-                self.cover.start()
-                self.mainThread.run(code, self.debugMod.__dict__, debug=False)
-                self.cover.stop()
-                self.cover.save()
-
-        elif method == METHOD_REQUEST_PROFILE:
-            sys.setprofile(None)
-            import PyProfile
-            sys.argv = []
-            self.__setCoding(params['filename'])
-            sys.argv.append(params['filename'])
-            sys.argv.extend(params['argv'])
-            sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
-            if params['workdir'] == '':
-                os.chdir(sys.path[1])
-            else:
-                os.chdir(params["workdir"])
-
-            # set the system exception handling function to ensure, that
-            # we report on all unhandled exceptions
-            sys.excepthook = self.__unhandled_exception
-            self.__interceptSignals()
-
-            # generate a profile object
-            self.prof = PyProfile.PyProfile(sys.argv[0])
-
-            if params['erase']:
-                self.prof.erase()
-            self.debugMod.__dict__['__file__'] = sys.argv[0]
-            sys.modules['__main__'] = self.debugMod
-            script = ''
-            with codecs.open(sys.argv[0], encoding=self.__coding) as fp:
-                script = fp.read()
-            if script and not script.endswith('\n'):
-                script += '\n'
-
-            if script:
-                self.running = sys.argv[0]
-                res = 0
-                try:
-                    self.prof.run(script)
-                    atexit._run_exitfuncs()
-                except SystemExit as exc:
-                    res = exc.code
-                    atexit._run_exitfuncs()
-                except Exception:
-                    excinfo = sys.exc_info()
-                    self.__unhandled_exception(*excinfo)
-
-                self.prof.save()
-                self.progTerminated(res)
-
         elif method == METHOD_EXECUTE_STATEMENT:
             if self.buffer:
                 self.buffer = self.buffer + '\n' + params['statement']
@@ -636,17 +555,17 @@ class DebugClientBase(object):
                 Breakpoint.clear_break(params['filename'], params['line'])
 
         elif method == METHOD_REQUEST_BP_ENABLE:
-            bp = Breakpoint.get_break(params['filename'], params['line'])
-            if bp is not None:
+            bPoint = Breakpoint.get_break(params['filename'], params['line'])
+            if bPoint is not None:
                 if params['enable']:
-                    bp.enable()
+                    bPoint.enable()
                 else:
-                    bp.disable()
+                    bPoint.disable()
 
         elif method == METHOD_REQUEST_BP_IGNORE:
-            bp = Breakpoint.get_break(params['filename'], params['line'])
-            if bp is not None:
-                bp.ignore = params['count']
+            bPoint = Breakpoint.get_break(params['filename'], params['line'])
+            if bPoint is not None:
+                bPoint.ignore = params['count']
 
         elif method == METHOD_REQUEST_WATCH:
             if params['setWatch']:
@@ -670,27 +589,24 @@ class DebugClientBase(object):
                 Watch.clear_watch(params['condition'])
 
         elif method == METHOD_REQUEST_WATCH_ENABLE:
-            wp = Watch.get_watch(params['condition'])
-            if wp is not None:
+            wPoint = Watch.get_watch(params['condition'])
+            if wPoint is not None:
                 if params['enable']:
-                    wp.enable()
+                    wPoint.enable()
                 else:
-                    wp.disable()
+                    wPoint.disable()
 
         elif method == METHOD_REQUEST_WATCH_IGNORE:
-            wp = Watch.get_watch(params['condition'])
-            if wp is not None:
-                wp.ignore = params['count']
+            wPoint = Watch.get_watch(params['condition'])
+            if wPoint is not None:
+                wPoint.ignore = params['count']
 
         elif method == METHOD_REQUEST_SHUTDOWN:
             self.sessionClose()
 
-        elif method == METHOD_REQUEST_COMPLETION:
-            self.__completionList(params['text'])
-
         elif method == METHOD_RESPONSE_FORK_TO:
             # this results from a separate event loop
-            self.fork_child = (params['target'] == 'child')
+            self.forkChild = (params['target'] == 'child')
             self.eventExit = True
 
     def sendJSONCommand(self, method, params):
@@ -770,7 +686,7 @@ class DebugClientBase(object):
 
     def __interact(self):
         """Interacts with the debugger"""
-        global DebugClientInstance
+        global DEBUG_CLIENT_INSTANCE
 
         DEBUG_CLIENT_INSTANCE = self
         self.__receiveBuffer = ''
@@ -787,7 +703,7 @@ class DebugClientBase(object):
         while self.eventExit is None:
             wrdy = []
 
-            if self.writestream.nWriteErrors > self.writestream.maxtries:
+            if self.writestream.nWriteErrors > self.writestream.MAXTRIES:
                 break
 
             if AsyncPendingWrite(self.writestream):
@@ -896,9 +812,9 @@ class DebugClientBase(object):
             ffunc = ''
 
         if ffunc and not ffunc.startswith('<'):
-            argInfo = getargvalues(stackFrame)
+            argInfo = getArgValues(stackFrame)
             try:
-                fargs = formatargvalues(
+                fargs = formatArgValues(
                     argInfo.args, argInfo.varargs,
                     argInfo.keywords, argInfo.locals)
             except Exception:
@@ -965,7 +881,7 @@ class DebugClientBase(object):
         if self.running:
             self.setQuit()
             self.running = None
-            self.sendJsonCommand(
+            self.sendJSONCommand(
                 METHOD_RESPONSE_EXIT, {'status': status, 'message': message})
 
         # reset coding
@@ -1040,8 +956,7 @@ class DebugClientBase(object):
             variable = varDict
             for attribute in var:
                 attribute = self.__extractIndicators(attribute)[0]
-                typeObject, typeName, typeStr, resolver = \
-                    DebugVariables.getType(variable)
+                typeObject, typeName, typeStr, resolver = getType(variable)
                 if resolver:
                     variable = resolver.resolve(variable, attribute)
                     if variable is None:
@@ -1050,8 +965,7 @@ class DebugClientBase(object):
                     break
 
             if variable is not None:
-                typeObject, typeName, typeStr, resolver = \
-                    DebugVariables.getType(variable)
+                typeObject, typeName, typeStr, resolver = getType(variable)
                 if typeStr.startswith(('PyQt5.', 'PyQt4.')):
                     vlist = self.__formatQtVariable(variable, typeName)
                     varlist.extend(vlist)
@@ -1233,7 +1147,7 @@ class DebugClientBase(object):
             # filter hidden attributes (filter #0)
             if 0 in filterList and str(key)[:2] == '__' and not (
                     key == "___len___" and
-                    DebugVariables.TooLargeAttribute in keylist):
+                    TOO_LARGE_ATTRIBUTE in keylist):
                 continue
 
             # special handling for '__builtins__' (it's way too big)
@@ -1279,7 +1193,7 @@ class DebugClientBase(object):
                             if VAR_TYPE_STRINGS.index(
                                     'instance') in filterList:
                                 continue
-                        elif valtype == sip.methoddescriptor:
+                        elif valtype == 'sip.methoddescriptor':
                             if VAR_TYPE_STRINGS.index(
                                     'method') in filterList:
                                 continue
@@ -1331,64 +1245,7 @@ class DebugClientBase(object):
         else:
             self.localsFilterObjects = patternFilterObjects[:]
 
-    def __completionList(self, text):
-        """Handles the request for a commandline completion list"""
-        completerDelims = ' \t\n`~!@#$%^&*()-=+[{]}\\|;:\'",<>/?'
-
-        completions = set()
-        # find position of last delim character
-        pos = -1
-        while pos >= -len(text):
-            if text[pos] in completerDelims:
-                if pos == -1:
-                    text = ''
-                else:
-                    text = text[pos + 1:]
-                break
-            pos -= 1
-
-        # Get local and global completions
-        try:
-            localdict = self.currentThread.getFrameLocals(self.framenr)
-            localCompleter = Completer(localdict).complete
-            self.__getCompletionList(text, localCompleter, completions)
-        except AttributeError:
-            pass
-
-        cf = self.currentThread.getCurrentFrame()
-        frmnr = self.framenr
-        while cf is not None and frmnr > 0:
-            cf = cf.f_back
-            frmnr -= 1
-
-        if cf is None:
-            globaldict = self.debugMod.__dict__
-        else:
-            globaldict = cf.f_globals
-
-        globalCompleter = Completer(globaldict).complete
-        self.__getCompletionList(text, globalCompleter, completions)
-
-        self.sendJSONCommand(
-            METHOD_RESPONSE_COMPLETION,
-            {'completions': list(completions), 'text': text})
-
-    def __getCompletionList(self, text, completer, completions):
-        """Creates a completions list"""
-        state = 0
-        try:
-            comp = completer(text, state)
-        except Exception:
-            comp = None
-        while comp is not None:
-            completions.add(comp)
-            state += 1
-            try:
-                comp = completer(text, state)
-            except Exception:
-                comp = None
-
-    def startProgInDebugger(self, progargs, wd, host,
+    def startProgInDebugger(self, progargs, workingDir, host,
                             port, exceptions=True, tracePython=False,
                             redirect=True):
         """Starts the remote debugger"""
@@ -1400,10 +1257,10 @@ class DebugClientBase(object):
         sys.argv = progargs[:]
         sys.argv[0] = os.path.abspath(sys.argv[0])
         sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
-        if wd == '':
+        if workingDir == '':
             os.chdir(sys.path[1])
         else:
-            os.chdir(wd)
+            os.chdir(workingDir)
         self.running = sys.argv[0]
         self.__setCoding(self.running)
         self.debugging = True

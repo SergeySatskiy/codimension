@@ -28,6 +28,7 @@ Various debug utilities
 """
 
 import json
+import sys
 from collections import namedtuple
 from inspect import iscode, isframe
 
@@ -39,6 +40,12 @@ for flagName, value in COMPILER_FLAG_NAMES.items():
     mod_dict['CO_' + value] = flagName
 
 ArgInfo = namedtuple('ArgInfo', 'args varargs keywords locals')
+
+
+def printerr(s):
+    """debugging the debug client printout"""
+    sys.__stderr__.write('{0!s}\n'.format(s))
+    sys.__stderr__.flush()
 
 
 def prepareJSONMessage(method, params):
@@ -56,7 +63,7 @@ def parseJSONMessage(jsonStr):
     return cmdDictionary['method'], cmdDictionary['params']
 
 
-def getargvalues(frame):
+def getArgValues(frame):
     """Provides information about arguments passed into a particular frame"""
     if not isframe(frame):
         raise TypeError('{0!r} is not a frame object'.format(frame))
@@ -87,12 +94,12 @@ def _getfullargs(co):
     return args, varargs, kwonlyargs, varkw
 
 
-def formatargvalues(args, varargs, varkw, localsDict,
+def formatArgValues(args, varargs, varkw, localsDict,
                     formatarg=str,
                     formatvarargs=lambda name: '*' + name,
                     formatvarkw=lambda name: '**' + name,
                     formatvalue=lambda value: '=' + repr(value)):
-    """Formats an argument spec from the 4 values returned by getargvalues"""
+    """Formats an argument spec from the 4 values returned by getArgValues"""
     specs = []
     for i in range(len(args)):
         name = args[i]

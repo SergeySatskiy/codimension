@@ -89,7 +89,7 @@ class AsyncFile(object):
                 self.nWriteErrors = 0
             except socket.error:
                 self.nWriteErrors += 1
-                if self.nWriteErrors > self.maxtries:
+                if self.nWriteErrors > self.MAXTRIES:
                     self.wpending = []    # delete all output
 
     def isatty(self):
