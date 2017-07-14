@@ -25,7 +25,8 @@ from optparse import OptionParser
 from subprocess import Popen, PIPE
 from cdmcf import getControlFlowFromFile, VERSION
 from ui.qt import (Qt, QApplication, QGraphicsView, QMainWindow, QAction,
-                   QTextEdit, QDockWidget, QGraphicsScene)
+                   QTextEdit, QDockWidget, QGraphicsScene, QPainter, QTimer,
+                   QIcon, QSize, QFileDialog, QDialog, QMessageBox)
 from items import CellElement
 import vcanvas
 import cflowsettings
@@ -65,14 +66,15 @@ def isPythonFile(fName):
     return None
 
 
-def formatFlow(s):
+def formatFlow(src):
     """Reformats the control flow output"""
     result = ""
     shifts = []     # positions of opening '<'
     pos = 0         # symbol position in a line
     nextIsList = False
 
-    def IsNextList(index, maxIndex, buf):
+    def isNextList(index, maxIndex, buf):
+        """True if it is a next list"""
         if index == maxIndex:
             return False
         if buf[index + 1] == '<':
@@ -82,20 +84,20 @@ def formatFlow(s):
                 return True
         return False
 
-    maxIndex = len(s) - 1
-    for index in range(len(s)):
-        sym = s[index]
+    maxIndex = len(src) - 1
+    for index in range(len(src)):
+        sym = src[index]
         if sym == "\n":
             lastShift = shifts[-1]
             result += sym + lastShift * " "
             pos = lastShift
             if index < maxIndex:
-                if s[index + 1] not in "<>":
+                if src[index + 1] not in "<>":
                     result += " "
                     pos += 1
             continue
         if sym == "<":
-            if nextIsList == False:
+            if not nextIsList:
                 shifts.append(pos)
             else:
                 nextIsList = False
@@ -109,7 +111,7 @@ def formatFlow(s):
             pos = shift
             result += sym
             pos += 1
-            if IsNextList(index, maxIndex, s):
+            if isNextList(index, maxIndex, src):
                 nextIsList = True
             else:
                 del shifts[-1]
@@ -122,7 +124,6 @@ def formatFlow(s):
 
 def main():
     """The CF graphics driver"""
-
     parser = OptionParser("""
     %prog [options] [fileName]
     Unit test for the control flow drawing
@@ -153,7 +154,7 @@ def main():
             if warning is not None:
                 fName = None
 
-    if options.debug == True:
+    if options.debug:
         global DEBUG
         DEBUG = True
 
@@ -170,8 +171,8 @@ class CFGraphicsView(QGraphicsView):
 
     def __init__(self, parent=None):
         super(CFGraphicsView, self).__init__(parent)
-        self.setRenderHint(QtGui.QPainter.Antialiasing)
-        self.setRenderHint(QtGui.QPainter.TextAntialiasing)
+        self.setRenderHint(QPainter.Antialiasing)
+        self.setRenderHint(QPainter.TextAntialiasing)
 
     def wheelEvent(self, event):
         """Mouse wheel event"""
@@ -204,7 +205,7 @@ class MainWindow(QMainWindow):
         self.scene = None
         self.fName = fName
         self.verbose = verbose
-        self.cf = None
+        self.cFlow = None
 
         self.resize(1400, 800)
 
@@ -224,39 +225,39 @@ class MainWindow(QMainWindow):
 
         if fName:
             # To yeld the main message processing loop
-            kickOffTimer = QtCore.QTimer()
+            kickOffTimer = QTimer()
             kickOffTimer.singleShot(200, self.proceedWithFile)
 
     def createToolbar(self):
-        """There are the following buttons on the main window:
-           open, reload, zoom out, zoom in, debug, clear log
-        """
+        """There are a few buttons on the main window toolbar.
 
-        openButton = QAction(QtGui.QIcon('icons/open.png'),
+           They are: open, reload, zoom out, zoom in, debug, clear log
+        """
+        openButton = QAction(QIcon('icons/open.png'),
                              'Open (Ctrl+O)', self)
         openButton.setShortcut('Ctrl+O')
         openButton.setStatusTip('Open python file')
         openButton.triggered.connect(self.openButtonClicked)
 
-        reloadButton = QAction(QtGui.QIcon('icons/reload.png'),
+        reloadButton = QAction(QIcon('icons/reload.png'),
                                'Reload (F5)', self)
         reloadButton.setShortcut('F5')
         reloadButton.setStatusTip('Reload python file')
         reloadButton.triggered.connect(self.reloadButtonClicked)
 
-        zoomoutButton = QAction(QtGui.QIcon('icons/zoomOut.png'),
+        zoomoutButton = QAction(QIcon('icons/zoomOut.png'),
                                 'Zoom Out (Ctrl+-)', self)
         zoomoutButton.setShortcut('Ctrl+-')
         zoomoutButton.setStatusTip('Zoom Out')
         zoomoutButton.triggered.connect(self.zoomOut)
 
-        zoominButton = QAction(QtGui.QIcon('icons/zoomIn.png'),
+        zoominButton = QAction(QIcon('icons/zoomIn.png'),
                                'Zoom In (Ctrl++)', self)
         zoominButton.setShortcut('Ctrl++')
         zoominButton.setStatusTip('Zoom In')
         zoominButton.triggered.connect(self.zoomIn)
 
-        clearLogButton = QAction(QtGui.QIcon('icons/clear.png'),
+        clearLogButton = QAction(QIcon('icons/clear.png'),
                                  'Clear log (Ctrl+R)', self)
         clearLogButton.setShortcut('Ctrl+R')
         clearLogButton.setStatusTip('Clear log')
@@ -269,7 +270,7 @@ class MainWindow(QMainWindow):
         separator1.setSeparator(True)
 
         toolbar = self.addToolBar('Toolbar')
-        toolbar.setIconSize(QtCore.QSize(48, 48))
+        toolbar.setIconSize(QSize(48, 48))
         toolbar.addAction(openButton)
         toolbar.addAction(reloadButton)
         toolbar.addAction(separator)
@@ -287,10 +288,10 @@ class MainWindow(QMainWindow):
 
         logDockWidget = QDockWidget("Log", self)
         logDockWidget.setObjectName("LogDockWidget")
-        logDockWidget.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
+        logDockWidget.setAllowedAreas(Qt.BottomDockWidgetArea)
         logDockWidget.setWidget(self.logWidget)
 
-        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, logDockWidget)
+        self.addDockWidget(Qt.BottomDockWidgetArea, logDockWidget)
 
     def zoomIn(self):
         """zoom in the main window"""
@@ -317,7 +318,6 @@ class MainWindow(QMainWindow):
 
     def updateWindowTitle(self):
         """updates the main window title with the current so file"""
-
         if self.fName:
             self.setWindowTitle('Control flow for: ' + self.fName)
         else:
@@ -333,27 +333,27 @@ class MainWindow(QMainWindow):
         """Brings up an open dialogue"""
         # By some unknown reasons the following simple way of getting a file is
         # not working:
-        # fileName = QtGui.QFileDialog.getOpenFileName( self, 'Open file',
-        #                                           QtCore.QDir.currentPath() )
+        # fileName = QFileDialog.getOpenFileName(self, 'Open file',
+        #                                        QDir.currentPath())
         #
         # There is however a workaround. Here it is:
-        dialog = QtGui.QFileDialog(self)
-        if dialog.exec_() != QtGui.QDialog.Accepted:
+        dialog = QFileDialog(self)
+        if dialog.exec_() != QDialog.Accepted:
             return
 
         fileNames = dialog.selectedFiles()
         fileName = str(fileNames[0])
 
         if not os.path.exists(fileName):
-            QtGui.QMessageBox.critical(self, 'Error',
-                                       'The selected file (' + fileName +
-                                       ') does not exist')
+            QMessageBox.critical(self, 'Error',
+                                 'The selected file (' + fileName +
+                                 ') does not exist')
             return
 
         # Check that the file is a python one
         warning = isPythonFile(fileName)
         if warning is not None:
-            QtGui.QMessageBox.critical(self, 'Error', warning)
+            QMessageBox.critical(self, 'Error', warning)
             return
 
         # set the new file name
@@ -365,28 +365,27 @@ class MainWindow(QMainWindow):
 
     def proceedWithFile(self, needToParse=True):
         """Taks the file from settings and processes it"""
-
         if needToParse:
             if self.verbose:
                 self.logMessage("Parsing file " + self.fName)
-            self.cf = getControlFlowFromFile(self.fName)
+            self.cFlow = getControlFlowFromFile(self.fName)
             if self.verbose:
                 self.logMessage("Parsed file:")
-                self.logMessage(formatFlow(str(self.cf)))
+                self.logMessage(formatFlow(str(self.cFlow)))
 
-            if len(self.cf.errors) != 0:
+            if len(self.cFlow.errors) != 0:
                 self.logMessage("No drawing due to parsing errors")
                 return
 
-            if len(self.cf.warnings) != 0:
+            if len(self.cFlow.warnings) != 0:
                 self.logMessage("Parser warnings: ")
-                for warn in self.cf.warnings:
+                for warn in self.cFlow.warnings:
                     self.logMessage(str(warn[0]) + ": " + warn[1])
         else:
-            if self.cf is None:
+            if self.cFlow is None:
                 self.logMessage("No control flow object")
                 return
-            if len(self.cf.errors) != 0:
+            if len(self.cFlow.errors) != 0:
                 self.logMessage("No drawing due to parsing errors")
                 return
 
@@ -398,12 +397,12 @@ class MainWindow(QMainWindow):
             # To pick up possibly changed settings
             importlib.reload(cflowsettings)
             cflowSettings = cflowsettings.getDefaultCflowSettings(self)
-            if DEBUG == True:
+            if DEBUG:
                 cflowSettings.debug = True
 
             # Top level canvas has no adress and no parent canvas
             canvas = vcanvas.VirtualCanvas(cflowSettings, None, None, None)
-            canvas.layout(self.cf, CellElement.FILE_SCOPE)
+            canvas.layout(self.cFlow, CellElement.FILE_SCOPE)
             if self.verbose:
                 self.logMessage("Layout is done:")
                 self.logMessage(str(canvas))
