@@ -316,5 +316,3 @@ class SubversionPlugin(SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
             return IND_ERROR
         except:
             return IND_ERROR
-
-
