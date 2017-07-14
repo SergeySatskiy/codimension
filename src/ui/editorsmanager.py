@@ -1359,12 +1359,15 @@ class EditorsManager(QTabWidget):
             return False
 
         if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
-            widget.getEditor().document().setModified(False)
-            newType, _, _ = getFileProperties(fileName, True, True)
+            editor = widget.getEditor()
+            editor.document().setModified(False)
+            newType, _, xmlSyntaxFile = getFileProperties(fileName, True, True)
             if newType != oldType or newType is None:
-                widget.setFileType(newType)
-                widget.getEditor().bindLexer(fileName, newType)
-                widget.getEditor().clearPyflakesMessages()
+                editor.mime = newType
+                editor.clearSyntax()
+                if xmlSyntaxFile:
+                    editor.detectSyntax(xmlSyntaxFile)
+                editor.clearPyflakesMessages()
                 self.sigFileTypeChanged.emit(fileName, widget.getUUID(),
                                              newType if newType else '')
             self._updateIconAndTooltip(index, newType)
