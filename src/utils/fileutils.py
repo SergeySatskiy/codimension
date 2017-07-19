@@ -688,6 +688,8 @@ def saveJSON(fileName, values, errorWhat):
     except Exception as exc:
         logging.error('Error saving ' + errorWhat +
                       ' (to ' + fileName + '): ' + str(exc))
+        return False
+    return True
 
 
 def getFileContent(fileName, allowException=True, enc=DEFAULT_ENCODING):

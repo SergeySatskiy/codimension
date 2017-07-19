@@ -8,3 +8,4 @@ yapsy==1.11.223
 jedi==0.9.0
 sxsdiff==0.3.0
 gprof2dot
+cryptography
