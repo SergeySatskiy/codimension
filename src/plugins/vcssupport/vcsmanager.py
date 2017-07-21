@@ -304,7 +304,7 @@ class VCSManager(QObject):
                 self.dirCache.dismissPlugin(
                     pluginID, self.sendDirStatusNotification)
 
-        if pluginID:
+        if pluginID is not None:
             del self.activePlugins[pluginID]
 
         if self.activePluginCount() == 0:
