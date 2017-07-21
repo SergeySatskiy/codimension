@@ -69,11 +69,6 @@ class ScintillaWrapper( QsciScintilla ):
             return -1
         return line
 
-    def getEndPosition( self ):
-        " Provides the end position "
-        line = self.lines() - 1
-        return ( line, len( self.text( line ) ) )
-
     def getCurrentPixelPosition( self ):
         " Provides the current text cursor position in points "
         pos = self.SendScintilla( self.SCI_GETCURRENTPOS )

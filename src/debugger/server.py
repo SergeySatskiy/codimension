@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2012  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -141,7 +141,6 @@ class CodimensionDebugger(QObject):
                           'The previous one has not finished yet.')
             return
 
-        self.__protocolState = self.PROTOCOL_CONTROL
         self.__exitCode = None
         self.__fileName = None
         self.__runParameters = None
@@ -169,9 +168,9 @@ class CodimensionDebugger(QObject):
         self.__translatePath = self.__noPathTranslation
 
         self.__mainWindow.switchDebugMode(True)
-        terminalType = Settings().terminalType
+        terminalType = Settings()['terminalType']
 
-        if terminalType == TERM_REDIRECT and Settings().clearDebugIO:
+        if terminalType == TERM_REDIRECT and Settings()['clearDebugIO']:
             self.__mainWindow.clearDebugIOConsole()
 
         self.sigClientIDEMessage.emit("Start debugging session for " +
@@ -633,7 +632,7 @@ class CodimensionDebugger(QObject):
                    self.__runParameters.closeTerminal:
                     killOnSuccess = True
 
-            if Settings().terminalType != TERM_REDIRECT:
+            if Settings()['terminalType'] != TERM_REDIRECT:
                 if brutal or killOnSuccess:
                     try:
                         # Throws exceptions if cannot kill the process
@@ -656,7 +655,7 @@ class CodimensionDebugger(QObject):
         self.__debugSettings = None
 
         message = "Debugging session has been stopped"
-        if brutal and Settings().terminalType != TERM_REDIRECT:
+        if brutal and Settings()['terminalType'] != TERM_REDIRECT:
             message += " and the console has been closed"
         self.sigClientIDEMessage.emit(message)
 

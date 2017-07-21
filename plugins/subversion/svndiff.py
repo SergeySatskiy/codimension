@@ -22,9 +22,9 @@
 import logging
 import difflib
 import os.path
-import pysvn
+import svn
 from ui.qt import QApplication, QCursor, Qt
-from svnindicators import IND_UPTODATE
+from .svnindicators import IND_UPTODATE
 
 
 def getLocalRevisionNumber(client, path):

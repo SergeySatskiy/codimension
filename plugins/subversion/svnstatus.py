@@ -20,15 +20,14 @@
 """SVN Status functionality"""
 
 import os.path
-import pysvn
+import svn
 import logging
-from svnindicators import IND_ERROR, IND_IGNORED, getIndicatorPixmap
+from .svnindicators import IND_ERROR, IND_IGNORED, getIndicatorPixmap
 from ui.qt import (Qt, QTimer, QDialog, QApplication, QVBoxLayout, QLabel,
                    QDialogButtonBox, QCursor, QTreeWidget, QTreeWidgetItem,
                    QHeaderView, QIcon)
-from svnstrconvert import notifyActionToString
+from .svnstrconvert import notifyActionToString, STATUS
 from ui.itemdelegates import NoOutlineHeightDelegate
-from svnstrconvert import STATUS
 
 
 class SVNStatusMixin:

@@ -28,9 +28,9 @@ from ui.qt import (Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                    QTreeWidgetItem, QHeaderView, QPushButton)
 from utils.pixmapcache import PixmapCache
 from ui.difftabwidget import DiffTabWidget
-from svnindicators import pluginHomeDir
+from .svnindicators import pluginHomeDir
 from ui.itemdelegates import NoOutlineHeightDelegate
-from svnstrconvert import timestampToString
+from .svnstrconvert import timestampToString
 from thirdparty.diff2html.diff2html import parse_from_memory
 
 

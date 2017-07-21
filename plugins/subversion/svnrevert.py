@@ -23,7 +23,7 @@
 " SVN revert functionality "
 
 import logging, os.path
-from svnstrconvert import notifyActionToString
+from .svnstrconvert import notifyActionToString
 
 
 class SVNRevertMixin:

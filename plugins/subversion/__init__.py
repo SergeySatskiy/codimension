@@ -19,9 +19,9 @@
 
 """Codimension SVN plugin implementation"""
 
-from ui.qt import QMutex, QDialog
+from ui.qt import QMutex, QDialog, pyqtSignal
 from copy import deepcopy
-import pysvn
+import svn
 import os.path
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from .svnmenus import SVNMenuMixin
@@ -97,11 +97,11 @@ class SubversionPlugin(SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
         self.ideWideSettings = getSettings(self.__getIDEConfigFile())
         if self.ide.project.isLoaded():
             self.projectSettings = getSettings(self.__getProjectConfigFile())
-        self.ide.project.projectChanged.connect(self.__onProjectChanged)
+        self.ide.project.sigProjectChanged.connect(self.__onProjectChanged)
 
     def deactivate(self):
         """Called when the plugin is deactivated"""
-        self.ide.project.projectChanged.disconnect(self.__onProjectChanged)
+        self.ide.project.sigProjectChanged.disconnect(self.__onProjectChanged)
 
         self.projectSettings = None
         self.ideWideSettings = None
@@ -114,7 +114,7 @@ class SubversionPlugin(SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
 
     def __getIDEConfigFile(self):
         """Provides a name of the IDE wide config file"""
-        return self.ide.SETTINGS_DIR + "svn.plugin.conf"
+        return self.ide.settingsDir + "svn.plugin.conf"
 
     def __getProjectConfigFile(self):
         """Provides a name of the project config file"""
@@ -288,7 +288,7 @@ class SubversionPlugin(SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
         except:
             return (("", IND_ERROR, "Unknown error"),)
 
-    def getLocalStatus(self, path, pDepth=pysvn.depth.empty):
+    def getLocalStatus(self, path, pDepth=None):
         """Provides quick local SVN status for the item itself"""
         client = self.getSVNClient(self.getSettings())
         try:

@@ -24,7 +24,7 @@ from ui.qt import (Qt, QDialog, QVBoxLayout, QDialogButtonBox, QLabel,
                    QCursor)
 from ui.itemdelegates import NoOutlineHeightDelegate
 import logging
-import pysvn
+import svn
 import os.path
 from .svnstrconvert import notifyActionToString
 

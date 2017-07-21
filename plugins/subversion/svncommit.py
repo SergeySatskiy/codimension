@@ -20,14 +20,14 @@
 """Does SVN commit"""
 
 import os.path
-import pysvn
+import svn
 import logging
-from svncommitdlg import SVNPluginCommitDialog
-from svnindicators import (IND_ADDED, IND_DELETED, IND_MERGED,
-                           IND_MODIFIED_LR, IND_MODIFIED_L,
-                           IND_REPLACED, IND_CONFLICTED, IND_IGNORED)
+from .svncommitdlg import SVNPluginCommitDialog
+from .svnindicators import (IND_ADDED, IND_DELETED, IND_MERGED,
+                            IND_MODIFIED_LR, IND_MODIFIED_L,
+                            IND_REPLACED, IND_CONFLICTED, IND_IGNORED)
 from ui.qt import (QDialog, QApplication, QCursor, Qt)
-from svnstrconvert import notifyActionToString
+from .svnstrconvert import notifyActionToString
 
 
 COMMIT_ALLOW_STATUSES = [ IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,

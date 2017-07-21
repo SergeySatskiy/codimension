@@ -19,8 +19,8 @@
 
 """Codimension SVN plugin properties functionality implementation"""
 
-import os.path, logging, pysvn
-from svnindicators import IND_ERROR
+import os.path, logging, svn
+from .svnindicators import IND_ERROR
 from ui.qt import (QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                    QTextEdit, QDialogButtonBox, QLabel, QFontMetrics,
                    QHeaderView, QApplication, QCursor, QHBoxLayout,

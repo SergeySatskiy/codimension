@@ -434,17 +434,18 @@ class SVNPluginConfigDialog(QDialog):
             output = check_output(['svn', '--version'])
             for line in output.decode('utf-8').splitlines():
                 parts = line.split(' ')
-                for index, parts in enumerate(parts):
-                    if parts[index].lower() == 'version':
+                for index, part in enumerate(parts):
+                    if part.lower() == 'version':
                         return parts[index + 1]
-        except:
+        except Exception as exc:
+            logging.error(str(exc))
             return None
         return None
 
     def __createVersionWidget(self):
         """Creates the version tab content"""
-        svnVersion = self.__getSVNVersion()
-        svnModuleVersion = svn.__version__
+        svnVersion = str(self.__getSVNVersion())
+        svnModuleVersion = str(svn.__version__)
 
         text = "<p>The major Codimension SVN plugin " \
                "components are listed below:</p>" \

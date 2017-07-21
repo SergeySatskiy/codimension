@@ -19,12 +19,12 @@
 
 """Codimension SVN plugin UPDATE command implementation"""
 
-import pysvn
+import svn
 import logging
 import os.path
 from ui.qt import (Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                    QApplication, QCursor)
-from svnstrconvert import notifyActionToString
+from .svnstrconvert import notifyActionToString
 
 
 class SVNUpdateMixin:

@@ -19,13 +19,13 @@
 
 """Codimension SVN plugin ANNOTATE command implementation"""
 
-import pysvn
+import svn
 import logging
 import os.path
 from copy import deepcopy
 from ui.qt import (Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                    QApplication, QCursor)
-from svnstrconvert import notifyActionToString
+from .svnstrconvert import notifyActionToString
 
 
 class SVNAnnotateMixin:

@@ -490,3 +490,8 @@ class QutepartWrapper(Qutepart):
         """Shows a main window status bar message"""
         mainWindow = GlobalData().mainWindow
         mainWindow.showStatusBarMessage(msg, 8000)
+
+    def getEndPosition(self):
+        """Provides the end position, 0 based"""
+        line = len(self.lines) - 1
+        return (line, len(self.lines[line]))

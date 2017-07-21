@@ -262,52 +262,52 @@ class MainWindowMenuMixin:
             getIcon('detailsdlg.png'), 'Debug t&ab script...',
             self._onDebugTabDlg, "Ctrl+F5")
         dbgMenu.addSeparator()
-        self.__debugStopBrutalAct = dbgMenu.addAction(
+        self._debugStopBrutalAct = dbgMenu.addAction(
             getIcon('dbgstopbrutal.png'), 'Stop session and kill console',
             self._onBrutalStopDbgSession, "Ctrl+F10")
-        self.__debugStopBrutalAct.setEnabled(False)
-        self.__debugStopAct = dbgMenu.addAction(
+        self._debugStopBrutalAct.setEnabled(False)
+        self._debugStopAct = dbgMenu.addAction(
             getIcon('dbgstop.png'), 'Stop session and keep console if so',
             self._onStopDbgSession, "F10")
-        self.__debugStopAct.setEnabled(False)
-        self.__debugRestartAct = dbgMenu.addAction(
+        self._debugStopAct.setEnabled(False)
+        self._debugRestartAct = dbgMenu.addAction(
             getIcon('dbgrestart.png'), 'Restart session',
             self._onRestartDbgSession, "F4")
-        self.__debugRestartAct.setEnabled(False)
+        self._debugRestartAct.setEnabled(False)
         dbgMenu.addSeparator()
-        self.__debugContinueAct = dbgMenu.addAction(
+        self._debugContinueAct = dbgMenu.addAction(
             getIcon('dbggo.png'), 'Continue', self._onDbgGo, "F6")
-        self.__debugContinueAct.setEnabled(False)
-        self.__debugStepInAct = dbgMenu.addAction(
+        self._debugContinueAct.setEnabled(False)
+        self._debugStepInAct = dbgMenu.addAction(
             getIcon('dbgstepinto.png'), 'Step in', self._onDbgStepInto, "F7")
-        self.__debugStepInAct.setEnabled(False)
-        self.__debugStepOverAct = dbgMenu.addAction(
+        self._debugStepInAct.setEnabled(False)
+        self._debugStepOverAct = dbgMenu.addAction(
             getIcon('dbgnext.png'), 'Step over', self._onDbgNext, "F8")
-        self.__debugStepOverAct.setEnabled(False)
-        self.__debugStepOutAct = dbgMenu.addAction(
+        self._debugStepOverAct.setEnabled(False)
+        self._debugStepOutAct = dbgMenu.addAction(
             getIcon('dbgreturn.png'), 'Step out', self._onDbgReturn, "F9")
-        self.__debugStepOutAct.setEnabled(False)
-        self.__debugRunToCursorAct = dbgMenu.addAction(
+        self._debugStepOutAct.setEnabled(False)
+        self._debugRunToCursorAct = dbgMenu.addAction(
             getIcon('dbgruntoline.png'), 'Run to cursor',
             self._onDbgRunToLine, "Shift+F6")
-        self.__debugRunToCursorAct.setEnabled(False)
-        self.__debugJumpToCurrentAct = dbgMenu.addAction(
+        self._debugRunToCursorAct.setEnabled(False)
+        self._debugJumpToCurrentAct = dbgMenu.addAction(
             getIcon('dbgtocurrent.png'), 'Show current line',
             self._onDbgJumpToCurrent, "Ctrl+W")
-        self.__debugJumpToCurrentAct.setEnabled(False)
+        self._debugJumpToCurrentAct.setEnabled(False)
         dbgMenu.addSeparator()
 
         self.__dumpDbgSettingsMenu = QMenu("Dump debug settings", self)
         dbgMenu.addMenu(self.__dumpDbgSettingsMenu)
-        self.__debugDumpSettingsAct = self.__dumpDbgSettingsMenu.addAction(
+        self._debugDumpSettingsAct = self.__dumpDbgSettingsMenu.addAction(
             getIcon('dbgsettings.png'), 'Debug session settings',
             self._onDumpDebugSettings)
-        self.__debugDumpSettingsAct.setEnabled(False)
-        self.__debugDumpSettingsEnvAct = self.__dumpDbgSettingsMenu.addAction(
+        self._debugDumpSettingsAct.setEnabled(False)
+        self._debugDumpSettingsEnvAct = self.__dumpDbgSettingsMenu.addAction(
             getIcon('detailsdlg.png'),
             'Session settings with complete environment',
             self._onDumpFullDebugSettings)
-        self.__debugDumpSettingsEnvAct.setEnabled(False)
+        self._debugDumpSettingsEnvAct.setEnabled(False)
         self.__dumpDbgSettingsMenu.addSeparator()
         self.__debugDumpScriptSettingsAct = \
             self.__dumpDbgSettingsMenu.addAction(

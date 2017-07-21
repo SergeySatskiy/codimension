@@ -25,15 +25,15 @@ from ui.qt import (Qt, QDialog, QVBoxLayout, QDialogButtonBox, QTextEdit,
                    QPalette, QSpacerItem, QSizePolicy, QPushButton,
                    QApplication, QCursor)
 from ui.itemdelegates import NoOutlineHeightDelegate
-from svnstrconvert import STATUS
+from .svnstrconvert import STATUS
 from utils.pixmapcache import PixmapCache
-from svnindicators import pluginHomeDir, IND_REPLACED, IND_ADDED, IND_DELETED
+from .svnindicators import pluginHomeDir, IND_REPLACED, IND_ADDED, IND_DELETED
 from ui.difftabwidget import DiffTabWidget
 from thirdparty.diff2html.diff2html import parse_from_memory
 import os.path
 import difflib
 import logging
-from utils.fileutils import detectFileType, isFileTypeSearchable
+from utils.fileutils import isFileSearchable
 
 
 class DiffButton( QPushButton ):
@@ -89,10 +89,8 @@ class SVNPluginCommitDialog( QDialog ):
             diffButton.path = item[ 0 ]
             diffButton.status = item[ 1 ]
 
-            fileType = detectFileType( item[ 0 ] )
-
             if os.path.isdir( item[ 0 ] ) or item[ 1 ] in [ IND_REPLACED ] \
-                or not isFileTypeSearchable( fileType ):
+                or not isFileSearchable(item[0]):
                 diffButton.setEnabled( False )
                 diffButton.setToolTip( "Diff is not available" )
             else:

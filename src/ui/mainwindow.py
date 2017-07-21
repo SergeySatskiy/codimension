@@ -1030,7 +1030,7 @@ class CodimensionMainWindow(QMainWindow):
 
         if self._bottomSideBar.height() == 0:
             # It was hidden completely, so need to move the slider
-            splitterSizes = self.settings.vSplitterSizes
+            splitterSizes = self.settings['vSplitterSizes']
             splitterSizes[0] -= 200
             splitterSizes[1] += 200
             self.__verticalSplitter.setSizes(splitterSizes)
@@ -1088,7 +1088,7 @@ class CodimensionMainWindow(QMainWindow):
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
             params = getRunParameters(fileName)
-            termType = self.settings.terminalType
+            termType = self.settings['terminalType']
             profilerParams = self.settings.getProfilerSettings()
             debuggerParams = self.settings.getDebuggerSettings()
             dlg = RunDialog(fileName, params, termType,
@@ -1096,7 +1096,7 @@ class CodimensionMainWindow(QMainWindow):
             if dlg.exec_() == QDialog.Accepted:
                 addRunParams(fileName, dlg.runParams)
                 if dlg.termType != termType:
-                    self.settings.terminalType = dlg.termType
+                    self.settings['terminalType'] = dlg.termType
                 if dlg.profilerParams != profilerParams:
                     self.settings.setProfilerSettings(dlg.profilerParams)
                 self._onProfileProject()
@@ -1106,7 +1106,7 @@ class CodimensionMainWindow(QMainWindow):
         if self.__checkDebugPrerequisites():
             fileName = GlobalData().project.getProjectScript()
             params = getRunParameters(fileName)
-            termType = self.settings.terminalType
+            termType = self.settings['terminalType']
             profilerParams = self.settings.getProfilerSettings()
             debuggerParams = self.settings.getDebuggerSettings()
             dlg = RunDialog(fileName, params, termType,
@@ -1114,7 +1114,7 @@ class CodimensionMainWindow(QMainWindow):
             if dlg.exec_() == QDialog.Accepted:
                 addRunParams(fileName, dlg.runParams)
                 if dlg.termType != termType:
-                    self.settings.terminalType = dlg.termType
+                    self.settings['terminalType'] = dlg.termType
                 if dlg.debuggerParams != debuggerParams:
                     self.settings.setDebuggerSettings(dlg.debuggerParams)
                 self._onDebugProject()
@@ -1396,9 +1396,9 @@ class CodimensionMainWindow(QMainWindow):
 
         # Toolbar buttons
         self.__dbgStopBrutal.setVisible(
-            newState and self.settings.terminalType != TERM_REDIRECT)
+            newState and self.settings['terminalType'] != TERM_REDIRECT)
         self.__dbgStopAndClearIO.setVisible(
-            newState and self.settings.terminalType == TERM_REDIRECT)
+            newState and self.settings['terminalType'] == TERM_REDIRECT)
         self.__dbgStop.setVisible(newState)
         self.__dbgRestart.setVisible(newState)
         self.__dbgGo.setVisible(newState)
@@ -1410,17 +1410,17 @@ class CodimensionMainWindow(QMainWindow):
         self.__dbgDumpSettingsAct.setVisible(newState)
 
         if not newState:
-            self.__debugStopBrutalAct.setEnabled(False)
-            self.__debugStopAct.setEnabled(False)
-            self.__debugRestartAct.setEnabled(False)
-            self.__debugContinueAct.setEnabled(False)
-            self.__debugStepOverAct.setEnabled(False)
-            self.__debugStepInAct.setEnabled(False)
-            self.__debugStepOutAct.setEnabled(False)
-            self.__debugRunToCursorAct.setEnabled(False)
-            self.__debugJumpToCurrentAct.setEnabled(False)
-            self.__debugDumpSettingsAct.setEnabled(False)
-            self.__debugDumpSettingsEnvAct.setEnabled(False)
+            self._debugStopBrutalAct.setEnabled(False)
+            self._debugStopAct.setEnabled(False)
+            self._debugRestartAct.setEnabled(False)
+            self._debugContinueAct.setEnabled(False)
+            self._debugStepOverAct.setEnabled(False)
+            self._debugStepInAct.setEnabled(False)
+            self._debugStepOutAct.setEnabled(False)
+            self._debugRunToCursorAct.setEnabled(False)
+            self._debugJumpToCurrentAct.setEnabled(False)
+            self._debugDumpSettingsAct.setEnabled(False)
+            self._debugDumpSettingsEnvAct.setEnabled(False)
 
         self.updateRunDebugButtons()
 
@@ -1434,8 +1434,8 @@ class CodimensionMainWindow(QMainWindow):
             self._rightSideBar.setCurrentTab('debugger')
             self._rightSideBar.raise_()
             self.__lastDebugAction = None
-            self.__debugDumpSettingsAct.setEnabled(True)
-            self.__debugDumpSettingsEnvAct.setEnabled(True)
+            self._debugDumpSettingsAct.setEnabled(True)
+            self._debugDumpSettingsEnvAct.setEnabled(True)
         else:
             if not self._rightSideBar.isMinimized():
                 if self._rightSideBar.currentIndex() == 1:
@@ -1455,66 +1455,66 @@ class CodimensionMainWindow(QMainWindow):
         if newState == CodimensionDebugger.STATE_STOPPED:
             self.__dbgStopBrutal.setEnabled(False)
             self.__dbgStopAndClearIO.setEnabled(False)
-            self.__debugStopBrutalAct.setEnabled(False)
+            self._debugStopBrutalAct.setEnabled(False)
             self.__dbgStop.setEnabled(False)
-            self.__debugStopAct.setEnabled(False)
+            self._debugStopAct.setEnabled(False)
             self.__dbgRestart.setEnabled(False)
-            self.__debugRestartAct.setEnabled(False)
+            self._debugRestartAct.setEnabled(False)
             self.__setDebugControlFlowButtonsState(False)
             self.sbDebugState.setText("Debugger: stopped")
             self.redirectedIOConsole.sessionStopped()
         elif newState == CodimensionDebugger.STATE_PROLOGUE:
             self.__dbgStopBrutal.setEnabled(True)
             self.__dbgStopAndClearIO.setEnabled(True)
-            self.__debugStopBrutalAct.setEnabled(
-                self.settings.terminalType != TERM_REDIRECT)
+            self._debugStopBrutalAct.setEnabled(
+                self.settings['terminalType'] != TERM_REDIRECT)
             self.__dbgStop.setEnabled(False)
-            self.__debugStopAct.setEnabled(False)
+            self._debugStopAct.setEnabled(False)
             self.__dbgRestart.setEnabled(False)
-            self.__debugRestartAct.setEnabled(False)
+            self._debugRestartAct.setEnabled(False)
             self.__setDebugControlFlowButtonsState(False)
             self.sbDebugState.setText("Debugger: prologue")
         elif newState == CodimensionDebugger.STATE_IN_IDE:
             self.__dbgStopBrutal.setEnabled(True)
             self.__dbgStopAndClearIO.setEnabled(True)
-            self.__debugStopBrutalAct.setEnabled(
-                self.settings.terminalType != TERM_REDIRECT)
+            self._debugStopBrutalAct.setEnabled(
+                self.settings['terminalType'] != TERM_REDIRECT)
             self.__dbgStop.setEnabled(True)
-            self.__debugStopAct.setEnabled(True)
+            self._debugStopAct.setEnabled(True)
             self.__dbgRestart.setEnabled(True)
-            self.__debugRestartAct.setEnabled(True)
+            self._debugRestartAct.setEnabled(True)
             self.__setDebugControlFlowButtonsState(True)
             self.sbDebugState.setText("Debugger: idle")
         elif newState == CodimensionDebugger.STATE_IN_CLIENT:
             self.__dbgStopBrutal.setEnabled(True)
             self.__dbgStopAndClearIO.setEnabled(True)
-            self.__debugStopBrutalAct.setEnabled(
-                self.settings.terminalType != TERM_REDIRECT)
+            self._debugStopBrutalAct.setEnabled(
+                self.settings['terminalType'] != TERM_REDIRECT)
             self.__dbgStop.setEnabled(True)
-            self.__debugStopAct.setEnabled(True)
+            self._debugStopAct.setEnabled(True)
             self.__dbgRestart.setEnabled(True)
-            self.__debugRestartAct.setEnabled(True)
+            self._debugRestartAct.setEnabled(True)
             self.__setDebugControlFlowButtonsState(False)
             self.sbDebugState.setText("Debugger: running")
         elif newState == CodimensionDebugger.STATE_FINISHING:
             self.__dbgStopBrutal.setEnabled(True)
             self.__dbgStopAndClearIO.setEnabled(True)
-            self.__debugStopBrutalAct.setEnabled(
-                self.settings.terminalType != TERM_REDIRECT)
+            self._debugStopBrutalAct.setEnabled(
+                self.settings['terminalType'] != TERM_REDIRECT)
             self.__dbgStop.setEnabled(False)
-            self.__debugStopAct.setEnabled(False)
+            self._debugStopAct.setEnabled(False)
             self.__dbgRestart.setEnabled(False)
-            self.__debugRestartAct.setEnabled(False)
+            self._debugRestartAct.setEnabled(False)
             self.__setDebugControlFlowButtonsState(False)
             self.sbDebugState.setText("Debugger: finishing")
         elif newState == CodimensionDebugger.STATE_BRUTAL_FINISHING:
             self.__dbgStopBrutal.setEnabled(False)
             self.__dbgStopAndClearIO.setEnabled(False)
-            self.__debugStopBrutalAct.setEnabled(False)
+            self._debugStopBrutalAct.setEnabled(False)
             self.__dbgStop.setEnabled(False)
             self.__dbgStop.setEnabled(False)
             self.__dbgRestart.setEnabled(False)
-            self.__debugRestartAct.setEnabled(False)
+            self._debugRestartAct.setEnabled(False)
             self.__setDebugControlFlowButtonsState(False)
             self.sbDebugState.setText("Debugger: force finishing")
         QApplication.processEvents()
@@ -1629,7 +1629,7 @@ class CodimensionMainWindow(QMainWindow):
 
         dlg = QMessageBox(QMessageBox.Critical, "Debugging session", message)
 
-        if self.settings.terminalType == TERM_REDIRECT:
+        if self.settings['terminalType'] == TERM_REDIRECT:
             dlg.addButton(QMessageBox.Ok)
         else:
             dlg.addButton(QMessageBox.Ok)
@@ -1647,14 +1647,14 @@ class CodimensionMainWindow(QMainWindow):
         res = dlg.exec_()
 
         if res == QMessageBox.Cancel or \
-           self.settings.terminalType == TERM_REDIRECT:
+           self.settings['terminalType'] == TERM_REDIRECT:
             QTimer.singleShot(0, self._onStopDbgSession)
         else:
             QTimer.singleShot(0, self._onBrutalStopDbgSession)
 
     def __onDebuggerClientIDEMessage(self, message):
         """Triggered when the debug server has something to report"""
-        if self.settings.terminalType == TERM_REDIRECT:
+        if self.settings['terminalType'] == TERM_REDIRECT:
             self.__ioconsoleIDEMessage(str(message))
         else:
             logging.info(str(message))
@@ -1672,21 +1672,21 @@ class CodimensionMainWindow(QMainWindow):
     def __setDebugControlFlowButtonsState(self, enabled):
         """Sets the control flow debug buttons state"""
         self.__dbgGo.setEnabled(enabled)
-        self.__debugContinueAct.setEnabled(enabled)
+        self._debugContinueAct.setEnabled(enabled)
         self.__dbgNext.setEnabled(enabled)
-        self.__debugStepOverAct.setEnabled(enabled)
+        self._debugStepOverAct.setEnabled(enabled)
         self.__dbgStepInto.setEnabled(enabled)
-        self.__debugStepInAct.setEnabled(enabled)
+        self._debugStepInAct.setEnabled(enabled)
         self.__dbgReturn.setEnabled(enabled)
-        self.__debugStepOutAct.setEnabled(enabled)
+        self._debugStepOutAct.setEnabled(enabled)
         self.__dbgJumpToCurrent.setEnabled(enabled)
-        self.__debugJumpToCurrentAct.setEnabled(enabled)
+        self._debugJumpToCurrentAct.setEnabled(enabled)
 
         if enabled:
             self.setRunToLineButtonState()
         else:
             self.__dbgRunToLine.setEnabled(False)
-            self.__debugRunToCursorAct.setEnabled(False)
+            self._debugRunToCursorAct.setEnabled(False)
 
     def setRunToLineButtonState(self):
         """Sets the Run To Line button state"""
@@ -1695,28 +1695,28 @@ class CodimensionMainWindow(QMainWindow):
         # - no run for non-python file
         if not self.debugMode:
             self.__dbgRunToLine.setEnabled(False)
-            self.__debugRunToCursorAct.setEnabled(False)
+            self._debugRunToCursorAct.setEnabled(False)
             return
         if not self._isPythonBuffer():
             self.__dbgRunToLine.setEnabled(False)
-            self.__debugRunToCursorAct.setEnabled(False)
+            self._debugRunToCursorAct.setEnabled(False)
             return
 
         # That's for sure a python buffer, so the widget exists
         currentWidget = self.em.currentWidget()
         if currentWidget.getType() in [MainWindowTabWidgetBase.VCSAnnotateViewer]:
             self.__dbgRunToLine.setEnabled(False)
-            self.__debugRunToCursorAct.setEnabled(False)
+            self._debugRunToCursorAct.setEnabled(False)
             return
 
         enabled = currentWidget.isLineBreakable()
         self.__dbgRunToLine.setEnabled(enabled)
-        self.__debugRunToCursorAct.setEnabled(enabled)
+        self._debugRunToCursorAct.setEnabled(enabled)
 
     def _onBrutalStopDbgSession(self):
         """Stop debugging brutally"""
         self.__debugger.stopDebugging(True)
-        if self.settings.terminalType == TERM_REDIRECT:
+        if self.settings['terminalType'] == TERM_REDIRECT:
             self.redirectedIOConsole.clear()
 
     def _onStopDbgSession(self):
@@ -2386,15 +2386,15 @@ class CodimensionMainWindow(QMainWindow):
                     env += "\n        " + item
 
         terminal = "Terminal to run in: "
-        if self.settings.terminalType == TERM_AUTO:
+        if self.settings['terminalType'] == TERM_AUTO:
             terminal += "auto detection"
-        elif self.settings.terminalType == TERM_KONSOLE:
+        elif self.settings['terminalType'] == TERM_KONSOLE:
             terminal += "default KDE konsole"
-        elif self.settings.terminalType == TERM_GNOME:
+        elif self.settings['terminalType'] == TERM_GNOME:
             terminal += "gnome-terminal"
-        elif self.settings.terminalType == TERM_XTERM:
+        elif self.settings['terminalType'] == TERM_XTERM:
             terminal += "xterm"
-        elif self.settings.terminalType == TERM_REDIRECT:
+        elif self.settings['terminalType'] == TERM_REDIRECT:
             terminal += "redirect to IDE"
 
         logging.info("\n".join(

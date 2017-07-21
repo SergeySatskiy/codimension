@@ -24,7 +24,7 @@ Menu provider for codimension subversion plugin
 
 import os.path
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from utils.fileutils import detectFileType, isFileTypeSearchable
+from utils.fileutils import isFileSearchable
 from utils.pixmapcache import getIcon
 from .svnindicators import (pluginHomeDir, IND_ERROR, IND_ADDED, IND_DELETED,
                             IND_MERGED, IND_MODIFIED_LR, IND_MODIFIED_L,
@@ -212,8 +212,7 @@ class SVNMenuMixin:
                                              not debugMode)
 
         # Diff makes sense only for text files
-        fileType = detectFileType(path)
-        self.fileContextDiffAct.setEnabled(isFileTypeSearchable(fileType))
+        self.fileContextDiffAct.setEnabled(isFileSearchable(path))
 
     def onDirectoryContextMenuAboutToShow(self):
         """Called when the plugin directory context manu is about to show"""
@@ -331,8 +330,7 @@ class SVNMenuMixin:
             pathStatus != IND_UPTODATE and not debugMode)
 
         # Diff makes sense only for text files
-        fileType = detectFileType(path)
-        self.bufContextDiffAct.setEnabled(isFileTypeSearchable(fileType))
+        self.bufContextDiffAct.setEnabled(isFileSearchable(path))
 
         widgetType = self.ide.currentEditorWidget.getType()
         if widgetType in [MainWindowTabWidgetBase.PlainTextEditor,

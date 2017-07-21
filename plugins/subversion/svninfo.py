@@ -19,10 +19,11 @@
 
 """Codimension SVN plugin INFO command implementation"""
 
-import pysvn, os.path, logging
-from svnstrconvert import ( nodeKindToString, scheduleToString,
-                            timestampToString, statusToString, rawStatusToString )
-from svnindicators import IND_ERROR
+import svn, os.path, logging
+from .svnstrconvert import (nodeKindToString, scheduleToString,
+                            timestampToString, statusToString,
+                            rawStatusToString)
+from .svnindicators import IND_ERROR
 from ui.qt import (Qt, QApplication, QCursor)
 
 

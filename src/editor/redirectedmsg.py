@@ -70,10 +70,10 @@ class IOConsoleMessages:
         self.msgs.append(msg)
         self.size += 1
 
-        if self.size <= Settings().ioconsolemaxmsgs:
+        if self.size <= Settings()['ioconsolemaxmsgs']:
             return False
 
-        removeCount = Settings().ioconsoledelchunk
+        removeCount = Settings()['ioconsoledelchunk']
         self.msgs = self.msgs[removeCount:]
         self.size -= removeCount
         return True
