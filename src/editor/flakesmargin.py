@@ -20,13 +20,12 @@
 
 """Pyflakes margin"""
 
+from html import escape
 import qutepart
-from cgi import escape
-from ui.qt import QWidget, QPainter, Qt, QFont, QToolTip
 from qutepart.margins import MarginBase
+from ui.qt import QWidget, QPainter, QToolTip
 from utils.misc import extendInstance
 from utils.globals import GlobalData
-from utils.settings import Settings
 from utils.fileutils import isPythonMime
 from utils.pixmapcache import getPixmap
 
@@ -131,7 +130,7 @@ class CDMFlakesMargin(QWidget):
         """Sets a new set of messages"""
         self.__messages = dict(messages)
 
-        for lineno in self.__messages.keys():
+        for lineno in self.__messages:
             if lineno > 0:
                 self.setBlockValue(
                     self._qpart.document().findBlockByNumber(lineno - 1), 1)
