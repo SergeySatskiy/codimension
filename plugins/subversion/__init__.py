@@ -140,7 +140,7 @@ class SubversionPlugin(SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
 
     def notifyPathChanged(self, path):
         """Sends notifications to the IDE that a path was changed"""
-        PathChanged.emit(path)
+        self.PathChanged.emit(path)
 
     def __onProjectChanged(self, what):
         """Triggers when a project has changed"""
