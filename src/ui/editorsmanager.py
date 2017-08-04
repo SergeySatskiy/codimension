@@ -2171,7 +2171,7 @@ class EditorsManager(QTabWidget):
         return result
 
     def getOpenedList(self, projectOnly=False):
-        """provides a list of opened files"""
+        """Provides a list of opened files"""
         result = []
         for index in range(self.count()):
             widget = self.widget(index)

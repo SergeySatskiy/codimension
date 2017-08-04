@@ -89,8 +89,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.updateSettings()
 
         # Completion support
-        self.__completionObject = ""
-        self.__completionPrefix = ""
+        self.__completionPrefix = ''
         self.__completionLine = -1
         self.__completionPos = -1
         self.__completer = CodeCompleter(self)
@@ -329,7 +328,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             QutepartWrapper.keyPressEvent(self, event)
             QApplication.processEvents()
             if key == Qt.Key_Backspace:
-                if self.__completionPrefix == "":
+                if self.__completionPrefix == '':
                     self.__completer.hide()
                     self.setFocus()
                 else:
@@ -504,74 +503,44 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def onAutoComplete(self):
         """Triggered when ctrl+space or TAB is clicked"""
         if self.isReadOnly():
-            return True
-
-        self.__inCompletion = True
-        self.__completionObject, \
-        self.__completionPrefix = getPrefixAndObject(self)
+            return
 
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        if not self.isPythonBuffer():
-            words = list( getEditorTags(self, self.__completionPrefix))
-            isModName = False
-        else:
-            text = self.text
-            info = getBriefModuleInfoFromMemory(text)
-            context = getContext(self, info)
-
-            words, isModName = getCompletionList(self._parent.getFileName(),
-                                                 context,
-                                                 self.__completionObject,
-                                                 self.__completionPrefix,
-                                                 self, text, info)
+        self.__inCompletion = True
+        self.__completionPrefix = self.getWordBeforeCursor()
+        words = getCompletionList(self, self._parent.getFileName())
         QApplication.restoreOverrideCursor()
 
         if len(words) == 0:
             self.setFocus()
             self.__inCompletion = False
-            return True
+            return
 
-        line, pos = self.cursorPosition
-        if isModName:
-            # The prefix should be re-taken because a module name may have '.'
-            # in it.
-            self.__completionPrefix = str(self.getWord(line, pos, 1,
-                                                       True, "."))
-
-        currentPosFont = self.getCurrentPosFont()
-        self.__completer.setWordsList(words, currentPosFont)
+        self.__completer.setWordsList(words, self.font())
         self.__completer.setPrefix(self.__completionPrefix)
 
         count = self.__completer.completionCount()
         if count == 0:
             self.setFocus()
             self.__inCompletion = False
-            return True
+            return
 
         # Make sure the line is visible
-        self.ensureLineOnScreen(line)
-        xPos, yPos = self.getCurrentPixelPosition()
-        if self.hasSelectedText():
-            # Remove the selection as it could be interpreted not as expected
-            self.setSelection(line, pos, line, pos)
+        line, _ = self.cursorPosition
+        self.ensureLineOnScreen(line + 1)
+
+        # Remove the selection as it could be interpreted not as expected
+        if self.selectedText:
+            self.clearSelection()
 
         if count == 1:
             self.insertCompletion(self.__completer.currentCompletion())
-            self.__inCompletion = False
-            return True
-
-        if self._charWidth <= 0:
-            self.__detectCharWidth()
-        if self._lineHeight <= 0:
-            self.__detectLineHeight()
-
-        # All the X Servers I tried have a problem with the line height, so I
-        # have some spare points in the height
-        cursorRectangle = QRect(xPos, yPos - 2,
-                                self._charWidth, self._lineHeight + 8)
-        self.__completer.complete(cursorRectangle)
+        else:
+            cRectangle = self.cursorRect()
+            cRectangle.setLeft(cRectangle.left() + self.viewport().x())
+            cRectangle.setTop(cRectangle.top() + self.viewport().y() + 2)
+            self.__completer.complete(cRectangle)
         self.__inCompletion = False
-        return True
 
     def onTagHelp(self):
         """Provides help for an item if available"""
@@ -817,25 +786,18 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def insertCompletion(self, text):
         """Triggered when a completion is selected"""
         if text:
-            currentWord = str(self.getCurrentWord())
-            prefixLength = len(str(self.__completionPrefix).decode('utf-8'))
-            # wordLength = len( currentWord.decode( 'utf-8' ) )
+            currentWord = self.getCurrentWord()
             line, pos = self.cursorPosition
-
-            if text == currentWord:
-                # No changes, just possible cursor position change
-                self.cursorPosition = line, pos + len(text) - prefixLength
-            else:
-                oldBuffer = QApplication.clipboard().text()
+            prefixLength = len(self.__completionPrefix)
+            if text != currentWord:
                 with self:
-                    self.setSelection(line, pos - prefixLength, line, pos)
-                    self.removeSelectedText()
-                    self.insert(text)
-                    self.cursorPosition = line, pos + len(text) - prefixLength
-                QApplication.clipboard().setText(oldBuffer)
+                    lineContent = self.lines[line]
+                    leftPart = lineContent[0:pos - prefixLength]
+                    rightPart = lineContent[pos + len(currentWord) - prefixLength:]
+                    self.lines[line] = leftPart + text + rightPart
+            self.cursorPosition = line, pos + len(text) - prefixLength
 
-            self.__completionPrefix = ""
-            self.__completionObject = ""
+            self.__completionPrefix = ''
             self.__completer.hide()
 
     def insertLines(self, text, line):

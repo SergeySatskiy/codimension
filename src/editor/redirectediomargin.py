@@ -110,16 +110,15 @@ class CDMRedirectedIOMargin(QWidget):
 
     def mouseMoveEvent(self, event):
         """Tooltips for the text"""
-        if not self.__noTooltip:
-            blockNumber = self._qpart.cursorForPosition(
-                event.pos()).blockNumber()
-            lineno = blockNumber + 1
-            if lineno in self.__data:
-                _, msg, _ = self.__data.get(lineno, (None, None, None))
-                msg = "<p style='white-space:pre'>" + escape(msg) + "</p>"
-                QToolTip.showText(event.globalPos(), msg)
-            else:
-                QToolTip.hideText()
+        blockNumber = self._qpart.cursorForPosition(
+            event.pos()).blockNumber()
+        lineno = blockNumber + 1
+        if lineno in self.__data:
+            _, tooltip, _ = self.__data.get(lineno, (None, None, None))
+            tooltip = "<p style='white-space:pre'>" + escape(tooltip) + "</p>"
+            QToolTip.showText(event.globalPos(), tooltip)
+        else:
+            QToolTip.hideText()
         return QWidget.mouseMoveEvent(self, event)
 
     def __calculateWidth(self):

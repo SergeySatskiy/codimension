@@ -22,6 +22,7 @@
 
 import os
 import imp
+import jedi
 from cdmbriefparser import (getBriefModuleInfoFromMemory,
                             getBriefModuleInfoFromFile)
 from utils.globals import GlobalData
@@ -403,7 +404,47 @@ def _isSystemImportOrAlias(obj, text, info):
     return False, obj
 
 
-def getCompletionList(fileName, scope, obj, prefix,
+def getJediScript(source, line, column, srcPath):
+    """Provides the jedi Script object considering the current project"""
+    jedi.settings.additional_dynamic_modules = []
+
+    project = GlobalData().project
+    if not project.isLoaded:
+        # Add the other opened files if so
+        mainWindow = GlobalData().mainWindow
+        for path in mainWindow.editorsManager().getOpenedList():
+            if path[0]:
+                jedi.settings.additional_dynamic_modules.append(path[0])
+        return jedi.Script(source, line, column, srcPath)
+
+    # need to deal with sys.path
+    paths = sys.path[:]
+    for path in project.getImportDirsAsAbsolutePaths():
+        if path not in paths:
+            paths.append(path)
+    projectDir = project.getProjectDir()
+    if projectDir not in paths:
+        paths.append(projectDir)
+
+    return jedi.Script(source, line, column, sys_path=paths)
+
+
+def getCompletionList(editor, fileName):
+    """Provides a list for completion"""
+    if not editor.isPythonBuffer():
+        return list(getEditorTags(editor))
+
+    line, pos = editor.cursorPosition
+    script = getJediScript(editor.text, line + 1, pos,
+                           fileName if fileName else '')
+
+    items = []
+    for item in script.completions():
+        items.append(item.name)
+    return items
+
+
+def getCompletionListOld(fileName, scope, obj, prefix,
                       editor, text, info=None):
     """High level function. It provides a list of suggestions for
        autocompletion depending on the text cursor scope and the

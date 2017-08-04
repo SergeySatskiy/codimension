@@ -21,11 +21,21 @@
 
 
 import re
+import logging
+import os.path
+import socket
+import urllib.request
 from qutepart import Qutepart
-from ui.qt import QPalette, pyqtSignal, QFont, QTextCursor
+from ui.qt import (QPalette, pyqtSignal, QTextCursor, QApplication,
+                   QCursor, Qt, QDesktopServices, QUrl)
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.colorfont import getZoomedMonoFont
+from utils.encoding import decodeURLContent
+
+
+WORD_AT_END_REGEXP = re.compile("\w+$")
+WORD_AT_START_REGEXP = re.compile("^\w+")
 
 
 class QutepartWrapper(Qutepart):
@@ -204,6 +214,95 @@ class QutepartWrapper(Qutepart):
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
         self.setTextCursor(cursor)
 
+    def onShiftDel(self):
+        """Triggered when Shift+Del is received"""
+        if self.selectedText:
+            QApplication.clipboard().setText(self.selectedText)
+            self.selectedText = ''
+        else:
+            line, _ = self.cursorPosition
+            if self.lines[line]:
+                QApplication.clipboard().setText(self.lines[line] + '\n')
+                del self.lines[line]
+
+    def onCtrlC(self):
+        """Handles copying"""
+        if self.selectedText:
+            QApplication.clipboard().setText(self.selectedText)
+        else:
+            line, _ = self.cursorPosition
+            if self.lines[line]:
+                QApplication.clipboard().setText(self.lines[line] + '\n')
+
+    def openAsFile(self):
+        """Opens a selection or a current tag as a file"""
+        path = self.selectedText.strip()
+        if path == "" or '\n' in path or '\r' in path:
+            return
+
+        # Now the processing
+        if os.path.isabs(path):
+            GlobalData().mainWindow.detectTypeAndOpenFile(path)
+            return
+
+        # This is not an absolute path but could be a relative path for the
+        # current buffer file. Let's try it.
+        fileName = self._parent.getFileName()
+        if fileName != "":
+            # There is a file name
+            fName = os.path.dirname(fileName) + os.path.sep + path
+            fName = os.path.abspath(os.path.realpath(fName))
+            if os.path.exists(fName):
+                GlobalData().mainWindow.detectTypeAndOpenFile(fName)
+                return
+        if GlobalData().project.isLoaded():
+            # Try it as a relative path to the project
+            prjFile = GlobalData().project.fileName
+            fName = os.path.dirname(prjFile) + os.path.sep + path
+            fName = os.path.abspath(os.path.realpath(fName))
+            if os.path.exists(fName):
+                GlobalData().mainWindow.detectTypeAndOpenFile(fName)
+                return
+        # The last hope - open as is
+        if os.path.exists(path):
+            path = os.path.abspath(os.path.realpath(path))
+            GlobalData().mainWindow.detectTypeAndOpenFile(path)
+            return
+
+        logging.error("Cannot find '" + path + "' to open")
+
+    def downloadAndShow(self):
+        """Triggered when the user wants to download and see the file"""
+        url = self.selectedText.strip()
+        if url.lower().startswith("www."):
+            url = "http://" + url
+
+        oldTimeout = socket.getdefaulttimeout()
+        newTimeout = 5      # Otherwise the pause is too long
+        socket.setdefaulttimeout(newTimeout)
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+
+        try:
+            response = urllib.request.urlopen(url)
+            content = decodeURLContent(response.read())
+
+            # The content has been read sucessfully
+            mainWindow = GlobalData().mainWindow
+            editorsManager = mainWindow.editorsManagerWidget.editorsManager
+            editorsManager.newTabClicked(content, os.path.basename(url))
+        except Exception as exc:
+            logging.error("Error downloading '" + url + "'\n" + str(exc))
+
+        QApplication.restoreOverrideCursor()
+        socket.setdefaulttimeout(oldTimeout)
+
+    def openInBrowser(self):
+        """Triggered when a selected URL should be opened in a browser"""
+        url = self.selectedText.strip()
+        if url.lower().startswith("www."):
+            url = "http://" + url
+        QDesktopServices.openUrl(QUrl(url))
+
     def printUserData(self):
         """Debug purpose member to print the highlight data"""
         line, pos = self.cursorPosition
@@ -340,6 +439,31 @@ class QutepartWrapper(Qutepart):
         cursor.select(QTextCursor.WordUnderCursor)
         return cursor.selectedText(), False, cursor.anchor(), cursor.position()
 
+    def getCurrentWord(self):
+        """Provides the current word if so"""
+        cursor = self.textCursor()
+        cursor.select(QTextCursor.WordUnderCursor)
+        return cursor.selectedText()
+
+    def getWordBeforeCursor(self):
+        """Provides a word before the cursor"""
+        cursor = self.textCursor()
+        textBeforeCursor = cursor.block().text()[:cursor.positionInBlock()]
+        match = WORD_AT_END_REGEXP.search(textBeforeCursor)
+        return match.group(0) if match else ''
+
+    def getWordAfterCursor(self):
+        """Provides a word after cursor"""
+        cursor = self.textCursor()
+        textAfterCursor = cursor.block().text()[cursor.positionInBlock():]
+        match = WORD_AT_START_REGEXP.search(textBeforeCursor)
+        return match.group(0) if match else ''
+
+    def clearSelection(self):
+        """Clears the current selection if so"""
+        cursor = self.textCursor()
+        cursor.clearSelection()
+
     def findAllMatches(self, regExp):
         """Find all matches of regExp"""
         if self.__matchesRegexp != regExp or self.__matchesCache is None:
@@ -378,8 +502,9 @@ class QutepartWrapper(Qutepart):
                     msg = 'no matches'
             else:
                 msg = 'match %d of %d (too many to highlight, ' \
-                    'exceeds the limit of %d)' % (matchIndex, totalMatches,
-                        Settings()['maxHighlightedMatches'])
+                      'exceeds the limit of %d)' % \
+                      (matchIndex, totalMatches,
+                       Settings()['maxHighlightedMatches'])
             self.__showStatusBarMessage(msg)
         return len(self.__matchesCache)
 

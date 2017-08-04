@@ -20,18 +20,13 @@
 """Sets up and handles the text editor conext menus"""
 
 
-import logging
 import os.path
-import socket
-import urllib.request
 from cdmbriefparser import getBriefModuleInfoFromMemory
-from ui.qt import (QMenu, QActionGroup, QApplication, Qt, QCursor,
-                   QDesktopServices, QUrl, QMessageBox)
+from ui.qt import QMenu, QActionGroup, QApplication, QMessageBox
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
-from utils.encoding import (SUPPORTED_CODECS, decodeURLContent,
+from utils.encoding import (SUPPORTED_CODECS,
                             getNormalizedEncoding,
-                            detectExistingFileWriteEncoding,
                             detectEncodingOnClearExplicit,
                             detectNewFileWriteEncoding)
 from utils.diskvaluesrelay import getFileEncoding, setFileEncoding
@@ -293,8 +288,8 @@ class EditorContextMenuMixin:
         if self.__isSameEncodingAsCurrent(encoding):
             return
 
-        fileName = self._parent.getFileName()
-        absFileName = os.path.isabs(fileName)
+        # fileName = self._parent.getFileName()
+        # absFileName = os.path.isabs(fileName)
         self.document().setModified(True)
         self.explicitUserEncoding = encoding
         self.__updateMainWindowStatusBar()
@@ -321,89 +316,8 @@ class EditorContextMenuMixin:
             self.redo()
             self._parent.modificationChanged()
 
-    def onShiftDel(self):
-        """Triggered when Shift+Del is received"""
-        if self.selectedText:
-            QApplication.clipboard().setText(self.selectedText)
-            self.selectedText = ''
-        else:
-            line, _ = self.cursorPosition
-            if self.lines[line]:
-                QApplication.clipboard().setText(self.lines[line] + '\n')
-                del self.lines[line]
-
-    def onCtrlC(self):
-        """Handles copying"""
-        if self.selectedText:
-            QApplication.clipboard().setText(self.selectedText)
-        else:
-            line, _ = self.cursorPosition
-            if self.lines[line]:
-                QApplication.clipboard().setText(self.lines[line] + '\n')
-
-    def openAsFile(self):
-        """Opens a selection or a current tag as a file"""
-        path = self.selectedText.strip()
-        if path == "" or '\n' in path or '\r' in path:
-            return
-
-        # Now the processing
-        if os.path.isabs(path):
-            GlobalData().mainWindow.detectTypeAndOpenFile(path)
-            return
-
-        # This is not an absolute path but could be a relative path for the
-        # current buffer file. Let's try it.
-        fileName = self._parent.getFileName()
-        if fileName != "":
-            # There is a file name
-            fName = os.path.dirname(fileName) + os.path.sep + path
-            fName = os.path.abspath(os.path.realpath(fName))
-            if os.path.exists(fName):
-                GlobalData().mainWindow.detectTypeAndOpenFile(fName)
-                return
-        if GlobalData().project.isLoaded():
-            # Try it as a relative path to the project
-            prjFile = GlobalData().project.fileName
-            fName = os.path.dirname(prjFile) + os.path.sep + path
-            fName = os.path.abspath(os.path.realpath(fName))
-            if os.path.exists(fName):
-                GlobalData().mainWindow.detectTypeAndOpenFile(fName)
-                return
-        # The last hope - open as is
-        if os.path.exists(path):
-            path = os.path.abspath(os.path.realpath(path))
-            GlobalData().mainWindow.detectTypeAndOpenFile(path)
-            return
-
-        logging.error("Cannot find '" + path + "' to open")
-
-    def downloadAndShow(self):
-        """Triggered when the user wants to download and see the file"""
-        url = self.selectedText.strip()
-        if url.lower().startswith("www."):
-            url = "http://" + url
-
-        oldTimeout = socket.getdefaulttimeout()
-        newTimeout = 5      # Otherwise the pause is too long
-        socket.setdefaulttimeout(newTimeout)
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-
-        try:
-            response = urllib.request.urlopen(url)
-            content = decodeURLContent(response.read())
-
-            # The content has been read sucessfully
-            mainWindow = GlobalData().mainWindow
-            editorsManager = mainWindow.editorsManagerWidget.editorsManager
-            editorsManager.newTabClicked(content, os.path.basename(url))
-        except Exception as exc:
-            logging.error("Error downloading '" + url + "'\n" + str(exc))
-
-        QApplication.restoreOverrideCursor()
-        socket.setdefaulttimeout(oldTimeout)
-
-    def __onPluginMenuAdded(self, menu, count):
+    # __onPluginMenuAdded(self, menu, count)
+    def __onPluginMenuAdded(self, menu, _):
         """Triggered when a new menu was added"""
         self._menu.addMenu(menu)
         self.__pluginMenuSeparator.setVisible(True)
@@ -462,13 +376,6 @@ class EditorContextMenuMixin:
                        selectedText.lower().startswith('www.')
         return False
 
-    def openInBrowser(self):
-        """Triggered when a selected URL should be opened in a browser"""
-        url = self.selectedText.strip()
-        if url.lower().startswith("www."):
-            url = "http://" + url
-        QDesktopServices.openUrl(QUrl(url))
-
     def highlightInOutline(self):
         """Triggered when highlight in outline browser is requested"""
         if self.isPythonBuffer():
@@ -480,18 +387,21 @@ class EditorContextMenuMixin:
 
     @staticmethod
     def __updateMainWindowStatusBar():
+        """Updates the main window status bar"""
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         editorsManager.updateStatusBar()
 
     @staticmethod
     def __updateFilePosition():
+        """Updates the position in a file"""
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         editorsManager.updateFilePosition(None)
 
     @staticmethod
     def __restoreFilePosition():
+        """Restores the position in a file"""
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         editorsManager.restoreFilePosition(None)

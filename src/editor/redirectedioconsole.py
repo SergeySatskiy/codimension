@@ -19,39 +19,31 @@
 
 """Redirected IO console implementation"""
 
-from ui.qt import (Qt, QSize, QPoint, QEvent, pyqtSignal, QToolBar, QFont,
+from ui.qt import (Qt, QSize, QEvent, pyqtSignal, QToolBar, QFont,
                    QFontMetrics, QHBoxLayout, QWidget, QAction, QSizePolicy,
-                   QToolTip, QMenu, QToolButton, QActionGroup, QApplication,
+                   QMenu, QToolButton, QActionGroup, QApplication,
                    QTextOption)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
-from .texteditor import TextEditor
+from .qpartwrap import QutepartWrapper
 from .redirectedmsg import IOConsoleMessages, IOConsoleMsg
+from .redirectediomargin import CDMRedirectedIOMargin
 
 
-class RedirectedIOConsole(TextEditor):
+class RedirectedIOConsole(QutepartWrapper):
 
     """Widget which implements the redirected IO console"""
 
     sigUserInput = pyqtSignal(str)
 
-    TIMESTAMP_MARGIN = 0     # Introduced here
-
-    stdoutStyle = 1
-    stderrStyle = 2
-    stdinStyle = 3
-    marginStyle = 4
-
     MODE_OUTPUT = 0
     MODE_INPUT = 1
 
     def __init__(self, parent):
-        TextEditor.__init__(self, parent, None)
+        QutepartWrapper.__init__(self, parent)
 
-        # line number -> [ timestamps ]
-        self.__marginTooltip = {}
         self.mode = self.MODE_OUTPUT
         self.lastOutputPos = None
         self.inputEcho = True
@@ -61,9 +53,6 @@ class RedirectedIOConsole(TextEditor):
         self.__initGeneralSettings()
         self.__initMargins()
         self._initContextMenu()
-
-        self.__timestampTooltipShown = False
-        self.__initMessageMarkers()
 
         self.installEventFilter(self)
 
@@ -245,7 +234,7 @@ class RedirectedIOConsole(TextEditor):
         """Called when the cursor changed position"""
         self.setCursorStyle()
 
-    def setCursorStyle( self ):
+    def setCursorStyle(self):
         """Sets the cursor style depending on the mode and the cursor pos"""
         if self.mode == self.MODE_OUTPUT:
             self.setCursorWidth(1)
@@ -276,33 +265,7 @@ class RedirectedIOConsole(TextEditor):
     def __initMargins(self):
         """Initializes the IO console margins"""
         # The supported margins: timestamp
-        pass
-
-    def __initMessageMarkers(self):
-        """Initializes the marker used for the IDE messages"""
-        skin = GlobalData().skin
-
-    def _marginClicked(self, margin, line, modifiers):
-        return
-
-    def __showTimestampTooltip(self, position, x, y):
-        """Shows a tooltip on the timestamp margin"""
-        # Calculate the line
-        pos = self.SendScintilla(self.SCI_POSITIONFROMPOINT, x, y)
-        line, _ = self.lineIndexFromPosition(pos)
-
-        tooltip = self.__getTimestampMarginTooltip(line)
-        if not tooltip:
-            return
-
-        QToolTip.showText(self.mapToGlobal(QPoint(x, y)), tooltip)
-        self.__timestampTooltipShown = True
-
-    def __getTimestampMarginTooltip(self, line):
-        """Provides the margin tooltip"""
-        if line in self.__marginTooltip:
-            return "\n".join(self.__marginTooltip[line])
-        return None
+        self.addMargin(CDMRedirectedIOMargin(self))
 
     def _initContextMenu(self):
         """Called to initialize a context menu"""

@@ -20,6 +20,7 @@
 """Various editor buffer related utilities"""
 
 import re
+import time
 from cdmbriefparser import getBriefModuleInfoFromMemory
 
 
@@ -363,31 +364,37 @@ def getPrefixAndObject(editor):
         col = col - len(part) + 1
 
 
-def getEditorTags(editor, exclude="", excludePythonKeywords=False):
+WORD_PATTERN = '\w+'
+WORD_REGEXP = re.compile(WORD_PATTERN)
+EDITOR_TAG_TIMEOUT = 0.5
+
+def getEditorTags(editor, exclude=None, excludePythonKeywords=False):
     """Builds a list of the tags in the editor.
        The current line could be excluded.
        The only tags are included which start with prefix
     """
+    start = time.time()
+
     excludeSet = set()
-    if exclude != "":
+    if exclude:
         excludeSet.add(exclude)
     if excludePythonKeywords:
         # Note: 2 characters words will be filtered unconditionally
         excludeSet.update(["try", "for", "and", "not"])
 
     result = set()
-    for line in range(editor.lines()):
-        words = re.sub(r"[^\w]", " ", str(editor.text(line))).split()
-        for word in words:
-            word = str(word)
-            if len(word) > 2:
-                if word not in excludeSet:
-                    result.add(word)
+    for line in editor.lines:
+        for match in WORD_REGEXP.findall(line):
+            if len(match) > 2:
+                if match not in excludeSet:
+                    result.add(match)
+        if time.time() - start > EDITOR_TAG_TIMEOUT:
+            # Do not freeze longer than that
+            break
 
     # If a cursor is in a middle of the word then the current word is not what
     # you need.
-    currentWord = str(editor.getCurrentWord()).strip()
-    result.discard(currentWord)
+    result.discard(editor.getCurrentWord())
     return result
 
 
