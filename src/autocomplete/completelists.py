@@ -23,6 +23,7 @@
 import os
 import imp
 import jedi
+import sys
 from cdmbriefparser import (getBriefModuleInfoFromMemory,
                             getBriefModuleInfoFromFile)
 from utils.globals import GlobalData
@@ -414,7 +415,8 @@ def getJediScript(source, line, column, srcPath):
         mainWindow = GlobalData().mainWindow
         for path in mainWindow.editorsManager().getOpenedList():
             if path[0]:
-                jedi.settings.additional_dynamic_modules.append(path[0])
+                if path[0].lower().endswith('.py'):
+                    jedi.settings.additional_dynamic_modules.append(path[0])
         return jedi.Script(source, line, column, srcPath)
 
     # need to deal with sys.path
