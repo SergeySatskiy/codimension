@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,16 +21,11 @@
 
 
 import os
-import imp
-import jedi
 import sys
-from cdmbriefparser import (getBriefModuleInfoFromMemory,
-                            getBriefModuleInfoFromFile)
+import jedi
 from utils.globals import GlobalData
-from utils.settings import Settings
 from .listmodules import getSysModules, getModules
-from .bufferutils import (getEditorTags, isComment, isStringLiteral,
-                          isOnSomeImport)
+from .bufferutils import getEditorTags
 
 
 __systemwideModules = {}
@@ -45,18 +40,6 @@ def buildSystemWideModulesList():
     if not __systemwideInitialized:
         __systemwideModules = getSysModules()
         __systemwideInitialized = True
-
-
-def __getModuleNames(fileName):
-    """Provides a list of modules available for completion"""
-    buildSystemWideModulesList()
-
-    # Additional paths:
-    # if project is loaded: the project import dirs
-    # if file is an absolute path: modules for the basedir
-    specificModules = getProjectSpecificModules(fileName)
-    specificModules.update(__systemwideModules)
-    return set(specificModules.keys())
 
 
 def getSystemWideModules():
@@ -94,148 +77,6 @@ def getProjectSpecificModules(path='', onlySpecified=False):
             specificModules.update(getModules(basedir))
 
     return specificModules
-
-
-def __isBinaryModule(moduleName):
-    """Returns True if it is a binary library"""
-    for suffix in imp.get_suffixes():
-        if suffix[2] == imp.C_EXTENSION:
-            if moduleName.endswith(suffix[0]):
-                return suffix
-    return None
-
-
-def __getParsedModuleNames(info):
-    """Provides the names which could be imported from a module"""
-    result = set()
-    for item in info.globals:
-        result.add(item.name)
-    for item in info.functions:
-        result.add(item.name)
-    for item in info.classes:
-        result.add(item.name)
-    return result
-
-
-def __getImportedObjects(moduleName, fileName):
-    """Provides a list of objects to be imported from"""
-    buildSystemWideModulesList()
-
-    modulePath = None
-    moduleName = str(moduleName)
-    if moduleName in __systemwideModules:
-        modulePath = __systemwideModules[moduleName]
-        if modulePath is None or moduleName in Settings().dirSafeModules:
-            # it could be a built-in module
-            return getImportNames(moduleName)
-    else:
-        # Not a system wide, try search in the project
-        # or current directories
-        if moduleName.startswith('.'):
-            # That's a relative import
-            if not fileName:
-                # File name must be known for a relative import
-                return set()
-            dotCount = 0
-            while moduleName.startswith('.'):
-                dotCount += 1
-                moduleName = moduleName[1:]
-            # Strip as many paths as dots instruct
-            baseDir = os.path.dirname(fileName)
-            while dotCount > 1:
-                baseDir = os.path.dirname(baseDir)
-                dotCount -= 1
-            specificModules = getProjectSpecificModules(baseDir, True)
-        else:
-            specificModules = getProjectSpecificModules(fileName)
-        if moduleName in specificModules:
-            modulePath = specificModules[moduleName]
-
-    if modulePath is None:
-        return set()
-
-    binarySuffix = __isBinaryModule(modulePath)
-    if binarySuffix is not None:
-        try:
-            modName = os.path.basename(modulePath)
-            modObj = imp.load_module(modName, None, modulePath, binarySuffix)
-            return set(dir(modObj))
-        except:
-            # Failed to load a binary module
-            return set()
-
-    # It's not a binary module, so parse it and make a list of objects.
-    # Check first if the module is loaded into the editor
-    mainWindow = GlobalData().mainWindow
-    editorsManager = mainWindow.editorsManagerWidget.editorsManager
-    widget = editorsManager.getWidgetForFileName(modulePath)
-    if widget is None:
-        # Not loaded, so parse it from a file
-        info = getBriefModuleInfoFromFile(modulePath)
-    else:
-        # Parse it from memory because it could be changed
-        editor = widget.getEditor()
-        info = getBriefModuleInfoFromMemory(editor.text())
-
-    return __getParsedModuleNames(info)
-
-
-# See: http://stackoverflow.com/questions/211100/
-#             pythons-import-doesnt-work-as-expected
-def importModule(modName, parentModule=None):
-    """Attempts to import the supplied string as a module.
-
-    Returns the module that was imported.
-    """
-    mods = modName.split('.')
-    childModuleString = '.'.join(mods[1:])
-    if parentModule is None:
-        if len(mods) > 1:
-            # First time this function is called; import the module
-            # __import__() will only return the top level module
-            return importModule(childModuleString, __import__(modName))
-        return __import__(modName)
-    else:
-        mod = getattr(parentModule, mods[0])
-        if len(mods) > 1:
-            # We're not yet at the intended module; drill down
-            return importModule(childModuleString, mod)
-        return mod
-
-
-def getImportNames(importName):
-    """Builds a list of names for an import"""
-    try:
-        mod = importModule(importName)
-
-        result = set()
-        for item in dir(mod):
-            result.add(item)
-        return result
-    except:
-        return set()
-
-
-def _addClassPrivateNames(classInfo, names):
-    """Adds private names to the given list"""
-    for item in classInfo.classAttributes:
-        if item.name.startswith('__') and not item.name.endswith('__'):
-            names.add(item.name)
-    for item in classInfo.instanceAttributes:
-        if item.name.startswith('__') and not item.name.endswith('__'):
-            names.add(item.name)
-    for item in classInfo.functions:
-        if item.name.startswith('__') and not item.name.endswith('__'):
-            names.add(item.name)
-    for item in classInfo.classes:
-        if item.name.startswith('__') and not item.name.endswith('__'):
-            names.add(item.name)
-
-
-def _getRopeCompletion(fileName, text, editor, prefix):
-    """Provides the rope library idea of how to complete"""
-    # Note: should be replaced with jedi
-    return [], False
 
 
 def getCalltipAndDoc(fileName, editor, position=None, tryQt=False):
@@ -353,58 +194,6 @@ def getOccurencesForFilePosition(fileName, position, throwException):
     return _buildOccurrencesImplementationsResult(result)
 
 
-def _excludePrivateAndBuiltins(proposals):
-    """Returns a list of names excluding private members
-       and __xxx__() methods
-    """
-    # Different versions of rope have a different name of an attribute:
-    # 'kind' or 'scope'. 'scope' is newer.
-    initialized = False
-    hasScope = False
-
-    result = set()
-    for item in proposals:
-        name = item.name
-        if not name.startswith('__'):
-            result.add(name)
-            continue
-        # Here: name starts with '__'
-        if not initialized:
-            initialized = True
-            hasScope = hasattr(item, 'scope')
-
-        if hasScope:
-            if item.scope == 'attribute' and name.endswith('__'):
-                result.add(name)
-                continue
-        else:
-            if item.kind == 'attribute' and name.endswith('__'):
-                result.add(name)
-                continue
-    return result
-
-
-def _isSystemImportOrAlias(obj, text, info):
-    """Checks if the obj is a system wide import name (possibly alias)"""
-    buildSystemWideModulesList()
-
-    if obj in __systemwideModules:
-        return True, obj
-
-    # Check aliases
-    if info is None:
-        info = getBriefModuleInfoFromMemory(text)
-    for item in info.imports:
-        if item.alias == obj:
-            if item.name in __systemwideModules:
-                # That's an alias for a system module
-                return True, item.name
-            # That's an alias for something else, so stop search for a system
-            # module alias
-            return False, obj
-    return False, obj
-
-
 def getJediScript(source, line, column, srcPath):
     """Provides the jedi Script object considering the current project"""
     jedi.settings.additional_dynamic_modules = []
@@ -443,90 +232,8 @@ def getCompletionList(editor, fileName):
     items = []
     for item in script.completions():
         items.append(item.name)
-    return items
+    if items:
+        return items
 
-
-def getCompletionListOld(fileName, scope, obj, prefix,
-                      editor, text, info=None):
-    """High level function. It provides a list of suggestions for
-       autocompletion depending on the text cursor scope and the
-       object the user wants completion for
-    """
-    onImportModule, needToComplete, moduleName = isOnSomeImport(editor)
-    if onImportModule:
-        if not needToComplete:
-            # No need to complete
-            return [], False
-        if moduleName != "":
-            return list(__getImportedObjects(moduleName, fileName)), False
-        # Need to complete a module name
-        return list(__getModuleNames(fileName)), True
-
-    if isComment(editor):
-        return list(getEditorTags(editor, prefix, True)), False
-    if isStringLiteral(editor):
-        return list(getEditorTags(editor, prefix, True)), False
-    if obj == "" and prefix == "":
-        return list(getEditorTags(editor, prefix, True)), False
-
-    # Check a popular case self. and then something
-    if scope.getScope() == scope.ClassMethodScope:
-        infoObj = scope.getInfoObj()
-        if not infoObj.isStaticMethod() and infoObj.arguments:
-            firstArgName = infoObj.arguments[0]
-            if firstArgName == obj:
-                # The user completes the class member
-                proposals, isOK = _getRopeCompletion(fileName, text,
-                                                     editor, prefix)
-                if isOK == False:
-                    return list(getEditorTags(editor, prefix, True)), False
-
-                # The rope proposals include private members and built-ins
-                # which are inaccessible/not needed in most case.
-
-                # Exclude everything private and built-in
-                result = _excludePrivateAndBuiltins(proposals)
-
-                # By some reasons rope sometimes inserts the current
-                # word with '=' at the end. Let's just discard it.
-                currentWord = str(editor.getCurrentWord()).strip()
-                result.discard(currentWord + "=")
-
-                # Add private members of the class itself
-                if info is None:
-                    info = getBriefModuleInfoFromMemory(text)
-                _addClassPrivateNames(scope.levels[scope.length - 2][0],
-                                      result)
-                return list(result), False
-
-    # Rope does not offer anything for system modules, let's handle it here
-    # if so
-    if obj != '':
-        isSystemImport, realImportName = \
-            _isSystemImportOrAlias(obj, text, info)
-        if isSystemImport:
-            # Yes, that is a reference to something from a system module
-            return list(__getImportedObjects(realImportName, '')), False
-
-    # Try rope completion
-    proposals, isOK = _getRopeCompletion(fileName, text, editor, prefix)
-
-    if isOK == False:
-        return list(getEditorTags(editor, prefix, True)), False
-
-    result = _excludePrivateAndBuiltins(proposals)
-
-    # By some reasons rope sometimes inserts the current word with '=' at the
-    # end. Let's just discard it.
-    currentWord = str(editor.getCurrentWord()).strip()
-    result.discard(currentWord + "=")
-
-    if not result:
-        return list(getEditorTags(editor, prefix, True)), False
-
-    if obj == '':
-        # Inject the editor tags as it might be good to have
-        # words from another scope
-        result.update(getEditorTags(editor, prefix, True))
-
-    return list(result), False
+    # jedi provided nothing => last resort: words in the editor buffer
+    return list(getEditorTags(editor))

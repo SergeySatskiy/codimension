@@ -114,6 +114,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def __initHotKeys(self):
         """Initializes a map for the hot keys event filter"""
         self.autoIndentLineAction.setShortcut('Ctrl+Shift+I')
+        self.invokeCompletionAction.setEnabled(False)
         self.__hotKeys = {
             CTRL_SHIFT: {Qt.Key_F1: self.onCallHelp,
                          Qt.Key_T: self.onJumpToTop,
