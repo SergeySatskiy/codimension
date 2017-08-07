@@ -370,6 +370,13 @@ class SideBar(QWidget):
             return self.__tabBar.tabText(index)
         return None
 
+    def tabButton(self, indexOrNameOrWidget, position):
+        """Provide the button of the tab"""
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            return self.__tabBar.tabButton(index, position)
+        return None
+
     def setTabText(self, indexOrNameOrWidget, text):
         """Set the text of the tab"""
         index = self.__getWidgetIndex(indexOrNameOrWidget)
@@ -408,3 +415,7 @@ class SideBar(QWidget):
         if index is not None:
             return self.__stackedWidget.widget(index)
         return None
+
+    def setTabsClosable(self, closable):
+        """Sets the tabs closable"""
+        self.__tabBar.setTabsClosable(closable)

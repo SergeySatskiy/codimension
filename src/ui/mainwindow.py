@@ -57,7 +57,7 @@ from editor.redirectedioconsole import IOConsoleTabWidget
 from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QToolBar, QWidget,
                  QMessageBox, QVBoxLayout, QSplitter, QSizePolicy, QAction,
                  QMainWindow, QShortcut, QApplication, QCursor, QToolButton,
-                 QToolTip, QFileDialog, QDialog, QMenu, QDesktopServices)
+                 QToolTip, QFileDialog, QDialog, QMenu, QDesktopServices, QTabBar)
 from .about import AboutDialog
 from .runmanager import RunManager
 from .sidebar import SideBar
@@ -263,6 +263,7 @@ class CodimensionMainWindow(QMainWindow):
 
         # The layout is a sidebar-style one
         self._bottomSideBar = SideBar(SideBar.South, self)
+        self._bottomSideBar.setTabsClosable(True)
         self._leftSideBar = SideBar(SideBar.West, self)
         self._rightSideBar = SideBar(SideBar.East, self)
 
@@ -270,6 +271,7 @@ class CodimensionMainWindow(QMainWindow):
         self.logViewer = LogViewer()
         self._bottomSideBar.addTab(self.logViewer, getIcon('logviewer.png'),
                                     'Log', 'log', 0)
+        self._bottomSideBar.tabButton('log', QTabBar.RightSide).resize(0, 0)
         sys.stdout.appendToStdout.connect(self.toStdout)
         sys.stderr.appendToStderr.connect(self.toStderr)
 
@@ -311,11 +313,14 @@ class CodimensionMainWindow(QMainWindow):
         self.findInFilesViewer = FindInFilesViewer()
         self._bottomSideBar.addTab(self.findInFilesViewer,
             getIcon('findindir.png'), 'Search results', 'search', 1)
+        self._bottomSideBar.tabButton('search', QTabBar.RightSide).resize(0, 0)
 
         # Create tag help viewer
         self.tagHelpViewer = TagHelpViewer()
         self._bottomSideBar.addTab(self.tagHelpViewer,
             getIcon('helpviewer.png'), 'Context help', 'contexthelp', 2)
+        self._bottomSideBar.tabButton('contexthelp',
+                                      QTabBar.RightSide).resize(0, 0)
         self._bottomSideBar.setTabToolTip('contexthelp',
                                            "Ctrl+F1 in python file")
 
@@ -323,6 +328,7 @@ class CodimensionMainWindow(QMainWindow):
         self.diffViewer = DiffViewer()
         self._bottomSideBar.addTab(self.diffViewer,
             getIcon('diffviewer.png'), 'Diff viewer', 'diff', 3)
+        self._bottomSideBar.tabButton('diff', QTabBar.RightSide).resize(0, 0)
         self._bottomSideBar.setTabToolTip('diff', 'No diff shown')
 
         # Create outline viewer
