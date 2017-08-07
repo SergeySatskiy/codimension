@@ -59,7 +59,6 @@ class QutepartWrapper(Qutepart):
         # Search/replace support
         self.__matchesCache = None
         self.__matchesRegexp = None
-        self.textToIterate = None
         self.textChanged.connect(self.__resetMatchCache)
 
     def setPaper(self, paperColor):
@@ -456,7 +455,7 @@ class QutepartWrapper(Qutepart):
         """Provides a word after cursor"""
         cursor = self.textCursor()
         textAfterCursor = cursor.block().text()[cursor.positionInBlock():]
-        match = WORD_AT_START_REGEXP.search(textBeforeCursor)
+        match = WORD_AT_START_REGEXP.search(textAfterCursor)
         return match.group(0) if match else ''
 
     def clearSelection(self):

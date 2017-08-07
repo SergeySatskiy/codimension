@@ -77,7 +77,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.__initMargins(debugger)
 
         # self.SCN_DOUBLECLICK.connect(self.__onDoubleClick)
-        # self.cursorPositionChanged.connect(self._onCursorPositionChanged)
+        self.cursorPositionChanged.connect(self._onCursorPositionChanged)
 
         self.__skipChangeCursor = False
 
@@ -95,7 +95,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.__completer = CodeCompleter(self)
         self.__inCompletion = False
         self.__completer.activated.connect(self.insertCompletion)
-        self.__lastTabPosition = -1
+        self.__lastTabPosition = None
 
         # Calltip support
         self.__calltip = None
@@ -382,18 +382,19 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
         elif key == Qt.Key_Tab:
             line, pos = self.cursorPosition
-            currentPosition = self.cursorPosition
+            currentPosition = self.absCursorPosition
             if pos != 0:
                 char = self.lines[line][pos - 1]
-                if (char.isalnum() or char in ['_', '.']) and \
-                   currentPosition != self.__lastTabPosition:
+                if char != ' ' and currentPosition != self.__lastTabPosition:
                     self.onAutoComplete()
                     event.accept()
                 else:
                     QutepartWrapper.keyPressEvent(self, event)
+                    self.__lastTabPosition = currentPosition
             else:
                 QutepartWrapper.keyPressEvent(self, event)
-            self.__lastTabPosition = currentPosition
+                self.__lastTabPosition = currentPosition
+
         elif key == Qt.Key_Z and \
             int(event.modifiers()) == (Qt.ControlModifier + Qt.ShiftModifier):
             event.accept()
@@ -412,8 +413,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
         self.__skipChangeCursor = False
 
-    def _onCursorPositionChanged(self, line, pos):
+    def _onCursorPositionChanged(self):
         """Triggered when the cursor changed the position"""
+        self.__lastTabPosition = None
+        line, _ = self.cursorPosition
+
         if self.__calltip:
             if self.__calltipTimer.isActive():
                 self.__calltipTimer.stop()
@@ -503,6 +507,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def onAutoComplete(self):
         """Triggered when ctrl+space or TAB is clicked"""
+        self.__lastTabPosition = None
         if self.isReadOnly():
             return
 

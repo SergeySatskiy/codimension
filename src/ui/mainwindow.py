@@ -847,11 +847,6 @@ class CodimensionMainWindow(QMainWindow):
 
         self.openFile(path, lineNo)
 
-    def notImplementedYet(self):
-        """Shows a dummy window"""
-        QMessageBox.about(self, 'Not implemented yet',
-                          'This function has not been implemented yet')
-
     def closeEvent(self, event):
         """Triggered when the IDE is closed"""
         # Save the side bars status
@@ -1527,7 +1522,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def __onDebuggerCurrentLine(self, fileName, lineNumber,
                                 isStack, asException=False):
-        "Triggered when the client reported a new line"""
+        """Triggered when the client reported a new line"""
         self.__removeCurrenDebugLineHighlight()
 
         self.__lastDebugFileName = fileName

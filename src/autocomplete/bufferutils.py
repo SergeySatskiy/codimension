@@ -394,7 +394,8 @@ def getEditorTags(editor, exclude=None, excludePythonKeywords=False):
 
     # If a cursor is in a middle of the word then the current word is not what
     # you need.
-    result.discard(editor.getCurrentWord())
+    if editor.getWordAfterCursor() == '':
+        result.discard(editor.getWordBeforeCursor())
     return result
 
 
