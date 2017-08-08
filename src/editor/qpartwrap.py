@@ -524,6 +524,14 @@ class QutepartWrapper(Qutepart):
         self.sigHighlighted.emit(word, wordFlag, count)
         return count
 
+    def mouseDoubleClickEvent(self, event):
+        """Highlight the current word keeping the selection"""
+        Qutepart.mouseDoubleClickEvent(self, event)
+        if self.selectedText:
+            selectedPos = self.absSelectedPosition
+            self.onHighlight()
+            self.absSelectedPosition = selectedPos
+
     def onNextHighlight(self):
         """Triggered when Ctrl+. is clicked"""
         if self.__matchesRegexp is None or self.__matchesCache is None:
