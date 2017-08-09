@@ -497,6 +497,8 @@ class FindReplaceWidget(QWidget):
                 self.__connectOnChanges()
                 self.__setBackgroundColor(self.BG_NOMATCH if count == 0 else
                                           self.BG_MATCH)
+                self.findPrevButton.setEnabled(count > 0)
+                self.findNextButton.setEnabled(count > 0)
                 self.__cursorPositionChanged()
 
     def __onCriteriaChanged(self, _):
