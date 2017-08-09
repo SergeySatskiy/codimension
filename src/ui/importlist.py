@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ class ImportsList(QTreeWidget):
     def __init__(self, parent):
         QTreeWidget.__init__(self, parent)
 
-    def focusOutEvent(self, event):
+    def focusOutEvent(self, _):
         """Hides the imports list widget"""
         self.parent().hide()
 
@@ -48,8 +48,8 @@ class ImportListWidget(QFrame):
         QFrame.__init__(self, parent)
 
         # Make the frame nice looking
-        self.setFrameShape(QFrame.StyledPanel)
-        self.setLineWidth(2)
+        self.setFrameShape(QFrame.Panel)
+        self.setLineWidth(1)
 
         self.__importList = None
         self.__createLayout()
@@ -138,7 +138,8 @@ class ImportListWidget(QFrame):
             event.accept()
             self.hide()
 
-    def __importActivated(self, item, column):
+    @staticmethod
+    def __importActivated(item, _):
         """Handles the import selection"""
         path = str(item.text(1))
         GlobalData().mainWindow.editorsManager().openFile(path, -1)

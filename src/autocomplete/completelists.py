@@ -22,6 +22,7 @@
 
 import os
 import sys
+import logging
 import jedi
 from utils.globals import GlobalData
 from .listmodules import getSysModules, getModules
@@ -98,21 +99,27 @@ def getCalltipAndDoc(fileName, editor, position=None, tryQt=False):
 
 def getDefinitions(editor, fileName):
     """Provides the definition location or None"""
-    line, pos = editor.cursorPosition
-    script = getJediScript(editor.text, line + 1, pos,
-                           fileName if fileName else '')
-    definitions = script.goto_definitions()
-
-    # Filter out those on which there is no way to jump
     result = []
-    for definition in definitions:
-        path = definition.module_path
-        if definition.line is None or definition.column is None:
-            continue
-        if path is None and definition.in_builtin_module():
-            continue
-        result.append([path if path else fileName,
-                       definition.line, definition.column])
+    line, pos = editor.cursorPosition
+
+    try:
+        script = getJediScript(editor.text, line + 1, pos,
+                               fileName if fileName else '')
+        definitions = script.goto_definitions()
+
+        # Filter out those on which there is no way to jump
+        for definition in definitions:
+            path = definition.module_path
+            if definition.line is None or definition.column is None:
+                continue
+            if path is None and definition.in_builtin_module():
+                continue
+            result.append([path if path else fileName,
+                           definition.line, definition.column,
+                           definition.type])
+    except Exception as exc:
+        logging.error('jedi library failed to provide definitions: ' +
+                      str(exc))
     return result
 
 
@@ -206,7 +213,7 @@ def getJediScript(source, line, column, srcPath):
     jedi.settings.additional_dynamic_modules = []
 
     project = GlobalData().project
-    if not project.isLoaded:
+    if not project.isLoaded():
         # Add the other opened files if so
         mainWindow = GlobalData().mainWindow
         for path in mainWindow.editorsManager().getOpenedList():
@@ -224,6 +231,12 @@ def getJediScript(source, line, column, srcPath):
     if projectDir not in paths:
         paths.append(projectDir)
 
+    # This make relative imports resolvable
+    if os.path.abspath(srcPath):
+        dirName = os.path.dirname(srcPath)
+        if dirName not in paths:
+            paths.append(dirName)
+
     return jedi.Script(source, line, column, sys_path=paths)
 
 
@@ -232,13 +245,18 @@ def getCompletionList(editor, fileName):
     if not editor.isPythonBuffer():
         return list(getEditorTags(editor))
 
-    line, pos = editor.cursorPosition
-    script = getJediScript(editor.text, line + 1, pos,
-                           fileName if fileName else '')
-
     items = []
-    for item in script.completions():
-        items.append(item.name)
+    line, pos = editor.cursorPosition
+    try:
+        script = getJediScript(editor.text, line + 1, pos,
+                               fileName if fileName else '')
+
+        for item in script.completions():
+            items.append(item.name)
+    except Exception as exc:
+        logging.error('jedi library could not provide completions: ' +
+                      str(exc))
+
     if items:
         return items
 

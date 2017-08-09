@@ -36,7 +36,7 @@ from utils.misc import extendInstance
 from utils.fileutils import isPythonMime
 from utils.diskvaluesrelay import getRunParameters, addRunParams
 from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
-                               getImportedNameDefinitionLine, resolveImports)
+                               resolveImports)
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
