@@ -39,7 +39,6 @@ from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
                                getImportedNameDefinitionLine, resolveImports)
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
-from autocomplete.bufferutils import isImportLine
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from profiling.profui import ProfilingProgressDialog
 from .flowuiwidget import FlowUIWidget
@@ -452,67 +451,16 @@ class TextEditorTabWidget(QWidget):
 
     def onOpenImport(self):
         """Triggered when Ctrl+I is received"""
-        if not isPythonMime(self.__editor.mime):
-            return True
+        if isPythonMime(self.__editor.mime):
+            basePath = os.path.dirname(self.__fileName)
 
-        # Python file, we may continue
-        importLine, lineNo = isImportLine(self.__editor)
-        basePath = os.path.dirname(self.__fileName)
-
-        if importLine:
-            lineImports, importWhat = getImportsInLine(self.__editor.text,
-                                                       lineNo + 1)
-            currentWord = self.__editor.getCurrentWord(".")
-            if currentWord in lineImports:
-                # The cursor is on some import
-                path = resolveImport(basePath, currentWord)
-                if path != '':
-                    GlobalData().mainWindow.openFile(path, -1)
-                    return True
+            # Take all the file imports and resolve them
+            fileImports = getImportsList(self.__editor.text)
+            if not fileImports:
                 GlobalData().mainWindow.showStatusBarMessage(
-                    "The import '" + currentWord + "' is not resolved.")
-                return True
-            # We are not on a certain import.
-            # Check if it is a line with exactly one import
-            if len(lineImports) == 1:
-                path = resolveImport(basePath, lineImports[0])
-                if path == '':
-                    GlobalData().mainWindow.showStatusBarMessage(
-                        "The import '" + lineImports[0] +
-                        "' is not resolved")
-                    return True
-                # The import is resolved. Check where we are.
-                if currentWord in importWhat:
-                    # We are on a certain imported name in a resolved import
-                    # So, jump to the definition line
-                    line = getImportedNameDefinitionLine(path, currentWord)
-                    GlobalData().mainWindow.openFile(path, line)
-                    return True
-                GlobalData().mainWindow.openFile(path, -1)
-                return True
-
-            # Take all the imports in the line and resolve them.
-            self.__onImportList(basePath, lineImports)
-            return True
-
-        # Here: the cursor is not on the import line. Take all the file imports
-        # and resolve them
-        fileImports = getImportsList(self.__editor.text)
-        if not fileImports:
-            GlobalData().mainWindow.showStatusBarMessage(
-                "There are no imports")
-            return True
-        if len(fileImports) == 1:
-            path = resolveImport(basePath, fileImports[0])
-            if path == '':
-                GlobalData().mainWindow.showStatusBarMessage(
-                    "The import '" + fileImports[0] + "' is not resolved")
-                return True
-            GlobalData().mainWindow.openFile(path, -1)
-            return True
-
-        self.__onImportList(basePath, fileImports)
-        return True
+                    "There are no imports")
+            else:
+                self.__onImportList(basePath, fileImports)
 
     def __onImportList(self, basePath, imports):
         """Works with a list of imports"""

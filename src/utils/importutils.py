@@ -33,7 +33,7 @@ from .fileutils import isPythonFile
 def getImportsList(fileContent):
     """Parses a python file and provides a list imports in it"""
     result = []
-    info = getBriefModuleInfoFromMemory(str(fileContent))
+    info = getBriefModuleInfoFromMemory(fileContent)
     for importObj in info.imports:
         if importObj.name not in result:
             result.append(importObj.name)
@@ -129,9 +129,7 @@ def resolveImports(basePath, imports):
                 if os.path.isdir(path):
                     path += os.path.sep + "__init__.py"
                     if not os.path.exists(path):
-                        path += "3"
-                        if not os.path.exists(path):
-                            continue
+                        continue
                 else:
                     if not path.endswith(".py"):
                         continue
@@ -146,9 +144,7 @@ def resolveImports(basePath, imports):
                 if os.path.isdir(path):
                     path += os.path.sep + "__init__.py"
                     if not os.path.exists(path):
-                        path += "3"
-                        if not os.path.exists(path):
-                            continue
+                        continue
                 else:
                     if not path.endswith(".py"):
                         continue
