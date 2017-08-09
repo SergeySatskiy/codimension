@@ -325,12 +325,6 @@ class QutepartWrapper(Qutepart):
             return False
         return self._highlighter._syntax._getTextType(data.data, pos) == 's'
 
-    def getCurrentWord(self):
-        """Provides the current word"""
-        cursor = self.textCursor()
-        cursor.select(QTextCursor.WordUnderCursor)
-        return cursor.selectedText()
-
     def removeTrailingWhitespaces(self):
         """Removes trailing whitespaces"""
         with self:

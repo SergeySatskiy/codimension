@@ -96,17 +96,24 @@ def getCalltipAndDoc(fileName, editor, position=None, tryQt=False):
         return None, None
 
 
-def getDefinitionLocation(fileName, editor):
+def getDefinitions(editor, fileName):
     """Provides the definition location or None"""
-    try:
-        position = editor.currentPosition()
-        text = editor.text()
+    line, pos = editor.cursorPosition
+    script = getJediScript(editor.text, line + 1, pos,
+                           fileName if fileName else '')
+    definitions = script.goto_definitions()
 
-        # Note: should be replaced with jedi
-
-        return None
-    except:
-        return None
+    # Filter out those on which there is no way to jump
+    result = []
+    for definition in definitions:
+        path = definition.module_path
+        if definition.line is None or definition.column is None:
+            continue
+        if path is None and definition.in_builtin_module():
+            continue
+        result.append([path if path else fileName,
+                       definition.line, definition.column])
+    return result
 
 
 def _switchFileAndBuffer(fileName, editor):

@@ -38,7 +38,7 @@ from autocomplete.bufferutils import (getContext, getPrefixAndObject,
                                       getEditorTags,
                                       getCallPosition, getCommaCount)
 from autocomplete.completelists import (getCompletionList, getCalltipAndDoc,
-                                        getDefinitionLocation, getOccurrences)
+                                        getDefinitions, getOccurrences)
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from .qpartwrap import QutepartWrapper
 from .editorcontextmenus import EditorContextMenuMixin
@@ -634,19 +634,19 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             return True
 
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        location = getDefinitionLocation(self._parent.getFileName(), self)
+        definitions = getDefinitions(self, self._parent.getFileName())
         QApplication.restoreOverrideCursor()
-        if location is None:
+
+        if definitions:
+            if len(definitions) == 1:
+                GlobalData().mainWindow.openFile(
+                    definitions[0][0], definitions[0][1],
+                    definitions[0][2] + 1)
+            else:
+                print("More than one definition identified")
+        else:
             GlobalData().mainWindow.showStatusBarMessage(
                 "Definition is not found")
-        else:
-            if location.resource is None:
-                # That was an unsaved yet buffer, but something has been found
-                GlobalData().mainWindow.jumpToLine(location.lineno)
-            else:
-                path = os.path.realpath(location.resource.real_path)
-                GlobalData().mainWindow.openFile(path, location.lineno)
-        return True
 
     def onScopeBegin(self):
         """The user requested jumping to the current scope begin"""
