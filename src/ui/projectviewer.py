@@ -29,6 +29,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
 from utils.fileutils import isPythonMime, isPythonFile, isPythonCompiledFile
+from utils.colorfont import getLabelStyle
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
 from analysis.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
@@ -36,7 +37,7 @@ from analysis.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
 from .qt import (QSize, Qt, QWidget, QVBoxLayout, QSplitter,
                  QToolBar, QAction, QToolButton, QHBoxLayout, QLabel,
                  QSpacerItem, QSizePolicy, QDialog, QMenu, QFrame,
-                 QApplication, QMessageBox, QCursor, QPalette, pyqtSignal)
+                 QApplication, QMessageBox, QCursor, pyqtSignal)
 from .projectproperties import ProjectPropertiesDialog
 from .filesystembrowser import FileSystemBrowser
 from .projectbrowser import ProjectBrowser
@@ -122,16 +123,10 @@ class ProjectViewer(QWidget):
 
         # Header part: label + i-button
         headerFrame = QFrame()
-        headerFrame.setFrameStyle(QFrame.StyledPanel)
-        headerFrame.setAutoFillBackground(True)
-        headerPalette = headerFrame.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        headerFrame.setPalette(headerPalette)
-        headerFrame.setFixedHeight(24)
+        headerFrame.setObjectName('prjheader')
+        headerFrame.setStyleSheet('QFrame#prjheader {' +
+                                  getLabelStyle(self) + '}')
+        headerFrame.setFixedHeight(26)
 
         self.projectLabel = QLabel()
         self.projectLabel.setText("Project: none")
@@ -306,16 +301,10 @@ class ProjectViewer(QWidget):
         """Creates the lower part of the project viewer"""
         # Header part: label + show/hide button
         self.headerFrame = QFrame()
-        self.headerFrame.setFrameStyle(QFrame.StyledPanel)
-        self.headerFrame.setAutoFillBackground(True)
-        headerPalette = self.headerFrame.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        self.headerFrame.setPalette(headerPalette)
-        self.headerFrame.setFixedHeight(24)
+        self.headerFrame.setObjectName('fsheader')
+        self.headerFrame.setStyleSheet('QFrame#fsheader {' +
+                                       getLabelStyle(self) + '}')
+        self.headerFrame.setFixedHeight(26)
 
         projectLabel = QLabel()
         projectLabel.setText("File system")

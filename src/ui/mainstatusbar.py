@@ -51,7 +51,7 @@ class MainWindowStatusBarMixin:
         self.__statusBar = self.statusBar()
         self.__statusBar.setSizeGripEnabled(True)
 
-        labelStylesheet = getLabelStyle(self)
+        labelStylesheet = 'QLabel {' + getLabelStyle(self) + '}'
 
         self.sbVCSStatus = FitPathLabel(self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbVCSStatus)
