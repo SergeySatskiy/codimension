@@ -20,14 +20,15 @@
 """Client exceptions viewer"""
 
 
+import os.path
 from ui.qt import (Qt, pyqtSignal, QSize, QSizePolicy, QFrame, QTreeWidget,
                    QTreeWidgetItem, QVBoxLayout, QLabel, QWidget,
                    QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
-                   QPalette, QCursor, QAction, QToolBar)
+                   QCursor, QAction, QToolBar)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
-import os.path
+from utils.colorfont import getLabelStyle
 from utils.project import CodimensionProject
 from .variableitems import getDisplayValue, getTooltipValue
 
@@ -48,7 +49,8 @@ class StackFrameItem(QTreeWidgetItem):
         self.setText(0, os.path.basename(fileName) + ":" + str(lineNumber))
         self.setToolTip(0, fileName + ":" + str(lineNumber))
 
-    def getType(self):
+    @staticmethod
+    def getType():
         """Provides the item type"""
         return STACK_FRAME_ITEM
 
@@ -94,7 +96,8 @@ class ExceptionItem(QTreeWidgetItem):
             for fileName, lineNumber in stackTrace:
                 StackFrameItem(self, fileName, lineNumber)
 
-    def getType(self):
+    @staticmethod
+    def getType():
         """Provides the item type"""
         return EXCEPTION_ITEM
 
@@ -176,16 +179,10 @@ class ClientExceptionsViewer(QWidget):
         verticalLayout.setSpacing(0)
 
         self.headerFrame = QFrame()
-        self.headerFrame.setFrameStyle(QFrame.StyledPanel)
-        self.headerFrame.setAutoFillBackground(True)
-        headerPalette = self.headerFrame.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        self.headerFrame.setPalette(headerPalette)
-        self.headerFrame.setFixedHeight(24)
+        self.headerFrame.setObjectName('excpt')
+        self.headerFrame.setStyleSheet('QFrame#excpt {' +
+                                       getLabelStyle(self) + '}')
+        self.headerFrame.setFixedHeight(26)
 
         self.__excptLabel = QLabel("Exceptions")
 
@@ -274,14 +271,14 @@ class ClientExceptionsViewer(QWidget):
 
     def __showContextMenu(self, coord):
         """Shows the frames list context menu"""
-        self.__contextItem = self.exceptionsList.itemAt(coord)
+        self.__currentItem = self.exceptionsList.itemAt(coord)
 
         self.__addToIgnoreMenuItem.setEnabled(
             self.__addToIgnoreButton.isEnabled())
         self.__jumpToCodeMenuItem.setEnabled(
             self.__jumpToCodeButton.isEnabled())
 
-        if self.__contextItem is not None:
+        if self.__currentItem is not None:
             self.__excptMenu.popup(QCursor.pos())
 
     def __onAddToIgnore(self):

@@ -804,6 +804,8 @@ class EditorsManager(QTabWidget):
 
     def __currentChanged(self, index):
         """Handles the currentChanged signal"""
+        GlobalData().mainWindow.clearStatusBarMessage()
+
         if index == -1:
             self.sigTabRunChanged.emit(False)
             return
@@ -1718,8 +1720,12 @@ class EditorsManager(QTabWidget):
         """Triggered when the cursor position changed"""
         widget = self.currentWidget()
         mainWindow = self.__mainWindow
-        mainWindow.sbLine.setText("Line: " + str(widget.getLine() + 1))
-        mainWindow.sbPos.setText("Pos: " + str(widget.getPos() + 1))
+        line = widget.getLine()
+        pos = widget.getPos()
+
+        if line is not None and pos is not None:
+            mainWindow.sbLine.setText("Line: " + str(line + 1))
+            mainWindow.sbPos.setText("Pos: " + str(pos + 1))
 
         if self.__debugMode:
             mainWindow.setRunToLineButtonState()
@@ -2028,6 +2034,14 @@ class EditorsManager(QTabWidget):
                     # This will make the modification markers re-drawn
                     # properly for the case when auto line wrap toggled
                     item.resizeBars()
+
+    def resetTextSearchMatchCache(self):
+        """Resets all the buffers match cache"""
+        for index in range(self.count()):
+            item = self.widget(index)
+            if item.getType() in [MainWindowTabWidgetBase.PlainTextEditor,
+                                  MainWindowTabWidgetBase.VCSAnnotateViewer]:
+                item.getEditor().resetMatchCache()
 
     def updateCFEditorsSettings(self):
         """Visits all the visible CF editors"""

@@ -22,12 +22,13 @@
 from ui.qt import (Qt, QSize, QSizePolicy, QFrame, QTreeWidget, QToolButton,
                    QTreeWidgetItem, QVBoxLayout, QToolBar, QLabel, QWidget,
                    QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
-                   QPalette, QCursor, QLineEdit, QPushButton, QAction)
+                   QCursor, QLineEdit, QPushButton, QAction)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.settings import Settings
+from utils.colorfont import getLabelStyle
 
 
 class IgnoredExceptionsViewer(QWidget):
@@ -44,7 +45,7 @@ class IgnoredExceptionsViewer(QWidget):
 
         GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
-        if Settings()['showIgnoredExcViewer'] == False:
+        if not Settings()['showIgnoredExcViewer']:
             self.__onShowHide(True)
 
     def __createPopupMenu(self):
@@ -61,16 +62,10 @@ class IgnoredExceptionsViewer(QWidget):
         verticalLayout.setSpacing(0)
 
         self.headerFrame = QFrame()
-        self.headerFrame.setFrameStyle(QFrame.StyledPanel)
-        self.headerFrame.setAutoFillBackground(True)
-        headerPalette = self.headerFrame.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        self.headerFrame.setPalette(headerPalette)
-        self.headerFrame.setFixedHeight(24)
+        self.headerFrame.setObjectName('ignexcpt')
+        self.headerFrame.setStyleSheet('QFrame#ignexcpt {' +
+                                       getLabelStyle(self) + '}')
+        self.headerFrame.setFixedHeight(26)
 
         self.__excptLabel = QLabel("Ignored exception types")
 
@@ -86,7 +81,7 @@ class IgnoredExceptionsViewer(QWidget):
         self.__showHideButton.clicked.connect(self.__onShowHide)
 
         headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(1, 1, 1, 1)
+        headerLayout.setContentsMargins(0, 0, 0, 0)
         headerLayout.addSpacerItem(fixedSpacer)
         headerLayout.addWidget(self.__excptLabel)
         headerLayout.addSpacerItem(expandingSpacer)

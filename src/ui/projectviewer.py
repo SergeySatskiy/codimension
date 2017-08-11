@@ -37,7 +37,7 @@ from analysis.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
 from .qt import (QSize, Qt, QWidget, QVBoxLayout, QSplitter,
                  QToolBar, QAction, QToolButton, QHBoxLayout, QLabel,
                  QSpacerItem, QSizePolicy, QDialog, QMenu, QFrame,
-                 QApplication, QMessageBox, QCursor, pyqtSignal)
+                 QMessageBox, QCursor, pyqtSignal)
 from .projectproperties import ProjectPropertiesDialog
 from .filesystembrowser import FileSystemBrowser
 from .projectbrowser import ProjectBrowser
@@ -109,7 +109,7 @@ class ProjectViewer(QWidget):
         self.__maxH = self.lower.maximumHeight()
 
         # At the beginning the FS viewer is shown, so hide it if needed
-        if Settings()['showFSViewer'] == False:
+        if not Settings()['showFSViewer']:
             self.__onShowHide(True)
 
     def setTooltips(self, switchOn):
@@ -517,7 +517,8 @@ class ProjectViewer(QWidget):
 
             scriptName = dialog.scriptEdit.text().strip()
             if scriptName != "":
-                relativePath = relpath(scriptName, project.getProjectDir())
+                relativePath = os.path.relpath(scriptName,
+                                               project.getProjectDir())
                 if not relativePath.startswith('..'):
                     scriptName = relativePath
 
@@ -681,7 +682,7 @@ class ProjectViewer(QWidget):
             self.__fsContextItem.itemType in [FunctionItemType,
                                               ClassItemType,
                                               AttributeItemType,
-                                              GlobalItemType ] and \
+                                              GlobalItemType] and \
                 GlobalData().project.isProjectFile(
                     self.__fsContextItem.getPath()))
 
@@ -960,7 +961,7 @@ class ProjectViewer(QWidget):
 
         res = QMessageBox.warning(self, header, text,
                                   QMessageBox.StandardButtons(
-                                        QMessageBox.Cancel | QMessageBox.Yes),
+                                      QMessageBox.Cancel | QMessageBox.Yes),
                                   QMessageBox.Cancel)
         if res == QMessageBox.Yes:
             try:
@@ -1179,7 +1180,7 @@ class ProjectViewer(QWidget):
             pluginName = plugin.getName()
             logging.error("Error removing " + pluginName +
                           " plugin file context menu: " +
-                           str(exc) + ". Ignore and continue.")
+                          str(exc) + ". Ignore and continue.")
 
         try:
             path = plugin.getPath()

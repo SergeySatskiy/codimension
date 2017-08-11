@@ -25,12 +25,13 @@ from utils.pixmapcache import getIcon
 from utils.settings import Settings
 from utils.project import CodimensionProject, getProjectFileTooltip
 from utils.globals import GlobalData
+from utils.colorfont import getLabelStyle
 from utils.fileutils import (getFileProperties, isPythonMime,
                              isCDMProjectMime, isImageViewable)
 from .qt import (Qt, QSize, QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
                  QToolButton, QWidget, QAction, QDialog, QSpacerItem,
                  QVBoxLayout, QSizePolicy, QToolBar, QApplication, QFrame,
-                 QLabel, QHBoxLayout, QSplitter, QCursor, QPalette)
+                 QLabel, QHBoxLayout, QSplitter, QCursor)
 from .projectproperties import ProjectPropertiesDialog
 from .itemdelegates import NoOutlineHeightDelegate
 
@@ -183,6 +184,9 @@ class RecentProjectsViewer(QWidget):
         self.__projectContextItem = None
         self.__fileContextItem = None
 
+        self.__minH = None
+        self.__maxH = None
+
         self.upper = self.__createRecentFilesLayout()
         self.lower = self.__createRecentProjectsLayout()
         self.__createProjectPopupMenu()
@@ -208,8 +212,8 @@ class RecentProjectsViewer(QWidget):
         self.__debugMode = False
         parent.debugModeChanged.connect(self.__onDebugMode)
 
-    def setTooltips(self, switchOn):
-        """Switches the tooltips mode"""
+    def setTooltips(self, _):
+        """Switches the tooltips mode; _: switchOn"""
         for index in range(0, self.recentFilesView.topLevelItemCount()):
             self.recentFilesView.topLevelItem(index).updateIconAndTooltip()
         for index in range(0, self.projectsView.topLevelItemCount()):
@@ -256,16 +260,10 @@ class RecentProjectsViewer(QWidget):
     def __createRecentFilesLayout(self):
         """Creates the upper part - recent files"""
         headerFrame = QFrame()
-        headerFrame.setFrameStyle(QFrame.StyledPanel)
-        headerFrame.setAutoFillBackground(True)
-        headerPalette = headerFrame.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        headerFrame.setPalette(headerPalette)
-        headerFrame.setFixedHeight(24)
+        headerFrame.setObjectName('fheader')
+        headerFrame.setStyleSheet('QFrame#fheader {' +
+                                  getLabelStyle(self) + '}')
+        headerFrame.setFixedHeight(26)
 
         recentFilesLabel = QLabel()
         recentFilesLabel.setText("Recent files")
@@ -336,16 +334,10 @@ class RecentProjectsViewer(QWidget):
     def __createRecentProjectsLayout(self):
         """Creates the bottom layout"""
         self.headerFrame = QFrame()
-        self.headerFrame.setFrameStyle(QFrame.StyledPanel)
-        self.headerFrame.setAutoFillBackground(True)
-        headerPalette = self.headerFrame.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        self.headerFrame.setPalette(headerPalette)
-        self.headerFrame.setFixedHeight(24)
+        self.headerFrame.setObjectName('pheader')
+        self.headerFrame.setStyleSheet('QFrame#pheader {' +
+                                       getLabelStyle(self) + '}')
+        self.headerFrame.setFixedHeight(26)
 
         recentProjectsLabel = QLabel()
         recentProjectsLabel.setText("Recent projects")
@@ -523,12 +515,12 @@ class RecentProjectsViewer(QWidget):
         self.recentFilesView.header().setSectionResizeMode(
             0, QHeaderView.Fixed)
 
-    def __projectActivated(self, item, column):
+    def __projectActivated(self, item, _):
         """Handles the double click (or Enter) on the item"""
         self.__projectContextItem = item
         self.__loadProject()
 
-    def __fileActivated(self, item, column):
+    def __fileActivated(self, item, _):
         """Handles the double click (or Enter) on a file item"""
         self.__fileContextItem = item
         self.__openFile()
@@ -543,13 +535,13 @@ class RecentProjectsViewer(QWidget):
         if self.__projectContextItem.isCurrent():
             # This is the current project - it can be edited
             project = GlobalData().project
-            dialog = ProjectPropertiesDialog(project, self)
-            if dialog.exec_() == QDialog.Accepted:
+            dlg = ProjectPropertiesDialog(project, self)
+            if dlg.exec_() == QDialog.Accepted:
                 importDirs = []
-                for index in range(dialog.importDirList.count()):
-                    importDirs.append(dialog.importDirList.item(index).text())
+                for index in range(dlg.importDirList.count()):
+                    importDirs.append(dlg.importDirList.item(index).text())
 
-                scriptName = dialog.scriptEdit.text().strip()
+                scriptName = dlg.scriptEdit.text().strip()
                 relativePath = os.path.relpath(scriptName,
                                                project.getProjectDir())
                 if not relativePath.startswith('..'):
@@ -557,21 +549,21 @@ class RecentProjectsViewer(QWidget):
 
                 project.updateProperties(
                     {'scriptname': scriptName,
-                     'creationdate': dialog.creationDateEdit.text().strip(),
-                     'author': dialog.authorEdit.text().strip(),
-                     'license': dialog.licenseEdit.text().strip(),
-                     'copyright': dialog.copyrightEdit.text().strip(),
-                     'version': dialog.versionEdit.text().strip(),
-                     'email': dialog.emailEdit.text().strip(),
-                     'description': dialog.descriptionEdit.toPlainText().strip(),
-                     'uuid': dialog.uuidEdit.text().strip(),
+                     'creationdate': dlg.creationDateEdit.text().strip(),
+                     'author': dlg.authorEdit.text().strip(),
+                     'license': dlg.licenseEdit.text().strip(),
+                     'copyright': dlg.copyrightEdit.text().strip(),
+                     'version': dlg.versionEdit.text().strip(),
+                     'email': dlg.emailEdit.text().strip(),
+                     'description': dlg.descriptionEdit.toPlainText().strip(),
+                     'uuid': dlg.uuidEdit.text().strip(),
                      'importdirs': importDirs,
-                     'encoding': dialog.encodingCombo.currentText().strip()})
+                     'encoding': dlg.encodingCombo.currentText().strip()})
         else:
             # This is not the current project - it can be viewed
             fName = self.__projectContextItem.getFilename()
-            dialog = ProjectPropertiesDialog(fName, self)
-            dialog.exec_()
+            dlg = ProjectPropertiesDialog(fName, self)
+            dlg.exec_()
 
     def __deleteProject(self):
         """Handles the 'delete from recent' context menu item"""
@@ -691,8 +683,8 @@ class RecentProjectsViewer(QWidget):
             QApplication.clipboard().setText(
                 self.__projectContextItem.getFilename())
 
-    def onFileUpdated(self, fileName, uuid):
-        """Triggered when the file is updated: python or project"""
+    def onFileUpdated(self, fileName, _):
+        """Triggered when the file is updated: python or project; _: uuid"""
         realPath = os.path.realpath(fileName)
 
         count = self.recentFilesView.topLevelItemCount()

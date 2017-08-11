@@ -394,6 +394,7 @@ class FindReplaceWidget(QWidget):
         self.replaceAndMoveButton.setEnabled(False)
         self.replaceAllButton.setEnabled(False)
         self.replaceCombo.setEnabled(False)
+        self.__setBackgroundColor(self.BG_IDLE)
 
     def updateStatus(self):
         """Triggered when the current tab is changed"""
@@ -417,7 +418,13 @@ class FindReplaceWidget(QWidget):
 
         criteriaValid = self.__isCriteriaValid()
         if criteriaValid:
-            self.__setBackgroundColor(self.BG_IDLE)
+            _, totalMatches = self.__editor.getMatchesInfo()
+            if totalMatches is None or totalMatches == 0:
+                self.__setBackgroundColor(self.BG_NOMATCH)
+            else:
+                self.__setBackgroundColor(self.BG_MATCH)
+        else:
+            self.__setBackgroundColor(self.BG_BROKEN)
 
         self.findPrevButton.setEnabled(criteriaValid)
         self.findNextButton.setEnabled(criteriaValid)
@@ -503,6 +510,10 @@ class FindReplaceWidget(QWidget):
 
     def __onCriteriaChanged(self, _):
         """Triggered when the search text or a checkbox state changed"""
+        # All the opened buffers match cache needs to be reset to trigger
+        # re-search next time the user switches the buffer
+        self.editorsManager.resetTextSearchMatchCache()
+
         self.__performSearch(True, True)
 
     def __appendReplaceMessage(self):

@@ -20,11 +20,10 @@
 """The tag help viewer implementation"""
 
 from utils.pixmapcache import getIcon
-from utils.globals import GlobalData
-from utils.colorfont import getZoomedMonoFont
+from utils.colorfont import getZoomedMonoFont, getLabelStyle
 from .qt import (Qt, QSize, QPlainTextEdit, QMenu, QApplication, QHBoxLayout,
                  QWidget, QAction, QToolBar, QSizePolicy, QLabel, QVBoxLayout,
-                 QFrame, QPalette, QCursor, QFont)
+                 QCursor)
 
 
 class TagHelpViewer(QWidget):
@@ -94,16 +93,10 @@ class TagHelpViewer(QWidget):
         toolbar.addAction(self.__clearButton)
 
         self.__header = QLabel("Signature: none")
-        self.__header.setFrameStyle(QFrame.StyledPanel)
+        self.__header.setObjectName('signature')
+        self.__header.setStyleSheet('QFrame#signature {' +
+                                    getLabelStyle(self) + '}')
         self.__header.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
-        self.__header.setAutoFillBackground(True)
-        headerPalette = self.__header.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        self.__header.setPalette(headerPalette)
         verticalLayout = QVBoxLayout()
         verticalLayout.setContentsMargins(2, 2, 2, 2)
         verticalLayout.setSpacing(2)
@@ -119,14 +112,15 @@ class TagHelpViewer(QWidget):
 
         self.setLayout(layout)
 
-    def __handleShowContextMenu(self, coord):
+    def __handleShowContextMenu(self, _):
         """Show the context menu"""
         self.__selectAllMenuItem.setEnabled(not self.__isEmpty)
         self.__copyMenuItem.setEnabled(self.__copyAvailable)
         self.__clearMenuItem.setEnabled(not self.__isEmpty)
         self.__menu.popup(QCursor.pos())
 
-    def __calltipDisplayable(self, calltip):
+    @staticmethod
+    def __calltipDisplayable(calltip):
         """True if calltip is displayable"""
         if calltip is None:
             return False
@@ -134,7 +128,8 @@ class TagHelpViewer(QWidget):
             return False
         return True
 
-    def __docstringDisplayable(self, docstring):
+    @staticmethod
+    def __docstringDisplayable(docstring):
         """True if docstring is displayable"""
         if docstring is None:
             return False

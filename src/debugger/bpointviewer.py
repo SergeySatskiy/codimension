@@ -23,13 +23,14 @@ import logging
 from ui.qt import (Qt, pyqtSignal, QSize, QSizePolicy, QFrame, QTreeView,
                    QHeaderView, QVBoxLayout, QSortFilterProxyModel, QLabel,
                    QWidget, QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
-                   QPalette, QCursor, QItemSelectionModel, QDialog, QToolBar,
+                   QCursor, QItemSelectionModel, QDialog, QToolBar,
                    QAction, QModelIndex)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
+from utils.colorfont import getLabelStyle
 from .editbreakpoint import BreakpointEditDialog
 from .breakpoint import Breakpoint
 from .bputils import getBreakpointLines
@@ -139,7 +140,7 @@ class BreakPointView(QTreeView):
         self.__delAllAct = self.menu.addAction(
             getIcon('bpdelall.png'), "Delete all", self.deleteAllBreaks)
 
-    def __showContextMenu(self, coord):
+    def __showContextMenu(self, _):
         """Shows the context menu"""
         index = self.currentIndex()
         if not index.isValid():
@@ -147,15 +148,15 @@ class BreakPointView(QTreeView):
         sindex = self.toSourceIndex(index)
         if not sindex.isValid():
             return
-        bp = self.__model.getBreakPointByIndex(sindex)
-        if not bp:
+        bpoint = self.__model.getBreakPointByIndex(sindex)
+        if not bpoint:
             return
 
         enableCount, disableCount = self.__model.getCounts()
 
         self.__editAct.setEnabled(True)
-        self.__enableAct.setEnabled(not bp.isEnabled())
-        self.__disableAct.setEnabled(bp.isEnabled())
+        self.__enableAct.setEnabled(not bpoint.isEnabled())
+        self.__disableAct.setEnabled(bpoint.isEnabled())
         self.__jumpToCodeAct.setEnabled(True)
         self.__delAct.setEnabled(True)
         self.__enableAllAct.setEnabled(disableCount > 0)
@@ -179,7 +180,8 @@ class BreakPointView(QTreeView):
         line = bpoint.getLineNumber()
         self.jumpToCode(fileName, line)
 
-    def jumpToCode(self, fileName, line):
+    @staticmethod
+    def jumpToCode(fileName, line):
         """Jumps to the source code"""
         editorsManager = GlobalData().mainWindow.editorsManager()
         editorsManager.openFile(fileName, line)
@@ -197,14 +199,14 @@ class BreakPointView(QTreeView):
         """Edits a breakpoint"""
         sindex = self.toSourceIndex(index)
         if sindex.isValid():
-            bp = self.__model.getBreakPointByIndex(sindex)
-            if not bp:
+            bpoint = self.__model.getBreakPointByIndex(sindex)
+            if not bpoint:
                 return
 
-            dlg = BreakpointEditDialog(bp)
+            dlg = BreakpointEditDialog(bpoint)
             if dlg.exec_() == QDialog.Accepted:
                 newBpoint = dlg.getData()
-                if newBpoint == bp:
+                if newBpoint == bpoint:
                     return
                 self.__model.setBreakPointByIndex(sindex, newBpoint)
                 self.layoutDisplay()
@@ -263,9 +265,9 @@ class BreakPointView(QTreeView):
         index = self.currentIndex()
         self.__doubleClicked(index)
 
-    def highlightBreakpoint(self, fn, lineno):
+    def highlightBreakpoint(self, fname, lineno):
         """Handles the clientLine signal"""
-        sindex = self.__model.getBreakPointIndex(fn, lineno)
+        sindex = self.__model.getBreakPointIndex(fname, lineno)
         if sindex.isValid():
             return
 
@@ -316,16 +318,10 @@ class BreakPointViewer(QWidget):
         verticalLayout.setSpacing(0)
 
         self.headerFrame = QFrame()
-        self.headerFrame.setFrameStyle(QFrame.StyledPanel)
-        self.headerFrame.setAutoFillBackground(True)
-        headerPalette = self.headerFrame.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        self.headerFrame.setPalette(headerPalette)
-        self.headerFrame.setFixedHeight(24)
+        self.headerFrame.setObjectName('bpheader')
+        self.headerFrame.setStyleSheet('QFrame#bpheader {' +
+                                       getLabelStyle(self) + '}')
+        self.headerFrame.setFixedHeight(26)
 
         self.__breakpointLabel = QLabel("Breakpoints")
 
@@ -430,7 +426,7 @@ class BreakPointViewer(QWidget):
         total = enableCount + disableCount
         if total > 0:
             self.__breakpointLabel.setText("Breakpoints (total: " +
-                                          str(total) + ")")
+                                           str(total) + ")")
         else:
             self.__breakpointLabel.setText("Breakpoints")
 
@@ -447,10 +443,10 @@ class BreakPointViewer(QWidget):
         else:
             bpoints = Settings().breakpoints
 
-        for bp in bpoints:
+        for bpoint in bpoints:
             newBpoint = Breakpoint()
             try:
-                if not newBpoint.deserialize(bp):
+                if not newBpoint.deserialize(bpoint):
                     # Non valid
                     continue
             except:

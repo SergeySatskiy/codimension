@@ -294,8 +294,8 @@ class QutepartWrapper(Qutepart):
 
             # The content has been read sucessfully
             mainWindow = GlobalData().mainWindow
-            editorsManager = mainWindow.editorsManagerWidget.editorsManager
-            editorsManager.newTabClicked(content, os.path.basename(url))
+            mainWindow.editorsManager().newTabClicked(content,
+                                                      os.path.basename(url))
         except Exception as exc:
             logging.error("Error downloading '" + url + "'\n" + str(exc))
 
@@ -367,12 +367,22 @@ class QutepartWrapper(Qutepart):
 
     def resetHighlight(self):
         """Resets the highlight if so"""
-        self.__resetMatchCache()
+        self.resetMatchCache()
         self.setExtraSelections([])
         QutepartWrapper.highlightOn = False
 
     def __resetMatchCache(self):
-        """Resets the cached search results"""
+        """Resets the matches cache when the text is modified"""
+        # The highlight does not need to be switched off
+        self.__matchesCache = None
+
+    def resetMatchCache(self):
+        """Resets the matches cache when a search criteria changed in the
+           otehr editors
+        """
+        if not self.isVisible():
+            if self._userExtraSelections:
+                self.setExtraSelections([])
         self.__matchesCache = None
 
     def __searchInText(self, regExp, startPoint, forward):
@@ -466,7 +476,8 @@ class QutepartWrapper(Qutepart):
 
     def findAllMatches(self, regExp):
         """Find all matches of regExp"""
-        if QutepartWrapper.matchesRegexp != regExp or self.__matchesCache is None:
+        if QutepartWrapper.matchesRegexp != regExp or \
+                self.__matchesCache is None:
             QutepartWrapper.matchesRegexp = regExp
             self.__matchesCache = [match
                                    for match in regExp.finditer(self.text)]
@@ -517,6 +528,11 @@ class QutepartWrapper(Qutepart):
         word, wasSelection, _, absEnd = self.getCurrentOrSelection()
         if not word or '\r' in word or '\n' in word:
             return 0
+
+        # Reset match cashe in all the buffers
+        # Otherwise they keep an old highlight when the user switches to them
+        mainWindow = GlobalData().mainWindow
+        mainWindow.editorsManager().resetTextSearchMatchCache()
 
         wordFlag = 0
         if wasSelection:
