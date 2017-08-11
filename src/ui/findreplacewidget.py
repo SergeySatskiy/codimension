@@ -407,7 +407,7 @@ class FindReplaceWidget(QWidget):
             return
 
         self.__editor = currentWidget.getEditor()
-        self.__editor.resetHighlight()
+        self.__editor.onTabChanged()
         self.__startPoint = None
 
         self.findtextCombo.setEnabled(True)

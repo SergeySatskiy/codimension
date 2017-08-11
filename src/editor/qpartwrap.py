@@ -44,6 +44,10 @@ class QutepartWrapper(Qutepart):
 
     sigHighlighted = pyqtSignal(str, int, int)
 
+    # Shared between buffers
+    matchesRegexp = None
+    highlightOn = False
+
     def __init__(self, parent):
         Qutepart.__init__(self, parent)
 
@@ -58,8 +62,11 @@ class QutepartWrapper(Qutepart):
 
         # Search/replace support
         self.__matchesCache = None
-        self.__matchesRegexp = None
         self.textChanged.connect(self.__resetMatchCache)
+
+    def _dropUserExtraSelections(self):
+        """Suppressing highlight removal when the text is changed"""
+        pass
 
     def setPaper(self, paperColor):
         """Sets the new paper color"""
@@ -362,11 +369,11 @@ class QutepartWrapper(Qutepart):
         """Resets the highlight if so"""
         self.__resetMatchCache()
         self.setExtraSelections([])
+        QutepartWrapper.highlightOn = False
 
     def __resetMatchCache(self):
         """Resets the cached search results"""
         self.__matchesCache = None
-        self.__matchesRegexp = None
 
     def __searchInText(self, regExp, startPoint, forward):
         """Search in text and return the nearest match"""
@@ -380,7 +387,7 @@ class QutepartWrapper(Qutepart):
                     match = self.__matchesCache[0]
             else:  # reverse search
                 for match in self.__matchesCache[::-1]:
-                    if match.start() < startPoint:
+                    if match.start() <= startPoint:
                         break
                 else:  # wrap, search from end
                     match = self.__matchesCache[-1]
@@ -459,10 +466,11 @@ class QutepartWrapper(Qutepart):
 
     def findAllMatches(self, regExp):
         """Find all matches of regExp"""
-        if self.__matchesRegexp != regExp or self.__matchesCache is None:
-            self.__matchesRegexp = regExp
+        if QutepartWrapper.matchesRegexp != regExp or self.__matchesCache is None:
+            QutepartWrapper.matchesRegexp = regExp
             self.__matchesCache = [match
                                    for match in regExp.finditer(self.text)]
+        QutepartWrapper.highlightOn = True
         return self.__matchesCache
 
     def updateFoundItemsHighlighting(self, regExp):
@@ -503,6 +511,9 @@ class QutepartWrapper(Qutepart):
 
     def onHighlight(self):
         """Triggered when Ctrl+' is clicked"""
+        if self.isCursorOnHighlight():
+            return self.onNextHighlight()
+
         word, wasSelection, _, absEnd = self.getCurrentOrSelection()
         if not word or '\r' in word or '\n' in word:
             return 0
@@ -528,17 +539,35 @@ class QutepartWrapper(Qutepart):
 
     def onNextHighlight(self):
         """Triggered when Ctrl+. is clicked"""
-        if self.__matchesRegexp is None or self.__matchesCache is None:
+        if QutepartWrapper.matchesRegexp is None:
             return self.onHighlight()
-        return self.highlightRegexp(self.__matchesRegexp,
-                                    self.absCursorPosition + 1, True)
+
+        if QutepartWrapper.highlightOn:
+            # The current highlight is on
+            return self.highlightRegexp(QutepartWrapper.matchesRegexp,
+                                        self.absCursorPosition + 1, True)
+
+        # Not highlighted. If within the currently matched word, then the
+        # cursor should stay on it.
+        wordBefore = self.getWordBeforeCursor()
+        return self.highlightRegexp(QutepartWrapper.matchesRegexp,
+                                    self.absCursorPosition - len(wordBefore),
+                                    True)
 
     def onPrevHighlight(self):
         """Triggered when Ctrl+, is clicked"""
-        if self.__matchesRegexp is None or self.__matchesCache is None:
+        if QutepartWrapper.matchesRegexp is None:
             return self.onHighlight()
-        return self.highlightRegexp(self.__matchesRegexp,
-                                    self.absCursorPosition - 1, False)
+
+        if QutepartWrapper.highlightOn:
+            # The current highlight is on
+            return self.highlightRegexp(QutepartWrapper.matchesRegexp,
+                                        self.absCursorPosition - 1, False)
+
+        # Not highlighted. If within the currently matched word, then the
+        # cursor should stay on it.
+        return self.highlightRegexp(QutepartWrapper.matchesRegexp,
+                                    self.absCursorPosition, False)
 
     def replaceAllMatches(self, replaceText):
         """Replaces all the current matches with the other text"""
@@ -558,7 +587,7 @@ class QutepartWrapper(Qutepart):
         if replaceCount > 0:
             cursorPos = None
             delta = 0
-            regExp = self.__matchesRegexp
+            regExp = QutepartWrapper.matchesRegexp
             with self:
                 # reverse order, because replacement may move indexes
                 for match in self.__matchesCache[::-1]:
@@ -595,7 +624,7 @@ class QutepartWrapper(Qutepart):
             pos = self.absCursorPosition
             for match in self.__matchesCache:
                 if match.start() == pos:
-                    regExp = self.__matchesRegexp
+                    regExp = QutepartWrapper.matchesRegexp
                     textToReplace = self.text[match.start():
                                               match.start() +
                                               len(match.group(0))]
@@ -610,6 +639,24 @@ class QutepartWrapper(Qutepart):
 
                     self.__showStatusBarMessage(msg)
                     break
+
+    def isCursorOnHighlight(self):
+        """True if the current cursor position is on the highlighted text"""
+        if QutepartWrapper.highlightOn:
+            pos = self.absCursorPosition
+            self.findAllMatches(QutepartWrapper.matchesRegexp)
+            for match in self.__matchesCache:
+                if pos >= match.start() and pos < match.end():
+                    return True
+        return False
+
+    def onTabChanged(self):
+        """Called by find/replace widget"""
+        if QutepartWrapper.highlightOn:
+            # Highlight the current regexp without changing the cursor position
+            self.updateFoundItemsHighlighting(QutepartWrapper.matchesRegexp)
+        else:
+            self.resetHighlight()
 
     @staticmethod
     def __showStatusBarMessage(msg):
