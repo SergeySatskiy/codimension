@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""imports list selection widget"""
+"""imports/definitions selection widget"""
 
 import os.path
 from utils.globals import GlobalData
@@ -44,6 +44,9 @@ class ImportListWidget(QFrame):
 
     """Frameless dialogue to select an import to open"""
 
+    IMPORT_MODE = 0
+    DEFINITION_MODE = 1
+
     def __init__(self, parent=None):
         QFrame.__init__(self, parent)
 
@@ -52,6 +55,7 @@ class ImportListWidget(QFrame):
         self.setLineWidth(1)
 
         self.__importList = None
+        self.__mode = None
         self.__createLayout()
 
     def __createLayout(self):
@@ -77,10 +81,11 @@ class ImportListWidget(QFrame):
         self.setFixedHeight(sizeHint.height())
         self.move(5, 5)
 
-    def showResolvedList(self, importsList):
+    def showResolvedImports(self, importsList):
         """Pops up the dialogue"""
         self.__importList.clear()
-        self.__populate(importsList)
+        self.__populateImports(importsList)
+        self.__mode = ImportListWidget.IMPORT_MODE
 
         self.__importList.setCurrentItem(self.__importList.topLevelItem(0))
 
@@ -100,17 +105,44 @@ class ImportListWidget(QFrame):
 
         self.setFixedWidth(widgetWidth)
 
-    def __populate(self, importsList):
+    def __populateImports(self, importsList):
         """Populates the dialogue with imports"""
         count = len(importsList)
         info = str(count) + " resolved import"
         if count > 1:
             info += "s"
-        self.__importList.setHeaderLabels(["Import (" + info + ")", "Path"])
+        headerItem = QTreeWidgetItem(["Import (" + info + ")", "Path"])
+        self.__importList.setHeaderItem(headerItem)
         for item in importsList:
             importItem = QTreeWidgetItem([item[0], item[1]])
             importItem.setToolTip(0, self.__getFileTooltip(item[1]))
             self.__importList.addTopLevelItem(importItem)
+
+        self.__importList.header().resizeSections(
+            QHeaderView.ResizeToContents)
+
+    def showDefinitions(self, definitions):
+        """Pops up the dialog"""
+        self.__importList.clear()
+        self.__populateDefinitions(definitions)
+        self.__mode = ImportListWidget.DEFINITION_MODE
+
+        self.__importList.setCurrentItem(self.__importList.topLevelItem(0))
+
+        QApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
+
+        self.resize()
+        self.show()
+        self.__importList.setFocus()
+
+    def __populateDefinitions(self, definitions):
+        """Populates the dialogue with definitions"""
+        headerItem = QTreeWidgetItem(["Type", "Path", "Line", "Column"])
+        self.__importList.setHeaderItem(headerItem)
+        for item in definitions:
+            defItem = QTreeWidgetItem([item[3], item[0],
+                                       str(item[1]), str(item[2] + 1)])
+            self.__importList.addTopLevelItem(defItem)
 
         self.__importList.header().resizeSections(
             QHeaderView.ResizeToContents)
@@ -138,8 +170,12 @@ class ImportListWidget(QFrame):
             event.accept()
             self.hide()
 
-    @staticmethod
-    def __importActivated(item, _):
+    def __importActivated(self, item, _):
         """Handles the import selection"""
         path = str(item.text(1))
-        GlobalData().mainWindow.editorsManager().openFile(path, -1)
+        if self.__mode == ImportListWidget.IMPORT_MODE:
+            GlobalData().mainWindow.openFile(path, -1)
+        else:
+            line = int(item.text(2))
+            column = int(item.text(3))
+            GlobalData().mainWindow.openFile(path, line, column)

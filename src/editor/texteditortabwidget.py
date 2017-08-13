@@ -254,8 +254,8 @@ class TextEditorTabWidget(QWidget):
         toolbar.addAction(self.removeTrailingSpacesButton)
         toolbar.addAction(self.expandTabsButton)
 
-        self.__importsBar = ImportListWidget(self.__editor)
-        self.__importsBar.hide()
+        self.importsBar = ImportListWidget(self.__editor)
+        self.importsBar.hide()
 
         self.__outsideChangesBar = OutsideChangeWidget(self.__editor)
         self.__outsideChangesBar.sigReloadRequest.connect(self.__onReload)
@@ -468,7 +468,7 @@ class TextEditorTabWidget(QWidget):
         resolvedList = resolveImports(basePath, imports)
         if resolvedList:
             # Display the import selection widget
-            self.__importsBar.showResolvedList(resolvedList)
+            self.importsBar.showResolvedImports(resolvedList)
         else:
             GlobalData().mainWindow.showStatusBarMessage(
                 "Could not resolve any imports")
@@ -481,8 +481,8 @@ class TextEditorTabWidget(QWidget):
 
     def resizeBars(self):
         """Resize the bars if they are shown"""
-        if not self.__importsBar.isHidden():
-            self.__importsBar.resize()
+        if not self.importsBar.isHidden():
+            self.importsBar.resize()
         if not self.__outsideChangesBar.isHidden():
             self.__outsideChangesBar.resize()
         self.__editor.resizeCalltip()
@@ -503,8 +503,8 @@ class TextEditorTabWidget(QWidget):
         self.readFile(self.__fileName)
 
         # Hide the bars, just in case both of them
-        if not self.__importsBar.isHidden():
-            self.__importsBar.hide()
+        if not self.importsBar.isHidden():
+            self.importsBar.hide()
         if not self.__outsideChangesBar.isHidden():
             self.__outsideChangesBar.hide()
 

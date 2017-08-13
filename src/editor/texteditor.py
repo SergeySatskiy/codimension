@@ -22,7 +22,7 @@
 
 import os.path
 import logging
-from ui.qt import (Qt, QTimer, pyqtSignal, QRect, QEvent,
+from ui.qt import (Qt, QTimer, pyqtSignal, QEvent,
                    QCursor, QApplication, QTextOption, QAction)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.completer import CodeCompleter
@@ -34,9 +34,8 @@ from utils.encoding import (readEncodedFile, detectEolString,
                             detectWriteEncoding, writeEncodedFile)
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.diskvaluesrelay import setFileEncoding, getFileEncoding
-from autocomplete.bufferutils import (getContext, getPrefixAndObject,
-                                      getEditorTags,
-                                      getCallPosition, getCommaCount)
+from autocomplete.bufferutils import (getContext, getCallPosition,
+                                      getCommaCount)
 from autocomplete.completelists import (getCompletionList, getCalltipAndDoc,
                                         getDefinitions, getOccurrences)
 from cdmbriefparser import getBriefModuleInfoFromMemory
@@ -152,10 +151,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                           Qt.Key_F12: self.makeLineFirst}}
 
         # Not all the derived classes need certain tool functionality
-        if hasattr(self._parent, "getType" ):
+        if hasattr(self._parent, "getType"):
             widgetType = self._parent.getType()
             if widgetType in [MainWindowTabWidgetBase.PlainTextEditor]:
-                if hasattr(self._parent, "onOpenImport" ):
+                if hasattr(self._parent, "onOpenImport"):
                     self.__hotKeys[CTRL][Qt.Key_I] = self._parent.onOpenImport
         if hasattr(self._parent, "onNavigationBar"):
             self.__hotKeys[NO_MODIFIER][Qt.Key_F2] = \
@@ -643,7 +642,8 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                     definitions[0][0], definitions[0][1],
                     definitions[0][2] + 1)
             else:
-                print("More than one definition identified")
+                if hasattr(self._parent, "importsBar"):
+                    self._parent.importsBar.showDefinitions(definitions)
         else:
             GlobalData().mainWindow.showStatusBarMessage(
                 "Definition is not found")
