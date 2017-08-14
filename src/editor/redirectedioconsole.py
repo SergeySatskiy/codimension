@@ -22,7 +22,7 @@
 from ui.qt import (Qt, QSize, QEvent, pyqtSignal, QToolBar, QFont,
                    QFontMetrics, QHBoxLayout, QWidget, QAction, QSizePolicy,
                    QMenu, QToolButton, QActionGroup, QApplication,
-                   QTextOption)
+                   QTextOption, QColor)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
@@ -40,6 +40,11 @@ class RedirectedIOConsole(QutepartWrapper):
 
     MODE_OUTPUT = 0
     MODE_INPUT = 1
+
+    MSG_TYPE_TO_COLOR = {IOConsoleMsg.IDE_MESSAGE: None,
+                         IOConsoleMsg.STDOUT_MESSAGE: None,
+                         IOConsoleMsg.STDERR_MESSAGE: None,
+                         IOConsoleMsg.STDIN_MESSAGE: None}
 
     def __init__(self, parent):
         QutepartWrapper.__init__(self, parent)
@@ -225,6 +230,15 @@ class RedirectedIOConsole(QutepartWrapper):
 
         self.setPaper(skin['ioconsolePaper'])
         self.setColor(skin['ioconsoleColor'])
+
+        RedirectedIOConsole.MSG_TYPE_TO_COLOR[IOConsoleMsg.IDE_MESSAGE] = \
+            skin['ioconsoleMarginIDEMsgColor']
+        RedirectedIOConsole.MSG_TYPE_TO_COLOR[IOConsoleMsg.STDOUT_MESSAGE] = \
+            skin['ioconsoleMarginStdoutColor']
+        RedirectedIOConsole.MSG_TYPE_TO_COLOR[IOConsoleMsg.STDERR_MESSAGE] = \
+            skin['ioconsoleMarginStderrColor']
+        RedirectedIOConsole.MSG_TYPE_TO_COLOR[IOConsoleMsg.STDIN_MESSAGE] = \
+            skin['ioconsoleMarginStdinColor']
 
         self.setReadOnly(True)
 
@@ -432,14 +446,16 @@ class RedirectedIOConsole(QutepartWrapper):
     def __renderMessage(self, msg):
         """Adds a single message"""
         timestamp = msg.getTimestamp()
+        marginColor = RedirectedIOConsole.MSG_TYPE_TO_COLOR[msg.msgType]
         if msg.msgType == IOConsoleMsg.IDE_MESSAGE:
             # Check the text. Append \n if needed. Append the message
             line, pos = self.getEndPosition()
+
+            startMarkLine = line
             if pos != 0:
                 self.append("\n")
-                startMarkLine = line + 1
-            else:
-                startMarkLine = line
+                startMarkLine += 1
+
             self.append(msg.msgText)
             if not msg.msgText.endswith("\n"):
                 self.append("\n")
@@ -447,10 +463,10 @@ class RedirectedIOConsole(QutepartWrapper):
             margin = self.getMargin('cdm_redirected_io_margin')
             line, pos = self.getEndPosition()
             for lineNo in range(startMarkLine, line):
-                margin.addData(lineNo, timestamp, 'IDE message', QColor(255, 0, 0))
+                margin.addData(lineNo + 1, timestamp,
+                               timestamp, marginColor,
+                               IOConsoleMsg.IDE_MESSAGE)
         else:
-            if self._parent.hiddenMessage(msg):
-                return
             line, pos = self.getEndPosition()
             startPos = self.positionFromLineIndex(line, pos)
             if pos != 0:
@@ -704,16 +720,6 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def appendStderrMessage(self, text):
         """Appends an stderr message"""
         self.__viewer.appendStderrMessage(text)
-
-    def hiddenMessage(self, msg):
-        """Returns True if the message should not be shown"""
-        if msg.msgType == IOConsoleMsg.STDERR_MESSAGE and \
-           not Settings()['ioconsoleshowstderr']:
-            return True
-        if msg.msgType == IOConsoleMsg.STDOUT_MESSAGE and \
-           not Settings()['ioconsoleshowstdout']:
-            return True
-        return False
 
     def onTextZoomChanged(self):
         """Triggered when a text zoom is changed"""

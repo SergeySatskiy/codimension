@@ -93,22 +93,10 @@ _DEFAULT_SKIN_SETTINGS = {
 
     'ioconsolePaper': QColor(255, 255, 230, 255),
     'ioconsoleColor': QColor(0, 0, 0, 255),
-    'ioconsoleStdoutPaper': QColor(255, 255, 230, 255),
-    'ioconsoleStdoutColor': QColor(0, 0, 0, 255),
-    'ioconsoleStdoutBold': False,
-    'ioconsoleStdoutItalic': False,
-    'ioconsoleStdinPaper': QColor(255, 255, 230, 255),
-    'ioconsoleStdinColor': QColor(0, 0, 0, 255),
-    'ioconsoleStdinBold': False,
-    'ioconsoleStdinItalic': False,
-    'ioconsoleStderrPaper': QColor(255, 228, 228, 255),
-    'ioconsoleStderrColor': QColor(0, 0, 0, 255),
-    'ioconsoleStderrBold': False,
-    'ioconsoleStderrItalic': False,
-    'ioconsoleIDEMsgPaper': QColor(228, 228, 228, 255),
-    'ioconsoleIDEMsgColor': QColor(0, 0, 255, 255),
-    'ioconsolemarginPaper': QColor(228, 228, 228, 255),
-    'ioconsolemarginColor': QColor(128, 128, 128, 255)}
+    'ioconsoleMarginStdoutColor': QColor(0, 0, 0, 255),
+    'ioconsoleMarginStdinColor': QColor(51, 102, 255, 255),
+    'ioconsoleMarginStderrColor': QColor(204, 51, 0, 255),
+    'ioconsoleMarginIDEMsgColor': QColor(128, 128, 128, 255)}
 
 
 _DEFAULT_APP_CSS = """

@@ -25,6 +25,7 @@ from qutepart.margins import MarginBase
 from utils.misc import extendInstance
 from utils.globals import GlobalData
 from utils.colorfont import getZoomedMarginFont
+from .redirectedmsg import IOConsoleMsg
 
 
 class CDMRedirectedIOMargin(QWidget):
@@ -34,11 +35,16 @@ class CDMRedirectedIOMargin(QWidget):
     _LEFT_MARGIN = 5
     _RIGHT_MARGIN = 3
 
+    MSG_TYPE_TO_PREFIX = {IOConsoleMsg.IDE_MESSAGE: 'IDE: ',
+                          IOConsoleMsg.STDOUT_MESSAGE: 'OUT: ',
+                          IOConsoleMsg.STDERR_MESSAGE: 'ERR: ',
+                          IOConsoleMsg.STDIN_MESSAGE: 'IN:  '}
+
     def __init__(self, parent):
         QWidget.__init__(self, parent)
 
         # Margin data is:
-        # {lineNo: (text, tooltip, fgColor)}
+        # {lineNo: [(text, tooltip, fgColor, msgType),...], }
         # line number is 1 based, tooltip and fgColor could be None
         self.__data = {}
 
@@ -93,7 +99,9 @@ class CDMRedirectedIOMargin(QWidget):
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible() and bottom >= event.rect().top():
                 lineno = blockNumber + 1
-                text, _, color = self.__data.get(lineno, (None, None, None))
+                props = self.__data.get(lineno, [(None, None, None, None)])
+                text = props[0][0]
+                color = props[0][2]
                 if text:
                     if color is None:
                         color = self.__fgColor
@@ -114,8 +122,16 @@ class CDMRedirectedIOMargin(QWidget):
             event.pos()).blockNumber()
         lineno = blockNumber + 1
         if lineno in self.__data:
-            _, tooltip, _ = self.__data.get(lineno, (None, None, None))
-            tooltip = "<p style='white-space:pre'>" + escape(tooltip) + "</p>"
+            props = self.__data.get(lineno, [(None, None, None, None)])
+            tooltipItems = []
+            for prop in props:
+                if prop[1]:
+                    tooltipItems.append(
+                        CDMRedirectedIOMargin.MSG_TYPE_TO_PREFIX[prop[3]] +
+                        prop[1])
+            if tooltipItems:
+                tooltip = "<p style='white-space:pre'>" + \
+                          escape('\n'.join(tooltipItems)) + "</p>"
             QToolTip.showText(event.globalPos(), tooltip)
         else:
             QToolTip.hideText()
@@ -152,7 +168,11 @@ class CDMRedirectedIOMargin(QWidget):
             self.__data = {}
             self.update()
 
-    def addData(self, lineno, text, tooltip=None, fgColor=None):
+    def addData(self, lineno, text, tooltip, fgColor, msgType):
         """Appends new data; lineno is 1-based"""
-        self.__data[lineno] = (text, tooltip, fgColor)
-        self.update()
+        print("Adding data for line " + str(lineno))
+        if lineno in self.__data:
+            self.__data[lineno].append((text, tooltip, fgColor, msgType))
+        else:
+            self.__data[lineno] = [(text, tooltip, fgColor, msgType)]
+            self.update()

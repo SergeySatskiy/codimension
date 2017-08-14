@@ -687,10 +687,25 @@ class QutepartWrapper(Qutepart):
 
     def append(self, text):
         """Appends the given text to the end"""
-        parts = text.splitlines()
-        self.lines[-1] = self.lines[-1] + parts[0]
-        for part in parts[1:]:
-            self.lines.append(part)
+        if not text:
+            return
+
+        # Tail separator could be stripped otherwise; also there are so many
+        # separators:
+        # https://docs.python.org/3.5/library/stdtypes.html#str.splitlines
+        partsNoEnd = text.splitlines()
+        partsWithEnd = text.splitlines(True)
+
+        lastIndex = len(partsNoEnd)
+        with self:
+            for index, value in enumerate(partsNoEnd):
+                if value:
+                    self.lines[-1] += value
+                if index == partsNoEnd:
+                    if value != partsWithEnd[index]:
+                        self.lines.append('')
+                else:
+                    self.lines.append('')
 
     def gotoLine(self, line, pos=None, firstVisible=None):
         """Jumps to the given position and scrolls if needed.
