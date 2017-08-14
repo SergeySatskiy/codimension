@@ -44,6 +44,8 @@ class RedirectedIOConsole(QutepartWrapper):
     def __init__(self, parent):
         QutepartWrapper.__init__(self, parent)
 
+        self.setAttribute(Qt.WA_KeyCompression)
+
         self.mode = self.MODE_OUTPUT
         self.lastOutputPos = None
         self.inputEcho = True
@@ -226,7 +228,7 @@ class RedirectedIOConsole(QutepartWrapper):
 
         self.setReadOnly(True)
 
-        # self.setCurrentLineHighlight(False, None)
+        self.currentLineColor = None
         self.lineLengthEdge = None
         self.setCursorStyle()
 
@@ -423,7 +425,7 @@ class RedirectedIOConsole(QutepartWrapper):
     def renderContent(self):
         """Regenerates the viewer content"""
         self.clear()
-        self.__marginTooltip = {}
+        self.getMargin('cdm_redirected_io_margin').clear()
         for msg in self.__messages.msgs:
             self.__renderMessage(msg)
 
@@ -441,10 +443,11 @@ class RedirectedIOConsole(QutepartWrapper):
             self.append(msg.msgText)
             if not msg.msgText.endswith("\n"):
                 self.append("\n")
+
+            margin = self.getMargin('cdm_redirected_io_margin')
             line, pos = self.getEndPosition()
             for lineNo in range(startMarkLine, line):
-                self.markerAdd(lineNo, self.ideMessageMarker)
-                self.__addTooltip(lineNo, timestamp)
+                margin.addData(lineNo, timestamp, 'IDE message', QColor(255, 0, 0))
         else:
             if self._parent.hiddenMessage(msg):
                 return
@@ -483,7 +486,7 @@ class RedirectedIOConsole(QutepartWrapper):
                                endPos - startPos, styleNo)
 
         self.clearUndoRedoHistory()
-        if Settings().ioconsoleautoscroll:
+        if Settings()['ioconsoleautoscroll']:
             line, pos = self.getEndPosition()
             self.gotoLine(line + 1, pos + 1)
 
@@ -498,7 +501,7 @@ class RedirectedIOConsole(QutepartWrapper):
     def clearData(self):
         """Clears the collected data"""
         self.__messages.clear()
-        self.__marginTooltip = {}
+        self.getMargin('cdm_redirected_io_margin').clear()
 
     def clearAll(self):
         """Clears both data and visible content"""
@@ -530,45 +533,9 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __createLayout(self):
         """Creates the toolbar and layout"""
-        # Buttons
-        self.__printButton = QAction(getIcon('printer.png'), 'Print', self)
-        self.__printButton.triggered.connect(self.__onPrint)
-        self.__printButton.setEnabled(False)
-        self.__printButton.setVisible(False)
-
-        self.__printPreviewButton = QAction(
-            getIcon('printpreview.png'), 'Print preview', self)
-        self.__printPreviewButton.triggered.connect(self.__onPrintPreview)
-        self.__printPreviewButton.setEnabled(False)
-        self.__printPreviewButton.setVisible(False)
-
         # self.__sendUpButton = QAction(getIcon('sendioup.png'),
         #                               'Send to Main Editing Area', self)
         # self.__sendUpButton.triggered.connect(self.__sendUp)
-
-        self.__filterMenu = QMenu(self)
-        self.__filterMenu.aboutToShow.connect(self.__filterAboutToShow)
-        self.__filterGroup = QActionGroup(self)
-        self.__filterShowAllAct = self.__filterMenu.addAction("Show all")
-        self.__filterShowAllAct.setCheckable(True)
-        self.__filterShowAllAct.setActionGroup(self.__filterGroup)
-        self.__filterShowAllAct.triggered.connect(self.__onFilterShowAll)
-        self.__filterShowStdoutAct = self.__filterMenu.addAction(
-            "Show stdin and stdout")
-        self.__filterShowStdoutAct.setCheckable(True)
-        self.__filterShowStdoutAct.setActionGroup(self.__filterGroup)
-        self.__filterShowStdoutAct.triggered.connect(self.__onFilterShowStdout)
-        self.__filterShowStderrAct = self.__filterMenu.addAction(
-            "Show stdin and stderr")
-        self.__filterShowStderrAct.setCheckable(True)
-        self.__filterShowStderrAct.setActionGroup(self.__filterGroup)
-        self.__filterShowStderrAct.triggered.connect(self.__onFilterShowStderr)
-        self.__filterButton = QToolButton(self)
-        self.__filterButton.setIcon(getIcon('iofilter.png'))
-        self.__filterButton.setToolTip('Filtering settings')
-        self.__filterButton.setPopupMode(QToolButton.InstantPopup)
-        self.__filterButton.setMenu(self.__filterMenu)
-        self.__filterButton.setFocusPolicy(Qt.NoFocus)
 
         self.__settingsMenu = QMenu(self)
         self.__settingsMenu.aboutToShow.connect(self.__settingsAboutToShow)
@@ -613,9 +580,6 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
         toolbar.setContentsMargins(0, 0, 0, 0)
 
         # toolbar.addAction(self.__sendUpButton)
-        toolbar.addAction(self.__printPreviewButton)
-        toolbar.addAction(self.__printButton)
-        toolbar.addWidget(self.__filterButton)
         toolbar.addWidget(self.__settingsButton)
         toolbar.addWidget(spacer)
         toolbar.addAction(self.__clearButton)
@@ -628,14 +592,6 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
         self.setLayout(hLayout)
 
-    def __onPrint(self):
-        """Triggered when the print button is pressed"""
-        pass
-
-    def __onPrintPreview(self):
-        """triggered when the print preview button is pressed"""
-        pass
-
     def setFocus(self):
         """Overridden setFocus"""
         self.__viewer.setFocus()
@@ -647,57 +603,6 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def __sendUp(self):
         """Triggered when requested to move the console up"""
         return
-
-    def __filterAboutToShow(self):
-        """Triggered when filter menu is about to show"""
-        showAll = Settings()['ioconsoleshowstdin'] and \
-                  Settings()['ioconsoleshowstdout'] and \
-                  Settings()['ioconsoleshowstderr']
-        onlyStdout = Settings()['ioconsoleshowstdin'] and \
-                     Settings()['ioconsoleshowstdout'] and \
-                     not Settings()['ioconsoleshowstderr']
-        onlyStderr = Settings()['ioconsoleshowstdin'] and \
-                     not Settings()['ioconsoleshowstdout'] and \
-                     Settings()['ioconsoleshowstderr']
-        self.__filterShowAllAct.setChecked(showAll)
-        self.__filterShowStdoutAct.setChecked(onlyStdout)
-        self.__filterShowStderrAct.setChecked(onlyStderr)
-
-    def __onFilterShowAll(self):
-        """Triggered when filter show all is clicked"""
-        if Settings()['ioconsoleshowstdin'] == True and \
-           Settings()['ioconsoleshowstdout'] == True and \
-           Settings()['ioconsoleshowstderr'] == True:
-            return
-
-        Settings()['ioconsoleshowstdin'] = True
-        Settings()['ioconsoleshowstdout'] = True
-        Settings()['ioconsoleshowstderr'] = True
-        self.__viewer.renderContent()
-
-    def __onFilterShowStdout(self):
-        """Triggered when filter show stdout only is clicked"""
-        if Settings()['ioconsoleshowstdin'] == True and \
-           Settings()['ioconsoleshowstdout'] == True and \
-           Settings()['ioconsoleshowstderr'] == False:
-            return
-
-        Settings()['ioconsoleshowstdin'] = True
-        Settings()['ioconsoleshowstdout'] = True
-        Settings()['ioconsoleshowstderr'] = False
-        self.__viewer.renderContent()
-
-    def __onFilterShowStderr(self):
-        """Triggered when filter show stderr only is clicked"""
-        if Settings()['ioconsoleshowstdin'] == True and \
-           Settings()['ioconsoleshowstdout'] == False and \
-           Settings()['ioconsoleshowstderr'] == True:
-            return
-
-        Settings()['ioconsoleshowstdin'] = True
-        Settings()['ioconsoleshowstdout'] = False
-        Settings()['ioconsoleshowstderr'] = True
-        self.__viewer.renderContent()
 
     def __settingsAboutToShow(self):
         " Settings menu is about to show "

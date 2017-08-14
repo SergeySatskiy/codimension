@@ -835,39 +835,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             absPos = self.positionFromLineIndex(line, pos)
             self.sigCFlowSyncRequested.emit(absPos, line + 1, pos + 1)
 
-    def gotoLine(self, line, pos=None, firstVisible=None):
-        """Jumps to the given position and scrolls if needed.
-
-        line and pos and firstVisible are 1-based
-        """
-        # Normalize editor line and pos
-        editorLine = line - 1
-        if editorLine < 0:
-            editorLine = 0
-        if pos is None or pos <= 0:
-            editorPos = 0
-        else:
-            editorPos = pos - 1
-
-        if self.isLineOnScreen(editorLine):
-            if firstVisible is None:
-                self.cursorPosition = editorLine, editorPos
-                return
-
-        self.ensureLineOnScreen(editorLine)
-
-        # Otherwise we would deal with scrolling any way, so normalize
-        # the first visible line
-        if firstVisible is None:
-            editorFirstVisible = editorLine - 1
-        else:
-            editorFirstVisible = firstVisible - 1
-        if editorFirstVisible < 0:
-            editorFirstVisible = 0
-
-        self.cursorPosition = editorLine, editorPos
-        self.setFirstVisible(editorFirstVisible)
-
     def setDebugMode(self, debugOn, disableEditing):
         """Called to switch between debug/development"""
         skin = GlobalData().skin

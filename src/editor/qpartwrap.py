@@ -684,3 +684,43 @@ class QutepartWrapper(Qutepart):
         """Provides the end position, 0 based"""
         line = len(self.lines) - 1
         return (line, len(self.lines[line]))
+
+    def append(self, text):
+        """Appends the given text to the end"""
+        parts = text.splitlines()
+        self.lines[-1] = self.lines[-1] + parts[0]
+        for part in parts[1:]:
+            self.lines.append(part)
+
+    def gotoLine(self, line, pos=None, firstVisible=None):
+        """Jumps to the given position and scrolls if needed.
+
+        line and pos and firstVisible are 1-based
+        """
+        # Normalize editor line and pos
+        editorLine = line - 1
+        if editorLine < 0:
+            editorLine = 0
+        if pos is None or pos <= 0:
+            editorPos = 0
+        else:
+            editorPos = pos - 1
+
+        if self.isLineOnScreen(editorLine):
+            if firstVisible is None:
+                self.cursorPosition = editorLine, editorPos
+                return
+
+        self.ensureLineOnScreen(editorLine)
+
+        # Otherwise we would deal with scrolling any way, so normalize
+        # the first visible line
+        if firstVisible is None:
+            editorFirstVisible = editorLine - 1
+        else:
+            editorFirstVisible = firstVisible - 1
+        if editorFirstVisible < 0:
+            editorFirstVisible = 0
+
+        self.cursorPosition = editorLine, editorPos
+        self.setFirstVisible(editorFirstVisible)

@@ -179,9 +179,6 @@ _DEFAULT_SETTINGS = {
     'ioconsoleshowspaces': True,
     'ioconsoleautoscroll': True,
     'ioconsoleshowmargin': True,
-    'ioconsoleshowstdin': True,
-    'ioconsoleshowstdout': True,
-    'ioconsoleshowstderr': True,
     'navbarglobalsimports': False,
 
     'recentProjects': [],
