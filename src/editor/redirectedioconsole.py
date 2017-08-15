@@ -41,11 +41,6 @@ class RedirectedIOConsole(QutepartWrapper):
     MODE_OUTPUT = 0
     MODE_INPUT = 1
 
-    MSG_TYPE_TO_COLOR = {IOConsoleMsg.IDE_MESSAGE: None,
-                         IOConsoleMsg.STDOUT_MESSAGE: None,
-                         IOConsoleMsg.STDERR_MESSAGE: None,
-                         IOConsoleMsg.STDIN_MESSAGE: None}
-
     def __init__(self, parent):
         QutepartWrapper.__init__(self, parent)
 
@@ -124,14 +119,14 @@ class RedirectedIOConsole(QutepartWrapper):
         return False
 
     def keyPressEvent(self, event):
-        " Triggered when a key is pressed "
+        """Triggered when a key is pressed"""
         key = event.key()
         if key == Qt.Key_Escape:
             self.clearSearchIndicators()
             return
 
         if self.mode == self.MODE_OUTPUT:
-            ScintillaWrapper.keyPressEvent(self, event)
+            QutepartWrapper.keyPressEvent(self, event)
             return
 
         # It is an input mode
@@ -143,12 +138,7 @@ class RedirectedIOConsole(QutepartWrapper):
                 return
 
             if self.inputEcho:
-                startPos = self.currentPosition()
-                self.SendScintilla(self.SCI_STARTSTYLING, startPos, 31)
-                ScintillaWrapper.keyPressEvent(self, event)
-                endPos = self.currentPosition()
-                self.SendScintilla(self.SCI_SETSTYLING,
-                                   endPos - startPos, self.stdinStyle)
+                QutepartWrapper.keyPressEvent(self, event)
             else:
                 self.inputBuffer += txt
             return
@@ -165,9 +155,6 @@ class RedirectedIOConsole(QutepartWrapper):
             self.ensureLineOnScreen(line)
             endPos = self.currentPosition()
             startPos = self.positionBefore(endPos)
-            self.SendScintilla(self.SCI_STARTSTYLING, startPos, 31)
-            self.SendScintilla(self.SCI_SETSTYLING,
-                               endPos - startPos, self.stdinStyle)
             msg = IOConsoleMsg(IOConsoleMsg.STDIN_MESSAGE,
                                userInput + "\n")
             self.__messages.append(msg)
@@ -180,7 +167,7 @@ class RedirectedIOConsole(QutepartWrapper):
                     self.inputBuffer = self.inputBuffer[:-1]
                 return
 
-        ScintillaWrapper.keyPressEvent(self, event)
+        QutepartWrapper.keyPressEvent(self, event)
 
     def insertText(self):
         """Triggered when insert is requested"""
@@ -196,13 +183,7 @@ class RedirectedIOConsole(QutepartWrapper):
             self.inputBuffer += text
             return True
 
-        startPos = self.currentPosition()
-        TextEditor.paste(self)
-        endPos = self.currentPosition()
-
-        self.SendScintilla(self.SCI_STARTSTYLING, startPos, 31)
-        self.SendScintilla(self.SCI_SETSTYLING,
-                           endPos - startPos, self.stdinStyle)
+        self.paste(self)
         return True
 
     def __getUserInput(self):
@@ -230,15 +211,6 @@ class RedirectedIOConsole(QutepartWrapper):
 
         self.setPaper(skin['ioconsolePaper'])
         self.setColor(skin['ioconsoleColor'])
-
-        RedirectedIOConsole.MSG_TYPE_TO_COLOR[IOConsoleMsg.IDE_MESSAGE] = \
-            skin['ioconsoleMarginIDEMsgColor']
-        RedirectedIOConsole.MSG_TYPE_TO_COLOR[IOConsoleMsg.STDOUT_MESSAGE] = \
-            skin['ioconsoleMarginStdoutColor']
-        RedirectedIOConsole.MSG_TYPE_TO_COLOR[IOConsoleMsg.STDERR_MESSAGE] = \
-            skin['ioconsoleMarginStderrColor']
-        RedirectedIOConsole.MSG_TYPE_TO_COLOR[IOConsoleMsg.STDIN_MESSAGE] = \
-            skin['ioconsoleMarginStdinColor']
 
         self.setReadOnly(True)
 
@@ -272,9 +244,10 @@ class RedirectedIOConsole(QutepartWrapper):
             self.inputEcho = True
             self.inputBuffer = ""
         else:
+            line, pos = self.getEndPosition()
+            self.cursorPosition = line, pos
             self.lastOutputPos = self.absCursorPosition
             self.setReadOnly(False)
-            self.cursorPosition = line, pos
             self.ensureLineOnScreen(line)
         self.setCursorStyle()
 
@@ -446,7 +419,6 @@ class RedirectedIOConsole(QutepartWrapper):
     def __renderMessage(self, msg):
         """Adds a single message"""
         timestamp = msg.getTimestamp()
-        marginColor = RedirectedIOConsole.MSG_TYPE_TO_COLOR[msg.msgType]
         if msg.msgType == IOConsoleMsg.IDE_MESSAGE:
             # Check the text. Append \n if needed. Append the message
             line, pos = self.getEndPosition()
@@ -464,8 +436,7 @@ class RedirectedIOConsole(QutepartWrapper):
             line, pos = self.getEndPosition()
             for lineNo in range(startMarkLine, line):
                 margin.addData(lineNo + 1, timestamp,
-                               timestamp, marginColor,
-                               IOConsoleMsg.IDE_MESSAGE)
+                               timestamp, IOConsoleMsg.IDE_MESSAGE)
         else:
             line, pos = self.getEndPosition()
             startPos = self.positionFromLineIndex(line, pos)
@@ -495,11 +466,8 @@ class RedirectedIOConsole(QutepartWrapper):
             line, pos = self.getEndPosition()
             endPos = self.positionFromLineIndex(line, pos)
 
-            self.SendScintilla(self.SCI_STARTSTYLING, startPos, 31)
             line, pos = self.getEndPosition()
             endPos = self.positionFromLineIndex(line, pos)
-            self.SendScintilla(self.SCI_SETSTYLING,
-                               endPos - startPos, styleNo)
 
         self.clearUndoRedoHistory()
         if Settings()['ioconsoleautoscroll']:
@@ -698,9 +666,6 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def shouldAcceptFocus(self):
         return True
-
-    def onNavigationBar(self):
-        pass
 
     def writeFile(self, fileName):
         """Writes the text to a file"""

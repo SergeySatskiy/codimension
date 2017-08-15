@@ -35,16 +35,16 @@ class CDMRedirectedIOMargin(QWidget):
     _LEFT_MARGIN = 5
     _RIGHT_MARGIN = 3
 
-    MSG_TYPE_TO_PREFIX = {IOConsoleMsg.IDE_MESSAGE: 'IDE: ',
-                          IOConsoleMsg.STDOUT_MESSAGE: 'OUT: ',
-                          IOConsoleMsg.STDERR_MESSAGE: 'ERR: ',
-                          IOConsoleMsg.STDIN_MESSAGE: 'IN:  '}
+    MSG_TYPE_PROPS = {IOConsoleMsg.IDE_MESSAGE: ['IDE: ', None],
+                      IOConsoleMsg.STDOUT_MESSAGE: ['OUT: ', None],
+                      IOConsoleMsg.STDERR_MESSAGE: ['ERR: ', None],
+                      IOConsoleMsg.STDIN_MESSAGE: ['IN:  ', None]}
 
     def __init__(self, parent):
         QWidget.__init__(self, parent)
 
         # Margin data is:
-        # {lineNo: [(text, tooltip, fgColor, msgType),...], }
+        # {lineNo: [(text, tooltip, msgType),...], }
         # line number is 1 based, tooltip and fgColor could be None
         self.__data = {}
 
@@ -52,8 +52,18 @@ class CDMRedirectedIOMargin(QWidget):
         MarginBase.__init__(self, parent, 'cdm_redirected_io_margin', 0)
         self.setMouseTracking(True)
 
-        self.__bgColor = GlobalData().skin['marginPaper']
-        self.__fgColor = GlobalData().skin['marginColor']   # default
+        skin = GlobalData().skin
+        self.__bgColor = skin['marginPaper']
+        self.__fgColor = skin['marginColor']   # default
+
+        CDMRedirectedIOMargin.MSG_TYPE_PROPS[IOConsoleMsg.IDE_MESSAGE][1] = \
+            skin['ioconsoleMarginIDEMsgColor']
+        CDMRedirectedIOMargin.MSG_TYPE_PROPS[IOConsoleMsg.STDOUT_MESSAGE][1] = \
+            skin['ioconsoleMarginStdoutColor']
+        CDMRedirectedIOMargin.MSG_TYPE_PROPS[IOConsoleMsg.STDERR_MESSAGE][1] = \
+            skin['ioconsoleMarginStderrColor']
+        CDMRedirectedIOMargin.MSG_TYPE_PROPS[IOConsoleMsg.STDIN_MESSAGE][1] = \
+            skin['ioconsoleMarginStdinColor']
 
         self.__width = self.__calculateWidth()
         self.onTextZoomChanged()
@@ -99,10 +109,11 @@ class CDMRedirectedIOMargin(QWidget):
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible() and bottom >= event.rect().top():
                 lineno = blockNumber + 1
-                props = self.__data.get(lineno, [(None, None, None, None)])
+                props = self.__data.get(lineno, [(None, None, None)])
                 text = props[0][0]
-                color = props[0][2]
                 if text:
+                    msgType = props[0][2]
+                    color = CDMRedirectedIOMargin.MSG_TYPE_PROPS[msgType][1]
                     if color is None:
                         color = self.__fgColor
                     painter.setPen(color)
@@ -122,12 +133,13 @@ class CDMRedirectedIOMargin(QWidget):
             event.pos()).blockNumber()
         lineno = blockNumber + 1
         if lineno in self.__data:
-            props = self.__data.get(lineno, [(None, None, None, None)])
+            props = self.__data.get(lineno, [(None, None, None)])
             tooltipItems = []
             for prop in props:
                 if prop[1]:
+                    msgType = prop[2]
                     tooltipItems.append(
-                        CDMRedirectedIOMargin.MSG_TYPE_TO_PREFIX[prop[3]] +
+                        CDMRedirectedIOMargin.MSG_TYPE_PROPS[msgType][0] +
                         prop[1])
             if tooltipItems:
                 tooltip = "<p style='white-space:pre'>" + \
@@ -168,11 +180,10 @@ class CDMRedirectedIOMargin(QWidget):
             self.__data = {}
             self.update()
 
-    def addData(self, lineno, text, tooltip, fgColor, msgType):
+    def addData(self, lineno, text, tooltip, msgType):
         """Appends new data; lineno is 1-based"""
-        print("Adding data for line " + str(lineno))
         if lineno in self.__data:
-            self.__data[lineno].append((text, tooltip, fgColor, msgType))
+            self.__data[lineno].append((text, tooltip, msgType))
         else:
-            self.__data[lineno] = [(text, tooltip, fgColor, msgType)]
+            self.__data[lineno] = [(text, tooltip, msgType)]
             self.update()
