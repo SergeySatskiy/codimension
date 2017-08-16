@@ -482,7 +482,6 @@ class MainWindowMenuMixin:
             ('Show vertical edge', 'verticalEdge', self._verticalEdgeChanged),
             ('Show whitespaces', 'showSpaces', self._showSpacesChanged),
             ('Wrap long lines', 'lineWrap', self._lineWrapChanged),
-            ('Show EOL', 'showEOL', self._showEOLChanged),
             ('Show brace matching', 'showBraceMatch',
              self._showBraceMatchChanged),
             ('Auto indent', 'autoIndent', self._autoIndentChanged),

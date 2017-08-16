@@ -23,8 +23,8 @@
 # pylint: disable=no-self-use, unused-argument
 
 import socket
-from .protocol_cdm_dbg import METHOD_STDOUT, METHOD_STDERR
-from .cdm_dbg_utils import prepareJSONMessage
+from protocol_cdm_dbg import METHOD_STDOUT, METHOD_STDERR
+from cdm_dbg_utils import prepareJSONMessage
 
 
 MAX_TRIES = 3

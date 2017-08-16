@@ -1199,11 +1199,6 @@ class CodimensionMainWindow(QMainWindow):
         self.settings['lineWrap'] = not self.settings['lineWrap']
         self.em.updateEditorsSettings()
 
-    def _showEOLChanged(self):
-        """Editor setting changed"""
-        self.settings['showEOL'] = not self.settings['showEOL']
-        self.em.updateEditorsSettings()
-
     def _showBraceMatchChanged(self):
         """Editor setting changed"""
         self.settings['showBraceMatch'] = not self.settings['showBraceMatch']

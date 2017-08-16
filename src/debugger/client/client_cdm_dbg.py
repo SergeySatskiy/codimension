@@ -28,9 +28,9 @@
 Module implementing the multithreaded version of the debug client
 """
 
-from .base_cdm_dbg import DebugBase
-from .clientbase_cdm_dbg import DebugClientBase
-from .threadextension_cdm_dbg import ThreadExtension
+from base_cdm_dbg import DebugBase
+from clientbase_cdm_dbg import DebugClientBase
+from threadextension_cdm_dbg import ThreadExtension
 
 
 class DebugClient(DebugClientBase, DebugBase, ThreadExtension):

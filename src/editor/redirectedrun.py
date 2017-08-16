@@ -107,9 +107,6 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
             "Wrap long lines")
         self.__wrapLongLinesAct.setCheckable(True)
         self.__wrapLongLinesAct.triggered.connect(self.__onWrapLongLines)
-        self.__showEOLAct = self.__settingsMenu.addAction("Show EOL")
-        self.__showEOLAct.setCheckable(True)
-        self.__showEOLAct.triggered.connect(self.__onShowEOL)
         self.__showWhitespacesAct = self.__settingsMenu.addAction(
             "Show whitespaces")
         self.__showWhitespacesAct.setCheckable(True)
@@ -247,7 +244,6 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def __settingsAboutToShow(self):
         """Settings menu is about to show"""
         self.__wrapLongLinesAct.setChecked(Settings().ioconsolelinewrap)
-        self.__showEOLAct.setChecked(Settings().ioconsoleshoweol)
         self.__showWhitespacesAct.setChecked(Settings().ioconsoleshowspaces)
         self.__autoscrollAct.setChecked(Settings().ioconsoleautoscroll)
         self.__showMarginAct.setChecked(Settings().ioconsoleshowmargin)
@@ -255,11 +251,6 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def __onWrapLongLines(self):
         """Triggered when long lines setting is changed"""
         Settings().ioconsolelinewrap = not Settings().ioconsolelinewrap
-        self.sigSettingUpdated.emit()
-
-    def __onShowEOL(self):
-        """Triggered when show EOL is changed"""
-        Settings().ioconsoleshoweol = not Settings().ioconsoleshoweol
         self.sigSettingUpdated.emit()
 
     def __onShowWhitespaces(self):
@@ -286,7 +277,6 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
             self.__viewer.setWrapMode(QsciScintilla.WrapWord)
         else:
             self.__viewer.setWrapMode(QsciScintilla.WrapNone)
-        self.__viewer.setEolVisibility(Settings().ioconsoleshoweol)
         if Settings().ioconsoleshowspaces:
             self.__viewer.setWhitespaceVisibility(QsciScintilla.WsVisible)
         else:

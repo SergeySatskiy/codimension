@@ -55,7 +55,7 @@
         "__class__": "QColor"
     },
     "ioconsoleStdoutPaper": {
-        "__value__": "255,255,230,255",
+        "__value__": "255,255,255,255",
         "__class__": "QColor"
     },
     "indentGuideColor": {
@@ -120,7 +120,7 @@
         "__class__": "QColor"
     },
     "ioconsoleStdinPaper": {
-        "__value__": "255,255,230,255",
+        "__value__": "255,255,255,255",
         "__class__": "QColor"
     },
     "diffchangedColor": {
@@ -145,7 +145,7 @@
         "__class__": "QColor"
     },
     "ioconsolePaper": {
-        "__value__": "255,255,230,255",
+        "__value__": "255,255,255,255",
         "__class__": "QColor"
     },
     "marginColor": {
@@ -169,7 +169,7 @@
         "__class__": "QColor"
     },
     "nolexerPaper": {
-        "__value__": "255,255,230,255",
+        "__value__": "255,255,255,255",
         "__class__": "QColor"
     },
     "ioconsoleStdoutBold": false,

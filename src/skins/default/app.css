@@ -35,17 +35,17 @@ QToolTip
 QTreeView
 {
     alternate-background-color: #eef0f1;
-    background-color: #ffffe6;
+    background-color: #ffffff;
 }
 
 QLineEdit
 {
-    background-color: #ffffe6;
+    background-color: #ffffff;
 }
 
 QComboBox
 {
-    background-color: #ffffe6;
+    background-color: #ffffff;
     color: black;
 }
 
@@ -56,20 +56,20 @@ QComboBox QAbstractItemView
 
 QTextEdit
 {
-    background-color: #ffffe6;
+    background-color: #ffffff;
     selection-background-color: #c0c0c0;
     selection-color: #000000;
 }
 
 QPlainTextEdit
 {
-    background-color: #ffffe6;
+    background-color: #ffffff;
     selection-background-color: #c0c0c0;
     selection-color: #000000;
 }
 
 QListView
 {
-    background-color: #ffffe6;
+    background-color: #ffffff;
 }
 

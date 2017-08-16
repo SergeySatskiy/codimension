@@ -30,7 +30,7 @@ from utils.encoding import (SUPPORTED_CODECS,
                             detectEncodingOnClearExplicit,
                             detectNewFileWriteEncoding)
 from utils.diskvaluesrelay import getFileEncoding, setFileEncoding
-from autocomplete.bufferutils import isImportLine, getContext
+from autocomplete.bufferutils import getContext
 from analysis.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
                              OPT_OPTIMIZE_DOCSTRINGS)
 
@@ -355,26 +355,6 @@ class EditorContextMenuMixin:
         """Triggered when a menu was deleted"""
         self._menu.removeAction(menu.menuAction())
         self.__pluginMenuSeparator.setVisible(count != 0)
-
-    def openAsFileAvailable(self):
-        """True if there is something to try to open as a file"""
-        importLine, _ = isImportLine(self)
-        if not importLine:
-            selectedText = self.selectedText.strip()
-            if selectedText:
-                return '\n' not in selectedText and \
-                       '\r' not in selectedText
-        return False
-
-    def downloadAndShowAvailable(self):
-        """True if download and show available"""
-        importLine, _ = isImportLine(self)
-        if not importLine:
-            selectedText = self.selectedText.strip()
-            if '\n' not in selectedText and '\r' not in selectedText:
-                return selectedText.lower().startswith('http://') or \
-                       selectedText.lower().startswith('www.')
-        return False
 
     def highlightInOutline(self):
         """Triggered when highlight in outline browser is requested"""

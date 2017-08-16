@@ -19,10 +19,10 @@
 
 """Redirected IO console implementation"""
 
+import logging
 from ui.qt import (Qt, QSize, QEvent, pyqtSignal, QToolBar, QFont,
                    QFontMetrics, QHBoxLayout, QWidget, QAction, QSizePolicy,
-                   QMenu, QToolButton, QActionGroup, QApplication,
-                   QTextOption, QColor)
+                   QMenu, QToolButton, QApplication, QTextOption)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
@@ -30,6 +30,13 @@ from utils.settings import Settings
 from .qpartwrap import QutepartWrapper
 from .redirectedmsg import IOConsoleMessages, IOConsoleMsg
 from .redirectediomargin import CDMRedirectedIOMargin
+
+
+CTRL_SHIFT = int(Qt.ShiftModifier | Qt.ControlModifier)
+SHIFT = int(Qt.ShiftModifier)
+CTRL = int(Qt.ControlModifier)
+CTRL_KEYPAD = int(Qt.KeypadModifier | Qt.ControlModifier)
+NO_MODIFIER = int(Qt.NoModifier)
 
 
 class RedirectedIOConsole(QutepartWrapper):
@@ -55,67 +62,57 @@ class RedirectedIOConsole(QutepartWrapper):
         self.__initGeneralSettings()
         self.__initMargins()
         self._initContextMenu()
+        self.onTextZoomChanged()
 
+        self.__hotKeys = {}
+        self.__initHotKeys()
         self.installEventFilter(self)
 
-    def eventFilter(self, obj, event):
+    def __initHotKeys(self):
+        """Initializes a map for the hot keys event filter"""
+        self.autoIndentLineAction.setShortcut('Ctrl+Shift+I')
+        self.invokeCompletionAction.setEnabled(False)
+        self.__hotKeys = {
+            CTRL_SHIFT: {Qt.Key_C: self.onCtrlShiftC},
+            SHIFT: {Qt.Key_End: self.onShiftEnd,
+                    Qt.Key_Home: self.onShiftHome,
+                    Qt.Key_Insert: self.insertText,
+                    Qt.Key_Delete: self.onShiftDel},
+            CTRL: {Qt.Key_V: self.insertText,
+                   Qt.Key_X: self.onShiftDel,
+                   Qt.Key_C: self.onCtrlC,
+                   Qt.Key_Insert: self.onCtrlC,
+                   Qt.Key_Apostrophe: self.onHighlight,
+                   Qt.Key_Period: self.onNextHighlight,
+                   Qt.Key_Comma: self.onPrevHighlight,
+                   Qt.Key_Minus: Settings().onTextZoomOut,
+                   Qt.Key_Equal: Settings().onTextZoomIn,
+                   Qt.Key_0: Settings().onTextZoomReset,
+                   Qt.Key_Home: self.onFirstChar,
+                   Qt.Key_End: self.onLastChar},
+            CTRL_KEYPAD: {Qt.Key_Minus: Settings().onTextZoomOut,
+                          Qt.Key_Plus: Settings().onTextZoomIn,
+                          Qt.Key_0: Settings().onTextZoomReset},
+            NO_MODIFIER: {Qt.Key_Home: self.onHome,
+                          Qt.Key_End: self.moveToLineEnd}}
+
+    def eventFilter(self, _, event):
         """Event filter to catch shortcuts on UBUNTU"""
         if event.type() == QEvent.KeyPress:
             key = event.key()
-            modifiers = event.modifiers()
-            if modifiers == Qt.ShiftModifier | Qt.ControlModifier:
-                if key == Qt.Key_C:
-                    self.onCtrlShiftC()
-                    return True
-            if modifiers == Qt.ShiftModifier:
-                if key == Qt.Key_End:
-                    self.selectTillDisplayEnd()
-                    return True
-                if key == Qt.Key_Home:
-                    return self._onShiftHome()
-                if key == Qt.Key_Insert:
-                    return self.insertText()
-                if key == Qt.Key_Delete:
-                    return self.onShiftDel()
-            if modifiers == Qt.ControlModifier:
-                if key == Qt.Key_V:
-                    return self.insertText()
-                if key == Qt.Key_X:
-                    return self.onShiftDel()
-                if key in [Qt.Key_C, Qt.Key_Insert]:
-                    return self.onCtrlC()
-                if key == Qt.Key_Apostrophe:       # Ctrl + '
-                    return self._onHighlight()
-                if key == Qt.Key_Period:
-                    return self._onNextHighlight() # Ctrl + .
-                if key == Qt.Key_Comma:
-                    return self._onPrevHighlight() # Ctrl + ,
-                if key == Qt.Key_Minus:
-                    return Settings().onTextZoomOut()
-                if key == Qt.Key_Equal:
-                    return Settings().onTextZoomIn()
-                if key == Qt.Key_0:
-                    return Settings().onTextZoomReset()
-                if key == Qt.Key_Home:
-                    return self.onFirstChar()
-                if key == Qt.Key_End:
-                    return self.onLastChar()
-            if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
-                if key == Qt.Key_Minus:
-                    return Settings().onTextZoomOut()
-                if key == Qt.Key_Plus:
-                    return Settings().onTextZoomIn()
-                if key == Qt.Key_0:
-                    return Settings().onTextZoomReset()
-            if modifiers == Qt.NoModifier:
-                if key == Qt.Key_Home:
-                    return self._onHome()
-                if key == Qt.Key_End:
-                    self.moveToLineEnd()
-                    return True
-                if key in [Qt.Key_Delete, Qt.Key_Backspace]:
-                    if not self.__isCutDelAvailable():
+            modifiers = int(event.modifiers())
+            try:
+                if modifiers in self.__hotKeys:
+                    if key in self.__hotKeys[modifiers]:
+                        self.__hotKeys[modifiers][key]()
                         return True
+
+                if modifiers == NO_MODIFIER:
+                    if key in [Qt.Key_Delete, Qt.Key_Backspace]:
+                        if not self.__isCutDelAvailable():
+                            return True
+            except Exception as exc:
+                logging.warning(str(exc))
         return False
 
     def keyPressEvent(self, event):
@@ -186,6 +183,14 @@ class RedirectedIOConsole(QutepartWrapper):
         self.paste(self)
         return True
 
+    def setReadOnly(self, mode):
+        """Overridden version"""
+        QutepartWrapper.setReadOnly(self, mode)
+        if mode:
+            # Otherwise the cursor is suppressed in the RO mode
+            self.setTextInteractionFlags(self.textInteractionFlags() |
+                                         Qt.TextSelectableByKeyboard)
+
     def __getUserInput(self):
         """Provides the collected user input"""
         if self.mode != self.MODE_INPUT:
@@ -202,12 +207,7 @@ class RedirectedIOConsole(QutepartWrapper):
         """Sets some generic look and feel"""
         skin = GlobalData().skin
 
-        if Settings()['ioconsolelinewrap']:
-            self.setWordWrapMode(QTextOption.WrapAnywhere)
-        else:
-            self.setWordWrapMode(QTextOption.NoWrap)
-
-        self.drawAnyWhitespace = Settings()['ioconsoleshowspaces']
+        self.updateSettings()
 
         self.setPaper(skin['ioconsolePaper'])
         self.setColor(skin['ioconsoleColor'])
@@ -218,6 +218,16 @@ class RedirectedIOConsole(QutepartWrapper):
         self.lineLengthEdge = None
         self.setCursorStyle()
 
+    def updateSettings(self):
+        """Updates the IO console settings"""
+        if Settings()['ioconsolelinewrap']:
+            self.setWordWrapMode(QTextOption.WrapAnywhere)
+        else:
+            self.setWordWrapMode(QTextOption.NoWrap)
+
+        self.drawAnyWhitespace = Settings()['ioconsoleshowspaces']
+        self.drawIncorrectIndentation = Settings()['ioconsoleshowspaces']
+
     def _onCursorPositionChanged(self, line, pos):
         """Called when the cursor changed position"""
         self.setCursorStyle()
@@ -226,6 +236,7 @@ class RedirectedIOConsole(QutepartWrapper):
         """Sets the cursor style depending on the mode and the cursor pos"""
         if self.mode == self.MODE_OUTPUT:
             self.setCursorWidth(1)
+            self.setReadOnly(True)
         else:
             if self.absCursorPosition >= self.lastOutputPos:
                 fontMetrics = QFontMetrics(self.font(), self)
@@ -308,12 +319,7 @@ class RedirectedIOConsole(QutepartWrapper):
     def contextMenuEvent(self, event):
         """Called just before showing a context menu"""
         event.accept()
-        if self._marginNumber(event.x()) is None:
-            # Editing area context menu
-            self._menu.popup(event.globalPos())
-        else:
-            # Menu for a margin
-            pass
+        self._menu.popup(event.globalPos())
 
     def _contextMenuAboutToShow(self):
         """IO Console context menu is about to show"""
@@ -383,7 +389,6 @@ class RedirectedIOConsole(QutepartWrapper):
         """Copy all with timestamps"""
         QApplication.clipboard().setText(
             self.__messages.renderWithTimestamps())
-        return True
 
     def appendIDEMessage(self, text):
         """Appends an IDE message"""
@@ -439,7 +444,6 @@ class RedirectedIOConsole(QutepartWrapper):
                                timestamp, IOConsoleMsg.IDE_MESSAGE)
         else:
             line, pos = self.getEndPosition()
-            startPos = self.positionFromLineIndex(line, pos)
             if pos != 0:
                 self.__addTooltip(line, timestamp)
                 startTimestampLine = line + 1
@@ -511,7 +515,7 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
         self.__createLayout()
 
     def __onUserInput(self, userInput):
-        """Triggered when the user finished input in the redirected IO console"""
+        """The user finished input in the redirected IO console"""
         self.sigUserInput.emit(userInput)
         self.__clearButton.setEnabled(True)
 
@@ -527,9 +531,6 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
             "Wrap long lines")
         self.__wrapLongLinesAct.setCheckable(True)
         self.__wrapLongLinesAct.triggered.connect(self.__onWrapLongLines)
-        self.__showEOLAct = self.__settingsMenu.addAction("Show EOL")
-        self.__showEOLAct.setCheckable(True)
-        self.__showEOLAct.triggered.connect(self.__onShowEOL)
         self.__showWhitespacesAct = self.__settingsMenu.addAction(
             "Show whitespaces")
         self.__showWhitespacesAct.setCheckable(True)
@@ -591,7 +592,6 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def __settingsAboutToShow(self):
         " Settings menu is about to show "
         self.__wrapLongLinesAct.setChecked(Settings()['ioconsolelinewrap'])
-        self.__showEOLAct.setChecked(Settings()['ioconsoleshoweol'])
         self.__showWhitespacesAct.setChecked(Settings()['ioconsoleshowspaces'])
         self.__autoscrollAct.setChecked(Settings()['ioconsoleautoscroll'])
         self.__showMarginAct.setChecked(Settings()['ioconsoleshowmargin'])
@@ -601,23 +601,21 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
         Settings()['ioconsolelinewrap'] = not Settings()['ioconsolelinewrap']
         self.settingUpdated.emit()
 
-    def __onShowEOL(self):
-        """Triggered when show EOL is changed"""
-        Settings()['ioconsoleshoweol'] = not Settings()['ioconsoleshoweol']
-        self.settingUpdated.emit()
-
     def __onShowWhitespaces(self):
         """Triggered when show whitespaces is changed"""
-        Settings()['ioconsoleshowspaces'] = not Settings()['ioconsoleshowspaces']
+        Settings()['ioconsoleshowspaces'] = \
+            not Settings()['ioconsoleshowspaces']
         self.settingUpdated.emit()
 
     def __onAutoscroll(self):
         """Triggered when autoscroll is changed"""
-        Settings()['ioconsoleautoscroll'] = not Settings()['ioconsoleautoscroll']
+        Settings()['ioconsoleautoscroll'] = \
+            not Settings()['ioconsoleautoscroll']
 
     def __onShowMargin(self):
         """Triggered when show margin is changed"""
-        Settings()['ioconsoleshowmargin'] = not Settings()['ioconsoleshowmargin']
+        Settings()['ioconsoleshowmargin'] = \
+            not Settings()['ioconsoleshowmargin']
         self.settingUpdated.emit()
 
     def clear(self):
@@ -626,15 +624,7 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def consoleSettingsUpdated(self):
         """Triggered when one of the consoles updated a common setting"""
-        if Settings()['ioconsolelinewrap']:
-            self.__viewer.setWrapMode(QsciScintilla.WrapWord)
-        else:
-            self.__viewer.setWrapMode(QsciScintilla.WrapNone)
-        self.__viewer.setEolVisibility(Settings()['ioconsoleshoweol'])
-        if Settings()['ioconsoleshowspaces']:
-            self.__viewer.setWhitespaceVisibility(QsciScintilla.WsVisible)
-        else:
-            self.__viewer.setWhitespaceVisibility(QsciScintilla.WsInvisible)
+        self.__viewer.updateSettings()
         self.__viewer.setTimestampMarginWidth()
 
     def resizeEvent(self, event):

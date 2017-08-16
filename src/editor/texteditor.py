@@ -71,11 +71,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         skin = GlobalData().skin
         self.setPaper(skin['nolexerPaper'])
         self.setColor(skin['nolexerColor'])
+        self.currentLineColor = skin['currentLinePaper']
 
         self.onTextZoomChanged()
         self.__initMargins(debugger)
 
-        # self.SCN_DOUBLECLICK.connect(self.__onDoubleClick)
         self.cursorPositionChanged.connect(self._onCursorPositionChanged)
 
         self.__skipChangeCursor = False
@@ -309,11 +309,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         QApplication.restoreOverrideCursor()
         return True
 
-    def clearSearchIndicators(self):
-        """Hides the search indicator"""
-        self.resetHighlight()
-        GlobalData().mainWindow.clearStatusBarMessage()
-
     def keyPressEvent(self, event):
         """Handles the key press events"""
         self.__skipChangeCursor = True
@@ -441,27 +436,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             font = self.font()
         font.setPointSize(font.pointSize() + self.getZoom())
         return font
-
-    def __onDoubleClick(self, position, line, modifier):
-        """Triggered when the user double clicks in the editor"""
-        QApplication.processEvents()
-        self.onHighlight()
-
-    def onFirstChar(self):
-        """Jump to the first character in the buffer"""
-        self.cursorPosition = 0, 0
-        self.ensureLineOnScreen(0)
-        self.setHScrollOffset(0)
-
-    def onLastChar(self):
-        """Jump to the last char"""
-        line = len(self.lines)
-        if line != 0:
-            line -= 1
-        pos = len(self.lines[line])
-        self.cursorPosition = line, pos
-        self.ensureLineOnScreen(line)
-        self.setHScrollOffset(0)
 
     def onCommentUncomment(self):
         """Triggered when Ctrl+M is received"""
@@ -832,7 +806,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         """Triggered when highlight in the control flow is requested"""
         if self.isPythonBuffer():
             line, pos = self.cursorPosition
-            absPos = self.positionFromLineIndex(line, pos)
+            absPos = self.absCursorPosition
             self.sigCFlowSyncRequested.emit(absPos, line + 1, pos + 1)
 
     def setDebugMode(self, debugOn, disableEditing):

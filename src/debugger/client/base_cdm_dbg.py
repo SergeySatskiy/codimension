@@ -37,8 +37,8 @@ import inspect
 import ctypes
 import time
 from inspect import CO_GENERATOR
-from .bp_wp_cdm_dbg import Breakpoint, Watch
-from .cdm_dbg_utils import formatArgValues, getArgValues, printerr
+from bp_wp_cdm_dbg import Breakpoint, Watch
+from cdm_dbg_utils import formatArgValues, getArgValues, printerr
 import _thread
 
 

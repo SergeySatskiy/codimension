@@ -33,8 +33,8 @@ import sys
 import importlib
 import threading
 import _thread
-from .protocol_cdm_dbg import METHOD_RESPONSE_THREAD_LIST
-from .base_cdm_dbg import DebugBase
+from protocol_cdm_dbg import METHOD_RESPONSE_THREAD_LIST
+from base_cdm_dbg import DebugBase
 
 _qtThreadNumber = 1
 

@@ -32,6 +32,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.colorfont import getZoomedMonoFont
 from utils.encoding import decodeURLContent
+from autocomplete.bufferutils import isImportLine
 
 
 WORD_AT_END_REGEXP = re.compile("\w+$")
@@ -469,6 +470,22 @@ class QutepartWrapper(Qutepart):
         match = WORD_AT_START_REGEXP.search(textAfterCursor)
         return match.group(0) if match else ''
 
+    def onFirstChar(self):
+        """Jump to the first character in the buffer"""
+        self.cursorPosition = 0, 0
+        self.ensureLineOnScreen(0)
+        self.setHScrollOffset(0)
+
+    def onLastChar(self):
+        """Jump to the last char"""
+        line = len(self.lines)
+        if line != 0:
+            line -= 1
+        pos = len(self.lines[line])
+        self.cursorPosition = line, pos
+        self.ensureLineOnScreen(line)
+        self.setHScrollOffset(0)
+
     def clearSelection(self):
         """Clears the current selection if so"""
         cursor = self.textCursor()
@@ -519,6 +536,11 @@ class QutepartWrapper(Qutepart):
                        Settings()['maxHighlightedMatches'])
             self.__showStatusBarMessage(msg)
         return len(self.__matchesCache)
+
+    def clearSearchIndicators(self):
+        """Hides the search indicator"""
+        self.resetHighlight()
+        GlobalData().mainWindow.clearStatusBarMessage()
 
     def onHighlight(self):
         """Triggered when Ctrl+' is clicked"""
@@ -739,3 +761,23 @@ class QutepartWrapper(Qutepart):
 
         self.cursorPosition = editorLine, editorPos
         self.setFirstVisible(editorFirstVisible)
+
+    def openAsFileAvailable(self):
+        """True if there is something to try to open as a file"""
+        importLine, _ = isImportLine(self)
+        if not importLine:
+            selectedText = self.selectedText.strip()
+            if selectedText:
+                return '\n' not in selectedText and \
+                       '\r' not in selectedText
+        return False
+
+    def downloadAndShowAvailable(self):
+        """True if download and show available"""
+        importLine, _ = isImportLine(self)
+        if not importLine:
+            selectedText = self.selectedText.strip()
+            if '\n' not in selectedText and '\r' not in selectedText:
+                return selectedText.lower().startswith('http://') or \
+                       selectedText.lower().startswith('www.')
+        return False

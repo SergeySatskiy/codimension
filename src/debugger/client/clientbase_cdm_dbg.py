@@ -37,14 +37,14 @@ import re
 import signal
 import json
 
-from .protocol_cdm_dbg import *
-from .base_cdm_dbg import setRecursionLimit
-from .asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
-from .outredir_cdm_dbg import OutStreamRedirector
-from .bp_wp_cdm_dbg import Breakpoint, Watch
-from .cdm_dbg_utils import (prepareJSONMessage, formatArgValues, getArgValues,
-                            printerr)
-from .variables_cdm_dbg import getType, TOO_LARGE_ATTRIBUTE
+from protocol_cdm_dbg import *
+from base_cdm_dbg import setRecursionLimit
+from asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
+from outredir_cdm_dbg import OutStreamRedirector
+from bp_wp_cdm_dbg import Breakpoint, Watch
+from cdm_dbg_utils import (prepareJSONMessage, formatArgValues, getArgValues,
+                           printerr)
+from variables_cdm_dbg import getType, TOO_LARGE_ATTRIBUTE
 
 
 DEBUG_CLIENT_INSTANCE = None

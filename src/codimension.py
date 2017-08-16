@@ -19,7 +19,8 @@
 #
 
 """Codimension main Python script.
-   It performs necessery initialization and starts the Qt main loop.
+
+It performs necessery initialization and starts the Qt main loop.
 """
 
 import sys
@@ -40,7 +41,7 @@ sys.argv[0] = os.path.realpath(sys.argv[0])
 
 # Make it possible to import from the subdirectories
 srcDir = os.path.dirname(sys.argv[0])
-if not srcDir in sys.path:
+if srcDir not in sys.path:
     sys.path.insert(0, srcDir)
 
 from autocomplete.completelists import buildSystemWideModulesList
@@ -211,7 +212,7 @@ Runs codimension UI"""
 def launchUserInterface():
     """UI launchpad"""
     globalData = GlobalData()
-    if not globalData.splash is None:
+    if globalData.splash is not None:
         globalData.splash.finish(globalData.mainWindow)
         splashScreen = globalData.splash
         globalData.splash = None
@@ -292,8 +293,7 @@ def copySkin():
     """
     systemWideSkinsDir = srcDir + os.path.sep + "skins" + os.path.sep
     userSkinsDir = os.path.normpath(QDir.homePath()) + \
-                   os.path.sep + CONFIG_DIR + os.path.sep + "skins" + \
-                   os.path.sep
+        os.path.sep + CONFIG_DIR + os.path.sep + "skins" + os.path.sep
 
     for item in os.listdir(systemWideSkinsDir):
         candidate = systemWideSkinsDir + item
@@ -351,12 +351,10 @@ def exceptionHook(excType, excValue, tracebackObj):
 
     # Keyboard interrupt is a special case
     if issubclass(excType, KeyboardInterrupt):
-        if not globalData.application is None:
+        if globalData.application is not None:
             globalData.application.quit()
         return
 
-    filename, line, dummy, dummy = traceback.extract_tb(tracebackObj).pop()
-    filename = os.path.basename(filename)
     error = "%s: %s" % (excType.__name__, excValue)
     stackTraceString = "".join(traceback.format_exception(excType, excValue,
                                                           tracebackObj))
@@ -395,7 +393,7 @@ def exceptionHook(excType, excValue, tracebackObj):
 
     # Display the message as a QT modal dialog box if the application
     # has started
-    if not globalData.application is None:
+    if globalData.application is not None:
         message = "<html><body>"
         if savedOK:
             message += "Stack trace and log window content saved in " + \

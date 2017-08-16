@@ -56,7 +56,7 @@ _DEFAULT_SKIN_SETTINGS = {
     'matchMarkColor': QColor(0, 0, 255, 255),
     'matchMarkPaper': QColor(255, 255, 0, 255),
     'spellingMarkColor': QColor(139, 0, 0, 255),
-    'nolexerPaper': QColor(255, 255, 230, 255),
+    'nolexerPaper': QColor(255, 255, 255, 255),
     'nolexerColor': QColor(0, 0, 0, 255),
     'monoFont': buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
     'currentLinePaper': QColor(232, 232, 255, 255),
@@ -91,7 +91,7 @@ _DEFAULT_SKIN_SETTINGS = {
     'diffunmodifiedColor': QColor(102, 102, 102, 255),
     'diffunmodifiedPaper': QColor(238, 238, 238, 255),
 
-    'ioconsolePaper': QColor(255, 255, 230, 255),
+    'ioconsolePaper': QColor(255, 255, 255, 255),
     'ioconsoleColor': QColor(0, 0, 0, 255),
     'ioconsoleMarginStdoutColor': QColor(0, 0, 0, 255),
     'ioconsoleMarginStdinColor': QColor(51, 102, 255, 255),

@@ -30,7 +30,7 @@ class DiffViewer(QWidget):
 
     """The diff viewer widget at the bottom"""
 
-    NODIFF = '<html><body bgcolor="#ffffe6"></body></html>'
+    NODIFF = None
 
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
@@ -43,6 +43,8 @@ class DiffViewer(QWidget):
         self.__tooltip = ""
         self.__inClear = False
 
+        paperColor = GlobalData().skin['nolexerPaper'].name()
+        NODIFF = '<html><body bgcolor="' + paperColor + '"></body></html>'
         self.viewer.setHTML(self.NODIFF)
         self.__updateToolbarButtons()
 

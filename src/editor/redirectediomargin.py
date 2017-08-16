@@ -35,10 +35,11 @@ class CDMRedirectedIOMargin(QWidget):
     _LEFT_MARGIN = 5
     _RIGHT_MARGIN = 3
 
-    MSG_TYPE_PROPS = {IOConsoleMsg.IDE_MESSAGE: ['IDE: ', None],
-                      IOConsoleMsg.STDOUT_MESSAGE: ['OUT: ', None],
-                      IOConsoleMsg.STDERR_MESSAGE: ['ERR: ', None],
-                      IOConsoleMsg.STDIN_MESSAGE: ['IN:  ', None]}
+    # Prefixes should match the message rendering (when copied to clipboard)
+    MSG_TYPE_PROPS = {IOConsoleMsg.IDE_MESSAGE: ['ide ', None],
+                      IOConsoleMsg.STDOUT_MESSAGE: ['out ', None],
+                      IOConsoleMsg.STDERR_MESSAGE: ['err ', None],
+                      IOConsoleMsg.STDIN_MESSAGE: [' in ', None]}
 
     def __init__(self, parent):
         QWidget.__init__(self, parent)
