@@ -24,6 +24,42 @@ import time
 from cdmbriefparser import getBriefModuleInfoFromMemory
 
 
+WORD_PATTERN = '\w+'
+WORD_REGEXP = re.compile(WORD_PATTERN)
+EDITOR_TAG_TIMEOUT = 0.5
+
+
+def getEditorTags(editor, exclude=None, excludePythonKeywords=False):
+    """Builds a list of the tags in the editor.
+       The current line could be excluded.
+       The only tags are included which start with prefix
+    """
+    start = time.time()
+
+    excludeSet = set()
+    if exclude:
+        excludeSet.add(exclude)
+    if excludePythonKeywords:
+        # Note: 2 characters words will be filtered unconditionally
+        excludeSet.update(["try", "for", "and", "not"])
+
+    result = set()
+    for line in editor.lines:
+        for match in WORD_REGEXP.findall(line):
+            if len(match) > 2:
+                if match not in excludeSet:
+                    result.add(match)
+        if time.time() - start > EDITOR_TAG_TIMEOUT:
+            # Do not freeze longer than that
+            break
+
+    # If a cursor is in a middle of the word then the current word is not what
+    # you need.
+    if editor.getWordAfterCursor() == '':
+        result.discard(editor.getWordBeforeCursor())
+    return result
+
+
 class TextCursorContext:
 
     """Holds the text cursor context for a python file"""
@@ -302,103 +338,6 @@ def _getDefinitionObject(info, line, pos):
     return None
 
 
-def _skipSpacesBack(editor, line, col):
-    """Skips spaces backward and returns position of the non-space symbol"""
-    txt = editor.text(line)
-    while True:
-        col -= 1
-        if col < 0:
-            line -= 1
-            if line < 0:
-                return -1, -1   # Reached the beginning of the doc
-            txt = editor.text(line)
-            col = len(txt) - 2    # \r or \n at the end
-            if txt[col] != '\\':
-                return -1, -1   # Reached the beginning of the line
-            col -= 1
-        if txt[col] in [' ', '\t']:
-            continue
-        break
-    return line, col
-
-
-def getPrefixAndObject(editor):
-    """Provides a prefix to search for and
-       the object the prefix used with if so.
-       E.g. self.bla would return 'bla' as prefix and 'self' as object
-            a.b.bla would return 'bla' and 'a.b'
-    """
-    # Get the word to the left
-    line, col = editor.cursorPosition
-    prefix = str(editor.getWord(line, col, 1, True))
-
-    # Search for object
-    obj = ""
-    col -= len(prefix)
-
-    while True:
-        line, col = _skipSpacesBack(editor, line, col)
-        if line < 0 or col < 0:
-            return obj, prefix
-
-        txt = str(editor.text(line))
-        if txt[col] != '.':
-            return obj, prefix
-
-        line, col = _skipSpacesBack(editor, line, col)
-        if line < 0 or col < 0:
-            return obj, prefix
-
-        part = str(editor.getWord(line, col + 1, 1, True))
-        if part == "":
-            txt = str(editor.text( line))
-            if txt[col] in [")", "]", "}", "'", '"']:
-                if obj != "":
-                    obj = "." + obj
-                obj = txt[col] + obj
-            return obj, prefix
-
-        if obj != "":
-            obj = "." + obj
-        obj = part + obj
-        col = col - len(part) + 1
-
-
-WORD_PATTERN = '\w+'
-WORD_REGEXP = re.compile(WORD_PATTERN)
-EDITOR_TAG_TIMEOUT = 0.5
-
-def getEditorTags(editor, exclude=None, excludePythonKeywords=False):
-    """Builds a list of the tags in the editor.
-       The current line could be excluded.
-       The only tags are included which start with prefix
-    """
-    start = time.time()
-
-    excludeSet = set()
-    if exclude:
-        excludeSet.add(exclude)
-    if excludePythonKeywords:
-        # Note: 2 characters words will be filtered unconditionally
-        excludeSet.update(["try", "for", "and", "not"])
-
-    result = set()
-    for line in editor.lines:
-        for match in WORD_REGEXP.findall(line):
-            if len(match) > 2:
-                if match not in excludeSet:
-                    result.add(match)
-        if time.time() - start > EDITOR_TAG_TIMEOUT:
-            # Do not freeze longer than that
-            break
-
-    # If a cursor is in a middle of the word then the current word is not what
-    # you need.
-    if editor.getWordAfterCursor() == '':
-        result.discard(editor.getWordBeforeCursor())
-    return result
-
-
 # Note: docstrings are considered as comments
 def isStringLiteral(editor, line=None, pos=None):
     """True if the position is inside a string literal"""
@@ -427,17 +366,6 @@ def isComment(editor, line=None, pos=None):
     if pos >= len(text):
         pos = len(text) - 1
 
-    return editor.isComment(line, pos)
-
-
-def hasCommentAtEnd(editor, line):
-    """True if the line has comment at the end"""
-    text = editor.lines[line]
-    if not text.strip():
-        return False
-    pos = len(text) - 1
-    while text[pos].isspace():
-        pos -= 1
     return editor.isComment(line, pos)
 
 
@@ -479,95 +407,6 @@ def isImportLine(editor):
                                editor.positionFromLineIndex(line, 0)):
             return True, line
     return False, None
-
-
-def getWordAtPosition(editor, position, direction=0,
-                      useWordChars=True, addChars=""):
-    """Provides a word at position"""
-    wordLine, pos = editor.lineIndexFromPosition(position)
-    return editor.getWord(wordLine, pos, direction, useWordChars, addChars)
-
-
-def isOnSomeImport(editor):
-    """Returns 3 values:
-       bool   - this is an import line
-       bool   - a list of modules should be provided
-       string - module name from which an object is to be imported
-    """
-    # There are two case:
-    # import BLA1, BLA2 as WHATEVER2, BLA3
-    # from BLA import X, Y as y, Z
-    isImport, line = isImportLine(editor)
-    if isImport == False:
-        return False, False, ""
-
-    charsToSkip = [' ', '\\', '\r', '\n', '\t']
-
-    text = editor.text(line).strip()
-    if text.startswith("import"):
-        currentWord = editor.getCurrentWord()
-        if currentWord in ["import", "as"]:
-            # It is an import line, but no need to complete
-            return True, False, ""
-        # Search for the first non space character before the current word
-        position = editor.positionBefore(editor.cursorPosition)
-        while editor.charAt(position) not in charsToSkip:
-            position = editor.positionBefore(position)
-        while editor.charAt(position) in charsToSkip:
-            position = editor.positionBefore(position)
-        if editor.charAt(position) in [',', '(']:
-            # It's an import line and need to complete
-            return True, True, ""
-
-        if getWordAtPosition(editor, position) == "import":
-            # It's an import line and need to complete
-            return True, True, ""
-        # It;s an import line but no need to complete
-        return True, False, ""
-
-    # Here: this is the from x import bla as ... statement
-    currentWord = editor.getCurrentWord()
-    if currentWord in ["from", "import", "as"]:
-        return True, False, ""
-    # Search for the first non space character before the current word
-    position = editor.positionBefore(editor.cursorPosition)
-    while editor.charAt(position) not in charsToSkip:
-        position = editor.positionBefore(position)
-    while editor.charAt(position) in charsToSkip:
-        position = editor.positionBefore(position)
-
-    previousWord = getWordAtPosition(editor, position)
-    if previousWord == "as":
-        # Nothing should be completed
-        return True, False, ""
-    if previousWord == "from":
-        # Completing a module
-        return True, True, ""
-    if previousWord == "import" or editor.charAt(position) in [',', '(']:
-        # Need to complete an imported object
-        position = editor.positionFromLineIndex(line, 0)
-        while editor.charAt(position) in [' ', '\t']:
-            position = editor.positionAfter(position)
-        # Expected 'from' at this position
-        if getWordAtPosition(editor, position) != 'from':
-            return True, False, ""
-        # Next is a module name
-        position += len('from')
-        while editor.charAt(position) in charsToSkip:
-            position = editor.positionAfter(position)
-        moduleName = getWordAtPosition(editor, position, 0, True, ".")
-        if moduleName == "":
-            return True, False, ""
-        # Sanity check - there is 'import' after that
-        position += len(moduleName)
-        while editor.charAt(position) in charsToSkip:
-            position = editor.positionAfter(position)
-        if getWordAtPosition(editor, position) != 'import':
-            return True, False, ""
-        # Finally, this is a completion for an imported object
-        return True, True, moduleName
-
-    return True, False, ""
 
 
 def _skipSpacesBackAtPos(editor, pos):
