@@ -21,7 +21,7 @@
 
 import re
 import time
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmpyparser import getBriefModuleInfoFromMemory
 
 
 WORD_PATTERN = '\w+'

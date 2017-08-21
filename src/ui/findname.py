@@ -22,7 +22,7 @@
 
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmpyparser import getBriefModuleInfoFromMemory
 from utils.settings import Settings
 from utils.fileutils import isPythonFile
 from utils.diskvaluesrelay import getFindNameHistory, setFindNameHistory

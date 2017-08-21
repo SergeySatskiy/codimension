@@ -30,7 +30,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import isFileSearchable, isPythonFile, getFileContent
 from utils.diskvaluesrelay import getFindInFilesHistory, setFindInFilesHistory
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmpyparser import getBriefModuleInfoFromMemory
 from autocomplete.listmodules import resolveLink
 from .qt import (QCursor, Qt, QDialog, QDialogButtonBox, QVBoxLayout,
                  QSizePolicy, QLabel, QProgressBar, QApplication, QComboBox,

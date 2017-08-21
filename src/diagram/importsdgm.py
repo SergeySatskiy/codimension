@@ -26,7 +26,7 @@ from ui.qt import (Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                    QCheckBox, QProgressBar, QApplication, QGraphicsScene)
 from utils.globals import GlobalData
 from utils.fileutils import isPythonFile
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmpyparser import getBriefModuleInfoFromMemory
 from autocomplete.completelists import getSystemWideModules
 from .plaindotparser import getGraphFromDescriptionData
 from .importsdgmgraphics import (ImportsDgmDocConn, ImportsDgmDependConn,

@@ -24,7 +24,7 @@ import encodings
 import logging
 import os.path
 from codecs import BOM_UTF8, BOM_UTF16, BOM_UTF32
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmpyparser import getBriefModuleInfoFromMemory
 from .diskvaluesrelay import getFileEncoding
 from .fileutils import isPythonFile
 from .globals import GlobalData

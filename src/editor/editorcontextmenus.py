@@ -21,7 +21,7 @@
 
 
 import os.path
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmpyparser import getBriefModuleInfoFromMemory
 from ui.qt import QMenu, QActionGroup, QApplication, QMessageBox
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData

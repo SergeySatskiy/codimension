@@ -22,8 +22,8 @@
 import os
 import os.path
 from ui.qt import QApplication
-from cdmbriefparser import (getBriefModuleInfoFromMemory,
-                            getBriefModuleInfoFromFile)
+from cdmpyparser import (getBriefModuleInfoFromMemory,
+                         getBriefModuleInfoFromFile)
 from autocomplete.completelists import (getSystemWideModules,
                                         getProjectSpecificModules)
 from .globals import GlobalData

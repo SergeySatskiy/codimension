@@ -25,7 +25,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import isPythonMime
 from utils.pixmapcache import getPixmap, getIcon
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmpyparser import getBriefModuleInfoFromMemory
 from autocomplete.bufferutils import getContext
 
 

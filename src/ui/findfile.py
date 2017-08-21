@@ -21,7 +21,7 @@
 
 import os
 import os.path
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmpyparser import getBriefModuleInfoFromMemory
 from utils.globals import GlobalData
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.settings import Settings

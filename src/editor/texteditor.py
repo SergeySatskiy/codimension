@@ -38,7 +38,7 @@ from autocomplete.bufferutils import (getContext, getCallPosition,
                                       getCommaCount)
 from autocomplete.completelists import (getCompletionList, getCalltipAndDoc,
                                         getDefinitions, getOccurrences)
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmpyparser import getBriefModuleInfoFromMemory
 from .qpartwrap import QutepartWrapper
 from .editorcontextmenus import EditorContextMenuMixin
 from .linenomargin import CDMLineNumberMargin

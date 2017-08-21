@@ -25,7 +25,7 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import isPythonMime, isPythonFile
-from cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmpyparser import getBriefModuleInfoFromMemory
 from .qt import (Qt, QSize, QTimer, QCursor, QPalette, QMenu, QWidget, QAction,
                  QVBoxLayout, QToolBar, QFrame, QLabel)
 from .outlinebrowser import OutlineBrowser
