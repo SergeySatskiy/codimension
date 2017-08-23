@@ -597,7 +597,7 @@ class CodimensionDebugger(QObject):
         # Close the opened socket if so
         if self.__clientSocket is not None:
             self.__clientSocket.readyRead.disconnect(self.__parseClientLine)
-            self.__sendCommand(RequestShutdown + "\n")
+#            self.__sendJSONCommand(RequestShutdown)
 
             # Give the client a chance to shutdown itself
             if brutal:

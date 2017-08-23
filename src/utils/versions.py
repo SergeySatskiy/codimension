@@ -43,12 +43,6 @@ def getCodimensionVersion():
     return GlobalData().version, abspath(sys.argv[0])
 
 
-def getControlFlowParserVersion():
-    """Provides the python control flow version"""
-    import cdmcf
-    return cdmcf.VERSION, abspath(cdmcf.__file__)
-
-
 def getPythonInterpreterVersion():
     """Provides the python interpreter version"""
     import sys
@@ -110,7 +104,7 @@ def getComponentInfo():
                        "GPL-3.0",
                        "http://www.gnu.org/licenses/gpl-3.0.html",
                        path))
-    version, path = getControlFlowParserVersion()
+    version, path = getPackageVersionAndLocation('cdmcfparser')
     components.append(("Codimension python control flow parser",
                        version,
                        "http://codimension.org/", None,

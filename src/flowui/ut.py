@@ -23,7 +23,7 @@ import datetime
 import importlib
 from optparse import OptionParser
 from subprocess import Popen, PIPE
-from cdmcf import getControlFlowFromFile, VERSION
+from cdmcfparser import getControlFlowFromFile, VERSION
 from ui.qt import (Qt, QApplication, QGraphicsView, QMainWindow, QAction,
                    QTextEdit, QDockWidget, QGraphicsScene, QPainter, QTimer,
                    QIcon, QSize, QFileDialog, QDialog, QMessageBox)
@@ -218,7 +218,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.view)
 
         if verbose:
-            self.logMessage("Using cdmcf version " + VERSION)
+            self.logMessage("Using cdmcfparser version " + VERSION)
 
         if warning:
             self.logMessage(warning)

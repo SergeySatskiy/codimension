@@ -27,7 +27,7 @@ from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QRectF, QPoint,
                    QLabel, QVBoxLayout, QFrame, QSizePolicy, QFileDialog,
                    QDialog, QMenu, QToolButton, QMessageBox, QSvgGenerator,
                    QPrinter)
-from cdmcf import getControlFlowFromMemory
+from cdmcfparser import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas
 from flowui.cflowsettings import getCflowSettings
 from flowui.cml import CMLVersion

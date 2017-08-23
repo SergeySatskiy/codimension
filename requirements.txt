@@ -1,9 +1,10 @@
 cdmpyparser
+cdmcfparser
 pyflakes==1.2.3
-pylint==1.6.4
+pylint
 PyQt5~=5.7
 python-magic==0.4.13
-qutepart==3.0.1
+qutepart
 svn~=0.3.44
 yapsy==1.11.223
 jedi==0.9.0

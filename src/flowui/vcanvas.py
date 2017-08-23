@@ -30,12 +30,12 @@ does not affect all the other sections.
 """
 
 from ui.qt import Qt, QPen, QColor
-from cdmcf import (CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
-                   BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
-                   RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,
-                   IMPORT_FRAGMENT, COMMENT_FRAGMENT,
-                   WHILE_FRAGMENT, FOR_FRAGMENT, IF_FRAGMENT,
-                   WITH_FRAGMENT, TRY_FRAGMENT, CML_COMMENT_FRAGMENT)
+from cdmcfparser import (CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
+                         BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
+                         RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,
+                         IMPORT_FRAGMENT, COMMENT_FRAGMENT,
+                         WHILE_FRAGMENT, FOR_FRAGMENT, IF_FRAGMENT,
+                         WITH_FRAGMENT, TRY_FRAGMENT, CML_COMMENT_FRAGMENT)
 from .cml import CMLVersion, CMLsw
 from .items import (CellElement, VacantCell, CodeBlockCell,
                     BreakCell, ContinueCell, ReturnCell, RaiseCell,
