@@ -22,6 +22,12 @@
 from copy import deepcopy
 
 
+# These constants are used throughout the code to identify the type of run
+RUN = 0
+PROFILE = 1
+DEBUG = 2
+
+
 class RunParameters:
 
     """Stores the script run parameters"""
@@ -32,7 +38,6 @@ class RunParameters:
 
     def __init__(self):
         self.__params = deepcopy(DEFAULT_RUN_PARAMETERS)
-        return
 
     def __getitem__(self, key):
         return self.__params[key]
@@ -57,19 +62,23 @@ class RunParameters:
 # Default parameters
 DEFAULT_RUN_PARAMETERS = {
     # Cmd line arguments
-    'arguments': "",
+    'arguments': '',
 
     # Working dir part
     'useScriptLocation': True,
-    'specificDir': "",
+    'specificDir': '',
 
     # Environment
     'envType': RunParameters.InheritParentEnv,
     'additionToParentEnv': {},
     'specificEnv': {},
 
-    # Close terminal
-    'closeTerminal': False}
+    # Path to python
+    'customInterpreter': '',
+
+    # Way to run
+    'redirected': True,
+    'customTerminal': ''}
 
 
 # JSON serialization/deserialization support

@@ -22,7 +22,7 @@
 import os
 import os.path
 import copy
-from utils.runparams import RunParameters
+from utils.runparams import RunParameters, RUN, PROFILE, DEBUG
 from utils.run import (parseCommandLineArguments,
                        TERM_AUTO, TERM_GNOME, TERM_KONSOLE, TERM_XTERM,
                        TERM_REDIRECT)
@@ -105,18 +105,22 @@ class RunDialog(QDialog):
 
     """Run parameters dialog implementation"""
 
+    ACTION_TO_VERB = {RUN: 'Run',
+                      PROFILE: 'Profile',
+                      DEBUG: 'Debug'}
+
     # See utils.run for runParameters
-    def __init__(self, path, runParameters, termType,
+    def __init__(self, path, runParameters,
                  profilerParams, debuggerParams,
-                 action="", parent=None):
+                 action, parent=None):
         QDialog.__init__(self, parent)
 
         # Used as a return value
-        self.termType = termType
+        self.runParams = copy.deepcopy(runParameters)
         self.profilerParams = copy.deepcopy(profilerParams)
         self.debuggerParams = copy.deepcopy(debuggerParams)
 
-        self.__action = action.lower()
+        self.__action = action
 
         # Avoid pylint complains
         self.__argsEdit = None
@@ -139,11 +143,11 @@ class RunDialog(QDialog):
         self.__nodeLimitEdit = None
         self.__edgeLimitEdit = None
 
-        self.__createLayout(action)
-        self.setWindowTitle(action + " parameters for " + path)
+        self.__createLayout()
+        self.setWindowTitle(RunDialog.ACTION_TO_VERB[action] +
+                            ' parameters for ' + path)
 
         # Restore the values
-        self.runParams = copy.deepcopy(runParameters)
         self.__argsEdit.setText(self.runParams['arguments'])
 
         # Working dir
@@ -175,25 +179,8 @@ class RunDialog(QDialog):
             self.__specificRButton.setChecked(True)
             self.__setEnabledInheritedPlusEnv(False)
 
-        # Terminal
-        if self.termType == TERM_REDIRECT:
-            self.__redirectRButton.setChecked(True)
-        elif self.termType == TERM_AUTO:
-            self.__autoRButton.setChecked(True)
-        elif self.termType == TERM_KONSOLE:
-            self.__konsoleRButton.setChecked(True)
-        elif self.termType == TERM_GNOME:
-            self.__gnomeRButton.setChecked(True)
-        else:
-            self.__xtermRButton.setChecked(True)
-
-        # Close checkbox
-        self.__closeCheckBox.setChecked(self.runParams['closeTerminal'])
-        if self.termType == TERM_REDIRECT:
-            self.__closeCheckBox.setEnabled(False)
-
         # Profile limits if so
-        if self.__action == "profile":
+        if self.__action == PROFILE:
             if self.profilerParams.nodeLimit < 0.0 or \
                self.profilerParams.nodeLimit > 100.0:
                 self.profilerParams.nodeLimit = 1.0
@@ -202,7 +189,7 @@ class RunDialog(QDialog):
                self.profilerParams.edgeLimit > 100.0:
                 self.profilerParams.edgeLimit = 1.0
             self.__edgeLimitEdit.setText(str(self.profilerParams.edgeLimit))
-        elif self.__action == "debug":
+        elif self.__action == DEBUG:
             self.__reportExceptionCheckBox.setChecked(
                 self.debuggerParams.reportExceptions)
             self.__traceInterpreterCheckBox.setChecked(
@@ -228,7 +215,7 @@ class RunDialog(QDialog):
 
     def __setEnabledInheritedPlusEnv(self, value):
         """Disables/enables 'inherited and add' section controls"""
-        self.__inhPlusEnvTable.setEnabled( value)
+        self.__inhPlusEnvTable.setEnabled(value)
         self.__addInhButton.setEnabled(value)
         self.__delInhButton.setEnabled(value)
         self.__editInhButton.setEnabled(value)
@@ -240,24 +227,48 @@ class RunDialog(QDialog):
         self.__delSpecButton.setEnabled(value)
         self.__editSpecButton.setEnabled(value)
 
-    def __createLayout(self, action):
+    def __createLayout(self):
         """Creates the dialog layout"""
         self.resize(650, 300)
         self.setSizeGripEnabled(True)
 
-        # Top level layout
-        layout = QVBoxLayout(self)
+        layout = QVBoxLayout(self)  # top level layout
+        layout.addLayout(self.__getArgLayout())
+        layout.addWidget(self.__getWorkingDirGroupbox())
+        layout.addWidget(self.__getEnvGroupbox())
+        layout.addWidget(self.__getInterpreterGroupbox())
+        layout.addWidget(self.__getIOGroupbox())
 
-        # Cmd line arguments
+        if self.__action == PROFILE:
+            layout.addWidget(self.__getProfileLimitsGroupbox())
+        elif self.__action == DEBUG:
+            layout.addWidget(self.__getDebugGroupbox())
+
+        # Buttons at the bottom
+        buttonBox = QDialogButtonBox(self)
+        buttonBox.setOrientation(Qt.Horizontal)
+        buttonBox.setStandardButtons(QDialogButtonBox.Cancel)
+        self.__runButton = buttonBox.addButton(
+            RunDialog.ACTION_TO_VERB[self.__action],
+            QDialogButtonBox.AcceptRole)
+        self.__runButton.setDefault(True)
+        self.__runButton.clicked.connect(self.onAccept)
+        layout.addWidget(buttonBox)
+
+        buttonBox.rejected.connect(self.close)
+
+    def __getArgLayout(self):
+        """Provides the arguments layout"""
         argsLabel = QLabel("Command line arguments")
         self.__argsEdit = QLineEdit()
         self.__argsEdit.textChanged.connect(self.__argsChanged)
         argsLayout = QHBoxLayout()
         argsLayout.addWidget(argsLabel)
         argsLayout.addWidget(self.__argsEdit)
-        layout.addLayout(argsLayout)
+        return argsLayout
 
-        # Working directory
+    def __getWorkingDirGroupbox(self):
+        """Provides the working dir groupbox"""
         workDirGroupbox = QGroupBox(self)
         workDirGroupbox.setTitle("Working directory")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -286,10 +297,10 @@ class RunDialog(QDialog):
         self.__dirSelectButton.setText("...")
         gridLayoutWD.addWidget(self.__dirSelectButton, 1, 2)
         self.__dirSelectButton.clicked.connect(self.__selectDirClicked)
+        return workDirGroupbox
 
-        layout.addWidget(workDirGroupbox)
-
-        # Environment
+    def __getEnvGroupbox(self):
+        """Provides the environment groupbox"""
         envGroupbox = QGroupBox(self)
         envGroupbox.setTitle("Environment")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -356,98 +367,74 @@ class RunDialog(QDialog):
         vSpecLayout.addWidget(self.__editSpecButton)
         hSpecLayout.addLayout(vSpecLayout)
         layoutEnv.addLayout(hSpecLayout)
-        layout.addWidget(envGroupbox)
+        return envGroupbox
 
-        # Terminal and profile limits
-        if self.__action in ["profile", "debug"]:
-            layout.addWidget(self.__getIDEWideGroupbox())
-        else:
-            termGroupbox = self.__getTermGroupbox()
-            termGroupbox.setTitle("Terminal to run in (IDE wide setting)")
-            layout.addWidget(termGroupbox)
-
-        # Close checkbox
-        self.__closeCheckBox = QCheckBox("&Close terminal upon "
-                                         "successful completion")
-        self.__closeCheckBox.stateChanged.connect(self.__onCloseChanged)
-        layout.addWidget(self.__closeCheckBox)
-
-        # Buttons at the bottom
-        buttonBox = QDialogButtonBox(self)
-        buttonBox.setOrientation(Qt.Horizontal)
-        buttonBox.setStandardButtons(QDialogButtonBox.Cancel)
-        self.__runButton = buttonBox.addButton(action,
-                                               QDialogButtonBox.AcceptRole)
-        self.__runButton.setDefault(True)
-        self.__runButton.clicked.connect(self.onAccept)
-        layout.addWidget(buttonBox)
-
-        buttonBox.rejected.connect(self.close)
-
-    def __getTermGroupbox(self):
-        """Creates the term groupbox"""
-        termGroupbox = QGroupBox(self)
+    def __getInterpreterGroupbox(self):
+        """Creates the interpreter groupbox"""
+        interpreterGroupbox = QGroupBox(self)
+        interpreterGroupbox.setTitle("Python Interpreter")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(
-            termGroupbox.sizePolicy().hasHeightForWidth())
-        termGroupbox.setSizePolicy(sizePolicy)
+            interpreterGroupbox.sizePolicy().hasHeightForWidth())
+        interpreterGroupbox.setSizePolicy(sizePolicy)
 
-        layoutTerm = QVBoxLayout(termGroupbox)
-        self.__redirectRButton = QRadioButton(termGroupbox)
-        self.__redirectRButton.setText("&Redirect to IDE")
-        self.__redirectRButton.toggled.connect(self.__redirectedChanged)
-        layoutTerm.addWidget(self.__redirectRButton)
-        self.__autoRButton = QRadioButton(termGroupbox)
-        self.__autoRButton.setText("Aut&o detection")
-        layoutTerm.addWidget(self.__autoRButton)
-        self.__konsoleRButton = QRadioButton(termGroupbox)
-        self.__konsoleRButton.setText("Default &KDE konsole")
-        layoutTerm.addWidget(self.__konsoleRButton)
-        self.__gnomeRButton = QRadioButton(termGroupbox)
-        self.__gnomeRButton.setText("gnome-&terminal")
-        layoutTerm.addWidget(self.__gnomeRButton)
-        self.__xtermRButton = QRadioButton(termGroupbox)
-        self.__xtermRButton.setText("&xterm")
-        layoutTerm.addWidget(self.__xtermRButton)
-        return termGroupbox
+        gridLayoutInt = QGridLayout(interpreterGroupbox)
+        self.__inheritedInterpreterRButton = QRadioButton(interpreterGroupbox)
+        self.__inheritedInterpreterRButton.setText("&Inherited")
+        gridLayoutInt.addWidget(self.__inheritedInterpreterRButton, 0, 0)
+        self.__inheritedInterpreterRButton.clicked.connect(
+            self.__inheritedInterpreterRButtonClicked)
 
-    def __redirectedChanged(self, checked):
-        """Triggered when the redirected radio button changes its state"""
-        self.__closeCheckBox.setEnabled(not checked)
+        self.__customIntRButton = QRadioButton(interpreterGroupbox)
+        self.__customIntRButton.setText("Select interpreter (series &3)")
+        gridLayoutInt.addWidget(self.__customIntRButton, 1, 0)
+        self.__customIntRButton.clicked.connect(self.__customIntRButtonClicked)
 
-    def __getIDEWideGroupbox(self):
-        """Creates the IDE wide groupbox"""
-        ideGroupbox = QGroupBox(self)
-        ideGroupbox.setTitle("IDE Wide Settings")
+        self.__intEdit = QLineEdit(interpreterGroupbox)
+        gridLayoutInt.addWidget(self.__intEdit, 1, 1)
+        self.__intEdit.textChanged.connect(self.__interpreterChanged)
+
+        self.__intSelectButton = QPushButton(interpreterGroupbox)
+        self.__intSelectButton.setText("...")
+        gridLayoutInt.addWidget(self.__intSelectButton, 1, 2)
+        self.__intSelectButton.clicked.connect(self.__selectIntClicked)
+        return interpreterGroupbox
+
+    def __getIOGroupbox(self):
+        """Creates the interpreter groupbox"""
+        ioGroupbox = QGroupBox(self)
+        ioGroupbox.setTitle("Input/output")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(
-            ideGroupbox.sizePolicy().hasHeightForWidth())
-        ideGroupbox.setSizePolicy(sizePolicy)
+            ioGroupbox.sizePolicy().hasHeightForWidth())
+        ioGroupbox.setSizePolicy(sizePolicy)
 
-        layoutIDE = QHBoxLayout(ideGroupbox)
+        gridLayoutInt = QGridLayout(ioGroupbox)
+        self.__redirectedRButton = QRadioButton(ioGroupbox)
+        self.__redirectedRButton.setText("&Redirected I/O")
+        gridLayoutInt.addWidget(self.__redirectedRButton, 0, 0)
+        self.__redirectedRButton.clicked.connect(
+            self.__redirectedRButtonClicked)
 
-        termGroupbox = self.__getTermGroupbox()
-        termGroupbox.setTitle("Terminal to run in")
-        layoutIDE.addWidget(termGroupbox)
+        self.__customTermRButton = QRadioButton(ioGroupbox)
+        self.__customTermRButton.setText("Custom terminal string")
+        gridLayoutInt.addWidget(self.__customTermRButton, 1, 0)
+        self.__customTermRButton.clicked.connect(
+            self.__customTermRButtonClicked)
 
-        if self.__action == "profile":
-            # Profile version of the dialog
-            limitsGroupbox = self.__getProfileLimitsGroupbox()
-            layoutIDE.addWidget(limitsGroupbox)
-        else:
-            # Debug version of the dialog
-            dbgGroupbox = self.__getDebugGroupbox()
-            layoutIDE.addWidget(dbgGroupbox)
-        return ideGroupbox
+        self.__termEdit = QLineEdit(ioGroupbox)
+        gridLayoutInt.addWidget(self.__termEdit, 1, 1)
+        self.__termEdit.textChanged.connect(self.__customTermChanged)
+        return ioGroupbox
 
     def __getProfileLimitsGroupbox(self):
         """Creates the profile limits groupbox"""
         limitsGroupbox = QGroupBox(self)
-        limitsGroupbox.setTitle("Profiler diagram limits")
+        limitsGroupbox.setTitle("Profiler diagram limits (IDE wide)")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -481,7 +468,7 @@ class RunDialog(QDialog):
     def __getDebugGroupbox(self):
         """Creates the debug settings groupbox"""
         dbgGroupbox = QGroupBox(self)
-        dbgGroupbox.setTitle("Debugger")
+        dbgGroupbox.setTitle("Debugger (IDE wide)")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -640,7 +627,7 @@ class RunDialog(QDialog):
     def __selectDirClicked(self):
         """Selects the script working dir"""
         dirName = QFileDialog.getExistingDirectory(
-            self,"Select the script working directory",
+            self, "Select the script working directory",
             self.__dirEdit.text(),
             QFileDialog.Options(QFileDialog.ShowDirsOnly))
 

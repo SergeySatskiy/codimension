@@ -26,7 +26,7 @@
 """Sidebar implementation"""
 
 from .qt import (QEvent, QSize, Qt, QTabBar, QWidget, QStackedWidget,
-                 QBoxLayout)
+                 QBoxLayout, pyqtSignal)
 
 
 class SideBar(QWidget):
@@ -40,6 +40,8 @@ class SideBar(QWidget):
     South = 2
     West = 3
 
+    sigTabCloseRequested = pyqtSignal(int)
+
     def __init__(self, orientation, parent=None):
         QWidget.__init__(self, parent)
 
@@ -48,6 +50,7 @@ class SideBar(QWidget):
         self.__tabBar.setFocusPolicy(Qt.NoFocus)
         self.__tabBar.setUsesScrollButtons(True)
         self.__tabBar.setElideMode(1)
+        self.__tabBar.tabCloseRequested.connect(self.__onCloseRequest)
         self.__stackedWidget = QStackedWidget(self)
         self.__stackedWidget.setContentsMargins(0, 0, 0, 0)
         self.barLayout = QBoxLayout(QBoxLayout.LeftToRight)
@@ -419,3 +422,7 @@ class SideBar(QWidget):
     def setTabsClosable(self, closable):
         """Sets the tabs closable"""
         self.__tabBar.setTabsClosable(closable)
+
+    def __onCloseRequest(self, index):
+        """Re-emits the close request signal"""
+        self.sigTabCloseRequested.emit(index)

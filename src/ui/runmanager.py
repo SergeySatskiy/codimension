@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Run/profile manager"""
+"""Run/profile/debug manager"""
 
 import os
 import logging
@@ -90,10 +90,11 @@ class RemoteProcessWrapper(QObject):
     def start(self):
         """Starts the remote process"""
         params = getRunParameters(self.__path)
+        terminalType = Settings()['terminalType']
         if self.__needRedirection:
             workingDir, cmd, environment = \
                 getCwdCmdEnv(CMD_TYPE_RUN, self.__path, params,
-                             Settings()['terminalType'],
+                             terminalType,
                              None, self.__serverPort, self.__procID)
         else:
             workingDir, cmd, environment = \

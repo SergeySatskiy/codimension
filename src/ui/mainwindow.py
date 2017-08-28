@@ -53,11 +53,11 @@ from analysis.disasm import (getFileDisassembled, getCompiledfileDisassembled,
 from debugger.bputils import clearValidBreakpointLinesCache
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
-from editor.redirectedioconsole import IOConsoleTabWidget
 from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QToolBar, QWidget,
                  QMessageBox, QVBoxLayout, QSplitter, QSizePolicy, QAction,
                  QMainWindow, QShortcut, QApplication, QCursor, QToolButton,
-                 QToolTip, QFileDialog, QDialog, QMenu, QDesktopServices, QTabBar)
+                 QToolTip, QFileDialog, QDialog, QMenu, QDesktopServices,
+                 QTabBar)
 from .about import AboutDialog
 from .runmanager import RunManager
 from .sidebar import SideBar
@@ -84,6 +84,7 @@ from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .runparams import RunDialog
 from .mainstatusbar import MainWindowStatusBarMixin
 from .mainmenu import MainWindowMenuMixin
+from .mainredirectedio import MainWindowRedirectedIOMixin
 
 
 class EditorsManagerWidget(QWidget):
@@ -135,36 +136,37 @@ class CodimensionMainWindow(QMainWindow):
         extendInstance(self, MainWindowMenuMixin)
         MainWindowMenuMixin.__init__(self)
 
+        extendInstance(self, MainWindowRedirectedIOMixin)
+        MainWindowRedirectedIOMixin.__init__(self)
+
         self.debugMode = False
         # Last position the IDE received control from the debugger
         self.__lastDebugFileName = None
         self.__lastDebugLineNumber = None
         self.__lastDebugAsException = None
         self.__lastDebugAction = None
-        self.__newRunIndex = -1
-        self.__newProfileIndex = -1
 
         self.vcsManager = VCSManager()
 
         self.__debugger = CodimensionDebugger(self)
-        self.__debugger.sigDebuggerStateChanged.connect(
-            self.__onDebuggerStateChanged)
-        self.__debugger.sigClientLine.connect(self.__onDebuggerCurrentLine)
-        self.__debugger.sigClientException.connect(
-            self.__onDebuggerClientException)
-        self.__debugger.sigClientSyntaxError.connect(
-            self.__onDebuggerClientSyntaxError)
-        self.__debugger.sigClientIDEMessage.connect(
-            self.__onDebuggerClientIDEMessage)
-        self.__debugger.sigEvalOK.connect(self.__onEvalOK)
-        self.__debugger.sigEvalError.connect(self.__onEvalError)
-        self.__debugger.sigExecOK.connect(self.__onExecOK)
-        self.__debugger.sigExecError.connect(self.__onExecError)
-        self.__debugger.sigClientStdout.connect(self.__onClientStdout)
-        self.__debugger.sigClientStderr.connect(self.__onClientStderr)
-        self.__debugger.sigClientRawInput.connect(self.__onClientRawInput)
-        self.__debugger.getBreakPointModel().sigBreakpoinsChanged.connect(
-            self.__onBreakpointsModelChanged)
+#        self.__debugger.sigDebuggerStateChanged.connect(
+#            self.__onDebuggerStateChanged)
+#        self.__debugger.sigClientLine.connect(self.__onDebuggerCurrentLine)
+#        self.__debugger.sigClientException.connect(
+#            self.__onDebuggerClientException)
+#        self.__debugger.sigClientSyntaxError.connect(
+#            self.__onDebuggerClientSyntaxError)
+#        self.__debugger.sigClientIDEMessage.connect(
+#            self.__onDebuggerClientIDEMessage)
+#        self.__debugger.sigEvalOK.connect(self.__onEvalOK)
+#        self.__debugger.sigEvalError.connect(self.__onEvalError)
+#        self.__debugger.sigExecOK.connect(self.__onExecOK)
+#        self.__debugger.sigExecError.connect(self.__onExecError)
+#        self.__debugger.sigClientStdout.connect(self.__onClientStdout)
+#        self.__debugger.sigClientStderr.connect(self.__onClientStderr)
+#        self.__debugger.sigClientRawInput.connect(self.__onClientRawInput)
+#        self.__debugger.getBreakPointModel().sigBreakpoinsChanged.connect(
+#            self.__onBreakpointsModelChanged)
 
         self.__initialisation = True
 
@@ -207,8 +209,8 @@ class CodimensionMainWindow(QMainWindow):
         self.__verticalSplitterSizes = settings['vSplitterSizes']
 
         self.logViewer = None
-        self.redirectedIOConsole = None
         self.__createLayout()
+        self._initRedirectedIO()
 
         splash.showMessage("Initializing main menu bar...")
         self.__initPluginSupport()
@@ -960,16 +962,6 @@ class CodimensionMainWindow(QMainWindow):
             if hasattr(widget, "getType"):
                 if widget.getType() == MainWindowTabWidgetBase.IOConsole:
                     widget.onTextZoomChanged()
-            index -= 1
-
-    def onIOConsoleSettingUpdated(self):
-        """Initiates updating all the IO consoles settings"""
-        index = self._bottomSideBar.count() - 1
-        while index >= 0:
-            widget = self._bottomSideBar.widget(index)
-            if hasattr(widget, "getType"):
-                if widget.getType() == MainWindowTabWidgetBase.IOConsole:
-                    widget.consoleSettingsUpdated()
             index -= 1
 
     def showProfileReport(self, widget, tooltip):
@@ -2460,135 +2452,6 @@ class CodimensionMainWindow(QMainWindow):
             return True
         return False
 
-    def installRedirectedIOConsole(self):
-        """Create redirected IO console"""
-        self.redirectedIOConsole = IOConsoleTabWidget(self)
-        self.redirectedIOConsole.sigUserInput.connect(self.__onUserInput)
-        self.redirectedIOConsole.sigSettingUpdated.connect(
-            self.onIOConsoleSettingUpdated)
-        self._bottomSideBar.addTab(
-            self.redirectedIOConsole, getIcon('ioconsole.png'),
-            'IO console', 'ioredirect', None)
-        self._bottomSideBar.setTabToolTip('ioredirect',
-                                           'Redirected IO debug console')
-
-    def clearDebugIOConsole(self):
-        """Clears the content of the debug IO console"""
-        if self.redirectedIOConsole:
-            self.redirectedIOConsole.clear()
-
-    def __onClientStdout(self, data):
-        """Triggered when the client reports stdout"""
-        self._bottomSideBar.show()
-        self._bottomSideBar.setCurrentTab('ioredirect')
-        self._bottomSideBar.raise_()
-        self.redirectedIOConsole.appendStdoutMessage(data)
-
-    def __onClientStderr(self, data):
-        """Triggered when the client reports stderr"""
-        self._bottomSideBar.show()
-        self._bottomSideBar.setCurrentTab('ioredirect')
-        self._bottomSideBar.raise_()
-        self.redirectedIOConsole.appendStderrMessage(data)
-
-    def __ioconsoleIDEMessage(self, message):
-        """Sends an IDE message to the IO console"""
-        self._bottomSideBar.show()
-        self._bottomSideBar.setCurrentTab('ioredirect')
-        self._bottomSideBar.raise_()
-        self.redirectedIOConsole.appendIDEMessage(message)
-
-    def __onClientRawInput(self, prompt, echo):
-        """Triggered when the client input is requested"""
-        self._bottomSideBar.show()
-        self._bottomSideBar.setCurrentTab('ioredirect')
-        self._bottomSideBar.raise_()
-        self.redirectedIOConsole.rawInput(prompt, echo)
-        self.redirectedIOConsole.setFocus()
-
-    def __onUserInput(self, userInput):
-        """Triggered when the user finished input in the redirected IO tab"""
-        self.__debugger.remoteRawInput(userInput)
-
-    def __getNewRunIndex(self):
-        """Provides the new run index"""
-        self.__newRunIndex += 1
-        return self.__newRunIndex
-
-    def __getNewProfileIndex(self):
-        """Provides the new profile index"""
-        self.__newProfileIndex += 1
-        return self.__newProfileIndex
-
-    def installIOConsole(self, widget, isProfile=False):
-        """Installs a new widget at the bottom"""
-        if isProfile:
-            index = str(self.__getNewProfileIndex())
-            caption = "Profiling #" + index
-            name = 'profiling#' + index
-            tooltip = "Redirected IO profile console #" + index + " (running)"
-        else:
-            index = str(self.__getNewRunIndex())
-            caption = "Run #" + index
-            name = 'running#' + index
-            tooltip = "Redirected IO run console #" + index + " (running)"
-
-        widget.CloseIOConsole.connect(self.__onCloseIOConsole)
-        widget.KillIOConsoleProcess.connect(self.__onKillIOConsoleProcess)
-        widget.settingUpdated.connect(self.onIOConsoleSettingUpdated)
-
-        self._bottomSideBar.addTab(
-            widget, getIcon('ioconsole.png'), caption, name)
-        self._bottomSideBar.setTabToolTip(name, tooltip)
-        self._bottomSideBar.show()
-        self._bottomSideBar.setCurrentTab(name)
-        self._bottomSideBar.raise_()
-        widget.setFocus()
-
-    def updateIOConsoleTooltip(self, threadID, msg):
-        """Updates the IO console tooltip"""
-        index = self.__getIOConsoleIndex(threadID)
-        if index is not None:
-            tooltip = self._bottomSideBar.tabToolTip(index)
-            tooltip = tooltip.replace("(running)", "(" + msg + ")")
-            self._bottomSideBar.setTabToolTip(index, tooltip)
-
-    def __getIOConsoleIndex(self, threadID):
-        """Provides the IO console index by the thread ID"""
-        index = self._bottomSideBar.count() - 1
-        while index >= 0:
-            widget = self._bottomSideBar.widget(index)
-            if hasattr(widget, "threadID"):
-                if widget.threadID() == threadID:
-                    return index
-            index -= 1
-        return None
-
-    def __onCloseIOConsole(self, threadID):
-        """Closes the tab with the corresponding widget"""
-        index = self.__getIOConsoleIndex(threadID)
-        if index is not None:
-            self._bottomSideBar.removeTab(index)
-
-    def __onKillIOConsoleProcess(self, threadID):
-        """Kills the process linked to the IO console"""
-        self.__runManager.kill(threadID)
-
-    def closeAllIOConsoles(self):
-        """Closes all IO run/profile tabs and clears the debug IO console"""
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        index = self._bottomSideBar.count - 1
-        while index >= 0:
-            widget = self._bottomSideBar.widget(index)
-            if hasattr(widget, "getType"):
-                if widget.getType() == MainWindowTabWidgetBase.IOConsole:
-                    if hasattr(widget, "stopAndClose"):
-                        widget.stopAndClose()
-            index -= 1
-
-        self.clearDebugIOConsole()
-        QApplication.restoreOverrideCursor()
-
     def passFocusToEditor(self):
         """Passes the focus to the text editor if it is there"""
         return self.em.passFocusToEditor()
@@ -2596,5 +2459,3 @@ class CodimensionMainWindow(QMainWindow):
     def passFocusToFlow(self):
         """Passes the focus to the flow UI if it is there"""
         return self.em.passFocusToFlow()
-
-
