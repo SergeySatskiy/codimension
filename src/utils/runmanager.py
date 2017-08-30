@@ -23,16 +23,17 @@ import os
 import logging
 import time
 from subprocess import Popen
-from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
-from utils.procfeedback import killProcess
-from utils.globals import GlobalData
-from utils.settings import Settings
-from utils.diskvaluesrelay import getRunParameters, addRunParams
 from editor.redirectedrun import RunConsoleTabWidget
 from debugger.client.protocol_cdm_dbg import *
-from .qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
-                 QTcpServer, QHostAddress, QAbstractSocket, pyqtSignal)
-from .runparams import RunDialog
+from ui.runparamsdlg import RunDialog
+from ui.qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
+                   QTcpServer, QHostAddress, QAbstractSocket, pyqtSignal)
+from .run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
+from .runparams import RUN
+from .procfeedback import killProcess
+from .globals import GlobalData
+from .settings import Settings
+from .diskvaluesrelay import getRunParameters, addRunParams
 
 
 # Finish codes in addition to the normal exit code
@@ -413,11 +414,9 @@ class RunManager(QObject):
         """Runs the given script with redirected IO"""
         if needDialog:
             params = getRunParameters(path)
-            termType = Settings()['terminalType']
             profilerParams = Settings().getProfilerSettings()
             debuggerParams = Settings().getDebuggerSettings()
-            dlg = RunDialog(path, params, termType,
-                            profilerParams, debuggerParams, "Run",
+            dlg = RunDialog(path, params, profilerParams, debuggerParams, RUN,
                             self.__mainWindow)
             if dlg.exec_() != QDialog.Accepted:
                 return

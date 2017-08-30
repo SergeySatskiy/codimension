@@ -74,6 +74,7 @@ DEFAULT_RUN_PARAMETERS = {
     'specificEnv': {},
 
     # Path to python
+    'useInherited': True,
     'customInterpreter': '',
 
     # Way to run

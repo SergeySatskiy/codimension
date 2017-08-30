@@ -32,25 +32,26 @@ from utils.pixmapcache import getIcon
 from utils.fileutils import (getFileProperties, isImageViewable, isImageFile,
                              isFileSearchable, isCDMProjectFile)
 from utils.diskvaluesrelay import getRunParameters, addRunParams
-from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
-                                ImportDiagramOptions)
+from utils.runmanager import RunManager
 from utils.run import (getWorkingDir,
                        parseCommandLineArguments, getNoArgsEnvironment,
                        TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM,
                        TERM_REDIRECT)
 from utils.fileutils import isPythonMime
+from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
+                                ImportDiagramOptions)
 from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from debugger.server import CodimensionDebugger
 from debugger.excpt import DebuggerExceptions
 from debugger.bpwp import DebuggerBreakWatchPoints
+from debugger.bputils import clearValidBreakpointLinesCache
 from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
 from profiling.profui import ProfilingProgressDialog
 from analysis.disasm import (getFileDisassembled, getCompiledfileDisassembled,
                              getBufferDisassembled)
-from debugger.bputils import clearValidBreakpointLinesCache
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
 from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QToolBar, QWidget,
@@ -59,7 +60,6 @@ from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QToolBar, QWidget,
                  QToolTip, QFileDialog, QDialog, QMenu, QDesktopServices,
                  QTabBar)
 from .about import AboutDialog
-from .runmanager import RunManager
 from .sidebar import SideBar
 from .logviewer import LogViewer
 from .taghelpviewer import TagHelpViewer
@@ -81,7 +81,7 @@ from .findinfilesviewer import FindInFilesViewer, hideSearchTooltip
 from .findname import FindNameDialog
 from .findfile import FindFileDialog
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from .runparams import RunDialog
+from .runparamsdlg import RunDialog
 from .mainstatusbar import MainWindowStatusBarMixin
 from .mainmenu import MainWindowMenuMixin
 from .mainredirectedio import MainWindowRedirectedIOMixin

@@ -26,7 +26,7 @@ from ui.qt import (Qt, QFileInfo, QSize, pyqtSignal, QToolBar, QHBoxLayout,
                    QWidget, QAction, QMenu, QSizePolicy, QToolButton, QDialog,
                    QVBoxLayout, QSplitter)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from ui.runparams import RunDialog
+from ui.runparamsdlg import RunDialog
 from ui.importlist import ImportListWidget
 from ui.outsidechanges import OutsideChangeWidget
 from utils.pixmapcache import getIcon
