@@ -624,7 +624,8 @@ class RunDialog(QDialog):
         try:
             code = "from __future__ import print_function; " \
                 "import sys; print(sys.version_info.major)"
-            output = checkOutput(path + '-c "' + code + '"', useShell=True)
+            output = checkOutput(path + ' -c "' + code + '"', useShell=True)
+            output = output.strip()
             if output != '3':
                 return 'Only python series 3 is supported ' \
                     '(provided: series ' + output + ')'
@@ -707,7 +708,7 @@ class RunDialog(QDialog):
 
     def __selectIntClicked(self):
         """Selects a python interpreter"""
-        path = QFileDialog.getOpenFileName(
+        path, _ = QFileDialog.getOpenFileName(
             self, "Select python series 3 interpreter")
 
         if path:

@@ -27,7 +27,7 @@ import os
 import os.path
 import getpass
 import logging
-from subprocess import getstatusoutput, check_output
+from subprocess import getstatusoutput, check_output, STDOUT
 from .config import DEFAULT_ENCODING
 
 
@@ -513,7 +513,8 @@ def checkOutput(cmdLine, useShell=False):
         if type(cmdLine) != list:
             raise Exception("Running without shell requires "
                             "the command line as a list")
-    return check_output(cmdLine, shell=useShell).decode(DEFAULT_ENCODING)
+    return check_output(cmdLine, stderr=STDOUT,
+                        shell=useShell).decode(DEFAULT_ENCODING)
 
 
 if __name__ == '__main__':
