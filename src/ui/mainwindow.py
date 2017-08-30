@@ -32,9 +32,8 @@ from utils.pixmapcache import getIcon
 from utils.fileutils import (getFileProperties, isImageViewable, isImageFile,
                              isFileSearchable, isCDMProjectFile)
 from utils.diskvaluesrelay import getRunParameters, addRunParams
-from utils.runmanager import RunManager
-from utils.run import (getWorkingDir,
-                       parseCommandLineArguments, getNoArgsEnvironment,
+from utils.runmanager import RunManager, getWorkingDir
+from utils.run import (parseCommandLineArguments, getNoArgsEnvironment,
                        TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM,
                        TERM_REDIRECT)
 from utils.fileutils import isPythonMime

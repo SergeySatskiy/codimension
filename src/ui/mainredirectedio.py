@@ -169,7 +169,7 @@ class MainWindowRedirectedIOMixin:
 
     def __getIOConsoleIndex(self, threadID):
         """Provides the IO console index by the thread ID"""
-        index = self._bottomSideBar.count() - 1
+        index = self._bottomSideBar.count - 1
         while index >= 0:
             widget = self._bottomSideBar.widget(index)
             if hasattr(widget, "threadID"):
@@ -198,5 +198,3 @@ class MainWindowRedirectedIOMixin:
 
         self.clearDebugIOConsole()
         QApplication.restoreOverrideCursor()
-
-

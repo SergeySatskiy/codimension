@@ -27,7 +27,6 @@ import json
 import logging
 from copy import deepcopy
 from ui.qt import QObject, QDir, pyqtSignal
-from .run import TERM_REDIRECT
 from .config import SETTINGS_ENCODING, CONFIG_DIR
 from .runparamscache import RunParametersCache
 from .debugenv import DebuggerEnvironment
@@ -41,6 +40,10 @@ SETTINGS_DIR = os.path.join(os.path.realpath(QDir.homePath()),
                             CONFIG_DIR) + os.path.sep
 THIRDPARTY_DIR = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])),
                               'thirdparty') + os.path.sep
+
+CLEAR_AND_REUSE = 0
+NO_CLEAR_AND_REUSE = 1
+NO_REUSE = 2
 
 
 class ProfilerSettings:
@@ -136,7 +139,6 @@ _DEFAULT_SETTINGS = {
     'showNavigationBar': True,
     'showCFNavigationBar': True,
     'showMainToolBar': True,
-    'terminalType': TERM_REDIRECT,
     'profilerLimits': ProfilerSettings(),
     'debuggerSettings': DebuggerSettings(),
     'debugHideMCF': True,
@@ -178,6 +180,7 @@ _DEFAULT_SETTINGS = {
     'ioconsoleautoscroll': True,
     'ioconsoleshowmargin': True,
     'navbarglobalsimports': False,
+    'ioconsolereuse': CLEAR_AND_REUSE,
 
     'recentProjects': [],
     'projectFilesFilters': ['^\\.', '.*\\~$', '.*\\.pyc$',

@@ -228,9 +228,10 @@ class RunDialog(QDialog):
             self.__customTermRButton.setChecked(True)
             self.__termEdit.setEnabled(True)
         self.__termEdit.setText(self.runParams['customTerminal'])
-        self.__termEdit.setToolTip('Use ${prog} substitution if needed.\n'
-                                   'Otherwise the command line is '
-                                   'attached at the end.')
+        self.__termEdit.setToolTip(
+            'Use ${prog} substitution if needed.\n'
+            'Otherwise the command line is attached at the end.\n'
+            'E.g.: xterm -e /bin/bash -c "${prog}; /bin/bash" &')
 
     def __populateProfile(self):
         """Populates profile"""

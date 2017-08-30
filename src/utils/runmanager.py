@@ -19,7 +19,7 @@
 
 """Run/profile/debug manager"""
 
-import os
+import os.path
 import logging
 import time
 from subprocess import Popen
@@ -42,6 +42,14 @@ DISCONNECTED = -2000000
 
 
 NEXT_ID = 0
+
+
+# Used from outside too
+def getWorkingDir(path, params):
+    """Provides the working directory"""
+    if params['useScriptLocation']:
+        return os.path.dirname(path)
+    return params['specificDir']
 
 
 def getNextID():
@@ -78,16 +86,15 @@ class RemoteProcessWrapper(QObject):
         """Starts the remote process"""
         params = getRunParameters(self.path)
         if self.redirected:
-            workingDir, cmd, environment = \
-                getCwdCmdEnv(kind, self.path, params,
-                             None, self.__serverPort, self.procID)
+            cmd, environment = getCwdCmdEnv(kind, self.path, params,
+                                            self.__serverPort, self.procID)
         else:
-            workingDir, cmd, environment = \
-                getCwdCmdEnv(kind, self.__path, params)
+            cmd, environment = getCwdCmdEnv(kind, self.path, params)
 
         try:
             self.__proc = Popen(cmd, shell=True,
-                                cwd=workingDir, env=environment)
+                                cwd=getWorkingDir(self.path, params),
+                                env=environment)
         except Exception as exc:
             logging.error(str(exc))
             return False
@@ -106,7 +113,7 @@ class RemoteProcessWrapper(QObject):
         """Kills the process"""
         self.__disconnectSocket()
         self.__kill()
-        self.sigFinished.emit(self.__procID, KILLED)
+        self.sigFinished.emit(self.procID, KILLED)
 
     def __connectSocket(self):
         """Connects the socket slots"""
@@ -179,7 +186,7 @@ class RemoteProcessWrapper(QObject):
 
     def __getChildPID(self):
         """Provides the child process PID if redirected"""
-        if self.__serverPort is None or self.__procID is None:
+        if self.__serverPort is None or self.procID is None:
             return None
 
         for item in os.listdir("/proc"):
@@ -193,7 +200,7 @@ class RemoteProcessWrapper(QObject):
                         if "-p" in content and \
                            str(self.__serverPort) in content:
                             if "-i" in content and \
-                                str(self.__procID) in content:
+                                str(self.procID) in content:
                                 return int(item)
                 except:
                     pass
@@ -202,7 +209,7 @@ class RemoteProcessWrapper(QObject):
     def __disconnected(self):
         """Triggered when the client closed the connection"""
         self.__kill()
-        self.sigFinished.emit(self.__procID, DISCONNECTED)
+        self.sigFinished.emit(self.procID, DISCONNECTED)
 
     def __sendStart(self):
         """Sends the start command to the runnee"""
@@ -307,7 +314,7 @@ class RemoteProcessWrapper(QObject):
                 # Must never happened
                 retCode = -1
             self.__sendExit()
-            self.sigFinished.emit(self.__procID, retCode)
+            self.sigFinished.emit(self.procID, retCode)
             QApplication.processEvents()
             return self.__buffer != ""
 
