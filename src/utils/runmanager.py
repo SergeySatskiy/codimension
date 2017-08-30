@@ -28,8 +28,8 @@ from debugger.client.protocol_cdm_dbg import *
 from ui.runparamsdlg import RunDialog
 from ui.qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
                    QTcpServer, QHostAddress, QAbstractSocket, pyqtSignal)
-from .run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
-from .runparams import RUN
+from .run import getCwdCmdEnv
+from .runparams import RUN, PROFILE, DEBUG
 from .procfeedback import killProcess
 from .globals import GlobalData
 from .settings import Settings
@@ -65,42 +65,25 @@ class RemoteProcessWrapper(QObject):
     PROTOCOL_STDOUT = 1
     PROTOCOL_STDERR = 2
 
-    def __init__(self, path, serverPort):
+    def __init__(self, path, serverPort, redirected):
         QObject.__init__(self)
-        self.__procID = getNextID()
-        self.__path = path
+        self.procID = getNextID()
+        self.path = path
+        self.redirected = redirected
         self.__serverPort = serverPort
         self.__clientSocket = None
-        self.__needRedirection = Settings()['terminalType'] == TERM_REDIRECT
-        self.__protocolState = self.PROTOCOL_CONTROL
-        self.__buffer = ""
         self.__proc = None
 
-    def needRedirection(self):
-        """True if redirection required"""
-        return self.__needRedirection
-
-    def procID(self):
-        """Provides the process ID"""
-        return self.__procID
-
-    def path(self):
-        """Provides the script path"""
-        return self.__path
-
-    def start(self):
+    def start(self, kind):
         """Starts the remote process"""
-        params = getRunParameters(self.__path)
-        terminalType = Settings()['terminalType']
-        if self.__needRedirection:
+        params = getRunParameters(self.path)
+        if self.redirected:
             workingDir, cmd, environment = \
-                getCwdCmdEnv(CMD_TYPE_RUN, self.__path, params,
-                             terminalType,
-                             None, self.__serverPort, self.__procID)
+                getCwdCmdEnv(kind, self.path, params,
+                             None, self.__serverPort, self.procID)
         else:
             workingDir, cmd, environment = \
-                getCwdCmdEnv(CMD_TYPE_RUN, self.__path, params,
-                             Settings()['terminalType'])
+                getCwdCmdEnv(kind, self.__path, params)
 
         try:
             self.__proc = Popen(cmd, shell=True,
@@ -353,7 +336,7 @@ class RemoteProcess:
     def __init__(self):
         self.procWrapper = None
         self.widget = None
-        self.isProfiling = False
+        self.kind = None
 
 
 class RunManager(QObject):
@@ -414,25 +397,23 @@ class RunManager(QObject):
         """Runs the given script with redirected IO"""
         if needDialog:
             params = getRunParameters(path)
-            profilerParams = Settings().getProfilerSettings()
-            debuggerParams = Settings().getDebuggerSettings()
-            dlg = RunDialog(path, params, profilerParams, debuggerParams, RUN,
-                            self.__mainWindow)
+            # profilerParams = Settings().getProfilerSettings()
+            # debuggerParams = Settings().getDebuggerSettings()
+            dlg = RunDialog(path, params, None, None, RUN, self.__mainWindow)
             if dlg.exec_() != QDialog.Accepted:
                 return
             addRunParams(path, dlg.runParams)
-            if dlg.termType != termType:
-                Settings()['terminalType'] = dlg.termType
 
         # The parameters for the run are ready.
         # Start the run business.
+        redirected = getRunParameters(path)['redirected']
         remoteProc = RemoteProcess()
-        remoteProc.isProfiling = False
-        remoteProc.procWrapper = RemoteProcessWrapper(path,
-            self.__tcpServer.serverPort())
-        if Settings()['terminalType'] == TERM_REDIRECT:
+        remoteProc.kind = RUN
+        remoteProc.procWrapper = RemoteProcessWrapper(
+            path, self.__tcpServer.serverPort(), redirected)
+        if redirected:
             remoteProc.widget = RunConsoleTabWidget(
-                remoteProc.procWrapper.procID())
+                remoteProc.procWrapper.procID)
             remoteProc.procWrapper.sigClientStdout.connect(
                 remoteProc.widget.appendStdoutMessage)
             remoteProc.procWrapper.sigClientStderr.connect(
@@ -445,18 +426,22 @@ class RunManager(QObject):
 
         remoteProc.procWrapper.sigFinished.connect(self.__onProcessFinished)
         self.__processes.append(remoteProc)
-        if remoteProc.procWrapper.start() == False:
+        if remoteProc.procWrapper.start(RUN) == False:
             # Failed to start - the fact is logged, just remove from the list
-            procIndex = self.__getProcessIndex(remoteProc.procWrapper.procID())
+            procIndex = self.__getProcessIndex(remoteProc.procWrapper.procID)
             if procIndex is not None:
                 del self.__processes[procIndex]
         else:
-            if Settings()['terminalType'] != TERM_REDIRECT:
+            if not redirected:
                 if not self.__waitTimer.isActive():
                     self.__waitTimer.start(1000)
 
-    def profile(self, path):
+    def profile(self, path, needDialog):
         """Profiles the given script with redirected IO"""
+        pass
+
+    def debug(self, path, needDialog):
+        """Debugs the given script with redirected IO"""
         pass
 
     def killAll(self):
@@ -464,7 +449,7 @@ class RunManager(QObject):
         index = len(self.__processes) - 1
         while index >= 0:
             item = self.__processes[index]
-            if item.procWrapper.needRedirection():
+            if item.procWrapper.redirected:
                 item.procWrapper.stop()
             index -= 1
 
@@ -480,7 +465,7 @@ class RunManager(QObject):
         count = 0
         index = len(self.__processes) - 1
         while index >= 0:
-            if self.__processes[index].procWrapper.needRedirection():
+            if self.__processes[index].procWrapper.redirected:
                 count += 1
             index -= 1
         return count
@@ -491,14 +476,14 @@ class RunManager(QObject):
         if index is None:
             return
         item = self.__processes[index]
-        if not item.procWrapper.needRedirection():
+        if not item.procWrapper.redirected:
             return
         item.procWrapper.stop()
 
     def __getProcessIndex(self, procID):
         """Returns a process index in the list"""
         for index, item in enumerate(self.__processes):
-            if item.procWrapper.procID() == procID:
+            if item.procWrapper.procID == procID:
                 return index
         return None
 
@@ -507,7 +492,7 @@ class RunManager(QObject):
         index = self.__getProcessIndex(procID)
         if index is not None:
             item = self.__processes[index]
-            if item.procWrapper.needRedirection():
+            if item.procWrapper.redirected:
                 if item.widget:
                     item.widget.scriptFinished()
                     if retCode == KILLED:
@@ -532,7 +517,7 @@ class RunManager(QObject):
             if item.widget:
                 self.__mainWindow.installIOConsole(item.widget)
                 item.widget.appendIDEMessage("Script " +
-                                             item.procWrapper.path() +
+                                             item.procWrapper.path +
                                              " started")
 
     def __onUserInput(self, procID, userInput):
@@ -540,7 +525,7 @@ class RunManager(QObject):
         index = self.__getProcessIndex(procID)
         if index is not None:
             item = self.__processes[index]
-            if item.procWrapper.needRedirection():
+            if item.procWrapper.redirected:
                 item.procWrapper.userInput(userInput)
 
     def __onWaitImer(self):
@@ -549,7 +534,7 @@ class RunManager(QObject):
         index = len(self.__processes) - 1
         while index >= 0:
             item = self.__processes[index]
-            if not item.procWrapper.needRedirection():
+            if not item.procWrapper.redirected:
                 if item.procWrapper.waitDetached():
                     del self.__processes[index]
                 else:
