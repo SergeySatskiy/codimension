@@ -27,9 +27,10 @@ import time
 import traceback
 import os
 import imp
-from .outredir_cdm_dbg import OutStreamRedirector, MAX_TRIES
-from .cdm_dbg_utils import prepareJSONMessage
-from .protocol_cdm_dbg import *
+from outredir_cdm_dbg import OutStreamRedirector, MAX_TRIES
+from cdm_dbg_utils import prepareJSONMessage
+from protocol_cdm_dbg import METHOD_PROC_ID_INFO
+from protocol_cdm_dbg import *
 from errno import EAGAIN
 
 
@@ -74,13 +75,15 @@ class RedirectedIORunWrapper():
             print("Unexpected arguments", file=sys.stderr)
             return 1
 
-        procid, host, port, wdir, args = self.parseArgs()
-        if procid is None or host is None or port is None or wdir is None:
+        procid, host, port, args = self.parseArgs()
+        if procid is None or host is None or port is None:
             print("Not enough arguments", file=sys.stderr)
             return 1
 
         remoteAddress = self.resolveHost(host)
         self.connect(remoteAddress, port)
+        self.sendJSONCommand(METHOD_PROC_ID_INFO, {'procid': procid})
+
         self.write(ResponseProcID + str(procid))
 
         try:
@@ -99,7 +102,7 @@ class RedirectedIORunWrapper():
         # Run the script
         retCode = 0
         try:
-            self.__runScript(wdir, args)
+            self.__runScript(args)
         except SystemExit as exc:
             if exc.code is None:
                 retCode = 0
@@ -197,19 +200,6 @@ class RedirectedIORunWrapper():
                     break
                 raise Exception("Unexpected command from IDE: " + data)
 
-    def write(self, data):
-        """Writes into the socket"""
-        tries = MAX_TRIES
-        while tries > 0:
-            try:
-                if self.__socket:
-                    self.__socket.sendall(data + EOT)
-                return
-            except socket.error:
-                tries -= 1
-                continue
-        raise socket.error("Too many attempts to send data")
-
     def sendJSONCommand(self, method, params):
         """Sends a single command or response to the IDE"""
         cmd = prepareJSONMessage(method, params)
@@ -224,7 +214,7 @@ class RedirectedIORunWrapper():
                 continue
         raise socket.error('Too many attempts to send data')
 
-    def __runScript(self, workingDir, arguments):
+    def __runScript(self, arguments):
         """Runs the python script"""
         try:
             # In Py 2.x, the builtins were in __builtin__
@@ -247,9 +237,8 @@ class RedirectedIORunWrapper():
 
         # Without this imports of what is located at the script directory do
         # not work
-        sys.path.insert(0, workingDir)
+        sys.path.insert(0, os.getcwd())
 
-        os.chdir(workingDir)
         f = open(fileName, "rU")
         source = f.read()
         f.close()
@@ -335,7 +324,6 @@ class RedirectedIORunWrapper():
         """Parses the arguments"""
         host = None
         port = None
-        wdir = None
         procid = None
         args = sys.argv[1:]
 
@@ -348,10 +336,6 @@ class RedirectedIORunWrapper():
                 port = int(args[1])
                 del args[0]
                 del args[0]
-            elif args[0] in ['-w', '--workdir']:
-                wdir = args[1]
-                del args[0]
-                del args[0]
             elif args[0] in ['-i', '--procid']:
                 procid = int(args[1])
                 del args[0]
@@ -360,7 +344,7 @@ class RedirectedIORunWrapper():
                 del args[0]
                 break
 
-        return procid, host, port, wdir, args
+        return procid, host, port, args
 
 
 if __name__ == "__main__":

@@ -34,7 +34,6 @@ from utils.fileutils import (getFileProperties, isImageViewable, isImageFile,
 from utils.diskvaluesrelay import getRunParameters, addRunParams
 from utils.runmanager import RunManager, getWorkingDir
 from utils.run import (parseCommandLineArguments, getNoArgsEnvironment,
-                       TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM,
                        TERM_REDIRECT)
 from utils.fileutils import isPythonMime
 from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
@@ -2373,16 +2372,6 @@ class CodimensionMainWindow(QMainWindow):
                     env += "\n        " + item
 
         terminal = "Terminal to run in: "
-        if self.settings['terminalType'] == TERM_AUTO:
-            terminal += "auto detection"
-        elif self.settings['terminalType'] == TERM_KONSOLE:
-            terminal += "default KDE konsole"
-        elif self.settings['terminalType'] == TERM_GNOME:
-            terminal += "gnome-terminal"
-        elif self.settings['terminalType'] == TERM_XTERM:
-            terminal += "xterm"
-        elif self.settings['terminalType'] == TERM_REDIRECT:
-            terminal += "redirect to IDE"
 
         logging.info("\n".join(
             ["Current debug session settings",

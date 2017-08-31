@@ -81,6 +81,7 @@ METHOD_REQUEST_FORK_TO = 'RequestForkTo'
 METHOD_STDOUT = 'ClientStdout'
 METHOD_STDERR = 'ClientStderr'
 
+METHOD_PROC_ID_INFO = 'ProcIDInfo'
 
 VAR_TYPE_DISP_STRINGS = {
     '__': 'Hidden Attributes',

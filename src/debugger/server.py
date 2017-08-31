@@ -29,7 +29,7 @@ from ui.qt import (pyqtSignal, QTimer, QObject, Qt, QModelIndex, QApplication,
                    QCursor, QMessageBox, QDialog, QTcpServer, QHostAddress,
                    QAbstractSocket)
 from utils.globals import GlobalData
-from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG, getUserShell, TERM_REDIRECT
+from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG, TERM_REDIRECT
 from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.pixmapcache import getIcon
@@ -262,9 +262,8 @@ class CodimensionDebugger(QObject):
 
                     if "client/client_cdm_dbg.py" in content:
                         if str(self.__tcpServer.serverPort()) in content:
-                            if content.startswith(getUserShell()):
-                                self.__procPID = int(item)
-                                return
+                            self.__procPID = int(item)
+                            return
                 except:
                     pass
 
