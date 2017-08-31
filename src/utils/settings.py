@@ -179,8 +179,9 @@ _DEFAULT_SETTINGS = {
     'ioconsoleshowspaces': True,
     'ioconsoleautoscroll': True,
     'ioconsoleshowmargin': True,
-    'navbarglobalsimports': False,
     'ioconsolereuse': CLEAR_AND_REUSE,
+
+    'navbarglobalsimports': False,
 
     'recentProjects': [],
     'projectFilesFilters': ['^\\.', '.*\\~$', '.*\\.pyc$',

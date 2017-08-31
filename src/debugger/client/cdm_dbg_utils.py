@@ -48,11 +48,12 @@ def printerr(s):
     sys.__stderr__.flush()
 
 
-def prepareJSONMessage(method, params):
+def prepareJSONMessage(method, procid, params):
     """Prepares a JSON message to be send"""
     msg = json.dumps(
         {'jsonrpc': '2.0',
          'method': method,
+         'procid': procid,
          'params': params}) + '\n'
     return msg.encode('utf8', 'backslashreplace')
 
@@ -60,7 +61,8 @@ def prepareJSONMessage(method, params):
 def parseJSONMessage(jsonStr):
     """Parses a JSON message"""
     cmdDictionary = json.loads(jsonStr.strip())
-    return cmdDictionary['method'], cmdDictionary['params']
+    return cmdDictionary['method'], cmdDictionary['procid'], \
+        cmdDictionary['params']
 
 
 def getArgValues(frame):

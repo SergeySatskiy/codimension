@@ -28,6 +28,7 @@ from utils.colorfont import (getMonospaceFontList, getScalableFontList,
                              getProportionalFontList)
 from utils.globals import GlobalData
 from utils.misc import getIDETemplateFile, getProjectTemplateFile
+from utils.settings import CLEAR_AND_REUSE, NO_CLEAR_AND_REUSE, NO_REUSE
 from .qt import QDir, QApplication, QMenu, QStyleFactory, QActionGroup
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
@@ -497,8 +498,6 @@ class MainWindowMenuMixin:
             ('Auto remove trailing spaces on save', 'removeTrailingOnSave',
              self._removeTrailingChanged),
             ('Editor calltips', 'editorCalltips', self._editorCalltipsChanged),
-            ('Clear debug IO console on new session', 'clearDebugIO',
-             self._clearDebugIOChanged),
             ('Show navigation bar', 'showNavigationBar',
              self._showNavBarChanged),
             ('Show control flow navigation bar', 'showCFNavigationBar',
@@ -513,6 +512,22 @@ class MainWindowMenuMixin:
             act.changed.connect(handler)
 
         optionsMenu.addSeparator()
+        redirectedMenu = optionsMenu.addMenu("Redirected I/O")
+        optionItems = [
+            ('Reuse I/O console if available and clear', CLEAR_AND_REUSE),
+            ('Reuse I/O console if available without clearing',
+             NO_CLEAR_AND_REUSE),
+            ('Create new I/O console for a new session', NO_REUSE)]
+
+        self.__ioGroup = QActionGroup(self)
+        for (name, data) in optionItems:
+            act = redirectedMenu.addAction(name)
+            act.setCheckable(True)
+            act.setData(data)
+            act.setActionGroup(self.__ioGroup)
+            act.setChecked(self.settings['ioconsolereuse'] == data)
+        redirectedMenu.triggered.connect(self._reuseIOConsoleChanged)
+
         tooltipsMenu = optionsMenu.addMenu("Tooltips")
         optionItems = [
             ('&Project tab', 'projectTooltips', self._projectTooltipsChanged),
@@ -1044,3 +1059,7 @@ class MainWindowMenuMixin:
         if currentWidget is None:
             return False
         return currentWidget.getType() == MainWindowTabWidgetBase.DiffViewer
+
+    def _reuseIOConsoleChanged(self, act):
+        """Triggered when a reuse I/O setting is changed"""
+        self.settings['ioconsolereuse'] = act.data()

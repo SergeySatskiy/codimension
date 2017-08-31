@@ -21,12 +21,8 @@
 
 from editor.redirectedioconsole import IOConsoleTabWidget
 from utils.pixmapcache import getIcon
+from utils.runparams import RUN, PROFILE, DEBUG
 from .qt import QApplication, QCursor, Qt
-
-
-RUN_CONSOLE = 0
-PROFILE_CONSOLE = 1
-DEBUG_CONSOLE = 2
 
 
 class MainWindowRedirectedIOMixin:
@@ -65,15 +61,15 @@ class MainWindowRedirectedIOMixin:
 
     def installIOConsole(self, widget, consoleType):
         """Installs a new widget at the bottom"""
-        if consoleType not in [RUN_CONSOLE, PROFILE_CONSOLE, DEBUG_CONSOLE]:
+        if consoleType not in [RUN, PROFILE, DEBUG]:
             raise Exception('Undefined redirected IO console type')
 
-        if consoleType == PROFILE_CONSOLE:
+        if consoleType == PROFILE:
             index = str(self.__getNewProfileIndex())
             caption = 'Profiling #' + index
             name = 'profiling#' + index
             tooltip = 'Redirected IO profile console #' + index + ' (running)'
-        elif consoleType == RUN_CONSOLE:
+        elif consoleType == RUN:
             index = str(self.__getNewRunIndex())
             caption = 'Run #' + index
             name = 'running#' + index

@@ -25,6 +25,7 @@ import time
 from subprocess import Popen
 from editor.redirectedrun import RunConsoleTabWidget
 from debugger.client.protocol_cdm_dbg import *
+from debugger.client.cdm_dbg_utils import parseJSONMessage, prepareJSONMessage
 from ui.runparamsdlg import RunDialog
 from ui.qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
                    QTcpServer, QHostAddress, QAbstractSocket, pyqtSignal)
@@ -39,6 +40,8 @@ from .diskvaluesrelay import getRunParameters, addRunParams
 # Finish codes in addition to the normal exit code
 KILLED = -1000000
 DISCONNECTED = -2000000
+
+HANDSHAKE_TIMEOUT = 15
 
 
 NEXT_ID = 0
@@ -68,10 +71,6 @@ class RemoteProcessWrapper(QObject):
     sigClientStdout = pyqtSignal(str)
     sigClientStderr = pyqtSignal(str)
     sigClientRawInput = pyqtSignal(str, int)
-
-    PROTOCOL_CONTROL = 0
-    PROTOCOL_STDOUT = 1
-    PROTOCOL_STDERR = 2
 
     def __init__(self, path, serverPort, redirected):
         QObject.__init__(self)
@@ -369,35 +368,34 @@ class RunManager(QObject):
         clientSocket.setSocketOption(QAbstractSocket.KeepAliveOption, 1)
         clientSocket.setSocketOption(QAbstractSocket.LowDelayOption, 1)
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        self.__waitForHandshake(clientSocket)
+        try:
+            self.__waitForHandshake(clientSocket)
+        except:
+            QApplication.restoreOverrideCursor()
+            raise
         QApplication.restoreOverrideCursor()
 
     def __waitForHandshake(self, clientSocket):
         """Waits for the message with the proc ID"""
         if clientSocket.waitForReadyRead(1000):
-            qs = clientSocket.readAll()
-            us = str(qs)
-            if not us.endswith(EOT):
-                return
+            qs = clientSocket.readLine()
+            jsonStr = bytes(qs).decode()
 
-            line = us[0:-len(EOT)]
-            if not line.startswith('>'):
-                return
+            print(jsonStr)
+            try:
+                method, procid, params = parseJSONMessage(jsonStr)
+            except (TypeError, ValueError) as exc:
+                logging.error(
+                    'The response received from the debugger backend '
+                    'could not be decoded. Please report the issue.\n'
+                    'Exception: ' + str(exc) + '\n'
+                    'Data: ' + jsonStr.strip())
 
-            cmdIndex = line.find('<')
-            if cmdIndex == -1:
-                return
 
-            cmd = line[0:cmdIndex + 1]
-            content = line[cmdIndex + 1:]
-            if cmd != ResponseProcID:
-                return
 
-            # It could only be a redirected process
-            procID = int(content)
-            procIndex = self.__getProcessIndex(procID)
+            procIndex = self.__getProcessIndex(procid)
             if procIndex is not None:
-                self.__onProcessStarted(procID)
+                self.__onProcessStarted(procid)
                 self.__processes[procIndex].procWrapper.setSocket(clientSocket)
 
     def run(self, path, needDialog):
@@ -421,6 +419,10 @@ class RunManager(QObject):
         if redirected:
             remoteProc.widget = RunConsoleTabWidget(
                 remoteProc.procWrapper.procID)
+            self.__mainWindow.installIOConsole(remoteProc.widget, RUN)
+            remoteProc.widget.appendIDEMessage(
+                'Running ' + path + '...')
+
             remoteProc.procWrapper.sigClientStdout.connect(
                 remoteProc.widget.appendStdoutMessage)
             remoteProc.procWrapper.sigClientStderr.connect(
@@ -522,10 +524,7 @@ class RunManager(QObject):
         if index is not None:
             item = self.__processes[index]
             if item.widget:
-                self.__mainWindow.installIOConsole(item.widget)
-                item.widget.appendIDEMessage("Script " +
-                                             item.procWrapper.path +
-                                             " started")
+                item.widget.appendIDEMessage('Started')
 
     def __onUserInput(self, procID, userInput):
         """Triggered when the user input is collected"""

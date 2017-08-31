@@ -82,7 +82,7 @@ class RedirectedIORunWrapper():
 
         remoteAddress = self.resolveHost(host)
         self.connect(remoteAddress, port)
-        self.sendJSONCommand(METHOD_PROC_ID_INFO, {'procid': procid})
+        self.sendJSONCommand(METHOD_PROC_ID_INFO, procid, None)
 
         self.write(ResponseProcID + str(procid))
 
@@ -200,9 +200,9 @@ class RedirectedIORunWrapper():
                     break
                 raise Exception("Unexpected command from IDE: " + data)
 
-    def sendJSONCommand(self, method, params):
+    def sendJSONCommand(self, method, procid, params):
         """Sends a single command or response to the IDE"""
-        cmd = prepareJSONMessage(method, params)
+        cmd = prepareJSONMessage(method, procid, params)
         tries = MAX_TRIES
         while tries > 0:
             try:

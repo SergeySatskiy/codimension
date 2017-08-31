@@ -1237,10 +1237,6 @@ class CodimensionMainWindow(QMainWindow):
         """Editor calltips changed"""
         self.settings['editorCalltips'] = not self.settings['editorCalltips']
 
-    def _clearDebugIOChanged(self):
-        """Clear debug IO console before a new session changed"""
-        self.settings['clearDebugIO'] = not self.settings['clearDebugIO']
-
     def _showNavBarChanged(self):
         """Editor setting changed"""
         self.settings['showNavigationBar'] = \
