@@ -32,8 +32,10 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     """IO console tab widget"""
 
-    sigSettingUpdated = pyqtSignal()
+    sigSettingsUpdated = pyqtSignal()
     sigUserInput = pyqtSignal(int, str)
+    sigKillIOConsoleProcess = pyqtSignal(int)
+    sigCloseIOConsole = pyqtSignal(int)
 
     def __init__(self, threadID, parent=None):
 
@@ -251,12 +253,12 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def __onWrapLongLines(self):
         """Triggered when long lines setting is changed"""
         Settings().ioconsolelinewrap = not Settings().ioconsolelinewrap
-        self.sigSettingUpdated.emit()
+        self.sigSettingsUpdated.emit()
 
     def __onShowWhitespaces(self):
         """Triggered when show whitespaces is changed"""
         Settings().ioconsoleshowspaces = not Settings().ioconsoleshowspaces
-        self.sigSettingUpdated.emit()
+        self.sigSettingsUpdated.emit()
 
     def __onAutoscroll(self):
         """Triggered when autoscroll is changed"""
@@ -265,7 +267,7 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def __onShowMargin(self):
         """Triggered when show margin is changed"""
         Settings().ioconsoleshowmargin = not Settings().ioconsoleshowmargin
-        self.sigSettingUpdated.emit()
+        self.sigSettingsUpdated.emit()
 
     def clear(self):
         """Triggered when requested to clear the console"""
@@ -361,7 +363,7 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def stop(self):
         """Triggered when the user requesed to stop the process"""
-        self.KillIOConsoleProcess.emit(self.__threadID)
+        self.sigKillIOConsoleProcess.emit(self.__threadID)
 
     def stopAndClose(self):
         """The user requested to stop the process and close console"""
@@ -370,7 +372,7 @@ class RunConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def close(self):
         """Triggered when the console should be closed"""
-        self.CloseIOConsole.emit(self.__threadID)
+        self.sigCloseIOConsole.emit(self.__threadID)
 
     def scriptFinished(self):
         """Triggered when the script process finished"""

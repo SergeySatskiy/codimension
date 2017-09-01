@@ -80,11 +80,11 @@ class MainWindowRedirectedIOMixin:
             name = 'debugging#' + index
             tooltip = 'Redirected IO debug console #' + index + ' (running)'
 
-        widget.KillIOConsoleProcess.connect(self.__onKillIOConsoleProcess)
-        widget.settingUpdated.connect(self.onIOConsoleSettingUpdated)
+        widget.sigKillIOConsoleProcess.connect(self.__onKillIOConsoleProcess)
+        widget.sigSettingsUpdated.connect(self.onIOConsoleSettingsUpdated)
 
         self._bottomSideBar.addTab(
-            widget, getIcon('ioconsole.png'), caption, name)
+            widget, getIcon('ioconsole.png'), caption, name, None)
         self._bottomSideBar.setTabToolTip(name, tooltip)
         self._bottomSideBar.show()
         self._bottomSideBar.setCurrentTab(name)
@@ -95,7 +95,7 @@ class MainWindowRedirectedIOMixin:
         """Kills the process linked to the IO console"""
         self.__runManager.kill(threadID)
 
-    def onIOConsoleSettingUpdated(self):
+    def onIOConsoleSettingsUpdated(self):
         """Initiates updating all the IO consoles settings"""
         index = self._bottomSideBar.count() - 1
         while index >= 0:
@@ -109,8 +109,8 @@ class MainWindowRedirectedIOMixin:
         """Create redirected IO console"""
         self.redirectedIOConsole = IOConsoleTabWidget(self)
         self.redirectedIOConsole.sigUserInput.connect(self.__onUserInput)
-        self.redirectedIOConsole.sigSettingUpdated.connect(
-            self.onIOConsoleSettingUpdated)
+        self.redirectedIOConsole.sigSettingsUpdated.connect(
+            self.onIOConsoleSettingsUpdated)
         self._bottomSideBar.addTab(
             self.redirectedIOConsole, getIcon('ioconsole.png'),
             'IO console', 'ioredirect', None)

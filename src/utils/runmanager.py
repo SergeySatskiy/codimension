@@ -24,7 +24,7 @@ import logging
 import time
 from subprocess import Popen
 from editor.redirectedrun import RunConsoleTabWidget
-from debugger.client.protocol_cdm_dbg import *
+from debugger.client.protocol_cdm_dbg import METHOD_PROC_ID_INFO
 from debugger.client.cdm_dbg_utils import parseJSONMessage, prepareJSONMessage
 from ui.runparamsdlg import RunDialog
 from ui.qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
@@ -42,9 +42,17 @@ KILLED = -1000000
 DISCONNECTED = -2000000
 
 HANDSHAKE_TIMEOUT = 15
+POLL_INTERVAL = 0.1
+BRUTAL_SHUTDOWN_TIMEOUT = 0.2
+GRACEFUL_SHUTDOWN_TIMEOUT = 5
 
 
 NEXT_ID = 0
+
+
+STATE_PROLOGUE = 0
+STATE_IN_CLIENT = 1
+
 
 
 # Used from outside too
@@ -77,6 +85,8 @@ class RemoteProcessWrapper(QObject):
         self.procID = getNextID()
         self.path = path
         self.redirected = redirected
+        self.state = None
+
         self.__serverPort = serverPort
         self.__clientSocket = None
         self.__proc = None
@@ -90,14 +100,9 @@ class RemoteProcessWrapper(QObject):
         else:
             cmd, environment = getCwdCmdEnv(kind, self.path, params)
 
-        try:
-            self.__proc = Popen(cmd, shell=True,
-                                cwd=getWorkingDir(self.path, params),
-                                env=environment)
-        except Exception as exc:
-            logging.error(str(exc))
-            return False
-        return True
+        self.__proc = Popen(cmd, shell=True,
+                            cwd=getWorkingDir(self.path, params),
+                            env=environment)
 
     def setSocket(self, clientSocket):
         """Called when an incoming connection has come"""
@@ -353,6 +358,7 @@ class RunManager(QObject):
         QObject.__init__(self)
         self.__mainWindow = mainWindow
         self.__processes = []
+        self.__prologueProcesses = []
 
         self.__tcpServer = QTcpServer()
         self.__tcpServer.newConnection.connect(self.__newConnection)
@@ -360,7 +366,11 @@ class RunManager(QObject):
 
         self.__waitTimer = QTimer(self)
         self.__waitTimer.setSingleShot(True)
-        self.__waitTimer.timeout.connect(self.__onWaitImer)
+        self.__waitTimer.timeout.connect(self.__onWaitTimer)
+
+        self.__prologueTimer(self)
+        self.__prologueTimer.setSingleShot(True)
+        self.__prologueTimer.timeout.connect(self.__onPrologueTimer)
 
     def __newConnection(self):
         """Handles new incoming connections"""
@@ -381,17 +391,25 @@ class RunManager(QObject):
             qs = clientSocket.readLine()
             jsonStr = bytes(qs).decode()
 
-            print(jsonStr)
             try:
                 method, procid, params = parseJSONMessage(jsonStr)
+                if method != METHOD_PROC_ID_INFO:
+                    logging.error('Unexpected message at the handshake stage. '
+                                  'Expected: ' + METHOD_PROC_ID_INFO +
+                                  '. Received: ' + str(method))
+                    try:
+                        clientSocket.close()
+                    except:
+                        pass
+                    return
             except (TypeError, ValueError) as exc:
-                logging.error(
-                    'The response received from the debugger backend '
-                    'could not be decoded. Please report the issue.\n'
-                    'Exception: ' + str(exc) + '\n'
-                    'Data: ' + jsonStr.strip())
-
-
+                self.__mainWindow.showStatusBarMessage(
+                    'Unsolicited connection to the RunManager. Ignoring...')
+                try:
+                    clientSocket.close()
+                except:
+                    pass
+                return
 
             procIndex = self.__getProcessIndex(procid)
             if procIndex is not None:
@@ -417,11 +435,16 @@ class RunManager(QObject):
         remoteProc.procWrapper = RemoteProcessWrapper(
             path, self.__tcpServer.serverPort(), redirected)
         if redirected:
+            remoteProc.procWrapper.state = STATE_PROLOGUE
+            self.__prologueProcesses.append((remoteProc.procWrapper.procID,
+                                             time.time()))
+            if not self.__prologueTimer.isActive():
+                self.__prologueTimer.start(1000)
             remoteProc.widget = RunConsoleTabWidget(
                 remoteProc.procWrapper.procID)
             self.__mainWindow.installIOConsole(remoteProc.widget, RUN)
             remoteProc.widget.appendIDEMessage(
-                'Running ' + path + '...')
+                'Starting ' + path + '...')
 
             remoteProc.procWrapper.sigClientStdout.connect(
                 remoteProc.widget.appendStdoutMessage)
@@ -430,20 +453,25 @@ class RunManager(QObject):
             remoteProc.procWrapper.sigClientRawInput.connect(
                 remoteProc.widget.rawInput)
             remoteProc.widget.sigUserInput.connect(self.__onUserInput)
-        else:
-            remoteProc.widget = None
 
         remoteProc.procWrapper.sigFinished.connect(self.__onProcessFinished)
         self.__processes.append(remoteProc)
-        if remoteProc.procWrapper.start(RUN) == False:
-            # Failed to start - the fact is logged, just remove from the list
-            procIndex = self.__getProcessIndex(remoteProc.procWrapper.procID)
-            if procIndex is not None:
-                del self.__processes[procIndex]
-        else:
+
+        try:
+            remoteProc.procWrapper.start(RUN)
             if not redirected:
                 if not self.__waitTimer.isActive():
                     self.__waitTimer.start(1000)
+        except Exception as exc:
+            # Failed to start:
+            # - log approprietly
+            # - remove from the list
+            if redirected:
+                remoteProc.widget.appendIDEMessage("Failed to start: " +
+                                                   str(exc))
+            else:
+                logging.error(str(exc))
+            del self.__processes[-1]
 
     def profile(self, path, needDialog):
         """Profiles the given script with redirected IO"""
@@ -534,7 +562,7 @@ class RunManager(QObject):
             if item.procWrapper.redirected:
                 item.procWrapper.userInput(userInput)
 
-    def __onWaitImer(self):
+    def __onWaitTimer(self):
         """Triggered when the timer fired"""
         needNewTimer = False
         index = len(self.__processes) - 1
@@ -548,3 +576,28 @@ class RunManager(QObject):
             index -= 1
         if needNewTimer:
             self.__waitTimer.start(1000)
+
+    def __onPrologueTimer(self):
+        """Triggered when a prologue phase controlling timer fired"""
+        needNewTimer = False
+        index = len(self.__prologueProcesses) - 1
+        while index >= 0:
+            procid, startTime = self.__prologueProcesses[index]
+            procIndex = self.__getProcessIndex(procid)
+            if procIndex is None:
+                # No such process anymore
+                del self.__prologueProcesses[index]
+            else:
+                item = self.__processes[procIndex]
+                if item.procWrapper.state != STATE_PROLOGUE:
+                    # The state has been changed
+                    del self.__prologueProcesses[index]
+                else:
+                    if time.time() - startTime > HANDSHAKE_TIMEOUT:
+                        # Waited too long
+                        item.widget.appendIDEMessage('Timeout: the process did not start; killing the process.')
+                        item.procWrapper.stop()
+                    else:
+                        needNewTimer = True
+        if needNewTimer:
+            self.__prologueTimer.start(1000)

@@ -500,7 +500,7 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     """IO console tab widget"""
 
     sigUserInput = pyqtSignal(str)
-    sigSettingUpdated = pyqtSignal()
+    sigSettingsUpdated = pyqtSignal()
 
     def __init__(self, parent):
         MainWindowTabWidgetBase.__init__(self)
@@ -596,13 +596,13 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
     def __onWrapLongLines(self):
         """Triggered when long lines setting is changed"""
         Settings()['ioconsolelinewrap'] = not Settings()['ioconsolelinewrap']
-        self.settingUpdated.emit()
+        self.sigSettingsUpdated.emit()
 
     def __onShowWhitespaces(self):
         """Triggered when show whitespaces is changed"""
         Settings()['ioconsoleshowspaces'] = \
             not Settings()['ioconsoleshowspaces']
-        self.settingUpdated.emit()
+        self.sigSettingsUpdated.emit()
 
     def __onAutoscroll(self):
         """Triggered when autoscroll is changed"""
@@ -613,7 +613,7 @@ class IOConsoleTabWidget(QWidget, MainWindowTabWidgetBase):
         """Triggered when show margin is changed"""
         Settings()['ioconsoleshowmargin'] = \
             not Settings()['ioconsoleshowmargin']
-        self.settingUpdated.emit()
+        self.sigSettingsUpdated.emit()
 
     def clear(self):
         """Triggered when requested to clear the console"""
