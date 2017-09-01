@@ -27,14 +27,15 @@ import time
 import traceback
 import os
 import imp
-from outredir_cdm_dbg import OutStreamRedirector, MAX_TRIES
-from cdm_dbg_utils import prepareJSONMessage
-from protocol_cdm_dbg import METHOD_PROC_ID_INFO
+from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket, QHostAddress
+from outredir_cdm_dbg import OutStreamRedirector
+from cdm_dbg_utils import sendJSONCommand, parseJSONMessage
+from protocol_cdm_dbg import METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE
 from protocol_cdm_dbg import *
 from errno import EAGAIN
 
 
-WAIT_CONTINUE_TIMEOUT = 10
+WAIT_CONTINUE_TIMEOUT = 5   # in seconds
 WAIT_EXIT_COMMAND = 5
 RUN_WRAPPER = None
 RUN_CLIENT_ORIG_INPUT = None
@@ -82,9 +83,7 @@ class RedirectedIORunWrapper():
 
         remoteAddress = self.resolveHost(host)
         self.connect(remoteAddress, port)
-        self.sendJSONCommand(METHOD_PROC_ID_INFO, procid, None)
-
-        self.write(ResponseProcID + str(procid))
+        sendJSONCommand(self.__socket, METHOD_PROC_ID_INFO, procid, None)
 
         try:
             self.__waitContinue()
@@ -95,8 +94,8 @@ class RedirectedIORunWrapper():
         # Setup redirections
         stdoutOld = sys.stdout
         stderrOld = sys.stderr
-        sys.stdout = OutStreamRedirector(self.__socket, True)
-        sys.stderr = OutStreamRedirector(self.__socket, False)
+        sys.stdout = OutStreamRedirector(self.__socket, True, procid)
+        sys.stderr = OutStreamRedirector(self.__socket, False, procid)
         self.__redirected = True
 
         # Run the script
@@ -138,46 +137,33 @@ class RedirectedIORunWrapper():
 
     def connect(self, remoteAddress, port):
         """Establishes a connection with the IDE"""
-        if remoteAddress is None:                    # default: 127.0.0.1
-            self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.__socket.connect(('127.0.0.1', port))
+        self.__socket = QTcpSocket()
+        if remoteAddress is None:
+            self.__socket.connectToHost(QHostAddress.LocalHost, port)
         else:
-            if "@@i" in remoteAddress:
-                remoteAddress, index = remoteAddress.split("@@i")
-            else:
-                index = 0
-            if ":" in remoteAddress:                              # IPv6
-                sockaddr = socket.getaddrinfo(remoteAddress, port, 0, 0,
-                                              socket.SOL_TCP)[0][-1]
-                self.__socket = socket.socket(socket.AF_INET6,
-                                              socket.SOCK_STREAM)
-                sockaddr = sockaddr[:-1] + (int(index),)
-                self.__socket.connect(sockaddr)
-            else:                                                   # IPv4
-                self.__socket = socket.socket(socket.AF_INET,
-                                              socket.SOCK_STREAM)
-                self.__socket.connect((remoteAddress, port))
+            self.__socket.connectToHost(remoteAddress, port)
+        if not self.__socket.waitForConnected(1000):
+            raise Exception('Cannot connect to the IDE')
+        self.__socket.setSocketOption(QAbstractSocket.KeepAliveOption, 1)
+        self.__socket.setSocketOption(QAbstractSocket.LowDelayOption, 1)
 
     def __waitContinue(self):
         """Waits the 'continue' command"""
-        startTime = time.time()
-        while True:
-            time.sleep(0.01)
+        if self.__socket.waitForReadyRead(WAIT_CONTINUE_TIMEOUT * 1000):
+            qs = self.__socket.readLine()
+            jsonStr = bytes(qs).decode()
 
-            # Read from the socket
             try:
-                data = self.__socket.recv(1024, socket.MSG_DONTWAIT)
-            except socket.error as exc:
-                if exc[0] != EAGAIN:
-                    raise
-                data = None
-            if not data:
-                if time.time() - startTime > WAIT_CONTINUE_TIMEOUT:
-                    raise Exception("Continue command timeout")
-            else:
-                if data == RequestContinue + EOT:
-                    break
-                raise Exception("Unexpected command from IDE: " + data)
+                method, _, _ = parseJSONMessage(jsonStr)
+                if method != METHOD_PROLOGUE_CONTINUE:
+                    raise Exception('Unexpected message from IDE. Expected: ' +
+                                    METHOD_PROLOGUE_CONTINUE + '. Received: ' +
+                                    str(method))
+                return
+            except (TypeError, ValueError) as exc:
+                raise Exception('Error parsing IDE message: ' + str(exc))
+
+        raise Exception('Timeout waiting an IDE prologue continue message')
 
     def __waitExit(self):
         """Waits for the 'exit' command"""
@@ -199,20 +185,6 @@ class RedirectedIORunWrapper():
                 if data == RequestExit + EOT:
                     break
                 raise Exception("Unexpected command from IDE: " + data)
-
-    def sendJSONCommand(self, method, procid, params):
-        """Sends a single command or response to the IDE"""
-        cmd = prepareJSONMessage(method, procid, params)
-        tries = MAX_TRIES
-        while tries > 0:
-            try:
-                if self.__socket:
-                    self.__socket.sendall(cmd)
-                return
-            except socket.error:
-                tries -= 1
-                continue
-        raise socket.error('Too many attempts to send data')
 
     def __runScript(self, arguments):
         """Runs the python script"""

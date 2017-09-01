@@ -24,20 +24,18 @@
 
 import socket
 from protocol_cdm_dbg import METHOD_STDOUT, METHOD_STDERR
-from cdm_dbg_utils import prepareJSONMessage
-
-
-MAX_TRIES = 3
+from cdm_dbg_utils import prepareJSONMessage, sendJSONCommand
 
 
 class OutStreamRedirector():
 
     """Wraps a socket object with a file interface"""
 
-    def __init__(self, sock, isStdout):
+    def __init__(self, sock, isStdout, procid):
         self.closed = False
         self.sock = sock
         self.isStdout = isStdout
+        self.procid = procid
 
     def close(self, closeit=False):
         """Closes the file. closeit != 0 => debugger requested it"""
@@ -100,22 +98,10 @@ class OutStreamRedirector():
         except (UnicodeEncodeError, UnicodeDecodeError):
             pass
 
-        tries = MAX_TRIES
-        while tries > 0:
-            try:
-                if self.isStdout:
-                    method = METHOD_STDOUT
-                else:
-                    method = METHOD_STDERR
-                msg = prepareJSONMessage(method,
-                                         {'text': data})
-                self.sock.sendall(msg)
-                return
-            except socket.error:
-                tries -= 1
-                continue
-
-        raise socket.error("Too many attempts to send data")
+        method = METHOD_STDERR
+        if self.isStdout:
+            method = METHOD_STDOUT
+        sendJSONCommand(self.sock, method, self.procid, {'text': data})
 
     def writelines(self, lines):
         """Writes a list of strings to the file"""

@@ -82,6 +82,7 @@ METHOD_STDOUT = 'ClientStdout'
 METHOD_STDERR = 'ClientStderr'
 
 METHOD_PROC_ID_INFO = 'ProcIDInfo'
+METHOD_PROLOGUE_CONTINUE = 'PrologueContinue'
 
 VAR_TYPE_DISP_STRINGS = {
     '__': 'Hidden Attributes',

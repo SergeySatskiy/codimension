@@ -29,8 +29,11 @@ Various debug utilities
 
 import json
 import sys
+import socket
 from collections import namedtuple
 from inspect import iscode, isframe
+
+MAX_TRIES = 3
 
 
 # Create constants for the compiler flags in Include/code.h
@@ -63,6 +66,29 @@ def parseJSONMessage(jsonStr):
     cmdDictionary = json.loads(jsonStr.strip())
     return cmdDictionary['method'], cmdDictionary['procid'], \
         cmdDictionary['params']
+
+
+def sendJSONCommand(clientSocket, method, procid, params):
+    """Prepares a message and sends it"""
+    cmd = prepareJSONMessage(method, procid, params)
+    if not clientSocket:
+        raise Exception('Cannot send a command to a counterpart: '
+                        'no connection established. Command: ' + str(cmd))
+
+    lastSocketError = None
+    tries = MAX_TRIES
+    while tries > 0:
+        try:
+            clientSocket.write(cmd)
+            clientSocket.flush()
+            return
+        except socket.error as exc:
+            tries -= 1
+            lastSocketError = str(exc)
+            continue
+    if lastSocketError:
+        raise Exception('Too many attempts to send data: ' + lastSocketError)
+    raise socket.error('Too many attempts to send data')
 
 
 def getArgValues(frame):

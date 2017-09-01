@@ -24,8 +24,9 @@ import logging
 import time
 from subprocess import Popen
 from editor.redirectedrun import RunConsoleTabWidget
-from debugger.client.protocol_cdm_dbg import METHOD_PROC_ID_INFO
-from debugger.client.cdm_dbg_utils import parseJSONMessage, prepareJSONMessage
+from debugger.client.protocol_cdm_dbg import (METHOD_PROC_ID_INFO,
+                                              METHOD_PROLOGUE_CONTINUE)
+from debugger.client.cdm_dbg_utils import parseJSONMessage, sendJSONCommand
 from ui.runparamsdlg import RunDialog
 from ui.qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
                    QTcpServer, QHostAddress, QAbstractSocket, pyqtSignal)
@@ -52,7 +53,6 @@ NEXT_ID = 0
 
 STATE_PROLOGUE = 0
 STATE_IN_CLIENT = 1
-
 
 
 # Used from outside too
@@ -217,9 +217,8 @@ class RemoteProcessWrapper(QObject):
 
     def __sendStart(self):
         """Sends the start command to the runnee"""
-        if self.__clientSocket:
-            data = RequestContinue + EOT
-            self.__clientSocket.write(data)
+        sendJSONCommand(self.__clientSocket, METHOD_PROLOGUE_CONTINUE,
+                        self.procID, None)
 
     def __sendExit(self):
         """sends the exit command to the runnee"""
@@ -232,19 +231,15 @@ class RemoteProcessWrapper(QObject):
 
     def __parseClientLine(self):
         """Parses a single line from the running client"""
-        while self.__clientSocket and self.__clientSocket.bytesAvailable() > 0:
-            self.__buffer += self.__clientSocket.readAll
+        while self.__clientSocket and self.__clientSocket.canReadLine():
+            qs = self.__clientSocket.readLine()
+            jsonStr = bytes(qs).decode()
 
-            tryAgain = True
-            while tryAgain:
-                if self.__protocolState == self.PROTOCOL_CONTROL:
-                    tryAgain = self.__processControlState()
-                elif self.__protocolState == self.PROTOCOL_STDOUT:
-                    tryAgain = self.__processStdoutStderrState(True)
-                elif self.__protocolState == self.PROTOCOL_STDERR:
-                    tryAgain = self.__processStdoutStderrState(False)
-                else:
-                    raise Exception("Unexpected protocol state")
+            print("Received: " + str(jsonStr))
+            try:
+                method, procid, params = parseJSONMessage(jsonStr)
+            except (TypeError, ValueError) as exc:
+                pass
 
     def __processStdoutStderrState(self, isStdout):
         """Analyzes receiving buffer in the STDOUT/STDERR state"""
@@ -368,7 +363,7 @@ class RunManager(QObject):
         self.__waitTimer.setSingleShot(True)
         self.__waitTimer.timeout.connect(self.__onWaitTimer)
 
-        self.__prologueTimer(self)
+        self.__prologueTimer = QTimer(self)
         self.__prologueTimer.setSingleShot(True)
         self.__prologueTimer.timeout.connect(self.__onPrologueTimer)
 
@@ -392,29 +387,31 @@ class RunManager(QObject):
             jsonStr = bytes(qs).decode()
 
             try:
-                method, procid, params = parseJSONMessage(jsonStr)
+                method, procid, _ = parseJSONMessage(jsonStr)
                 if method != METHOD_PROC_ID_INFO:
                     logging.error('Unexpected message at the handshake stage. '
                                   'Expected: ' + METHOD_PROC_ID_INFO +
                                   '. Received: ' + str(method))
-                    try:
-                        clientSocket.close()
-                    except:
-                        pass
+                    self.__safeSocketClose(clientSocket)
                     return
             except (TypeError, ValueError) as exc:
                 self.__mainWindow.showStatusBarMessage(
                     'Unsolicited connection to the RunManager. Ignoring...')
-                try:
-                    clientSocket.close()
-                except:
-                    pass
+                self.__safeSocketClose(clientSocket)
                 return
 
             procIndex = self.__getProcessIndex(procid)
             if procIndex is not None:
                 self.__onProcessStarted(procid)
                 self.__processes[procIndex].procWrapper.setSocket(clientSocket)
+
+    @staticmethod
+    def __safeSocketClose(clientSocket):
+        """No exception socket close"""
+        try:
+            clientSocket.close()
+        except Exception as exc:
+            logging.error('Run manager safe socket close: ' + str(exc))
 
     def run(self, path, needDialog):
         """Runs the given script with redirected IO"""
@@ -595,9 +592,12 @@ class RunManager(QObject):
                 else:
                     if time.time() - startTime > HANDSHAKE_TIMEOUT:
                         # Waited too long
-                        item.widget.appendIDEMessage('Timeout: the process did not start; killing the process.')
+                        item.widget.appendIDEMessage(
+                            'Timeout: the process did not start; '
+                            'killing the process.')
                         item.procWrapper.stop()
                     else:
                         needNewTimer = True
+            index -= 1
         if needNewTimer:
             self.__prologueTimer.start(1000)
