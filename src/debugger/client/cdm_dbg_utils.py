@@ -29,7 +29,6 @@ Various debug utilities
 
 import json
 import sys
-import socket
 from collections import namedtuple
 from inspect import iscode, isframe
 
@@ -82,13 +81,14 @@ def sendJSONCommand(clientSocket, method, procid, params):
             clientSocket.write(cmd)
             clientSocket.flush()
             return
-        except socket.error as exc:
+        except Exception as exc:
             tries -= 1
             lastSocketError = str(exc)
             continue
+    msg = 'Too many attempts to send data'
     if lastSocketError:
-        raise Exception('Too many attempts to send data: ' + lastSocketError)
-    raise socket.error('Too many attempts to send data')
+        msg += ': ' + lastSocketError
+    raise Exception(msg)
 
 
 def getArgValues(frame):

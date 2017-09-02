@@ -383,22 +383,20 @@ class RunManager(QObject):
     def __waitForHandshake(self, clientSocket):
         """Waits for the message with the proc ID"""
         if clientSocket.waitForReadyRead(1000):
-            qs = clientSocket.readLine()
-            jsonStr = bytes(qs).decode()
-
+            jsonStr = bytes(clientSocket.readLine()).decode()
             try:
-                method, procid, _ = parseJSONMessage(jsonStr)
+                method, procid, params = parseJSONMessage(jsonStr)
                 if method != METHOD_PROC_ID_INFO:
                     logging.error('Unexpected message at the handshake stage. '
                                   'Expected: ' + METHOD_PROC_ID_INFO +
                                   '. Received: ' + str(method))
                     self.__safeSocketClose(clientSocket)
-                    return
+                    return params
             except (TypeError, ValueError) as exc:
                 self.__mainWindow.showStatusBarMessage(
                     'Unsolicited connection to the RunManager. Ignoring...')
                 self.__safeSocketClose(clientSocket)
-                return
+                return None
 
             procIndex = self.__getProcessIndex(procid)
             if procIndex is not None:

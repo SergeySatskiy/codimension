@@ -23,20 +23,19 @@
 
 import sys
 import socket
-import time
 import traceback
 import os
 import imp
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket, QHostAddress
 from outredir_cdm_dbg import OutStreamRedirector
 from cdm_dbg_utils import sendJSONCommand, parseJSONMessage
-from protocol_cdm_dbg import METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE
-from protocol_cdm_dbg import *
-from errno import EAGAIN
+from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
+                              METHOD_EPILOGUE_EXIT, METHOD_EPILOGUE_EXIT_CODE,
+                              METHOD_STDIN)
 
 
 WAIT_CONTINUE_TIMEOUT = 5   # in seconds
-WAIT_EXIT_COMMAND = 5
+WAIT_EXIT_COMMAND = 5       # in seconds
 RUN_WRAPPER = None
 RUN_CLIENT_ORIG_INPUT = None
 
@@ -65,6 +64,7 @@ class RedirectedIORunWrapper():
     def __init__(self):
         self.__socket = None
         self.__redirected = False
+        self.__procid = None
 
     def redirected(self):
         """True if streams are redirected"""
@@ -76,14 +76,15 @@ class RedirectedIORunWrapper():
             print("Unexpected arguments", file=sys.stderr)
             return 1
 
-        procid, host, port, args = self.parseArgs()
-        if procid is None or host is None or port is None:
+        self.__procid, host, port, args = self.parseArgs()
+        if self.__procid is None or host is None or port is None:
             print("Not enough arguments", file=sys.stderr)
             return 1
 
         remoteAddress = self.resolveHost(host)
         self.connect(remoteAddress, port)
-        sendJSONCommand(self.__socket, METHOD_PROC_ID_INFO, procid, None)
+        sendJSONCommand(self.__socket, METHOD_PROC_ID_INFO,
+                        self.__procid, None)
 
         try:
             self.__waitContinue()
@@ -94,8 +95,8 @@ class RedirectedIORunWrapper():
         # Setup redirections
         stdoutOld = sys.stdout
         stderrOld = sys.stderr
-        sys.stdout = OutStreamRedirector(self.__socket, True, procid)
-        sys.stderr = OutStreamRedirector(self.__socket, False, procid)
+        sys.stdout = OutStreamRedirector(self.__socket, True, self.__procid)
+        sys.stderr = OutStreamRedirector(self.__socket, False, self.__procid)
         self.__redirected = True
 
         # Run the script
@@ -126,7 +127,8 @@ class RedirectedIORunWrapper():
 
         # Send the return code back
         try:
-            self.write(ResponseExit + str(retCode))
+            sendJSONCommand(self.__socket, METHOD_EPILOGUE_EXIT_CODE,
+                            self.__procid, {'ExitCode': retCode})
         except Exception as exc:
             print(str(exc), file=sys.stderr)
             self.close()
@@ -147,44 +149,30 @@ class RedirectedIORunWrapper():
         self.__socket.setSocketOption(QAbstractSocket.KeepAliveOption, 1)
         self.__socket.setSocketOption(QAbstractSocket.LowDelayOption, 1)
 
-    def __waitContinue(self):
-        """Waits the 'continue' command"""
-        if self.__socket.waitForReadyRead(WAIT_CONTINUE_TIMEOUT * 1000):
-            qs = self.__socket.readLine()
-            jsonStr = bytes(qs).decode()
-
+    def __waitForIDEMessage(self, msgType, timeout):
+        """Waits for a certain message from the IDE"""
+        if self.__socket.waitForReadyRead(timeout * 1000):
+            jsonStr = bytes(self.__socket.readLine()).decode()
             try:
-                method, _, _ = parseJSONMessage(jsonStr)
-                if method != METHOD_PROLOGUE_CONTINUE:
+                method, _, params = parseJSONMessage(jsonStr)
+                if method != msgType:
                     raise Exception('Unexpected message from IDE. Expected: ' +
-                                    METHOD_PROLOGUE_CONTINUE + '. Received: ' +
-                                    str(method))
-                return
+                                    msgType + '. Received: ' + str(method))
+                return params
             except (TypeError, ValueError) as exc:
                 raise Exception('Error parsing IDE message: ' + str(exc))
 
-        raise Exception('Timeout waiting an IDE prologue continue message')
+        raise Exception('Timeout waiting an IDE message ' + msgType)
+
+    def __waitContinue(self):
+        """Waits the 'continue' command"""
+        self.__waitForIDEMessage(METHOD_PROLOGUE_CONTINUE,
+                                 WAIT_CONTINUE_TIMEOUT)
 
     def __waitExit(self):
         """Waits for the 'exit' command"""
-        startTime = time.time()
-        while True:
-            time.sleep(0.01)
-
-            # Read from the socket
-            try:
-                data = self.__socket.recv(1024, socket.MSG_DONTWAIT)
-            except socket.error as exc:
-                if exc[0] != EAGAIN:
-                    raise
-                data = None
-            if data is None:
-                if time.time() - startTime > WAIT_EXIT_COMMAND:
-                    raise Exception("Exit command timeout")
-            else:
-                if data == RequestExit + EOT:
-                    break
-                raise Exception("Unexpected command from IDE: " + data)
+        self.__waitForIDEMessage(METHOD_EPILOGUE_EXIT,
+                                 WAIT_EXIT_COMMAND)
 
     def __runScript(self, arguments):
         """Runs the python script"""
@@ -244,46 +232,16 @@ class RedirectedIORunWrapper():
 
     def input(self, prompt, echo):
         """Implements input() using the redirected input"""
-        # self.__flushSocketBuffer()
-        self.write("%s%s" % (ResponseRaw, (prompt, echo)))
-        return self.__waitInput()
-
-    def __flushSocketBuffer(self):
-        """Debug purpose function which empties the socket buffer"""
-        try:
-            data = self.__socket.recv(1024, socket.MSG_DONTWAIT)
-            if data is not None:
-                if len(data) > 0:
-                    f = open("clientsocket.txt", "a")
-                    f.write("UNEXPECTED data in socket: " + repr(data) + "\n")
-                    f.close()
-        except:
-            pass
-
-    def __waitInput(self):
-        """Waits for the user input"""
-        buf = u""
-        while True:
-            try:
-                data = self.__socket.recv(4096)
-                if data is not None:
-                    pos = data.find('\n')
-                    if pos != -1:
-                        buf += data[0:pos].decode('utf8')
-                        break
-
-                    buf += data.decode('utf8')
-            except Exception as exc:
-                f = open("clientsocket.txt", "a")
-                f.write("Wait input exception: " + str(exc) + "\n")
-                f.close()
-        return buf
+        sendJSONCommand(self.__socket, METHOD_STDIN, self.__procid,
+                        {'prompt': prompt, 'echo': echo})
+        params = self.__waitForIDEMessage(METHOD_STDIN, 60 * 60 * 24 * 7)
+        return params['input']
 
     @staticmethod
     def resolveHost(host):
         """Resolves a hostname to an IP address"""
         try:
-            host, version = host.split("@@")
+            host, _ = host.split("@@")
             family = socket.AF_INET6
         except ValueError:
             # version = 'v4'
