@@ -718,12 +718,12 @@ class QutepartWrapper(Qutepart):
         partsNoEnd = text.splitlines()
         partsWithEnd = text.splitlines(True)
 
-        lastIndex = len(partsNoEnd)
+        lastIndex = len(partsNoEnd) - 1
         with self:
             for index, value in enumerate(partsNoEnd):
                 if value:
                     self.lines[-1] += value
-                if index == partsNoEnd:
+                if index == lastIndex:
                     if value != partsWithEnd[index]:
                         self.lines.append('')
                 else:

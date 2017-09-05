@@ -74,9 +74,9 @@ class RedirectedIOConsole(QutepartWrapper):
             CTRL_SHIFT: {Qt.Key_C: self.onCtrlShiftC},
             SHIFT: {Qt.Key_End: self.onShiftEnd,
                     Qt.Key_Home: self.onShiftHome,
-                    Qt.Key_Insert: self.insertText,
+                    Qt.Key_Insert: self.pasteText,
                     Qt.Key_Delete: self.onShiftDel},
-            CTRL: {Qt.Key_V: self.insertText,
+            CTRL: {Qt.Key_V: self.pasteText,
                    Qt.Key_X: self.onShiftDel,
                    Qt.Key_C: self.onCtrlC,
                    Qt.Key_Insert: self.onCtrlC,
@@ -155,13 +155,13 @@ class RedirectedIOConsole(QutepartWrapper):
             return
         if key == Qt.Key_Backspace:
             if self.currentPosition() == self.lastOutputPos:
-                if self.inputEcho == False:
+                if not self.inputEcho:
                     self.inputBuffer = self.inputBuffer[:-1]
                 return
 
         QutepartWrapper.keyPressEvent(self, event)
 
-    def insertText(self):
+    def pasteText(self):
         """Triggered when insert is requested"""
         if self.isReadOnly():
             return True
@@ -223,8 +223,9 @@ class RedirectedIOConsole(QutepartWrapper):
         self.drawAnyWhitespace = Settings()['ioconsoleshowspaces']
         self.drawIncorrectIndentation = Settings()['ioconsoleshowspaces']
 
-    def _onCursorPositionChanged(self, line, pos):
+    def _onCursorPositionChanged(self, line, _):
         """Called when the cursor changed position"""
+        line += 1   # pylint complain
         self.setCursorStyle()
 
     def setCursorStyle(self):
@@ -278,7 +279,7 @@ class RedirectedIOConsole(QutepartWrapper):
             getIcon('copymenu.png'), '&Copy all with timestamps',
             self.onCtrlShiftC, "Ctrl+Shift+C")
         self.__menuPaste = self._menu.addAction(
-            getIcon('pastemenu.png'), '&Paste', self.insertText, "Ctrl+V")
+            getIcon('pastemenu.png'), '&Paste', self.pasteText, "Ctrl+V")
         self.__menuSelectAll = self._menu.addAction(
             getIcon('selectallmenu.png'), 'Select &all',
             self.selectAll, "Ctrl+A")
@@ -418,40 +419,39 @@ class RedirectedIOConsole(QutepartWrapper):
 
     def __renderMessage(self, msg):
         """Adds a single message"""
+        margin = self.getMargin('cdm_redirected_io_margin')
         timestamp = msg.getTimestamp()
         if msg.msgType == IOConsoleMsg.IDE_MESSAGE:
-            # Check the text. Append \n if needed. Append the message
             line, pos = self.getEndPosition()
 
+            txt = msg.msgText
             startMarkLine = line
             if pos != 0:
-                self.append("\n")
+                txt = '\n' + txt
                 startMarkLine += 1
 
-            self.append(msg.msgText)
-            if not msg.msgText.endswith("\n"):
-                self.append("\n")
+            self.append(txt)
 
-            margin = self.getMargin('cdm_redirected_io_margin')
-            line, pos = self.getEndPosition()
-            for lineNo in range(startMarkLine, line):
+            line, _ = self.getEndPosition()
+            for lineNo in range(startMarkLine, line + 1):
                 margin.addData(lineNo + 1, timestamp,
                                timestamp, IOConsoleMsg.IDE_MESSAGE)
         else:
             line, pos = self.getEndPosition()
-            if pos != 0:
-                self.__addTooltip(line, timestamp)
-                startTimestampLine = line + 1
-            else:
-                startTimestampLine = line
-            self.append(msg.msgText)
-            line, pos = self.getEndPosition()
-            if pos != 0:
-                endTimestampLine = line
-            else:
-                endTimestampLine = line - 1
+            txt = msg.msgText
 
-            margin = self.getMargin('cdm_redirected_io_margin')
+            startTimestampLine = line
+            if pos != 0:
+                lastMsgType = margin.getLineMessageType(line + 1)
+                if lastMsgType == IOConsoleMsg.IDE_MESSAGE:
+                    txt = '\n' + txt
+                    startTimestampLine = line + 1
+
+            self.append(txt)
+            endTimestampLine, pos = self.getEndPosition()
+            if pos == 0:
+                endTimestampLine -= 1
+
             for lineNo in range(startTimestampLine, endTimestampLine + 1):
                 margin.addData(lineNo + 1, timestamp, timestamp,
                                msg.msgType)
@@ -460,14 +460,6 @@ class RedirectedIOConsole(QutepartWrapper):
         if Settings()['ioconsoleautoscroll']:
             line, pos = self.getEndPosition()
             self.gotoLine(line + 1, pos + 1)
-
-    def __addTooltip(self, lineNo, timestamp):
-        """Adds a tooltip into the dictionary"""
-        if lineNo in self.__marginTooltip:
-            self.__marginTooltip[lineNo].append(timestamp)
-        else:
-            self.__marginTooltip[lineNo] = [timestamp]
-            self.setMarginText(lineNo, timestamp, self.marginStyle)
 
     def clearData(self):
         """Clears the collected data"""

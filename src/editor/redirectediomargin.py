@@ -188,3 +188,9 @@ class CDMRedirectedIOMargin(QWidget):
         else:
             self.__data[lineno] = [(text, tooltip, msgType)]
             self.update()
+
+    def getLineMessageType(self, lineno):
+        """Provides the last line message type"""
+        if lineno in self.__data:
+            return self.__data[lineno][0][2]
+        return None

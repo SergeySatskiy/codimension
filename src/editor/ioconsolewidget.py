@@ -136,7 +136,8 @@ class IOConsoleWidget(QWidget):
             not Settings()['ioconsoleshowspaces']
         self.sigSettingsUpdated.emit()
 
-    def __onAutoscroll(self):
+    @staticmethod
+    def __onAutoscroll():
         """Triggered when autoscroll is changed"""
         Settings()['ioconsoleautoscroll'] = \
             not Settings()['ioconsoleautoscroll']
@@ -151,6 +152,7 @@ class IOConsoleWidget(QWidget):
         self.__viewer.setTimestampMarginWidth()
 
     def resizeEvent(self, event):
+        """Handles the widget resize"""
         QWidget.resizeEvent(self, event)
 
     def writeFile(self, fileName):

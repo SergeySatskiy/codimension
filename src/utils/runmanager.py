@@ -39,7 +39,7 @@ from .run import getCwdCmdEnv
 from .runparams import RUN, PROFILE, DEBUG
 from .procfeedback import killProcess
 from .globals import GlobalData
-from .settings import Settings, CLEAR_AND_REUSE, NO_CLEAR_AND_REUSE, NO_REUSE
+from .settings import Settings, CLEAR_AND_REUSE, NO_REUSE
 from .diskvaluesrelay import getRunParameters, addRunParams
 
 
