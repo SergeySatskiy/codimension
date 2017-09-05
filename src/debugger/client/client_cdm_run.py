@@ -64,7 +64,7 @@ class RedirectedIORunWrapper():
     def __init__(self):
         self.__socket = None
         self.__redirected = False
-        self.__procid = None
+        self.__procuuid = None
 
     def redirected(self):
         """True if streams are redirected"""
@@ -76,15 +76,15 @@ class RedirectedIORunWrapper():
             print("Unexpected arguments", file=sys.stderr)
             return 1
 
-        self.__procid, host, port, args = self.parseArgs()
-        if self.__procid is None or host is None or port is None:
+        self.__procuuid, host, port, args = self.parseArgs()
+        if self.__procuuid is None or host is None or port is None:
             print("Not enough arguments", file=sys.stderr)
             return 1
 
         remoteAddress = self.resolveHost(host)
         self.connect(remoteAddress, port)
         sendJSONCommand(self.__socket, METHOD_PROC_ID_INFO,
-                        self.__procid, None)
+                        self.__procuuid, None)
 
         try:
             self.__waitForIDEMessage(METHOD_PROLOGUE_CONTINUE,
@@ -96,8 +96,8 @@ class RedirectedIORunWrapper():
         # Setup redirections
         stdoutOld = sys.stdout
         stderrOld = sys.stderr
-        sys.stdout = OutStreamRedirector(self.__socket, True, self.__procid)
-        sys.stderr = OutStreamRedirector(self.__socket, False, self.__procid)
+        sys.stdout = OutStreamRedirector(self.__socket, True, self.__procuuid)
+        sys.stderr = OutStreamRedirector(self.__socket, False, self.__procuuid)
         self.__redirected = True
 
         # Run the script
@@ -133,7 +133,7 @@ class RedirectedIORunWrapper():
         # Send the return code back
         try:
             sendJSONCommand(self.__socket, METHOD_EPILOGUE_EXIT_CODE,
-                            self.__procid, {'exitCode': retCode})
+                            self.__procuuid, {'exitCode': retCode})
         except Exception as exc:
             print(str(exc), file=sys.stderr)
             self.close()
@@ -229,7 +229,7 @@ class RedirectedIORunWrapper():
 
     def input(self, prompt, echo):
         """Implements input() using the redirected input"""
-        sendJSONCommand(self.__socket, METHOD_STDIN, self.__procid,
+        sendJSONCommand(self.__socket, METHOD_STDIN, self.__procuuid,
                         {'prompt': prompt, 'echo': echo})
         params = self.__waitForIDEMessage(METHOD_STDIN, 60 * 60 * 24 * 7)
         return params['input']
@@ -251,27 +251,27 @@ class RedirectedIORunWrapper():
         """Parses the arguments"""
         host = None
         port = None
-        procid = None
+        procuuid = None
         args = sys.argv[1:]
 
         while args[0]:
-            if args[0] in ['-h', '--host']:
+            if args[0] in ['--host']:
                 host = args[1]
                 del args[0]
                 del args[0]
-            elif args[0] in ['-p', '--port']:
+            elif args[0] in ['--port']:
                 port = int(args[1])
                 del args[0]
                 del args[0]
-            elif args[0] in ['-i', '--procid']:
-                procid = int(args[1])
+            elif args[0] in ['--procuuid']:
+                procuuid = args[1]
                 del args[0]
                 del args[0]
             elif args[0] == '--':
                 del args[0]
                 break
 
-        return procid, host, port, args
+        return procuuid, host, port, args
 
 
 if __name__ == "__main__":

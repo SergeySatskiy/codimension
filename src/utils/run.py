@@ -60,7 +60,7 @@ def prepareScript(path):
 
 
 def getTerminalCommandToRun(fileName, arguments, params,
-                            tcpServerPort=None, procID=None):
+                            tcpServerPort=None, procuuid=None):
     """Provides a command to run a separate shell terminal"""
     interpreter = prepareInterpreter(params)
     script = prepareScript(fileName)
@@ -70,8 +70,8 @@ def getTerminalCommandToRun(fileName, arguments, params,
                                       "debugger", "client",
                                       "client_cdm_run.py"])
         parts = [interpreter, runClient,
-                 '-h', 'localhost', '-p', str(tcpServerPort),
-                 '-i', str(procID), '--', script] + prepareArguments(arguments)
+                 '--host', 'localhost', '--port', str(tcpServerPort),
+                 '--procuuid', str(procuuid), '--', script] + prepareArguments(arguments)
         return ' '.join(parts)
 
     # Non-redirected case, i.e. the user provided the a custom terminal string
@@ -84,7 +84,7 @@ def getTerminalCommandToRun(fileName, arguments, params,
 
 
 def getTerminalCommandToProfile(fileName, arguments, params,
-                                tcpServerPort=None, procID=None):
+                                tcpServerPort=None, procuuid=None):
     """Provides a command to run a separate shell terminal"""
     interpreter = prepareInterpreter(params)
     script = prepareScript(fileName)
@@ -94,8 +94,8 @@ def getTerminalCommandToProfile(fileName, arguments, params,
                                       "debugger", "client",
                                       "client_cdm_profile.py"])
         parts = [interpreter, runClient,
-                 '-h', 'localhost', '-p', str(tcpServerPort),
-                 '-i', str(procID), '--', script] + prepareArguments(arguments)
+                 '--host', 'localhost', '--port', str(tcpServerPort),
+                 '--procuuid', str(procuuid), '--', script] + prepareArguments(arguments)
         return ' '.join(parts)
 
     # Non-redirected case, i.e. the user provided the a custom terminal string
@@ -108,7 +108,7 @@ def getTerminalCommandToProfile(fileName, arguments, params,
 
 
 def getTerminalCommandToDebug(fileName, arguments, params,
-                              tcpServerPort, procID):
+                              tcpServerPort, procuuid):
     """Provides a command line to debug in a separate shell terminal"""
     interpreter = prepareInterpreter(params)
     script = prepareScript(fileName)
@@ -117,8 +117,8 @@ def getTerminalCommandToDebug(fileName, arguments, params,
                                     "debugger", "client",
                                     "client_cdm_dbg.py"])
     parts = [interpreter, debugClient,
-             '-h', 'localhost', '-p', str(tcpServerPort),
-             '-i', str(procID)]
+             '--host', 'localhost', '--port', str(tcpServerPort),
+             '--procuuid', str(procuuid)]
 
     # Get the debugging specific parameters
     from .settings import Settings
@@ -225,7 +225,7 @@ def parseCommandLineArguments(cmdLine):
     return result
 
 
-def getCwdCmdEnv(kind, path, params, tcpServerPort=None, procID=None):
+def getCwdCmdEnv(kind, path, params, tcpServerPort=None, procuuid=None):
     """Provides the working directory, command line and environment
        for running/debugging a script"""
     # The arguments parsing is going to pass OK because it
@@ -237,13 +237,13 @@ def getCwdCmdEnv(kind, path, params, tcpServerPort=None, procID=None):
     arguments = parseCommandLineArguments(params['arguments'])
     if kind == RUN:
         cmd = getTerminalCommandToRun(path, arguments, params,
-                                      tcpServerPort, procID)
+                                      tcpServerPort, procuuid)
     elif kind == PROFILE:
         cmd = getTerminalCommandToProfile(path, arguments, params,
-                                          tcpServerPort, procID)
+                                          tcpServerPort, procuuid)
     elif kind == DEBUG:
         cmd = getTerminalCommandToDebug(path, arguments, params,
-                                        tcpServerPort, procID)
+                                        tcpServerPort, procuuid)
 
     environment = getNoArgsEnvironment(params)
     for index, value in enumerate(arguments):

@@ -24,7 +24,7 @@ import logging
 import time
 import uuid
 from subprocess import Popen
-from editor.redirectedrun import RunConsoleTabWidget
+from editor.ioconsolewidget import IOConsoleWidget
 from debugger.client.protocol_cdm_dbg import (METHOD_PROC_ID_INFO,
                                               METHOD_PROLOGUE_CONTINUE,
                                               METHOD_EPILOGUE_EXIT_CODE,
@@ -198,9 +198,9 @@ class RemoteProcessWrapper(QObject):
                     f.close()
 
                     if "client/client_cdm_run.py" in content:
-                        if "-p" in content and \
+                        if "--port" in content and \
                            str(self.__serverPort) in content:
-                            if "-i" in content and \
+                            if "--procuuid" in content and \
                                 str(self.procuuid) in content:
                                 return int(item)
                 except:
@@ -214,18 +214,14 @@ class RemoteProcessWrapper(QObject):
 
     def __sendStart(self):
         """Sends the start command to the runnee"""
-        print("Sending prologue continue...")
         sendJSONCommand(self.__clientSocket, METHOD_PROLOGUE_CONTINUE,
                         self.procuuid, None)
-        print("sent")
 
     def __sendExit(self):
         """sends the exit command to the runnee"""
         self.__disconnectSocket()
-        print("Socket disconnected. Sending epilogue exit...")
         sendJSONCommand(self.__clientSocket, METHOD_EPILOGUE_EXIT,
                         self.procuuid, None)
-        print('sent')
 
     def __parseClientLine(self):
         """Parses a single line from the running client"""
@@ -328,7 +324,6 @@ class RunManager(QObject):
                 self.__safeSocketClose(clientSocket)
                 return None
 
-            print("PROC ID RECEIVED")
             procIndex = self.__getProcessIndex(procuuid)
             if procIndex is not None:
                 self.__onProcessStarted(procuuid)
@@ -347,15 +342,24 @@ class RunManager(QObject):
         """Picks the widget for a process"""
         consoleReuse = Settings()['ioconsolereuse']
         if consoleReuse == NO_REUSE:
-            widget = RunConsoleTabWidget(procuuid)
+            widget = IOConsoleWidget(procuuid, kind)
             self.__mainWindow.addIOConsole(widget, kind)
             return widget
 
+        widget = None
         consoles = self.__mainWindow.getIOConsoles()
         for console in consoles:
-            procuuid = 
-
-
+            if console.kind == kind:
+                procIndex = self.__getProcessIndex(console.procuuid)
+                if procIndex is None:
+                    widget = console
+                    if consoleReuse == CLEAR_AND_REUSE:
+                        widget.clear()
+                    break
+        if widget is None:
+            widget = IOConsoleWidget(procuuid, kind)
+            self.__mainWindow.addIOConsole(widget, kind)
+        return widget
 
     def run(self, path, needDialog):
         """Runs the given script with redirected IO"""
@@ -391,7 +395,7 @@ class RunManager(QObject):
             remoteProc.procWrapper.sigClientStderr.connect(
                 remoteProc.widget.appendStderrMessage)
             remoteProc.procWrapper.sigClientInput.connect(
-                remoteProc.widget.rawInput)
+                remoteProc.widget.input)
             remoteProc.widget.sigUserInput.connect(self.__onUserInput)
 
         remoteProc.procWrapper.sigFinished.connect(self.__onProcessFinished)

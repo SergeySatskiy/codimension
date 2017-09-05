@@ -50,12 +50,12 @@ def printerr(s):
     sys.__stderr__.flush()
 
 
-def prepareJSONMessage(method, procid, params):
+def prepareJSONMessage(method, procuuid, params):
     """Prepares a JSON message to be send"""
     msg = json.dumps(
         {'jsonrpc': '2.0',
          'method': method,
-         'procid': procid,
+         'procuuid': procuuid,
          'params': params}) + '\n'
     return msg.encode('utf8', 'backslashreplace')
 
@@ -63,13 +63,13 @@ def prepareJSONMessage(method, procid, params):
 def parseJSONMessage(jsonStr):
     """Parses a JSON message"""
     cmdDictionary = json.loads(jsonStr.strip())
-    return cmdDictionary['method'], cmdDictionary['procid'], \
+    return cmdDictionary['method'], cmdDictionary['procuuid'], \
         cmdDictionary['params']
 
 
-def sendJSONCommand(clientSocket, method, procid, params):
+def sendJSONCommand(clientSocket, method, procuuid, params):
     """Prepares a message and sends it"""
-    cmd = prepareJSONMessage(method, procid, params)
+    cmd = prepareJSONMessage(method, procuuid, params)
     if not clientSocket:
         raise Exception('Cannot send a command to a counterpart: '
                         'no connection established. Command: ' + str(cmd))

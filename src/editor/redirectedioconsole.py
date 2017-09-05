@@ -450,23 +450,11 @@ class RedirectedIOConsole(QutepartWrapper):
                 endTimestampLine = line
             else:
                 endTimestampLine = line - 1
+
+            margin = self.getMargin('cdm_redirected_io_margin')
             for lineNo in range(startTimestampLine, endTimestampLine + 1):
-                self.__addTooltip(lineNo, timestamp)
-
-            if msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
-                # Highlight as stderr
-                styleNo = self.stderrStyle
-            elif msg.msgType == IOConsoleMsg.STDOUT_MESSAGE:
-                # Highlight as stdout
-                styleNo = self.stdoutStyle
-            else:
-                styleNo = self.stdinStyle
-
-            line, pos = self.getEndPosition()
-            endPos = self.positionFromLineIndex(line, pos)
-
-            line, pos = self.getEndPosition()
-            endPos = self.positionFromLineIndex(line, pos)
+                margin.addData(lineNo + 1, timestamp, timestamp,
+                               msg.msgType)
 
         self.clearUndoRedoHistory()
         if Settings()['ioconsoleautoscroll']:

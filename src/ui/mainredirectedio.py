@@ -19,7 +19,6 @@
 
 """Codimension main window redirected io support"""
 
-from editor.redirectedioconsole import IOConsoleTabWidget
 from utils.pixmapcache import getIcon
 from utils.runparams import RUN, PROFILE, DEBUG
 from .qt import QApplication, QCursor, Qt
@@ -97,7 +96,7 @@ class MainWindowRedirectedIOMixin:
 
     def onIOConsoleSettingsUpdated(self):
         """Initiates updating all the IO consoles settings"""
-        index = self._bottomSideBar.count() - 1
+        index = self._bottomSideBar.count - 1
         while index >= 0:
             widget = self._bottomSideBar.widget(index)
             if hasattr(widget, "getType"):
@@ -182,7 +181,7 @@ class MainWindowRedirectedIOMixin:
         index = self._bottomSideBar.count - 1
         while index >= 0:
             widget = self._bottomSideBar.widget(index)
-            if hasattr(widget, "threadID"):
+            if hasattr(widget, "procuuid"):
                 consoles.append(widget)
             index -= 1
         return consoles
