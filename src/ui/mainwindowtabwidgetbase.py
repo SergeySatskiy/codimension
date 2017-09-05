@@ -27,7 +27,7 @@ class MainWindowTabWidgetBase():
     """Base class for all the main window tab widgets"""
 
     Unknown = -1
-    PlainTextEditor = 0         # Text only editor (including python)
+    PlainTextEditor = 0         # Text editor - all except python
     PythonGraphicsEditor = 1    # Text/graphics python only editor widget
     PictureViewer = 2
     HTMLViewer = 3
@@ -35,7 +35,6 @@ class MainWindowTabWidgetBase():
     ProfileViewer = 5
     VCSAnnotateViewer = 7
     DiffViewer = 8
-    IOConsole = 9
 
     def __init__(self):
         self.__uuid = str(uuid.uuid1())

@@ -22,10 +22,15 @@
 import os.path
 import logging
 import time
+import uuid
 from subprocess import Popen
 from editor.redirectedrun import RunConsoleTabWidget
 from debugger.client.protocol_cdm_dbg import (METHOD_PROC_ID_INFO,
-                                              METHOD_PROLOGUE_CONTINUE)
+                                              METHOD_PROLOGUE_CONTINUE,
+                                              METHOD_EPILOGUE_EXIT_CODE,
+                                              METHOD_EPILOGUE_EXIT,
+                                              METHOD_STDOUT, METHOD_STDERR,
+                                              METHOD_STDIN)
 from debugger.client.cdm_dbg_utils import parseJSONMessage, sendJSONCommand
 from ui.runparamsdlg import RunDialog
 from ui.qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
@@ -34,7 +39,7 @@ from .run import getCwdCmdEnv
 from .runparams import RUN, PROFILE, DEBUG
 from .procfeedback import killProcess
 from .globals import GlobalData
-from .settings import Settings
+from .settings import Settings, CLEAR_AND_REUSE, NO_CLEAR_AND_REUSE, NO_REUSE
 from .diskvaluesrelay import getRunParameters, addRunParams
 
 
@@ -63,26 +68,18 @@ def getWorkingDir(path, params):
     return params['specificDir']
 
 
-def getNextID():
-    """Provides the next available ID"""
-    global NEXT_ID
-    current = int(NEXT_ID)
-    NEXT_ID += 1
-    return current
-
-
 class RemoteProcessWrapper(QObject):
 
     """Wrapper to control the remote process"""
 
-    sigFinished = pyqtSignal(int, int)
+    sigFinished = pyqtSignal(str, int)
     sigClientStdout = pyqtSignal(str)
     sigClientStderr = pyqtSignal(str)
-    sigClientRawInput = pyqtSignal(str, int)
+    sigClientInput = pyqtSignal(str, int)
 
     def __init__(self, path, serverPort, redirected):
         QObject.__init__(self)
-        self.procID = getNextID()
+        self.procuuid = str(uuid.uuid1())
         self.path = path
         self.redirected = redirected
         self.state = None
@@ -96,7 +93,7 @@ class RemoteProcessWrapper(QObject):
         params = getRunParameters(self.path)
         if self.redirected:
             cmd, environment = getCwdCmdEnv(kind, self.path, params,
-                                            self.__serverPort, self.procID)
+                                            self.__serverPort, self.procuuid)
         else:
             cmd, environment = getCwdCmdEnv(kind, self.path, params)
 
@@ -117,7 +114,7 @@ class RemoteProcessWrapper(QObject):
         """Kills the process"""
         self.__disconnectSocket()
         self.__kill()
-        self.sigFinished.emit(self.procID, KILLED)
+        self.sigFinished.emit(self.procuuid, KILLED)
 
     def __connectSocket(self):
         """Connects the socket slots"""
@@ -190,7 +187,7 @@ class RemoteProcessWrapper(QObject):
 
     def __getChildPID(self):
         """Provides the child process PID if redirected"""
-        if self.__serverPort is None or self.procID is None:
+        if self.__serverPort is None or self.procuuid is None:
             return None
 
         for item in os.listdir("/proc"):
@@ -204,7 +201,7 @@ class RemoteProcessWrapper(QObject):
                         if "-p" in content and \
                            str(self.__serverPort) in content:
                             if "-i" in content and \
-                                str(self.procID) in content:
+                                str(self.procuuid) in content:
                                 return int(item)
                 except:
                     pass
@@ -213,21 +210,22 @@ class RemoteProcessWrapper(QObject):
     def __disconnected(self):
         """Triggered when the client closed the connection"""
         self.__kill()
-        self.sigFinished.emit(self.procID, DISCONNECTED)
+        self.sigFinished.emit(self.procuuid, DISCONNECTED)
 
     def __sendStart(self):
         """Sends the start command to the runnee"""
+        print("Sending prologue continue...")
         sendJSONCommand(self.__clientSocket, METHOD_PROLOGUE_CONTINUE,
-                        self.procID, None)
+                        self.procuuid, None)
+        print("sent")
 
     def __sendExit(self):
         """sends the exit command to the runnee"""
         self.__disconnectSocket()
-        if self.__clientSocket:
-            data = RequestExit + EOT
-            QApplication.processEvents()
-            self.__clientSocket.write(data)
-            self.__clientSocket.waitForBytesWritten()
+        print("Socket disconnected. Sending epilogue exit...")
+        sendJSONCommand(self.__clientSocket, METHOD_EPILOGUE_EXIT,
+                        self.procuuid, None)
+        print('sent')
 
     def __parseClientLine(self):
         """Parses a single line from the running client"""
@@ -237,102 +235,34 @@ class RemoteProcessWrapper(QObject):
 
             print("Received: " + str(jsonStr))
             try:
-                method, procid, params = parseJSONMessage(jsonStr)
+                method, procuuid, params = parseJSONMessage(jsonStr)
+                if method == METHOD_EPILOGUE_EXIT_CODE:
+                    self.__sendExit()
+                    self.sigFinished.emit(self.procuuid, params['exitCode'])
+                    QApplication.processEvents()
+                    continue
+                if method == METHOD_STDOUT:
+                    self.sigClientStdout.emit(params['text'])
+                    QApplication.processEvents()
+                    continue
+                if method == METHOD_STDERR:
+                    self.sigClientStderr.emit(params['text'])
+                    QApplication.processEvents()
+                    continue
+                if method == METHOD_STDIN:
+                    prompt = params['prompt']
+                    echo = params['echo']
+                    self.sigClientInput.emit(prompt, echo)
+                    QApplication.processEvents()
+                    continue
             except (TypeError, ValueError) as exc:
-                pass
-
-    def __processStdoutStderrState(self, isStdout):
-        """Analyzes receiving buffer in the STDOUT/STDERR state"""
-        # Collect till "\x04\x04"
-        index = self.__buffer.find(StdoutStderrEOT)
-        if index == -1:
-            # End has not been found
-            if self.__buffer.endswith('\x04'):
-                value = self.__buffer[:-1]
-                self.__buffer = '\x04'
-                if isStdout:
-                    self.ClientStdout.emit(value)
-                else:
-                    self.ClientStderr.emit(value)
-                QApplication.processEvents()
-                return False
-
-            # Partial stdout/stderr received
-            value = self.__buffer
-            self.__buffer = ""
-            if isStdout:
-                self.ClientStdout.emit(value)
-            else:
-                self.ClientStderr.emit(value)
-            QApplication.processEvents()
-            return False
-
-        # Here stdout/stderr has been received in full
-        value = self.__buffer[0:index]
-        self.__buffer = self.__buffer[index + 2:]
-        self.__protocolState = self.PROTOCOL_CONTROL
-        if isStdout:
-            self.ClientStdout.emit(value)
-        else:
-            self.ClientStderr.emit(value)
-        QApplication.processEvents()
-        return True
-
-    def __processControlState(self):
-        """Analyzes receiving buffer in the CONTROL state"""
-        # Buffer is going to start with >ZZZ< message and ends with EOT
-        index = self.__buffer.find(EOT)
-        if index == -1:
-            return False
-
-        line = self.__buffer[0:index]
-        self.__buffer = self.__buffer[index + len(EOT):]
-
-        if not line.startswith('>'):
-            print("Unexpected message received (no '>' at the beginning): '" +
-                  line + "'")
-            return self.__buffer != ""
-
-        cmdIndex = line.find('<')
-        if cmdIndex == -1:
-            print("Unexpected message received (no '<' found): '" + line + "'")
-            return self.__buffer != ""
-
-        cmd = line[0:cmdIndex + 1]
-        content = line[cmdIndex + 1:]
-
-        if cmd == ResponseRaw:
-            prompt, echo = eval(content)
-            self.sigClientRawInput.emit(prompt, echo)
-            return self.__buffer != ""
-
-        if cmd == ResponseExit:
-            try:
-                retCode = int(content)
-            except:
-                # Must never happened
-                retCode = -1
-            self.__sendExit()
-            self.sigFinished.emit(self.procID, retCode)
-            QApplication.processEvents()
-            return self.__buffer != ""
-
-        if cmd == ResponseStdout:
-            self.__protocolState = self.PROTOCOL_STDOUT
-            return self.__buffer != ""
-
-        if cmd == ResponseStderr:
-            self.__protocolState = self.PROTOCOL_STDERR
-            return self.__buffer != ""
-
-        print("Unexpected message received (no control match): '" + line + "'")
-        return self.__buffer != ""
+                logging.error('Failure to parse a client message: ' + str(exc))
 
     def userInput(self, collectedString):
         """Called when the user finished input"""
         if self.__clientSocket:
-            data = collectedString.encode("utf8") + "\n"
-            self.__clientSocket.write(data)
+            sendJSONCommand(self.__clientSocket, METHOD_STDIN,
+                            self.procuuid, collectedString)
 
 
 class RemoteProcess:
@@ -385,23 +315,25 @@ class RunManager(QObject):
         if clientSocket.waitForReadyRead(1000):
             jsonStr = bytes(clientSocket.readLine()).decode()
             try:
-                method, procid, params = parseJSONMessage(jsonStr)
+                method, procuuid, params = parseJSONMessage(jsonStr)
                 if method != METHOD_PROC_ID_INFO:
                     logging.error('Unexpected message at the handshake stage. '
                                   'Expected: ' + METHOD_PROC_ID_INFO +
                                   '. Received: ' + str(method))
                     self.__safeSocketClose(clientSocket)
-                    return params
+                    return None
             except (TypeError, ValueError) as exc:
                 self.__mainWindow.showStatusBarMessage(
                     'Unsolicited connection to the RunManager. Ignoring...')
                 self.__safeSocketClose(clientSocket)
                 return None
 
-            procIndex = self.__getProcessIndex(procid)
+            print("PROC ID RECEIVED")
+            procIndex = self.__getProcessIndex(procuuid)
             if procIndex is not None:
-                self.__onProcessStarted(procid)
+                self.__onProcessStarted(procuuid)
                 self.__processes[procIndex].procWrapper.setSocket(clientSocket)
+            return params
 
     @staticmethod
     def __safeSocketClose(clientSocket):
@@ -410,6 +342,20 @@ class RunManager(QObject):
             clientSocket.close()
         except Exception as exc:
             logging.error('Run manager safe socket close: ' + str(exc))
+
+    def __pickWidget(self, procuuid, kind):
+        """Picks the widget for a process"""
+        consoleReuse = Settings()['ioconsolereuse']
+        if consoleReuse == NO_REUSE:
+            widget = RunConsoleTabWidget(procuuid)
+            self.__mainWindow.addIOConsole(widget, kind)
+            return widget
+
+        consoles = self.__mainWindow.getIOConsoles()
+        for console in consoles:
+            procuuid = 
+
+
 
     def run(self, path, needDialog):
         """Runs the given script with redirected IO"""
@@ -431,13 +377,12 @@ class RunManager(QObject):
             path, self.__tcpServer.serverPort(), redirected)
         if redirected:
             remoteProc.procWrapper.state = STATE_PROLOGUE
-            self.__prologueProcesses.append((remoteProc.procWrapper.procID,
+            self.__prologueProcesses.append((remoteProc.procWrapper.procuuid,
                                              time.time()))
             if not self.__prologueTimer.isActive():
                 self.__prologueTimer.start(1000)
-            remoteProc.widget = RunConsoleTabWidget(
-                remoteProc.procWrapper.procID)
-            self.__mainWindow.installIOConsole(remoteProc.widget, RUN)
+            remoteProc.widget = self.__pickWidget(
+                remoteProc.procWrapper.procuuid, RUN)
             remoteProc.widget.appendIDEMessage(
                 'Starting ' + path + '...')
 
@@ -445,7 +390,7 @@ class RunManager(QObject):
                 remoteProc.widget.appendStdoutMessage)
             remoteProc.procWrapper.sigClientStderr.connect(
                 remoteProc.widget.appendStderrMessage)
-            remoteProc.procWrapper.sigClientRawInput.connect(
+            remoteProc.procWrapper.sigClientInput.connect(
                 remoteProc.widget.rawInput)
             remoteProc.widget.sigUserInput.connect(self.__onUserInput)
 
@@ -502,9 +447,9 @@ class RunManager(QObject):
             index -= 1
         return count
 
-    def kill(self, procID):
+    def kill(self, procuuid):
         """Kills a single process"""
-        index = self.__getProcessIndex(procID)
+        index = self.__getProcessIndex(procuuid)
         if index is None:
             return
         item = self.__processes[index]
@@ -512,16 +457,16 @@ class RunManager(QObject):
             return
         item.procWrapper.stop()
 
-    def __getProcessIndex(self, procID):
+    def __getProcessIndex(self, procuuid):
         """Returns a process index in the list"""
         for index, item in enumerate(self.__processes):
-            if item.procWrapper.procID == procID:
+            if item.procWrapper.procuuid == procuuid:
                 return index
         return None
 
-    def __onProcessFinished(self, procID, retCode):
+    def __onProcessFinished(self, procuuid, retCode):
         """Triggered when a process has finished"""
-        index = self.__getProcessIndex(procID)
+        index = self.__getProcessIndex(procuuid)
         if index is not None:
             item = self.__processes[index]
             if item.procWrapper.redirected:
@@ -538,20 +483,20 @@ class RunManager(QObject):
                         tooltip = "finished, exit code " + str(retCode)
                         item.procWrapper.wait()
                     item.widget.appendIDEMessage(msg)
-                    self.__mainWindow.updateIOConsoleTooltip(procID, tooltip)
+                    self.__mainWindow.updateIOConsoleTooltip(procuuid, tooltip)
             del self.__processes[index]
 
-    def __onProcessStarted(self, procID):
+    def __onProcessStarted(self, procuuid):
         """Triggered when a process has started"""
-        index = self.__getProcessIndex(procID)
+        index = self.__getProcessIndex(procuuid)
         if index is not None:
             item = self.__processes[index]
             if item.widget:
                 item.widget.appendIDEMessage('Started')
 
-    def __onUserInput(self, procID, userInput):
+    def __onUserInput(self, procuuid, userInput):
         """Triggered when the user input is collected"""
-        index = self.__getProcessIndex(procID)
+        index = self.__getProcessIndex(procuuid)
         if index is not None:
             item = self.__processes[index]
             if item.procWrapper.redirected:
@@ -577,8 +522,8 @@ class RunManager(QObject):
         needNewTimer = False
         index = len(self.__prologueProcesses) - 1
         while index >= 0:
-            procid, startTime = self.__prologueProcesses[index]
-            procIndex = self.__getProcessIndex(procid)
+            procuuid, startTime = self.__prologueProcesses[index]
+            procIndex = self.__getProcessIndex(procuuid)
             if procIndex is None:
                 # No such process anymore
                 del self.__prologueProcesses[index]

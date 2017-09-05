@@ -178,7 +178,6 @@ _DEFAULT_SETTINGS = {
     'ioconsolelinewrap': False,
     'ioconsoleshowspaces': True,
     'ioconsoleautoscroll': True,
-    'ioconsoleshowmargin': True,
     'ioconsolereuse': CLEAR_AND_REUSE,
 
     'navbarglobalsimports': False,

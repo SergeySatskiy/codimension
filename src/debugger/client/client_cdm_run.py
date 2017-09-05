@@ -34,8 +34,8 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_STDIN)
 
 
-WAIT_CONTINUE_TIMEOUT = 5   # in seconds
-WAIT_EXIT_COMMAND = 5       # in seconds
+WAIT_CONTINUE_TIMEOUT = 5       # in seconds
+WAIT_EXIT_COMMAND_TIMEOUT = 5   # in seconds
 RUN_WRAPPER = None
 RUN_CLIENT_ORIG_INPUT = None
 
@@ -87,7 +87,8 @@ class RedirectedIORunWrapper():
                         self.__procid, None)
 
         try:
-            self.__waitContinue()
+            self.__waitForIDEMessage(METHOD_PROLOGUE_CONTINUE,
+                                     WAIT_CONTINUE_TIMEOUT)
         except Exception as exc:
             print(str(exc), file=sys.stderr)
             return 1
@@ -104,6 +105,7 @@ class RedirectedIORunWrapper():
         try:
             self.__runScript(args)
         except SystemExit as exc:
+            print(traceback.format_exc(), file=sys.__stderr__)
             if exc.code is None:
                 retCode = 0
             elif isinstance(exc.code, int):
@@ -112,12 +114,15 @@ class RedirectedIORunWrapper():
                 retCode = 1
                 print(str(exc.code), file=sys.stderr)
         except KeyboardInterrupt as exc:
+            print(traceback.format_exc(), file=sys.__stderr__)
             retCode = 1
             print(traceback.format_exc(), file=sys.stderr)
         except Exception as exc:
+            print(traceback.format_exc(), file=sys.__stderr__)
             retCode = 1
             print(traceback.format_exc(), file=sys.stderr)
         except:
+            print(traceback.format_exc(), file=sys.__stderr__)
             retCode = 1
             print(traceback.format_exc(), file=sys.stderr)
 
@@ -128,7 +133,7 @@ class RedirectedIORunWrapper():
         # Send the return code back
         try:
             sendJSONCommand(self.__socket, METHOD_EPILOGUE_EXIT_CODE,
-                            self.__procid, {'ExitCode': retCode})
+                            self.__procid, {'exitCode': retCode})
         except Exception as exc:
             print(str(exc), file=sys.stderr)
             self.close()
@@ -163,16 +168,6 @@ class RedirectedIORunWrapper():
                 raise Exception('Error parsing IDE message: ' + str(exc))
 
         raise Exception('Timeout waiting an IDE message ' + msgType)
-
-    def __waitContinue(self):
-        """Waits the 'continue' command"""
-        self.__waitForIDEMessage(METHOD_PROLOGUE_CONTINUE,
-                                 WAIT_CONTINUE_TIMEOUT)
-
-    def __waitExit(self):
-        """Waits for the 'exit' command"""
-        self.__waitForIDEMessage(METHOD_EPILOGUE_EXIT,
-                                 WAIT_EXIT_COMMAND)
 
     def __runScript(self, arguments):
         """Runs the python script"""
@@ -225,10 +220,12 @@ class RedirectedIORunWrapper():
                 # disconnected before it has a chance to read the script
                 # exit code. Wait for the explicit command to exit guarantees
                 # that all the data will be received.
-                self.__waitExit()
+                self.__waitForIDEMessage(METHOD_EPILOGUE_EXIT,
+                                         WAIT_EXIT_COMMAND_TIMEOUT)
+        finally:
+            if self.__socket:
                 self.__socket.close()
-        except:
-            pass
+                self.__socket = None
 
     def input(self, prompt, echo):
         """Implements input() using the redirected input"""

@@ -225,7 +225,6 @@ def launchUserInterface():
     globalData.pluginManager.load()
 
     # Additional checks may come here
-    globalData.mainWindow.installRedirectedIOConsole()
     globalData.mainWindow.getToolbar().setVisible(
         Settings()['showMainToolBar'])
 

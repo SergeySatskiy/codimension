@@ -39,7 +39,6 @@ class OutStreamRedirector():
     def close(self, closeit=False):
         """Closes the file. closeit != 0 => debugger requested it"""
         if closeit and not self.closed:
-            self.flush()
             self.sock.close()
             self.closed = True
 
@@ -49,13 +48,13 @@ class OutStreamRedirector():
 
     def isatty(self):
         """Indicates whether a tty interface is supported"""
-        return 0
+        return False
 
     def fileno(self):
         """Provides the file number"""
         try:
-            return self.sock.fileno()
-        except socket.error:
+            return self.sock.socketDescriptor()
+        except Exception as exc:
             return -1
 
     def read_p(self, size=-1):
@@ -78,6 +77,10 @@ class OutStreamRedirector():
         """Read is not supported"""
         raise IOError((9, '[Errno 9] Bad file descriptor'))
 
+    def seekable(self):
+        """Checks if the stream is seekable"""
+        return False
+
     def seek(self, offset, whence=0):
         """Seek is not supported"""
         raise IOError((29, '[Errno 29] Illegal seek'))
@@ -92,11 +95,6 @@ class OutStreamRedirector():
 
     def write(self, data):
         """Writes a string to the file"""
-        try:
-            data = data.encode('utf8')
-        except (UnicodeEncodeError, UnicodeDecodeError):
-            pass
-
         method = METHOD_STDERR
         if self.isStdout:
             method = METHOD_STDOUT

@@ -59,7 +59,7 @@ class MainWindowRedirectedIOMixin:
         self.__newDebugIndex += 1
         return self.__newDebugIndex
 
-    def installIOConsole(self, widget, consoleType):
+    def addIOConsole(self, widget, consoleType):
         """Installs a new widget at the bottom"""
         if consoleType not in [RUN, PROFILE, DEBUG]:
             raise Exception('Undefined redirected IO console type')
@@ -104,23 +104,6 @@ class MainWindowRedirectedIOMixin:
                 if widget.getType() == MainWindowTabWidgetBase.IOConsole:
                     widget.consoleSettingsUpdated()
             index -= 1
-
-    def installRedirectedIOConsole(self):
-        """Create redirected IO console"""
-        self.redirectedIOConsole = IOConsoleTabWidget(self)
-        self.redirectedIOConsole.sigUserInput.connect(self.__onUserInput)
-        self.redirectedIOConsole.sigSettingsUpdated.connect(
-            self.onIOConsoleSettingsUpdated)
-        self._bottomSideBar.addTab(
-            self.redirectedIOConsole, getIcon('ioconsole.png'),
-            'IO console', 'ioredirect', None)
-        self._bottomSideBar.setTabToolTip('ioredirect',
-                                           'Redirected IO debug console')
-
-    def clearDebugIOConsole(self):
-        """Clears the content of the debug IO console"""
-        if self.redirectedIOConsole:
-            self.redirectedIOConsole.clear()
 
     def __onClientStdout(self, data):
         """Triggered when the client reports stdout"""
@@ -191,6 +174,15 @@ class MainWindowRedirectedIOMixin:
                     if hasattr(widget, "stopAndClose"):
                         widget.stopAndClose()
             index -= 1
-
-        self.clearDebugIOConsole()
         QApplication.restoreOverrideCursor()
+
+    def getIOConsoles(self):
+        """Provides a list of the current IO consoles"""
+        consoles = []
+        index = self._bottomSideBar.count - 1
+        while index >= 0:
+            widget = self._bottomSideBar.widget(index)
+            if hasattr(widget, "threadID"):
+                consoles.append(widget)
+            index -= 1
+        return consoles
