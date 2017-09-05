@@ -57,7 +57,7 @@ NEXT_ID = 0
 
 
 STATE_PROLOGUE = 0
-STATE_IN_CLIENT = 1
+STATE_RUNNING = 1
 
 
 # Used from outside too
@@ -104,6 +104,8 @@ class RemoteProcessWrapper(QObject):
     def setSocket(self, clientSocket):
         """Called when an incoming connection has come"""
         self.__clientSocket = clientSocket
+        self.state = STATE_RUNNING
+
         self.__connectSocket()
         self.__parseClientLine()
 
@@ -258,7 +260,7 @@ class RemoteProcessWrapper(QObject):
         """Called when the user finished input"""
         if self.__clientSocket:
             sendJSONCommand(self.__clientSocket, METHOD_STDIN,
-                            self.procuuid, collectedString)
+                            self.procuuid, {'input': collectedString})
 
 
 class RemoteProcess:
@@ -353,6 +355,7 @@ class RunManager(QObject):
                 procIndex = self.__getProcessIndex(console.procuuid)
                 if procIndex is None:
                     widget = console
+                    self.__mainWindow.onReuseConsole(widget, kind)
                     if consoleReuse == CLEAR_AND_REUSE:
                         widget.clear()
                     break
@@ -488,6 +491,7 @@ class RunManager(QObject):
                         item.procWrapper.wait()
                     item.widget.appendIDEMessage(msg)
                     self.__mainWindow.updateIOConsoleTooltip(procuuid, tooltip)
+                    self.__mainWindow.onConsoleFinished(item.widget)
             del self.__processes[index]
 
     def __onProcessStarted(self, procuuid):

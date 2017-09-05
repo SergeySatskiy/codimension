@@ -21,7 +21,7 @@
 
 from utils.pixmapcache import getIcon
 from utils.runparams import RUN, PROFILE, DEBUG
-from .qt import QApplication, QCursor, Qt
+from .qt import QApplication, QCursor, Qt, QTabBar
 
 
 class MainWindowRedirectedIOMixin:
@@ -58,41 +58,42 @@ class MainWindowRedirectedIOMixin:
         self.__newDebugIndex += 1
         return self.__newDebugIndex
 
+    def __getCaptionNameTooltip(self, kind):
+        """Provides the tab caption, name and tooltip"""
+        if kind == PROFILE:
+            index = str(self.__getNewProfileIndex())
+            return ('Profiling #' + index, 'profiling#' + index,
+                    'Redirected IO profile console #' + index + ' (running)')
+        if kind == RUN:
+            index = str(self.__getNewRunIndex())
+            return ('Run #' + index, 'running#' + index,
+                    'Redirected IO run console #' + index + ' (running)')
+        index = str(__getNewDebugIndex())
+        return ('Debug #' + index, 'debugging#' + index,
+                'Redirected IO debug console #' + index + ' (running)')
+
     def addIOConsole(self, widget, consoleType):
         """Installs a new widget at the bottom"""
         if consoleType not in [RUN, PROFILE, DEBUG]:
             raise Exception('Undefined redirected IO console type')
 
-        if consoleType == PROFILE:
-            index = str(self.__getNewProfileIndex())
-            caption = 'Profiling #' + index
-            name = 'profiling#' + index
-            tooltip = 'Redirected IO profile console #' + index + ' (running)'
-        elif consoleType == RUN:
-            index = str(self.__getNewRunIndex())
-            caption = 'Run #' + index
-            name = 'running#' + index
-            tooltip = 'Redirected IO run console #' + index + ' (running)'
-        else:
-            index = str(__getNewDebugIndex())
-            caption = 'Debug #' + index
-            name = 'debugging#' + index
-            tooltip = 'Redirected IO debug console #' + index + ' (running)'
+        caption, name, tooltip = self.__getCaptionNameTooltip(consoleType)
 
         widget.sigKillIOConsoleProcess.connect(self.__onKillIOConsoleProcess)
         widget.sigSettingsUpdated.connect(self.onIOConsoleSettingsUpdated)
 
         self._bottomSideBar.addTab(
             widget, getIcon('ioconsole.png'), caption, name, None)
+        self._bottomSideBar.tabButton(widget, QTabBar.RightSide).hide()
         self._bottomSideBar.setTabToolTip(name, tooltip)
         self._bottomSideBar.show()
         self._bottomSideBar.setCurrentTab(name)
         self._bottomSideBar.raise_()
         widget.setFocus()
 
-    def __onKillIOConsoleProcess(self, threadID):
+    def __onKillIOConsoleProcess(self, procuuid):
         """Kills the process linked to the IO console"""
-        self.__runManager.kill(threadID)
+        self.__runManager.kill(procuuid)
 
     def onIOConsoleSettingsUpdated(self):
         """Initiates updating all the IO consoles settings"""
@@ -137,28 +138,28 @@ class MainWindowRedirectedIOMixin:
         """Triggered when the user finished input in the redirected IO tab"""
         self.__debugger.remoteRawInput(userInput)
 
-    def updateIOConsoleTooltip(self, threadID, msg):
+    def updateIOConsoleTooltip(self, procuuid, msg):
         """Updates the IO console tooltip"""
-        index = self.__getIOConsoleIndex(threadID)
+        index = self.__getIOConsoleIndex(procuuid)
         if index is not None:
             tooltip = self._bottomSideBar.tabToolTip(index)
             tooltip = tooltip.replace("(running)", "(" + msg + ")")
             self._bottomSideBar.setTabToolTip(index, tooltip)
 
-    def __getIOConsoleIndex(self, threadID):
+    def __getIOConsoleIndex(self, procuuid):
         """Provides the IO console index by the thread ID"""
         index = self._bottomSideBar.count - 1
         while index >= 0:
             widget = self._bottomSideBar.widget(index)
-            if hasattr(widget, "threadID"):
-                if widget.threadID() == threadID:
+            if hasattr(widget, "procuuid"):
+                if widget.procuuid == procuuid:
                     return index
             index -= 1
         return None
 
-    def __onCloseIOConsole(self, threadID):
+    def __onCloseIOConsole(self, procuuid):
         """Closes the tab with the corresponding widget"""
-        index = self.__getIOConsoleIndex(threadID)
+        index = self.__getIOConsoleIndex(procuuid)
         if index is not None:
             self._bottomSideBar.removeTab(index)
 
@@ -168,10 +169,9 @@ class MainWindowRedirectedIOMixin:
         index = self._bottomSideBar.count - 1
         while index >= 0:
             widget = self._bottomSideBar.widget(index)
-            if hasattr(widget, "getType"):
-                if widget.getType() == MainWindowTabWidgetBase.IOConsole:
-                    if hasattr(widget, "stopAndClose"):
-                        widget.stopAndClose()
+            if hasattr(widget, 'procuuid'):
+                if hasattr(widget, "stopAndClose"):
+                    widget.stopAndClose()
             index -= 1
         QApplication.restoreOverrideCursor()
 
@@ -181,7 +181,23 @@ class MainWindowRedirectedIOMixin:
         index = self._bottomSideBar.count - 1
         while index >= 0:
             widget = self._bottomSideBar.widget(index)
-            if hasattr(widget, "procuuid"):
+            if hasattr(widget, 'procuuid'):
                 consoles.append(widget)
             index -= 1
         return consoles
+
+    def onReuseConsole(self, widget, kind):
+        """Called when a console is reused"""
+        caption, name, tooltip = self.__getCaptionNameTooltip(kind)
+        self._bottomSideBar.tabButton(widget, QTabBar.RightSide).hide()
+        self._bottomSideBar.updateTabName(widget, name)
+        self._bottomSideBar.setTabText(widget, caption)
+        self._bottomSideBar.setTabToolTip(widget, tooltip)
+        self._bottomSideBar.show()
+        self._bottomSideBar.setCurrentTab(widget)
+        self._bottomSideBar.raise_()
+        widget.setFocus()
+
+    def onConsoleFinished(self, widget):
+        """Triggered when a process finished one way or another"""
+        self._bottomSideBar.tabButton(widget, QTabBar.RightSide).show()

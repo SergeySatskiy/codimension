@@ -293,6 +293,24 @@ class SideBar(QWidget):
             return None
         return self.__stackedWidget.indexOf(indexOrNameOrWidget)
 
+    def getTabName(self, indexOrWidget):
+        """Provides the tab name by index or widget"""
+        index = self.__getWidgetIndex(indexOrWidget)
+        if index is not None:
+            data = self.__tabBar.tabData(index)
+            tabName, _ = self.__fromVariant(data)
+            return tabName
+        return None
+
+    def updateTabName(self, indexOrNameOrWidget, newName):
+        """Updates the tab name"""
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            data = self.__tabBar.tabData(index)
+            _, priority = self.__fromVariant(data)
+            self.__tabBar.setTabData(index,
+                                     self.__toVariant(newName, priority))
+
     def setCurrentTab(self, indexOrNameOrWidget):
         """Sets the current widget approprietly"""
         index = self.__getWidgetIndex(indexOrNameOrWidget)

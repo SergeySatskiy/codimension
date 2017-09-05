@@ -66,6 +66,8 @@ class RedirectedIOConsole(QutepartWrapper):
         self.__initHotKeys()
         self.installEventFilter(self)
 
+        self.cursorPositionChanged.connect(self._onCursorPositionChanged)
+
     def __initHotKeys(self):
         """Initializes a map for the hot keys event filter"""
         self.autoIndentLineAction.setShortcut('Ctrl+Shift+I')
@@ -125,7 +127,7 @@ class RedirectedIOConsole(QutepartWrapper):
         txt = event.text()
         if len(txt) and txt >= ' ':
             # Printable character
-            if self.currentPosition() < self.lastOutputPos:
+            if self.absCursorPosition < self.lastOutputPos:
                 # Out of the input zone
                 return
 
@@ -145,16 +147,17 @@ class RedirectedIOConsole(QutepartWrapper):
             line, pos = self.getEndPosition()
             self.cursorPosition = line, pos
             self.ensureLineOnScreen(line)
-            endPos = self.currentPosition()
-            startPos = self.positionBefore(endPos)
             msg = IOConsoleMsg(IOConsoleMsg.STDIN_MESSAGE,
-                               userInput + "\n")
+                               userInput + '\n')
             self.__messages.append(msg)
-            self.__addTooltip(timestampLine, msg.getTimestamp())
+
+            # margin data
+
             self.sigUserInput.emit(userInput)
             return
+
         if key == Qt.Key_Backspace:
-            if self.currentPosition() == self.lastOutputPos:
+            if self.absCursorPosition == self.lastOutputPos:
                 if not self.inputEcho:
                     self.inputBuffer = self.inputBuffer[:-1]
                 return
@@ -189,11 +192,11 @@ class RedirectedIOConsole(QutepartWrapper):
     def __getUserInput(self):
         """Provides the collected user input"""
         if self.mode != self.MODE_INPUT:
-            return ""
+            return ''
         if self.inputEcho:
-            line, pos = self.getEndPosition()
-            _, startPos = self.lineIndexFromPosition(self.lastOutputPos)
-            return self.getTextAtPos(line, startPos, pos - startPos)
+            _, endPos = self.getEndPosition()
+            _, beginPos = self.mapToLineCol(self.lastOutputPos)
+            return self.lines[-1][beginPos:endPos]
         value = self.inputBuffer
         self.inputBuffer = ""
         return value
@@ -223,9 +226,8 @@ class RedirectedIOConsole(QutepartWrapper):
         self.drawAnyWhitespace = Settings()['ioconsoleshowspaces']
         self.drawIncorrectIndentation = Settings()['ioconsoleshowspaces']
 
-    def _onCursorPositionChanged(self, line, _):
+    def _onCursorPositionChanged(self):
         """Called when the cursor changed position"""
-        line += 1   # pylint complain
         self.setCursorStyle()
 
     def setCursorStyle(self):
@@ -358,14 +360,15 @@ class RedirectedIOConsole(QutepartWrapper):
         """Returns True if cutting or deletion is possible"""
         if self.isReadOnly():
             return False
-        minPos = self.getSelectionStart()
-        if minPos < self.lastOutputPos:
-            return False
-        return True
+        if self.selectedText:
+            startPosition, cursorPosition = self.absSelectedPosition
+            minPos = min(startPosition, cursorPosition)
+            return minPos >= self.lastOutputPos
+        return self.absCursorPosition > self.lastOutputPos
 
     def onShiftDel(self):
         """Deletes the selected text"""
-        if self.hasSelectedText():
+        if self.selectedText:
             if self.__isCutDelAvailable():
                 self.cut()
             return True
