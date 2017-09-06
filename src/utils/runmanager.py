@@ -53,9 +53,6 @@ BRUTAL_SHUTDOWN_TIMEOUT = 0.2
 GRACEFUL_SHUTDOWN_TIMEOUT = 5
 
 
-NEXT_ID = 0
-
-
 STATE_PROLOGUE = 0
 STATE_RUNNING = 1
 
@@ -77,25 +74,26 @@ class RemoteProcessWrapper(QObject):
     sigClientStderr = pyqtSignal(str)
     sigClientInput = pyqtSignal(str, int)
 
-    def __init__(self, path, serverPort, redirected):
+    def __init__(self, path, serverPort, redirected, kind):
         QObject.__init__(self)
         self.procuuid = str(uuid.uuid1())
         self.path = path
         self.redirected = redirected
+        self.kind = kind
         self.state = None
 
         self.__serverPort = serverPort
         self.__clientSocket = None
         self.__proc = None
 
-    def start(self, kind):
+    def start(self):
         """Starts the remote process"""
         params = getRunParameters(self.path)
         if self.redirected:
-            cmd, environment = getCwdCmdEnv(kind, self.path, params,
+            cmd, environment = getCwdCmdEnv(self.kind, self.path, params,
                                             self.__serverPort, self.procuuid)
         else:
-            cmd, environment = getCwdCmdEnv(kind, self.path, params)
+            cmd, environment = getCwdCmdEnv(self.kind, self.path, params)
 
         self.__proc = Popen(cmd, shell=True,
                             cwd=getWorkingDir(self.path, params),
@@ -192,6 +190,12 @@ class RemoteProcessWrapper(QObject):
         if self.__serverPort is None or self.procuuid is None:
             return None
 
+        if self.kind == RUN:
+            wrapper = os.path.join('client', 'client_cdm_run.py')
+        elif self.kind == PROFILE:
+            wrapper = os.path.join('client', 'client_cdm_profile.py')
+        else:
+            wrapper = os.path.join('client', 'client_cdm_dbg.py')
         for item in os.listdir("/proc"):
             if item.isdigit():
                 try:
@@ -199,13 +203,13 @@ class RemoteProcessWrapper(QObject):
                     content = f.read()
                     f.close()
 
-                    wrapper = os.path.join('client', 'client_cdm_run.py')
                     if wrapper in content:
-                        if '--port' in content and str(self.__serverPort) in content:
-                            if '--procuuid' in content and self.procuuid in content:
-                                return int(item)
-                except Exception as exc:
-                    # logging.error(str(exc))
+                        if '--port' in content:
+                            if str(self.__serverPort) in content:
+                                if '--procuuid' in content:
+                                    if self.procuuid in content:
+                                        return int(item)
+                except:
                     pass
         return None
 
@@ -228,8 +232,7 @@ class RemoteProcessWrapper(QObject):
     def __parseClientLine(self):
         """Parses a single line from the running client"""
         while self.__clientSocket and self.__clientSocket.canReadLine():
-            qs = self.__clientSocket.readLine()
-            jsonStr = bytes(qs).decode()
+            jsonStr = bytes(self.__clientSocket.readLine()).decode()
 
             print("Received: " + str(jsonStr))
             try:
@@ -355,6 +358,7 @@ class RunManager(QObject):
                 procIndex = self.__getProcessIndex(console.procuuid)
                 if procIndex is None:
                     widget = console
+                    widget.onReuse(procuuid)
                     self.__mainWindow.onReuseConsole(widget, kind)
                     if consoleReuse == CLEAR_AND_REUSE:
                         widget.clear()
@@ -381,7 +385,7 @@ class RunManager(QObject):
         remoteProc = RemoteProcess()
         remoteProc.kind = RUN
         remoteProc.procWrapper = RemoteProcessWrapper(
-            path, self.__tcpServer.serverPort(), redirected)
+            path, self.__tcpServer.serverPort(), redirected, RUN)
         if redirected:
             remoteProc.procWrapper.state = STATE_PROLOGUE
             self.__prologueProcesses.append((remoteProc.procWrapper.procuuid,
@@ -391,7 +395,7 @@ class RunManager(QObject):
             remoteProc.widget = self.__pickWidget(
                 remoteProc.procWrapper.procuuid, RUN)
             remoteProc.widget.appendIDEMessage(
-                'Starting ' + path + '...')
+                'Starting script ' + path + '...')
 
             remoteProc.procWrapper.sigClientStdout.connect(
                 remoteProc.widget.appendStdoutMessage)
@@ -405,7 +409,7 @@ class RunManager(QObject):
         self.__processes.append(remoteProc)
 
         try:
-            remoteProc.procWrapper.start(RUN)
+            remoteProc.procWrapper.start()
             if not redirected:
                 if not self.__waitTimer.isActive():
                     self.__waitTimer.start(1000)
@@ -492,6 +496,7 @@ class RunManager(QObject):
                     item.widget.appendIDEMessage(msg)
                     self.__mainWindow.updateIOConsoleTooltip(procuuid, tooltip)
                     self.__mainWindow.onConsoleFinished(item.widget)
+                    item.widget.sigUserInput.disconnect(self.__onUserInput)
             del self.__processes[index]
 
     def __onProcessStarted(self, procuuid):
@@ -500,7 +505,7 @@ class RunManager(QObject):
         if index is not None:
             item = self.__processes[index]
             if item.widget:
-                item.widget.appendIDEMessage('Started')
+                item.widget.appendIDEMessage('Script started')
 
     def __onUserInput(self, procuuid, userInput):
         """Triggered when the user input is collected"""

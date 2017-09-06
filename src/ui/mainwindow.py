@@ -957,8 +957,8 @@ class CodimensionMainWindow(QMainWindow):
         index = self._bottomSideBar.count - 1
         while index >= 0:
             widget = self._bottomSideBar.widget(index)
-            if hasattr(widget, "getType"):
-                if widget.getType() == MainWindowTabWidgetBase.IOConsole:
+            if hasattr(widget, 'procuuid'):
+                if hasattr(widget, 'onTextZoomChanged'):
                     widget.onTextZoomChanged()
             index -= 1
 

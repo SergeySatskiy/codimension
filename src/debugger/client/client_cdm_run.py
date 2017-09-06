@@ -34,6 +34,8 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_STDIN)
 
 
+DEBUG = True
+
 WAIT_CONTINUE_TIMEOUT = 5       # in seconds
 WAIT_EXIT_COMMAND_TIMEOUT = 5   # in seconds
 RUN_WRAPPER = None
@@ -105,7 +107,8 @@ class RedirectedIORunWrapper():
         try:
             self.__runScript(args)
         except SystemExit as exc:
-            print(traceback.format_exc(), file=sys.__stderr__)
+            if DEBUG:
+                print(traceback.format_exc(), file=sys.__stderr__)
             if exc.code is None:
                 retCode = 0
             elif isinstance(exc.code, int):
@@ -114,15 +117,18 @@ class RedirectedIORunWrapper():
                 retCode = 1
                 print(str(exc.code), file=sys.stderr)
         except KeyboardInterrupt as exc:
-            print(traceback.format_exc(), file=sys.__stderr__)
+            if DEBUG:
+                print(traceback.format_exc(), file=sys.__stderr__)
             retCode = 1
             print(traceback.format_exc(), file=sys.stderr)
         except Exception as exc:
-            print(traceback.format_exc(), file=sys.__stderr__)
+            if DEBUG:
+                print(traceback.format_exc(), file=sys.__stderr__)
             retCode = 1
             print(traceback.format_exc(), file=sys.stderr)
         except:
-            print(traceback.format_exc(), file=sys.__stderr__)
+            if DEBUG:
+                print(traceback.format_exc(), file=sys.__stderr__)
             retCode = 1
             print(traceback.format_exc(), file=sys.stderr)
 

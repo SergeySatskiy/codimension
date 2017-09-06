@@ -20,7 +20,8 @@
 """Redirected IO console implementation"""
 
 import logging
-from ui.qt import (Qt, QEvent, pyqtSignal, QFont, QFontMetrics, QMenu,
+from qutepart import Qutepart
+from ui.qt import (Qt, QEvent, pyqtSignal, QFontMetrics, QMenu,
                    QApplication, QTextOption)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
@@ -120,7 +121,9 @@ class RedirectedIOConsole(QutepartWrapper):
             return
 
         if self.mode == self.MODE_OUTPUT:
-            # QutepartWrapper.keyPressEvent(self, event)
+            if key in [Qt.Key_Left, Qt.Key_Up, Qt.Key_Right, Qt.Key_Down,
+                       Qt.Key_PageUp, Qt.Key_PageDown]:
+                QutepartWrapper.keyPressEvent(self, event)
             return
 
         # It is an input mode
@@ -152,6 +155,10 @@ class RedirectedIOConsole(QutepartWrapper):
             self.__messages.append(msg)
 
             # margin data
+            timestamp = msg.getTimestamp()
+            margin = self.getMargin('cdm_redirected_io_margin')
+            margin.addData(timestampLine + 1, timestamp,
+                           timestamp, IOConsoleMsg.STDIN_MESSAGE)
 
             self.sigUserInput.emit(userInput)
             return
@@ -163,6 +170,10 @@ class RedirectedIOConsole(QutepartWrapper):
                 return
 
         QutepartWrapper.keyPressEvent(self, event)
+
+    def mouseDoubleClickEvent(self, event):
+        """Disable search highlight on double click"""
+        Qutepart.mouseDoubleClickEvent(self, event)
 
     def onPasteText(self):
         """Triggered when insert is requested"""
@@ -284,22 +295,6 @@ class RedirectedIOConsole(QutepartWrapper):
 
         self._menu.aboutToShow.connect(self._contextMenuAboutToShow)
         self._menu.aboutToHide.connect(self._contextMenuAboutToHide)
-
-    def setTimestampMarginWidth(self):
-        """Sets the timestamp margin width"""
-        settings = Settings()
-        if settings['ioconsoleshowmargin']:
-            skin = GlobalData().skin
-            font = QFont(skin['lineNumFont'])
-            font.setPointSize(font.pointSize() + settings['zoom'])
-            # The second parameter of the QFontMetrics is essential!
-            # If it is not there then the width is not calculated properly.
-            fontMetrics = QFontMetrics(font, self)
-            # W is for extra space at the right of the timestamp
-            width = fontMetrics.width('88:88:88.888W')
-            self.setMarginWidth(self.TIMESTAMP_MARGIN, width)
-        else:
-            self.setMarginWidth(self.TIMESTAMP_MARGIN, 0)
 
     def contextMenuEvent(self, event):
         """Called just before showing a context menu"""

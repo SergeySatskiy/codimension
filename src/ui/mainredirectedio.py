@@ -68,7 +68,7 @@ class MainWindowRedirectedIOMixin:
             index = str(self.__getNewRunIndex())
             return ('Run #' + index, 'running#' + index,
                     'Redirected IO run console #' + index + ' (running)')
-        index = str(__getNewDebugIndex())
+        index = str(self.__getNewDebugIndex())
         return ('Debug #' + index, 'debugging#' + index,
                 'Redirected IO debug console #' + index + ' (running)')
 
@@ -100,8 +100,8 @@ class MainWindowRedirectedIOMixin:
         index = self._bottomSideBar.count - 1
         while index >= 0:
             widget = self._bottomSideBar.widget(index)
-            if hasattr(widget, "getType"):
-                if widget.getType() == MainWindowTabWidgetBase.IOConsole:
+            if hasattr(widget, 'procuuid'):
+                if hasattr(widget, 'consoleSettingsUpdated'):
                     widget.consoleSettingsUpdated()
             index -= 1
 

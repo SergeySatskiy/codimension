@@ -149,7 +149,6 @@ class IOConsoleWidget(QWidget):
     def consoleSettingsUpdated(self):
         """Triggered when one of the consoles updated a common setting"""
         self.__viewer.updateSettings()
-        self.__viewer.setTimestampMarginWidth()
 
     def resizeEvent(self, event):
         """Handles the widget resize"""
@@ -197,3 +196,8 @@ class IOConsoleWidget(QWidget):
         self.__stopButton.setEnabled(False)
         self.__viewer.switchMode(self.__viewer.MODE_OUTPUT)
         self.__clearButton.setEnabled(True)
+
+    def onReuse(self, procuuid):
+        """Triggered when the console is reused"""
+        self.procuuid = procuuid
+        self.__stopButton.setEnabled(True)
