@@ -199,13 +199,13 @@ class RemoteProcessWrapper(QObject):
                     content = f.read()
                     f.close()
 
-                    if "client/client_cdm_run.py" in content:
-                        if "--port" in content and \
-                           str(self.__serverPort) in content:
-                            if "--procuuid" in content and \
-                                str(self.procuuid) in content:
+                    wrapper = os.path.join('client', 'client_cdm_run.py')
+                    if wrapper in content:
+                        if '--port' in content and str(self.__serverPort) in content:
+                            if '--procuuid' in content and self.procuuid in content:
                                 return int(item)
-                except:
+                except Exception as exc:
+                    # logging.error(str(exc))
                     pass
         return None
 

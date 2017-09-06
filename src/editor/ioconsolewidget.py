@@ -35,7 +35,7 @@ class IOConsoleWidget(QWidget):
 
     sigSettingsUpdated = pyqtSignal()
     sigUserInput = pyqtSignal(str, str)
-    sigKillIOConsoleProcess = pyqtSignal(int)
+    sigKillIOConsoleProcess = pyqtSignal(str)
     sigCloseIOConsole = pyqtSignal(int)
 
     def __init__(self, procuuid, kind, parent=None):

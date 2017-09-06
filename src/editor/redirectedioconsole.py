@@ -66,7 +66,7 @@ class RedirectedIOConsole(QutepartWrapper):
         self.__initHotKeys()
         self.installEventFilter(self)
 
-        self.cursorPositionChanged.connect(self._onCursorPositionChanged)
+        self.cursorPositionChanged.connect(self.setCursorStyle)
 
     def __initHotKeys(self):
         """Initializes a map for the hot keys event filter"""
@@ -76,9 +76,9 @@ class RedirectedIOConsole(QutepartWrapper):
             CTRL_SHIFT: {Qt.Key_C: self.onCtrlShiftC},
             SHIFT: {Qt.Key_End: self.onShiftEnd,
                     Qt.Key_Home: self.onShiftHome,
-                    Qt.Key_Insert: self.pasteText,
+                    Qt.Key_Insert: self.onPasteText,
                     Qt.Key_Delete: self.onShiftDel},
-            CTRL: {Qt.Key_V: self.pasteText,
+            CTRL: {Qt.Key_V: self.onPasteText,
                    Qt.Key_X: self.onShiftDel,
                    Qt.Key_C: self.onCtrlC,
                    Qt.Key_Insert: self.onCtrlC,
@@ -120,7 +120,7 @@ class RedirectedIOConsole(QutepartWrapper):
             return
 
         if self.mode == self.MODE_OUTPUT:
-            QutepartWrapper.keyPressEvent(self, event)
+            # QutepartWrapper.keyPressEvent(self, event)
             return
 
         # It is an input mode
@@ -164,30 +164,23 @@ class RedirectedIOConsole(QutepartWrapper):
 
         QutepartWrapper.keyPressEvent(self, event)
 
-    def pasteText(self):
+    def onPasteText(self):
         """Triggered when insert is requested"""
-        if self.isReadOnly():
-            return True
+        if self.mode == self.MODE_OUTPUT:
+            return
+        if self.absCursorPosition < self.lastOutputPos:
+            return
 
         # Check what is in the buffer
         text = QApplication.clipboard().text()
         if '\n' in text or '\r' in text:
-            return True
+            return
 
         if not self.inputEcho:
             self.inputBuffer += text
-            return True
+            return
 
-        self.paste(self)
-        return True
-
-    def setReadOnly(self, mode):
-        """Overridden version"""
-        QutepartWrapper.setReadOnly(self, mode)
-        if mode:
-            # Otherwise the cursor is suppressed in the RO mode
-            self.setTextInteractionFlags(self.textInteractionFlags() |
-                                         Qt.TextSelectableByKeyboard)
+        self.paste()
 
     def __getUserInput(self):
         """Provides the collected user input"""
@@ -210,8 +203,6 @@ class RedirectedIOConsole(QutepartWrapper):
         self.setPaper(skin['ioconsolePaper'])
         self.setColor(skin['ioconsoleColor'])
 
-        self.setReadOnly(True)
-
         self.currentLineColor = None
         self.lineLengthEdge = None
         self.setCursorStyle()
@@ -226,37 +217,33 @@ class RedirectedIOConsole(QutepartWrapper):
         self.drawAnyWhitespace = Settings()['ioconsoleshowspaces']
         self.drawIncorrectIndentation = Settings()['ioconsoleshowspaces']
 
-    def _onCursorPositionChanged(self):
-        """Called when the cursor changed position"""
-        self.setCursorStyle()
-
     def setCursorStyle(self):
         """Sets the cursor style depending on the mode and the cursor pos"""
         if self.mode == self.MODE_OUTPUT:
-            self.setCursorWidth(1)
-            self.setReadOnly(True)
+            if self.cursorWidth() != 1:
+                self.setCursorWidth(1)
         else:
             if self.absCursorPosition >= self.lastOutputPos:
-                fontMetrics = QFontMetrics(self.font(), self)
-                self.setCursorWidth(fontMetrics.width('W'))
-                self.setReadOnly(False)
+                if self.cursorWidth() == 1:
+                    fontMetrics = QFontMetrics(self.font(), self)
+                    self.setCursorWidth(fontMetrics.width('W'))
+                    self.update()
             else:
-                self.setCursorWidth(1)
-                self.setReadOnly(True)
+                if self.cursorWidth() != 1:
+                    self.setCursorWidth(1)
+                    self.update()
 
     def switchMode(self, newMode):
         """Switches between input/output mode"""
         self.mode = newMode
         if self.mode == self.MODE_OUTPUT:
             self.lastOutputPos = None
-            self.setReadOnly(True)
             self.inputEcho = True
             self.inputBuffer = ""
         else:
             line, pos = self.getEndPosition()
             self.cursorPosition = line, pos
             self.lastOutputPos = self.absCursorPosition
-            self.setReadOnly(False)
             self.ensureLineOnScreen(line)
         self.setCursorStyle()
 
@@ -281,7 +268,7 @@ class RedirectedIOConsole(QutepartWrapper):
             getIcon('copymenu.png'), '&Copy all with timestamps',
             self.onCtrlShiftC, "Ctrl+Shift+C")
         self.__menuPaste = self._menu.addAction(
-            getIcon('pastemenu.png'), '&Paste', self.pasteText, "Ctrl+V")
+            getIcon('pastemenu.png'), '&Paste', self.onPasteText, "Ctrl+V")
         self.__menuSelectAll = self._menu.addAction(
             getIcon('selectallmenu.png'), 'Select &all',
             self.selectAll, "Ctrl+A")
@@ -328,7 +315,10 @@ class RedirectedIOConsole(QutepartWrapper):
         pasteEnable = pasteText != "" and \
                       '\n' not in pasteText and \
                       '\r' not in pasteText and \
-                      not self.isReadOnly()
+                      self.mode != self.MODE_OUTPUT
+        if pasteEnable:
+            if self.absCursorPosition < self.lastOutputPos:
+                pasteEnable = False
 
         # Need to make decision about menu items for modifying the input
         self.__menuCut.setEnabled(self.__isCutDelAvailable())
@@ -358,7 +348,7 @@ class RedirectedIOConsole(QutepartWrapper):
 
     def __isCutDelAvailable(self):
         """Returns True if cutting or deletion is possible"""
-        if self.isReadOnly():
+        if self.mode == self.MODE_OUTPUT:
             return False
         if self.selectedText:
             startPosition, cursorPosition = self.absSelectedPosition

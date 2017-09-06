@@ -41,7 +41,7 @@ class MainWindowRedirectedIOMixin:
 
     def __onCloseRequest(self, index):
         """User wants to close a redirected IO console"""
-        print("Request to close: " + str(index))
+        self._bottomSideBar.removeTab(index)
 
     def __getNewRunIndex(self):
         """Provides the new run index"""
@@ -93,7 +93,7 @@ class MainWindowRedirectedIOMixin:
 
     def __onKillIOConsoleProcess(self, procuuid):
         """Kills the process linked to the IO console"""
-        self.__runManager.kill(procuuid)
+        self._runManager.kill(procuuid)
 
     def onIOConsoleSettingsUpdated(self):
         """Initiates updating all the IO consoles settings"""

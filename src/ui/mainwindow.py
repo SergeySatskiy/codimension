@@ -217,7 +217,7 @@ class CodimensionMainWindow(QMainWindow):
         self.updateWindowTitle()
         self.__printThirdPartyAvailability()
 
-        self.__runManager = RunManager(self)
+        self._runManager = RunManager(self)
 
         Settings().sigTextZoomChanged.connect(self.onTextZoomChanged)
 
@@ -878,7 +878,7 @@ class CodimensionMainWindow(QMainWindow):
             self.vcsManager.dismissAllPlugins()
 
             # Kill all the non-detached processes
-            self.__runManager.killAll()
+            self._runManager.killAll()
 
             # On ubuntu codimension produces core dumps coming from QT when:
             # - a new project is created
@@ -1072,7 +1072,7 @@ class CodimensionMainWindow(QMainWindow):
         """Brings up the dialog with run script settings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
-            self.__runManager.run(fileName, True)
+            self._runManager.run(fileName, True)
 
     def _onProfileProjectSettings(self):
         """Brings up the dialog with profile script settings"""
@@ -1114,7 +1114,7 @@ class CodimensionMainWindow(QMainWindow):
         """Runs the project with saved sattings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
-            self.__runManager.run(fileName, False)
+            self._runManager.run(fileName, False)
 
     def _onProfileProject(self, action=False):
         """Profiles the project with saved settings"""
@@ -1820,7 +1820,7 @@ class CodimensionMainWindow(QMainWindow):
     def onRunTab(self):
         """Triggered when run tab script is requested"""
         currentWidget = self.em.currentWidget()
-        self.__runManager.run(currentWidget.getFileName(), False)
+        self._runManager.run(currentWidget.getFileName(), False)
 
     def _onDebugTab(self):
         """Triggered when debug tab is requested"""
@@ -1833,7 +1833,7 @@ class CodimensionMainWindow(QMainWindow):
     def onRunTabDlg(self):
         """Triggered when run tab script dialog is requested"""
         currentWidget = self.em.currentWidget()
-        self.__runManager.run(currentWidget.getFileName(), True)
+        self._runManager.run(currentWidget.getFileName(), True)
 
     def _onDebugTabDlg(self):
         """Triggered when debug tab script dialog is requested"""

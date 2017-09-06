@@ -167,6 +167,11 @@ class RedirectedIORunWrapper():
             except (TypeError, ValueError) as exc:
                 raise Exception('Error parsing IDE message: ' + str(exc))
 
+        if self.__socket.state() != QAbstractSocket.ConnectedState:
+            # the socket has disconnected which most probably means
+            # the IDE crashed
+            sys.exit(1)
+
         raise Exception('Timeout waiting an IDE message ' + msgType)
 
     def __runScript(self, arguments):
