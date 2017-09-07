@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2014-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Wrapper to run a script with redirected IO"""
+"""Wrapper to profile a script with redirected IO"""
 
 
 import sys
@@ -26,6 +25,7 @@ import socket
 import traceback
 import os.path
 import imp
+from cProfile import runctx
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket, QHostAddress
 from outredir_cdm_dbg import OutStreamRedirector
 from cdm_dbg_utils import sendJSONCommand, parseJSONMessage
@@ -34,34 +34,35 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_STDIN)
 
 
-DEBUG = True
+# If set to true then the client prints debug messages on the original stderr
+CLIENT_DEBUG = True
 
 WAIT_CONTINUE_TIMEOUT = 5       # in seconds
 WAIT_EXIT_COMMAND_TIMEOUT = 5   # in seconds
-RUN_WRAPPER = None
-RUN_CLIENT_ORIG_INPUT = None
+PROFILE_WRAPPER = None
+PROFILE_CLIENT_ORIG_INPUT = None
 
 
-def runClientInput(prompt="", echo=True):
+def profileClientInput(prompt="", echo=True):
     """Replacement for the standard raw_input builtin"""
-    if RUN_WRAPPER is None or not RUN_WRAPPER.redirected():
-        return RUN_CLIENT_ORIG_INPUT(prompt)
-    return RUN_WRAPPER.input(prompt, echo)
+    if PROFILE_WRAPPER is None or not PROFILE_WRAPPER.redirected():
+        return PROFILE_CLIENT_ORIG_INPUT(prompt)
+    return PROFILE_WRAPPER.input(prompt, echo)
 
 
 # Use our own input().
 try:
-    RUN_CLIENT_ORIG_INPUT = __builtins__.__dict__['input']
-    __builtins__.__dict__['input'] = runClientInput
+    PROFILE_CLIENT_ORIG_INPUT = __builtins__.__dict__['input']
+    __builtins__.__dict__['input'] = profileClientInput
 except (AttributeError, KeyError):
     import __main__
-    RUN_CLIENT_ORIG_INPUT = __main__.__builtins__.__dict__['input']
-    __main__.__builtins__.__dict__['input'] = runClientInput
+    PROFILE_CLIENT_ORIG_INPUT = __main__.__builtins__.__dict__['input']
+    __main__.__builtins__.__dict__['input'] = profileClientInput
 
 
-class RedirectedIORunWrapper():
+class RedirectedIOProfileWrapper():
 
-    """Wrapper to run a script with redirected IO"""
+    """Wrapper to profile a script with redirected IO"""
 
     def __init__(self):
         self.__socket = None
@@ -73,13 +74,14 @@ class RedirectedIORunWrapper():
         return self.__redirected
 
     def main(self):
-        "Run wrapper driver"
+        "Profile wrapper driver"
         if '--' not in sys.argv:
             print("Unexpected arguments", file=sys.stderr)
             return 1
 
-        self.__procuuid, host, port, args = self.parseArgs()
-        if self.__procuuid is None or host is None or port is None:
+        self.__procuuid, host, port, outfile, args = self.parseArgs()
+        if self.__procuuid is None or host is None or \
+           port is None or outfile is None:
             print("Not enough arguments", file=sys.stderr)
             return 1
 
@@ -102,12 +104,12 @@ class RedirectedIORunWrapper():
         sys.stderr = OutStreamRedirector(self.__socket, False, self.__procuuid)
         self.__redirected = True
 
-        # Run the script
+        # Profile the script
         retCode = 0
         try:
-            self.__runScript(args)
+            self.__profileScript(outfile, args)
         except SystemExit as exc:
-            if DEBUG:
+            if CLIENT_DEBUG:
                 print(traceback.format_exc(), file=sys.__stderr__)
             if exc.code is None:
                 retCode = 0
@@ -117,17 +119,17 @@ class RedirectedIORunWrapper():
                 retCode = 1
                 print(str(exc.code), file=sys.stderr)
         except KeyboardInterrupt as exc:
-            if DEBUG:
+            if CLIENT_DEBUG:
                 print(traceback.format_exc(), file=sys.__stderr__)
             retCode = 1
             print(traceback.format_exc(), file=sys.stderr)
         except Exception as exc:
-            if DEBUG:
+            if CLIENT_DEBUG:
                 print(traceback.format_exc(), file=sys.__stderr__)
             retCode = 1
             print(traceback.format_exc(), file=sys.stderr)
         except:
-            if DEBUG:
+            if CLIENT_DEBUG:
                 print(traceback.format_exc(), file=sys.__stderr__)
             retCode = 1
             print(traceback.format_exc(), file=sys.stderr)
@@ -180,8 +182,9 @@ class RedirectedIORunWrapper():
 
         raise Exception('Timeout waiting an IDE message ' + msgType)
 
-    def __runScript(self, arguments):
-        """Runs the python script"""
+    @staticmethod
+    def __profileScript(outfile, arguments):
+        """Profiles the python script"""
         try:
             # In Py 2.x, the builtins were in __builtin__
             builtins = sys.modules['__builtin__']
@@ -217,8 +220,8 @@ class RedirectedIORunWrapper():
         if not source or source[-1] != '\n':
             source += '\n'
 
-        code = compile(source, fileName, "exec")
-        exec(code, mainMod.__dict__)
+        code = compile(source, fileName, 'exec')
+        runctx(code, mainMod.__dict__, None, outfile)
 
         # Restore the old __main__
         sys.modules['__main__'] = oldMainMod
@@ -266,6 +269,7 @@ class RedirectedIORunWrapper():
         host = None
         port = None
         procuuid = None
+        outfile = None
         args = sys.argv[1:]
 
         while args[0]:
@@ -281,13 +285,17 @@ class RedirectedIORunWrapper():
                 procuuid = args[1]
                 del args[0]
                 del args[0]
+            elif args[0] in ['--outfile']:
+                outfile = args[1]
+                del args[0]
+                del args[0]
             elif args[0] == '--':
                 del args[0]
                 break
 
-        return procuuid, host, port, args
+        return procuuid, host, port, outfile, args
 
 
 if __name__ == "__main__":
-    RUN_WRAPPER = RedirectedIORunWrapper()
-    sys.exit(RUN_WRAPPER.main())
+    PROFILE_WRAPPER = RedirectedIOProfileWrapper()
+    sys.exit(PROFILE_WRAPPER.main())

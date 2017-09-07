@@ -93,7 +93,8 @@ class RemoteProcessWrapper(QObject):
             cmd, environment = getCwdCmdEnv(self.kind, self.path, params,
                                             self.__serverPort, self.procuuid)
         else:
-            cmd, environment = getCwdCmdEnv(self.kind, self.path, params)
+            cmd, environment = getCwdCmdEnv(self.kind, self.path, params,
+                                            None, self.procuuid)
 
         self.__proc = Popen(cmd, shell=True,
                             cwd=getWorkingDir(self.path, params),

@@ -31,9 +31,6 @@ from .runparams import RUN, PROFILE, DEBUG
 
 
 TERM_REDIRECT = -1
-TERM_KONSOLE = 1
-TERM_GNOME = 2
-TERM_XTERM = 3
 
 CMD_TYPE_PROFILE = 1
 CMD_TYPE_DEBUG = 2
@@ -71,7 +68,8 @@ def getTerminalCommandToRun(fileName, arguments, params,
                                       "client_cdm_run.py"])
         parts = [interpreter, runClient,
                  '--host', 'localhost', '--port', str(tcpServerPort),
-                 '--procuuid', str(procuuid), '--', script] + prepareArguments(arguments)
+                 '--procuuid', str(procuuid), '--', script] + \
+                prepareArguments(arguments)
         return ' '.join(parts)
 
     # Non-redirected case, i.e. the user provided the a custom terminal string
@@ -89,13 +87,18 @@ def getTerminalCommandToProfile(fileName, arguments, params,
     interpreter = prepareInterpreter(params)
     script = prepareScript(fileName)
 
+    from globals import GlobalData
+    outfile = GlobalData().getProfileOutputPath(procuuid)
+
     if params['redirected']:
         runClient = os.path.sep.join([os.path.dirname(sys.argv[0]),
                                       "debugger", "client",
                                       "client_cdm_profile.py"])
         parts = [interpreter, runClient,
                  '--host', 'localhost', '--port', str(tcpServerPort),
-                 '--procuuid', str(procuuid), '--', script] + prepareArguments(arguments)
+                 '--procuuid', str(procuuid), '--outfile', outfile,
+                 '--', script] + \
+                prepareArguments(arguments)
         return ' '.join(parts)
 
     # Non-redirected case, i.e. the user provided the a custom terminal string

@@ -70,13 +70,13 @@ class GlobalDataWrapper:
 
         self.graphvizAvailable = self.__checkGraphviz()
 
-    def getProfileOutputPath(self):
+    def getProfileOutputPath(self, procuuid):
         """Provides the path to the profile output file"""
         if self.project.isLoaded():
-            return self.project.userProjectDir + 'profile.out'
+            return self.project.userProjectDir + procuuid + '.profile.out'
 
         # No project loaded
-        return SETTINGS_DIR + 'profile.out'
+        return SETTINGS_DIR + procuuid + '.profile.out'
 
     def getProjectImportDirs(self):
         """Provides a list of the project import dirs if so"""
