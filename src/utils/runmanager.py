@@ -24,7 +24,9 @@ import logging
 import time
 import uuid
 from subprocess import Popen
+from datetime import datetime
 from editor.ioconsolewidget import IOConsoleWidget
+from editor.redirectedmsg import printableTimestamp
 from debugger.client.protocol_cdm_dbg import (METHOD_PROC_ID_INFO,
                                               METHOD_PROLOGUE_CONTINUE,
                                               METHOD_EPILOGUE_EXIT_CODE,
@@ -81,6 +83,8 @@ class RemoteProcessWrapper(QObject):
         self.redirected = redirected
         self.kind = kind
         self.state = None
+        self.startTime = None
+        self.finishTime = None
 
         self.__serverPort = serverPort
         self.__clientSocket = None
@@ -281,6 +285,9 @@ class RunManager(QObject):
 
     """Manages the external running processes"""
 
+    # script path, output file, start time, finish time, redirected
+    sigProfilingResults = pyqtSignal(str, str, str, str, bool)
+
     def __init__(self, mainWindow):
         QObject.__init__(self)
         self.__mainWindow = mainWindow
@@ -369,24 +376,32 @@ class RunManager(QObject):
             self.__mainWindow.addIOConsole(widget, kind)
         return widget
 
-    def run(self, path, needDialog):
-        """Runs the given script with redirected IO"""
-        if needDialog:
-            params = getRunParameters(path)
-            # profilerParams = Settings().getProfilerSettings()
-            # debuggerParams = Settings().getDebuggerSettings()
-            dlg = RunDialog(path, params, None, None, RUN, self.__mainWindow)
-            if dlg.exec_() != QDialog.Accepted:
-                return
+    def __updateParameters(self, path, kind):
+        """Displays the dialog and updates the parameters if needed"""
+        params = getRunParameters(path)
+        profilerParams = None
+        debuggerParams = None
+        if kind == PROFILE:
+            profilerParams = Settings().getProfilerSettings()
+        elif kind == DEBUG:
+            debuggerParams = Settings().getDebuggerSettings()
+        dlg = RunDialog(path, params, profilerParams, debuggerParams,
+                        kind, self.__mainWindow)
+        if dlg.exec_() == QDialog.Accepted:
             addRunParams(path, dlg.runParams)
+            if kind == PROFILE:
+                if dlg.profilerParams != profilerParams:
+                    Settings().setProfilerSettings(dlg.profilerParams)
+            return True
+        return False
 
-        # The parameters for the run are ready.
-        # Start the run business.
+    def __prepareRemoteProcess(self, path, kind):
+        """Prepares the data structures to start a remote proces"""
         redirected = getRunParameters(path)['redirected']
         remoteProc = RemoteProcess()
-        remoteProc.kind = RUN
+        remoteProc.kind = kind
         remoteProc.procWrapper = RemoteProcessWrapper(
-            path, self.__tcpServer.serverPort(), redirected, RUN)
+            path, self.__tcpServer.serverPort(), redirected, kind)
         if redirected:
             remoteProc.procWrapper.state = STATE_PROLOGUE
             self.__prologueProcesses.append((remoteProc.procWrapper.procuuid,
@@ -394,7 +409,7 @@ class RunManager(QObject):
             if not self.__prologueTimer.isActive():
                 self.__prologueTimer.start(1000)
             remoteProc.widget = self.__pickWidget(
-                remoteProc.procWrapper.procuuid, RUN)
+                remoteProc.procWrapper.procuuid, kind)
             remoteProc.widget.appendIDEMessage(
                 'Starting script ' + path + '...')
 
@@ -408,17 +423,26 @@ class RunManager(QObject):
 
         remoteProc.procWrapper.sigFinished.connect(self.__onProcessFinished)
         self.__processes.append(remoteProc)
+        return remoteProc
 
+    def run(self, path, needDialog):
+        """Runs the given script with redirected IO"""
+        if needDialog:
+            if not self.__updateParameters(path, RUN):
+                return
+
+        remoteProc = self.__prepareRemoteProcess(path, RUN)
         try:
             remoteProc.procWrapper.start()
-            if not redirected:
+            if not remoteProc.procWrapper.redirected:
+                remoteProc.procWrapper.startTime = datetime.now()
                 if not self.__waitTimer.isActive():
                     self.__waitTimer.start(1000)
         except Exception as exc:
             # Failed to start:
             # - log approprietly
             # - remove from the list
-            if redirected:
+            if remoteProc.procWrapper.redirected:
                 remoteProc.widget.appendIDEMessage("Failed to start: " +
                                                    str(exc))
             else:
@@ -427,7 +451,27 @@ class RunManager(QObject):
 
     def profile(self, path, needDialog):
         """Profiles the given script with redirected IO"""
-        pass
+        if needDialog:
+            if not self.__updateParameters(path, PROFILE):
+                return
+
+        remoteProc = self.__prepareRemoteProcess(path, PROFILE)
+        try:
+            remoteProc.procWrapper.start()
+            if not remoteProc.procWrapper.redirected:
+                remoteProc.procWrapper.startTime = datetime.now()
+                if not self.__waitTimer.isActive():
+                    self.__waitTimer.start(1000)
+        except Exception as exc:
+            # Failed to start:
+            # - log approprietly
+            # - remove from the list
+            if remoteProc.procWrapper.redirected:
+                remoteProc.widget.appendIDEMessage("Failed to start: " +
+                                                   str(exc))
+            else:
+                logging.error(str(exc))
+            del self.__processes[-1]
 
     def debug(self, path, needDialog):
         """Debugs the given script with redirected IO"""
@@ -477,27 +521,36 @@ class RunManager(QObject):
         return None
 
     def __onProcessFinished(self, procuuid, retCode):
-        """Triggered when a process has finished"""
+        """Triggered when a redirected process has finished"""
         index = self.__getProcessIndex(procuuid)
         if index is not None:
             item = self.__processes[index]
-            if item.procWrapper.redirected:
-                if item.widget:
-                    item.widget.scriptFinished()
-                    if retCode == KILLED:
-                        msg = "Script killed"
-                        tooltip = "killed"
-                    elif retCode == DISCONNECTED:
-                        msg = "Connection lost to the script process"
-                        tooltip = "connection lost"
-                    else:
-                        msg = "Script finished with exit code " + str(retCode)
-                        tooltip = "finished, exit code " + str(retCode)
-                        item.procWrapper.wait()
-                    item.widget.appendIDEMessage(msg)
-                    self.__mainWindow.updateIOConsoleTooltip(procuuid, tooltip)
-                    self.__mainWindow.onConsoleFinished(item.widget)
-                    item.widget.sigUserInput.disconnect(self.__onUserInput)
+            item.procWrapper.finishTime = datetime.now()
+
+            needProfileSignal = False
+            if retCode == KILLED:
+                msg = "Script killed"
+                tooltip = "killed"
+            elif retCode == DISCONNECTED:
+                msg = "Connection lost to the script process"
+                tooltip = "connection lost"
+            else:
+                msg = "Script finished with exit code " + str(retCode)
+                tooltip = "finished, exit code " + str(retCode)
+                item.procWrapper.wait()
+                if item.kind == PROFILE:
+                    needProfileSignal = True
+
+            if item.widget:
+                item.widget.scriptFinished()
+                item.widget.appendIDEMessage(msg)
+                self.__mainWindow.updateIOConsoleTooltip(procuuid, tooltip)
+                self.__mainWindow.onConsoleFinished(item.widget)
+                item.widget.sigUserInput.disconnect(self.__onUserInput)
+
+            if needProfileSignal:
+                self.__sendProfileResultsSignal(item.procWrapper)
+
             del self.__processes[index]
 
     def __onProcessStarted(self, procuuid):
@@ -507,6 +560,7 @@ class RunManager(QObject):
             item = self.__processes[index]
             if item.widget:
                 item.widget.appendIDEMessage('Script started')
+                item.procWrapper.startTime = datetime.now()
 
     def __onUserInput(self, procuuid, userInput):
         """Triggered when the user input is collected"""
@@ -524,12 +578,24 @@ class RunManager(QObject):
             item = self.__processes[index]
             if not item.procWrapper.redirected:
                 if item.procWrapper.waitDetached():
+                    item.procWrapper.finishTime = datetime.now()
+                    if item.procWrapper.kind == PROFILE:
+                        self.__sendProfileResultsSignal(item.procWrapper)
                     del self.__processes[index]
                 else:
                     needNewTimer = True
             index -= 1
         if needNewTimer:
             self.__waitTimer.start(1000)
+
+    def __sendProfileResultsSignal(self, procWrapper):
+        """Sends a signal to tell that the results are available"""
+        self.sigProfilingResults.emit(
+            procWrapper.path,
+            GlobalData().getProfileOutputPath(procWrapper.procuuid),
+            printableTimestamp(procWrapper.startTime),
+            printableTimestamp(procWrapper.finishTime),
+            procWrapper.redirected)
 
     def __onPrologueTimer(self):
         """Triggered when a prologue phase controlling timer fired"""

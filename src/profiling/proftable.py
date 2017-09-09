@@ -265,7 +265,7 @@ class ProfileTableViewer(QWidget):
         totalTime = self.__stats.total_tt
 
         txt = "<b>Script:</b> " + self.__script + " " + \
-              params.arguments + "<br/>" \
+              params['arguments'] + "<br/>" \
               "<b>Run at:</b> " + reportTime + "<br/>" + \
               str(totalCalls) + " function calls (" + \
               str(totalPrimitiveCalls) + " primitive calls) in " + \
@@ -336,7 +336,7 @@ class ProfileTableViewer(QWidget):
             self.__outsideCallersMenu.setEnabled(False)
         else:
             callers = self.__stats.stats[item.getFuncIDs()][4]
-            callersList = callers.keys()
+            callersList = list(callers.keys())
             callersList.sort()
             for callerFunc in callersList:
                 menuText = self.__getCallLine(callerFunc, callers[callerFunc])
@@ -357,7 +357,7 @@ class ProfileTableViewer(QWidget):
             self.__outsideCalleesMenu.setEnabled(False)
         else:
             callees = self.__stats.all_callees[item.getFuncIDs()]
-            calleesList = callees.keys()
+            calleesList = list(callees.keys())
             calleesList.sort()
             for calleeFunc in calleesList:
                 menuText = self.__getCallLine(calleeFunc, callees[calleeFunc])
@@ -480,7 +480,7 @@ class ProfileTableViewer(QWidget):
 
         if callersCount != 0:
             tooltip = ""
-            callersList = callers.keys()
+            callersList = list(callers.keys())
             callersList.sort()
             for callerFunc in callersList[:MAX_CALLS_IN_TOOLTIP]:
                 if tooltip != "":
@@ -493,7 +493,7 @@ class ProfileTableViewer(QWidget):
         if calleesCount != 0:
             callees = self.__stats.all_callees[func]
             tooltip = ""
-            calleesList = callees.keys()
+            calleesList = list(callees.keys())
             calleesList.sort()
             for calleeFunc in calleesList[:MAX_CALLS_IN_TOOLTIP]:
                 if tooltip != "":

@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2014-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2014-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,7 +72,7 @@ class RedirectedIORunWrapper():
         return self.__redirected
 
     def main(self):
-        "Run wrapper driver"
+        """Run wrapper driver"""
         if '--' not in sys.argv:
             print("Unexpected arguments", file=sys.stderr)
             return 1
@@ -214,8 +213,8 @@ class RedirectedIORunWrapper():
 
         # We have the source.  `compile` still needs the last line to be clean,
         # so make sure it is, then compile a code object from it.
-        if not source or source[-1] != '\n':
-            source += '\n'
+        if not source or source[-1] != b'\n':
+            source += b'\n'
 
         code = compile(source, fileName, "exec")
         exec(code, mainMod.__dict__)

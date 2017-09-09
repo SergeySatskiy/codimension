@@ -87,7 +87,7 @@ def getTerminalCommandToProfile(fileName, arguments, params,
     interpreter = prepareInterpreter(params)
     script = prepareScript(fileName)
 
-    from globals import GlobalData
+    from .globals import GlobalData
     outfile = GlobalData().getProfileOutputPath(procuuid)
 
     if params['redirected']:

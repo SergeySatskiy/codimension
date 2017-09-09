@@ -47,11 +47,11 @@ from debugger.bputils import clearValidBreakpointLinesCache
 from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
-from profiling.profui import ProfilingProgressDialog
 from analysis.disasm import (getFileDisassembled, getCompiledfileDisassembled,
                              getBufferDisassembled)
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
+from profiling.profwidget import ProfileResultsWidget
 from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QToolBar, QWidget,
                  QMessageBox, QVBoxLayout, QSplitter, QSizePolicy, QAction,
                  QMainWindow, QShortcut, QApplication, QCursor, QToolButton,
@@ -218,6 +218,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__printThirdPartyAvailability()
 
         self._runManager = RunManager(self)
+        self._runManager.sigProfilingResults.connect(self.onProfileResults)
 
         Settings().sigTextZoomChanged.connect(self.onTextZoomChanged)
 
@@ -962,10 +963,6 @@ class CodimensionMainWindow(QMainWindow):
                     widget.onTextZoomChanged()
             index -= 1
 
-    def showProfileReport(self, widget, tooltip):
-        """Shows the given profile report"""
-        self.em.showProfileReport(widget, tooltip)
-
     def getWidgetByUUID(self, uuid):
         """Provides the widget found by the given UUID"""
         return self.em.getWidgetByUUID(uuid)
@@ -1068,29 +1065,29 @@ class CodimensionMainWindow(QMainWindow):
         if progressDlg.exec_() == QDialog.Accepted:
             self.openDiagram(progressDlg.scene, "Generated for the project")
 
+    def _onRunProject(self, action=False):
+        """Runs the project with saved sattings"""
+        if self.__checkProjectScriptValidity():
+            fileName = GlobalData().project.getProjectScript()
+            self._runManager.run(fileName, False)
+
     def _onRunProjectSettings(self):
         """Brings up the dialog with run script settings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
             self._runManager.run(fileName, True)
 
+    def _onProfileProject(self, action=False):
+        """Profiles the project with saved settings"""
+        if self.__checkProjectScriptValidity():
+            fileName = GlobalData().project.getProjectScript()
+            self._runManager.profile(fileName, False)
+
     def _onProfileProjectSettings(self):
         """Brings up the dialog with profile script settings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
-            params = getRunParameters(fileName)
-            termType = self.settings['terminalType']
-            profilerParams = self.settings.getProfilerSettings()
-            debuggerParams = self.settings.getDebuggerSettings()
-            dlg = RunDialog(fileName, params, termType,
-                            profilerParams, debuggerParams, "Profile")
-            if dlg.exec_() == QDialog.Accepted:
-                addRunParams(fileName, dlg.runParams)
-                if dlg.termType != termType:
-                    self.settings['terminalType'] = dlg.termType
-                if dlg.profilerParams != profilerParams:
-                    self.settings.setProfilerSettings(dlg.profilerParams)
-                self._onProfileProject()
+            self._runManager.profile(fileName, True)
 
     def _onDebugProjectSettings(self):
         """Brings up the dialog with debug script settings"""
@@ -1109,22 +1106,6 @@ class CodimensionMainWindow(QMainWindow):
                 if dlg.debuggerParams != debuggerParams:
                     self.settings.setDebuggerSettings(dlg.debuggerParams)
                 self._onDebugProject()
-
-    def _onRunProject(self, action=False):
-        """Runs the project with saved sattings"""
-        if self.__checkProjectScriptValidity():
-            fileName = GlobalData().project.getProjectScript()
-            self._runManager.run(fileName, False)
-
-    def _onProfileProject(self, action=False):
-        """Profiles the project with saved settings"""
-        if self.__checkProjectScriptValidity():
-            try:
-                dlg = ProfilingProgressDialog(
-                    GlobalData().project.getProjectScript(), self)
-                dlg.exec_()
-            except Exception as exc:
-                logging.error(str(exc))
 
     def _onDebugProject(self, action=False):
         """Debugging is requested"""
@@ -1822,26 +1803,28 @@ class CodimensionMainWindow(QMainWindow):
         currentWidget = self.em.currentWidget()
         self._runManager.run(currentWidget.getFileName(), False)
 
-    def _onDebugTab(self):
-        """Triggered when debug tab is requested"""
-        self.em.currentWidget().onDebugScript()
-
-    def _onProfileTab(self):
-        """Triggered when profile script is requested"""
-        self.em.currentWidget().onProfileScript()
-
     def onRunTabDlg(self):
         """Triggered when run tab script dialog is requested"""
         currentWidget = self.em.currentWidget()
         self._runManager.run(currentWidget.getFileName(), True)
 
+    def onProfileTab(self):
+        """Triggered when profile script is requested"""
+        currentWidget = self.em.currentWidget()
+        self._runManager.profile(currentWidget.getFileName(), False)
+
+    def onProfileTabDlg(self):
+        """Triggered when profile tab script dialog is requested"""
+        currentWidget = self.em.currentWidget()
+        self._runManager.profile(currentWidget.getFileName(), True)
+
+    def _onDebugTab(self):
+        """Triggered when debug tab is requested"""
+        self.em.currentWidget().onDebugScript()
+
     def _onDebugTabDlg(self):
         """Triggered when debug tab script dialog is requested"""
         self.em.currentWidget().onDebugScriptSettings()
-
-    def _onProfileTabDlg(self):
-        """Triggered when profile tab script dialog is requested"""
-        self.em.currentWidget().onProfileScriptSettings()
 
     def _onPluginManager(self):
         """Triggered when a plugin manager dialog is requested"""
@@ -2443,3 +2426,26 @@ class CodimensionMainWindow(QMainWindow):
     def passFocusToFlow(self):
         """Passes the focus to the flow UI if it is there"""
         return self.em.passFocusToFlow()
+
+    def onProfileResults(self, path, outfile,
+                         startTime, finishTime, redirected):
+        """Triggered when profiling run finished"""
+        print("Profiling results for: " + path)
+        print("In: " + outfile)
+        print(startTime + ' -- ' + finishTime)
+        print(redirected)
+
+        try:
+            widget = ProfileResultsWidget(path,
+                                          getRunParameters(path),
+                                          startTime,
+                                          outfile,
+                                          self)
+            self.em.showProfileReport(widget, 'Profiling report for ' + os.path.basename(path) + 'at ' + startTime)
+        except Exception as exc:
+            logging.error(str(exc))
+            if os.path.exists(outfile):
+                # os.unlink(outfile)
+                pass
+            raise
+

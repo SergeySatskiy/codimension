@@ -515,40 +515,24 @@ class TextEditorTabWidget(QWidget):
         """Request to reload all the non-modified files"""
         self.reloadAllNonModifiedRequest.emit()
 
-    @staticmethod
-    def onRunScriptSettings():
-        """Shows the run parameters dialogue"""
-        GlobalData().mainWindow.onRunTabDlg()
-
-    def onProfileScriptSettings(self):
-        """Shows the profile parameters dialogue"""
-        fileName = self.getFileName()
-        params = getRunParameters(fileName)
-        termType = Settings()['terminalType']
-        profilerParams = Settings().getProfilerSettings()
-        debuggerParams = Settings().getDebuggerSettings()
-        dlg = RunDialog(fileName, params, termType,
-                        profilerParams, debuggerParams, "Profile", self)
-        if dlg.exec_() == QDialog.Accepted:
-            addRunParams(fileName, dlg.runParams)
-            if dlg.termType != termType:
-                Settings()['terminalType'] = dlg.termType
-            if dlg.profilerParams != profilerParams:
-                Settings().setProfilerSettings(dlg.profilerParams)
-            self.onProfileScript()
-
     # Arguments: action
     def onRunScript(self, _=None):
         """Runs the script"""
         GlobalData().mainWindow.onRunTab()
 
+    @staticmethod
+    def onRunScriptSettings():
+        """Shows the run parameters dialogue"""
+        GlobalData().mainWindow.onRunTabDlg()
+
     # Arguments: action
     def onProfileScript(self, _=None):
         """Profiles the script"""
-        try:
-            ProfilingProgressDialog(self.getFileName(), self).exec_()
-        except Exception as exc:
-            logging.error(str(exc))
+        GlobalData().mainWindow.onProfileTab()
+
+    def onProfileScriptSettings(self):
+        """Shows the profile parameters dialogue"""
+        GlobalData().mainWindow.onProfileTabDlg()
 
     def onDebugScriptSettings(self):
         """Shows the debug parameters dialogue"""

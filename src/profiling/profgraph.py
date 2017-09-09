@@ -22,6 +22,9 @@
 import os
 import os.path
 import math
+import io
+import gprof2dot
+from contextlib import redirect_stdout
 from ui.qt import (Qt, QPointF, pyqtSignal, QPalette, QFont, QPen, QColor,
                    QFontMetrics, QPainterPath, QPainter, QWidget, QLabel,
                    QFrame, QVBoxLayout, QGraphicsScene, QGraphicsPathItem,
@@ -30,6 +33,7 @@ from ui.qt import (Qt, QPointF, pyqtSignal, QPalette, QFont, QPen, QColor,
 from utils.settings import Settings, THIRDPARTY_DIR
 from utils.globals import GlobalData
 from utils.pixmapcache import getPixmap
+from utils.run import checkOutput
 from diagram.plaindotparser import getGraphFromPlainDotData
 from diagram.importsdgmgraphics import DiagramWidget
 from .proftable import FLOAT_FORMAT
@@ -276,7 +280,7 @@ class ProfileGraphViewer(QWidget):
         totalTime = self.__stats.total_tt
 
         txt = "<b>Script:</b> " + self.__script + " " + \
-              self.__params.arguments + "<br/>" \
+              self.__params['arguments'] + "<br/>" \
               "<b>Run at:</b> " + self.__reportTime + "<br/>" + \
               str(totalCalls) + " function calls (" + \
               str(totalPrimitiveCalls) + " primitive calls) in " + \
@@ -306,6 +310,83 @@ class ProfileGraphViewer(QWidget):
 
         self.setLayout(vLayout)
 
+    @staticmethod
+    def __getDotFont(parts):
+        """Provides a QFont object if a font spec is found"""
+        for part in parts:
+            if 'fontname=' in part:
+                fontName = part.replace('fontname=', '')
+                fontName = fontName.replace('[', '')
+                fontName = fontName.replace(']', '')
+                fontName = fontName.replace(',', '')
+                return QFont(fontName)
+        return None
+
+    def __postprocessFullDotSpec(self, dotSpec):
+        """Removes the arrow size, extracts tooltips, extracts font info"""
+        nodeFont = None
+        edgeFont = None
+        tooltips = {}
+        processed = []
+
+        for line in dotSpec.splitlines():
+            parts = line.split()
+            lineModified = False
+            if parts:
+                if parts[0] == 'node':
+                    # need to extract the fontname
+                    nodeFont = self.__getDotFont(parts)
+                elif parts[0] == 'edge':
+                    # need to extract the fontname
+                    edgeFont = self.__getDotFont(parts)
+                elif parts[0].isdigit():
+                    if parts[1] == '->':
+                        # certain edge spec: replace arrowsize and font size
+                        for index, value in enumerate(parts):
+                            if part.startswith('[arrowsize='):
+                                modified = parts[:]
+                                modified[index] = '[arrowsize="0.0",'
+                                processed.append(' '.join(modified))
+                            elif part.startswith('fontsize='):
+                                size = float(part.split('"')[1])
+                                if edgeFont:
+                                    edgeFont.setSize(size)
+                        lineModified = True
+                    elif parts[1]startswith('['):
+                        # certain node spec: pick the tooltip and font size
+                        for part in parts:
+                            if part.startswith('tooltip='):
+                                nodePath = part.split('"')[1]
+                                tooltips[int(parts[0]] = nodePath
+                            elif part.startswith('fontsize='):
+                                size = float(part.split('"')[1])
+                                if nodeFont:
+                                    nodeFont.setSize(size)
+            if not lineModified:
+                processed.append(line)
+
+        return '\n'.join(processed), tooltips, nodeFont, edgeFont
+
+
+    def __rungprof2dot(self):
+        """Runs gprof2dot which produces a full dot spec"""
+        nodeLimit = Settings().getProfilerSettings().nodeLimit
+        edgeLimit = Settings().getProfilerSettings().edgeLimit
+        with io.StringIO() as buf:
+            gprofParser = gprof2dot.PstatsParser(self.__dataFile)
+            profileData = gprofParser.parse()
+            profileData.prune(nodeLimit / 100.0, edgeLimit / 100.0, False)
+
+            dot = gprof2dot.DotWriter(buf)
+            dot.strip = False
+            dot.wrap = False
+            dot.graph(profileData, gprof2dot.TEMPERATURE_COLORMAP)
+
+            output = buf.getvalue()
+        print('Non processed output')
+        print(output)
+        return self.__postprocessFullDotSpec(output)
+
     def __getDiagramLayout(self):
         """Runs external tools to get the diagram layout"""
         # Preparation: build a map of func ID -> fileName + line
@@ -316,15 +397,23 @@ class ProfileGraphViewer(QWidget):
             index += 1
 
         # First step is to run grpof2dot
-        gprof2dot = THIRDPARTY_DIR + "gprof2dot" + os.path.sep + "gprof2dot.py"
-        outputFile = self.__dataFile + ".dot"
-        nodeLimit = Settings().profileNodeLimit
-        edgeLimit = Settings().profileEdgeLimit
-        dotSpec = safeRun([gprof2dot, '-n', str(nodeLimit),
-                           '-e', str(edgeLimit),
-                           '-f', 'pstats', '-o', outputFile,
-                           self.__dataFile])
-        graphDescr = safeRun(["dot", "-Tplain", outputFile])
+        fullDotSpec, tooltips, nodeFont, edgeFont = self.__rungprof2dot()
+        print('Post processed output')
+        print(fullDotSpec)
+
+        raise Exception('To stop')
+
+
+
+
+
+#        outputFile = self.__dataFile + ".dot"
+#        dotSpec = checkOutput([gprof2dot, '-n', str(nodeLimit),
+#                               '-e', str(edgeLimit),
+#                               '-f', 'pstats', '-o', outputFile,
+#                               self.__dataFile])
+#        print(dotSpec)
+        graphDescr = checkOutput(["dot", "-Tplain", outputFile])
         graph = getGraphFromPlainDotData(graphDescr)
         graph.normalize(self.physicalDpiX(), self.physicalDpiY())
 

@@ -240,10 +240,10 @@ class MainWindowMenuMixin:
             getIcon('profile.png'), 'Profile project main script...',
             self._onProfileProjectSettings)
         self._tabProfileAct = runMenu.addAction(
-            getIcon('profile.png'), 'Profile tab script', self._onProfileTab)
+            getIcon('profile.png'), 'Profile tab script', self.onProfileTab)
         self._tabProfileDlgAct = runMenu.addAction(
             getIcon('profile.png'), 'Profile tab script...',
-            self._onProfileTabDlg)
+            self.onProfileTabDlg)
         return runMenu
 
     def __buildDebugMenu(self):

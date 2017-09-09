@@ -74,7 +74,7 @@ class RedirectedIOProfileWrapper():
         return self.__redirected
 
     def main(self):
-        "Profile wrapper driver"
+        """Profile wrapper driver"""
         if '--' not in sys.argv:
             print("Unexpected arguments", file=sys.stderr)
             return 1
@@ -217,8 +217,8 @@ class RedirectedIOProfileWrapper():
 
         # We have the source.  `compile` still needs the last line to be clean,
         # so make sure it is, then compile a code object from it.
-        if not source or source[-1] != '\n':
-            source += '\n'
+        if not source or source[-1] != b'\n':
+            source += b'\n'
 
         code = compile(source, fileName, 'exec')
         runctx(code, mainMod.__dict__, None, outfile)
