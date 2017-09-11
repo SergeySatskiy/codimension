@@ -378,16 +378,19 @@ class RedirectedIOConsole(QutepartWrapper):
         """Appends an IDE message"""
         msg = IOConsoleMsg(IOConsoleMsg.IDE_MESSAGE, text)
         self.__appendMessage(msg)
+        return msg
 
     def appendStdoutMessage(self, text):
         """Appends an stdout message"""
         msg = IOConsoleMsg(IOConsoleMsg.STDOUT_MESSAGE, text)
         self.__appendMessage(msg)
+        return msg
 
     def appendStderrMessage(self, text):
         """Appends an stderr message"""
         msg = IOConsoleMsg(IOConsoleMsg.STDERR_MESSAGE, text)
         self.__appendMessage(msg)
+        return msg
 
     def __appendMessage(self, message):
         """Appends a new message to the console"""

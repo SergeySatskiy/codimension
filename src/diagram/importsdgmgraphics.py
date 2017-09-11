@@ -26,7 +26,7 @@ from ui.qt import (QFont, QPen, QColor, QPainterPath, QFontMetrics, QPainter,
                    QGraphicsView, QToolBar, QHBoxLayout, QAction,
                    QGraphicsItem, QGraphicsTextItem, QApplication,
                    QStyleOptionGraphicsItem, QStyle, Qt, QSize, QPointF,
-                   QRectF, pyqtSignal)
+                   pyqtSignal)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache import getPixmap, getIcon
 from utils.globals import GlobalData
@@ -82,17 +82,20 @@ class ImportsDgmDocConn(QGraphicsPathItem):
 
         index = 1
         while index + 3 <= len(edge.points):
-            painterPath.cubicTo(edge.points[index][0], edge.points[index][1],
-                                edge.points[index+1][0],edge.points[index+1][1],
-                                edge.points[index+2][0],edge.points[index+2][1])
+            painterPath.cubicTo(
+                edge.points[index][0], edge.points[index][1],
+                edge.points[index+1][0], edge.points[index+1][1],
+                edge.points[index+2][0], edge.points[index+2][1])
             index = index + 3
         if index + 2 <= len(edge.points):
-            painterPath.quadTo(edge.points[index+1][0], edge.points[index+1][1],
-                               edge.points[index+2][0], edge.points[index+2][1])
+            painterPath.quadTo(
+                edge.points[index+1][0], edge.points[index+1][1],
+                edge.points[index+2][0], edge.points[index+2][1])
             index = index + 2
 
         if index + 1 <= len(edge.points):
-            painterPath.lineTo(edge.points[index+1][0], edge.points[index+1][1])
+            painterPath.lineTo(
+                edge.points[index+1][0], edge.points[index+1][1])
 
         self.setPath(painterPath)
 
@@ -136,7 +139,7 @@ class ImportsDgmDependConn(QGraphicsPathItem):
         lastIndex = len(edge.points) - 1
         self.addArrow(painterPath,
                       edge.points[lastIndex-1][0], edge.points[lastIndex-1][1],
-                      edge.points[lastIndex][0], edge.points[lastIndex][1] )
+                      edge.points[lastIndex][0], edge.points[lastIndex][1])
         self.setPath(painterPath)
 
     def addArrow(self, painterPath, startX, startY, endX, endY):
@@ -516,11 +519,7 @@ class DiagramWidget(QGraphicsView):
 
     def resetZoom(self):
         """Resets the zoom"""
-        # I don't really understand how it works
-        # Taken from here:
-        # http://cep.xor.aps.anl.gov/software/qt4-x11-4.2.2-browser/d9/df9/qgraphicsview_8cpp-source.html
-        unity = self.matrix().mapRect(QRectF(0, 0, 1, 1))
-        self.scale(1 / unity.width(), 1 / unity.height())
+        self.resetTransform()
 
     def zoomIn(self):
         """Zoom when a button clicked"""
@@ -535,8 +534,10 @@ class DiagramWidget(QGraphicsView):
     def wheelEvent(self, event):
         """Mouse wheel event"""
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
-            factor = 1.41 ** (event.angleDelta() / 240.0)
-            self.scale(factor, factor)
+            if event.angleDelta().y() < 0:
+                self.zoomOut()
+            else:
+                self.zoomIn()
         else:
             QGraphicsView.wheelEvent(self, event)
 

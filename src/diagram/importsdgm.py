@@ -271,7 +271,7 @@ class ImportDiagramModel:
 
         if modBox.kind == DgmModule.ModuleOfInterest:
             # Replace the existed one with a new one but keep the object name
-            modBox.objName = self.modules[ index ].objName
+            modBox.objName = self.modules[index].objName
             self.modules[index] = modBox
             return modBox.objName
 
@@ -359,7 +359,7 @@ class ImportsDiagramDialog(QDialog):
             title += "modified file " + os.path.basename(self.__path)
         self.setWindowTitle(title)
 
-    def __updateOptions(self, state=0):
+    def __updateOptions(self, state=None):
         """Updates the saved options"""
         self.options.includeClasses = self.includeClassesBox.isChecked()
         self.options.includeFuncs = self.includeFuncsBox.isChecked()
@@ -728,7 +728,7 @@ class ImportsDiagramProgress(QDialog):
 
 
             QApplication.processEvents()
-            if self.__cancelRequest == True:
+            if self.__cancelRequest:
                 QApplication.restoreOverrideCursor()
                 self.close()
                 return
@@ -746,7 +746,7 @@ class ImportsDiagramProgress(QDialog):
                     self.progressBar.setValue(index)
                     self.infoLabel.setText('Analyzing ' + fName + "...")
                     QApplication.processEvents()
-                    if self.__cancelRequest == True:
+                    if self.__cancelRequest:
                         QApplication.restoreOverrideCursor()
                         self.dataModel.clear()
                         self.close()
@@ -767,7 +767,7 @@ class ImportsDiagramProgress(QDialog):
             graph = getGraphFromDescriptionData(self.dataModel.toGraphviz())
             graph.normalize(self.physicalDpiX(), self.physicalDpiY())
             QApplication.processEvents()
-            if self.__cancelRequest == True:
+            if self.__cancelRequest:
                 QApplication.restoreOverrideCursor()
                 self.dataModel.clear()
                 self.close()
@@ -874,4 +874,3 @@ class ImportsDiagramProgress(QDialog):
 
             raise Exception("Unexpected type of module: " +
                             str(dataModelObj.kind))
-

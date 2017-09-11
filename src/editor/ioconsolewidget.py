@@ -160,15 +160,15 @@ class IOConsoleWidget(QWidget):
 
     def appendIDEMessage(self, text):
         """Appends an IDE message"""
-        self.__viewer.appendIDEMessage(text)
+        return self.__viewer.appendIDEMessage(text)
 
     def appendStdoutMessage(self, text):
         """Appends an stdout message"""
-        self.__viewer.appendStdoutMessage(text)
+        return self.__viewer.appendStdoutMessage(text)
 
     def appendStderrMessage(self, text):
         """Appends an stderr message"""
-        self.__viewer.appendStderrMessage(text)
+        return self.__viewer.appendStderrMessage(text)
 
     def onTextZoomChanged(self):
         """Triggered when a text zoom is changed"""

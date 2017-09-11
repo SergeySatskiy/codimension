@@ -2430,22 +2430,23 @@ class CodimensionMainWindow(QMainWindow):
     def onProfileResults(self, path, outfile,
                          startTime, finishTime, redirected):
         """Triggered when profiling run finished"""
-        print("Profiling results for: " + path)
-        print("In: " + outfile)
-        print(startTime + ' -- ' + finishTime)
-        print(redirected)
+        if not os.path.exists(outfile):
+            logging.error('No profiling results found for ' + path)
+            return
 
         try:
+            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
             widget = ProfileResultsWidget(path,
                                           getRunParameters(path),
                                           startTime,
                                           outfile,
                                           self)
-            self.em.showProfileReport(widget, 'Profiling report for ' + os.path.basename(path) + 'at ' + startTime)
+            tooltip = 'Profiling report for ' + os.path.basename(path) + \
+                ' at ' + startTime
+            self.em.showProfileReport(widget, tooltip)
         except Exception as exc:
             logging.error(str(exc))
+        finally:
+            QApplication.restoreOverrideCursor()
             if os.path.exists(outfile):
-                # os.unlink(outfile)
-                pass
-            raise
-
+                os.unlink(outfile)

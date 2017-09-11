@@ -21,12 +21,13 @@
 
 import logging
 import os.path
-from ui.qt import (Qt, pyqtSignal, QCursor, QPalette,
+from ui.qt import (Qt, pyqtSignal, QCursor,
                    QTreeWidgetItem, QTreeWidget, QLabel, QWidget, QVBoxLayout,
-                   QFrame, QHeaderView, QMenu, QAbstractItemView, QSizePolicy)
+                   QHeaderView, QMenu, QAbstractItemView, QSizePolicy)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
+from utils.colorfont import getLabelStyle
 
 
 FLOAT_FORMAT = "%8.6f"
@@ -273,15 +274,7 @@ class ProfileTableViewer(QWidget):
         summary = QLabel(txt)
         summary.setToolTip(txt)
         summary.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
-        summary.setFrameStyle(QFrame.StyledPanel)
-        summary.setAutoFillBackground(True)
-        summaryPalette = summary.palette()
-        summaryBackground = summaryPalette.color(QPalette.Background)
-        summaryBackground.setRgb(min(summaryBackground.red() + 30, 255),
-                                 min(summaryBackground.green() + 30, 255),
-                                 min(summaryBackground.blue() + 30, 255))
-        summaryPalette.setColor(QPalette.Background, summaryBackground)
-        summary.setPalette(summaryPalette)
+        summary.setStyleSheet('QLabel {' + getLabelStyle(self) + '}')
 
         vLayout = QVBoxLayout()
         vLayout.setContentsMargins(0, 0, 0, 0)
@@ -346,7 +339,7 @@ class ProfileTableViewer(QWidget):
                     act = self.__callersMenu.addAction(menuText)
                 funcFileName, funcLine, funcName = \
                     self.__getLocationAndName(callerFunc)
-                act.setData(funcFileName + ":" + str(funcLine) + 
+                act.setData(funcFileName + ":" + str(funcLine) +
                             ":" + funcName)
             self.__callersMenu.setEnabled(not self.__callersMenu.isEmpty())
             self.__outsideCallersMenu.setEnabled(

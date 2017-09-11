@@ -559,8 +559,8 @@ class RunManager(QObject):
         if index is not None:
             item = self.__processes[index]
             if item.widget:
-                item.widget.appendIDEMessage('Script started')
-                item.procWrapper.startTime = datetime.now()
+                msg = item.widget.appendIDEMessage('Script started')
+                item.procWrapper.startTime = msg.timestamp
 
     def __onUserInput(self, procuuid, userInput):
         """Triggered when the user input is collected"""

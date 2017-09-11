@@ -19,38 +19,42 @@
 
 """Profiling results as a graph"""
 
+from subprocess import PIPE, Popen
 import os
 import os.path
 import math
 import io
 import gprof2dot
-from contextlib import redirect_stdout
-from ui.qt import (Qt, QPointF, pyqtSignal, QPalette, QFont, QPen, QColor,
+from ui.qt import (Qt, QPointF, pyqtSignal, QFont, QPen, QColor,
                    QFontMetrics, QPainterPath, QPainter, QWidget, QLabel,
-                   QFrame, QVBoxLayout, QGraphicsScene, QGraphicsPathItem,
+                   QVBoxLayout, QGraphicsScene, QGraphicsPathItem,
                    QStyle, QGraphicsTextItem, QStyleOptionGraphicsItem,
                    QGraphicsItem, QGraphicsRectItem, QSizePolicy)
-from utils.settings import Settings, THIRDPARTY_DIR
+from utils.settings import Settings
 from utils.globals import GlobalData
 from utils.pixmapcache import getPixmap
-from utils.run import checkOutput
+from utils.colorfont import getLabelStyle
 from diagram.plaindotparser import getGraphFromPlainDotData
 from diagram.importsdgmgraphics import DiagramWidget
 from .proftable import FLOAT_FORMAT
 
 
+DEFAULT_FONT = QFont("Arial", 10)
+
 class FuncConnectionLabel(QGraphicsTextItem):
 
     """Connector label"""
 
-    def __init__(self, edge):
+    def __init__(self, edge, edgeFont):
         text = edge.label.replace('\\n', '\n')
         QGraphicsTextItem.__init__(self, text)
 
-        font = QFont("Arial", 10)
-        self.setFont(font)
+        if edgeFont:
+            self.setFont(edgeFont)
+        else:
+            self.setFont(DEFAULT_FONT)
 
-        metric = QFontMetrics(font)
+        metric = QFontMetrics(self.font())
         rec = metric.boundingRect(0, 0, 10000, 10000, Qt.AlignCenter, text)
 
         self.setPos(edge.labelX - rec.width() / 2,
@@ -138,12 +142,16 @@ class Function(QGraphicsRectItem):
 
     """Rectangle for a function"""
 
-    def __init__(self, node, fileName, lineNumber, outside):
+    def __init__(self, node, fileName, lineNumber, outside, nodeFont):
         QGraphicsRectItem.__init__(self)
         self.__node = node
         self.__fileName = fileName
         self.__lineNumber = lineNumber
         self.__outside = outside
+
+        self.__font = DEFAULT_FONT
+        if nodeFont:
+            self.__font = nodeFont
 
         posX = node.posX - node.width / 2.0
         posY = node.posY - node.height / 2.0
@@ -192,8 +200,7 @@ class Function(QGraphicsRectItem):
         QGraphicsRectItem.paint(self, painter, itemOption, widget)
 
         # Draw text over the rectangle
-        font = QFont("Arial", 10)
-        painter.setFont(font)
+        painter.setFont(self.__font)
         painter.setPen(QPen(QColor(255, 255, 255)))
         painter.drawText(self.__node.posX - self.__node.width / 2.0,
                          self.__node.posY - self.__node.height / 2.0,
@@ -218,21 +225,6 @@ class Function(QGraphicsRectItem):
 
         GlobalData().mainWindow.openFile(self.__fileName,
                                          self.__lineNumber)
-
-
-# The node label has attached nodeID to it as follows:
-# <label>--id
-def extractNodeID(label):
-    """Extracts the ID from the label"""
-    parts = label.split("--")
-    length = len(parts)
-    if length == 1:
-        return -1, label
-    try:
-        node_id = int(parts[length - 1])
-        return node_id, "--".join(parts[:-1])
-    except:
-        return -1, label
 
 
 class ProfileGraphViewer(QWidget):
@@ -288,15 +280,7 @@ class ProfileGraphViewer(QWidget):
         summary = QLabel(txt)
         summary.setToolTip(txt)
         summary.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
-        summary.setFrameStyle(QFrame.StyledPanel)
-        summary.setAutoFillBackground(True)
-        summaryPalette = summary.palette()
-        summaryBackground = summaryPalette.color(QPalette.Background)
-        summaryBackground.setRgb(min(summaryBackground.red() + 30, 255),
-                                 min(summaryBackground.green() + 30, 255),
-                                 min(summaryBackground.blue() + 30, 255))
-        summaryPalette.setColor(QPalette.Background, summaryBackground)
-        summary.setPalette(summaryPalette)
+        summary.setStyleSheet('QLabel {' + getLabelStyle(self) + '}')
 
         self.__scene = QGraphicsScene()
         self.__viewer = DiagramWidget()
@@ -342,7 +326,7 @@ class ProfileGraphViewer(QWidget):
                 elif parts[0].isdigit():
                     if parts[1] == '->':
                         # certain edge spec: replace arrowsize and font size
-                        for index, value in enumerate(parts):
+                        for index, part in enumerate(parts):
                             if part.startswith('[arrowsize='):
                                 modified = parts[:]
                                 modified[index] = '[arrowsize="0.0",'
@@ -350,18 +334,24 @@ class ProfileGraphViewer(QWidget):
                             elif part.startswith('fontsize='):
                                 size = float(part.split('"')[1])
                                 if edgeFont:
-                                    edgeFont.setSize(size)
+                                    edgeFont.setPointSize(size)
                         lineModified = True
-                    elif parts[1]startswith('['):
+                    elif parts[1].startswith('['):
                         # certain node spec: pick the tooltip and font size
+                        lineno = None
                         for part in parts:
                             if part.startswith('tooltip='):
                                 nodePath = part.split('"')[1]
-                                tooltips[int(parts[0]] = nodePath
+                                tooltips[int(parts[0])] = nodePath + ':' + str(lineno)
                             elif part.startswith('fontsize='):
                                 size = float(part.split('"')[1])
                                 if nodeFont:
-                                    nodeFont.setSize(size)
+                                    nodeFont.setPointSize(size)
+                            elif part.startswith('label='):
+                                try:
+                                    lineno = int(part.split(':')[1])
+                                except:
+                                    pass
             if not lineModified:
                 processed.append(line)
 
@@ -383,37 +373,15 @@ class ProfileGraphViewer(QWidget):
             dot.graph(profileData, gprof2dot.TEMPERATURE_COLORMAP)
 
             output = buf.getvalue()
-        print('Non processed output')
-        print(output)
         return self.__postprocessFullDotSpec(output)
 
     def __getDiagramLayout(self):
         """Runs external tools to get the diagram layout"""
-        # Preparation: build a map of func ID -> fileName + line
-        funcMap = {}
-        index = 0
-        for func, props in self.__stats.stats.items():
-            funcMap[index] = (func[0], func[1])
-            index += 1
-
-        # First step is to run grpof2dot
         fullDotSpec, tooltips, nodeFont, edgeFont = self.__rungprof2dot()
-        print('Post processed output')
-        print(fullDotSpec)
 
-        raise Exception('To stop')
+        p = Popen(["dot", "-Tplain"], stdin=PIPE, stdout=PIPE, bufsize=1)
+        graphDescr = p.communicate(fullDotSpec.encode('utf-8'))[0].decode('utf-8')
 
-
-
-
-
-#        outputFile = self.__dataFile + ".dot"
-#        dotSpec = checkOutput([gprof2dot, '-n', str(nodeLimit),
-#                               '-e', str(edgeLimit),
-#                               '-f', 'pstats', '-o', outputFile,
-#                               self.__dataFile])
-#        print(dotSpec)
-        graphDescr = checkOutput(["dot", "-Tplain", outputFile])
         graph = getGraphFromPlainDotData(graphDescr)
         graph.normalize(self.physicalDpiX(), self.physicalDpiY())
 
@@ -423,21 +391,25 @@ class ProfileGraphViewer(QWidget):
         for edge in graph.edges:
             self.__scene.addItem(FuncConnection(edge))
             if edge.label != "":
-                self.__scene.addItem(FuncConnectionLabel(edge))
+                self.__scene.addItem(FuncConnectionLabel(edge, edgeFont))
 
         for node in graph.nodes:
             fileName = ""
             lineNumber = 0
-            isOutside = True
-            nodeID, newLabel = extractNodeID(node.label)
-            if nodeID != -1:
-                node.label = newLabel
 
-                # Now, detect the file name/line number and
-                # if it belongs to the project
-                (fileName, lineNumber) = funcMap[nodeID]
+            try:
+                nodeNameAsInt = int(node.name)
+                if nodeNameAsInt in tooltips:
+                    parts = tooltips[nodeNameAsInt].rsplit(':', 1)
+                    fileName = parts[0]
+                    if parts[1].isdigit():
+                        lineNumber = int(parts[1])
+            except:
+                pass
+
             self.__scene.addItem(Function(node, fileName, lineNumber,
-                                          self.__isOutsideItem(fileName)))
+                                          self.__isOutsideItem(fileName),
+                                          nodeFont))
 
     def __onESC(self):
         """Triggered when ESC is clicked"""

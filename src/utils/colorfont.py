@@ -223,7 +223,7 @@ def getLabelStyle(owner):
                      min(blue + delta, 255))
 
     props = ['border-radius: 3px',
-             'padding: 2px',
+             'padding: 4px',
              'background-color: ' + colorAsString(bgColor, True),
              'border: 1px solid ' + colorAsString(borderColor, True)]
     return '; '.join(props)
