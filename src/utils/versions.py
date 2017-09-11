@@ -147,7 +147,7 @@ def getComponentInfo():
                        path))
     version, path = getPackageVersionAndLocation('gprof2dot')
     components.append(("gprof2dot", version,
-                       "http://freecode.com/projects/gprof2dot_py", True,
+                       "https://github.com/jrfonseca/gprof2dot", None,
                        "LGPL", "http://www.gnu.org/licenses/lgpl.html",
                        path))
     version, path = getPackageVersionAndLocation('yapsy')
