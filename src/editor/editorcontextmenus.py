@@ -145,14 +145,14 @@ class EditorContextMenuMixin:
             getIcon('run.png'), 'Run script', self._parent.onRunScript)
         self.runParamAct = self.toolsMenu.addAction(
             getIcon('paramsmenu.png'), 'Set parameters and run',
-            self._parent.onRunScriptSettings)
+            self._parent.onRunScriptDlg)
         self.toolsMenu.addSeparator()
         self.profileAct = self.toolsMenu.addAction(
             getIcon('profile.png'), 'Profile script',
             self._parent.onProfileScript)
         self.profileParamAct = self.toolsMenu.addAction(
             getIcon('paramsmenu.png'), 'Set parameters and profile',
-            self._parent.onProfileScriptSettings)
+            self._parent.onProfileScriptDlg)
         self.toolsMenu.addSeparator()
         self.disasmMenu = QMenu('Disassembly')
         self.disasmMenu.setIcon(getIcon('disassembly.png'))

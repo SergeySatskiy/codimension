@@ -287,6 +287,7 @@ class RunManager(QObject):
 
     # script path, output file, start time, finish time, redirected
     sigProfilingResults = pyqtSignal(str, str, str, str, bool)
+    sigDebugSessionPrologueStarted = pyqtSignal()
 
     def __init__(self, mainWindow):
         QObject.__init__(self)
@@ -392,6 +393,9 @@ class RunManager(QObject):
             if kind == PROFILE:
                 if dlg.profilerParams != profilerParams:
                     Settings().setProfilerSettings(dlg.profilerParams)
+            elif kind == DEBUG:
+                if dlg.debuggerParams != debuggerParams:
+                    Settings().setDebuggerSettings(dlg.debuggerParams)
             return True
         return False
 
@@ -426,7 +430,7 @@ class RunManager(QObject):
         return remoteProc
 
     def run(self, path, needDialog):
-        """Runs the given script with redirected IO"""
+        """Runs the given script regardless if it is redirected"""
         if needDialog:
             if not self.__updateParameters(path, RUN):
                 return
@@ -450,7 +454,7 @@ class RunManager(QObject):
             del self.__processes[-1]
 
     def profile(self, path, needDialog):
-        """Profiles the given script with redirected IO"""
+        """Profiles the given script regardless if it is redirected"""
         if needDialog:
             if not self.__updateParameters(path, PROFILE):
                 return
@@ -474,8 +478,29 @@ class RunManager(QObject):
             del self.__processes[-1]
 
     def debug(self, path, needDialog):
-        """Debugs the given script with redirected IO"""
-        pass
+        """Debugs the given script regardless if it is redirected"""
+        if needDialog:
+            if not self.__updateParameters(path, DEBUG):
+                return
+
+        self.sigDebugSessionPrologueStarted.emit()
+        remoteProc = self.__prepareRemoteProcess(path, DEBUG)
+        try:
+            remoteProc.procWrapper.start()
+            if not remoteProc.procWrapper.redirected:
+                remoteProc.procWrapper.startTime = datetime.now()
+                if not self.__waitTimer.isActive():
+                    self.__waitTimer.start(1000)
+        except Exception as exc:
+            # Failed to start:
+            # - log approprietly
+            # - remove from the list
+            if remoteProc.procWrapper.redirected:
+                remoteProc.widget.appendIDEMessage("Failed to start: " +
+                                                   str(exc))
+            else:
+                logging.error(str(exc))
+            del self.__processes[-1]
 
     def killAll(self):
         """Kills all the processes if needed"""

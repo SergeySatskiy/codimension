@@ -224,10 +224,10 @@ class MainWindowMenuMixin:
         runMenu.aboutToShow.connect(self.__runAboutToShow)
         self.__prjRunAct = runMenu.addAction(
             getIcon('run.png'), 'Run &project main script',
-            self._onRunProject)
+            self.onRunProject)
         self.__prjRunDlgAct = runMenu.addAction(
             getIcon('detailsdlg.png'), 'Run p&roject main script...',
-            self._onRunProjectSettings)
+            self.onRunProjectDlg)
         self._tabRunAct = runMenu.addAction(
             getIcon('run.png'), 'Run &tab script', self.onRunTab)
         self._tabRunDlgAct = runMenu.addAction(
@@ -235,10 +235,10 @@ class MainWindowMenuMixin:
         runMenu.addSeparator()
         self.__prjProfileAct = runMenu.addAction(
             getIcon('profile.png'), 'Profile project main script',
-            self._onProfileProject)
+            self.onProfileProject)
         self.__prjProfileDlgAct = runMenu.addAction(
             getIcon('profile.png'), 'Profile project main script...',
-            self._onProfileProjectSettings)
+            self.onProfileProjectDlg)
         self._tabProfileAct = runMenu.addAction(
             getIcon('profile.png'), 'Profile tab script', self.onProfileTab)
         self._tabProfileDlgAct = runMenu.addAction(
@@ -252,16 +252,16 @@ class MainWindowMenuMixin:
         dbgMenu.aboutToShow.connect(self.__debugAboutToShow)
         self._prjDebugAct = dbgMenu.addAction(
             getIcon('debugger.png'), 'Debug &project main script',
-            self._onDebugProject, "Shift+F5")
+            self.onDebugProject, "Shift+F5")
         self._prjDebugDlgAct = dbgMenu.addAction(
             getIcon('detailsdlg.png'), 'Debug p&roject main script...',
-            self._onDebugProjectSettings, "Ctrl+Shift+F5")
+            self.onDebugProjectDlg, "Ctrl+Shift+F5")
         self._tabDebugAct = dbgMenu.addAction(
             getIcon('debugger.png'), 'Debug &tab script',
-            self._onDebugTab, "F5")
+            self.onDebugTab, "F5")
         self._tabDebugDlgAct = dbgMenu.addAction(
             getIcon('detailsdlg.png'), 'Debug t&ab script...',
-            self._onDebugTabDlg, "Ctrl+F5")
+            self.onDebugTabDlg, "Ctrl+F5")
         dbgMenu.addSeparator()
         self._debugStopBrutalAct = dbgMenu.addAction(
             getIcon('dbgstopbrutal.png'), 'Stop session and kill console',

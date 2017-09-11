@@ -193,11 +193,13 @@ class IOConsoleWidget(QWidget):
 
     def scriptFinished(self):
         """Triggered when the script process finished"""
-        self.__stopButton.setEnabled(False)
+        if self.kind != DEBUG:
+            self.__stopButton.setEnabled(False)
         self.__viewer.switchMode(self.__viewer.MODE_OUTPUT)
         self.__clearButton.setEnabled(True)
 
     def onReuse(self, procuuid):
         """Triggered when the console is reused"""
         self.procuuid = procuuid
-        self.__stopButton.setEnabled(True)
+        if self.kind != DEBUG:
+            self.__stopButton.setEnabled(True)

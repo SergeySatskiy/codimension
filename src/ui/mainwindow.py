@@ -451,40 +451,40 @@ class CodimensionMainWindow(QMainWindow):
         runProjectMenu = QMenu(self)
         runProjectAct = runProjectMenu.addAction(
             getIcon('detailsdlg.png'), 'Set run parameters')
-        runProjectAct.triggered.connect(self._onRunProjectSettings)
+        runProjectAct.triggered.connect(self.onRunProjectDlg)
         self.runProjectButton = QToolButton(self)
         self.runProjectButton.setIcon(getIcon('run.png'))
         self.runProjectButton.setToolTip('Project is not loaded')
         self.runProjectButton.setPopupMode(QToolButton.DelayedPopup)
         self.runProjectButton.setMenu(runProjectMenu)
         self.runProjectButton.setFocusPolicy(Qt.NoFocus)
-        self.runProjectButton.clicked.connect(self._onRunProject)
+        self.runProjectButton.clicked.connect(self.onRunProject)
 
         # profile project button and its menu
         profileProjectMenu = QMenu(self)
         profileProjectAct = profileProjectMenu.addAction(
             getIcon('detailsdlg.png'), 'Set profile parameters')
-        profileProjectAct.triggered.connect(self._onProfileProjectSettings)
+        profileProjectAct.triggered.connect(self.onProfileProjectDlg)
         self.profileProjectButton = QToolButton(self)
         self.profileProjectButton.setIcon(getIcon('profile.png'))
         self.profileProjectButton.setToolTip('Project is not loaded')
         self.profileProjectButton.setPopupMode(QToolButton.DelayedPopup)
         self.profileProjectButton.setMenu(profileProjectMenu)
         self.profileProjectButton.setFocusPolicy(Qt.NoFocus)
-        self.profileProjectButton.clicked.connect(self._onProfileProject)
+        self.profileProjectButton.clicked.connect(self.onProfileProject)
 
         # Debug project button and its menu
         debugProjectMenu = QMenu(self)
         debugProjectAct = debugProjectMenu.addAction(
             getIcon('detailsdlg.png'), 'Set debug parameters')
-        debugProjectAct.triggered.connect(self._onDebugProjectSettings)
+        debugProjectAct.triggered.connect(self.onDebugProjectDlg)
         self.debugProjectButton = QToolButton(self)
         self.debugProjectButton.setIcon(getIcon('debugger.png'))
         self.debugProjectButton.setToolTip('Project is not loaded')
         self.debugProjectButton.setPopupMode(QToolButton.DelayedPopup)
         self.debugProjectButton.setMenu(debugProjectMenu)
         self.debugProjectButton.setFocusPolicy(Qt.NoFocus)
-        self.debugProjectButton.clicked.connect(self._onDebugProject)
+        self.debugProjectButton.clicked.connect(self.onDebugProject)
         self.debugProjectButton.setVisible(True)
 
         packageDiagramButton = QAction(
@@ -1065,60 +1065,77 @@ class CodimensionMainWindow(QMainWindow):
         if progressDlg.exec_() == QDialog.Accepted:
             self.openDiagram(progressDlg.scene, "Generated for the project")
 
-    def _onRunProject(self, action=False):
+    def onRunTab(self):
+        """Triggered when run tab script is requested"""
+        currentWidget = self.em.currentWidget()
+        self._runManager.run(currentWidget.getFileName(), False)
+
+    def onRunTabDlg(self):
+        """Triggered when run tab script dialog is requested"""
+        currentWidget = self.em.currentWidget()
+        self._runManager.run(currentWidget.getFileName(), True)
+
+    def onRunProject(self, _=None):
         """Runs the project with saved sattings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
             self._runManager.run(fileName, False)
 
-    def _onRunProjectSettings(self):
+    def onRunProjectDlg(self):
         """Brings up the dialog with run script settings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
             self._runManager.run(fileName, True)
 
-    def _onProfileProject(self, action=False):
+    def onProfileTab(self):
+        """Triggered when profile script is requested"""
+        currentWidget = self.em.currentWidget()
+        self._runManager.profile(currentWidget.getFileName(), False)
+
+    def onProfileTabDlg(self):
+        """Triggered when profile tab script dialog is requested"""
+        currentWidget = self.em.currentWidget()
+        self._runManager.profile(currentWidget.getFileName(), True)
+
+    def onProfileProject(self, _=None):
         """Profiles the project with saved settings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
             self._runManager.profile(fileName, False)
 
-    def _onProfileProjectSettings(self):
+    def onProfileProjectDlg(self):
         """Brings up the dialog with profile script settings"""
         if self.__checkProjectScriptValidity():
             fileName = GlobalData().project.getProjectScript()
             self._runManager.profile(fileName, True)
 
-    def _onDebugProjectSettings(self):
-        """Brings up the dialog with debug script settings"""
-        if self.__checkDebugPrerequisites():
-            fileName = GlobalData().project.getProjectScript()
-            params = getRunParameters(fileName)
-            termType = self.settings['terminalType']
-            profilerParams = self.settings.getProfilerSettings()
-            debuggerParams = self.settings.getDebuggerSettings()
-            dlg = RunDialog(fileName, params, termType,
-                            profilerParams, debuggerParams, "Debug")
-            if dlg.exec_() == QDialog.Accepted:
-                addRunParams(fileName, dlg.runParams)
-                if dlg.termType != termType:
-                    self.settings['terminalType'] = dlg.termType
-                if dlg.debuggerParams != debuggerParams:
-                    self.settings.setDebuggerSettings(dlg.debuggerParams)
-                self._onDebugProject()
+    def onDebugTab(self):
+        """Triggered when debug tab is requested"""
+        if not self.debugMode:
+            currentWidget = self.em.currentWidget()
+            self._runManager.debug(currentWidget.getFileName(), False)
 
-    def _onDebugProject(self, action=False):
+    def onDebugTabDlg(self):
+        """Triggered when debug tab script dialog is requested"""
+        if not self.debugMode:
+            currentWidget = self.em.currentWidget()
+            self._runManager.debug(currentWidget.getFileName(), True)
+
+    def onDebugProject(self, _=None):
         """Debugging is requested"""
         if not self.debugMode:
-            if self.__checkDebugPrerequisites():
-                self.debugScript(GlobalData().project.getProjectScript())
+            if self.__checkDebugProjectPrerequisites():
+                fileName = GlobalData().project.getProjectScript()
+                self._runManager.profile(fileName, False)
 
-    def debugScript(self, fileName):
-        """Runs a script to debug"""
+    def onDebugProjectDlg(self):
+        """Brings up the dialog with debug script settings"""
         if not self.debugMode:
-            self.__debugger.startDebugging(fileName)
+            if self.__checkDebugProjectPrerequisites():
+                fileName = GlobalData().project.getProjectScript()
+                self._runManager.profile(fileName, True)
 
-    def __checkDebugPrerequisites(self):
+    def __checkDebugProjectPrerequisites(self):
         """Returns True if should continue"""
         if not self.__checkProjectScriptValidity():
             return False
@@ -1797,34 +1814,6 @@ class CodimensionMainWindow(QMainWindow):
     def _onTabImportDgmTuned(self):
         """Triggered when tuned tab imports diagram is requested"""
         self.em.currentWidget().onImportDgmTuned()
-
-    def onRunTab(self):
-        """Triggered when run tab script is requested"""
-        currentWidget = self.em.currentWidget()
-        self._runManager.run(currentWidget.getFileName(), False)
-
-    def onRunTabDlg(self):
-        """Triggered when run tab script dialog is requested"""
-        currentWidget = self.em.currentWidget()
-        self._runManager.run(currentWidget.getFileName(), True)
-
-    def onProfileTab(self):
-        """Triggered when profile script is requested"""
-        currentWidget = self.em.currentWidget()
-        self._runManager.profile(currentWidget.getFileName(), False)
-
-    def onProfileTabDlg(self):
-        """Triggered when profile tab script dialog is requested"""
-        currentWidget = self.em.currentWidget()
-        self._runManager.profile(currentWidget.getFileName(), True)
-
-    def _onDebugTab(self):
-        """Triggered when debug tab is requested"""
-        self.em.currentWidget().onDebugScript()
-
-    def _onDebugTabDlg(self):
-        """Triggered when debug tab script dialog is requested"""
-        self.em.currentWidget().onDebugScriptSettings()
 
     def _onPluginManager(self):
         """Triggered when a plugin manager dialog is requested"""

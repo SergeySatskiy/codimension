@@ -22,8 +22,8 @@
 import pstats
 from ui.qt import (Qt, QSize, pyqtSignal, QWidget, QToolBar, QHBoxLayout,
                    QAction)
-from utils.pixmapcache import getIcon
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from utils.pixmapcache import getIcon
 from .proftable import ProfileTableViewer
 from .profgraph import ProfileGraphViewer
 

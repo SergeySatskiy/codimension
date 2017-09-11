@@ -26,7 +26,6 @@ from ui.qt import (Qt, QFileInfo, QSize, pyqtSignal, QToolBar, QHBoxLayout,
                    QWidget, QAction, QMenu, QSizePolicy, QToolButton, QDialog,
                    QVBoxLayout, QSplitter)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from ui.runparamsdlg import RunDialog
 from ui.importlist import ImportListWidget
 from ui.outsidechanges import OutsideChangeWidget
 from utils.pixmapcache import getIcon
@@ -34,13 +33,9 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.misc import extendInstance
 from utils.fileutils import isPythonMime
-from utils.diskvaluesrelay import getRunParameters, addRunParams
-from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
-                               resolveImports)
+from utils.importutils import getImportsList, resolveImports
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
-from debugger.modifiedunsaved import ModifiedUnsavedDialog
-from profiling.profui import ProfilingProgressDialog
 from .flowuiwidget import FlowUIWidget
 from .navbar import NavigationBar
 from .texteditor import TextEditor
@@ -152,7 +147,7 @@ class TextEditorTabWidget(QWidget):
         runScriptMenu = QMenu(self)
         runScriptDlgAct = runScriptMenu.addAction(
             getIcon('detailsdlg.png'), 'Set run/debug parameters')
-        runScriptDlgAct.triggered.connect(self.onRunScriptSettings)
+        runScriptDlgAct.triggered.connect(self.onRunScriptDlg)
         self.runScriptButton = QToolButton(self)
         self.runScriptButton.setIcon(getIcon('run.png'))
         self.runScriptButton.setToolTip('Run script')
@@ -166,7 +161,7 @@ class TextEditorTabWidget(QWidget):
         profileScriptMenu = QMenu(self)
         profileScriptDlgAct = profileScriptMenu.addAction(
             getIcon('detailsdlg.png'), 'Set profile parameters')
-        profileScriptDlgAct.triggered.connect(self.onProfileScriptSettings)
+        profileScriptDlgAct.triggered.connect(self.onProfileScriptDlg)
         self.profileScriptButton = QToolButton(self)
         self.profileScriptButton.setIcon(getIcon('profile.png'))
         self.profileScriptButton.setToolTip('Profile script')
@@ -180,7 +175,7 @@ class TextEditorTabWidget(QWidget):
         debugScriptMenu = QMenu(self)
         debugScriptDlgAct = debugScriptMenu.addAction(
             getIcon('detailsdlg.png'), 'Set run/debug parameters')
-        debugScriptDlgAct.triggered.connect(self.onDebugScriptSettings)
+        debugScriptDlgAct.triggered.connect(self.onDebugScriptDlg)
         self.debugScriptButton = QToolButton(self)
         self.debugScriptButton.setIcon(getIcon('debugger.png'))
         self.debugScriptButton.setToolTip('Debug script')
@@ -521,7 +516,7 @@ class TextEditorTabWidget(QWidget):
         GlobalData().mainWindow.onRunTab()
 
     @staticmethod
-    def onRunScriptSettings():
+    def onRunScriptDlg():
         """Shows the run parameters dialogue"""
         GlobalData().mainWindow.onRunTabDlg()
 
@@ -530,49 +525,18 @@ class TextEditorTabWidget(QWidget):
         """Profiles the script"""
         GlobalData().mainWindow.onProfileTab()
 
-    def onProfileScriptSettings(self):
+    def onProfileScriptDlg(self):
         """Shows the profile parameters dialogue"""
         GlobalData().mainWindow.onProfileTabDlg()
 
-    def onDebugScriptSettings(self):
-        """Shows the debug parameters dialogue"""
-        if self.__checkDebugPrerequisites():
-            fileName = self.getFileName()
-            params = getRunParameters(fileName)
-            termType = Settings()['terminalType']
-            profilerParams = Settings().getProfilerSettings()
-            debuggerParams = Settings().getDebuggerSettings()
-            dlg = RunDialog(fileName, params, termType,
-                            profilerParams, debuggerParams, "Debug", self)
-            if dlg.exec_() == QDialog.Accepted:
-                addRunParams(fileName, dlg.runParams)
-                if dlg.termType != termType:
-                    Settings()['terminalType'] = dlg.termType
-                if dlg.debuggerParams != debuggerParams:
-                    Settings().setDebuggerSettings(dlg.debuggerParams)
-                self.onDebugScript()
-
-    def onDebugScript(self):
+    # Arguments: action
+    def onDebugScript(self, _=None):
         """Starts debugging"""
-        if self.__checkDebugPrerequisites():
-            GlobalData().mainWindow.debugScript(self.getFileName())
+        GlobalData().mainWindow.onDebugTab()
 
-    @staticmethod
-    def __checkDebugPrerequisites():
-        """Returns True if should continue"""
-        mainWindow = GlobalData().mainWindow
-        editorsManager = mainWindow.editorsManagerWidget.editorsManager
-        modifiedFiles = editorsManager.getModifiedList(True)
-        if not modifiedFiles:
-            return True
-
-        dlg = ModifiedUnsavedDialog(modifiedFiles, "Save and debug")
-        if dlg.exec_() != QDialog.Accepted:
-            # Selected to cancel
-            return False
-
-        # Need to save the modified project files
-        return editorsManager.saveModified(True)
+    def onDebugScriptDlg(self):
+        """Shows the debug parameters dialogue"""
+        GlobalData().mainWindow.onDebugTabDlg()
 
     def getCFEditor(self):
         """Provides a reference to the control flow widget"""

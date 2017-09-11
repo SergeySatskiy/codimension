@@ -216,7 +216,7 @@ class Function(QGraphicsRectItem):
             painter.setRenderHint(QPainter.SmoothPixmapTransform)
             painter.drawPixmap(pixmapPosX, pixmapPosY, pixmap)
 
-    def mouseDoubleClickEvent(self, event):
+    def mouseDoubleClickEvent(self, _):
         """Open the clicked file if it could be opened"""
         if self.__lineNumber == 0:
             return
@@ -342,7 +342,8 @@ class ProfileGraphViewer(QWidget):
                         for part in parts:
                             if part.startswith('tooltip='):
                                 nodePath = part.split('"')[1]
-                                tooltips[int(parts[0])] = nodePath + ':' + str(lineno)
+                                pathLine = nodePath + ':' + str(lineno)
+                                tooltips[int(parts[0])] = pathLine
                             elif part.startswith('fontsize='):
                                 size = float(part.split('"')[1])
                                 if nodeFont:
@@ -379,8 +380,10 @@ class ProfileGraphViewer(QWidget):
         """Runs external tools to get the diagram layout"""
         fullDotSpec, tooltips, nodeFont, edgeFont = self.__rungprof2dot()
 
-        p = Popen(["dot", "-Tplain"], stdin=PIPE, stdout=PIPE, bufsize=1)
-        graphDescr = p.communicate(fullDotSpec.encode('utf-8'))[0].decode('utf-8')
+        dotProc = Popen(["dot", "-Tplain"],
+                        stdin=PIPE, stdout=PIPE, bufsize=1)
+        graphDescr = dotProc.communicate(
+            fullDotSpec.encode('utf-8'))[0].decode('utf-8')
 
         graph = getGraphFromPlainDotData(graphDescr)
         graph.normalize(self.physicalDpiX(), self.physicalDpiY())
