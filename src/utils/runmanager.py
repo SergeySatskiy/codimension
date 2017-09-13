@@ -239,7 +239,7 @@ class RemoteProcessWrapper(QObject):
         while self.__clientSocket and self.__clientSocket.canReadLine():
             jsonStr = bytes(self.__clientSocket.readLine()).decode()
 
-            print("Received: " + str(jsonStr))
+            print("Run manager received: " + str(jsonStr))
             try:
                 method, procuuid, params = parseJSONMessage(jsonStr)
                 if method == METHOD_EPILOGUE_EXIT_CODE:
@@ -324,6 +324,7 @@ class RunManager(QObject):
         """Waits for the message with the proc ID"""
         if clientSocket.waitForReadyRead(1000):
             jsonStr = bytes(clientSocket.readLine()).decode()
+            print("Run manager received: " + str(jsonStr))
             try:
                 method, procuuid, params = parseJSONMessage(jsonStr)
                 if method != METHOD_PROC_ID_INFO:

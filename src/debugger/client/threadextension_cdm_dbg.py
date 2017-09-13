@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -33,8 +32,9 @@ import sys
 import importlib
 import threading
 import _thread
-from protocol_cdm_dbg import METHOD_RESPONSE_THREAD_LIST
+from protocol_cdm_dbg import METHOD_THREAD_LIST
 from base_cdm_dbg import DebugBase
+from cdm_dbg_utils import sendJSONCommand
 
 _qtThreadNumber = 1
 
@@ -170,9 +170,9 @@ class ThreadExtension(object):
             threadProps["broken"] = self.isBroken
             threadList.append(threadProps)
 
-        self.sendJSONCommand(METHOD_RESPONSE_THREAD_LIST, {
-            "currentID": currentId,
-            "threadList": threadList})
+        sendJSONCommand(self.__socket, METHOD_THREAD_LIST,
+                        self.__procuuid,
+                        {"currentID": currentId, "threadList": threadList})
 
     @staticmethod
     def getExecutedFrame(frame):

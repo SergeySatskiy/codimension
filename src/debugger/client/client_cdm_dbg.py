@@ -28,9 +28,15 @@
 Module implementing the multithreaded version of the debug client
 """
 
+import sys
+import traceback
+import time
 from base_cdm_dbg import DebugBase
 from clientbase_cdm_dbg import DebugClientBase
 from threadextension_cdm_dbg import ThreadExtension
+
+
+CLIENT_DEBUG = True
 
 
 class DebugClient(DebugClientBase, DebugBase, ThreadExtension):
@@ -50,4 +56,13 @@ class DebugClient(DebugClientBase, DebugBase, ThreadExtension):
 
 if __name__ == '__main__':
     debugClient = DebugClient()
-    debugClient.main()
+    try:
+        debugClient.main()
+    except Exception as exc:
+        print('in exception')
+        if CLIENT_DEBUG:
+            print(traceback.format_exc(), file=sys.__stderr__)
+            if sys.__stderr__ != sys.stderr:
+                print(traceback.format_exc(), file=sys.stderr)
+            # The delay is for a socket data
+            time.sleep(4)

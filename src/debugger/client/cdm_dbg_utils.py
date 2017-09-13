@@ -31,12 +31,14 @@ import json
 import sys
 from collections import namedtuple
 from inspect import iscode, isframe
+from dis import COMPILER_FLAG_NAMES
+from PyQt5.QtNetwork import QAbstractSocket
+
 
 MAX_TRIES = 3
 
 
 # Create constants for the compiler flags in Include/code.h
-from dis import COMPILER_FLAG_NAMES
 mod_dict = globals()
 for flagName, value in COMPILER_FLAG_NAMES.items():
     mod_dict['CO_' + value] = flagName
@@ -89,6 +91,27 @@ def sendJSONCommand(clientSocket, method, procuuid, params):
     if lastSocketError:
         msg += ': ' + lastSocketError
     raise Exception(msg)
+
+
+def waitForIDEMessage(clientSocket, msgType, timeout):
+    """Waits for a certain message from the IDE"""
+    if clientSocket.waitForReadyRead(timeout * 1000):
+        jsonStr = bytes(clientSocket.readLine()).decode()
+        try:
+            method, _, params = parseJSONMessage(jsonStr)
+            if method != msgType:
+                raise Exception('Unexpected message from IDE. Expected: ' +
+                                msgType + '. Received: ' + str(method))
+            return params
+        except (TypeError, ValueError) as exc:
+            raise Exception('Error parsing IDE message: ' + str(exc))
+
+    if clientSocket.state() != QAbstractSocket.ConnectedState:
+        # the socket has disconnected which most probably means
+        # the IDE crashed
+        sys.exit(1)
+
+    raise Exception('Timeout waiting an IDE message ' + msgType)
 
 
 def getArgValues(frame):

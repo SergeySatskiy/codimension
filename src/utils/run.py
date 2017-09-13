@@ -129,9 +129,9 @@ def getTerminalCommandToDebug(fileName, arguments, params,
 
     # Form the debug client options
     if not debugSettings.reportExceptions:
-        parts.append('-e')
+        parts.append('--no-exc-report')
     if debugSettings.traceInterpreter:
-        parts.append('-t')
+        parts.append('--trace-python')
     if debugSettings.autofork:
         if debugSettings.followChild:
             parts.append('--fork-child')
@@ -143,7 +143,7 @@ def getTerminalCommandToDebug(fileName, arguments, params,
         return ' '.join(parts)
 
     # Append the option of a non redirected I/O
-    parts.append('-n')
+    parts.append('--no-redirect')
     parts += ['--', script] + prepareArguments(arguments)
 
     customTerminal = params['customTerminal'].strip()

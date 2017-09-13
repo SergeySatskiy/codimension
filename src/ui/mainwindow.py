@@ -31,7 +31,7 @@ from utils.misc import (getDefaultTemplate, getIDETemplateFile,
 from utils.pixmapcache import getIcon
 from utils.fileutils import (getFileProperties, isImageViewable, isImageFile,
                              isFileSearchable, isCDMProjectFile)
-from utils.diskvaluesrelay import getRunParameters, addRunParams
+from utils.diskvaluesrelay import getRunParameters
 from utils.runmanager import RunManager, getWorkingDir
 from utils.run import (parseCommandLineArguments, getNoArgsEnvironment,
                        TERM_REDIRECT)
@@ -79,7 +79,6 @@ from .findinfilesviewer import FindInFilesViewer, hideSearchTooltip
 from .findname import FindNameDialog
 from .findfile import FindFileDialog
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from .runparamsdlg import RunDialog
 from .mainstatusbar import MainWindowStatusBarMixin
 from .mainmenu import MainWindowMenuMixin
 from .mainredirectedio import MainWindowRedirectedIOMixin

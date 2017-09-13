@@ -20,7 +20,6 @@
 """CML utilities"""
 
 from sys import maxsize
-from ui.qt import QColor
 from cdmcfparser import (IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT,
                          TRY_FRAGMENT, CONTROL_FLOW_FRAGMENT, CLASS_FRAGMENT,
                          FUNCTION_FRAGMENT)
@@ -114,8 +113,8 @@ class CMLcc(CMLCommentBase):
 
     def __init__(self, ref):
         CMLCommentBase.__init__(self, ref)
-        self.bg = None      # background color
-        self.fg = None      # foreground color
+        self.bgColor = None      # background color
+        self.fgColor = None      # foreground color
         self.border = None
         self.validate()
 
@@ -125,17 +124,19 @@ class CMLcc(CMLCommentBase):
         CMLVersion.validate(self.ref)
 
         if "background" in self.ref.properties:
-            self.bg = buildColor(self.ref.properties["background"])
+            self.bgColor = buildColor(self.ref.properties["background"])
         if "foreground" in self.ref.properties:
-            self.fg = buildColor(self.ref.properties["foreground"])
+            self.fgColor = buildColor(self.ref.properties["foreground"])
         if "border" in self.ref.properties:
             self.border = buildColor(self.ref.properties["border"])
 
-        if self.bg is None and self.fg is None and self.border is None:
-            raise Exception("The '" + CMLcc.CODE +
-                            "' CML comment does not supply neither "
-                            "background nor foreground color nor "
-                            "border color")
+        if self.bgColor is None:
+            if self.fgColor is None:
+                if self.border is None:
+                    raise Exception("The '" + CMLcc.CODE +
+                                    "' CML comment does not supply neither "
+                                    "background nor foreground color nor "
+                                    "border color")
 
     @staticmethod
     def description():
@@ -154,24 +155,24 @@ class CMLcc(CMLCommentBase):
                "- 'ddd,ddd,ddd,ddd': decimal RGB + alpha\n\n" \
                "Example:\n" \
                "# cml 1 " + CMLcc.CODE + \
-               " backgound=#f6f4e4 foreground=#000000 border=#ffffff"
+               " background=#f6f4e4 foreground=#000000 border=#ffffff"
 
     @staticmethod
-    def generate(backgound, foreground, border, pos=1):
-        " Generates a complete line to be inserted "
+    def generate(background, foreground, border, pos=1):
+        """Generates a complete line to be inserted"""
         res = " " * (pos - 1) + "# cml 1 cc"
-        if backgound is not None:
-            bg = background.name()
-            bgalpha = backgound.alpha()
+        if background is not None:
+            bgColor = background.name()
+            bgalpha = background.alpha()
             if bgalpha != 255:
-                bg += hex(bgalpha)[2:]
-            res += " background=" + bg
+                bgColor += hex(bgalpha)[2:]
+            res += " background=" + bgColor
         if foreground is not None:
-            fg = foreground.name()
+            fgColor = foreground.name()
             fgalpha = foreground.alpha()
             if fgalpha != 255:
-                fg += hex(fgalpha)[2:]
-            res += " foreground=" + fg
+                fgColor += hex(fgalpha)[2:]
+            res += " foreground=" + fgColor
         if border is not None:
             brd = border.name()
             brdalpha = border.alpha()
@@ -193,6 +194,7 @@ class CMLrt(CMLCommentBase):
         self.validate()
 
     def validate(self):
+        """Validates the CML rt comment"""
         self.validateRecordType(CMLrt.CODE)
         CMLVersion.validate(self.ref)
 
@@ -263,10 +265,12 @@ class CMLVersion:
 
     @staticmethod
     def validateCMLComments(item):
-        """Walks recursively all the items in the control flow and validates
-           the CML comments. Replaces the recognized CML comments from the
-           module  with their higher level counterparts.
-           Returns back a list of warnings."""
+        """Validates recursively all the CML items in the control flow.
+
+           Replaces the recognized CML comments from the
+           module with their higher level counterparts.
+           Returns back a list of warnings.
+        """
         warnings = []
         if hasattr(item, "leadingCMLComments"):
             warnings += CMLVersion.validateCMLList(item.leadingCMLComments)
@@ -290,9 +294,9 @@ class CMLVersion:
                          CLASS_FRAGMENT, FUNCTION_FRAGMENT]:
             if item.docstring:
                 warnings += CMLVersion.validateCMLList(
-                                            item.docstring.leadingCMLComments)
+                    item.docstring.leadingCMLComments)
                 warnings += CMLVersion.validateCMLList(
-                                            item.docstring.sideCMLComments)
+                    item.docstring.sideCMLComments)
 
         if hasattr(item, "sideCMLComments"):
             warnings += CMLVersion.validateCMLList(item.sideCMLComments)
@@ -304,8 +308,7 @@ class CMLVersion:
 
     @staticmethod
     def validateCMLList(comments):
-        """Validates the CML comments in the provided list.
-           Internal usage only."""
+        """Validates the CML comments in the provided list (internal use)"""
         warnings = []
         if comments:
             count = len(comments)

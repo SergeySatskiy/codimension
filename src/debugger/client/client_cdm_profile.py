@@ -28,7 +28,7 @@ import imp
 from cProfile import runctx
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket, QHostAddress
 from outredir_cdm_dbg import OutStreamRedirector
-from cdm_dbg_utils import sendJSONCommand, parseJSONMessage
+from cdm_dbg_utils import sendJSONCommand, parseJSONMessage, waitForIDEMessage
 from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_EPILOGUE_EXIT, METHOD_EPILOGUE_EXIT_CODE,
                               METHOD_STDIN)
@@ -91,8 +91,8 @@ class RedirectedIOProfileWrapper():
                         self.__procuuid, None)
 
         try:
-            self.__waitForIDEMessage(METHOD_PROLOGUE_CONTINUE,
-                                     WAIT_CONTINUE_TIMEOUT)
+            waitForIDEMessage(self.__socket, METHOD_PROLOGUE_CONTINUE,
+                              WAIT_CONTINUE_TIMEOUT)
         except Exception as exc:
             print(str(exc), file=sys.stderr)
             return 1
@@ -162,26 +162,6 @@ class RedirectedIOProfileWrapper():
         self.__socket.setSocketOption(QAbstractSocket.KeepAliveOption, 1)
         self.__socket.setSocketOption(QAbstractSocket.LowDelayOption, 1)
 
-    def __waitForIDEMessage(self, msgType, timeout):
-        """Waits for a certain message from the IDE"""
-        if self.__socket.waitForReadyRead(timeout * 1000):
-            jsonStr = bytes(self.__socket.readLine()).decode()
-            try:
-                method, _, params = parseJSONMessage(jsonStr)
-                if method != msgType:
-                    raise Exception('Unexpected message from IDE. Expected: ' +
-                                    msgType + '. Received: ' + str(method))
-                return params
-            except (TypeError, ValueError) as exc:
-                raise Exception('Error parsing IDE message: ' + str(exc))
-
-        if self.__socket.state() != QAbstractSocket.ConnectedState:
-            # the socket has disconnected which most probably means
-            # the IDE crashed
-            sys.exit(1)
-
-        raise Exception('Timeout waiting an IDE message ' + msgType)
-
     @staticmethod
     def __profileScript(outfile, arguments):
         """Profiles the python script"""
@@ -237,8 +217,8 @@ class RedirectedIOProfileWrapper():
                 # disconnected before it has a chance to read the script
                 # exit code. Wait for the explicit command to exit guarantees
                 # that all the data will be received.
-                self.__waitForIDEMessage(METHOD_EPILOGUE_EXIT,
-                                         WAIT_EXIT_COMMAND_TIMEOUT)
+                waitForIDEMessage(self.__socket, METHOD_EPILOGUE_EXIT,
+                                  WAIT_EXIT_COMMAND_TIMEOUT)
         finally:
             if self.__socket:
                 self.__socket.close()
@@ -248,7 +228,8 @@ class RedirectedIOProfileWrapper():
         """Implements input() using the redirected input"""
         sendJSONCommand(self.__socket, METHOD_STDIN, self.__procuuid,
                         {'prompt': prompt, 'echo': echo})
-        params = self.__waitForIDEMessage(METHOD_STDIN, 60 * 60 * 24 * 7)
+        params = waitForIDEMessage(self.__socket, METHOD_STDIN,
+                                   60 * 60 * 24 * 7)
         return params['input']
 
     @staticmethod

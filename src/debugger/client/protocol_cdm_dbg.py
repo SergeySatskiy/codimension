@@ -25,33 +25,35 @@
 
 """Module defining the debug protocol tokens"""
 
-# The address used for debugger/client communications.
-DEBUG_ADDRESS = '127.0.0.1'
+METHOD_STDOUT = 'ClientStdout'
+METHOD_STDERR = 'ClientStderr'
+METHOD_STDIN = 'ClientInput'
 
 METHOD_CLIENT_OUTPUT = 'ClientOutput'
-METHOD_REQUEST_VARIABLES = 'RequestVariables'
-METHOD_REQUEST_VARIABLE = 'RequestVariable'
-METHOD_REQUEST_THREAD_LIST = 'RequestThreadList'
-METHOD_REQUEST_THREAD_SET = 'RequestThreadSet'
-METHOD_RESPONSE_THREAD_SET = 'ResponseThreadSet'
-METHOD_RESPONSE_THREAD_LIST = 'ResponseThreadList'
+METHOD_THREAD_LIST = 'ThreadList'                   # in/out
+METHOD_THREAD_SET = 'ThreadSet'                     # in/out
+METHOD_VARIABLES = 'Variables'                      # in/out
+METHOD_VARIABLE = 'Variable'                        # in/out
+METHOD_FORK_TO = 'ForkTo'                           # in/out
+METHOD_CONTINUE = 'Continue'                        # in/out
+METHOD_DEBUG_STARTUP = 'DebugStartup'               # to IDE
+METHOD_CALL_TRACE = 'CallTrace'                     # to IDE
+METHOD_LINE = 'Line'                                # to IDE
+METHOD_EXCEPTION = 'Exception'                      # to IDE
+
 METHOD_RESPONSE_STACK = 'ResponseStack'
-METHOD_REQUEST_BANNER = 'RequestBanner'
-METHOD_RESPONSE_BANNER = 'ResponseBanner'
 METHOD_REQUEST_SET_FILTER = 'RequestSetFilter'
 METHOD_REQUEST_CALL_TRACE = 'RequestCallTrace'
 METHOD_REQUEST_ENVIRONMENT = 'RequestEnvironment'
 METHOD_REQUEST_LOAD = 'RequestLoad'
 METHOD_REQUEST_RUN = 'RequestRun'
 METHOD_EXECUTE_STATEMENT = 'ExecuteStatement'
-METHOD_RESPONSE_CONTINUE = 'ResponseContinue'
 METHOD_RESPONSE_OK = 'ResponseOK'
 METHOD_REQUEST_STEP = 'RequestStep'
 METHOD_REQUEST_STEP_OVER = 'RequestStepOver'
 METHOD_REQUEST_STEP_OUT = 'RequestStepOut'
 METHOD_REQUEST_STEP_QUIT = 'RequestStepQuit'
 METHOD_REQUEST_MOVE_IP = 'RequestMoveIP'
-METHOD_REQUEST_CONTINUE = 'RequestContinue'
 METHOD_REQUEST_BREAKPOINT = 'RequestBreakpoint'
 METHOD_RESPONSE_BP_CONDITION_ERROR = 'ResponseBPConditionError'
 METHOD_REQUEST_BP_ENABLE = 'RequestBreakpointEnable'
@@ -61,23 +63,11 @@ METHOD_RESPONSE_WATCH_CONDITION_ERROR = 'ResponseWatchConditionError'
 METHOD_REQUEST_WATCH_ENABLE = 'RequestWatchEnable'
 METHOD_REQUEST_WATCH_IGNORE = 'RequestWatchIgnore'
 METHOD_REQUEST_SHUTDOWN = 'RequestShutdown'
-METHOD_RESPONSE_FORK_TO = 'ResponseForkTo'
 METHOD_RESPONSE_CLEAR_BP = 'ResponseClearBreakpoint'
 METHOD_RESPONSE_CLEAR_WATCH = 'ResponseClearWatch'
-METHOD_RESPONSE_LINE = 'ResponseLine'
-METHOD_CALL_TRACE = 'CallTrace'
-METHOD_RESPONSE_EXCEPTION = 'ResponseException'
 METHOD_RESPONSE_SYNTAX = 'ResponseSyntax'
-METHOD_PASSIVE_STARTUP = 'PassiveStartup'
 METHOD_RESPONSE_SIGNAL = 'ResponseSignal'
 METHOD_RESPONSE_EXIT = 'ResponseExit'
-METHOD_RESPONSE_VARIABLES = 'ResponseVariables'
-METHOD_RESPONSE_VARIABLE = 'ResponseVariable'
-METHOD_REQUEST_FORK_TO = 'RequestForkTo'
-
-METHOD_STDOUT = 'ClientStdout'
-METHOD_STDERR = 'ClientStderr'
-METHOD_STDIN = 'ClientInput'
 
 METHOD_PROC_ID_INFO = 'ProcIDInfo'
 METHOD_PROLOGUE_CONTINUE = 'PrologueContinue'

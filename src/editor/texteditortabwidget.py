@@ -525,7 +525,8 @@ class TextEditorTabWidget(QWidget):
         """Profiles the script"""
         GlobalData().mainWindow.onProfileTab()
 
-    def onProfileScriptDlg(self):
+    @staticmethod
+    def onProfileScriptDlg():
         """Shows the profile parameters dialogue"""
         GlobalData().mainWindow.onProfileTabDlg()
 
@@ -534,7 +535,8 @@ class TextEditorTabWidget(QWidget):
         """Starts debugging"""
         GlobalData().mainWindow.onDebugTab()
 
-    def onDebugScriptDlg(self):
+    @staticmethod
+    def onDebugScriptDlg():
         """Shows the debug parameters dialogue"""
         GlobalData().mainWindow.onDebugTabDlg()
 
