@@ -44,7 +44,7 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_CLIENT_OUTPUT, METHOD_FORK_TO,
                               METHOD_CONTINUE, METHOD_DEBUG_STARTUP,
                               METHOD_CALL_TRACE, METHOD_LINE,
-                              METHOD_EXCEPTION
+                              METHOD_EXCEPTION, METHOD_STACK
                              )
 from base_cdm_dbg import setRecursionLimit
 from asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
@@ -148,7 +148,7 @@ class DebugClientBase(object):
         self.breakpoints = {}
         self.redirect = True
         self.socket = None
-        self.__procuuid = None
+        self.procuuid = None
 
         # special objects representing the main scripts thread and frame
         self.mainThread = self
@@ -171,18 +171,15 @@ class DebugClientBase(object):
         self.running = None
         self.test = None
         self.debugging = False
+        self.userInput = None
 
         self.forkAuto = False
         self.forkChild = False
 
         self.readstream = None
-        self.writestream = None
-        self.errorstream = None
         self.pollingDisabled = False
 
         self.callTraceEnabled = None
-
-        self.variant = 'You should not see this'
 
         self.compileCommand = codeop.CommandCompiler()
 
@@ -198,7 +195,6 @@ class DebugClientBase(object):
 
     def __setCoding(self, filename):
         """Sets the coding used by a python file"""
-        import time
         if self.noencoding:
             self.__coding = sys.getdefaultencoding()
         else:
@@ -222,8 +218,8 @@ class DebugClientBase(object):
 
     def input(self, prompt, echo):
         """input() using the event loop"""
-        sendJSONCommand(
-            METHOD_STDIN, {'prompt': prompt, 'echo': echo})
+        sendJSONCommand(self.socket, METHOD_STDIN,
+                        self.procuuid, {'prompt': prompt, 'echo': echo})
         self.eventLoop(True)
         return self.userInput
 
@@ -240,8 +236,6 @@ class DebugClientBase(object):
         # might be overkill as normally stdin, stdout and stderr
         # SHOULD be closed on exit, but it does not hurt to do it here
         self.readstream.close(True)
-        self.writestream.close(True)
-        self.errorstream.close(True)
 
         if terminate:
             # Ok, go away.
@@ -311,12 +305,13 @@ class DebugClientBase(object):
                 self.setCurrentThread(params['threadID'])
                 sendJSONCommand(METHOD_THREAD_SET, {})
                 stack = self.currentThread.getStack()
-                sendJSONCommand(METHOD_RESPONSE_STACK, {'stack': stack})
+                sendJSONCommand(self.socket, METHOD_STACK,
+                                self.procuuid, {'stack': stack})
 
         elif method == METHOD_REQUEST_SET_FILTER:
             self.__generateFilterObjects(params['scope'], params['filter'])
 
-        elif method == METHOD_REQUEST_CALL_TRACE:
+        elif method == METHOD_CALL_TRACE:
             if params['enable']:
                 callTraceEnabled = self.profile
             else:
@@ -628,18 +623,18 @@ class DebugClientBase(object):
     def sendResponseLine(self, stack):
         """Sends the current call stack"""
         sendJSONCommand(self.socket, METHOD_LINE,
-                        self.__procuuid, {'stack': stack})
+                        self.procuuid, {'stack': stack})
 
     def sendCallTrace(self, event, fromInfo, toInfo):
         """Sends a call trace entry"""
         sendJSONCommand(self.socket, METHOD_CALL_TRACE,
-                        self.__procuuid,
+                        self.procuuid,
                         {'event': event[0], 'from': fromInfo, 'to': toInfo})
 
     def sendException(self, exceptionType, exceptionMessage, stack):
         """Sends information for an exception"""
         sendJSONCommand(self.socket, METHOD_EXCEPTION,
-                        self.__procuuid,
+                        self.procuuid,
                         {'type': exceptionType, 'message': exceptionMessage,
                          'stack': stack})
 
@@ -653,7 +648,7 @@ class DebugClientBase(object):
     def sendPassiveStartup(self, filename, exceptions):
         """Sends indication that the debugee is entering event loop"""
         sendJSONCommand(self.socket, METHOD_DEBUG_STARTUP,
-                        self.__procuuid,
+                        self.procuuid,
                         {'filename': filename, 'exceptions': exceptions})
 
     def readReady(self, stream):
@@ -699,61 +694,18 @@ class DebugClientBase(object):
         self.pollingDisabled = disablePolling
 
         while self.eventExit is None:
-            wrdy = []
-
-            if self.writestream.nWriteErrors > self.writestream.MAXTRIES:
-                break
-
-            if AsyncPendingWrite(self.writestream):
-                wrdy.append(self.writestream)
-
-            if AsyncPendingWrite(self.errorstream):
-                wrdy.append(self.errorstream)
-
-            try:
-                rrdy, wrdy, xrdy = select.select([self.readstream], wrdy, [])
-            except (select.error, KeyboardInterrupt, socket.error):
-                # just carry on
-                continue
-
-            if self.readstream in rrdy:
-                self.readReady(self.readstream)
-
-            if self.writestream in wrdy:
-                self.writeReady(self.writestream)
-
-            if self.errorstream in wrdy:
-                self.writeReady(self.errorstream)
+            if self.socket.waitForReadyRead():
+                if self.socket.canReadLine():
+                    self.readReady(self.readstream)
 
         self.eventExit = None
         self.pollingDisabled = False
 
     def eventPoll(self):
         """Polls for events like 'set break point'"""
-        if self.pollingDisabled:
-            return
-
-        wrdy = []
-        if AsyncPendingWrite(self.writestream):
-            wrdy.append(self.writestream)
-
-        if AsyncPendingWrite(self.errorstream):
-            wrdy.append(self.errorstream)
-
-        # Immediate return if nothing is ready
-        try:
-            rrdy, wrdy, xrdy = select.select([self.readstream], wrdy, [], 0)
-        except (select.error, KeyboardInterrupt, socket.error):
-            return
-
-        if self.readstream in rrdy:
-            self.readReady(self.readstream)
-
-        if self.writestream in wrdy:
-            self.writeReady(self.writestream)
-
-        if self.errorstream in wrdy:
-            self.writeReady(self.errorstream)
+        if not self.pollingDisabled:
+            if self.socket.canReadLine():
+                self.readReady(self.readstream)
 
     def connect(self, remoteAddress, port):
         """Establishes a session with the debugger"""
@@ -770,12 +722,10 @@ class DebugClientBase(object):
     def __setupStreams(self):
         """Sets up all the required streams"""
         self.readstream = AsyncFile(self.socket, sys.stdin.mode, sys.stdin.name)
-        self.writestream = AsyncFile(self.socket, sys.stdout.mode, sys.stdout.name)
-        self.errorstream = AsyncFile(self.socket, sys.stderr.mode, sys.stderr.name)
 
         if self.redirect:
-            sys.stdout = OutStreamRedirector(self.socket, True, self.__procuuid)
-            sys.stderr = OutStreamRedirector(self.socket, False, self.__procuuid)
+            sys.stdout = OutStreamRedirector(self.socket, True, self.procuuid)
+            sys.stderr = OutStreamRedirector(self.socket, False, self.procuuid)
             sys.stdin = self.readstream
 
         # Attach to the main thread here
@@ -1259,7 +1209,7 @@ class DebugClientBase(object):
 
         # Common part of running: the IDE waits for the client message
         sendJSONCommand(self.socket, METHOD_PROC_ID_INFO,
-                        self.__procuuid, None)
+                        self.procuuid, None)
         waitForIDEMessage(self.socket, METHOD_PROLOGUE_CONTINUE,
                           WAIT_CONTINUE_TIMEOUT)
 
@@ -1350,7 +1300,7 @@ class DebugClientBase(object):
                     self.forkChild = False
                     del args[0]
                 elif args[0] == '--procuuid':
-                    self.__procuuid = args[1]
+                    self.procuuid = args[1]
                     del args[0]
                     del args[0]
                 elif args[0] == '--':
@@ -1415,10 +1365,9 @@ class DebugClientBase(object):
     def close(self, fdescriptor):
         """close method as a replacement for os.close().
 
-           It prevents the debugger connections from being closed"""
-        if fdescriptor not in [self.readstream.fileno(),
-                               self.writestream.fileno(),
-                               self.errorstream.fileno()]:
+        It prevents the debugger connections from being closed
+        """
+        if fdescriptor not in [self.readstream.fileno()]:
             DEBUG_CLIENT_ORIG_CLOSE(fdescriptor)
 
     @staticmethod

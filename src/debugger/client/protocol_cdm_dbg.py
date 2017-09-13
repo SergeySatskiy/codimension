@@ -36,14 +36,17 @@ METHOD_VARIABLES = 'Variables'                      # in/out
 METHOD_VARIABLE = 'Variable'                        # in/out
 METHOD_FORK_TO = 'ForkTo'                           # in/out
 METHOD_CONTINUE = 'Continue'                        # in/out
+METHOD_CALL_TRACE = 'CallTrace'                     # in/out
+
 METHOD_DEBUG_STARTUP = 'DebugStartup'               # to IDE
-METHOD_CALL_TRACE = 'CallTrace'                     # to IDE
 METHOD_LINE = 'Line'                                # to IDE
 METHOD_EXCEPTION = 'Exception'                      # to IDE
+METHOD_STACK = 'Stack'                              # to IDE
 
-METHOD_RESPONSE_STACK = 'ResponseStack'
+
+
+
 METHOD_REQUEST_SET_FILTER = 'RequestSetFilter'
-METHOD_REQUEST_CALL_TRACE = 'RequestCallTrace'
 METHOD_REQUEST_ENVIRONMENT = 'RequestEnvironment'
 METHOD_REQUEST_LOAD = 'RequestLoad'
 METHOD_REQUEST_RUN = 'RequestRun'

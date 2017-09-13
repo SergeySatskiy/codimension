@@ -49,7 +49,6 @@ class DebugClient(DebugClientBase, DebugBase, ThreadExtension):
         DebugClientBase.__init__(self)
         DebugBase.__init__(self, self)
         ThreadExtension.__init__(self)
-        self.variant = 'Standard'
 
 
 # We are normally called by the debugger to execute directly.
@@ -59,7 +58,6 @@ if __name__ == '__main__':
     try:
         debugClient.main()
     except Exception as exc:
-        print('in exception')
         if CLIENT_DEBUG:
             print(traceback.format_exc(), file=sys.__stderr__)
             if sys.__stderr__ != sys.stderr:

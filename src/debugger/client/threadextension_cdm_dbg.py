@@ -170,8 +170,8 @@ class ThreadExtension(object):
             threadProps["broken"] = self.isBroken
             threadList.append(threadProps)
 
-        sendJSONCommand(self.__socket, METHOD_THREAD_LIST,
-                        self.__procuuid,
+        sendJSONCommand(self.socket, METHOD_THREAD_LIST,
+                        self.procuuid,
                         {"currentID": currentId, "threadList": threadList})
 
     @staticmethod
