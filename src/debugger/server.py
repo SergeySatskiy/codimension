@@ -21,30 +21,17 @@
 
 import socket
 import logging
-import errno
-import time
 import os.path
-from subprocess import Popen
-from ui.qt import (pyqtSignal, QTimer, QObject, Qt, QModelIndex, QApplication,
-                   QCursor, QMessageBox, QDialog, QTcpServer, QHostAddress,
-                   QAbstractSocket)
-from utils.globals import GlobalData
-from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG, TERM_REDIRECT
-from utils.settings import Settings
-from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
+from ui.qt import (pyqtSignal, QTimer, QObject, QModelIndex, QApplication,
+                   QCursor, QMessageBox, QDialog)
 from utils.pixmapcache import getIcon
-from utils.diskvaluesrelay import getRunParameters
-from .client.protocol_cdm_dbg import *
-from .client.cdm_dbg_utils import prepareJSONMessage, parseJSONMessage
+from .client.protocol_cdm_dbg import (METHOD_LINE, METHOD_STACK,
+                                      METHOD_THREAD_LIST, METHOD_VARIABLES)
+from .client.cdm_dbg_utils import prepareJSONMessage
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
 from .editbreakpoint import BreakpointEditDialog
-
-POLL_INTERVAL = 0.1
-HANDSHAKE_TIMEOUT = 15
-BRUTAL_SHUTDOWN_TIMEOUT = 0.2
-GRACEFUL_SHUTDOWN_TIMEOUT = 5
 
 
 class CodimensionDebugger(QObject):
@@ -55,14 +42,10 @@ class CodimensionDebugger(QObject):
     sigClientLine = pyqtSignal(str, int, bool)
     sigClientException = pyqtSignal(str, str, list)
     sigClientSyntaxError = pyqtSignal(str, str, int, int)
-    sigClientIDEMessage = pyqtSignal(str)
     sigEvalOK = pyqtSignal(str)
     sigEvalError = pyqtSignal(str)
     sigExecOK = pyqtSignal(str)
     sigExecError = pyqtSignal(str)
-    sigClientStdout = pyqtSignal(str)
-    sigClientStderr = pyqtSignal(str)
-    sigClientRawInput = pyqtSignal(str, str)
     sigClientStack = pyqtSignal(list)
     sigClientThreadList = pyqtSignal(int, list)
     sigClientVariables = pyqtSignal(int, list)
@@ -72,11 +55,8 @@ class CodimensionDebugger(QObject):
     sigClientBreakConditionError = pyqtSignal(str, int)
 
     STATE_STOPPED = 0
-    STATE_PROLOGUE = 1
-    STATE_IN_CLIENT = 2
-    STATE_IN_IDE = 3
-    STATE_FINISHING = 4
-    STATE_BRUTAL_FINISHING = 5
+    STATE_IN_CLIENT = 1
+    STATE_IN_IDE = 2
 
     def __init__(self, mainWindow):
         QObject.__init__(self)
@@ -85,17 +65,9 @@ class CodimensionDebugger(QObject):
         self.__mainWindow = mainWindow
         self.__state = self.STATE_STOPPED
 
-        self.__procFeedbackSocket = None
-        self.__procFeedbackPort = None
-        self.__tcpServer = None
-        self.__clientSocket = None
-        self.__proc = None
-        self.__procPID = None
-        self.__disconnectReceived = None
         self.__stopAtFirstLine = None
-        self.__translatePath = None
 
-        self.__exitCode = None
+        self.__procuuid = None
         self.__fileName = None
         self.__runParameters = None
         self.__debugSettings = None
@@ -131,199 +103,23 @@ class CodimensionDebugger(QObject):
 
     def __changeDebuggerState(self, newState):
         """Changes the debugger state"""
-        self.__state = newState
-        self.sigDebuggerStateChanged.emit(newState)
+        if newState != self.__state:
+            self.__state = newState
+            self.sigDebuggerStateChanged.emit(newState)
 
-    def startDebugging(self, fileName):
-        """Starts debugging a script"""
+    def onDebugSessionStarted(self, procuuid, fileName,
+                              runParameters, debugSettings):
+        """Starts debugging a script. Run manager informs about it."""
         if self.__state != self.STATE_STOPPED:
-            logging.error('Cannot start debug session. '
-                          'The previous one has not finished yet.')
-            return
+            raise Exception('Logic error. Debugging session started while the '
+                            'previous one has not finished.')
 
-        self.__exitCode = None
-        self.__fileName = None
-        self.__runParameters = None
-        self.__debugSettings = None
-
-        try:
-            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-            self.__initiatePrologue(fileName)
-            QApplication.restoreOverrideCursor()
-
-            self.__clientSocket.readyRead.connect(self.__parseClientLine)
-            self.__parseClientLine()
-        except Exception as exc:
-            QApplication.restoreOverrideCursor()
-            logging.error(str(exc))
-            self.stopDebugging()
-
-    def __initiatePrologue(self, fileName):
-        """Prologue is starting here"""
+        self.__procuuid = procuuid
         self.__fileName = fileName
-        self.__changeDebuggerState(self.STATE_PROLOGUE)
-        self.__disconnectReceived = False
-
-        # For the time being there is no path translation
-        self.__translatePath = self.__noPathTranslation
+        self.__runParameters = runParameters
+        self.__debugSettings = debugSettings
 
         self.__mainWindow.switchDebugMode(True)
-        terminalType = Settings()['terminalType']
-
-        if terminalType == TERM_REDIRECT and Settings()['clearDebugIO']:
-            self.__mainWindow.clearDebugIOConsole()
-
-        self.sigClientIDEMessage.emit("Start debugging session for " +
-                                      fileName)
-        self.__createProcfeedbackSocket()
-        self.__createTCPServer()
-
-        self.__runParameters = getRunParameters(fileName)
-        workingDir, cmd, environment = getCwdCmdEnv(
-            CMD_TYPE_DEBUG, fileName, self.__runParameters, terminalType,
-            self.__procFeedbackPort, self.__tcpServer.serverPort())
-
-        self.__debugSettings = Settings().getDebuggerSettings()
-        self.__stopAtFirstLine = self.__debugSettings.stopAtFirstLine
-
-        # Run the client -  exception is processed in the outer scope
-        self.__proc = Popen(cmd, shell=True, cwd=workingDir, env=environment)
-
-        # Wait for the child PID
-        self.__waitChildPID()
-        self.__adjustChildPID()
-
-        # Wait till the client incoming connection
-        self.__waitIncomingConnection()
-
-    def __waitIncomingConnection(self):
-        """Waits till the debugged program comes up"""
-        startTime = time.time()
-        while True:
-            time.sleep(POLL_INTERVAL)
-            QApplication.processEvents()
-
-            # It does not matter how the state was changed - the user has
-            # interrupted it, the client has connected
-            if self.__state != self.STATE_PROLOGUE:
-                break
-
-            if not isProcessAlive(self.__procPID):
-                # Stop it brutally
-                self.stopDebugging(True)
-                break
-
-            if time.time() - startTime > HANDSHAKE_TIMEOUT:
-                raise Exception("Handshake timeout: debugged "
-                                "program did not come up.")
-
-    def __waitChildPID(self):
-        """Waits for the child PID on the feedback socket"""
-        startTime = time.time()
-        while True:
-            time.sleep(POLL_INTERVAL)
-            QApplication.processEvents()
-
-            data = self.__getProcfeedbackData()
-            if data != "":
-                # We've got the message, extract the PID to watch
-                msgParts = decodeMessage(data)
-                if len(msgParts) != 1:
-                    raise Exception("Unexpected handshake message: '" +
-                                    data + "'. Expected debuggee child "
-                                    "process PID.")
-                try:
-                    self.__procPID = int(msgParts[0])
-                    break   # Move to stage 2
-                except:
-                    raise Exception("Broken handshake message: '" +
-                                    data + ". Cannot convert debuggee "
-                                    "child process PID to integer.")
-
-            if time.time() - startTime > HANDSHAKE_TIMEOUT:
-                raise Exception("Handshake timeout: "
-                                "error spawning process to debug")
-
-    def __adjustChildPID(self):
-        """Detects the debugged process shell reliable"""
-        # On some systems, e.g. recent Fedora, the way shells are spawned
-        # differs to the usual scheme. These systems have a single server which
-        # brings children up. This server fools $PPID and thus a child process
-        # PID is not detected properly. The fix is here.
-        # After a feedback message with a PID is received, we check again in
-        # /proc what is the child PID is.
-        # Later on, the feedback step can be removed completely.
-        for item in os.listdir("/proc"):
-            if item.isdigit():
-                try:
-                    f = open("/proc/" + item + "/cmdline", "r")
-                    content = f.read()
-                    f.close()
-
-                    if "client/client_cdm_dbg.py" in content:
-                        if str(self.__tcpServer.serverPort()) in content:
-                            self.__procPID = int(item)
-                            return
-                except:
-                    pass
-
-    def __createProcfeedbackSocket(self):
-        """Creates the process feedback socket"""
-        self.__procFeedbackSocket = socket.socket(socket.AF_INET,
-                                                  socket.SOCK_DGRAM)
-
-        # Zero port allows the system to pick any available port
-        self.__procFeedbackSocket.bind(("127.0.0.1", 0))
-        self.__procFeedbackPort = self.__procFeedbackSocket.getsockname()[1]
-
-    def __createTCPServer(self):
-        """Creates the TCP server for the commands exchange"""
-        self.__tcpServer = QTcpServer()
-        self.__tcpServer.newConnection.connect(self.__newConnection)
-
-        # Port will be assigned automatically
-        self.__tcpServer.listen(QHostAddress.LocalHost)
-
-    def __getProcfeedbackData(self):
-        """Checks if data avalable in the socket and reads it if so"""
-        try:
-            data = self.__procFeedbackSocket.recv(1024, socket.MSG_DONTWAIT)
-        except socket.error as excpt:
-            if excpt[0] == errno.EWOULDBLOCK:
-                return ""
-            raise
-        return data
-
-    def __newConnection(self):
-        """Handles new incoming connections"""
-        sock = self.__tcpServer.nextPendingConnection()
-        if self.__state != self.STATE_PROLOGUE or \
-           self.__clientSocket is not None:
-            sock.abort()
-            return
-
-        self.__clientSocket = sock
-        self.__clientSocket.setSocketOption(QAbstractSocket.KeepAliveOption, 1)
-        self.__clientSocket.disconnected.connect(self.__disconnected)
-
-        # The readyRead() signal should not be connected here. Sometimes
-        # e.g. in case of syntax errors, a message from the remote side comes
-        # very quickly, before the prologue is finished.
-        # So, connecting this signal is moved to the top level, see
-        # startDebugging()
-        # self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-        #               self.__parseClientLine )
-
-        self.__changeStateWhenReady()
-
-    def __changeStateWhenReady(self):
-        """Changes the debugger state from prologue to in client when
-           all the required connections are ready
-        """
-        if self.__clientSocket is None:
-            return
-
-        # All the conditions are met, the state can be changed
         self.__changeDebuggerState(self.STATE_IN_CLIENT)
 
     def __sendJSONCommand(self, method, params):
@@ -337,27 +133,46 @@ class CodimensionDebugger(QObject):
         raise Exception("Cannot send command to debuggee - "
                         "no connection established. Command: " + cmd)
 
-    def __parseClientLine(self):
-        """Triggered when something has been received from the client"""
-        while self.__clientSocket and self.__clientSocket.canReadLine():
-            qs = self.__clientSocket.readLine()
-            jsonStr = bytes(qs).decode()
+    def onIncomingMessage(self, procuuid, method, params):
+        """Message from the debuggee has been received"""
+        if self.__procuuid != procuuid:
+            return
 
-            try:
-                method, params = parseJSONMessage(jsonStr)
-            except (TypeError, ValueError) as exc:
-                logging.error(
-                    'The response received from the debugger backend '
-                    'could not be decoded. Please report the issue.\n'
-                    'Exception: ' + str(exc) + '\n'
-                    'Data: ' + jsonStr.strip())
-                continue
+        if method in [METHOD_LINE, METHOD_STACK]:
+            stack = params['stack']
+            if self.__stopAtFirstLine:
+                cf = stack[0]
+                self.sigClientLine.emit(cf[0], int(cf[1]), method==METHOD_STACK)
+                self.sigClientStack.emit(stack)
+            else:
+                self.__stopAtFirstLine = True
+                QTimer.singleShot(0, self.remoteContinue)
 
-            self.__processMessage(method, params)
+            if method == METHOD_LINE:
+                self.__changeDebuggerState(self.STATE_IN_IDE)
+            return
 
-    def __processMessage(self, method, params):
-        """Processes one message from the debugger"""
+        if method == METHOD_THREAD_LIST:
+            self.sigClientThreadList.emit(params['currentID'],
+                                          params['threadList'])
+            return
 
+        if method == METHOD_VARIABLES:
+            self.sigClientVariables.emit(params['scope'], params['variables'])
+            return
+
+
+    def onProcessFinished(self, procuuid, retCode):
+        """Process finished. The retCode may indicate a disconnection."""
+        if self.__procuuid == procuuid:
+            self.__procuuid = None
+            self.__fileName = None
+            self.__runParameters = None
+            self.__debugSettings = None
+            self.__stopAtFirstLine = None
+
+            self.__changeDebuggerState(self.STATE_STOPPED)
+            self.__mainWindow.switchDebugMode(False)
 
 
 
@@ -369,37 +184,7 @@ class CodimensionDebugger(QObject):
         # Buffer is going to start with >ZZZ< message and ends with EOT
         cmd = line[0:cmdIndex + 1]
         content = line[cmdIndex + 1:]
-        if cmd == ResponseLine or cmd == ResponseStack:
-            stack = eval(content)
-            for s in stack:
-                s[0] = self.__translatePath(s[0], True)
 
-            if self.__stopAtFirstLine:
-                cf = stack[0]
-                self.sigClientLine.emit(cf[0], int(cf[1]), cmd==ResponseStack)
-                self.sigClientStack.emit(stack)
-            else:
-                self.__stopAtFirstLine = True
-                QTimer.singleShot(0, self.remoteContinue)
-
-            if cmd == ResponseLine:
-                self.__changeDebuggerState(self.STATE_IN_IDE)
-            return self.__buffer != ""
-
-        if cmd == ResponseThreadList:
-            currentThreadID, threadList = eval(content)
-            self.sigClientThreadList.emit(currentThreadID, threadList)
-            return self.__buffer != ""
-
-        if cmd == ResponseVariables:
-            vlist = eval(content)
-            scope = vlist[0]
-            try:
-                variables = vlist[1:]
-            except IndexError:
-                variables = []
-            self.sigClientVariables.emit(scope, variables)
-            return self.__buffer != ""
 
         if cmd == ResponseVariable:
             vlist = eval(content)
@@ -473,15 +258,6 @@ class CodimensionDebugger(QObject):
             self.sigClientRawInput.emit(prompt, echo)
             return self.__buffer != ""
 
-        if cmd == ResponseExit:
-            message = "Debugged script finished with exit code " + content
-            self.sigClientIDEMessage.emit(message)
-            try:
-                self.__exitCode = int(content)
-            except:
-                pass
-            return self.__buffer != ""
-
         if cmd == ResponseEval:
             self.__protocolState = self.PROTOCOL_EVALEXEC
             return self.__buffer != ""
@@ -539,128 +315,7 @@ class CodimensionDebugger(QObject):
             return self.__buffer != ""
         return False
 
-    def __processStdoutStderrState(self, isStdout):
-        """Analyzes receiving buffer in the STDOUT/STDERR state"""
-        # Collect till "\x04\x04"
-        index = self.__buffer.find(StdoutStderrEOT)
-        if index == -1:
-            # End has not been found
-            if self.__buffer.endswith('\x04'):
-                if isStdout:
-                    self.sigClientStdout.emit(self.__buffer[:-1])
-                else:
-                    self.ClientStderr.emit(self.__buffer[:-1])
-                self.__buffer = '\x04'
-                return False
-            if isStdout:
-                self.sigClientStdout.emit(self.__buffer)
-            else:
-                self.ClientStderr.emit(self.__buffer)
-            self.__buffer = ""
-            return False
 
-        if isStdout:
-            self.sigClientStdout.emit(self.__buffer[0:index])
-        else:
-            self.ClientStderr.emit(self.__buffer[0:index])
-        self.__buffer = self.__buffer[index + 2:]
-        self.__protocolState = self.PROTOCOL_CONTROL
-        return True
-
-    def __disconnected(self):
-        """Triggered when the client closed the connection"""
-        # Note: if the stopDebugging call is done synchronously - you've got
-        #       a core dump!
-        self.__disconnectReceived = True
-        QTimer.singleShot(1, self.stopDebugging)
-
-    def stopDebugging(self, brutal=False):
-        """Stops debugging"""
-        if self.__state in [self.STATE_STOPPED, self.STATE_BRUTAL_FINISHING]:
-            return
-        if not brutal and self.__state == self.STATE_FINISHING:
-            return
-
-        if brutal:
-            self.__changeDebuggerState(self.STATE_BRUTAL_FINISHING)
-        else:
-            self.__changeDebuggerState(self.STATE_FINISHING)
-        QApplication.processEvents()
-
-        # Close the process feedback socket if so
-        if self.__procFeedbackSocket is not None:
-            self.__procFeedbackSocket.close()
-        self.__procFeedbackSocket = None
-        self.__procFeedbackPort = None
-
-        # Close the opened socket if so
-        if self.__clientSocket is not None:
-            self.__clientSocket.readyRead.disconnect(self.__parseClientLine)
-#            self.__sendJSONCommand(RequestShutdown)
-
-            # Give the client a chance to shutdown itself
-            if brutal:
-                timeout = BRUTAL_SHUTDOWN_TIMEOUT
-            else:
-                timeout = GRACEFUL_SHUTDOWN_TIMEOUT
-            start = time.time()
-            while True:
-                time.sleep(POLL_INTERVAL)
-                QApplication.processEvents()
-                if self.__disconnectReceived:
-                    # The client has shut itself down
-                    break
-                if time.time() - start > timeout:
-                    # Timeout is over, don't wait any more
-                    break
-            self.__clientSocket.disconnected.disconnect(self.__disconnected)
-            self.__clientSocket.close()
-        self.__clientSocket = None
-
-        # Close the TCP server if so
-        if self.__tcpServer is not None:
-            self.__tcpServer.newConnection.disconnect(self.__newConnection)
-            self.__tcpServer.close()
-        self.__tcpServer = None
-
-        # Deal with the process if so
-        if self.__procPID is not None:
-            killOnSuccess = False
-            if self.__exitCode is not None and self.__exitCode == 0:
-                if self.__runParameters is not None and \
-                   self.__runParameters.closeTerminal:
-                    killOnSuccess = True
-
-            if Settings()['terminalType'] != TERM_REDIRECT:
-                if brutal or killOnSuccess:
-                    try:
-                        # Throws exceptions if cannot kill the process
-                        killProcess(self.__procPID)
-                    except:
-                        pass
-        self.__procPID = None
-        if self.__proc is not None:
-            try:
-                self.__proc.wait()
-            except:
-                pass
-            self.__proc = None
-
-        self.__mainWindow.switchDebugMode(False)
-        self.__changeDebuggerState(self.STATE_STOPPED)
-
-        self.__fileName = None
-        self.__runParameters = None
-        self.__debugSettings = None
-
-        message = "Debugging session has been stopped"
-        if brutal and Settings()['terminalType'] != TERM_REDIRECT:
-            message += " and the console has been closed"
-        self.sigClientIDEMessage.emit(message)
-
-    def __noPathTranslation(self, fname, remote2local=True):
-        """ Dump to support later path translations """
-        return fname
 
     def __askForkTo(self):
         " Asks what to follow, a parent or a child "

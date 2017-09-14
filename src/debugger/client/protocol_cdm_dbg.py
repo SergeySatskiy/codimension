@@ -25,52 +25,46 @@
 
 """Module defining the debug protocol tokens"""
 
-METHOD_STDOUT = 'ClientStdout'
-METHOD_STDERR = 'ClientStderr'
-METHOD_STDIN = 'ClientInput'
+METHOD_STDOUT = 'Stdout'
+METHOD_STDERR = 'Stderr'
+METHOD_STDIN = 'Stdin'
 
 METHOD_CLIENT_OUTPUT = 'ClientOutput'
-METHOD_THREAD_LIST = 'ThreadList'                   # in/out
-METHOD_THREAD_SET = 'ThreadSet'                     # in/out
-METHOD_VARIABLES = 'Variables'                      # in/out
-METHOD_VARIABLE = 'Variable'                        # in/out
-METHOD_FORK_TO = 'ForkTo'                           # in/out
-METHOD_CONTINUE = 'Continue'                        # in/out
-METHOD_CALL_TRACE = 'CallTrace'                     # in/out
+METHOD_THREAD_LIST = 'ThreadList'                   # to/from IDE
+METHOD_THREAD_SET = 'ThreadSet'                     # to/from IDE
+METHOD_VARIABLES = 'Variables'                      # to/from IDE
+METHOD_VARIABLE = 'Variable'                        # to/from IDE
+METHOD_FORK_TO = 'ForkTo'                           # to/from IDE
+METHOD_CONTINUE = 'Continue'                        # to/from IDE
+METHOD_CALL_TRACE = 'CallTrace'                     # to/from IDE
 
 METHOD_DEBUG_STARTUP = 'DebugStartup'               # to IDE
 METHOD_LINE = 'Line'                                # to IDE
 METHOD_EXCEPTION = 'Exception'                      # to IDE
 METHOD_STACK = 'Stack'                              # to IDE
+METHOD_BP_CONDITION_ERROR = 'BPConditionError'      # to IDE
+METHOD_WP_CONDITION_ERROR = 'WPConditionError'      # to IDE
+METHOD_CLEAR_BP = 'ClearBreakpoint'                 # to IDE
+METHOD_CLEAR_WP = 'ClearWatchpoint'                 # to IDE
+METHOD_SYNTAX_ERROR = 'SyntaxError'                 # to IDE
+METHOD_SIGNAL = 'Signal'                            # to IDE
+METHOD_OK = 'OK'                                    # to IDE
 
-
-
-
-METHOD_REQUEST_SET_FILTER = 'RequestSetFilter'
-METHOD_REQUEST_ENVIRONMENT = 'RequestEnvironment'
-METHOD_REQUEST_LOAD = 'RequestLoad'
-METHOD_REQUEST_RUN = 'RequestRun'
-METHOD_EXECUTE_STATEMENT = 'ExecuteStatement'
-METHOD_RESPONSE_OK = 'ResponseOK'
-METHOD_REQUEST_STEP = 'RequestStep'
-METHOD_REQUEST_STEP_OVER = 'RequestStepOver'
-METHOD_REQUEST_STEP_OUT = 'RequestStepOut'
-METHOD_REQUEST_STEP_QUIT = 'RequestStepQuit'
-METHOD_REQUEST_MOVE_IP = 'RequestMoveIP'
-METHOD_REQUEST_BREAKPOINT = 'RequestBreakpoint'
-METHOD_RESPONSE_BP_CONDITION_ERROR = 'ResponseBPConditionError'
-METHOD_REQUEST_BP_ENABLE = 'RequestBreakpointEnable'
-METHOD_REQUEST_BP_IGNORE = 'RequestBreakpointIgnore'
-METHOD_REQUEST_WATCH = 'RequestWatch'
-METHOD_RESPONSE_WATCH_CONDITION_ERROR = 'ResponseWatchConditionError'
-METHOD_REQUEST_WATCH_ENABLE = 'RequestWatchEnable'
-METHOD_REQUEST_WATCH_IGNORE = 'RequestWatchIgnore'
-METHOD_REQUEST_SHUTDOWN = 'RequestShutdown'
-METHOD_RESPONSE_CLEAR_BP = 'ResponseClearBreakpoint'
-METHOD_RESPONSE_CLEAR_WATCH = 'ResponseClearWatch'
-METHOD_RESPONSE_SYNTAX = 'ResponseSyntax'
-METHOD_RESPONSE_SIGNAL = 'ResponseSignal'
-METHOD_RESPONSE_EXIT = 'ResponseExit'
+METHOD_STEP_QUIT = 'StepQuit'                       # from IDE
+METHOD_STEP_OUT = 'StepOut'                         # from IDE
+METHOD_STEP_OVER = 'StepOver'                       # from IDE
+METHOD_STEP = 'Step'                                # from IDE
+METHOD_MOVE_IP = 'MoveIP'                           # from IDE
+METHOD_SET_BP = 'SetBreakpoint'                     # from IDE
+METHOD_BP_ENABLE = 'EnableBreakpoint'               # from IDE
+METHOD_BP_IGNORE = 'IgnoreBreakpoint'               # from IDE
+METHOD_SET_WP = 'SetWatchpoint'                     # from IDE
+METHOD_WP_ENABLE = 'EnableWatchpoint'               # from IDE
+METHOD_WP_IGNORE = 'IgnoreWatchpoint'               # from IDE
+METHOD_SET_ENVIRONMENT = 'SetEnvironment'           # from IDE
+METHOD_EXECUTE_STATEMENT = 'ExecuteStatement'       # from IDE
+METHOD_SHUTDOWN = 'Shutdown'                        # from IDE
+METHOD_SET_FILTER = 'SetFilter'                     # from IDE
 
 METHOD_PROC_ID_INFO = 'ProcIDInfo'
 METHOD_PROLOGUE_CONTINUE = 'PrologueContinue'

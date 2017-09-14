@@ -32,9 +32,6 @@ from .runparams import RUN, PROFILE, DEBUG
 
 TERM_REDIRECT = -1
 
-CMD_TYPE_PROFILE = 1
-CMD_TYPE_DEBUG = 2
-
 
 def prepareArguments(arguments):
     """Prepares arguments for the command line"""

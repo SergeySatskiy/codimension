@@ -114,6 +114,17 @@ def waitForIDEMessage(clientSocket, msgType, timeout):
     raise Exception('Timeout waiting an IDE message ' + msgType)
 
 
+def getParsedJSONMessage(clientSocket):
+    """Provides a parsed message"""
+    jsonStr = bytes(clientSocket.readLine()).decode('utf-8')
+    try:
+        method, procuuid, params = parseJSONMessage(jsonStr)
+        return method, procuuid, params, jsonStr
+    except Exception as exc:
+        raise Exception('Error parsing JSON message: ' + str(exc) +
+                        '\nIncoming message: ' + str(jsonStr))
+
+
 def getArgValues(frame):
     """Provides information about arguments passed into a particular frame"""
     if not isframe(frame):

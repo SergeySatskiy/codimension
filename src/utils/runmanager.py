@@ -33,7 +33,7 @@ from debugger.client.protocol_cdm_dbg import (METHOD_PROC_ID_INFO,
                                               METHOD_EPILOGUE_EXIT,
                                               METHOD_STDOUT, METHOD_STDERR,
                                               METHOD_STDIN)
-from debugger.client.cdm_dbg_utils import parseJSONMessage, sendJSONCommand
+from debugger.client.cdm_dbg_utils import getParsedJSONMessage, sendJSONCommand
 from ui.runparamsdlg import RunDialog
 from ui.qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
                    QTcpServer, QHostAddress, QAbstractSocket, pyqtSignal)
@@ -43,6 +43,9 @@ from .procfeedback import killProcess
 from .globals import GlobalData
 from .settings import Settings, CLEAR_AND_REUSE, NO_REUSE
 from .diskvaluesrelay import getRunParameters, addRunParams
+
+
+IDE_DEBUG = True
 
 
 # Finish codes in addition to the normal exit code
@@ -72,9 +75,10 @@ class RemoteProcessWrapper(QObject):
     """Wrapper to control the remote process"""
 
     sigFinished = pyqtSignal(str, int)
-    sigClientStdout = pyqtSignal(str)
-    sigClientStderr = pyqtSignal(str)
-    sigClientInput = pyqtSignal(str, int)
+    sigClientStdout = pyqtSignal(str, str)
+    sigClientStderr = pyqtSignal(str, str)
+    sigClientInput = pyqtSignal(str, str, int)
+    sigIncomingMessage = pyqtSignal(str, str, object)
 
     def __init__(self, path, serverPort, redirected, kind):
         QObject.__init__(self)
@@ -237,32 +241,40 @@ class RemoteProcessWrapper(QObject):
     def __parseClientLine(self):
         """Parses a single line from the running client"""
         while self.__clientSocket and self.__clientSocket.canReadLine():
-            jsonStr = bytes(self.__clientSocket.readLine()).decode()
-
-            print("Run manager received: " + str(jsonStr))
             try:
-                method, procuuid, params = parseJSONMessage(jsonStr)
+                method, procuuid, params, jsonStr = getParsedJSONMessage(
+                    self.__clientSocket)
+
+                if IDE_DEBUG:
+                    print("Process wrapper received: " + str(jsonStr))
+
                 if method == METHOD_EPILOGUE_EXIT_CODE:
                     self.__sendExit()
                     self.sigFinished.emit(self.procuuid, params['exitCode'])
                     QApplication.processEvents()
                     continue
                 if method == METHOD_STDOUT:
-                    self.sigClientStdout.emit(params['text'])
+                    self.sigClientStdout.emit(self.procuuid, params['text'])
                     QApplication.processEvents()
                     continue
                 if method == METHOD_STDERR:
-                    self.sigClientStderr.emit(params['text'])
+                    self.sigClientStderr.emit(self.procuuid, params['text'])
                     QApplication.processEvents()
                     continue
                 if method == METHOD_STDIN:
                     prompt = params['prompt']
                     echo = params['echo']
-                    self.sigClientInput.emit(prompt, echo)
+                    self.sigClientInput.emit(self.procuuid, prompt, echo)
                     QApplication.processEvents()
                     continue
-            except (TypeError, ValueError) as exc:
-                logging.error('Failure to parse a client message: ' + str(exc))
+
+                # The other messages may appear only when a code is debugged
+                # so they are processed outside of a generic run manager
+                self.sigIncomingMessage.emit(self.procuuid, method, params)
+
+            except Exception as exc:
+                logging.error('Failure to get a message '
+                              'from a remote process: ' + str(exc))
 
     def userInput(self, collectedString):
         """Called when the user finished input"""
@@ -287,7 +299,9 @@ class RunManager(QObject):
 
     # script path, output file, start time, finish time, redirected
     sigProfilingResults = pyqtSignal(str, str, str, str, bool)
-    sigDebugSessionPrologueStarted = pyqtSignal()
+    sigDebugSessionPrologueStarted = pyqtSignal(str, str, object, object)
+    sigIncomingMessage = pyqtSignal(str, str, object)
+    sigProcessFinished = pyqtSignal(str, int)
 
     def __init__(self, mainWindow):
         QObject.__init__(self)
@@ -323,10 +337,12 @@ class RunManager(QObject):
     def __waitForHandshake(self, clientSocket):
         """Waits for the message with the proc ID"""
         if clientSocket.waitForReadyRead(1000):
-            jsonStr = bytes(clientSocket.readLine()).decode()
-            print("Run manager received: " + str(jsonStr))
             try:
-                method, procuuid, params = parseJSONMessage(jsonStr)
+                method, procuuid, params, jsonStr = getParsedJSONMessage(
+                    clientSocket)
+                if IDE_DEBUG:
+                    print("Run manager (wait for handshake) received: " +
+                          str(jsonStr))
                 if method != METHOD_PROC_ID_INFO:
                     logging.error('Unexpected message at the handshake stage. '
                                   'Expected: ' + METHOD_PROC_ID_INFO +
@@ -424,9 +440,12 @@ class RunManager(QObject):
                 remoteProc.widget.appendStderrMessage)
             remoteProc.procWrapper.sigClientInput.connect(
                 remoteProc.widget.input)
+
             remoteProc.widget.sigUserInput.connect(self.__onUserInput)
 
         remoteProc.procWrapper.sigFinished.connect(self.__onProcessFinished)
+        remoteProc.procWrapper.sigIncomingMessage.connect(
+            self.__onIncomingMessage)
         self.__processes.append(remoteProc)
         return remoteProc
 
@@ -484,8 +503,13 @@ class RunManager(QObject):
             if not self.__updateParameters(path, DEBUG):
                 return
 
-        self.sigDebugSessionPrologueStarted.emit()
         remoteProc = self.__prepareRemoteProcess(path, DEBUG)
+
+        # The run parameters could be changed by another run after the
+        # debugging has started so they need to be saved per session
+        self.sigDebugSessionPrologueStarted.emit(
+            remoteProc.procuuid, path,
+            getRunParameters(path), Settings().getDebuggerSettings())
         try:
             remoteProc.procWrapper.start()
             if not remoteProc.procWrapper.redirected:
@@ -579,6 +603,8 @@ class RunManager(QObject):
 
             del self.__processes[index]
 
+        self.sigProcessFinished.emit(procuuid, retCode)
+
     def __onProcessStarted(self, procuuid):
         """Triggered when a process has started"""
         index = self.__getProcessIndex(procuuid)
@@ -622,6 +648,14 @@ class RunManager(QObject):
             printableTimestamp(procWrapper.startTime),
             printableTimestamp(procWrapper.finishTime),
             procWrapper.redirected)
+
+    def __onIncomingMessage(self, procuuid, method, params):
+        """Handles a debugger incoming message"""
+        if IDE_DEBUG:
+            print('Debugger message from ' + procuuid +
+                  ' Method: ' + method + ' Prameters: ' + repr(params))
+
+        self.sigIncomingMessage.emit(procuuid, method, params)
 
     def __onPrologueTimer(self):
         """Triggered when a prologue phase controlling timer fired"""

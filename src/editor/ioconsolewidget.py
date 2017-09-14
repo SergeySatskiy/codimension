@@ -162,11 +162,11 @@ class IOConsoleWidget(QWidget):
         """Appends an IDE message"""
         return self.__viewer.appendIDEMessage(text)
 
-    def appendStdoutMessage(self, text):
+    def appendStdoutMessage(self, _, text):
         """Appends an stdout message"""
         return self.__viewer.appendStdoutMessage(text)
 
-    def appendStderrMessage(self, text):
+    def appendStderrMessage(self, _, text):
         """Appends an stderr message"""
         return self.__viewer.appendStderrMessage(text)
 
@@ -174,11 +174,11 @@ class IOConsoleWidget(QWidget):
         """Triggered when a text zoom is changed"""
         self.__viewer.onTextZoomChanged()
 
-    def input(self, prompt, echo):
+    def input(self, procuuid, prompt, echo):
         """Triggered when input is requested"""
         self.__viewer.inputEcho = echo
         if prompt:
-            self.appendStdoutMessage(prompt)
+            self.appendStdoutMessage(procuuid, prompt)
         self.__clearButton.setEnabled(False)
         self.__viewer.switchMode(self.__viewer.MODE_INPUT)
 

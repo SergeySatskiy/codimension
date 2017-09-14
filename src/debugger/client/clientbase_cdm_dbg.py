@@ -18,7 +18,7 @@
 #
 
 #
-# The file was taken from eric 4 and adopted for codimension.
+# The file was taken from eric 4/6 and adopted for codimension.
 # Original copyright:
 # Copyright (c) 2002 - 2012 Detlev Offenbach <detlev@die-offenbachs.de>
 #
@@ -44,10 +44,19 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_CLIENT_OUTPUT, METHOD_FORK_TO,
                               METHOD_CONTINUE, METHOD_DEBUG_STARTUP,
                               METHOD_CALL_TRACE, METHOD_LINE,
-                              METHOD_EXCEPTION, METHOD_STACK
-                             )
+                              METHOD_EXCEPTION, METHOD_STACK, METHOD_STEP_QUIT,
+                              METHOD_STEP_OUT, METHOD_STEP_OVER, METHOD_STEP,
+                              METHOD_MOVE_IP, METHOD_SET_BP,
+                              METHOD_BP_CONDITION_ERROR, METHOD_BP_ENABLE,
+                              METHOD_BP_IGNORE, METHOD_SET_WP,
+                              METHOD_WP_CONDITION_ERROR, METHOD_WP_ENABLE,
+                              METHOD_WP_IGNORE, METHOD_CLEAR_BP, METHOD_OK,
+                              METHOD_CLEAR_WP, METHOD_SYNTAX_ERROR,
+                              METHOD_SET_ENVIRONMENT, METHOD_EXECUTE_STATEMENT,
+                              METHOD_SIGNAL, METHOD_SHUTDOWN,
+                              METHOD_SET_FILTER)
 from base_cdm_dbg import setRecursionLimit
-from asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
+from asyncfile_cdm_dbg import AsyncFile
 from outredir_cdm_dbg import OutStreamRedirector
 from bp_wp_cdm_dbg import Breakpoint, Watch
 from cdm_dbg_utils import (sendJSONCommand, formatArgValues, getArgValues,
@@ -303,12 +312,13 @@ class DebugClientBase(object):
         elif method == METHOD_THREAD_SET:
             if params['threadID'] in self.threads:
                 self.setCurrentThread(params['threadID'])
-                sendJSONCommand(METHOD_THREAD_SET, {})
+                sendJSONCommand(self.socket, METHOD_THREAD_SET,
+                                self.procuuid, None)
                 stack = self.currentThread.getStack()
                 sendJSONCommand(self.socket, METHOD_STACK,
                                 self.procuuid, {'stack': stack})
 
-        elif method == METHOD_REQUEST_SET_FILTER:
+        elif method == METHOD_SET_FILTER:
             self.__generateFilterObjects(params['scope'], params['filter'])
 
         elif method == METHOD_CALL_TRACE:
@@ -323,7 +333,7 @@ class DebugClientBase(object):
                 # remember for later
                 self.callTraceEnabled = callTraceEnabled
 
-        elif method == METHOD_REQUEST_ENVIRONMENT:
+        elif method == METHOD_SET_ENVIRONMENT:
             for key, value in params['environment'].items():
                 if key.endswith('+'):
                     if key[:-1] in os.environ:
@@ -332,82 +342,6 @@ class DebugClientBase(object):
                         os.environ[key[:-1]] = value
                 else:
                     os.environ[key] = value
-
-        elif method == METHOD_REQUEST_LOAD:
-            self._fncache = {}
-            self.dircache = []
-            sys.argv = []
-            self.__setCoding(params['filename'])
-            sys.argv.append(params['filename'])
-            sys.argv.extend(params['argv'])
-            sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
-            if params['workdir'] == '':
-                os.chdir(sys.path[1])
-            else:
-                os.chdir(params['workdir'])
-
-            self.running = sys.argv[0]
-            self.debugging = True
-
-            self.forkAuto = params["autofork"]
-            self.forkChild = params["forkChild"]
-
-            self.threads.clear()
-            self.attachThread(mainThread=True)
-
-            # set the system exception handling function to ensure, that
-            # we report on all unhandled exceptions
-            sys.excepthook = self.__unhandled_exception
-            self.__interceptSignals()
-
-            # clear all old breakpoints, they'll get set after we have
-            # started
-            Breakpoint.clear_all_breaks()
-            Watch.clear_all_watches()
-
-            self.mainThread.tracePythonLibs(params['traceInterpreter'])
-
-            # This will eventually enter a local event loop.
-            self.debugMod.__dict__['__file__'] = self.running
-            sys.modules['__main__'] = self.debugMod
-            code = self.__compileFileSource(self.running)
-            if code:
-                sys.setprofile(self.callTraceEnabled)
-                self.mainThread.run(code, self.debugMod.__dict__, debug=True)
-
-        elif method == METHOD_REQUEST_RUN:
-            sys.argv = []
-            self.__setCoding(params['filename'])
-            sys.argv.append(params['filename'])
-            sys.argv.extend(params['argv'])
-            sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
-            if params['workdir'] == '':
-                os.chdir(sys.path[1])
-            else:
-                os.chdir(params['workdir'])
-
-            self.running = sys.argv[0]
-            self.botframe = None
-
-            self.forkAuto = params['autofork']
-            self.forkChild = params['forkChild']
-
-            self.threads.clear()
-            self.attachThread(mainThread=True)
-
-            # set the system exception handling function to ensure, that
-            # we report on all unhandled exceptions
-            sys.excepthook = self.__unhandled_exception
-            self.__interceptSignals()
-
-            self.mainThread.tracePythonLibs(False)
-
-            self.debugMod.__dict__['__file__'] = sys.argv[0]
-            sys.modules['__main__'] = self.debugMod
-            res = 0
-            code = self.__compileFileSource(self.running)
-            if code:
-                self.mainThread.run(code, self.debugMod.__dict__, debug=False)
 
         elif method == METHOD_EXECUTE_STATEMENT:
             if self.buffer:
@@ -421,14 +355,16 @@ class DebugClientBase(object):
                 # Report the exception
                 sys.last_type, sys.last_value, sys.last_traceback = \
                     sys.exc_info()
-                sendJSONCommand(
-                    METHOD_CLIENT_OUTPUT,
-                    {'text': ''.join(traceback.format_exception_only(
-                        sys.last_type, sys.last_value))})
+                sendJSONCommand(self.socket, METHOD_CLIENT_OUTPUT,
+                                self.procuuid,
+                                {'text':
+                                    ''.join(traceback.format_exception_only(
+                                        sys.last_type, sys.last_value))})
                 self.buffer = ''
             else:
                 if code is None:
-                    sendJSONCommand(METHOD_CONTINUE, {})
+                    sendJSONCommand(self.socket, METHOD_CONTINUE,
+                                    self.procuuid, None)
                     return
                 else:
                     self.buffer = ''
@@ -495,31 +431,33 @@ class DebugClientBase(object):
                         finally:
                             tblist = exc_tb = None
 
-                        sendJSONCommand(
-                            METHOD_CLIENT_OUTPUT, {'text': ''.join(tlist)})
+                        sendJSONCommand(self.socket, METHOD_CLIENT_OUTPUT,
+                                        self.procuuid,
+                                        {'text': ''.join(tlist)})
 
-            sendJSONCommand(METHOD_RESPONSE_OK, {})
+            sendJSONCommand(self.socket, METHOD_OK,
+                            self.procuuid, None)
 
-        elif method == METHOD_REQUEST_STEP:
+        elif method == METHOD_STEP:
             self.currentThreadExec.step(True)
             self.eventExit = True
 
-        elif method == METHOD_REQUEST_STEP_OVER:
+        elif method == METHOD_STEP_OVER:
             self.currentThreadExec.step(False)
             self.eventExit = True
 
-        elif method == METHOD_REQUEST_STEP_OUT:
+        elif method == METHOD_STEP_OUT:
             self.currentThreadExec.stepOut()
             self.eventExit = True
 
-        elif method == METHOD_REQUEST_STEP_QUIT:
+        elif method == METHOD_STEP_QUIT:
             if self.passive:
                 self.progTerminated(42)
             else:
                 self.setQuit()
                 self.eventExit = True
 
-        elif method == METHOD_REQUEST_MOVE_IP:
+        elif method == METHOD_MOVE_IP:
             newLine = params['newLine']
             self.currentThreadExec.move_instruction_pointer(newLine)
 
@@ -533,7 +471,7 @@ class DebugClientBase(object):
             self.userInput = params['input']
             self.eventExit = True
 
-        elif method == METHOD_REQUEST_BREAKPOINT:
+        elif method == METHOD_SET_BP:
             if params['setBreakpoint']:
                 if params['condition'] in ['None', '']:
                     cond = None
@@ -541,10 +479,10 @@ class DebugClientBase(object):
                     try:
                         cond = compile(params['condition'], '<string>', 'eval')
                     except SyntaxError:
-                        sendJSONCommand(
-                            METHOD_RESPONSE_BP_CONDITION_ERROR,
-                            {'filename': params['filename'],
-                             'line': params['line']})
+                        sendJSONCommand(self.socket, METHOD_BP_CONDITION_ERROR,
+                                        self.procuuid,
+                                        {'filename': params['filename'],
+                                         'line': params['line']})
                         return
                 else:
                     cond = None
@@ -554,7 +492,7 @@ class DebugClientBase(object):
             else:
                 Breakpoint.clear_break(params['filename'], params['line'])
 
-        elif method == METHOD_REQUEST_BP_ENABLE:
+        elif method == METHOD_BP_ENABLE:
             bPoint = Breakpoint.get_break(params['filename'], params['line'])
             if bPoint is not None:
                 if params['enable']:
@@ -562,12 +500,12 @@ class DebugClientBase(object):
                 else:
                     bPoint.disable()
 
-        elif method == METHOD_REQUEST_BP_IGNORE:
+        elif method == METHOD_BP_IGNORE:
             bPoint = Breakpoint.get_break(params['filename'], params['line'])
             if bPoint is not None:
                 bPoint.ignore = params['count']
 
-        elif method == METHOD_REQUEST_WATCH:
+        elif method == METHOD_SET_WP:
             if params['setWatch']:
                 if params['condition'].endswith(
                         ('??created??', '??changed??')):
@@ -579,16 +517,16 @@ class DebugClientBase(object):
                 try:
                     compiledCond = compile(compiledCond, '<string>', 'eval')
                 except SyntaxError:
-                    sendJSONCommand(
-                        METHOD_RESPONSE_WATCH_CONDITION_ERROR,
-                        {'condition': params['condition']})
+                    sendJSONCommand(self.socket, METHOD_WP_CONDITION_ERROR,
+                                    self.procuuid,
+                                    {'condition': params['condition']})
                     return
                 Watch(params['condition'], compiledCond, flag,
                       params['temporary'])
             else:
                 Watch.clear_watch(params['condition'])
 
-        elif method == METHOD_REQUEST_WATCH_ENABLE:
+        elif method == METHOD_WP_ENABLE:
             wPoint = Watch.get_watch(params['condition'])
             if wPoint is not None:
                 if params['enable']:
@@ -596,12 +534,12 @@ class DebugClientBase(object):
                 else:
                     wPoint.disable()
 
-        elif method == METHOD_REQUEST_WATCH_IGNORE:
+        elif method == METHOD_WP_IGNORE:
             wPoint = Watch.get_watch(params['condition'])
             if wPoint is not None:
                 wPoint.ignore = params['count']
 
-        elif method == METHOD_REQUEST_SHUTDOWN:
+        elif method == METHOD_SHUTDOWN:
             self.sessionClose()
 
         elif method == METHOD_FORK_TO:
@@ -611,14 +549,13 @@ class DebugClientBase(object):
 
     def sendClearTemporaryBreakpoint(self, filename, lineno):
         """Signals the deletion of a temporary breakpoint"""
-        sendJSONCommand(
-            METHOD_RESPONSE_CLEAR_BP,
-            {'filename': filename, 'line': lineno})
+        sendJSONCommand(self.socket, METHOD_CLEAR_BP,
+                        self.procuuid, {'filename': filename, 'line': lineno})
 
     def sendClearTemporaryWatch(self, condition):
         """Signals the deletion of a temporary watch expression"""
-        sendJSONCommand(
-            METHOD_RESPONSE_CLEAR_WATCH, {'condition': condition})
+        sendJSONCommand(self.socket, METHOD_CLEAR_WP,
+                        self.procuuid, {'condition': condition})
 
     def sendResponseLine(self, stack):
         """Sends the current call stack"""
@@ -640,10 +577,10 @@ class DebugClientBase(object):
 
     def sendSyntaxError(self, message, filename, lineno, charno):
         """Sends information for a syntax error"""
-        sendJSONCommand(
-            METHOD_RESPONSE_SYNTAX,
-            {'message': message, 'filename': filename,
-             'linenumber': lineno, 'characternumber': charno})
+        sendJSONCommand(self.socket, METHOD_SYNTAX_ERROR,
+                        self.procuuid,
+                        {'message': message, 'filename': filename,
+                         'linenumber': lineno, 'characternumber': charno})
 
     def sendPassiveStartup(self, filename, exceptions):
         """Sends indication that the debugee is entering event loop"""
@@ -775,10 +712,11 @@ class DebugClientBase(object):
         else:
             fargs = ''
 
-        sendJSONCommand(
-            METHOD_RESPONSE_SIGNAL,
-            {'message': message, 'filename': filename, 'linenumber': linenr,
-             'function': ffunc, 'arguments': fargs})
+        sendJSONCommand(self.socket, METHOD_SIGNAL,
+                        self.procuuid,
+                        {'message': message, 'filename': filename,
+                         'linenumber': linenr, 'function': ffunc,
+                         'arguments': fargs})
 
     def absPath(self, fileName):
         """Converts a filename to an absolute name"""
@@ -834,8 +772,9 @@ class DebugClientBase(object):
         if self.running:
             self.setQuit()
             self.running = None
-            sendJSONCommand(
-                METHOD_RESPONSE_EXIT, {'status': status, 'message': message})
+            sendJSONCommand(self.socket, METHOD_RESPONSE_EXIT,
+                            self.procuuid,
+                            {'status': status, 'message': message})
 
         # reset coding
         self.__coding = self.defaultCoding
@@ -876,8 +815,8 @@ class DebugClientBase(object):
                 keylist, varDict, scope, filterList)
             varlist.extend(vlist)
 
-        sendJSONCommand(
-            METHOD_VARIABLES, {'scope': scope, 'variables': varlist})
+        sendJSONCommand(self.socket, METHOD_VARIABLES,
+                        self.procuuid, {'scope': scope, 'variables': varlist})
 
     def __dumpVariable(self, var, frmnr, scope, filterList):
         """Returns the variables of a frame to the debug server"""
@@ -928,9 +867,10 @@ class DebugClientBase(object):
                         list(varDict.keys()), varDict, scope, filterList)
                     varlist.extend(vlist)
 
-        sendJSONCommand(
-            METHOD_VARIABLE,
-            {'scope': scope, 'variable': var, 'variables': varlist})
+        sendJSONCommand(self.socket, METHOD_VARIABLE,
+                        self.procuuid,
+                        {'scope': scope, 'variable': var,
+                         'variables': varlist})
 
     def __extractIndicators(self, var):
         """Extracts the indicator string from a variable text"""
@@ -1335,7 +1275,8 @@ class DebugClientBase(object):
                     isPopen = True
 
         if not self.forkAuto and not isPopen:
-            sendJSONCommand(METHOD_FORK_TO, {})
+            sendJSONCommand(self.socket, METHOD_FORK_TO,
+                            self.procuuid, None)
             self.eventLoop(True)
         pid = DEBUG_CLIENT_ORIG_FORK()
 

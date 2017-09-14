@@ -52,7 +52,6 @@ class AsyncFile(object):
         self.mode = mode
         self.name = name
         self.nWriteErrors = 0
-        self.encoding = 'utf-8'
 
         self.wpending = []
 
@@ -68,7 +67,6 @@ class AsyncFile(object):
     def close(self, closeit=False):
         """Closes the file"""
         if closeit and not self.closed:
-            self.flush()
             self.sock.close()
             self.closed = True
 
@@ -99,8 +97,8 @@ class AsyncFile(object):
     def fileno(self):
         """Provides the file number"""
         try:
-            return self.sock.fileno()
-        except socket.error:
+            return self.sock.socketDescriptor()
+        except Exception as exc:
             return -1
 
     def readable(self):

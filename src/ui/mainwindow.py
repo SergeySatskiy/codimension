@@ -146,22 +146,17 @@ class CodimensionMainWindow(QMainWindow):
         self.vcsManager = VCSManager()
 
         self.__debugger = CodimensionDebugger(self)
-#        self.__debugger.sigDebuggerStateChanged.connect(
-#            self.__onDebuggerStateChanged)
-#        self.__debugger.sigClientLine.connect(self.__onDebuggerCurrentLine)
+        self.__debugger.sigDebuggerStateChanged.connect(
+            self.__onDebuggerStateChanged)
+        self.__debugger.sigClientLine.connect(self.__onDebuggerCurrentLine)
 #        self.__debugger.sigClientException.connect(
 #            self.__onDebuggerClientException)
 #        self.__debugger.sigClientSyntaxError.connect(
 #            self.__onDebuggerClientSyntaxError)
-#        self.__debugger.sigClientIDEMessage.connect(
-#            self.__onDebuggerClientIDEMessage)
 #        self.__debugger.sigEvalOK.connect(self.__onEvalOK)
 #        self.__debugger.sigEvalError.connect(self.__onEvalError)
 #        self.__debugger.sigExecOK.connect(self.__onExecOK)
 #        self.__debugger.sigExecError.connect(self.__onExecError)
-#        self.__debugger.sigClientStdout.connect(self.__onClientStdout)
-#        self.__debugger.sigClientStderr.connect(self.__onClientStderr)
-#        self.__debugger.sigClientRawInput.connect(self.__onClientRawInput)
 #        self.__debugger.getBreakPointModel().sigBreakpoinsChanged.connect(
 #            self.__onBreakpointsModelChanged)
 
@@ -218,6 +213,12 @@ class CodimensionMainWindow(QMainWindow):
 
         self._runManager = RunManager(self)
         self._runManager.sigProfilingResults.connect(self.onProfileResults)
+        self._runManager.sigDebugSessionPrologueStarted.connect(
+            self.__debugger.onDebugSessionStarted)
+        self._runManager.sigIncomingMessage.connect(
+            self.__debugger.onIncomingMessage)
+        self._runManager.sigProcessFinished.connect(
+            self.__debugger.onProcessFinished)
 
         Settings().sigTextZoomChanged.connect(self.onTextZoomChanged)
 
@@ -1630,13 +1631,6 @@ class CodimensionMainWindow(QMainWindow):
             QTimer.singleShot(0, self._onStopDbgSession)
         else:
             QTimer.singleShot(0, self._onBrutalStopDbgSession)
-
-    def __onDebuggerClientIDEMessage(self, message):
-        """Triggered when the debug server has something to report"""
-        if self.settings['terminalType'] == TERM_REDIRECT:
-            self.__ioconsoleIDEMessage(str(message))
-        else:
-            logging.info(str(message))
 
     def __removeCurrenDebugLineHighlight(self):
         """Removes the current debug line highlight"""
