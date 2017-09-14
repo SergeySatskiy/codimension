@@ -263,12 +263,8 @@ class MainWindowMenuMixin:
             getIcon('detailsdlg.png'), 'Debug t&ab script...',
             self.onDebugTabDlg, "Ctrl+F5")
         dbgMenu.addSeparator()
-        self._debugStopBrutalAct = dbgMenu.addAction(
-            getIcon('dbgstopbrutal.png'), 'Stop session and kill console',
-            self._onBrutalStopDbgSession, "Ctrl+F10")
-        self._debugStopBrutalAct.setEnabled(False)
         self._debugStopAct = dbgMenu.addAction(
-            getIcon('dbgstop.png'), 'Stop session and keep console if so',
+            getIcon('dbgstop.png'), 'Stop debugging session',
             self._onStopDbgSession, "F10")
         self._debugStopAct.setEnabled(False)
         self._debugRestartAct = dbgMenu.addAction(

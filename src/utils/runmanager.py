@@ -508,7 +508,7 @@ class RunManager(QObject):
         # The run parameters could be changed by another run after the
         # debugging has started so they need to be saved per session
         self.sigDebugSessionPrologueStarted.emit(
-            remoteProc.procuuid, path,
+            remoteProc.procWrapper.procuuid, path,
             getRunParameters(path), Settings().getDebuggerSettings())
         try:
             remoteProc.procWrapper.start()
