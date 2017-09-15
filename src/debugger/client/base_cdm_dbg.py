@@ -222,6 +222,7 @@ class DebugBase(object):
 
         if event == 'line':
             if self.stop_here(frame) or self.break_here(frame):
+                printerr('Going to stop here...')
                 if (self.stop_everywhere and frame.f_back and
                         frame.f_back.f_code.co_name == "prepareJSONCommand"):
                     # Just stepped into print statement, so skip these frames
@@ -462,7 +463,6 @@ class DebugBase(object):
     def break_here(self, frame):
         """Reimplemented from bdb.py to fix the filename from the frame"""
         filename = self.fix_frame_filename(frame)
-        printerr('Checking breakpoint in ' + filename + ' at ' + str(frame.f_lineno) + '. Total BPs: ' + str(len(Breakpoint.BREAKS)))
         if (filename, frame.f_lineno) in Breakpoint.BREAKS:
             bp, flag = Breakpoint.effectiveBreak(
                 filename, frame.f_lineno, frame)
@@ -639,14 +639,6 @@ class DebugBase(object):
         else:
             exctypetxt = str(exctype)
 
-        if sys.version_info[0] == 2:
-            try:
-                excvaltxt = str(excval).encode(self._dbgClient.getCoding())
-            except UnicodeError:
-                excvaltxt = str(excval)
-        else:
-            excvaltxt = str(excval)
-
         # Don't step into libraries, which are used by our debugger methods
         if exctb is not None:
             self.stop_everywhere = False
@@ -664,7 +656,7 @@ class DebugBase(object):
         self._dbgClient.lockClient()
         self._dbgClient.currentThread = self
         self._dbgClient.currentThreadExec = self
-        self._dbgClient.sendException(exctypetxt, excvaltxt, stack)
+        self._dbgClient.sendException(exctypetxt, str(excval), stack)
         self._dbgClient.dumpThreadList()
 
         if exctb is not None:
@@ -734,6 +726,7 @@ class DebugBase(object):
     def stop_here(self, frame):
         """Reimplemented to filter out debugger files"""
         if self.__skipFrame(frame):
+            printerr('skipping frame due to a file name: ' + frame.f_code.co_filename)
             return False
 
         return (self.stop_everywhere or
@@ -759,6 +752,7 @@ class DebugBase(object):
     def __skipFrame(self, frame):
         """Filters out debugger files"""
         try:
+            printerr('Checking frame ' + repr(frame))
             return self.filesToSkip[frame.f_code.co_filename]
         except KeyError:
             ret = frame.f_code.co_filename.startswith(self.pathsToSkip)

@@ -30,9 +30,6 @@ from .config import DEFAULT_ENCODING
 from .runparams import RUN, PROFILE, DEBUG
 
 
-TERM_REDIRECT = -1
-
-
 def prepareArguments(arguments):
     """Prepares arguments for the command line"""
     args = []

@@ -33,8 +33,7 @@ from utils.fileutils import (getFileProperties, isImageViewable, isImageFile,
                              isFileSearchable, isCDMProjectFile)
 from utils.diskvaluesrelay import getRunParameters
 from utils.runmanager import RunManager, getWorkingDir
-from utils.run import (parseCommandLineArguments, getNoArgsEnvironment,
-                       TERM_REDIRECT)
+from utils.run import parseCommandLineArguments, getNoArgsEnvironment
 from utils.fileutils import isPythonMime
 from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
                                 ImportDiagramOptions)
@@ -149,16 +148,16 @@ class CodimensionMainWindow(QMainWindow):
         self.__debugger.sigDebuggerStateChanged.connect(
             self.__onDebuggerStateChanged)
         self.__debugger.sigClientLine.connect(self.__onDebuggerCurrentLine)
-#        self.__debugger.sigClientException.connect(
-#            self.__onDebuggerClientException)
-#        self.__debugger.sigClientSyntaxError.connect(
-#            self.__onDebuggerClientSyntaxError)
+        self.__debugger.sigClientException.connect(
+            self.__onDebuggerClientException)
+        self.__debugger.sigClientSyntaxError.connect(
+            self.__onDebuggerClientSyntaxError)
 #        self.__debugger.sigEvalOK.connect(self.__onEvalOK)
 #        self.__debugger.sigEvalError.connect(self.__onEvalError)
 #        self.__debugger.sigExecOK.connect(self.__onExecOK)
 #        self.__debugger.sigExecError.connect(self.__onExecError)
-#        self.__debugger.getBreakPointModel().sigBreakpoinsChanged.connect(
-#            self.__onBreakpointsModelChanged)
+        self.__debugger.getBreakPointModel().sigBreakpoinsChanged.connect(
+            self.__onBreakpointsModelChanged)
 
         self.__initialisation = True
 

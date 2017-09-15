@@ -31,7 +31,8 @@ from .client.protocol_cdm_dbg import (METHOD_LINE, METHOD_STACK, METHOD_STEP,
                                       METHOD_SYNTAX_ERROR, METHOD_EXCEPTION,
                                       METHOD_VARIABLE, METHOD_STEP_OVER,
                                       METHOD_BP_CONDITION_ERROR,
-                                      METHOD_SET_BP, METHOD_STEP_OUT)
+                                      METHOD_SET_BP, METHOD_STEP_OUT,
+                                      METHOD_BP_ENABLE, METHOD_BP_IGNORE)
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
@@ -124,6 +125,7 @@ class CodimensionDebugger(QObject):
         self.__fileName = fileName
         self.__runParameters = runParameters
         self.__debugSettings = debugSettings
+        self.__stopAtFirstLine = debugSettings.stopAtFirstLine
 
         self.__mainWindow.switchDebugMode(True)
         self.__changeDebuggerState(self.STATE_IN_CLIENT)
@@ -213,11 +215,6 @@ class CodimensionDebugger(QObject):
 
             self.__changeDebuggerState(self.STATE_STOPPED)
             self.__mainWindow.switchDebugMode(False)
-
-
-
-
-
 
     def __processControlState(self):
         """Analyzes receiving buffer in the CONTROL state"""
@@ -365,17 +362,15 @@ class CodimensionDebugger(QObject):
 
     def __remoteBreakpointEnable(self, fileName, line, enable):
         """Sends the breakpoint enability"""
-        if enable:
-            enable = 1
-        else:
-            enable = 0
-        self.__sendCommand(RequestBreakEnable + fileName + ',' +
-                           str(line) + ',' + str(enable) + '\n')
+        self.__sendJSONCommand(METHOD_BP_ENABLE,
+                               {'filename': fileName, 'line': line,
+                                'enable': enable})
 
     def __remoteBreakpointIgnore(self, fileName, line, ignoreCount):
         """Sends the breakpoint ignore count"""
-        self.__sendCommand(RequestBreakIgnore + fileName + ',' +
-                           str(line) + ',' + str(ignoreCount) + '\n')
+        self.__sendJSONCommand(METHOD_BP_IGNORE,
+                               {'filename': fileName, 'line': line,
+                                'count': ignoreCount})
 
     def __clientClearBreakPoint(self, fileName, line):
         """Handles the sigClientClearBreak signal"""
@@ -427,15 +422,18 @@ class CodimensionDebugger(QObject):
 
     def remoteThreadList(self):
         """Provides the threads list"""
-        self.__sendCommand(RequestThreadList + "\n")
+        self.__sendJSONCommand(METHOD_THREAD_LIST, None)
 
-    def remoteClientVariables(self, scope, framenr=0):
+    def remoteClientVariables(self, scope, framenr=0, filters=None):
         """Provides the client variables.
-           scope - 0 => local, 1 => global
+
+        scope - 0 => local, 1 => global
         """
-        scope = int(scope)
-        self.__sendCommand(RequestVariables +
-                           str(framenr) + ", " + str(scope) + "\n")
+        if filters is None:
+            filters = []
+        self.__sendJSONCommand(METHOD_VARIABLES,
+                               {'frameNumber': framenr,
+                                'scope': scope, 'filters': filters})
 
     def remoteClientVariable(self, scope, var, framenr=0):
         """Provides the client variable.

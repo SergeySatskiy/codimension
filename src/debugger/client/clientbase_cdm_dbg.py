@@ -54,7 +54,7 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_SET_ENVIRONMENT, METHOD_EXECUTE_STATEMENT,
                               METHOD_SIGNAL, METHOD_SHUTDOWN,
                               METHOD_SET_FILTER, METHOD_EPILOGUE_EXIT_CODE,
-                              METHOD_EPILOGUE_EXIT, METHOD_STDIN)
+                              METHOD_EPILOGUE_EXIT)
 from base_cdm_dbg import setRecursionLimit
 from asyncfile_cdm_dbg import AsyncFile
 from outredir_cdm_dbg import OutStreamRedirector
@@ -64,6 +64,9 @@ from cdm_dbg_utils import (sendJSONCommand, formatArgValues, getArgValues,
                            getParsedJSONMessage)
 from variables_cdm_dbg import getType, TOO_LARGE_ATTRIBUTE
 
+
+# If set to true then the client prints debug messages on the original stderr
+CLIENT_DEBUG = True
 
 DEBUG_CLIENT_INSTANCE = None
 VAR_TYPE_STRINGS = list(VAR_TYPE_DISP_STRINGS.keys())
@@ -161,6 +164,9 @@ class DebugClientBase(object):
         self.socket = None
         self.procuuid = None
 
+        self.__messageHandlers = {}
+        self.__initMessageHandlers()
+
         # special objects representing the main scripts thread and frame
         self.mainThread = self
         self.framenr = 0
@@ -200,9 +206,32 @@ class DebugClientBase(object):
         self.noencoding = False
         self.eventExit = None
 
-    def getCoding(self):
-        """Provides the current coding"""
-        return self.__coding
+    def __initMessageHandlers(self):
+        """initializes a map for the message handlers"""
+        self.__messageHandlers = {
+            METHOD_VARIABLES: self.__handleVariables,
+            METHOD_VARIABLE: self.__handleVariable,
+            METHOD_THREAD_LIST: self.__handleThreadList,
+            METHOD_FORK_TO: self.__handleForkTo,
+            METHOD_SHUTDOWN: self.__handleShutdown,
+            METHOD_WP_IGNORE: self.__handleWPIgnore,
+            METHOD_WP_ENABLE: self.__handleWPEnable,
+            METHOD_SET_WP: self.__handleSetWP,
+            METHOD_BP_IGNORE: self.__handleBPIgnore,
+            METHOD_BP_ENABLE: self.__handleBPEnable,
+            METHOD_SET_BP: self.__handleSetBP,
+            METHOD_STDIN: self.__handleStdin,
+            METHOD_CONTINUE: self.__handleContinue,
+            METHOD_MOVE_IP: self.__handleMoveIP,
+            METHOD_STEP_QUIT: self.__handleStepQuit,
+            METHOD_STEP_OUT: self.__handleStepOut,
+            METHOD_STEP_OVER: self.__handleStepOver,
+            METHOD_STEP: self.__handleStep,
+            METHOD_EXECUTE_STATEMENT: self.__handleExecuteStatement,
+            METHOD_SET_ENVIRONMENT: self.__handleSetEnvironment,
+            METHOD_CALL_TRACE: self.__handleCallTrace,
+            METHOD_SET_FILTER: self.__handleSetFilter,
+            METHOD_THREAD_SET: self.__handleThreadSet}
 
     def __setCoding(self, filename):
         """Sets the coding used by a python file"""
@@ -268,7 +297,6 @@ class DebugClientBase(object):
                 charno = excval.offset
                 if charno is None:
                     charno = 0
-
             except (AttributeError, ValueError):
                 message = ""
                 filename = ""
@@ -277,7 +305,6 @@ class DebugClientBase(object):
 
             self.sendSyntaxError(message, filename, lineno, charno)
             return None
-
         return code
 
     def handleJSONCommand(self):
@@ -285,257 +312,284 @@ class DebugClientBase(object):
         method, procuuid, params, _ = getParsedJSONMessage(self.socket)
         if procuuid != self.procuuid:
             return
-        printerr("Method: " + method + " Params: " + repr(params))
 
-        if method == METHOD_VARIABLES:
-            self.__dumpVariables(
-                params['frameNumber'], params['scope'], params['filters'])
+        if CLIENT_DEBUG:
+            printerr("Method: " + method + " Params: " + repr(params))
 
-        elif method == METHOD_VARIABLE:
-            self.__dumpVariable(
-                params['variable'], params['frameNumber'],
-                params['scope'], params['filters'])
+        try:
+            self.__messageHandlers[method](params)
+        except KeyError:
+            printerr('Unhandled message. Method: ' + method +
+                     ' Params: ' + repr(params))
 
-        elif method == METHOD_THREAD_LIST:
-            self.dumpThreadList()
+    def __handleThreadSet(self, params):
+        """Handling METHOD_THREAD_SET"""
+        if params['threadID'] in self.threads:
+            self.setCurrentThread(params['threadID'])
+            sendJSONCommand(self.socket, METHOD_THREAD_SET,
+                            self.procuuid, None)
+            stack = self.currentThread.getStack()
+            sendJSONCommand(self.socket, METHOD_STACK,
+                            self.procuuid, {'stack': stack})
 
-        elif method == METHOD_THREAD_SET:
-            if params['threadID'] in self.threads:
-                self.setCurrentThread(params['threadID'])
-                sendJSONCommand(self.socket, METHOD_THREAD_SET,
+    def __handleSetFilter(self, params):
+        """Handling METHOD_SET_FILTER"""
+        self.__generateFilterObjects(params['scope'], params['filter'])
+
+    def __handleCallTrace(self, params):
+        """Handling METHOD_CALL_TRACE"""
+        if params['enable']:
+            callTraceEnabled = self.profile
+        else:
+            callTraceEnabled = None
+
+        if self.debugging:
+            sys.setprofile(callTraceEnabled)
+        else:
+            # remember for later
+            self.callTraceEnabled = callTraceEnabled
+
+    def __handleSetEnvironment(self, params):
+        """Handling METHOD_SET_ENVIRONMENT"""
+        for key, value in params['environment'].items():
+            if key.endswith('+'):
+                if key[:-1] in os.environ:
+                    os.environ[key[:-1]] += value
+                else:
+                    os.environ[key[:-1]] = value
+            else:
+                os.environ[key] = value
+
+    def __handleExecuteStatement(self, params):
+        """Handling METHOD_EXECUTE_STATEMENT"""
+        if self.buffer:
+            self.buffer = self.buffer + '\n' + params['statement']
+        else:
+            self.buffer = params['statement']
+
+        try:
+            code = self.compile_command(self.buffer, self.readstream.name)
+        except (OverflowError, SyntaxError, ValueError):
+            # Report the exception
+            sys.last_type, sys.last_value, sys.last_traceback = \
+                sys.exc_info()
+            sendJSONCommand(self.socket, METHOD_CLIENT_OUTPUT,
+                            self.procuuid,
+                            {'text':
+                                ''.join(traceback.format_exception_only(
+                                    sys.last_type, sys.last_value))})
+            self.buffer = ''
+        else:
+            if code is None:
+                sendJSONCommand(self.socket, METHOD_CONTINUE,
                                 self.procuuid, None)
-                stack = self.currentThread.getStack()
-                sendJSONCommand(self.socket, METHOD_STACK,
-                                self.procuuid, {'stack': stack})
-
-        elif method == METHOD_SET_FILTER:
-            self.__generateFilterObjects(params['scope'], params['filter'])
-
-        elif method == METHOD_CALL_TRACE:
-            if params['enable']:
-                callTraceEnabled = self.profile
+                return
             else:
-                callTraceEnabled = None
-
-            if self.debugging:
-                sys.setprofile(callTraceEnabled)
-            else:
-                # remember for later
-                self.callTraceEnabled = callTraceEnabled
-
-        elif method == METHOD_SET_ENVIRONMENT:
-            for key, value in params['environment'].items():
-                if key.endswith('+'):
-                    if key[:-1] in os.environ:
-                        os.environ[key[:-1]] += value
-                    else:
-                        os.environ[key[:-1]] = value
-                else:
-                    os.environ[key] = value
-
-        elif method == METHOD_EXECUTE_STATEMENT:
-            if self.buffer:
-                self.buffer = self.buffer + '\n' + params['statement']
-            else:
-                self.buffer = params['statement']
-
-            try:
-                code = self.compile_command(self.buffer, self.readstream.name)
-            except (OverflowError, SyntaxError, ValueError):
-                # Report the exception
-                sys.last_type, sys.last_value, sys.last_traceback = \
-                    sys.exc_info()
-                sendJSONCommand(self.socket, METHOD_CLIENT_OUTPUT,
-                                self.procuuid,
-                                {'text':
-                                    ''.join(traceback.format_exception_only(
-                                        sys.last_type, sys.last_value))})
                 self.buffer = ''
-            else:
-                if code is None:
-                    sendJSONCommand(self.socket, METHOD_CONTINUE,
-                                    self.procuuid, None)
-                    return
-                else:
-                    self.buffer = ''
 
-                    try:
-                        if self.running is None:
-                            exec(code, self.debugMod.__dict__)
+                try:
+                    if self.running is None:
+                        exec(code, self.debugMod.__dict__)
+                    else:
+                        if self.currentThread is None:
+                            # program has terminated
+                            self.running = None
+                            _globals = self.debugMod.__dict__
+                            _locals = _globals
                         else:
-                            if self.currentThread is None:
-                                # program has terminated
+                            cf = self.currentThread.getCurrentFrame()
+                            # program has terminated
+                            if cf is None:
                                 self.running = None
                                 _globals = self.debugMod.__dict__
                                 _locals = _globals
                             else:
-                                cf = self.currentThread.getCurrentFrame()
-                                # program has terminated
-                                if cf is None:
-                                    self.running = None
-                                    _globals = self.debugMod.__dict__
-                                    _locals = _globals
-                                else:
-                                    frmnr = self.framenr
-                                    while cf is not None and frmnr > 0:
-                                        cf = cf.f_back
-                                        frmnr -= 1
-                                    _globals = cf.f_globals
-                                    _locals = \
-                                        self.currentThread.getFrameLocals(
-                                            self.framenr)
-                            # reset sys.stdout to our redirector
-                            # (unconditionally)
-                            if 'sys' in _globals:
-                                __stdout = _globals['sys'].stdout
-                                _globals['sys'].stdout = self.writestream
-                                exec(code, _globals, _locals)
-                                _globals['sys'].stdout = __stdout
-                            elif 'sys' in _locals:
-                                __stdout = _locals['sys'].stdout
-                                _locals['sys'].stdout = self.writestream
-                                exec(code, _globals, _locals)
-                                _locals['sys'].stdout = __stdout
-                            else:
-                                exec(code, _globals, _locals)
+                                frmnr = self.framenr
+                                while cf is not None and frmnr > 0:
+                                    cf = cf.f_back
+                                    frmnr -= 1
+                                _globals = cf.f_globals
+                                _locals = self.currentThread.getFrameLocals(
+                                    self.framenr)
+                        # reset sys.stdout to our redirector
+                        # (unconditionally)
+                        if 'sys' in _globals:
+                            __stdout = _globals['sys'].stdout
+                            _globals['sys'].stdout = self.writestream
+                            exec(code, _globals, _locals)
+                            _globals['sys'].stdout = __stdout
+                        elif 'sys' in _locals:
+                            __stdout = _locals['sys'].stdout
+                            _locals['sys'].stdout = self.writestream
+                            exec(code, _globals, _locals)
+                            _locals['sys'].stdout = __stdout
+                        else:
+                            exec(code, _globals, _locals)
 
-                            self.currentThread.storeFrameLocals(self.framenr)
-                    except SystemExit as exc:
-                        self.progTerminated(exc.code)
-                    except Exception:
-                        # Report the exception and the traceback
-                        tlist = []
-                        try:
-                            exc_type, exc_value, exc_tb = sys.exc_info()
-                            sys.last_type = exc_type
-                            sys.last_value = exc_value
-                            sys.last_traceback = exc_tb
-                            tblist = traceback.extract_tb(exc_tb)
-                            del tblist[:1]
-                            tlist = traceback.format_list(tblist)
-                            if tlist:
-                                tlist.insert(
-                                    0, '"Traceback (innermost last):\n')
-                                tlist.extend(traceback.format_exception_only(
-                                    exc_type, exc_value))
-                        finally:
-                            tblist = exc_tb = None
-
-                        sendJSONCommand(self.socket, METHOD_CLIENT_OUTPUT,
-                                        self.procuuid,
-                                        {'text': ''.join(tlist)})
-
-            sendJSONCommand(self.socket, METHOD_OK,
-                            self.procuuid, None)
-
-        elif method == METHOD_STEP:
-            self.currentThreadExec.step(True)
-            self.eventExit = True
-
-        elif method == METHOD_STEP_OVER:
-            self.currentThreadExec.step(False)
-            self.eventExit = True
-
-        elif method == METHOD_STEP_OUT:
-            self.currentThreadExec.stepOut()
-            self.eventExit = True
-
-        elif method == METHOD_STEP_QUIT:
-            if self.passive:
-                self.progTerminated(42)
-            else:
-                self.set_quit()
-                self.eventExit = True
-
-        elif method == METHOD_MOVE_IP:
-            newLine = params['newLine']
-            self.currentThreadExec.move_instruction_pointer(newLine)
-
-        elif method == METHOD_CONTINUE:
-            self.currentThreadExec.go(params['special'])
-            self.eventExit = True
-
-        elif method == METHOD_STDIN:
-            # If we are handling raw mode input then break out of the current
-            # event loop.
-            self.userInput = params['input']
-            self.eventExit = True
-
-        elif method == METHOD_SET_BP:
-            if params['setBreakpoint']:
-                if params['condition'] in ['None', '']:
-                    cond = None
-                elif params['condition'] is not None:
+                        self.currentThread.storeFrameLocals(self.framenr)
+                except SystemExit as exc:
+                    self.progTerminated(exc.code)
+                except Exception:
+                    # Report the exception and the traceback
+                    tlist = []
                     try:
-                        cond = compile(params['condition'], '<string>', 'eval')
-                    except SyntaxError:
-                        sendJSONCommand(self.socket, METHOD_BP_CONDITION_ERROR,
-                                        self.procuuid,
-                                        {'filename': params['filename'],
-                                         'line': params['line']})
-                        return
-                else:
-                    cond = None
+                        exc_type, exc_value, exc_tb = sys.exc_info()
+                        sys.last_type = exc_type
+                        sys.last_value = exc_value
+                        sys.last_traceback = exc_tb
+                        tblist = traceback.extract_tb(exc_tb)
+                        del tblist[:1]
+                        tlist = traceback.format_list(tblist)
+                        if tlist:
+                            tlist.insert(
+                                0, '"Traceback (innermost last):\n')
+                            tlist.extend(traceback.format_exception_only(
+                                exc_type, exc_value))
+                    finally:
+                        tblist = exc_tb = None
 
-                Breakpoint(params['filename'], params['line'],
-                           params['temporary'], cond)
-            else:
-                Breakpoint.clear_break(params['filename'], params['line'])
+                    sendJSONCommand(self.socket, METHOD_CLIENT_OUTPUT,
+                                    self.procuuid, {'text': ''.join(tlist)})
 
-        elif method == METHOD_BP_ENABLE:
-            bPoint = Breakpoint.get_break(params['filename'], params['line'])
-            if bPoint is not None:
-                if params['enable']:
-                    bPoint.enable()
-                else:
-                    bPoint.disable()
+        sendJSONCommand(self.socket, METHOD_OK, self.procuuid, None)
 
-        elif method == METHOD_BP_IGNORE:
-            bPoint = Breakpoint.get_break(params['filename'], params['line'])
-            if bPoint is not None:
-                bPoint.ignore = params['count']
+    def __handleStep(self, _):
+        """Handling METHOD_STEP"""
+        self.currentThreadExec.step(True)
+        self.eventExit = True
 
-        elif method == METHOD_SET_WP:
-            if params['setWatch']:
-                if params['condition'].endswith(
-                        ('??created??', '??changed??')):
-                    compiledCond, flag = params['condition'].split()
-                else:
-                    compiledCond = params['condition']
-                    flag = ''
+    def __handleStepOver(self, _):
+        """Handling METHOD_STEP_OVER"""
+        self.currentThreadExec.step(False)
+        self.eventExit = True
 
-                try:
-                    compiledCond = compile(compiledCond, '<string>', 'eval')
-                except SyntaxError:
-                    sendJSONCommand(self.socket, METHOD_WP_CONDITION_ERROR,
-                                    self.procuuid,
-                                    {'condition': params['condition']})
-                    return
-                Watch(params['condition'], compiledCond, flag,
-                      params['temporary'])
-            else:
-                Watch.clear_watch(params['condition'])
+    def __handleStepOut(self, _):
+        """Handling METHOD_STEP_OUT"""
+        self.currentThreadExec.stepOut()
+        self.eventExit = True
 
-        elif method == METHOD_WP_ENABLE:
-            wPoint = Watch.get_watch(params['condition'])
-            if wPoint is not None:
-                if params['enable']:
-                    wPoint.enable()
-                else:
-                    wPoint.disable()
-
-        elif method == METHOD_WP_IGNORE:
-            wPoint = Watch.get_watch(params['condition'])
-            if wPoint is not None:
-                wPoint.ignore = params['count']
-
-        elif method == METHOD_SHUTDOWN:
-            self.sessionClose()
-
-        elif method == METHOD_FORK_TO:
-            # this results from a separate event loop
-            self.forkChild = (params['target'] == 'child')
+    def __handleStepQuit(self, _):
+        """Handling METHOD_STEP_QUIT"""
+        if self.passive:
+            self.progTerminated(42)
+        else:
+            self.set_quit()
             self.eventExit = True
+
+    def __handleMoveIP(self, params):
+        """Handling METHOD_MOVE_IP"""
+        newLine = params['newLine']
+        self.currentThreadExec.move_instruction_pointer(newLine)
+
+    def __handleContinue(self, params):
+        """Handling METHOD_CONTINUE"""
+        self.currentThreadExec.go(params['special'])
+        self.eventExit = True
+
+    def __handleStdin(self, params):
+        """Handling METHOD_STDIN"""
+        # If we are handling raw mode input then break out of the current
+        # event loop.
+        self.userInput = params['input']
+        self.eventExit = True
+
+    def __handleSetBP(self, params):
+        """Handling METHOD_SET_BP"""
+        if params['setBreakpoint']:
+            if params['condition'] in ['None', '']:
+                cond = None
+            elif params['condition'] is not None:
+                try:
+                    cond = compile(params['condition'], '<string>', 'eval')
+                except SyntaxError:
+                    sendJSONCommand(self.socket, METHOD_BP_CONDITION_ERROR,
+                                    self.procuuid,
+                                    {'filename': params['filename'],
+                                     'line': params['line']})
+                    return
+            else:
+                cond = None
+
+            Breakpoint(params['filename'], params['line'],
+                       params['temporary'], cond)
+        else:
+            Breakpoint.clear_break(params['filename'], params['line'])
+
+    def __handleBPEnable(self, params):
+        """Handling METHOD_BP_ENABLE"""
+        bPoint = Breakpoint.get_break(params['filename'], params['line'])
+        if bPoint is not None:
+            if params['enable']:
+                bPoint.enable()
+            else:
+                bPoint.disable()
+
+    def __handleBPIgnore(self, params):
+        """Handling METHOD_BP_IGNORE"""
+        bPoint = Breakpoint.get_break(params['filename'], params['line'])
+        if bPoint is not None:
+            bPoint.ignore = params['count']
+
+    def __handleSetWP(self, params):
+        """Handling METHOD_SET_WP"""
+        if params['setWatch']:
+            if params['condition'].endswith(
+                    ('??created??', '??changed??')):
+                compiledCond, flag = params['condition'].split()
+            else:
+                compiledCond = params['condition']
+                flag = ''
+
+            try:
+                compiledCond = compile(compiledCond, '<string>', 'eval')
+            except SyntaxError:
+                sendJSONCommand(self.socket, METHOD_WP_CONDITION_ERROR,
+                                self.procuuid,
+                                {'condition': params['condition']})
+                return
+            Watch(params['condition'], compiledCond, flag,
+                  params['temporary'])
+        else:
+            Watch.clear_watch(params['condition'])
+
+    def __handleWPEnable(self, params):
+        """Handling METHOD_WP_ENABLE"""
+        wPoint = Watch.get_watch(params['condition'])
+        if wPoint is not None:
+            if params['enable']:
+                wPoint.enable()
+            else:
+                wPoint.disable()
+
+    def __handleWPIgnore(self, params):
+        """Handling METHOD_WP_IGNORE"""
+        wPoint = Watch.get_watch(params['condition'])
+        if wPoint is not None:
+            wPoint.ignore = params['count']
+
+    def __handleShutdown(self, _):
+        """Handling METHOD_SHUTDOWN"""
+        self.sessionClose()
+
+    def __handleForkTo(self, params):
+        """Handling METHOD_FORK_TO"""
+        # this results from a separate event loop
+        self.forkChild = (params['target'] == 'child')
+        self.eventExit = True
+
+    def __handleVariables(self, params):
+        """Handling METHOD_VARIABLES"""
+        self.__dumpVariables(params['frameNumber'], params['scope'],
+                             params['filters'])
+
+    def __handleVariable(self, params):
+        """Handling METHOD_VARIABLE"""
+        self.__dumpVariable(params['variable'], params['frameNumber'],
+                            params['scope'], params['filters'])
+
+    def __handleThreadList(self, _):
+        """Handling METHOD_THREAD_LIST"""
+        self.dumpThreadList()
 
     def sendClearTemporaryBreakpoint(self, filename, lineno):
         """Signals the deletion of a temporary breakpoint"""
@@ -598,10 +652,12 @@ class DebugClientBase(object):
         self.eventExit = None
         self.pollingDisabled = disablePolling
 
+        printerr('EVENT LOOP Entering...')
         while self.eventExit is None:
             if self.socket.waitForReadyRead():
-                if self.socket.canReadLine():
+                while self.socket.canReadLine():
                     self.readReady(self.readstream)
+        printerr('EVENT LOOP Exiting...')
 
         self.eventExit = None
         self.pollingDisabled = False
@@ -609,8 +665,12 @@ class DebugClientBase(object):
     def eventPoll(self):
         """Polls for events like 'set break point'"""
         if not self.pollingDisabled:
-            if self.socket.canReadLine():
+            printerr('Entering polling loop...')
+            while self.socket.canReadLine():
                 self.readReady(self.readstream)
+            printerr('Exiting polling loop...')
+        else:
+            printerr('Event poll disabled. Exiting...')
 
     def connect(self, remoteAddress, port):
         """Establishes a session with the debugger"""
@@ -623,6 +683,11 @@ class DebugClientBase(object):
             raise Exception('Cannot connect to the IDE')
         self.socket.setSocketOption(QAbstractSocket.KeepAliveOption, 1)
         self.socket.setSocketOption(QAbstractSocket.LowDelayOption, 1)
+        self.socket.disconnected.connect(self.__onDisconnected)
+
+    def __onDisconnected(self):
+        """IDE dropped the socket"""
+        sys.exit(0)
 
     def __setupStreams(self):
         """Sets up all the required streams"""

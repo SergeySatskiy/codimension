@@ -238,16 +238,18 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def highlightCurrentDebuggerLine(self, line, asException):
         """Highlights the current debugger line"""
-        if asException:
-            self.markerAdd(line - 1, self.__exceptionLineMarker)
-            self.markerAdd(line - 1, self.__excptMarker)
-        else:
-            self.markerAdd(line - 1, self.__currentDebuggerLineMarker)
-            self.markerAdd(line - 1, self.__dbgMarker)
+        margin = self.getMargin('cdm_bpoint_margin')
+        if margin:
+            if asException:
+                margin.setExceptionLine(line)
+            else:
+                margin.setCurrentDebugLine(line)
 
     def clearCurrentDebuggerLine(self):
         """Removes the current debugger line marker"""
-        pass
+        margin = self.getMargin('cdm_bpoint_margin')
+        if margin:
+            margin.clearDebugMarks()
 
     def readFile(self, fileName):
         """Reads the text from a file"""
