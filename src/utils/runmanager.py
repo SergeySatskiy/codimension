@@ -238,6 +238,10 @@ class RemoteProcessWrapper(QObject):
         sendJSONCommand(self.__clientSocket, METHOD_EPILOGUE_EXIT,
                         self.procuuid, None)
 
+    def sendJSONCommand(self, method, params):
+        """Sends a command to the debuggee. Used by the debugger."""
+        sendJSONCommand(self.__clientSocket, method, self.procuuid, params)
+
     def __parseClientLine(self):
         """Parses a single line from the running client"""
         while self.__clientSocket and self.__clientSocket.canReadLine():
@@ -299,7 +303,7 @@ class RunManager(QObject):
 
     # script path, output file, start time, finish time, redirected
     sigProfilingResults = pyqtSignal(str, str, str, str, bool)
-    sigDebugSessionPrologueStarted = pyqtSignal(str, str, object, object)
+    sigDebugSessionPrologueStarted = pyqtSignal(object, str, object, object)
     sigIncomingMessage = pyqtSignal(str, str, object)
     sigProcessFinished = pyqtSignal(str, int)
 
@@ -508,7 +512,7 @@ class RunManager(QObject):
         # The run parameters could be changed by another run after the
         # debugging has started so they need to be saved per session
         self.sigDebugSessionPrologueStarted.emit(
-            remoteProc.procWrapper.procuuid, path,
+            remoteProc.procWrapper, path,
             getRunParameters(path), Settings().getDebuggerSettings())
         try:
             remoteProc.procWrapper.start()

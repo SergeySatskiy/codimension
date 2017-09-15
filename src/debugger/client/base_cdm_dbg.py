@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -390,10 +389,10 @@ class DebugBase(object):
             self.currentFrame.f_lineno = lineno
             stack = self.getStack(self.currentFrame)
             self._dbgClient.sendResponseLine(stack)
-        except Exception as e:
-            printerr(e)
+        except Exception as exc:
+            printerr(str(exc))
 
-    def set_quit(self):
+    def setQuit(self):
         """Quits"""
         sys.setprofile(None)
         self.stopframe = None
@@ -463,6 +462,7 @@ class DebugBase(object):
     def break_here(self, frame):
         """Reimplemented from bdb.py to fix the filename from the frame"""
         filename = self.fix_frame_filename(frame)
+        printerr('Checking breakpoint in ' + filename + ' at ' + str(frame.f_lineno) + '. Total BPs: ' + str(len(Breakpoint.BREAKS)))
         if (filename, frame.f_lineno) in Breakpoint.BREAKS:
             bp, flag = Breakpoint.effectiveBreak(
                 filename, frame.f_lineno, frame)

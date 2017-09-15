@@ -19,15 +19,19 @@
 
 """Debugger server"""
 
-import socket
 import logging
 import os.path
-from ui.qt import (pyqtSignal, QTimer, QObject, QModelIndex, QApplication,
-                   QCursor, QMessageBox, QDialog)
+from ui.qt import (pyqtSignal, QTimer, QObject, QModelIndex,
+                   QMessageBox, QDialog)
 from utils.pixmapcache import getIcon
-from .client.protocol_cdm_dbg import (METHOD_LINE, METHOD_STACK,
-                                      METHOD_THREAD_LIST, METHOD_VARIABLES)
-from .client.cdm_dbg_utils import prepareJSONMessage
+from .client.protocol_cdm_dbg import (METHOD_LINE, METHOD_STACK, METHOD_STEP,
+                                      METHOD_THREAD_LIST, METHOD_VARIABLES,
+                                      METHOD_CONTINUE, METHOD_DEBUG_STARTUP,
+                                      METHOD_FORK_TO, METHOD_CLEAR_BP,
+                                      METHOD_SYNTAX_ERROR, METHOD_EXCEPTION,
+                                      METHOD_VARIABLE, METHOD_STEP_OVER,
+                                      METHOD_BP_CONDITION_ERROR,
+                                      METHOD_SET_BP, METHOD_STEP_OUT)
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
@@ -67,6 +71,7 @@ class CodimensionDebugger(QObject):
 
         self.__stopAtFirstLine = None
 
+        self.__procWrapper = None
         self.__procuuid = None
         self.__fileName = None
         self.__runParameters = None
@@ -107,31 +112,21 @@ class CodimensionDebugger(QObject):
             self.__state = newState
             self.sigDebuggerStateChanged.emit(newState)
 
-    def onDebugSessionStarted(self, procuuid, fileName,
+    def onDebugSessionStarted(self, procWrapper, fileName,
                               runParameters, debugSettings):
         """Starts debugging a script. Run manager informs about it."""
         if self.__state != self.STATE_STOPPED:
             raise Exception('Logic error. Debugging session started while the '
                             'previous one has not finished.')
 
-        self.__procuuid = procuuid
+        self.__procWrapper = procWrapper
+        self.__procuuid = procWrapper.procuuid
         self.__fileName = fileName
         self.__runParameters = runParameters
         self.__debugSettings = debugSettings
 
         self.__mainWindow.switchDebugMode(True)
         self.__changeDebuggerState(self.STATE_IN_CLIENT)
-
-    def __sendJSONCommand(self, method, params):
-        """Sends a command to the debuggee"""
-        cmd = prepareJSONMessage(method, params)
-        if self.__clientSocket:
-            self.__clientSocket.write(cmd.encode('utf8', 'backslashreplace'))
-            self.__clientSocket.flush()
-            return
-
-        raise Exception("Cannot send command to debuggee - "
-                        "no connection established. Command: " + cmd)
 
     def onIncomingMessage(self, procuuid, method, params):
         """Message from the debuggee has been received"""
@@ -141,8 +136,9 @@ class CodimensionDebugger(QObject):
         if method in [METHOD_LINE, METHOD_STACK]:
             stack = params['stack']
             if self.__stopAtFirstLine:
-                cf = stack[0]
-                self.sigClientLine.emit(cf[0], int(cf[1]), method==METHOD_STACK)
+                topFrame = stack[0]
+                self.sigClientLine.emit(topFrame[0], int(topFrame[1]),
+                                        method == METHOD_STACK)
                 self.sigClientStack.emit(stack)
             else:
                 self.__stopAtFirstLine = True
@@ -161,10 +157,54 @@ class CodimensionDebugger(QObject):
             self.sigClientVariables.emit(params['scope'], params['variables'])
             return
 
+        if method == METHOD_DEBUG_STARTUP:
+            self.__sendBreakpoints()
+            self.__sendWatchpoints()
+            return
+
+        if method == METHOD_FORK_TO:
+            self.__askForkTo()
+            return
+
+        if method == METHOD_CLEAR_BP:
+            self.sigClientClearBreak.emit(params['filename'], params['line'])
+            return
+
+        if method == METHOD_SYNTAX_ERROR:
+            self.sigClientSyntaxError.emit(params['message'],
+                                           params['filename'],
+                                           params['line'],
+                                           params['characternumber'])
+            return
+
+        if method == METHOD_VARIABLE:
+            self.sigClientVariable.emit(params['scope'],
+                                        params['variable'],
+                                        params['variables'])
+            return
+
+        if method == METHOD_BP_CONDITION_ERROR:
+            self.sigClientBreakConditionError.emit(params['filename'],
+                                                   params['line'])
+            return
+
+        if method == METHOD_EXCEPTION:
+            self.__changeDebuggerState(self.STATE_IN_IDE)
+            self.sigClientException.emit(params['type'],
+                                         params['message'],
+                                         params['stack'])
+            return
+
+
+
+
+        print('Unprocessed message received by the debugger. '
+              'Method: ' + str(method) + ' Parameters: ' + repr(params))
 
     def onProcessFinished(self, procuuid, retCode):
         """Process finished. The retCode may indicate a disconnection."""
         if self.__procuuid == procuuid:
+            self.__procWrapper = None
             self.__procuuid = None
             self.__fileName = None
             self.__runParameters = None
@@ -186,76 +226,8 @@ class CodimensionDebugger(QObject):
         content = line[cmdIndex + 1:]
 
 
-        if cmd == ResponseVariable:
-            vlist = eval(content)
-            scope = vlist[0]
-            try:
-                variables = vlist[1:]
-            except IndexError:
-                variables = []
-            self.sigClientVariable.emit(scope, variables)
-            return self.__buffer != ""
-
-        if cmd == ResponseException:
-            self.__changeDebuggerState(self.STATE_IN_IDE)
-            try:
-                excList = eval(content)
-                excType = excList[0]
-                excMessage = excList[1]
-                stackTrace = excList[2:]
-                if stackTrace and stackTrace[0] and \
-                   stackTrace[0][0] == "<string>":
-                    stackTrace = []
-            except (IndexError, ValueError, SyntaxError):
-                excType = None
-                excMessage = ""
-                stackTrace = []
-            self.sigClientException.emit(excType, excMessage, stackTrace)
-            return self.__buffer != ""
-
-        if cmd == ResponseSyntax:
-            try:
-                message, (fileName, lineNo, charNo) = eval(content)
-                if fileName is None:
-                    fileName = ""
-            except (IndexError, ValueError):
-                message = None
-                fileName = ''
-                lineNo = 0
-                charNo = 0
-            if charNo is None:
-                charNo = 0
-            self.sigClientSyntaxError.emit(message, fileName, lineNo, charNo)
-            return self.__buffer != ""
-
-        if cmd == RequestForkTo:
-            self.__askForkTo()
-            return self.__buffer != ""
-
-        if cmd == PassiveStartup:
-            self.__sendBreakpoints()
-            self.__sendWatchpoints()
-            return self.__buffer != ""
-
         if cmd == ResponseThreadSet:
             self.sigClientThreadSet.emit()
-            return self.__buffer != ""
-
-        if cmd == ResponseClearBreak:
-            fileName, lineNo = content.split(',')
-            lineNo = int(lineNo)
-            self.sigClientClearBreak.emit(fileName, lineNo)
-            return self.__buffer != ""
-
-        if cmd == ResponseBPConditionError:
-            fileName, lineNo = content.split(',')
-            lineNo = int(lineNo)
-            self.sigClientBreakConditionError.emit(fileName, lineNo)
-            return self.__buffer != ""
-
-        if cmd == ResponseRaw:
-            prompt, echo = eval(content)
-            self.sigClientRawInput.emit(prompt, echo)
             return self.__buffer != ""
 
         if cmd == ResponseEval:
@@ -266,13 +238,6 @@ class CodimensionDebugger(QObject):
             self.__protocolState = self.PROTOCOL_EVALEXEC
             return self.__buffer != ""
 
-        if cmd == ResponseStdout:
-            self.__protocolState = self.PROTOCOL_STDOUT
-            return self.__buffer != ""
-
-        if cmd == ResponseStderr:
-            self.__protocolState = self.PROTOCOL_STDERR
-            return self.__buffer != ""
 
         print("Unexpected message received (no control match): '" + line + "'")
         return self.__buffer != ""
@@ -282,40 +247,10 @@ class CodimensionDebugger(QObject):
         # Collect till ResponseEvalOK, ResponseEvalError,
         #              ResponseExecOK, ResponseExecError
 
-        index = self.__buffer.find(ResponseEvalOK + EOT)
-        if index != -1:
-            self.sigEvalOK.emit(self.__buffer[0:index].replace(EOT, ""))
-            self.__protocolState = self.PROTOCOL_CONTROL
-            self.__buffer = self.__buffer[index +
-                                          len(ResponseEvalOK) + len(EOT):]
-            return self.__buffer != ""
-
-        index = self.__buffer.find(ResponseEvalError + EOT)
-        if index != -1:
-            self.sigEvalError.emit(self.__buffer[0:index].replace(EOT, ""))
-            self.__protocolState = self.PROTOCOL_CONTROL
-            self.__buffer = self.__buffer[index +
-                                          len(ResponseEvalError) + len(EOT):]
-            return self.__buffer != ""
-
-        index = self.__buffer.find(ResponseExecOK + EOT)
-        if index != -1:
-            self.sigExecOK.emit(self.__buffer[0:index].replace(EOT, ""))
-            self.__protocolState = self.PROTOCOL_CONTROL
-            self.__buffer = self.__buffer[index +
-                                          len(ResponseExecOK) + len(EOT):]
-            return self.__buffer != ""
-
-        index = self.__buffer.find(ResponseExecError + EOT)
-        if index != -1:
-            self.sigExecError.emit(self.__buffer[0:index].replace(EOT, ""))
-            self.__protocolState = self.PROTOCOL_CONTROL
-            self.__buffer = self.__buffer[index +
-                                          len(ResponseExecError) + len(EOT):]
-            return self.__buffer != ""
-        return False
-
-
+        self.sigEvalOK.emit("")
+        self.sigEvalError.emit("")
+        self.sigExecOK.emit("")
+        self.sigExecError.emit("")
 
     def __askForkTo(self):
         " Asks what to follow, a parent or a child "
@@ -336,9 +271,9 @@ class CodimensionDebugger(QObject):
         res = dlg.exec_()
 
         if res == QMessageBox.Cancel:
-            self.__sendCommand(ResponseForkTo + 'parent\n')
+            self.__sendJSONCommand(METHOD_FORK_TO, {'target': 'parent'})
         else:
-            self.__sendCommand(ResponseForkTo + 'child\n')
+            self.__sendJSONCommand(METHOD_FORK_TO, {'target': 'child'})
 
     def __validateBreakpoints(self):
         """Checks all the breakpoints validity and deletes invalid"""
@@ -385,10 +320,7 @@ class CodimensionDebugger(QObject):
 
     def __addBreakPoints(self, parentIndex, start, end):
         """Adds breakpoints"""
-        if self.__state in [self.STATE_PROLOGUE,
-                            self.STATE_STOPPED,
-                            self.STATE_FINISHING,
-                            self.STATE_BRUTAL_FINISHING]:
+        if self.__state == self.STATE_STOPPED:
             return
 
         for row in range(start, end + 1):
@@ -408,10 +340,7 @@ class CodimensionDebugger(QObject):
 
     def __deleteBreakPoints(self, parentIndex, start, end):
         """Deletes breakpoints"""
-        if self.__state in [self.STATE_PROLOGUE,
-                            self.STATE_STOPPED,
-                            self.STATE_FINISHING,
-                            self.STATE_BRUTAL_FINISHING]:
+        if self.__state == self.STATE_STOPPED:
             return
 
         for row in range(start, end + 1):
@@ -450,10 +379,7 @@ class CodimensionDebugger(QObject):
 
     def __clientClearBreakPoint(self, fileName, line):
         """Handles the sigClientClearBreak signal"""
-        if self.__state in [self.STATE_PROLOGUE,
-                            self.STATE_STOPPED,
-                            self.STATE_FINISHING,
-                            self.STATE_BRUTAL_FINISHING]:
+        if self.__state == self.STATE_STOPPED:
             return
 
         index = self.__breakpointModel.getBreakPointIndex(fileName, line)
@@ -482,33 +408,26 @@ class CodimensionDebugger(QObject):
     def remoteStep(self):
         """Single step in the debugged program"""
         self.__changeDebuggerState(self.STATE_IN_CLIENT)
-        self.__sendCommand(RequestStep + '\n')
+        self.__sendJSONCommand(METHOD_STEP, None)
 
     def remoteStepOver(self):
         """Step over the debugged program"""
         self.__changeDebuggerState(self.STATE_IN_CLIENT)
-        self.__sendCommand(RequestStepOver + '\n')
+        self.__sendJSONCommand(METHOD_STEP_OVER, None)
 
     def remoteStepOut(self):
         """Step out the debugged program"""
         self.__changeDebuggerState(self.STATE_IN_CLIENT)
-        self.__sendCommand(RequestStepOut + '\n')
+        self.__sendJSONCommand(METHOD_STEP_OUT, None)
 
     def remoteContinue(self, special=False):
         """Continues the debugged program"""
         self.__changeDebuggerState(self.STATE_IN_CLIENT)
-        if special:
-            self.__sendCommand(RequestContinue + '1\n')
-        else:
-            self.__sendCommand(RequestContinue + '0\n')
+        self.__sendJSONCommand(METHOD_CONTINUE, {'special': special})
 
     def remoteThreadList(self):
         """Provides the threads list"""
         self.__sendCommand(RequestThreadList + "\n")
-
-    def remoteStack(self):
-        """Provides the current thread stack"""
-        self.__sendCommand(RequestStack + "\n")
 
     def remoteClientVariables(self, scope, framenr=0):
         """Provides the client variables.
@@ -540,15 +459,21 @@ class CodimensionDebugger(QObject):
     def remoteBreakpoint(self, fileName, line,
                          isSetting, condition=None, temporary=False):
         """Sets or clears a breakpoint"""
-        self.__sendCommand(RequestBreak + fileName + "@@" + str(line) +
-                           "@@" + str(int(temporary)) + "@@" +
-                           str(int(isSetting)) + "@@" +
-                           str(condition) + "\n" )
+        params = {'filename': fileName, 'line': line,
+                  'setBreakpoint': isSetting, 'condition': condition,
+                  'temporary': temporary}
+        self.__sendJSONCommand(METHOD_SET_BP, params)
 
     def remoteSetThread(self, tid):
         """Sets the given thread as the current"""
         self.__sendCommand(RequestThreadSet + str(tid) + "\n")
 
-    def remoteRawInput(self, userInput):
-        """Sends the remote user input"""
-        self.__sendCommand(userInput + "\n")
+    def __sendJSONCommand(self, method, params):
+        """Sends a message to the debuggee"""
+        if self.__procWrapper:
+            self.__procWrapper.sendJSONCommand(method, params)
+        else:
+            raise Exception('Trying to send JSON command from the debugger '
+                            'to the debugged program wneh there is no remote '
+                            'process wrapper. Method: ' + str(method) +
+                            'Parameters: ' + repr(params))

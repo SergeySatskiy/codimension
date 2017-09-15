@@ -1408,6 +1408,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def __onDebuggerStateChanged(self, newState):
         """Triggered when the debugger reported its state changed"""
+        print('Switching state to: ' + str(newState))
         if newState != CodimensionDebugger.STATE_IN_IDE:
             self.__removeCurrenDebugLineHighlight()
             self.debuggerContext.switchControl(False)
@@ -1421,7 +1422,6 @@ class CodimensionMainWindow(QMainWindow):
             self._debugRestartAct.setEnabled(False)
             self.__setDebugControlFlowButtonsState(False)
             self.sbDebugState.setText("Debugger: stopped")
-            self.redirectedIOConsole.sessionStopped()
         elif newState == CodimensionDebugger.STATE_IN_IDE:
             self.__dbgStop.setEnabled(True)
             self._debugStopAct.setEnabled(True)
@@ -1436,13 +1436,6 @@ class CodimensionMainWindow(QMainWindow):
             self._debugRestartAct.setEnabled(True)
             self.__setDebugControlFlowButtonsState(False)
             self.sbDebugState.setText("Debugger: running")
-        elif newState == CodimensionDebugger.STATE_FINISHING:
-            self.__dbgStop.setEnabled(False)
-            self._debugStopAct.setEnabled(False)
-            self.__dbgRestart.setEnabled(False)
-            self._debugRestartAct.setEnabled(False)
-            self.__setDebugControlFlowButtonsState(False)
-            self.sbDebugState.setText("Debugger: finishing")
         QApplication.processEvents()
 
     def __onDebuggerCurrentLine(self, fileName, lineNumber,

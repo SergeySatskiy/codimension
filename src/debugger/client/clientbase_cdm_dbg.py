@@ -54,13 +54,15 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_CLEAR_WP, METHOD_SYNTAX_ERROR,
                               METHOD_SET_ENVIRONMENT, METHOD_EXECUTE_STATEMENT,
                               METHOD_SIGNAL, METHOD_SHUTDOWN,
-                              METHOD_SET_FILTER)
+                              METHOD_SET_FILTER, METHOD_EPILOGUE_EXIT_CODE,
+                              METHOD_EPILOGUE_EXIT)
 from base_cdm_dbg import setRecursionLimit
 from asyncfile_cdm_dbg import AsyncFile
 from outredir_cdm_dbg import OutStreamRedirector
 from bp_wp_cdm_dbg import Breakpoint, Watch
 from cdm_dbg_utils import (sendJSONCommand, formatArgValues, getArgValues,
-                           printerr, parseJSONMessage, waitForIDEMessage)
+                           printerr, parseJSONMessage, waitForIDEMessage,
+                           getParsedJSONMessage)
 from variables_cdm_dbg import getType, TOO_LARGE_ATTRIBUTE
 
 
@@ -72,6 +74,7 @@ DEBUG_CLIENT_ORIG_CLOSE = None
 DEBUG_CLIENT_ORIG_SET_RECURSION_LIMIT = None
 
 WAIT_CONTINUE_TIMEOUT = 5       # in seconds
+WAIT_EXIT_COMMAND_TIMEOUT = 5   # in seconds
 
 
 def debugClientInput(prompt="", echo=True):
@@ -278,24 +281,12 @@ class DebugClientBase(object):
 
         return code
 
-    def handleLine(self, line):
-        """Handles the receipt of a complete line"""
-        # Remove any newline
-        if line[-1] == '\n':
-            line = line[:-1]
-        ## printerr(line)
-        self.handleJSONCommand(line)
-
-    def handleJSONCommand(self, jsonStr):
+    def handleJSONCommand(self):
         """Handle a command serialized as a JSON string"""
-        try:
-            commandDict = json.loads(jsonStr.strip())
-        except (TypeError, ValueError) as err:
-            printerr(str(err))
+        method, procuuid, params, _ = getParsedJSONMessage(self.socket)
+        if procuuid != self.procuuid:
             return
-
-        method = commandDict['method']
-        params = commandDict['params']
+        printerr("Method: " + method + " Params: " + repr(params))
 
         if method == METHOD_VARIABLES:
             self.__dumpVariables(
@@ -580,7 +571,7 @@ class DebugClientBase(object):
         sendJSONCommand(self.socket, METHOD_SYNTAX_ERROR,
                         self.procuuid,
                         {'message': message, 'filename': filename,
-                         'linenumber': lineno, 'characternumber': charno})
+                         'line': lineno, 'characternumber': charno})
 
     def sendPassiveStartup(self, filename, exceptions):
         """Sends indication that the debugee is entering event loop"""
@@ -590,29 +581,7 @@ class DebugClientBase(object):
 
     def readReady(self, stream):
         """Called when there is data ready to be read"""
-        try:
-            got = stream.readline_p()
-        except Exception:
-            return
-
-        if len(got) == 0:
-            self.sessionClose()
-            return
-
-        self.__receiveBuffer = self.__receiveBuffer + got
-
-        # Call handleLine for the line if it is complete
-        eol = self.__receiveBuffer.find('\n')
-        while eol >= 0:
-            line = self.__receiveBuffer[:eol + 1]
-            self.__receiveBuffer = self.__receiveBuffer[eol + 1:]
-            self.handleLine(line)
-            eol = self.__receiveBuffer.find('\n')
-
-    def writeReady(self, stream):
-        """Called when we are ready to write data"""
-        stream.write_p('')
-        stream.flush()
+        self.handleJSONCommand()
 
     def __interact(self):
         """Interacts with the debugger"""
@@ -772,9 +741,12 @@ class DebugClientBase(object):
         if self.running:
             self.setQuit()
             self.running = None
-            sendJSONCommand(self.socket, METHOD_RESPONSE_EXIT,
-                            self.procuuid,
-                            {'status': status, 'message': message})
+
+        sendJSONCommand(self.socket, METHOD_EPILOGUE_EXIT_CODE,
+                        self.procuuid, {'exitCode': status,
+                                        'message': message})
+        waitForIDEMessage(self.socket, METHOD_EPILOGUE_EXIT,
+                          WAIT_EXIT_COMMAND_TIMEOUT)
 
         # reset coding
         self.__coding = self.defaultCoding
