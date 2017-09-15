@@ -392,7 +392,7 @@ class DebugBase(object):
         except Exception as exc:
             printerr(str(exc))
 
-    def setQuit(self):
+    def set_quit(self):
         """Quits"""
         sys.setprofile(None)
         self.stopframe = None
@@ -572,9 +572,7 @@ class DebugBase(object):
         """Reimplemented to report an exception to the debug server"""
         exctype, excval, exctb = excinfo
 
-        if ((exctype in [GeneratorExit, StopIteration] and
-             unhandled is False) or
-                exctype == SystemExit):
+        if exctype in [GeneratorExit, StopIteration, SystemExit]:
             # ignore these
             return
 

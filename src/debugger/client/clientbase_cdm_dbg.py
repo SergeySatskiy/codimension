@@ -35,7 +35,6 @@ import os
 import imp
 import re
 import signal
-import json
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket, QHostAddress
 from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_STDIN, VAR_TYPE_DISP_STRINGS,
@@ -55,13 +54,13 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_SET_ENVIRONMENT, METHOD_EXECUTE_STATEMENT,
                               METHOD_SIGNAL, METHOD_SHUTDOWN,
                               METHOD_SET_FILTER, METHOD_EPILOGUE_EXIT_CODE,
-                              METHOD_EPILOGUE_EXIT)
+                              METHOD_EPILOGUE_EXIT, METHOD_STDIN)
 from base_cdm_dbg import setRecursionLimit
 from asyncfile_cdm_dbg import AsyncFile
 from outredir_cdm_dbg import OutStreamRedirector
 from bp_wp_cdm_dbg import Breakpoint, Watch
 from cdm_dbg_utils import (sendJSONCommand, formatArgValues, getArgValues,
-                           printerr, parseJSONMessage, waitForIDEMessage,
+                           printerr, waitForIDEMessage,
                            getParsedJSONMessage)
 from variables_cdm_dbg import getType, TOO_LARGE_ATTRIBUTE
 
@@ -238,7 +237,7 @@ class DebugClientBase(object):
     def sessionClose(self, terminate=True):
         """Closes the session with the debugger and optionally terminate"""
         try:
-            self.setQuit()
+            self.set_quit()
         except:
             pass
 
@@ -445,7 +444,7 @@ class DebugClientBase(object):
             if self.passive:
                 self.progTerminated(42)
             else:
-                self.setQuit()
+                self.set_quit()
                 self.eventExit = True
 
         elif method == METHOD_MOVE_IP:
@@ -456,7 +455,7 @@ class DebugClientBase(object):
             self.currentThreadExec.go(params['special'])
             self.eventExit = True
 
-        elif method == METHOD_USER_INPUT:
+        elif method == METHOD_STDIN:
             # If we are handling raw mode input then break out of the current
             # event loop.
             self.userInput = params['input']
@@ -739,7 +738,7 @@ class DebugClientBase(object):
             status = 1
 
         if self.running:
-            self.setQuit()
+            self.set_quit()
             self.running = None
 
         sendJSONCommand(self.socket, METHOD_EPILOGUE_EXIT_CODE,
