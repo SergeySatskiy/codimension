@@ -244,6 +244,7 @@ class RemoteProcessWrapper(QObject):
             try:
                 method, procuuid, params, jsonStr = getParsedJSONMessage(
                     self.__clientSocket)
+                del procuuid    # unused
 
                 if IDE_DEBUG:
                     print("Process wrapper received: " + str(jsonStr))

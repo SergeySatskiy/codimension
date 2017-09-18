@@ -26,6 +26,7 @@ from .variableitems import (VariableItem, SpecialVariableItem,
                             ArrayElementVariableItem,
                             SpecialArrayElementVariableItem)
 from .viewvariable import ViewVariableDialog
+from .client.protocol_cdm_dbg import VAR_TYPE_DISP_STRINGS
 
 
 NONPRINTABLE = QRegExp(r"""(\\x\d\d)+""")
@@ -38,41 +39,6 @@ VARVALUE_CLASS_1 = QRegExp('<.*(instance|object) at 0x.*>')
 VARVALUE_CLASS_2 = QRegExp('<class .* at 0x.*>')
 VARNAME_SPECIAL_ARRAY_ELEMENT = QRegExp(r'^\d+(\[\]|\{\}|\(\))$')
 VARNAME_ARRAY_ELEMENT = QRegExp(r'^\d+$')
-
-VARIABLE_DISPLAY_TYPE = {
-    '__': 'Hidden Attributes',
-    'nonetype': 'None',
-    'type': 'Type',
-    'bool': 'Boolean',
-    'int': 'Integer',
-    'long': 'Long Integer',
-    'float': 'Float',
-    'complex': 'Complex',
-    'str': 'String',
-    'unicode': 'Unicode String',
-    'tuple': 'Tuple',
-    'list': 'List/Array',
-    'dict': 'Dictionary/Hash/Map',
-    'dict-proxy': 'Dictionary Proxy',
-    'set': 'Set',
-    'file': 'File',
-    'xrange': 'X Range',
-    'slice': 'Slice',
-    'buffer': 'Buffer',
-    'class': 'Class',
-    'instance': 'Class Instance',
-    'classobj': 'Class',
-    'instance method': 'Class Method',
-    'property': 'Class Property',
-    'generator': 'Generator',
-    'function': 'Function',
-    'builtin_function_or_method': 'Builtin Function',
-    'code': 'Code',
-    'module': 'Module',
-    'ellipsis': 'Ellipsis',
-    'traceback': 'Traceback',
-    'frame': 'Frame',
-    'other': 'Other'}
 
 
 class VariablesBrowser(QTreeWidget):
@@ -178,8 +144,7 @@ class VariablesBrowser(QTreeWidget):
                                                          item.getType()))
 
             # reexpand tree
-            openItems = self.openItems[:]
-            openItems.sort()
+            openItems = sorted(self.openItems[:])
             self.openItems = []
             for itemPath in openItems:
                 itm = self.__findItem(itemPath, 0)
@@ -240,8 +205,7 @@ class VariablesBrowser(QTreeWidget):
                                                             newItem.getType()))
 
         # reexpand tree
-        openItems = self.openItems[:]
-        openItems.sort()
+        openItems = sorted(self.openItems[:])
         self.openItems = []
         for itemPath in openItems:
             item = self.__findItem(itemPath, 0)
@@ -317,8 +281,8 @@ class VariablesBrowser(QTreeWidget):
     def __getDisplayType(self, varType):
         """Provides a variable type for display purpose"""
         key = varType.lower()
-        if key in VARIABLE_DISPLAY_TYPE:
-            return VARIABLE_DISPLAY_TYPE[key]
+        if key in VAR_TYPE_DISP_STRINGS:
+            return VAR_TYPE_DISP_STRINGS[key]
         return varType
 
     def __addItem(self, parentItem, isGlobal, varType, varName, varValue):

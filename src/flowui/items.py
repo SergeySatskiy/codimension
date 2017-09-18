@@ -22,7 +22,7 @@
 from sys import maxsize
 from cgi import escape
 from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
-                   QFont, QGraphicsRectItem, QGraphicsPathItem, QGraphicsItem,
+                   QGraphicsRectItem, QGraphicsPathItem, QGraphicsItem,
                    QStyleOptionGraphicsItem, QStyle)
 from .auxitems import SVGItem, Connector, Text, CMLLabel
 from .cml import CMLVersion, CMLsw, CMLcc, CMLrt
@@ -180,8 +180,9 @@ class CellElement:
         self._editor = editor
 
     def mouseDoubleClickEvent(self, event):
-        """Jump to the appropriate line in the text editor:
-           default implementation
+        """Jump to the appropriate line in the text editor.
+
+        default implementation
         """
         if self._editor is None:
             return
@@ -211,13 +212,15 @@ class CellElement:
 
     def getDistance(self, absPos):
         """Default implementation.
-           Provides a distance between the absPos and the item
+
+        Provides a distance between the absPos and the item
         """
         return distance(absPos, self.ref.body.begin, self.ref.body.end)
 
     def getLineDistance(self, line):
         """Default implementation.
-           Provides a distance between the line and the item
+
+        Provides a distance between the line and the item
         """
         return distance(line, self.ref.body.beginLine, self.ref.body.endLine)
 
@@ -451,6 +454,9 @@ class CodeBlockCell(CellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
+        del option      # unused argument
+        del widget      # unused argument
+
         s = self.canvas.settings
 
         rectWidth = self.minWidth - 2 * s.hCellPadding
@@ -558,6 +564,9 @@ class BreakCell(CellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the break statement"""
+        del option      # unused argument
+        del widget      # unused argument
+
         s = self.canvas.settings
 
         if self.isSelected():
@@ -658,6 +667,9 @@ class ContinueCell(CellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the break statement"""
+        del option      # unused argument
+        del widget      # unused argument
+
         s = self.canvas.settings
 
         if self.isSelected():
@@ -771,6 +783,9 @@ class ReturnCell(CellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
+        del option      # unused argument
+        del widget      # unused argument
+
         s = self.canvas.settings
 
         if self.isSelected():
@@ -901,6 +916,9 @@ class RaiseCell(CellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the raise statement"""
+        del option      # unused argument
+        del widget      # unused argument
+
         s = self.canvas.settings
 
         if self.isSelected():
@@ -1039,6 +1057,9 @@ class AssertCell(CellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
+        del option      # unused argument
+        del widget      # unused argument
+
         s = self.canvas.settings
 
         if self.isSelected():
@@ -1178,6 +1199,9 @@ class SysexitCell(CellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the sys.exit call"""
+        del option      # unused argument
+        del widget      # unused argument
+
         s = self.canvas.settings
 
         if self.isSelected():
@@ -1216,6 +1240,7 @@ class SysexitCell(CellElement, QGraphicsRectItem):
             Qt.AlignLeft, self._getText())
 
     def getSelectTooltip(self):
+        """Provides tooltip"""
         lineRange = self.ref.body.getLineRange()
         return "Sys.exit() at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
 
@@ -1287,6 +1312,9 @@ class ImportCell(CellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the import statement"""
+        del option      # unused argument
+        del widget      # unused argument
+
         s = self.canvas.settings
 
         if self.isSelected():
@@ -1410,8 +1438,9 @@ class IfCell(CellElement, QGraphicsRectItem):
         else:
             self.rightLabel = Text(s, "Y")
 
-        self.rightLabel.setPos(self.x4 + 2,
-                               self.y4 - self.rightLabel.boundingRect().height() - 2)
+        self.rightLabel.setPos(
+            self.x4 + 2,
+            self.y4 - self.rightLabel.boundingRect().height() - 2)
         scene.addItem(self.rightLabel)
 
         penWidth = s.selectPenWidth - 1
@@ -1427,6 +1456,9 @@ class IfCell(CellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
+        del option      # unused argument
+        del widget      # unused argument
+
         s = self.canvas.settings
 
         if self.isSelected():
@@ -1441,9 +1473,10 @@ class IfCell(CellElement, QGraphicsRectItem):
 
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
-        painter.drawPolygon(QPointF(self.x1, self.y1), QPointF(self.x2, self.y2),
-                            QPointF(self.x3, self.y3), QPointF(self.x4, self.y4),
-                            QPointF(self.x5, self.y5), QPointF(self.x6, self.y6))
+        painter.drawPolygon(
+            QPointF(self.x1, self.y1), QPointF(self.x2, self.y2),
+            QPointF(self.x3, self.y3), QPointF(self.x4, self.y4),
+            QPointF(self.x5, self.y5), QPointF(self.x6, self.y6))
 
         # Draw the text in the rectangle
         pen = QPen(self.__fgColor)
@@ -1539,10 +1572,11 @@ class IndependentCommentCell(CellElement, QGraphicsPathItem):
 
     def adjustWidth(self):
         """Used during rendering to adjust the width of the cell.
-           The comment now can take some space on the left and the left hand
-           side cell has to be rendered already.
-           The width of this cell will take whatever is needed considering
-           the comment shift to the left
+
+        The comment now can take some space on the left and the left hand
+        side cell has to be rendered already.
+        The width of this cell will take whatever is needed considering
+        the comment shift to the left
         """
         s = self.canvas.settings
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
@@ -1667,6 +1701,7 @@ class LeadingCommentCell(CellElement, QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def __getText(self):
+        """Provides text"""
         if self.__text is None:
             self.__text = self.ref.leadingComment.getDisplayValue()
         return self.__text
@@ -1689,10 +1724,11 @@ class LeadingCommentCell(CellElement, QGraphicsPathItem):
 
     def adjustWidth(self):
         """Used during rendering to adjust the width of the cell.
-           The comment now can take some space on the left and the left hand
-           side cell has to be rendered already.
-           The width of this cell will take whatever is needed considering
-           the comment shift to the left
+
+        The comment now can take some space on the left and the left hand
+        side cell has to be rendered already.
+        The width of this cell will take whatever is needed considering
+        the comment shift to the left
         """
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         if cellToTheLeft.kind != CellElement.CONNECTOR:
@@ -1872,11 +1908,12 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         return (self.width, self.height)
 
     def adjustWidth(self):
-        """ Used during rendering to adjust the width of the cell.
-            The comment now can take some space on the left and the left hand
-            side cell has to be rendered already.
-            The width of this cell will take whatever is needed considering
-            the comment shift to the left
+        """Used during rendering to adjust the width of the cell.
+
+        The comment now can take some space on the left and the left hand
+        side cell has to be rendered already.
+        The width of this cell will take whatever is needed considering
+        the comment shift to the left
         """
         s = self.canvas.settings
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
@@ -2020,9 +2057,10 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
 
 class AboveCommentCell(CellElement, QGraphicsPathItem):
 
-    """Represents a single leading comment which is above a certain block,
-       namely try/except or for/else or while/else
-       i.e. those which are scopes located in a single row
+    """Represents a single leading comment which is above certain blocks.
+
+    Blocks are: try/except or for/else or while/else
+    i.e. those which are scopes located in a single row
     """
 
     def __init__(self, ref, canvas, x, y):
@@ -2040,6 +2078,7 @@ class AboveCommentCell(CellElement, QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def __getText(self):
+        """Provides text"""
         if self.__text is None:
             self.__text = self.ref.leadingComment.getDisplayValue()
         return self.__text
@@ -2093,7 +2132,8 @@ class AboveCommentCell(CellElement, QGraphicsPathItem):
                        2 * (s.hCellPadding + s.hTextPadding),
                        s.minWidth)
 
-        path = getCommentBoxPath(s, self.__leftEdge, baseY, boxWidth, self.minHeight)
+        path = getCommentBoxPath(s, self.__leftEdge, baseY,
+                                 boxWidth, self.minHeight)
         self.setPath(path)
 
         self.commentConnector = Connector(s, 0, 0, 0, 0)
@@ -2184,8 +2224,10 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
     CENTER = 4
 
     def __init__(self, connections, canvas, x, y):
-        """ Connections are supposed to be a list of tuples e.g
-            [ (NORTH, SOUTH), (EAST, CENTER) ] """
+        """Connections are supposed to be a list of tuples.
+
+         Eample: [ (NORTH, SOUTH), (EAST, CENTER) ]
+        """
         CellElement.__init__(self, None, canvas, x, y)
         QGraphicsPathItem.__init__(self)
         self.kind = CellElement.CONNECTOR

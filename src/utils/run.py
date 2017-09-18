@@ -225,8 +225,10 @@ def parseCommandLineArguments(cmdLine):
 
 
 def getCwdCmdEnv(kind, path, params, tcpServerPort=None, procuuid=None):
-    """Provides the working directory, command line and environment
-       for running/debugging a script"""
+    """Provides the working directory, command line and environment.
+
+    It covers all: running/debugging/profiling a script
+    """
     # The arguments parsing is going to pass OK because it
     # was checked in the run parameters dialogue
     if kind not in [RUN, PROFILE, DEBUG]:

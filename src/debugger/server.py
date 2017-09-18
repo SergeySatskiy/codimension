@@ -92,6 +92,24 @@ class CodimensionDebugger(QObject):
         self.sigClientBreakConditionError.connect(
             self.__clientBreakConditionError)
 
+        self.__handlers = {}
+        self.__initHandlers()
+
+    def __initHandlers(self):
+        """Initializes the incoming messages handlers"""
+        self.__handlers = {
+            METHOD_LINE: self.__handleLine,
+            METHOD_STACK: self.__handleStack,
+            METHOD_THREAD_LIST: self.__handleThreadList,
+            METHOD_VARIABLES: self.__handleVariables,
+            METHOD_DEBUG_STARTUP: self.__handleStartup,
+            METHOD_FORK_TO: self.__handleForkTo,
+            METHOD_CLEAR_BP: self.__handleClearBP,
+            METHOD_SYNTAX_ERROR: self.__handleSyntaxError,
+            METHOD_VARIABLE: self.__handleVariable,
+            METHOD_BP_CONDITION_ERROR: self.__handleBPConditionError,
+            METHOD_EXCEPTION: self.__handleException}
+
     def getScriptPath(self):
         """Provides the path to the debugged script"""
         return self.__fileName
@@ -133,79 +151,89 @@ class CodimensionDebugger(QObject):
 
     def onIncomingMessage(self, procuuid, method, params):
         """Message from the debuggee has been received"""
-        if self.__procuuid != procuuid:
-            return
+        if self.__procuuid == procuuid:
+            try:
+                self.__handlers[method](params)
+            except KeyError:
+                logging.error('Unhandled message received by the debugger. '
+                              'Method: ' + str(method) +
+                              ' Parameters: ' + repr(params))
 
-        if method in [METHOD_LINE, METHOD_STACK]:
-            stack = params['stack']
-            if self.__stopAtFirstLine:
-                topFrame = stack[0]
-                self.sigClientLine.emit(topFrame[0], int(topFrame[1]),
-                                        method == METHOD_STACK)
-                self.sigClientStack.emit(stack)
-            else:
-                self.__stopAtFirstLine = True
-                QTimer.singleShot(0, self.remoteContinue)
+    def __handleLine(self, params):
+        """Handles METHOD_LINE"""
+        stack = params['stack']
+        if self.__stopAtFirstLine:
+            topFrame = stack[0]
+            self.sigClientLine.emit(topFrame[0], int(topFrame[1]), False)
+            self.sigClientStack.emit(stack)
+        else:
+            self.__stopAtFirstLine = True
+            QTimer.singleShot(0, self.remoteContinue)
 
-            if method == METHOD_LINE:
-                self.__changeDebuggerState(self.STATE_IN_IDE)
-            return
+        self.__changeDebuggerState(self.STATE_IN_IDE)
 
-        if method == METHOD_THREAD_LIST:
-            self.sigClientThreadList.emit(params['currentID'],
-                                          params['threadList'])
-            return
+    def __handleStack(self, params):
+        """Handles METHOD_STACK"""
+        stack = params['stack']
+        if self.__stopAtFirstLine:
+            topFrame = stack[0]
+            self.sigClientLine.emit(topFrame[0], int(topFrame[1]), True)
+            self.sigClientStack.emit(stack)
+        else:
+            self.__stopAtFirstLine = True
+            QTimer.singleShot(0, self.remoteContinue)
 
-        if method == METHOD_VARIABLES:
-            self.sigClientVariables.emit(params['scope'], params['variables'])
-            return
+    def __handleThreadList(self, params):
+        """Handles METHOD_THREAD_LIST"""
+        self.sigClientThreadList.emit(params['currentID'],
+                                      params['threadList'])
 
-        if method == METHOD_DEBUG_STARTUP:
-            self.__sendBreakpoints()
-            self.__sendWatchpoints()
-            return
+    def __handleVariables(self, params):
+        """Handles METHOD_VARIABLES"""
+        self.sigClientVariables.emit(params['scope'], params['variables'])
 
-        if method == METHOD_FORK_TO:
-            self.__askForkTo()
-            return
+    def __handleStartup(self, params):
+        """Handles METHOD_DEBUG_STARTUP"""
+        del params  # unused argument
+        self.__sendBreakpoints()
+        self.__sendWatchpoints()
 
-        if method == METHOD_CLEAR_BP:
-            self.sigClientClearBreak.emit(params['filename'], params['line'])
-            return
+    def __handleForkTo(self, params):
+        """Handles METHOD_FORK_TO"""
+        del params  # unused argument
+        self.__askForkTo()
 
-        if method == METHOD_SYNTAX_ERROR:
-            self.sigClientSyntaxError.emit(params['message'],
-                                           params['filename'],
-                                           params['line'],
-                                           params['characternumber'])
-            return
+    def __handleClearBP(self, params):
+        """Handles METHOD_CLEAR_BP"""
+        self.sigClientClearBreak.emit(params['filename'], params['line'])
 
-        if method == METHOD_VARIABLE:
-            self.sigClientVariable.emit(params['scope'],
-                                        params['variable'],
-                                        params['variables'])
-            return
+    def __handleSyntaxError(self, params):
+        """Handles METHOD_SYNTAX_ERROR"""
+        self.sigClientSyntaxError.emit(params['message'], params['filename'],
+                                       params['line'],
+                                       params['characternumber'])
 
-        if method == METHOD_BP_CONDITION_ERROR:
-            self.sigClientBreakConditionError.emit(params['filename'],
-                                                   params['line'])
-            return
+    def __handleVariable(self, params):
+        """Handles METHOD_VARIABLE"""
+        self.sigClientVariable.emit(params['scope'],
+                                    [params['variable']] + params['variables'])
 
-        if method == METHOD_EXCEPTION:
-            self.__changeDebuggerState(self.STATE_IN_IDE)
-            self.sigClientException.emit(params['type'],
-                                         params['message'],
-                                         params['stack'])
-            return
+    def __handleBPConditionError(self, params):
+        """Handles METHOD_BP_CONDITION_ERROR"""
+        self.sigClientBreakConditionError.emit(params['filename'],
+                                               params['line'])
 
-
-
-
-        print('Unprocessed message received by the debugger. '
-              'Method: ' + str(method) + ' Parameters: ' + repr(params))
+    def __handleException(self, params):
+        """Handles METHOD_EXCEPTION"""
+        self.__changeDebuggerState(self.STATE_IN_IDE)
+        self.sigClientException.emit(params['type'],
+                                     params['message'],
+                                     params['stack'])
 
     def onProcessFinished(self, procuuid, retCode):
         """Process finished. The retCode may indicate a disconnection."""
+        del retCode     # unused argument
+
         if self.__procuuid == procuuid:
             self.__procWrapper = None
             self.__procuuid = None
@@ -216,39 +244,6 @@ class CodimensionDebugger(QObject):
 
             self.__changeDebuggerState(self.STATE_STOPPED)
             self.__mainWindow.switchDebugMode(False)
-
-    def __processControlState(self):
-        """Analyzes receiving buffer in the CONTROL state"""
-        # Buffer is going to start with >ZZZ< message and ends with EOT
-        cmd = line[0:cmdIndex + 1]
-        content = line[cmdIndex + 1:]
-
-
-        if cmd == ResponseThreadSet:
-            self.sigClientThreadSet.emit()
-            return self.__buffer != ""
-
-        if cmd == ResponseEval:
-            self.__protocolState = self.PROTOCOL_EVALEXEC
-            return self.__buffer != ""
-
-        if cmd == ResponseExec:
-            self.__protocolState = self.PROTOCOL_EVALEXEC
-            return self.__buffer != ""
-
-
-        print("Unexpected message received (no control match): '" + line + "'")
-        return self.__buffer != ""
-
-    def __processEvalexecState(self):
-        """Analyzes receiving buffer in the EVALEXEC state"""
-        # Collect till ResponseEvalOK, ResponseEvalError,
-        #              ResponseExecOK, ResponseExecError
-
-        self.sigEvalOK.emit("")
-        self.sigEvalError.emit("")
-        self.sigExecOK.emit("")
-        self.sigExecError.emit("")
 
     def __askForkTo(self):
         " Asks what to follow, a parent or a child "
@@ -436,14 +431,14 @@ class CodimensionDebugger(QObject):
                                {'frameNumber': framenr,
                                 'scope': scope, 'filters': filters})
 
-    def remoteClientVariable(self, scope, var, framenr=0):
+    def remoteClientVariable(self, scope, var, framenr=0, filters=None):
         """Provides the client variable.
-           scope - 0 => local, 1 => global
+
+        scope - 0 => local, 1 => global
         """
-        scope = int(scope)
-        self.__sendCommand(RequestVariable +
-                           var + ", " +
-                           str(framenr) + ", " + str(scope) + "\n")
+        self.__sendJSONCommand(METHOD_VARIABLE,
+                               {'frameNumber': framenr, 'variable': var,
+                                'scope': scope, 'filters': filters})
 
     def remoteEval(self, expression, framenr):
         """Evaluates the expression in the current context of the debuggee"""

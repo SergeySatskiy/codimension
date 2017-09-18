@@ -89,7 +89,7 @@ class DebuggerContext(QWidget):
     def __onClientVariables(self, scope, variables):
         """Handles the client variables lists"""
         frameNumber = self.stackViewer.getFrameNumber()
-        if scope in [-1, 0]:
+        if scope in [-1, 0, False]:
             # Empty list for local variables
             self.variablesViewer.updateVariables(False, frameNumber, variables)
         else:
@@ -97,7 +97,7 @@ class DebuggerContext(QWidget):
 
     def __onClientVariable(self, scope, variables):
         """Handles the client variable list"""
-        if scope in [-1, 0]:
+        if scope in [-1, 0, False]:
             self.variablesViewer.updateVariable(False, variables)
         else:
             self.variablesViewer.updateVariable(True, variables)
