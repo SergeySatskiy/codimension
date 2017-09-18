@@ -21,6 +21,7 @@
 """Pyflakes margin"""
 
 import math
+import logging
 from html import escape
 import qutepart
 from qutepart.margins import MarginBase
@@ -61,7 +62,7 @@ class CDMFlakesMargin(QWidget):
         for item in self.__marks:
             self.__marks[item][1] = self.__marks[item][0].height()
             if self.__marks[item][0].height() != self.__marks[item][0].width():
-                logging.error('margin pixmap needs to be square')
+                logging.error('flakes margin pixmap needs to be square')
 
         self.myUUID = None
         if hasattr(self._qpart._parent, 'getUUID'):

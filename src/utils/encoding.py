@@ -254,13 +254,12 @@ def detectFileEncodingToRead(fName, text=None):
     # Step 4: check the project default encoding
     project = GlobalData().project
     if project.isLoaded():
-        projectEncoding = project.props['encoding']
-        return decodedText, projectEncoding
+        return project.props['encoding']
 
     # Step 5: checks the IDE encoding
     ideEncoding = Settings()['encoding']
     if ideEncoding:
-        return decodedText, ideEncoding
+        return ideEncoding
 
     # Step 6: default
     return DEFAULT_ENCODING

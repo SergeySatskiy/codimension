@@ -82,6 +82,8 @@ class CDMBreakpointMargin(QWidget):
 
         for item in self.__marks:
             self.__marks[item][1] = self.__marks[item][0].height()
+            if self.__marks[item][0].height() != self.__marks[item][0].width():
+                logging.error('breakpoint margin pixmap needs to be square')
 
         self.myUUID = None
         if hasattr(self._qpart._parent, 'getUUID'):
@@ -120,7 +122,7 @@ class CDMBreakpointMargin(QWidget):
             if top > event.rect().bottom():
                 break
             if block.isVisible():
-                lineNo = block.blockNumber() + 1
+                # lineNo = block.blockNumber() + 1
                 blockValue = self.getBlockValue(block)
                 pixmap = None
                 if blockValue != 0:

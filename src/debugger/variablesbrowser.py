@@ -77,7 +77,7 @@ VARIABLE_DISPLAY_TYPE = {
 
 class VariablesBrowser(QTreeWidget):
 
-    "Variables browser implementation"
+    """Variables browser implementation"""
 
     TYPE_INDICATORS = {'list': '[]', 'tuple': '()', 'dict': '{}',
                        'Array': '[]', 'Hash': '{}'}
@@ -117,22 +117,22 @@ class VariablesBrowser(QTreeWidget):
         self.setSortingEnabled(True)
 
     def scrollTo(self, index, hint=QAbstractItemView.EnsureVisible):
-
         """ Disables horizontal scrolling when a row is clicked.
-            Found here: http://qt-project.org/faq/answer/how_can_i_disable_autoscroll_when_selecting_a_partially_displayed_column_in
-        """
 
+        Found here: http://qt-project.org/faq/answer/
+                           how_can_i_disable_autoscroll_when
+                           _selecting_a_partially_displayed_column_in
+        """
         oldValue = self.horizontalScrollBar().value()
         QTreeWidget.scrollTo(self, index, hint)
         self.horizontalScrollBar().setValue(oldValue)
 
     def __findItem(self, slist, column, node=None):
-
         """Searches for an item.
 
-           It is used to find a specific item in column,
-           that is a child of node. If node is None, a child of the
-           QTreeWidget is searched.
+        It is used to find a specific item in column,
+        that is a child of node. If node is None, a child of the
+        QTreeWidget is searched.
         """
         if node is None:
             count = self.topLevelItemCount()
@@ -192,7 +192,7 @@ class VariablesBrowser(QTreeWidget):
                 citm = self.__findItem(self.curpathlist, 0)
                 if citm:
                     self.setCurrentItem(citm)
-                    self.setItemSelected(citm, True)
+                    citm.setSelected(True)
                     self.scrollToItem(citm, QAbstractItemView.PositionAtTop)
                     self.current = None
 
@@ -215,7 +215,6 @@ class VariablesBrowser(QTreeWidget):
 
     def showVariable(self, isGlobal, vlist):
         """Shows variables in a list"""
-
         # vlist the list of subitems to be displayed. The first element gives
         # the path of the parent variable. Each other listentry is a tuple of
         # three values:
@@ -259,7 +258,7 @@ class VariablesBrowser(QTreeWidget):
             citm = self.__findItem(self.curpathlist, 0)
             if citm:
                 self.setCurrentItem(citm)
-                self.setItemSelected(citm, True)
+                citm.setSelected(True)
                 if self.__scrollToItem:
                     self.scrollToItem(self.__scrollToItem,
                                       QAbstractItemView.PositionAtTop)
@@ -286,7 +285,8 @@ class VariablesBrowser(QTreeWidget):
                 isSpecial = False
 
         if VARTYPE_CLASS.exactMatch(varType) or \
-           (VARTYPE_TYPE.exactMatch(varType) and VARNAME_CLASS_3.exactMatch(varValue)):
+           (VARTYPE_TYPE.exactMatch(varType) and
+            VARNAME_CLASS_3.exactMatch(varValue)):
             return SpecialVariableItem(parentItem, self.__debugger, isGlobal,
                                        varName, varValue, varType[7:-1],
                                        self.framenr)
@@ -296,8 +296,11 @@ class VariablesBrowser(QTreeWidget):
               VARVALUE_CLASS_2.exactMatch(varValue) or
               isSpecial):
             if VARNAME_SPECIAL_ARRAY_ELEMENT.exactMatch(varName):
-                return SpecialArrayElementVariableItem(parentItem, self.__debugger, isGlobal,
-                                                       varName, varValue, varType,
+                return SpecialArrayElementVariableItem(parentItem,
+                                                       self.__debugger,
+                                                       isGlobal,
+                                                       varName, varValue,
+                                                       varType,
                                                        self.framenr)
             return SpecialVariableItem(parentItem, self.__debugger, isGlobal,
                                        varName, varValue, varType,
@@ -504,7 +507,7 @@ class VariablesBrowser(QTreeWidget):
         self.__resort()
 
     def __applyFiltersRecursively(self, item):
-        """Applies the filter recursively to all the children of the given item"""
+        """Applies the filter recursively to all the children of the item"""
         for index in range(item.childCount()):
             childItem = item.child(index)
             if not hasattr(childItem, "getName"):

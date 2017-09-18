@@ -25,6 +25,7 @@ from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
 from utils.pixmapcache import getIcon
 from ui.fitlabel import FramedLabelWithDoubleClick
 from utils.globals import GlobalData
+from utils.colorfont import getZoomedMonoFont, getLabelStyle
 
 
 class ViewVariableDialog(QDialog):
@@ -62,36 +63,38 @@ class ViewVariableDialog(QDialog):
         layout = QVBoxLayout(self)
 
         gridLayout = QGridLayout()
-        gridLayout.setSpacing(2)
+        gridLayout.setSpacing(4)
         varScopeLabel = QLabel("Scope:")
-        gridLayout.addWidget(varScopeLabel, 0, 0, Qt.AlignTop)
+        gridLayout.addWidget(varScopeLabel, 0, 0, Qt.AlignCenter)
         if isGlobal:
             varScopeValue = FramedLabelWithDoubleClick("Global")
         else:
             varScopeValue = FramedLabelWithDoubleClick("Local")
         varScopeValue.setToolTip("Double click to copy")
+        varScopeValue.setStyleSheet(getLabelStyle(self))
         font = varScopeValue.font()
-        font.setFamily(GlobalData().skin.baseMonoFontFace)
-        varScopeValue.setFont(font)
+        font.setFamily(GlobalData().skin['monoFont'].family())
         gridLayout.addWidget(varScopeValue, 0, 1)
 
         varNameLabel = QLabel("Name:")
-        gridLayout.addWidget(varNameLabel, 1, 0, Qt.AlignTop)
+        gridLayout.addWidget(varNameLabel, 1, 0, Qt.AlignCenter)
         varNameValue = FramedLabelWithDoubleClick(varName)
         varNameValue.setToolTip("Double click to copy")
-        varNameValue.setFont(font)
+        varNameValue.setStyleSheet(getLabelStyle(self))
         gridLayout.addWidget(varNameValue, 1, 1)
+
         varTypeLabel = QLabel("Type:")
-        gridLayout.addWidget(varTypeLabel, 2, 0, Qt.AlignTop)
+        gridLayout.addWidget(varTypeLabel, 2, 0, Qt.AlignCenter)
         varTypeValue = FramedLabelWithDoubleClick(varType)
         varTypeValue.setToolTip("Double click to copy")
-        varTypeValue.setFont(font)
+        varTypeValue.setStyleSheet(getLabelStyle(self))
         gridLayout.addWidget(varTypeValue, 2, 1)
+
         varValueLabel = QLabel("Value:")
         gridLayout.addWidget(varValueLabel, 3, 0, Qt.AlignTop)
         varValueValue = QTextEdit()
         varValueValue.setReadOnly(True)
-        varValueValue.setFontFamily(GlobalData().skin.baseMonoFontFace)
+        varValueValue.setFont(getZoomedMonoFont())
         # varValueValue.setLineWrapMode(QTextEdit.NoWrap)
         varValueValue.setAcceptRichText(False)
         varValueValue.setPlainText(varValue)
