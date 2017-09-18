@@ -238,7 +238,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def highlightCurrentDebuggerLine(self, line, asException):
         """Highlights the current debugger line"""
-        margin = self.getMargin('cdm_bpoint_margin')
+        margin = self.getMargin('cdm_flakes_margin')
         if margin:
             if asException:
                 margin.setExceptionLine(line)
@@ -247,7 +247,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def clearCurrentDebuggerLine(self):
         """Removes the current debugger line marker"""
-        margin = self.getMargin('cdm_bpoint_margin')
+        margin = self.getMargin('cdm_flakes_margin')
         if margin:
             margin.clearDebugMarks()
 

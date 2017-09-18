@@ -28,6 +28,7 @@ from subprocess import check_output, STDOUT
 from shlex import quote
 from .config import DEFAULT_ENCODING
 from .runparams import RUN, PROFILE, DEBUG
+from .encoding import detectFileEncodingToRead
 
 
 def prepareArguments(arguments):
@@ -109,13 +110,14 @@ def getTerminalCommandToDebug(fileName, arguments, params,
     """Provides a command line to debug in a separate shell terminal"""
     interpreter = prepareInterpreter(params)
     script = prepareScript(fileName)
+    encoding = detectFileEncodingToRead(fileName)
 
     debugClient = os.path.sep.join([os.path.dirname(sys.argv[0]),
                                     "debugger", "client",
                                     "client_cdm_dbg.py"])
     parts = [interpreter, debugClient,
              '--host', 'localhost', '--port', str(tcpServerPort),
-             '--procuuid', str(procuuid)]
+             '--procuuid', str(procuuid), '--encoding', encoding]
 
     # Get the debugging specific parameters
     from .settings import Settings

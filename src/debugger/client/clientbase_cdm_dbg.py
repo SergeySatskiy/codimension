@@ -54,7 +54,8 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_SET_ENVIRONMENT, METHOD_EXECUTE_STATEMENT,
                               METHOD_SIGNAL, METHOD_SHUTDOWN,
                               METHOD_SET_FILTER, METHOD_EPILOGUE_EXIT_CODE,
-                              METHOD_EPILOGUE_EXIT)
+                              METHOD_EPILOGUE_EXIT, SYNTAX_ERROR_AT_START,
+                              STOPPED_BY_REQUEST)
 from base_cdm_dbg import setRecursionLimit
 from asyncfile_cdm_dbg import AsyncFile
 from outredir_cdm_dbg import OutStreamRedirector
@@ -200,11 +201,9 @@ class DebugClientBase(object):
 
         self.compileCommand = codeop.CommandCompiler()
 
-        self.codingRegexp = re.compile(r"coding[:=]\s*([-\w_.]+)")
-        self.defaultCoding = 'utf-8'
-        self.__coding = self.defaultCoding
-        self.noencoding = False
+        self.__encoding = 'utf-8'
         self.eventExit = None
+        self.__needEpilogue = True
 
     def __initMessageHandlers(self):
         """initializes a map for the message handlers"""
@@ -233,29 +232,6 @@ class DebugClientBase(object):
             METHOD_SET_FILTER: self.__handleSetFilter,
             METHOD_THREAD_SET: self.__handleThreadSet}
 
-    def __setCoding(self, filename):
-        """Sets the coding used by a python file"""
-        if self.noencoding:
-            self.__coding = sys.getdefaultencoding()
-        else:
-            default = 'utf-8'
-            try:
-                f = open(filename, 'rb')
-                # read the first and second line
-                text = f.readline()
-                text = "{0}{1}".format(text, f.readline())
-                f.close()
-            except IOError:
-                self.__coding = default
-                return
-
-            for line in text.splitlines():
-                match = self.codingRegexp.search(line)
-                if match:
-                    self.__coding = match.group(1)
-                    return
-            self.__coding = default
-
     def input(self, prompt, echo):
         """input() using the event loop"""
         sendJSONCommand(self.socket, METHOD_STDIN,
@@ -283,7 +259,7 @@ class DebugClientBase(object):
 
     def __compileFileSource(self, filename, mode='exec'):
         """Compiles source code read from a file"""
-        with codecs.open(filename, encoding=self.__coding) as fp:
+        with codecs.open(filename, encoding=self.__encoding) as fp:
             statement = fp.read()
 
         try:
@@ -471,7 +447,7 @@ class DebugClientBase(object):
     def __handleStepQuit(self, _):
         """Handling METHOD_STEP_QUIT"""
         if self.passive:
-            self.progTerminated(42)
+            self.progTerminated(STOPPED_BY_REQUEST)
         else:
             self.set_quit()
             self.eventExit = True
@@ -652,12 +628,10 @@ class DebugClientBase(object):
         self.eventExit = None
         self.pollingDisabled = disablePolling
 
-        printerr('EVENT LOOP Entering...')
         while self.eventExit is None:
             if self.socket.waitForReadyRead():
                 while self.socket.canReadLine():
                     self.readReady(self.readstream)
-        printerr('EVENT LOOP Exiting...')
 
         self.eventExit = None
         self.pollingDisabled = False
@@ -665,12 +639,8 @@ class DebugClientBase(object):
     def eventPoll(self):
         """Polls for events like 'set break point'"""
         if not self.pollingDisabled:
-            printerr('Entering polling loop...')
             while self.socket.canReadLine():
                 self.readReady(self.readstream)
-            printerr('Exiting polling loop...')
-        else:
-            printerr('Event poll disabled. Exiting...')
 
     def connect(self, remoteAddress, port):
         """Establishes a session with the debugger"""
@@ -756,7 +726,6 @@ class DebugClientBase(object):
         if os.path.isabs(fileName):
             if sys.version_info[0] == 2:
                 fileName = fileName.decode(sys.getfilesystemencoding())
-
             return fileName
 
         # Check the cache
@@ -796,6 +765,11 @@ class DebugClientBase(object):
 
     def progTerminated(self, status, message=''):
         """Tells the debugger that the program has terminated"""
+        if not self.__needEpilogue:
+            return
+
+        self.__needEpilogue = False
+
         if status is None:
             status = 0
         elif not isinstance(status, int):
@@ -811,9 +785,7 @@ class DebugClientBase(object):
                                         'message': message})
         waitForIDEMessage(self.socket, METHOD_EPILOGUE_EXIT,
                           WAIT_EXIT_COMMAND_TIMEOUT)
-
-        # reset coding
-        self.__coding = self.defaultCoding
+        self.eventExit = True
 
     def __dumpVariables(self, frmnr, scope, filterList):
         """Returns the variables of a frame to the debug server"""
@@ -1197,7 +1169,6 @@ class DebugClientBase(object):
         sys.argv[0] = os.path.abspath(sys.argv[0])
         sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
         self.running = sys.argv[0]
-        self.__setCoding(self.running)
         self.debugging = True
 
         self.passive = True
@@ -1219,9 +1190,13 @@ class DebugClientBase(object):
         # IOErrors if self.running is passed as a normal str.
         self.debugMod.__dict__['__file__'] = self.running
         sys.modules['__main__'] = self.debugMod
-        res = self.mainThread.run(
-            'exec(open(' + repr(self.running) + ').read())',
-            self.debugMod.__dict__)
+
+        code = self.__compileFileSource(self.running)
+        if code:
+            sys.setprofile(self.profile)
+            res = self.mainThread.run(code, self.debugMod.__dict__, debug=True)
+        else:
+            res = SYNTAX_ERROR_AT_START
         self.progTerminated(res)
 
     @staticmethod
@@ -1264,8 +1239,9 @@ class DebugClientBase(object):
                 elif args[0] == '--no-redirect':
                     self.redirect = False
                     del args[0]
-                elif args[0] == '--no-encoding':
-                    self.noencoding = True
+                elif args[0] == '--encoding':
+                    self.__encoding = args[1]
+                    del args[0]
                     del args[0]
                 elif args[0] == '--fork-child':
                     self.forkAuto = True
@@ -1289,8 +1265,6 @@ class DebugClientBase(object):
             elif port is None or host is None:
                 print("Network address is not provided. Aborting...")
             else:
-                if not self.noencoding:
-                    self.__coding = self.defaultCoding
                 self.startProgInDebugger(args, host, port,
                                          exceptions=exceptions,
                                          tracePython=tracePython)

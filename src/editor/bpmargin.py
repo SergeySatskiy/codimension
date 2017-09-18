@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2017  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2017 Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,9 +62,6 @@ class CDMBreakpointMargin(QWidget):
     TMP_BPOINT_MARK = 2
     DISABLED_BPOINT_MARK = 3
 
-    EXC_MARK = 4
-    CURRENT_MARK = 5
-
     def __init__(self, parent, debugger):
         QWidget.__init__(self, parent)
 
@@ -76,15 +73,9 @@ class CDMBreakpointMargin(QWidget):
         self.__breakpoints = {}     # block handle -> Breakpoint instance
         self.__breakableLines = None
         self.__maxBreakpoints = Settings()['maxBreakpoints']
-
-        self.currentDebugLine = None
-        self.excptionLine = None
-
         self.__bgColor = GlobalData().skin['bpointsMarginPaper']
 
         self.__marks = {
-            self.CURRENT_MARK: [getPixmap('dbgcurrentmarker.png'), 0],
-            self.EXC_MARK: [getPixmap('dbgexcptmarker.png'), 0],
             self.BPOINT_MARK: [getPixmap('dbgbpointmarker.png'), 0],
             self.TMP_BPOINT_MARK: [getPixmap('dbgtmpbpointmarker.png'), 0],
             self.DISABLED_BPOINT_MARK: [getPixmap('dbgdisbpointmarker.png'), 0]}
@@ -132,11 +123,7 @@ class CDMBreakpointMargin(QWidget):
                 lineNo = block.blockNumber() + 1
                 blockValue = self.getBlockValue(block)
                 pixmap = None
-                if lineNo == self.excptionLine:
-                    pixmap, height = self.__marks[self.EXC_MARK]
-                elif lineNo == self.currentDebugLine:
-                    pixmap, height = self.__marks[self.CURRENT_MARK]
-                elif blockValue != 0:
+                if blockValue != 0:
                     bpoint = self.__breakpoints[blockValue]
                     if not bpoint.isEnabled():
                         markType = self.DISABLED_BPOINT_MARK
@@ -144,49 +131,44 @@ class CDMBreakpointMargin(QWidget):
                         markType = self.TMP_BPOINT_MARK
                     else:
                         markType = self.BPOINT_MARK
-                    pixmap, height = self.__marks[markType]
+                    pixmap, edge = self.__marks[markType]
 
                 if pixmap:
-                    if height <= oneLineHeight:
-                        yPos = top + ((oneLineHeight - height) / 2)
-                        painter.drawPixmap(0, yPos, pixmap)
+                    xPos = 0
+                    yPos = top
+                    if edge <= oneLineHeight:
+                        yPos += math.ceil((oneLineHeight - edge) / 2)
                     else:
-                        xPos = math.ceil((16 - oneLineHeight) / 2)
-                        painter.drawPixmap(xPos, top, oneLineHeight,
-                                           oneLineHeight, pixmap)
-
+                        edge = oneLineHeight
+                        xPos = math.ceil((self.width() - edge) / 2)
+                    painter.drawPixmap(xPos, yPos, edge, edge, pixmap)
             top += height
 
     def mouseMoveEvent(self, event):
         """Tooltips for the marks"""
-        if self.__breakpoints or self.excptionLine or self.currentDebugLine:
+        if self.__breakpoints:
             textCursor = self._qpart.cursorForPosition(event.pos())
             block = textCursor.block()
-            blockNumber = textCursor.blockNumber()
-            lineNo = blockNumber + 1
             msg = None
-            if lineNo == self.excptionLine:
-                msg = 'Exception line'
-            elif lineNo == self.currentDebugLine:
-                msg = 'Current debugger line'
-            else:
-                blockValue = self.getBlockValue(block)
-                if blockValue != 0:
-                    bpoint = self.__breakpoints[blockValue]
-                    if not bpoint.isEnabled():
-                        msg = 'Disabled breakpoint'
-                    elif bpoint.isTemporary():
-                        msg = 'Temporary breakpoint'
-                    else:
-                        msg = 'Regular breakpoint'
+
+            blockValue = self.getBlockValue(block)
+            if blockValue != 0:
+                bpoint = self.__breakpoints[blockValue]
+                if not bpoint.isEnabled():
+                    msg = 'Disabled breakpoint'
+                elif bpoint.isTemporary():
+                    msg = 'Temporary breakpoint'
+                else:
+                    msg = 'Regular breakpoint'
+
             if msg:
                 QToolTip.showText(event.globalPos(), msg)
             else:
                 QToolTip.hideText()
         return QWidget.mouseMoveEvent(self, event)
 
-
-    def width(self):
+    @staticmethod
+    def width():
         """Desired width"""
         return 16
 
@@ -204,29 +186,8 @@ class CDMBreakpointMargin(QWidget):
             else:
                 self.setVisible(False)
 
-    def clearDebugMarks(self):
-        """Clears all debug marks"""
-        self.excptionLine = None
-        self.currentDebugLine = None
-        self.clear()
-        self.update()
-
-    def setCurrentDebugLine(self, currentDebugLine):
-        """Sets the current debug line"""
-        self.currentDebugLine = currentDebugLine
-        self.excptionLine = None
-        self.update()
-
-    def setExceptionLine(self, exceptionLine):
-        """Sets the exception line"""
-        self.excptionLine = exceptionLine
-        self.currentDebugLine = None
-        self.update()
-
     def restoreBreakpoints(self):
         """Restores the breakpoints"""
-        self.currentDebugLine = None
-        self.excptionLine = None
         self.__addBreakPoints(
             QModelIndex(), 0,
             self.__debugger.getBreakPointModel().rowCount() - 1)

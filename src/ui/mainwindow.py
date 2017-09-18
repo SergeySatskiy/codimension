@@ -515,7 +515,7 @@ class CodimensionMainWindow(QMainWindow):
         # Debugger buttons
         self.__dbgStop = QAction(
             getIcon('dbgstop.png'),
-            'Stop debugging session and keep console if so (F10)', self)
+            'Stop debugging session (F10)', self)
         self.__dbgStop.triggered.connect(self._onStopDbgSession)
         self.__dbgStop.setVisible(False)
         self.__dbgRestart = QAction(
@@ -1622,7 +1622,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def _onStopDbgSession(self):
         """Debugger stop debugging clicked"""
-        self.__debugger.stopDebugging(False)
+        self.__debugger.stopDebugging()
 
     def _onRestartDbgSession(self):
         """Debugger restart session clicked"""

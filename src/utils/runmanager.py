@@ -32,7 +32,9 @@ from debugger.client.protocol_cdm_dbg import (METHOD_PROC_ID_INFO,
                                               METHOD_EPILOGUE_EXIT_CODE,
                                               METHOD_EPILOGUE_EXIT,
                                               METHOD_STDOUT, METHOD_STDERR,
-                                              METHOD_STDIN)
+                                              METHOD_STDIN, KILLED,
+                                              DISCONNECTED, FAILED_TO_START,
+                                              STOPPED_BY_REQUEST)
 from debugger.client.cdm_dbg_utils import getParsedJSONMessage, sendJSONCommand
 from ui.runparamsdlg import RunDialog
 from ui.qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
@@ -47,20 +49,14 @@ from .diskvaluesrelay import getRunParameters, addRunParams
 
 IDE_DEBUG = True
 
-
 # Finish codes in addition to the normal exit code
-KILLED = -1000000
-DISCONNECTED = -2000000
-
 HANDSHAKE_TIMEOUT = 15
 POLL_INTERVAL = 0.1
 BRUTAL_SHUTDOWN_TIMEOUT = 0.2
 GRACEFUL_SHUTDOWN_TIMEOUT = 5
 
-
 STATE_PROLOGUE = 0
 STATE_RUNNING = 1
-
 
 # Used from outside too
 def getWorkingDir(path, params):
@@ -467,15 +463,9 @@ class RunManager(QObject):
                 if not self.__waitTimer.isActive():
                     self.__waitTimer.start(1000)
         except Exception as exc:
-            # Failed to start:
-            # - log approprietly
-            # - remove from the list
-            if remoteProc.procWrapper.redirected:
-                remoteProc.widget.appendIDEMessage("Failed to start: " +
-                                                   str(exc))
-            else:
-                logging.error(str(exc))
-            del self.__processes[-1]
+            self.__onProcessFinished(remoteProc.procWrapper.procuuid,
+                                     FAILED_TO_START)
+            logging.error(str(exc))
 
     def profile(self, path, needDialog):
         """Profiles the given script regardless if it is redirected"""
@@ -491,15 +481,9 @@ class RunManager(QObject):
                 if not self.__waitTimer.isActive():
                     self.__waitTimer.start(1000)
         except Exception as exc:
-            # Failed to start:
-            # - log approprietly
-            # - remove from the list
-            if remoteProc.procWrapper.redirected:
-                remoteProc.widget.appendIDEMessage("Failed to start: " +
-                                                   str(exc))
-            else:
-                logging.error(str(exc))
-            del self.__processes[-1]
+            self.__onProcessFinished(remoteProc.procWrapper.procuuid,
+                                     FAILED_TO_START)
+            logging.error(str(exc))
 
     def debug(self, path, needDialog):
         """Debugs the given script regardless if it is redirected"""
@@ -521,15 +505,9 @@ class RunManager(QObject):
                 if not self.__waitTimer.isActive():
                     self.__waitTimer.start(1000)
         except Exception as exc:
-            # Failed to start:
-            # - log approprietly
-            # - remove from the list
-            if remoteProc.procWrapper.redirected:
-                remoteProc.widget.appendIDEMessage("Failed to start: " +
-                                                   str(exc))
-            else:
-                logging.error(str(exc))
-            del self.__processes[-1]
+            self.__onProcessFinished(remoteProc.procWrapper.procuuid,
+                                     FAILED_TO_START)
+            logging.error(str(exc))
 
     def killAll(self):
         """Kills all the processes if needed"""
@@ -588,6 +566,14 @@ class RunManager(QObject):
             elif retCode == DISCONNECTED:
                 msg = "Connection lost to the script process"
                 tooltip = "connection lost"
+            elif retCode == FAILED_TO_START:
+                msg = "Script failed to start"
+                tooltip = "failed to start"
+            elif retCode == STOPPED_BY_REQUEST:
+                # Debugging only: user clicked 'stop'
+                msg = "Script finished by the user request"
+                tooltip = "stopped by user"
+                item.procWrapper.wait()
             else:
                 msg = "Script finished with exit code " + str(retCode)
                 tooltip = "finished, exit code " + str(retCode)

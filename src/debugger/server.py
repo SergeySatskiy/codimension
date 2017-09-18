@@ -32,7 +32,8 @@ from .client.protocol_cdm_dbg import (METHOD_LINE, METHOD_STACK, METHOD_STEP,
                                       METHOD_VARIABLE, METHOD_STEP_OVER,
                                       METHOD_BP_CONDITION_ERROR,
                                       METHOD_SET_BP, METHOD_STEP_OUT,
-                                      METHOD_BP_ENABLE, METHOD_BP_IGNORE)
+                                      METHOD_BP_ENABLE, METHOD_BP_IGNORE,
+                                      METHOD_STEP_QUIT)
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
@@ -465,6 +466,10 @@ class CodimensionDebugger(QObject):
     def remoteSetThread(self, tid):
         """Sets the given thread as the current"""
         self.__sendCommand(RequestThreadSet + str(tid) + "\n")
+
+    def stopDebugging(self):
+        """Stops the debugging session"""
+        self.__sendJSONCommand(METHOD_STEP_QUIT, None)
 
     def __sendJSONCommand(self, method, params):
         """Sends a message to the debuggee"""

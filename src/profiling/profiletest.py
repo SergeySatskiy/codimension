@@ -19,6 +19,7 @@
 #
 
 """Profiler test"""
+import sys
 
 def f( bla ):
     " F function docstring "
@@ -31,6 +32,8 @@ def f( bla ):
 def g( foo ):
     " g function doc "
     f( foo )
+
+a = 77
 
 f( 0 )
 g( -1 )

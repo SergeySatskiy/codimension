@@ -227,6 +227,45 @@ def detectEncodingOnClearExplicit(fName, content):
         return DEFAULT_ENCODING
 
 
+def detectFileEncodingToRead(fName, text=None):
+    """Detects the read encoding"""
+    if text is None:
+        with open(fName, 'rb') as diskfile:
+            text = diskfile.read(1024)
+
+    # Step 1: check for BOM
+    if text.startswith(BOM_UTF8):
+        return 'bom-utf-8'
+    if text.startswith(BOM_UTF16):
+        return 'bom-utf-16'
+    if text.startswith(BOM_UTF32):
+        return 'bom-utf-32'
+
+    # Check if it was a user assigned encoding
+    userAssignedEncoding = getFileEncoding(fName)
+    if userAssignedEncoding:
+        return userAssignedEncoding
+
+    # Step 3: extract encoding from the file
+    encFromFile = getCodingFromBytes(text)
+    if encFromFile:
+        return encFromFile
+
+    # Step 4: check the project default encoding
+    project = GlobalData().project
+    if project.isLoaded():
+        projectEncoding = project.props['encoding']
+        return decodedText, projectEncoding
+
+    # Step 5: checks the IDE encoding
+    ideEncoding = Settings()['encoding']
+    if ideEncoding:
+        return decodedText, ideEncoding
+
+    # Step 6: default
+    return DEFAULT_ENCODING
+
+
 def readEncodedFile(fName):
     """Reads the encoded file"""
     # Returns: text, used encoding

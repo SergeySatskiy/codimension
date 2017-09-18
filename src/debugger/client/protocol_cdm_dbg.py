@@ -25,6 +25,13 @@
 
 """Module defining the debug protocol tokens"""
 
+# Distinctive return codes
+KILLED = -100000
+DISCONNECTED = -200000
+FAILED_TO_START = -300000
+SYNTAX_ERROR_AT_START = -400000
+STOPPED_BY_REQUEST = -500000
+
 METHOD_STDOUT = 'Stdout'
 METHOD_STDERR = 'Stderr'
 METHOD_STDIN = 'Stdin'

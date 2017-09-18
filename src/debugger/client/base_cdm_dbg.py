@@ -222,9 +222,8 @@ class DebugBase(object):
 
         if event == 'line':
             if self.stop_here(frame) or self.break_here(frame):
-                printerr('Going to stop here...')
                 if (self.stop_everywhere and frame.f_back and
-                        frame.f_back.f_code.co_name == "prepareJSONCommand"):
+                        frame.f_back.f_code.co_name == "sendJSONCommand"):
                     # Just stepped into print statement, so skip these frames
                     self._set_stopinfo(None, frame.f_back)
                 else:
@@ -726,7 +725,6 @@ class DebugBase(object):
     def stop_here(self, frame):
         """Reimplemented to filter out debugger files"""
         if self.__skipFrame(frame):
-            printerr('skipping frame due to a file name: ' + frame.f_code.co_filename)
             return False
 
         return (self.stop_everywhere or
@@ -752,7 +750,6 @@ class DebugBase(object):
     def __skipFrame(self, frame):
         """Filters out debugger files"""
         try:
-            printerr('Checking frame ' + repr(frame))
             return self.filesToSkip[frame.f_code.co_filename]
         except KeyError:
             ret = frame.f_code.co_filename.startswith(self.pathsToSkip)
