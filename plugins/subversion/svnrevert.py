@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,10 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" SVN revert functionality "
+"""SVN revert functionality"""
 
 import logging, os.path
 from .svnstrconvert import notifyActionToString
@@ -28,52 +25,45 @@ from .svnstrconvert import notifyActionToString
 
 class SVNRevertMixin:
 
-    def __init__( self ):
+    def __init__(self):
         return
 
-    def fileRevert( self ):
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnRevert( path, False )
-        return
+    def fileRevert(self):
+        path = str(self.fileParentMenu.menuAction().data().toString())
+        self.__svnRevert(path, False)
 
-    def dirRevert( self ):
-        path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnRevert( path, True )
-        return
+    def dirRevert(self):
+        path = str(self.dirParentMenu.menuAction().data().toString())
+        self.__svnRevert(path, True)
 
-    def bufferRevert( self ):
+    def bufferRevert(self):
         path = self.ide.currentEditorWidget.getFileName()
-        self.__svnRevert( path, False )
-        return
+        self.__svnRevert(path, False)
 
-    def __svnRevert( self, path, recursively ):
-        " Adds the given path to the repository "
-        client = self.getSVNClient( self.getSettings() )
+    def __svnRevert(self, path, recursively):
+        """Adds the given path to the repository"""
+        client = self.getSVNClient(self.getSettings())
 
         pathList = []
-        def notifyCallback( event, paths = pathList ):
-            if event[ 'path' ]:
-                path = event[ 'path' ]
-                if os.path.isdir( path ) and not path.endswith( os.path.sep ):
+        def notifyCallback(event, paths=pathList):
+            if event['path']:
+                path = event['path']
+                if os.path.isdir(path) and not path.endswith(os.path.sep):
                     path += os.path.sep
-                action = notifyActionToString( event[ 'action' ] )
+                action = notifyActionToString(event['action'])
                 if action:
-                    logging.info( action + " " + path )
-                    paths.append( path )
+                    logging.info(action + " " + path)
+                    paths.append(path)
             return
 
         try:
             client.callback_notify = notifyCallback
-            client.revert( path, recurse = recursively )
+            client.revert(path, recurse=recursively)
 
             if pathList:
-                logging.info( "Finished" )
+                logging.info("Finished")
         except Exception as excpt:
-            logging.error( str( excpt ) )
+            logging.error(str(excpt))
 
         for revertedPath in pathList:
-            self.notifyPathChanged( revertedPath )
-        return
-
-
-
+            self.notifyPathChanged(revertedPath)

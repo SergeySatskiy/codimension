@@ -45,41 +45,41 @@ def getReposRevisionNumber(client, path):
 
 class SVNDiffMixin:
 
-    def __init__( self ):
+    def __init__(self):
         return
 
-    def fileDiff( self ):
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        with open( path ) as f:
+    def fileDiff(self):
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        path = str(self.fileParentMenu.menuAction().data().toString())
+        with open(path) as f:
             content = f.read()
-        self.__svnDiff( path, content, False )
+        self.__svnDiff(path, content, False)
         QApplication.restoreOverrideCursor()
-        return
 
-    def bufferDiff( self ):
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+    def bufferDiff(self):
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         editorWidget = self.ide.currentEditorWidget
         path = editorWidget.getFileName()
         content = self.ide.currentEditorWidget.getEditor().text()
-        self.__svnDiff( path, content, editorWidget.isModified() )
+        self.__svnDiff(path, content, editorWidget.isModified())
         QApplication.restoreOverrideCursor()
-        return
 
-    def __svnDiff( self, path, content, modified ):
-        """ Performs diff for the given content and
-            the current version in repository """
+    def __svnDiff(self, path, content, modified):
+        """Performs diff.
+
+        The given content vs. the current version in repository
+        """
         # Get the SVN content first
-        client = self.getSVNClient( self.getSettings() )
+        client = self.getSVNClient(self.getSettings())
 
         try:
-            localStatus = self.getLocalStatus( path )
-            localRevisionNumber = getLocalRevisionNumber( client, path )
-            reposRevisionNumber = getReposRevisionNumber( client, path )
+            localStatus = self.getLocalStatus(path)
+            localRevisionNumber = getLocalRevisionNumber(client, path)
+            reposRevisionNumber = getReposRevisionNumber(client, path)
 
             if reposRevisionNumber is None:
-                logging.info( "The path " + path +
-                              " does not exist in repository" )
+                logging.info("The path " + path +
+                             " does not exist in repository")
                 return
 
             localAtLeft = False
@@ -87,49 +87,48 @@ class SVNDiffMixin:
                 if localRevisionNumber < reposRevisionNumber:
                     localAtLeft = True
 
-            repositoryVersion = client.cat( path )
+            repositoryVersion = client.cat(path)
 
             # Calculate difference
             if localAtLeft:
-                diff = difflib.unified_diff( content.splitlines(),
-                                             repositoryVersion.splitlines(),
-                                             n = 5 )
+                diff = difflib.unified_diff(content.splitlines(),
+                                            repositoryVersion.splitlines(),
+                                            n=5)
             else:
-                diff = difflib.unified_diff( repositoryVersion.splitlines(),
-                                             content.splitlines(), n = 5 )
+                diff = difflib.unified_diff(repositoryVersion.splitlines(),
+                                            content.splitlines(), n=5)
             nodiffMessage = path + " has no difference to the " \
                                    "repository at revision HEAD"
             if modified:
                 nodiffMessage = "Editing buffer with " + nodiffMessage
             if diff is None:
-                logging.info( nodiffMessage )
+                logging.info(nodiffMessage)
                 return
 
             # There are changes, so replace the text and tell about the changes
-            diffAsText = '\n'.join( list( diff ) )
+            diffAsText = '\n'.join(list(diff))
             if diffAsText.strip() == '':
-                logging.info( nodiffMessage )
+                logging.info(nodiffMessage)
                 return
 
             if modified:
                 localSpec = "editing buffer with " + \
-                            os.path.basename( path ) + " based on rev." + \
-                            str( localRevisionNumber )
+                            os.path.basename(path) + " based on rev." + \
+                            str(localRevisionNumber)
             else:
-                localSpec = "local " + os.path.basename( path ) + \
-                            " (rev." + str( localRevisionNumber ) + ")"
+                localSpec = "local " + os.path.basename(path) + \
+                            " (rev." + str(localRevisionNumber) + ")"
             reposSpec = "repository at revision HEAD (rev." + \
-                        str( reposRevisionNumber ) + ")"
+                        str(reposRevisionNumber) + ")"
             if localAtLeft:
-                diffAsText = diffAsText.replace( "--- ", "--- " + localSpec, 1 )
-                diffAsText = diffAsText.replace( "+++ ", "+++ " + reposSpec, 1 )
+                diffAsText = diffAsText.replace("--- ", "--- " + localSpec, 1)
+                diffAsText = diffAsText.replace("+++ ", "+++ " + reposSpec, 1)
             else:
-                diffAsText = diffAsText.replace( "+++ ", "+++ " + localSpec, 1 )
-                diffAsText = diffAsText.replace( "--- ", "--- " + reposSpec, 1 )
+                diffAsText = diffAsText.replace("+++ ", "+++ " + localSpec, 1)
+                diffAsText = diffAsText.replace("--- ", "--- " + reposSpec, 1)
         except Exception as excpt:
-            logging.error( str( excpt ) )
+            logging.error(str(excpt))
             return
 
-        self.ide.mainWindow.showDiff( diffAsText,
-                                      "SVN diff for " + path )
-        return
+        self.ide.mainWindow.showDiff(diffAsText,
+                                     "SVN diff for " + path)

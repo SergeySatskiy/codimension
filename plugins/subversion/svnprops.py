@@ -31,274 +31,259 @@ from ui.itemdelegates import NoOutlineHeightDelegate
 
 class SVNPropsMixin:
 
-    def __init__( self ):
+    def __init__(self):
         return
 
-    def fileProps( self ):
-        " Called when properties requested for a file via context menu "
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnProps( path )
-        return
+    def fileProps(self):
+        """Called when properties requested for a file via context menu"""
+        path = str(self.fileParentMenu.menuAction().data().toString())
+        self.__svnProps(path)
 
-    def dirProps( self ):
-        " Called when properties  requested for a directory via context menu "
-        path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnProps( path )
-        return
+    def dirProps(self):
+        """Called when properties requested for a directory via context menu"""
+        path = str(self.dirParentMenu.menuAction().data().toString())
+        self.__svnProps(path)
 
-    def bufferProps( self ):
-        " Called when properties requested for a buffer "
+    def bufferProps(self):
+        """Called when properties requested for a buffer"""
         path = self.ide.currentEditorWidget.getFileName()
-        if not os.path.isabs( path ):
-            logging.info( "SVN properties are not applicable for never saved buffer" )
+        if not os.path.isabs(path):
+            logging.info("SVN properties are not applicable for never saved buffer")
             return
-        self.__svnProps( path )
-        return
+        self.__svnProps(path)
 
-    def __svnProps( self, path ):
-        " Implementation of the properties functionality for a path "
-        status = self.getLocalStatus( path )
+    def __svnProps(self, path):
+        """Implementation of the properties functionality for a path"""
+        status = self.getLocalStatus(path)
         if status == IND_ERROR:
-            logging.error( "Error getting status of " + path )
+            logging.error("Error getting status of " + path)
             return
         if status == self.NOT_UNDER_VCS:
-            logging.info( "The " + path + " is not under SVN" )
+            logging.info("The " + path + " is not under SVN")
             return
 
-        client = self.getSVNClient( self.getSettings() )
-        dlg = SVNPluginPropsDialog( self, client, path )
+        client = self.getSVNClient(self.getSettings())
+        dlg = SVNPluginPropsDialog(self, client, path)
         dlg.exec_()
-        return
 
 
-
-def readProperties( client, path ):
-    " Reads properties of the given path "
+def readProperties(client, path):
+    """Reads properties of the given path"""
     # Properties are always read locally so a progress dialog is not required
-    QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-    properties  = None
+    QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+    properties = None
     try:
-        properties = client.proplist( path )
+        properties = client.proplist(path)
     except pysvn.ClientError as exc:
-        message = exc.args[ 0 ]
-        logging.error( message )
+        message = exc.args[0]
+        logging.error(message)
     except Exception as exc:
-        logging.error( str( exc ) )
+        logging.error(str(exc))
     except:
-        logging.error( "Unknown error while retrieving properties of " + path )
+        logging.error("Unknown error while retrieving properties of " + path)
     QApplication.restoreOverrideCursor()
     return properties
 
 
-class SVNPluginPropsDialog( QDialog ):
-    " SVN plugin properties dialog "
+class SVNPluginPropsDialog(QDialog):
 
-    def __init__( self, plugin, client, path, parent = None ):
-        QDialog.__init__( self, parent )
+    """SVN plugin properties dialog"""
+
+    def __init__(self, plugin, client, path, parent=None):
+        QDialog.__init__(self, parent)
 
         self.__plugin = plugin
         self.__client = client
         self.__path = path
 
         self.__createLayout()
-        self.setWindowTitle( "SVN Properties of " + path )
+        self.setWindowTitle("SVN Properties of " + path)
         self.__populate()
         self.__propsView.setFocus()
-        return
 
-    def __populate( self ):
-        " Populate the properties list "
+    def __populate(self):
+        """Populate the properties list"""
         # Get the currently selected name
         selectedName = None
-        selected = list( self.__propsView.selectedItems() )
+        selected = list(self.__propsView.selectedItems())
         if selected:
-            selectedName = str( selected[ 0 ].text( 0 ) )
+            selectedName = str(selected[0].text(0))
 
         self.__propsView.clear()
-        properties = readProperties( self.__client, self.__path )
+        properties = readProperties(self.__client, self.__path)
         if properties:
             for itemPath, itemProps in properties:
                 if self.__path == itemPath or \
                    self.__path == itemPath + os.path.sep:
                     for name, value in itemProps.iteritems():
-                        name = str( name ).strip()
-                        value = str( value ).strip()
-                        newItem = QTreeWidgetItem( [ name, value ] )
-                        self.__propsView.addTopLevelItem( newItem )
+                        name = str(name).strip()
+                        value = str(value).strip()
+                        newItem = QTreeWidgetItem([name, value])
+                        self.__propsView.addTopLevelItem(newItem)
 
         self.__resizePropsView()
         self.__sortPropsView()
 
         if selectedName:
             index = 0
-            for index in range( 0, self.__propsView.topLevelItemCount() ):
-                item = self.__propsView.topLevelItem( index )
-                if selectedName == item.text( 0 ):
-                    item.setSelected( True )
-        return
+            for index in range(0, self.__propsView.topLevelItemCount()):
+                item = self.__propsView.topLevelItem(index)
+                if selectedName == item.text(0):
+                    item.setSelected(True)
 
-    def __resizePropsView( self ):
-        " Resizes the properties table "
-        self.__propsView.header().setStretchLastSection( True )
+    def __resizePropsView(self):
+        """Resizes the properties table"""
+        self.__propsView.header().setStretchLastSection(True)
         self.__propsView.header().resizeSections(
-                                        QHeaderView.ResizeToContents )
-        return
+            QHeaderView.ResizeToContents)
 
-    def __sortPropsView( self ):
-        " Sorts the properties table "
+    def __sortPropsView(self):
+        """Sorts the properties table"""
         self.__propsView.sortItems(
-                    self.__propsView.sortColumn(),
-                    self.__propsView.header().sortIndicatorOrder() )
-        return
+            self.__propsView.sortColumn(),
+            self.__propsView.header().sortIndicatorOrder())
 
-    def __createLayout( self ):
-        " Creates the dialog layout "
-        self.resize( 640, 480 )
-        self.setSizeGripEnabled( True )
+    def __createLayout(self):
+        """Creates the dialog layout"""
+        self.resize(640, 480)
+        self.setSizeGripEnabled(True)
 
-        vboxLayout = QVBoxLayout( self )
+        vboxLayout = QVBoxLayout(self)
 
         hLayout = QHBoxLayout()
         self.__propsView = QTreeWidget()
-        self.__propsView.setAlternatingRowColors( True )
-        self.__propsView.setRootIsDecorated( False )
-        self.__propsView.setItemsExpandable( False )
-        self.__propsView.setSortingEnabled( True )
-        self.__propsView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        self.__propsView.itemSelectionChanged.connect( self.__propsSelectionChanged )
+        self.__propsView.setAlternatingRowColors(True)
+        self.__propsView.setRootIsDecorated(False)
+        self.__propsView.setItemsExpandable(False)
+        self.__propsView.setSortingEnabled(True)
+        self.__propsView.setItemDelegate(NoOutlineHeightDelegate(4))
+        self.__propsView.itemSelectionChanged.connect(
+            self.__propsSelectionChanged)
 
-        propsViewHeader = QTreeWidgetItem( [ "Property Name", "Property Value" ] )
-        self.__propsView.setHeaderItem( propsViewHeader )
-        self.__propsView.header().setSortIndicator( 0, Qt.DescendingOrder )
-        hLayout.addWidget( self.__propsView )
+        propsViewHeader = QTreeWidgetItem(["Property Name", "Property Value"])
+        self.__propsView.setHeaderItem(propsViewHeader)
+        self.__propsView.header().setSortIndicator(0, Qt.DescendingOrder)
+        hLayout.addWidget(self.__propsView)
 
         self.__delButton = QToolButton()
-        self.__delButton.setText( "Delete" )
-        self.__delButton.setFocusPolicy( Qt.NoFocus )
-        self.__delButton.setEnabled( False )
-        self.__delButton.clicked.connect( self.__onDel )
-        hLayout.addWidget( self.__delButton, 0, Qt.AlignBottom )
-        vboxLayout.addLayout( hLayout )
+        self.__delButton.setText("Delete")
+        self.__delButton.setFocusPolicy(Qt.NoFocus)
+        self.__delButton.setEnabled(False)
+        self.__delButton.clicked.connect(self.__onDel)
+        hLayout.addWidget(self.__delButton, 0, Qt.AlignBottom)
+        vboxLayout.addLayout(hLayout)
 
         # Set property part
-        setGroupbox = QGroupBox( self )
-        setGroupbox.setTitle( "Set Property" )
+        setGroupbox = QGroupBox(self)
+        setGroupbox.setTitle("Set Property")
 
-        setLayout = QGridLayout( setGroupbox )
-        setLayout.addWidget( QLabel( "Name" ), 0, 0, Qt.AlignTop | Qt.AlignRight )
-        setLayout.addWidget( QLabel( "Value" ), 1, 0, Qt.AlignTop | Qt.AlignRight )
+        setLayout = QGridLayout(setGroupbox)
+        setLayout.addWidget(QLabel("Name"), 0, 0, Qt.AlignTop | Qt.AlignRight)
+        setLayout.addWidget(QLabel("Value"), 1, 0, Qt.AlignTop | Qt.AlignRight)
 
         self.__nameEdit = QLineEdit()
-        self.__nameEdit.textChanged.connect( self.__nameChanged )
-        setLayout.addWidget( self.__nameEdit, 0, 1 )
+        self.__nameEdit.textChanged.connect(self.__nameChanged)
+        setLayout.addWidget(self.__nameEdit, 0, 1)
 
         self.__valueEdit = QTextEdit()
-        self.__valueEdit.setAcceptRichText( False )
-        self.__valueEdit.textChanged.connect( self.__valueChanged )
-        metrics = QFontMetrics( self.__valueEdit.font() )
-        rect = metrics.boundingRect( "X" )
-        self.__valueEdit.setFixedHeight( rect.height() * 4 + 5 )
-        setLayout.addWidget( self.__valueEdit, 1, 1 )
+        self.__valueEdit.setAcceptRichText(False)
+        self.__valueEdit.textChanged.connect(self.__valueChanged)
+        metrics = QFontMetrics(self.__valueEdit.font())
+        rect = metrics.boundingRect("X")
+        self.__valueEdit.setFixedHeight(rect.height() * 4 + 5)
+        setLayout.addWidget(self.__valueEdit, 1, 1)
 
         self.__setButton = QToolButton()
-        self.__setButton.setText( "Set" )
-        self.__setButton.setFocusPolicy( Qt.NoFocus )
-        self.__setButton.setEnabled( False )
-        self.__setButton.clicked.connect( self.__onSet )
-        setLayout.addWidget( self.__setButton, 1, 2, Qt.AlignBottom | Qt.AlignHCenter )
-        
-        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Maximum )
-        sizePolicy.setHorizontalStretch( 0 )
-        sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( setGroupbox.sizePolicy().hasHeightForWidth() )
-        setGroupbox.setSizePolicy( sizePolicy )
-        vboxLayout.addWidget( setGroupbox )
+        self.__setButton.setText("Set")
+        self.__setButton.setFocusPolicy(Qt.NoFocus)
+        self.__setButton.setEnabled(False)
+        self.__setButton.clicked.connect(self.__onSet)
+        setLayout.addWidget(self.__setButton, 1, 2,
+                            Qt.AlignBottom | Qt.AlignHCenter)
+
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            setGroupbox.sizePolicy().hasHeightForWidth())
+        setGroupbox.setSizePolicy(sizePolicy)
+        vboxLayout.addWidget(setGroupbox)
 
         # Buttons at the bottom
-        buttonBox = QDialogButtonBox( self )
-        buttonBox.setOrientation( Qt.Horizontal )
-        buttonBox.setStandardButtons( QDialogButtonBox.Ok )
-        buttonBox.button( QDialogButtonBox.Ok ).setDefault( True )
-        buttonBox.accepted.connect( self.close )
-        vboxLayout.addWidget( buttonBox )
-        return
+        buttonBox = QDialogButtonBox(self)
+        buttonBox.setOrientation(Qt.Horizontal)
+        buttonBox.setStandardButtons(QDialogButtonBox.Ok)
+        buttonBox.button(QDialogButtonBox.Ok).setDefault(True)
+        buttonBox.accepted.connect(self.close)
+        vboxLayout.addWidget(buttonBox)
 
-    def __onSet( self ):
-        " Triggered when propery set is clicked "
+    def __onSet(self):
+        """Triggered when propery set is clicked"""
         name = self.__nameEdit.text().strip()
         value = self.__valueEdit.toPlainText().strip()
         try:
-            commitInfo = self.__client.propset( name, value, self.__path )
+            commitInfo = self.__client.propset(name, value, self.__path)
             if commitInfo:
-                logging.info( str( commitInfo ) )
+                logging.info(str(commitInfo))
             self.__populate()
-            self.__plugin.notifyPathChanged( self.__path )
+            self.__plugin.notifyPathChanged(self.__path)
             self.__nameEdit.clear()
             self.__valueEdit.clear()
             self.__propsView.setFocus()
         except pysvn.ClientError as exc:
-            message = exc.args[ 0 ]
-            logging.error( message )
-            return
+            message = exc.args[0]
+            logging.error(message)
         except Exception as exc:
-            logging.error( str( exc ) )
-            return
+            logging.error(str(exc))
         except:
-            logging.error( "Unknown property setting error" )
+            logging.error("Unknown property setting error")
+
+    def __propsSelectionChanged(self):
+        """Selection of a property has changed"""
+        selected = list(self.__propsView.selectedItems())
+        self.__delButton.setEnabled(len(selected) > 0)
+
+    def __onDel(self):
+        """Triggered when a property del is clicked"""
+        selected = list(self.__propsView.selectedItems())
+        if len(selected) == 0:
+            self.__delButton.setEnabled(False)
             return
 
-    def __propsSelectionChanged( self ):
-        " Selection of a property has changed "
-        selected = list( self.__propsView.selectedItems() )
-        self.__delButton.setEnabled( len( selected ) > 0 )
-        return
-
-    def __onDel( self ):
-        " Triggered when a property del is clicked "
-        selected = list( self.__propsView.selectedItems() )
-        if len( selected ) == 0:
-            self.__delButton.setEnabled( False )
-            return
-
-        name = str( selected[ 0 ].text( 0 ) )
-        res = QMessageBox.warning( self, "Deleting Property",
-                    "You are about to delete <b>" + name +
-                    "</b> SVN property from " + self.__path + ".\nAre you sure?",
-                           QMessageBox.StandardButtons(
-                                QMessageBox.Cancel | QMessageBox.Yes ),
-                           QMessageBox.Cancel )
+        name = str(selected[0].text(0))
+        res = QMessageBox.warning(
+            self, "Deleting Property",
+            "You are about to delete <b>" + name +
+            "</b> SVN property from " + self.__path + ".\nAre you sure?",
+            QMessageBox.StandardButtons(
+                QMessageBox.Cancel | QMessageBox.Yes),
+            QMessageBox.Cancel)
         if res != QMessageBox.Yes:
             return
 
         try:
-            self.__client.propdel( name, self.__path )
+            self.__client.propdel(name, self.__path)
             self.__populate()
-            self.__plugin.notifyPathChanged( self.__path )
+            self.__plugin.notifyPathChanged(self.__path)
             self.__propsView.setFocus()
         except pysvn.ClientError as exc:
-            message = exc.args[ 0 ]
-            logging.error( message )
-            return
+            message = exc.args[0]
+            logging.error(message)
         except Exception as exc:
-            logging.error( str( exc ) )
-            return
+            logging.error(str(exc))
         except:
-            logging.error( "Unknown property deleting error" )
-            return
+            logging.error("Unknown property deleting error")
 
-    def __nameChanged( self, text ):
-        " Triggered when a property name to set is changed "
+    def __nameChanged(self, text):
+        """Triggered when a property name to set is changed"""
         self.__updateSetButton()
-        return
 
-    def __valueChanged( self ):
-        " Triggered when a property value to set is changed "
+    def __valueChanged(self):
+        """Triggered when a property value to set is changed"""
         self.__updateSetButton()
-        return
 
-    def __updateSetButton( self ):
-        " Updates the 'Set' button state "
+    def __updateSetButton(self):
+        """Updates the 'Set' button state"""
         name = self.__nameEdit.text().strip()
         value = self.__valueEdit.toPlainText().strip()
-        self.__setButton.setEnabled( name != "" and value != "" )
-        return
+        self.__setButton.setEnabled(name != "" and value != "")

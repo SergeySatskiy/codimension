@@ -30,24 +30,32 @@ from .viewvariable import ViewVariableDialog
 from .client.protocol_cdm_dbg import VAR_TYPE_DISP_STRINGS
 
 
-NONPRINTABLE = QRegExp(r"""(\\x\d\d)+""")
-VARNAME_CLASS_1 = QRegExp(r'<.*(instance|object) at 0x.*>(\[\]|\{\}|\(\))')
-VARNAME_CLASS_2 = QRegExp(r'<class .* at 0x.*>(\[\]|\{\}|\(\))')
-VARNAME_CLASS_3 = QRegExp(r"<class '.*'>")
-VARTYPE_CLASS = QRegExp('class .*')
-VARTYPE_TYPE = QRegExp('Type')
-VARVALUE_CLASS_1 = QRegExp('<.*(instance|object) at 0x.*>')
-VARVALUE_CLASS_2 = QRegExp('<class .* at 0x.*>')
-VARNAME_SPECIAL_ARRAY_ELEMENT = QRegExp(r'^\d+(\[\]|\{\}|\(\))$')
-VARNAME_ARRAY_ELEMENT = QRegExp(r'^\d+$')
+INDICATOR_PATTERN = "|".join([QRegExp.escape(indicator)
+                              for indicator in INDICATORS])
+RX_CLASS = QRegExp('<.*(instance|object) at 0x.*>')
+RX_CLASS2 = QRegExp('class .*')
+RX_CLASS3 = QRegExp('<class .* at 0x.*>')
+DVAR_RX_CLASS1 = QRegExp(
+    r'<.*(instance|object) at 0x.*>({0})'.format(INDICATOR_PATTERN))
+DVAR_RX_CLASS2 = QRegExp(
+    r'<class .* at 0x.*>({0})'.format(INDICATOR_PATTERN))
+DVAR_RX_ARRAY_ELEMENT = QRegExp(r'^\d+$')
+DVAR_RX_SPECIAL_ARRAY_ELEMENT = QRegExp(
+    r'^\d+({0})$'.format(INDICATOR_PATTERN))
+RX_NONPRINTABLE = QRegExp(r"""(\\x\d\d)+""")
+
+TYPE_TO_INDICATORS = {
+    # Python types
+    'list': '[]',
+    'tuple': '()',
+    'dict': '{:}',
+    'set': '{}',
+    'frozenset': '{}'}
 
 
 class VariablesBrowser(QTreeWidget):
 
     """Variables browser implementation"""
-
-    TYPE_INDICATORS = {'list': '[]', 'tuple': '()', 'dict': '{}',
-                       'Array': '[]', 'Hash': '{}'}
 
     def __init__(self, debugger, parent=None):
         QTreeWidget.__init__(self, parent)
@@ -106,13 +114,18 @@ class VariablesBrowser(QTreeWidget):
         else:
             count = node.childCount()
 
+        if column == 0:
+            searchStr = VariableItem.extractId(slist[0])[0]
+        else:
+            searchStr = slist[0]
+
         for index in range(count):
             if node is None:
                 item = self.topLevelItem(index)
             else:
                 item = node.child(index)
 
-            if item.text(column) == slist[0]:
+            if item.text(column) == searchStr:
                 if len(slist) > 1:
                     item = self.__findItem(slist[1:], column, item)
                 return item
@@ -245,22 +258,20 @@ class VariablesBrowser(QTreeWidget):
                        varName, varValue, varType, isSpecial=False):
         """Generates an appropriate variable item"""
         if isSpecial:
-            if VARNAME_CLASS_1.exactMatch(varName) or \
-               VARNAME_CLASS_2.exactMatch(varName):
+            if DVAR_RX_CLASS1.exactMatch(varName) or \
+               DVAR_RX_CLASS2.exactMatch(varName):
                 isSpecial = False
 
-        if VARTYPE_CLASS.exactMatch(varType) or \
-           (VARTYPE_TYPE.exactMatch(varType) and
-            VARNAME_CLASS_3.exactMatch(varValue)):
+        if RX_CLASS2.exactMatch(varType):
             return SpecialVariableItem(parentItem, self.__debugger, isGlobal,
                                        varName, varValue, varType[7:-1],
                                        self.framenr)
 
         elif varType != "void *" and \
-             (VARVALUE_CLASS_1.exactMatch(varValue) or
-              VARVALUE_CLASS_2.exactMatch(varValue) or
+             (RX_CLASS.exactMatch(varValue) or
+              RX_CLASS3.exactMatch(varValue) or
               isSpecial):
-            if VARNAME_SPECIAL_ARRAY_ELEMENT.exactMatch(varName):
+            if DVAR_RX_SPECIAL_ARRAY_ELEMENT.exactMatch(varName):
                 return SpecialArrayElementVariableItem(parentItem,
                                                        self.__debugger,
                                                        isGlobal,
@@ -270,8 +281,13 @@ class VariablesBrowser(QTreeWidget):
             return SpecialVariableItem(parentItem, self.__debugger, isGlobal,
                                        varName, varValue, varType,
                                        self.framenr)
+        elif varType in ["numpy.ndarray", "django.MultiValueDict",
+                         "array.array"]:
+            return SpecialVariableItem(parentItem, self.__debugger, isGlobal,
+                                       varName, "{0} items".format(varValue),
+                                       varType, self.framenr)
         else:
-            if VARNAME_ARRAY_ELEMENT.exactMatch(varName):
+            if DVAR_RX_ARRAY_ELEMENT.exactMatch(varName):
                 return ArrayElementVariableItem(parentItem, isGlobal,
                                                 varName, varValue, varType)
             return VariableItem(parentItem, isGlobal,
@@ -281,28 +297,33 @@ class VariablesBrowser(QTreeWidget):
 
     def __getDisplayType(self, varType):
         """Provides a variable type for display purpose"""
-        key = varType.lower()
-        if key in VAR_TYPE_DISP_STRINGS:
-            return VAR_TYPE_DISP_STRINGS[key]
-        return varType
+        try:
+            dvtype = VAR_TYPE_DISP_STRINGS[varType]
+        except KeyError:
+            if varType == 'classobj':
+                dvtype = VAR_TYPE_DISP_STRINGS['instance']
+            else:
+                dvtype = varType
+        return dvtype
 
     def __addItem(self, parentItem, isGlobal, varType, varName, varValue):
         """Adds a new item to the children of the parentItem"""
         if parentItem is None:
             parentItem = self
 
-        # Decide what displayName will be
-        if varType in self.TYPE_INDICATORS:
-            varName += self.TYPE_INDICATORS[varType]
+        try:
+            varName = '{0}{1}'.format(varName, TYPE_TO_INDICATORS[varType])
+        except KeyError:
+            pass
 
         displayType = self.__getDisplayType(varType)
-        if varType in ['list', 'Array', 'tuple', 'dict', 'Hash']:
+        if varType in ['list', 'tuple', 'dict', 'set', 'frozenset']:
             return self.__generateItem(parentItem, isGlobal,
                                        varName, str(varValue) + " item(s)",
                                        displayType,
                                        True)
         if varType in ['unicode', 'str']:
-            if NONPRINTABLE.indexIn(varValue) != -1:
+            if RX_NONPRINTABLE.indexIn(varValue) != -1:
                 stringValue = varValue
             else:
                 try:

@@ -203,10 +203,6 @@ class VariableItem(QTreeWidgetItem):
         for item in self.takeChildren():
             del item
 
-    def __lt__(self, other):
-        column = self.treeWidget().sortColumn()
-        return self.key(column) < other.key(column)
-
     def expand(self):
         """Does nothing for the basic item. Should be overwritten"""
         pass

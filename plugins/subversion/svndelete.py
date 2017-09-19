@@ -26,58 +26,55 @@ from ui.qt import QMessageBox
 
 class SVNDeleteMixin:
 
-    def __init__( self ):
+    def __init__(self):
         return
 
-    def fileDelete( self ):
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnDelete( path )
-        return
+    def fileDelete(self):
+        path = str(self.fileParentMenu.menuAction().data().toString())
+        self.__svnDelete(path)
 
-    def dirDelete( self ):
-        path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnDelete( path )
-        return
+    def dirDelete(self):
+        path = str(self.dirParentMenu.menuAction().data().toString())
+        self.__svnDelete(path)
 
-    def bufferDelete( self ):
+    def bufferDelete(self):
         path = self.ide.currentEditorWidget.getFileName()
-        self.__svnDelete( path )
-        return
+        self.__svnDelete(path)
 
-    def __svnDelete( self, path ):
+    def __svnDelete(self, path):
 
-        res = QMessageBox.warning( None, "Deleting from SVN",
-                    "You are about to delete <b>" + path +
-                    "</b> from SVN and from the disk.\nAre you sure?",
-                           QMessageBox.StandardButtons(
-                                QMessageBox.Cancel | QMessageBox.Yes ),
-                           QMessageBox.Cancel )
+        res = QMessageBox.warning(
+            None, "Deleting from SVN",
+            "You are about to delete <b>" + path +
+            "</b> from SVN and from the disk.\nAre you sure?",
+            QMessageBox.StandardButtons(
+                QMessageBox.Cancel | QMessageBox.Yes),
+            QMessageBox.Cancel)
         if res != QMessageBox.Yes:
             return
 
-        client = self.getSVNClient( self.getSettings() )
+        client = self.getSVNClient(self.getSettings())
 
         pathList = []
-        def notifyCallback( event, paths = pathList ):
-            if event[ 'path' ]:
-                path = event[ 'path' ]
-                if os.path.isdir( path ) and not path.endswith( os.path.sep ):
+        def notifyCallback(event, paths=pathList):
+            if event['path']:
+                path = event['path']
+                if os.path.isdir(path) and not path.endswith(os.path.sep):
                     path += os.path.sep
-                action = notifyActionToString( event[ 'action' ] )
+                action = notifyActionToString(event['action'])
                 if action:
-                    logging.info( action + " " + path )
-                    paths.append( path )
+                    logging.info(action + " " + path)
+                    paths.append(path)
             return
 
         try:
             client.callback_notify = notifyCallback
-            client.remove( path )
+            client.remove(path)
 
             if pathList:
-                logging.info( "Finished" )
+                logging.info("Finished")
         except Exception as excpt:
-            logging.error( str( excpt ) )
+            logging.error(str(excpt))
 
         for revertedPath in pathList:
-            self.notifyPathChanged( revertedPath )
-        return
+            self.notifyPathChanged(revertedPath)

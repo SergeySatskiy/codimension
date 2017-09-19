@@ -35,9 +35,9 @@ from plugins.categories.vcsiface import VersionControlSystemInterface
 #              pysvn.node_kind.none : "absent" }
 
 def nodeKindToString( kind ):
-    " Converts node kind into a string"
+    """Converts node kind into a string"""
     if kind in NODE_KIND:
-        return NODE_KIND[ kind ]
+        return NODE_KIND[kind]
     return "unknown"
 
 
@@ -47,44 +47,46 @@ def nodeKindToString( kind ):
 #             pysvn.wc_schedule.replace : "replace" }
 
 
-def scheduleToString( schedule ):
-    " Converts schedule to string "
+def scheduleToString(schedule):
+    """Converts schedule to string"""
     if schedule in SCHEDULE:
-        return SCHEDULE[ schedule ]
+        return SCHEDULE[schedule]
     return "unknown"
 
 
-STATUS = { IND_ADDED       : "added",
-           IND_DELETED     : "deleted",
-           IND_IGNORED     : "ignored",
-           IND_MERGED      : "merged",
-           IND_MODIFIED_LR : "modified locally and in repository (content and/or properties)",
-           IND_MODIFIED_L  : "modified locally (content and/or properties)",
-           IND_MODIFIED_R  : "modified in repository (content and/or properties)",
-           IND_UPTODATE    : "up to date",
-           IND_REPLACED    : "replaced",
-           IND_CONFLICTED  : "conflicted",
-           IND_EXTERNAL    : "external",
-           IND_INCOMPLETE  : "incomplete entries list",
-           IND_MISSING     : "missing",
-           IND_UNKNOWN     : "unknown",
-           IND_ERROR       : "error getting status",
-           IND_OBSTRUCTED  : "obstructed by another item",
-           VersionControlSystemInterface.NOT_UNDER_VCS: "not under SVN control" }
+STATUS = {
+    IND_ADDED: "added",
+    IND_DELETED: "deleted",
+    IND_IGNORED: "ignored",
+    IND_MERGED: "merged",
+    IND_MODIFIED_LR: "modified locally and in repository (content and/or properties)",
+    IND_MODIFIED_L: "modified locally (content and/or properties)",
+    IND_MODIFIED_R: "modified in repository (content and/or properties)",
+    IND_UPTODATE: "up to date",
+    IND_REPLACED: "replaced",
+    IND_CONFLICTED: "conflicted",
+    IND_EXTERNAL: "external",
+    IND_INCOMPLETE: "incomplete entries list",
+    IND_MISSING: "missing",
+    IND_UNKNOWN: "unknown",
+    IND_ERROR: "error getting status",
+    IND_OBSTRUCTED: "obstructed by another item",
+    VersionControlSystemInterface.NOT_UNDER_VCS: "not under SVN control"}
 
-def statusToString( status ):
-    " Converts status to string "
+def statusToString(status):
+    """Converts status to string"""
     if status in STATUS:
-        return STATUS[ status ]
+        return STATUS[status]
     return "unknown"
 
 
-def timestampToString( value ):
-    """ Converts a pysvn time value (float) into a human readable.
-        Fraction of seconds is ommitted """
+def timestampToString(value):
+    """Converts a pysvn time value (float) into a human readable.
 
-    timestamp = datetime.fromtimestamp( int( value ) )
-    return timestamp.strftime( "%Y-%m-%d %H:%M:%S" )
+    Fraction of seconds is ommitted
+    """
+    timestamp = datetime.fromtimestamp(int(value))
+    return timestamp.strftime("%Y-%m-%d %H:%M:%S")
 
 
 #ACTION = { pysvn.wc_notify_action.add: "add",
@@ -155,10 +157,10 @@ def timestampToString( value ):
 
 
 
-def notifyActionToString( action ):
-    " Converts the action to a string "
+def notifyActionToString(action):
+    """Converts the action to a string"""
     if action in ACTION:
-        return ACTION[ action ]
+        return ACTION[action]
     return "unknown action"
 
 
@@ -178,8 +180,8 @@ def notifyActionToString( action ):
 #    pysvn.wc_status_kind.external:    "external",
 #    pysvn.wc_status_kind.incomplete:  "incomplete" }
 
-def rawStatusToString( status ):
-    " Converts status to string "
+def rawStatusToString(status):
+    """Converts status to string"""
     if status in RAW_STATUS:
-        return RAW_STATUS[ status ]
+        return RAW_STATUS[status]
     return "unknown"

@@ -29,48 +29,44 @@ from .svnstrconvert import notifyActionToString
 
 class SVNUpdateMixin:
 
-    def __init__( self ):
+    def __init__(self):
         return
 
-    def fileUpdate( self ):
-        " Called when update for a file is requested "
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnUpdate( path, False )
-        return
+    def fileUpdate(self):
+        """Called when update for a file is requested"""
+        path = str(self.fileParentMenu.menuAction().data().toString())
+        self.__svnUpdate(path, False)
 
-    def dirUpdate( self ):
-        " Called when update for a directory is requested "
-        path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnUpdate( path, True )
-        return
+    def dirUpdate(self):
+        """Called when update for a directory is requested"""
+        path = str(self.dirParentMenu.menuAction().data().toString())
+        self.__svnUpdate(path, True)
 
-    def bufferUpdate( self ):
-        " Called when update for a buffer is requested "
+    def bufferUpdate(self):
+        """Called when update for a buffer is requested"""
         path = self.ide.currentEditorWidget.getFileName()
-        if not os.path.isabs( path ):
-            logging.info( "SVN update is not applicable for never saved buffer" )
+        if not os.path.isabs(path):
+            logging.info("SVN update is not applicable for never saved buffer")
             return
-        self.__svnUpdate( path, False )
-        return
+        self.__svnUpdate(path, False)
 
-    def __svnUpdate( self, path, recursively, rev = None ):
-        " Does SVN update "
-        client = self.getSVNClient( self.getSettings() )
+    def __svnUpdate(self, path, recursively, rev=None):
+        """Does SVN update"""
+        client = self.getSVNClient(self.getSettings())
         if rev is None:
-            rev = pysvn.Revision( pysvn.opt_revision_kind.head )
-        progressDialog = SVNUpdateProgress( self, client, path, recursively, rev )
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+            rev = pysvn.Revision(pysvn.opt_revision_kind.head)
+        progressDialog = SVNUpdateProgress(self, client, path, recursively, rev)
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         progressDialog.exec_()
         QApplication.restoreOverrideCursor()
-        return
 
 
+class SVNUpdateProgress(QDialog):
 
-class SVNUpdateProgress( QDialog ):
-    " Progress of the svn update command "
+    """Progress of the svn update command"""
 
-    def __init__( self, plugin, client, path, recursively, rev, parent = None ):
-        QDialog.__init__( self, parent )
+    def __init__(self, plugin, client, path, recursively, rev, parent=None):
+        QDialog.__init__(self, parent)
         self.__cancelRequest = False
         self.__inProcess = False
 
@@ -82,125 +78,118 @@ class SVNUpdateProgress( QDialog ):
         self.__updatedPaths = []
 
         self.__createLayout()
-        self.setWindowTitle( "SVN Update" )
-        QTimer.singleShot( 0, self.__process )
-        return
+        self.setWindowTitle("SVN Update")
+        QTimer.singleShot(0, self.__process)
 
-    def keyPressEvent( self, event ):
-        " Processes the ESC key specifically "
+    def keyPressEvent(self, event):
+        """Processes the ESC key specifically"""
         if event.key() == Qt.Key_Escape:
             self.__cancelRequest = True
-            self.__infoLabel.setText( "Cancelling..." )
+            self.__infoLabel.setText("Cancelling...")
             QApplication.processEvents()
-        return
 
-    def __createLayout( self ):
-        " Creates the dialog layout "
-        self.resize( 450, 20 )
-        self.setSizeGripEnabled( True )
+    def __createLayout(self):
+        """Creates the dialog layout"""
+        self.resize(450, 20)
+        self.setSizeGripEnabled(True)
 
-        verticalLayout = QVBoxLayout( self )
-        verticalLayout.addWidget( QLabel( "Updating '" + self.__path + "':" ) )
-        self.__infoLabel = QLabel( self )
-        verticalLayout.addWidget( self.__infoLabel )
+        verticalLayout = QVBoxLayout(self)
+        verticalLayout.addWidget(QLabel("Updating '" + self.__path + "':"))
+        self.__infoLabel = QLabel(self)
+        verticalLayout.addWidget(self.__infoLabel)
 
-        buttonBox = QDialogButtonBox( self )
-        buttonBox.setOrientation( Qt.Horizontal )
-        buttonBox.setStandardButtons( QDialogButtonBox.Close )
-        verticalLayout.addWidget( buttonBox )
+        buttonBox = QDialogButtonBox(self)
+        buttonBox.setOrientation(Qt.Horizontal)
+        buttonBox.setStandardButtons(QDialogButtonBox.Close)
+        verticalLayout.addWidget(buttonBox)
 
-        buttonBox.rejected.connect( self.__onClose )
-        return
+        buttonBox.rejected.connect(self.__onClose)
 
-    def __onClose( self ):
-        " Triggered when the close button is clicked "
+    def __onClose(self):
+        """Triggered when the close button is clicked"""
         self.__cancelRequest = True
-        self.__infoLabel.setText( "Cancelling..." )
+        self.__infoLabel.setText("Cancelling...")
         QApplication.processEvents()
-        return
 
-    def closeEvent( self, event ):
-        " Window close event handler "
+    def closeEvent(self, event):
+        """Window close event handler"""
         if self.__inProcess:
             self.__cancelRequest = True
-            self.__infoLabel.setText( "Cancelling..." )
+            self.__infoLabel.setText("Cancelling...")
             QApplication.processEvents()
             event.ignore()
         else:
             event.accept()
-        return
 
-    def __cancelCallback( self ):
-        " Called by pysvn regularly "
+    def __cancelCallback(self):
+        """Called by pysvn regularly"""
         QApplication.processEvents()
         return self.__cancelRequest
 
-    def __notifyCallback( self, event ):
-        " Called by pysvn. event is a dictionary "
+    def __notifyCallback(self, event):
+        """Called by pysvn. event is a dictionary"""
         if 'path' not in event:
             return
-        if not event[ 'path' ]:
+        if not event['path']:
             return
 
         message = None
-        path = event[ 'path' ]
-        if os.path.isdir( path ) and not path.endswith( os.path.sep ):
+        path = event['path']
+        if os.path.isdir(path) and not path.endswith(os.path.sep):
             path += os.path.sep
-        if event[ 'action' ] == pysvn.wc_notify_action.update_completed:
-            message = path + " updated to revision " + str( event[ 'revision' ].number )
-        elif event[ 'action' ] == pysvn.wc_notify_action.update_started:
+        if event['action'] == pysvn.wc_notify_action.update_completed:
+            message = path + " updated to revision " + str(event['revision'].number)
+        elif event['action'] == pysvn.wc_notify_action.update_started:
             message = "updating " + path + ":"
         else:
-            self.__updatedPaths.append( path )
-            action = notifyActionToString( event[ 'action' ] )
+            self.__updatedPaths.append(path)
+            action = notifyActionToString(event['action'])
             if action is not None and action != "unknown":
                 message = "  " + action + " " + path
-                if event[ 'mime_type' ] == "application/octet-stream":
+                if event['mime_type'] == "application/octet-stream":
                     message += " (binary)"
 
         if message:
-            self.__infoLabel.setText( message.strip() )
-            logging.info( message )
+            self.__infoLabel.setText(message.strip())
+            logging.info(message)
         QApplication.processEvents()
-        return
 
-    def __process( self ):
-        " Update process "
+    def __process(self):
+        """Update process"""
         self.__client.callback_cancel = self.__cancelCallback
         self.__client.callback_notify = self.__notifyCallback
 
         try:
             self.__inProcess = True
-            self.__client.update( self.__path, self.__recursively,
-                                  self.__rev )
+            self.__client.update(self.__path, self.__recursively,
+                                 self.__rev)
             self.__inProcess = False
         except pysvn.ClientError as exc:
-            errorCode = exc.args[ 1 ][ 0 ][ 1 ]
+            errorCode = exc.args[1][0][1]
             if errorCode == pysvn.svn_err.cancelled:
-                logging.info( "Updating cancelled" )
+                logging.info("Updating cancelled")
             else:
-                message = exc.args[ 0 ]
-                logging.error( message )
+                message = exc.args[0]
+                logging.error(message)
             self.__inProcess = False
             self.close()
             return
         except Exception as exc:
-            logging.error( str( exc ) )
+            logging.error(str(exc))
             self.__inProcess = False
             self.close()
             return
         except:
-            logging.error( "Unknown error" )
+            logging.error("Unknown error")
             self.__inProcess = False
             self.close()
             return
 
         for updatedPath in self.__updatedPaths:
-            self.__plugin.notifyPathChanged( updatedPath )
+            self.__plugin.notifyPathChanged(updatedPath)
 
         if self.__cancelRequest:
             self.close()
         else:
             self.accept()
         return
-
