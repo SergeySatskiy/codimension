@@ -24,7 +24,8 @@ from ui.qt import (Qt, QRegExp, QAbstractItemView, QHeaderView, QTreeWidget)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from .variableitems import (VariableItem, SpecialVariableItem,
                             ArrayElementVariableItem,
-                            SpecialArrayElementVariableItem)
+                            SpecialArrayElementVariableItem,
+                            INDICATORS)
 from .viewvariable import ViewVariableDialog
 from .client.protocol_cdm_dbg import VAR_TYPE_DISP_STRINGS
 

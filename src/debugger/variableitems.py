@@ -25,6 +25,8 @@
 from ui.qt import Qt, QTreeWidgetItem
 from utils.pixmapcache import getIcon
 
+INDICATORS = ("()", "[]", "{:}", "{}")
+
 
 def getDisplayValue(displayValue):
     """Takes potentially multilined value and converts it to a single line"""
@@ -103,8 +105,9 @@ class VariableItem(QTreeWidgetItem):
                  displayName, displayValue, displayType):
         self.__isGlobal = isGlobal
         self.__value = displayValue
-        self.__name = displayName
         self.__type = displayType
+
+        self.__name, self.__varID = VariableItem.extractId(displayName)
 
         # Decide about the display value
         displayValue = getDisplayValue(displayValue)
@@ -128,6 +131,10 @@ class VariableItem(QTreeWidgetItem):
         """Provides the variable value"""
         return self.__value
 
+    def getId(self):
+        """Provides the variable ID"""
+        return self.__varID
+
     def getName(self):
         """Provides the variable name"""
         return self.__name
@@ -139,6 +146,39 @@ class VariableItem(QTreeWidgetItem):
     def isGlobal(self):
         """Tells if the variable is global"""
         return self.__isGlobal
+
+    @classmethod
+    def extractId(cls, var):
+        """Extracts the variable ID"""
+        if " (ID:" in var:
+            dvar, varID = var.rsplit(None, 1)
+            if varID.endswith(INDICATORS):
+                varID, indicators = VariableItem.extractIndicators(varID)
+                dvar += indicators
+        else:
+            dvar = var
+            varID = None
+        return dvar, varID
+
+    @classmethod
+    def extractIndicators(cls, var):
+        """Extract the indicator string from a variable text"""
+        for indicator in INDICATORS:
+            if var.endswith(indicator):
+                return var[:-len(indicator)], indicator
+        return var, ""
+
+    def _buildKey(self):
+        """Builds a key to access to the variable"""
+        indicators = ""
+        txt = self.text(0)
+        if txt.endswith(INDICATORS):
+            txt, indicators = VariableItem.extractIndicators(txt)
+        if self.__varID:
+            txt = "{0} {1}{2}".format(txt, self.__varID, indicators)
+        else:
+            txt = "{0}{1}".format(txt, indicators)
+        return txt
 
     def data(self, column, role):
         """Provides the data for the requested role"""
@@ -163,10 +203,6 @@ class VariableItem(QTreeWidgetItem):
         for item in self.takeChildren():
             del item
 
-    def key(self, column):
-        """Generates the key for this item"""
-        return self.text(column)
-
     def __lt__(self, other):
         column = self.treeWidget().sortColumn()
         return self.key(column) < other.key(column)
@@ -178,6 +214,7 @@ class VariableItem(QTreeWidgetItem):
     def collapse(self):
         """Does nothing for the basic item. Should be overwritten"""
         pass
+
 
 
 class SpecialVariableItem(VariableItem):
@@ -201,12 +238,12 @@ class SpecialVariableItem(VariableItem):
         self.deleteChildren()
         self.populated = True
 
-        pathlist = [str(self.text(0))]
+        pathlist = [self._buildKey()]
         par = self.parent()
 
         # Step 1: get a pathlist up to the requested variable
         while par is not None:
-            pathlist.insert(0, str(par.text(0)))
+            pathlist.insert(0, par._buildKey())
             par = par.parent()
 
         # Step 2: request the variable from the debugger
@@ -229,14 +266,8 @@ class ArrayElementVariableItem(VariableItem):
         element 2 will have a key of '000002' and appear before
         element 10 with a key of '000010'
         """
-        keyStr = str(self.text(0))
-        self.arrayElementKey = "%.6d" % int(keyStr)
-
-    def key(self, column):
-        """Generates the key for this item"""
-        if column == 0:
-            return self.arrayElementKey
-        return VariableItem.key(self, column)
+        col0Str = self.text(0)
+        self.setText(0, "{0:6d}".format(int(col0Str)))
 
 
 class SpecialArrayElementVariableItem(SpecialVariableItem):
@@ -254,11 +285,5 @@ class SpecialArrayElementVariableItem(SpecialVariableItem):
         element 2 will have a key of '000002' and appear before
         element 10 with a key of '000010'
         """
-        keyStr = str(self.text(0))[:-2]     # strip off [], () or {}
-        self.arrayElementKey = "%.6d" % int(keyStr)
-
-    def key(self, column):
-        """Generates the key for this item"""
-        if column == 0:
-            return self.arrayElementKey
-        return SpecialVariableItem.key(self, column)
+        col0Str, indicators = VariableItem.extractIndicators(self.text(0))
+        self.setText(0, "{0:6d}{1}".format(int(col0Str), indicators))
