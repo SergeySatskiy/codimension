@@ -48,12 +48,7 @@ from .diskvaluesrelay import getRunParameters, addRunParams
 
 
 IDE_DEBUG = True
-
-# Finish codes in addition to the normal exit code
 HANDSHAKE_TIMEOUT = 15
-POLL_INTERVAL = 0.1
-BRUTAL_SHUTDOWN_TIMEOUT = 0.2
-GRACEFUL_SHUTDOWN_TIMEOUT = 5
 
 STATE_PROLOGUE = 0
 STATE_RUNNING = 1

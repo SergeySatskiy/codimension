@@ -866,7 +866,7 @@ class CodimensionMainWindow(QMainWindow):
         if self.em.closeEvent(event):
             # The IDE is going to be closed just now
             if self.debugMode:
-                self._onBrutalStopDbgSession()
+                self._onStopDbgSession()
 
             project = GlobalData().project
             project.fsBrowserExpandedDirs = self.getProjectExpandedPaths()
@@ -1643,7 +1643,7 @@ class CodimensionMainWindow(QMainWindow):
     def _onRestartDbgSession(self):
         """Debugger restart session clicked"""
         fileName = self.__debugger.getScriptPath()
-        self._onBrutalStopDbgSession()
+        self._onStopDbgSession()
         self.__debugger.startDebugging(fileName)
 
     def _onDbgGo(self):
