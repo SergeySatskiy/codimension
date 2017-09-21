@@ -862,3 +862,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         linenoMargin = self.getMargin('cdm_line_number_margin')
         if linenoMargin:
             linenoMargin.setForegroundColor(color)
+
+    def terminate(self):
+        """Overloaded version to pass the request to margins too"""
+        for margin in self.getMargins():
+            if hasattr(margin, 'onClose'):
+                margin.onClose()
+        QutepartWrapper.terminate(self)

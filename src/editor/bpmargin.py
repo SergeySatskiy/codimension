@@ -494,3 +494,10 @@ class CDMBreakpointMargin(QWidget):
                 self.__breakpoints[changedHandle].updateLineNumber(newLineNo)
                 index = model.getBreakPointIndex(fileName, newLineNo)
                 model.updateLineNumberByIndex(index, newLineNo)
+
+    def onClose(self):
+        """The editor is going to be closed"""
+        # Prevent clearing breakpoints when an editor is closed.
+        # The signal is generated when the text is deleted and it happens when
+        # the editor is destroyed
+        self._qpart.blockCountChanged.disconnect(self.__onBlockCountChanged)

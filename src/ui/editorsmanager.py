@@ -621,9 +621,8 @@ class EditorsManager(QTabWidget):
             self.updateFilePosition(index)
 
         # Check if it is necessary to add a file to the recent history
-        if self.widget(index).getType() in \
-            [MainWindowTabWidgetBase.PlainTextEditor,
-             MainWindowTabWidgetBase.PictureViewer]:
+        if widgetType in [MainWindowTabWidgetBase.PlainTextEditor,
+                          MainWindowTabWidgetBase.PictureViewer]:
             # Yes, it needs to be saved if it was saved at least once
             fileName = self.widget(index).getFileName()
             if os.path.isabs(fileName) and os.path.exists(fileName):
