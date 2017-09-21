@@ -23,12 +23,12 @@
 import os.path
 from ui.qt import (Qt, pyqtSignal, QSize, QSizePolicy, QFrame, QTreeWidget,
                    QTreeWidgetItem, QVBoxLayout, QLabel, QWidget,
-                   QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
+                   QAbstractItemView, QMenu, QHBoxLayout,
                    QCursor, QAction, QToolBar)
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
-from utils.colorfont import getLabelStyle
+from utils.colorfont import getLabelStyle, HEADER_HEIGHT
 from utils.project import CodimensionProject
 from .variableitems import getDisplayValue, getTooltipValue
 
@@ -182,15 +182,13 @@ class ClientExceptionsViewer(QWidget):
         self.headerFrame.setObjectName('excpt')
         self.headerFrame.setStyleSheet('QFrame#excpt {' +
                                        getLabelStyle(self) + '}')
-        self.headerFrame.setFixedHeight(26)
+        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         self.__excptLabel = QLabel("Exceptions")
 
-        fixedSpacer = QSpacerItem(3, 3)
-
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addSpacerItem(fixedSpacer)
+        headerLayout.addSpacing(3)
         headerLayout.addWidget(self.__excptLabel)
         self.headerFrame.setLayout(headerLayout)
 
@@ -261,6 +259,8 @@ class ClientExceptionsViewer(QWidget):
 
     def __onExceptionDoubleClicked(self, item, column):
         """Triggered when an exception is double clicked"""
+        del item    # unused argument
+        del column  # unused argument
         if self.__currentItem is not None:
             if self.__currentItem.getType() == STACK_FRAME_ITEM:
                 self.__onJumpToCode()

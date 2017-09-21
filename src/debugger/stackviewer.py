@@ -23,8 +23,9 @@ import os.path
 from ui.qt import (Qt, QSizePolicy, QFrame, QTreeWidget, QToolButton,
                    QTreeWidgetItem, QHeaderView, QVBoxLayout, QLabel, QWidget,
                    QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
-                   QPalette, QCursor)
+                   QCursor)
 from ui.itemdelegates import NoOutlineHeightDelegate
+from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
@@ -82,10 +83,11 @@ class StackViewer(QWidget):
         self.__debugger = debugger
         self.currentStack = None
         self.currentFrame = 0
+        self.__contextItem = None
         self.__createPopupMenu()
         self.__createLayout()
 
-        if Settings()['showStackViewer'] == False:
+        if not Settings()['showStackViewer']:
             self.__onShowHide(True)
 
     def __createPopupMenu(self):
@@ -104,33 +106,26 @@ class StackViewer(QWidget):
         verticalLayout.setSpacing(0)
 
         self.headerFrame = QFrame()
-        self.headerFrame.setFrameStyle(QFrame.StyledPanel)
-        self.headerFrame.setAutoFillBackground(True)
-        headerPalette = self.headerFrame.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        self.headerFrame.setPalette(headerPalette)
-        self.headerFrame.setFixedHeight(24)
+        self.headerFrame.setObjectName('stackheader')
+        self.headerFrame.setStyleSheet('QFrame#stackheader {' +
+                                       getLabelStyle(self) + '}')
+        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         self.__stackLabel = QLabel("Stack")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
-        fixedSpacer = QSpacerItem(3, 3)
 
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise(True)
         self.__showHideButton.setIcon(getIcon('less.png'))
-        self.__showHideButton.setFixedSize(20, 20)
+        self.__showHideButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.__showHideButton.setToolTip("Hide frames list")
         self.__showHideButton.setFocusPolicy(Qt.NoFocus)
         self.__showHideButton.clicked.connect(self.__onShowHide)
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addSpacerItem(fixedSpacer)
+        headerLayout.addSpacing(3)
         headerLayout.addWidget(self.__stackLabel)
         headerLayout.addSpacerItem(expandingSpacer)
         headerLayout.addWidget(self.__showHideButton)
@@ -148,7 +143,7 @@ class StackViewer(QWidget):
         self.__framesList.setSelectionMode(QAbstractItemView.NoSelection)
         self.__framesList.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.__framesList.setItemDelegate(NoOutlineHeightDelegate(4))
-        self.__framesList.setFocusPolicy(Qt.NoFocus )
+        self.__framesList.setFocusPolicy(Qt.NoFocus)
         self.__framesList.setContextMenuPolicy(Qt.CustomContextMenu)
 
         self.__framesList.itemClicked.connect(self.__onFrameClicked)
@@ -208,13 +203,13 @@ class StackViewer(QWidget):
         self.currentStack = stack
         self.currentFrame = 0
         frameNumber = 0
-        for s in stack:
-            if len(s) == 2:
+        for item in stack:
+            if len(item) == 2:
                 # This is when an exception comes
                 funcName = ""
             else:
-                funcName = s[2]
-            item = StackFrameItem(s[0], s[1], funcName, frameNumber)
+                funcName = item[2]
+            item = StackFrameItem(item[0], item[1], funcName, frameNumber)
             self.__framesList.addTopLevelItem(item)
             frameNumber += 1
         self.__resizeColumns()
@@ -228,6 +223,7 @@ class StackViewer(QWidget):
 
     def __onFrameClicked(self, item, column):
         """Triggered when a frame is clicked"""
+        del column  # unused argument
         if item.isCurrent():
             return
 
@@ -245,6 +241,7 @@ class StackViewer(QWidget):
 
     def __onFrameDoubleClicked(self, item, column):
         """Triggered when a frame is double clicked"""
+        del column  # unused argument
         # The frame has been switched already because the double click
         # signal always comes after the single click one
         fileName = item.getFilename()

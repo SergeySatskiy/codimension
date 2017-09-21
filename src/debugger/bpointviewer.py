@@ -22,7 +22,7 @@
 import logging
 from ui.qt import (Qt, pyqtSignal, QSize, QSizePolicy, QFrame, QTreeView,
                    QHeaderView, QVBoxLayout, QSortFilterProxyModel, QLabel,
-                   QWidget, QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
+                   QWidget, QAbstractItemView, QMenu, QHBoxLayout,
                    QCursor, QItemSelectionModel, QDialog, QToolBar,
                    QAction, QModelIndex)
 from ui.itemdelegates import NoOutlineHeightDelegate
@@ -30,7 +30,7 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
-from utils.colorfont import getLabelStyle
+from utils.colorfont import getLabelStyle, HEADER_HEIGHT
 from .editbreakpoint import BreakpointEditDialog
 from .breakpoint import Breakpoint
 from .bputils import getBreakpointLines
@@ -321,15 +321,13 @@ class BreakPointViewer(QWidget):
         self.headerFrame.setObjectName('bpheader')
         self.headerFrame.setStyleSheet('QFrame#bpheader {' +
                                        getLabelStyle(self) + '}')
-        self.headerFrame.setFixedHeight(26)
+        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         self.__breakpointLabel = QLabel("Breakpoints")
 
-        fixedSpacer = QSpacerItem(3, 3)
-
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addSpacerItem(fixedSpacer)
+        headerLayout.addSpacing(3)
         headerLayout.addWidget(self.__breakpointLabel)
         self.headerFrame.setLayout(headerLayout)
 

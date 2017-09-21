@@ -25,7 +25,7 @@ from utils.pixmapcache import getIcon
 from utils.settings import Settings
 from utils.project import CodimensionProject, getProjectFileTooltip
 from utils.globals import GlobalData
-from utils.colorfont import getLabelStyle
+from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 from utils.fileutils import (getFileProperties, isPythonMime,
                              isCDMProjectMime, isImageViewable)
 from .qt import (Qt, QSize, QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
@@ -263,7 +263,7 @@ class RecentProjectsViewer(QWidget):
         headerFrame.setObjectName('fheader')
         headerFrame.setStyleSheet('QFrame#fheader {' +
                                   getLabelStyle(self) + '}')
-        headerFrame.setFixedHeight(26)
+        headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         recentFilesLabel = QLabel()
         recentFilesLabel.setText("Recent files")
@@ -337,7 +337,7 @@ class RecentProjectsViewer(QWidget):
         self.headerFrame.setObjectName('pheader')
         self.headerFrame.setStyleSheet('QFrame#pheader {' +
                                        getLabelStyle(self) + '}')
-        self.headerFrame.setFixedHeight(26)
+        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         recentProjectsLabel = QLabel()
         recentProjectsLabel.setText("Recent projects")
@@ -347,7 +347,7 @@ class RecentProjectsViewer(QWidget):
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise(True)
         self.__showHideButton.setIcon(getIcon('less.png'))
-        self.__showHideButton.setFixedSize(20, 20)
+        self.__showHideButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.__showHideButton.setToolTip("Hide recent projects list")
         self.__showHideButton.setFocusPolicy(Qt.NoFocus)
         self.__showHideButton.clicked.connect(self.__onShowHide)

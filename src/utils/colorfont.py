@@ -23,6 +23,14 @@ from ui.qt import QColor, QFont, QFontComboBox, QLabel
 from .globals import GlobalData
 from .settings import Settings
 
+# On many occaisions Codimension uses a header frame with a label in it
+# and possibly some controls. To make the look and feel of the headers unified
+# a style sheet is used for the header (see getLabelStyle() function).
+# The stylesheet dictates padding so the control height depends on the header
+# height. So, to make it easily changeable there are two constants here.
+HEADER_HEIGHT = 26
+HEADER_BUTTON = 17
+
 
 def checkColorRange(value):
     """Checks the color range"""

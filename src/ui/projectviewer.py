@@ -29,7 +29,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
 from utils.fileutils import isPythonMime, isPythonFile, isPythonCompiledFile
-from utils.colorfont import getLabelStyle
+from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
 from analysis.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
@@ -126,7 +126,7 @@ class ProjectViewer(QWidget):
         headerFrame.setObjectName('prjheader')
         headerFrame.setStyleSheet('QFrame#prjheader {' +
                                   getLabelStyle(self) + '}')
-        headerFrame.setFixedHeight(26)
+        headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         self.projectLabel = QLabel()
         self.projectLabel.setText("Project: none")
@@ -137,7 +137,7 @@ class ProjectViewer(QWidget):
         self.propertiesButton = QToolButton()
         self.propertiesButton.setAutoRaise(True)
         self.propertiesButton.setIcon(getIcon('smalli.png'))
-        self.propertiesButton.setFixedSize(20, 20)
+        self.propertiesButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.propertiesButton.setToolTip("Project properties")
         self.propertiesButton.setEnabled(False)
         self.propertiesButton.setFocusPolicy(Qt.NoFocus)
@@ -146,7 +146,7 @@ class ProjectViewer(QWidget):
         self.unloadButton = QToolButton()
         self.unloadButton.setAutoRaise(True)
         self.unloadButton.setIcon(getIcon('unloadproject.png'))
-        self.unloadButton.setFixedSize(20, 20)
+        self.unloadButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.unloadButton.setToolTip("Unload project")
         self.unloadButton.setEnabled(False)
         self.unloadButton.setFocusPolicy(Qt.NoFocus)
@@ -304,7 +304,7 @@ class ProjectViewer(QWidget):
         self.headerFrame.setObjectName('fsheader')
         self.headerFrame.setStyleSheet('QFrame#fsheader {' +
                                        getLabelStyle(self) + '}')
-        self.headerFrame.setFixedHeight(26)
+        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         projectLabel = QLabel()
         projectLabel.setText("File system")
@@ -314,7 +314,7 @@ class ProjectViewer(QWidget):
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise(True)
         self.__showHideButton.setIcon(getIcon('less.png'))
-        self.__showHideButton.setFixedSize(20, 20)
+        self.__showHideButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.__showHideButton.setToolTip("Hide file system tree")
         self.__showHideButton.setFocusPolicy(Qt.NoFocus)
         self.__showHideButton.clicked.connect(self.__onShowHide)

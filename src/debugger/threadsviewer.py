@@ -21,10 +21,10 @@
 
 
 from ui.qt import (Qt, QFrame, QTreeWidget, QToolButton, QTreeWidgetItem,
-                   QHeaderView, QVBoxLayout, QLabel, QWidget,
-                   QAbstractItemView, QSizePolicy, QSpacerItem,
-                   QHBoxLayout, QPalette)
+                   QHeaderView, QVBoxLayout, QLabel, QWidget, QHBoxLayout,
+                   QAbstractItemView, QSizePolicy, QSpacerItem)
 from ui.itemdelegates import NoOutlineHeightDelegate
+from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 from utils.pixmapcache import getIcon
 from utils.settings import Settings
 
@@ -97,33 +97,26 @@ class ThreadsViewer(QWidget):
         verticalLayout.setSpacing(0)
 
         self.headerFrame = QFrame()
-        self.headerFrame.setFrameStyle(QFrame.StyledPanel)
-        self.headerFrame.setAutoFillBackground(True)
-        headerPalette = self.headerFrame.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        self.headerFrame.setPalette(headerPalette)
-        self.headerFrame.setFixedHeight(24)
+        self.headerFrame.setObjectName('threadheader')
+        self.headerFrame.setStyleSheet('QFrame#threadheader {' +
+                                       getLabelStyle(self) + '}')
+        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         self.__threadsLabel = QLabel("Threads")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
-        fixedSpacer = QSpacerItem(3, 3)
 
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise(True)
         self.__showHideButton.setIcon(getIcon('less.png'))
-        self.__showHideButton.setFixedSize(20, 20)
+        self.__showHideButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.__showHideButton.setToolTip("Hide threads list")
         self.__showHideButton.setFocusPolicy(Qt.NoFocus)
         self.__showHideButton.clicked.connect(self.__onShowHide)
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addSpacerItem(fixedSpacer)
+        headerLayout.addSpacing(3)
         headerLayout.addWidget(self.__threadsLabel)
         headerLayout.addSpacerItem(expandingSpacer)
         headerLayout.addWidget(self.__showHideButton)

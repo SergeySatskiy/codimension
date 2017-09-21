@@ -20,7 +20,7 @@
 """The tag help viewer implementation"""
 
 from utils.pixmapcache import getIcon
-from utils.colorfont import getZoomedMonoFont, getLabelStyle
+from utils.colorfont import getZoomedMonoFont, getLabelStyle, HEADER_HEIGHT
 from .qt import (Qt, QSize, QPlainTextEdit, QMenu, QApplication, QHBoxLayout,
                  QWidget, QAction, QToolBar, QSizePolicy, QLabel, QVBoxLayout,
                  QCursor)
@@ -97,6 +97,7 @@ class TagHelpViewer(QWidget):
         self.__header.setStyleSheet('QFrame#signature {' +
                                     getLabelStyle(self) + '}')
         self.__header.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
+        self.__header.setFixedHeight(HEADER_HEIGHT)
         verticalLayout = QVBoxLayout()
         verticalLayout.setContentsMargins(2, 2, 2, 2)
         verticalLayout.setSpacing(2)

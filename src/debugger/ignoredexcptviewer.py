@@ -28,7 +28,7 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.settings import Settings
-from utils.colorfont import getLabelStyle
+from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 
 
 class IgnoredExceptionsViewer(QWidget):
@@ -65,24 +65,23 @@ class IgnoredExceptionsViewer(QWidget):
         self.headerFrame.setObjectName('ignexcpt')
         self.headerFrame.setStyleSheet('QFrame#ignexcpt {' +
                                        getLabelStyle(self) + '}')
-        self.headerFrame.setFixedHeight(26)
+        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         self.__excptLabel = QLabel("Ignored exception types")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
-        fixedSpacer = QSpacerItem(3, 3)
 
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise(True)
         self.__showHideButton.setIcon(getIcon('less.png'))
-        self.__showHideButton.setFixedSize(20, 20)
+        self.__showHideButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.__showHideButton.setToolTip("Hide ignored exceptions list")
         self.__showHideButton.setFocusPolicy(Qt.NoFocus)
         self.__showHideButton.clicked.connect(self.__onShowHide)
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addSpacerItem(fixedSpacer)
+        headerLayout.addSpacing(3)
         headerLayout.addWidget(self.__excptLabel)
         headerLayout.addSpacerItem(expandingSpacer)
         headerLayout.addWidget(self.__showHideButton)

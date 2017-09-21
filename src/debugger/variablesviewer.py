@@ -22,10 +22,11 @@
 
 from ui.qt import (Qt, QFrame, QVBoxLayout, QLabel, QWidget, QSizePolicy,
                    QSpacerItem, QGridLayout, QHBoxLayout, QToolButton,
-                   QPalette, QPushButton)
+                   QPushButton)
+from ui.combobox import CDMComboBox
 from utils.pixmapcache import getIcon
 from utils.settings import Settings
-from ui.combobox import CDMComboBox
+from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 from utils.globals import GlobalData
 from .variablesbrowser import VariablesBrowser
 
@@ -62,28 +63,20 @@ class VariablesViewer(QWidget):
         verticalLayout.setSpacing(0)
 
         headerFrame = QFrame()
-        headerFrame.setFrameStyle(QFrame.StyledPanel)
-        headerFrame.setAutoFillBackground(True)
-        headerPalette = headerFrame.palette()
-        headerBackground = headerPalette.color(QPalette.Background)
-        headerBackground.setRgb(min(headerBackground.red() + 30, 255),
-                                min(headerBackground.green() + 30, 255),
-                                min(headerBackground.blue() + 30, 255))
-        headerPalette.setColor(QPalette.Background, headerBackground)
-        headerFrame.setPalette(headerPalette)
-        headerFrame.setFixedHeight(24)
+        headerFrame.setObjectName('varsheader')
+        headerFrame.setStyleSheet('QFrame#varsheader {' +
+                                  getLabelStyle(self) + '}')
+        headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         self.__headerLabel = QLabel("Variables")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
-        fixedSpacer = QSpacerItem(3, 3)
-        fixedSpacer1 = QSpacerItem(5, 5)
 
         self.__mcfButton = QToolButton()
         self.__mcfButton.setCheckable(True)
         self.__mcfButton.setChecked(self.__hideMCFFilter)
         self.__mcfButton.setIcon(getIcon('dbgfltmcf.png'))
-        self.__mcfButton.setFixedSize(20, 20)
+        self.__mcfButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.__mcfButton.setToolTip("Show/hide modules, classes and functions")
         self.__mcfButton.setFocusPolicy(Qt.NoFocus)
         self.__mcfButton.clicked.connect(self.__onMCFFilter)
@@ -93,7 +86,7 @@ class VariablesViewer(QWidget):
         self.__globalAndLocalButton.setChecked(
             self.__filter == VariablesViewer.FilterGlobalAndLocal)
         self.__globalAndLocalButton.setIcon(getIcon('dbgfltgl.png'))
-        self.__globalAndLocalButton.setFixedSize(20, 20)
+        self.__globalAndLocalButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.__globalAndLocalButton.setToolTip(
             "Do not filter out global or local variables")
         self.__globalAndLocalButton.setFocusPolicy(Qt.NoFocus)
@@ -105,7 +98,7 @@ class VariablesViewer(QWidget):
         self.__localOnlyButton.setChecked(
             self.__filter == VariablesViewer.FilterLocalOnly)
         self.__localOnlyButton.setIcon(getIcon('dbgfltlo.png'))
-        self.__localOnlyButton.setFixedSize(20, 20)
+        self.__localOnlyButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.__localOnlyButton.setToolTip("Filter out global variables")
         self.__localOnlyButton.setFocusPolicy(Qt.NoFocus)
         self.__localOnlyButton.clicked.connect(self.__onLocalFilter)
@@ -115,7 +108,7 @@ class VariablesViewer(QWidget):
         self.__globalOnlyButton.setChecked(
             self.__filter == VariablesViewer.FilterGlobalOnly)
         self.__globalOnlyButton.setIcon(getIcon('dbgfltgo.png'))
-        self.__globalOnlyButton.setFixedSize(20, 20)
+        self.__globalOnlyButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
         self.__globalOnlyButton.setToolTip("Filter out local variables")
         self.__globalOnlyButton.setFocusPolicy(Qt.NoFocus)
         self.__globalOnlyButton.clicked.connect(self.__onGlobalFilter)
@@ -132,6 +125,7 @@ class VariablesViewer(QWidget):
         self.__execButton = QPushButton("Exec")
         # self.__execButton.setFocusPolicy(Qt.NoFocus)
         self.__execButton.setEnabled(False)
+        self.__execButton.setFixedHeight(26)
         self.__execButton.clicked.connect(self.__onExec)
 
         self.__evalStatement = CDMComboBox(True)
@@ -146,16 +140,17 @@ class VariablesViewer(QWidget):
         self.__evalButton = QPushButton("Eval")
         # self.__evalButton.setFocusPolicy(Qt.NoFocus)
         self.__evalButton.setEnabled(False)
+        self.__evalButton.setFixedHeight(26)
         self.__evalButton.clicked.connect(self.__onEval)
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins(0, 0, 0, 0)
         headerLayout.setSpacing(0)
-        headerLayout.addSpacerItem(fixedSpacer)
+        headerLayout.addSpacing(3)
         headerLayout.addWidget(self.__headerLabel)
         headerLayout.addSpacerItem(expandingSpacer)
         headerLayout.addWidget(self.__mcfButton)
-        headerLayout.addSpacerItem(fixedSpacer1)
+        headerLayout.addSpacing(5)
         headerLayout.addWidget(self.__globalAndLocalButton)
         headerLayout.addWidget(self.__localOnlyButton)
         headerLayout.addWidget(self.__globalOnlyButton)
@@ -240,9 +235,9 @@ class VariablesViewer(QWidget):
             self.__headerLabel.setText("Variables (" + str(shown) +
                                        " of " + str(total) + ")")
 
-    # Arguments: text
-    def __textFilterChanged(self, _):
+    def __textFilterChanged(self, text):
         """Triggered when a text filter has been changed"""
+        del text    # unused argument
         self.__updateFilter()
 
     def __updateFilter(self):
