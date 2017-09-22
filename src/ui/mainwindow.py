@@ -43,7 +43,6 @@ from debugger.server import CodimensionDebugger
 from debugger.excpt import DebuggerExceptions
 from debugger.bpwp import DebuggerBreakWatchPoints
 from debugger.bputils import clearValidBreakpointLinesCache
-from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
 from analysis.disasm import (getFileDisassembled, getCompiledfileDisassembled,
@@ -1421,7 +1420,6 @@ class CodimensionMainWindow(QMainWindow):
 
     def __onDebuggerStateChanged(self, newState):
         """Triggered when the debugger reported its state changed"""
-        print('Switching state to: ' + str(newState))
         if newState != CodimensionDebugger.STATE_IN_IDE:
             self.__removeCurrenDebugLineHighlight()
             self.debuggerContext.switchControl(False)
@@ -1644,7 +1642,7 @@ class CodimensionMainWindow(QMainWindow):
         """Debugger restart session clicked"""
         fileName = self.__debugger.getScriptPath()
         self._onStopDbgSession()
-        self.__debugger.startDebugging(fileName)
+        self._runManager.debug(fileName, False)
 
     def _onDbgGo(self):
         """Debugger continue clicked"""
@@ -2264,7 +2262,8 @@ class CodimensionMainWindow(QMainWindow):
                 keys = list(runParameters['additionToParentEnv'].keys())
                 keys.sort()
                 for key in keys:
-                    env += "\n    " + key + " = " + runParameters['additionToParentEnv'][key]
+                    env += "\n    " + key + " = " + \
+                        runParameters['additionToParentEnv'][key]
                     if 'PATH' in key:
                         pathVariables.append(key)
             elif runParameters['envType'] == runParameters.SpecificEnvironment:
@@ -2272,7 +2271,8 @@ class CodimensionMainWindow(QMainWindow):
                 keys = list(runParameters['specificEnv'].keys())
                 keys.sort()
                 for key in keys:
-                    env += "\n    " + key + " = " + runParameters['specificEnv'][key]
+                    env += "\n    " + key + " = " + \
+                        runParameters['specificEnv'][key]
                     if 'PATH' in key:
                         pathVariables.append(key)
 

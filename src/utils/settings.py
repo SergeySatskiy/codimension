@@ -38,8 +38,6 @@ from .userencodings import FileEncodings
 
 SETTINGS_DIR = os.path.join(os.path.realpath(QDir.homePath()),
                             CONFIG_DIR) + os.path.sep
-THIRDPARTY_DIR = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])),
-                              'thirdparty') + os.path.sep
 
 CLEAR_AND_REUSE = 0
 NO_CLEAR_AND_REUSE = 1

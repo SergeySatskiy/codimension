@@ -21,6 +21,16 @@
 """Profiler test"""
 import sys
 
+class A:
+    def __init__(self):
+        self.__d = 10
+        self.d = 20
+    def f():
+        pass
+    @property
+    def x(self):
+        return self.__x
+
 def f( bla ):
     " F function docstring "
     if bla == -1:
@@ -33,13 +43,10 @@ def g( foo ):
     " g function doc "
     f( foo )
 
-a = 77
+a = A()
+b = set()
+c = {1: '1', 2: '2'}
 
 f( 0 )
 g( -1 )
-
-class A:
-    def f():
-        pass
-
 
