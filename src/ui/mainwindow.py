@@ -1540,44 +1540,27 @@ class CodimensionMainWindow(QMainWindow):
         self.__debugger.remoteClientVariables(0, 0) # locals
         self.debuggerExceptions.setFocus()
 
-    def __onDebuggerClientSyntaxError(self, errMessage, fileName,
+    def __onDebuggerClientSyntaxError(self, procuuid, errMessage, fileName,
                                       lineNo, charNo):
         """Triggered when the client reported a syntax error"""
         if errMessage is None:
             message = "The program being debugged contains an unspecified " \
-                      "syntax error.\nDebugging session will be closed."
+                      "syntax error."
         else:
             # Jump to the source code
             self.em.openFile(fileName, lineNo)
             editor = self.em.currentWidget().getEditor()
             editor.gotoLine(lineNo, charNo)
 
-            message = "The file " + fileName + " contains syntax error: '" + \
+            message = "Syntax error: '" + \
                 errMessage + "' at line " + str(lineNo) + ", position " + \
-                str(charNo) + ".\nDebugging session will be closed."
+                str(charNo) + "."
 
-        dlg = QMessageBox(QMessageBox.Critical, "Debugging session", message)
-
-        if self.settings['terminalType'] == TERM_REDIRECT:
-            dlg.addButton(QMessageBox.Ok)
+        runParameters, _ = self.__debugger.getRunDebugParameters()
+        if runParameters['redirected']:
+            self._runManager.appendIDEMessage(procuuid, message)
         else:
-            dlg.addButton(QMessageBox.Ok)
-            dlg.addButton(QMessageBox.Cancel)
-
-            btn1 = dlg.button(QMessageBox.Ok)
-            btn1.setText("&Close debug console")
-            btn1.setIcon(getIcon(''))
-
-            btn2 = dlg.button(QMessageBox.Cancel)
-            btn2.setText("&Keep debug console")
-            btn2.setIcon(getIcon(''))
-
-        dlg.setDefaultButton(QMessageBox.Ok)
-        res = dlg.exec_()
-
-        if res == QMessageBox.Cancel or \
-           self.settings['terminalType'] == TERM_REDIRECT:
-            QTimer.singleShot(0, self._onStopDbgSession)
+            logging.error(message)
 
     def __removeCurrenDebugLineHighlight(self):
         """Removes the current debug line highlight"""
@@ -2283,7 +2266,10 @@ class CodimensionMainWindow(QMainWindow):
                 for item in container[key].split(':'):
                     env += "\n        " + item
 
-        terminal = "Terminal to run in: "
+        if runParameters['redirected']:
+            terminal = "IO: redirected to IDE"
+        else:
+            terminal = "IO: custom terminal"
 
         logging.info("\n".join(
             ["Current debug session settings",

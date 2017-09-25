@@ -80,7 +80,6 @@ def filterFunctions(isGlobal, varName, varType):
     """Filters out functions"""
     del isGlobal    # unused argument
     del varName     # unused argument
-    del varType     # unused argument
     return varType.lower() == 'builtin function'
 
 
@@ -104,7 +103,6 @@ def filterModules(isGlobal, varName, varType):
     """Filters out modules"""
     del isGlobal    # unused argument
     del varName     # unused argument
-    del varType     # unused argument
     return varType.lower() == 'module'
 
 

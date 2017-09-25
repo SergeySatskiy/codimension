@@ -21,7 +21,6 @@
 
 import os
 import os.path
-import sys
 import datetime
 import json
 import logging
@@ -185,8 +184,6 @@ _DEFAULT_SETTINGS = {
                             '.*\\.swp$', '.*\\.pyo$', '__pycache__'],
     'ignoredExceptions': [],
     'disabledPlugins': [],
-    'dirSafeModules': ['os', 'sys', 'xml', 'collections',
-                       'numpy', 'scipy', 'unittest'],
     'vcsindicators': [[-1, 'vcsunversioned.png', None,
                        '220,220,255,255', 'Not under VCS control'],
                       [-2, 'vcsstatuserror.png', None,

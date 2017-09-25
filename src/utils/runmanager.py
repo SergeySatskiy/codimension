@@ -34,7 +34,8 @@ from debugger.client.protocol_cdm_dbg import (METHOD_PROC_ID_INFO,
                                               METHOD_STDOUT, METHOD_STDERR,
                                               METHOD_STDIN, KILLED,
                                               DISCONNECTED, FAILED_TO_START,
-                                              STOPPED_BY_REQUEST)
+                                              STOPPED_BY_REQUEST,
+                                              SYNTAX_ERROR_AT_START)
 from debugger.client.cdm_dbg_utils import getParsedJSONMessage, sendJSONCommand
 from ui.runparamsdlg import RunDialog
 from ui.qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
@@ -570,6 +571,10 @@ class RunManager(QObject):
                 msg = "Script finished by the user request"
                 tooltip = "stopped by user"
                 item.procWrapper.wait()
+            elif retCode == SYNTAX_ERROR_AT_START:
+                msg = "Failure to run due to a syntax error"
+                tooltip = "syntax error"
+                item.procWrapper.wait()
             else:
                 msg = "Script finished with exit code " + str(retCode)
                 tooltip = "finished, exit code " + str(retCode)
@@ -670,3 +675,13 @@ class RunManager(QObject):
             index -= 1
         if needNewTimer:
             self.__prologueTimer.start(1000)
+
+    def appendIDEMessage(self, procuuid, message):
+        """Appends a message to the appropriate IO window"""
+        index = self.__getProcessIndex(procuuid)
+        if index is not None:
+            item = self.__processes[index]
+            if item.widget:
+                item.widget.appendIDEMessage(message)
+                return
+        logging.error(message)

@@ -47,7 +47,7 @@ class CodimensionDebugger(QObject):
     sigDebuggerStateChanged = pyqtSignal(int)
     sigClientLine = pyqtSignal(str, int, bool)
     sigClientException = pyqtSignal(str, str, list)
-    sigClientSyntaxError = pyqtSignal(str, str, int, int)
+    sigClientSyntaxError = pyqtSignal(str, str, str, int, int)
     sigEvalOK = pyqtSignal(str)
     sigEvalError = pyqtSignal(str)
     sigExecOK = pyqtSignal(str)
@@ -209,7 +209,8 @@ class CodimensionDebugger(QObject):
 
     def __handleSyntaxError(self, params):
         """Handles METHOD_SYNTAX_ERROR"""
-        self.sigClientSyntaxError.emit(params['message'], params['filename'],
+        self.sigClientSyntaxError.emit(self.__procuuid,
+                                       params['message'], params['filename'],
                                        params['line'],
                                        params['characternumber'])
 
