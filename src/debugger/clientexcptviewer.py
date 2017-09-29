@@ -104,7 +104,8 @@ class ExceptionItem(QTreeWidgetItem):
                 lineNumber = entry[1]
                 funcName = entry[2]
                 funcArguments = entry[3]
-                StackFrameItem(self, fileName, lineNumber)
+                StackFrameItem(self, fileName, lineNumber,
+                               funcName, funcArguments)
 
     @staticmethod
     def getType():
@@ -251,7 +252,8 @@ class ClientExceptionsViewer(QWidget):
         self.exceptionsList.itemSelectionChanged.connect(
             self.__onSelectionChanged)
 
-        self.exceptionsList.setHeaderLabels(["Exception"])
+        self.exceptionsList.setHeaderLabels(["Exception",
+                                             "Function", "Arguments"])
 
         verticalLayout.addWidget(self.headerFrame)
         verticalLayout.addWidget(self.toolbar)
