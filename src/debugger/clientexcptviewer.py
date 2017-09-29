@@ -41,13 +41,19 @@ class StackFrameItem(QTreeWidgetItem):
 
     """One stack trace frame"""
 
-    def __init__(self, parentItem, fileName, lineNumber):
+    def __init__(self, parentItem, fileName, lineNumber, funcName, funcArgs):
         QTreeWidgetItem.__init__(self, parentItem)
 
         self.__fileName = fileName
         self.__lineNumber = lineNumber
+        self.__funcName = funcName
+        self.__funcArgs = funcArgs
         self.setText(0, os.path.basename(fileName) + ":" + str(lineNumber))
         self.setToolTip(0, fileName + ":" + str(lineNumber))
+        self.setText(1, funcName)
+        self.setToolTip(1, funcName)
+        self.setText(2, funcArgs)
+        self.setToolTip(2, funcArgs)
 
     @staticmethod
     def getType():
@@ -78,7 +84,7 @@ class ExceptionItem(QTreeWidgetItem):
         self.__exceptionType = exceptionType
         self.__exceptionMessage = exceptionMessage
 
-        if exceptionMessage == "" or exceptionMessage is None:
+        if not exceptionMessage:
             self.setText(0, str(exceptionType))
             self.setToolTip(0, "Type: " + str(exceptionType))
         else:
@@ -93,7 +99,11 @@ class ExceptionItem(QTreeWidgetItem):
             self.setToolTip(0, tooltip)
 
         if stackTrace:
-            for fileName, lineNumber in stackTrace:
+            for entry in stackTrace:
+                fileName = entry[0]
+                lineNumber = entry[1]
+                funcName = entry[2]
+                funcArguments = entry[3]
                 StackFrameItem(self, fileName, lineNumber)
 
     @staticmethod

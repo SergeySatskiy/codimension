@@ -22,13 +22,14 @@
 
 from ui.qt import (Qt, QFrame, QVBoxLayout, QLabel, QWidget, QSizePolicy,
                    QSpacerItem, QGridLayout, QHBoxLayout, QToolButton,
-                   QPushButton)
+                   QPushButton, QMenu)
 from ui.combobox import CDMComboBox
 from utils.pixmapcache import getIcon
 from utils.settings import Settings
 from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 from utils.globals import GlobalData
 from .variablesbrowser import VariablesBrowser
+from .varfilters import VARIABLE_FILTERS
 
 
 class VariablesViewer(QWidget):
@@ -45,8 +46,6 @@ class VariablesViewer(QWidget):
 
         self.__debugger = debugger
         self.__browser = VariablesBrowser(debugger, self)
-        self.__filter = Settings()['debugGLFilter']
-        self.__hideMCFFilter = Settings()['debugHideMCF']
         self.__createLayout()
 
         self.setTabOrder(self.__browser, self.__execStatement)
@@ -72,46 +71,26 @@ class VariablesViewer(QWidget):
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
 
-        self.__mcfButton = QToolButton()
-        self.__mcfButton.setCheckable(True)
-        self.__mcfButton.setChecked(self.__hideMCFFilter)
-        self.__mcfButton.setIcon(getIcon('dbgfltmcf.png'))
-        self.__mcfButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
-        self.__mcfButton.setToolTip("Show/hide modules, classes and functions")
-        self.__mcfButton.setFocusPolicy(Qt.NoFocus)
-        self.__mcfButton.clicked.connect(self.__onMCFFilter)
+        self.__filterMenu = QMenu(self)
+        self.__showAllAct =  self.__filterMenu.addAction('Show all variables')
+        self.__showAllAct.setData('showall')
+        self.__filterMenu.addSeparator()
+        self.__filters = []
+        for title, settingName, _ in VARIABLE_FILTERS:
+            action = self.__filterMenu.addAction(title)
+            action.setCheckable(True)
+            action.setData(settingName)
+            self.__filters.append(action)
+        self.__filterMenu.aboutToShow.connect(self.__filterMenuAboutToShow)
+        self.__filterMenu.triggered.connect(self.__filterMenuTriggered)
 
-        self.__globalAndLocalButton = QToolButton()
-        self.__globalAndLocalButton.setCheckable(True)
-        self.__globalAndLocalButton.setChecked(
-            self.__filter == VariablesViewer.FilterGlobalAndLocal)
-        self.__globalAndLocalButton.setIcon(getIcon('dbgfltgl.png'))
-        self.__globalAndLocalButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
-        self.__globalAndLocalButton.setToolTip(
-            "Do not filter out global or local variables")
-        self.__globalAndLocalButton.setFocusPolicy(Qt.NoFocus)
-        self.__globalAndLocalButton.clicked.connect(
-            self.__onGlobalAndLocalFilter)
-
-        self.__localOnlyButton = QToolButton()
-        self.__localOnlyButton.setCheckable(True)
-        self.__localOnlyButton.setChecked(
-            self.__filter == VariablesViewer.FilterLocalOnly)
-        self.__localOnlyButton.setIcon(getIcon('dbgfltlo.png'))
-        self.__localOnlyButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
-        self.__localOnlyButton.setToolTip("Filter out global variables")
-        self.__localOnlyButton.setFocusPolicy(Qt.NoFocus)
-        self.__localOnlyButton.clicked.connect(self.__onLocalFilter)
-
-        self.__globalOnlyButton = QToolButton()
-        self.__globalOnlyButton.setCheckable(True)
-        self.__globalOnlyButton.setChecked(
-            self.__filter == VariablesViewer.FilterGlobalOnly)
-        self.__globalOnlyButton.setIcon(getIcon('dbgfltgo.png'))
-        self.__globalOnlyButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
-        self.__globalOnlyButton.setToolTip("Filter out local variables")
-        self.__globalOnlyButton.setFocusPolicy(Qt.NoFocus)
-        self.__globalOnlyButton.clicked.connect(self.__onGlobalFilter)
+        self.__filterButton = QToolButton(self)
+        self.__filterButton.setIcon(getIcon('dbgvarflt.png'))
+        self.__filterButton.setToolTip('Variable filter')
+        self.__filterButton.setPopupMode(QToolButton.InstantPopup)
+        self.__filterButton.setMenu(self.__filterMenu)
+        self.__filterButton.setFocusPolicy(Qt.NoFocus)
+        self.__filterButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
 
         self.__execStatement = CDMComboBox(True)
         self.__execStatement.setSizePolicy(QSizePolicy.Expanding,
@@ -123,7 +102,6 @@ class VariablesViewer(QWidget):
             self.__execStatementChanged)
         self.__execStatement.enterClicked.connect(self.__onEnterInExec)
         self.__execButton = QPushButton("Exec")
-        # self.__execButton.setFocusPolicy(Qt.NoFocus)
         self.__execButton.setEnabled(False)
         self.__execButton.setFixedHeight(26)
         self.__execButton.clicked.connect(self.__onExec)
@@ -138,7 +116,6 @@ class VariablesViewer(QWidget):
             self.__evalStatementChanged)
         self.__evalStatement.enterClicked.connect(self.__onEnterInEval)
         self.__evalButton = QPushButton("Eval")
-        # self.__evalButton.setFocusPolicy(Qt.NoFocus)
         self.__evalButton.setEnabled(False)
         self.__evalButton.setFixedHeight(26)
         self.__evalButton.clicked.connect(self.__onEval)
@@ -149,11 +126,7 @@ class VariablesViewer(QWidget):
         headerLayout.addSpacing(3)
         headerLayout.addWidget(self.__headerLabel)
         headerLayout.addSpacerItem(expandingSpacer)
-        headerLayout.addWidget(self.__mcfButton)
-        headerLayout.addSpacing(5)
-        headerLayout.addWidget(self.__globalAndLocalButton)
-        headerLayout.addWidget(self.__localOnlyButton)
-        headerLayout.addWidget(self.__globalOnlyButton)
+        headerLayout.addWidget(self.__filterButton)
         headerFrame.setLayout(headerLayout)
 
         execEvalLayout = QGridLayout()
@@ -168,52 +141,19 @@ class VariablesViewer(QWidget):
         verticalLayout.addWidget(self.__browser)
         verticalLayout.addLayout(execEvalLayout)
 
-    def __onMCFFilter(self):
-        """Triggered when modules/classes/functions filter changed"""
-        self.__hideMCFFilter = self.__mcfButton.isChecked()
-        Settings()['debugHideMCF'] = self.__hideMCFFilter
-        self.__updateFilter()
+    def __filterMenuAboutToShow(self):
+        """Debug variable filter menu is about to show"""
+        for flt in self.__filters:
+            flt.setChecked(Settings()[flt.data()])
 
-    def __onGlobalAndLocalFilter(self):
-        """Global and local filter has been pressed"""
-        self.__globalAndLocalButton.setChecked(True)
-        self.__localOnlyButton.setChecked(False)
-        self.__globalOnlyButton.setChecked(False)
-
-        if self.__filter == VariablesViewer.FilterGlobalAndLocal:
-            # No changes
-            return
-
-        Settings()['debugGLFilter'] = VariablesViewer.FilterGlobalAndLocal
-        self.__filter = VariablesViewer.FilterGlobalAndLocal
-        self.__updateFilter()
-
-    def __onLocalFilter(self):
-        """Local only filter has been pressed"""
-        self.__globalAndLocalButton.setChecked(False)
-        self.__localOnlyButton.setChecked(True)
-        self.__globalOnlyButton.setChecked(False)
-
-        if self.__filter == VariablesViewer.FilterLocalOnly:
-            # No changes
-            return
-
-        Settings()['debugGLFilter'] = VariablesViewer.FilterLocalOnly
-        self.__filter = VariablesViewer.FilterLocalOnly
-        self.__updateFilter()
-
-    def __onGlobalFilter(self):
-        """Global only filter has been pressed"""
-        self.__globalAndLocalButton.setChecked(False)
-        self.__localOnlyButton.setChecked(False)
-        self.__globalOnlyButton.setChecked(True)
-
-        if self.__filter == VariablesViewer.FilterGlobalOnly:
-            # No changes
-            return
-
-        Settings()['debugGLFilter'] = VariablesViewer.FilterGlobalOnly
-        self.__filter = VariablesViewer.FilterGlobalOnly
+    def __filterMenuTriggered(self, act):
+        """A filter has been changed"""
+        name = act.data()
+        if name == 'showall':
+            for _, settingName, _ in VARIABLE_FILTERS:
+                Settings()[settingName] = True
+        else:
+            Settings()[name] = not Settings()[name]
         self.__updateFilter()
 
     def updateVariables(self, areGlobals, frameNumber, variables):
@@ -235,14 +175,9 @@ class VariablesViewer(QWidget):
             self.__headerLabel.setText("Variables (" + str(shown) +
                                        " of " + str(total) + ")")
 
-    def __textFilterChanged(self, text):
-        """Triggered when a text filter has been changed"""
-        del text    # unused argument
-        self.__updateFilter()
-
     def __updateFilter(self):
         """Updates the current filter"""
-        self.__browser.setFilter(self.__hideMCFFilter, self.__filter, "")
+        self.__browser.filterChanged()
         self.__updateHeaderLabel()
 
     def clear(self):
@@ -297,9 +232,7 @@ class VariablesViewer(QWidget):
     def switchControl(self, isInIDE):
         """Switches the UI depending where the control flow is"""
         self.__browser.setEnabled(isInIDE)
-        self.__globalAndLocalButton.setEnabled(isInIDE)
-        self.__localOnlyButton.setEnabled(isInIDE)
-        self.__globalOnlyButton.setEnabled(isInIDE)
+        self.__filterButton.setEnabled(isInIDE)
 
         self.__execStatement.setEnabled(isInIDE)
         if isInIDE:

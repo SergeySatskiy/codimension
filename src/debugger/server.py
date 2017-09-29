@@ -227,9 +227,19 @@ class CodimensionDebugger(QObject):
     def __handleException(self, params):
         """Handles METHOD_EXCEPTION"""
         self.__changeDebuggerState(self.STATE_IN_IDE)
-        self.sigClientException.emit(params['type'],
-                                     params['message'],
-                                     params['stack'])
+        if params:
+            stack = params['stack']
+            if stack:
+                if stack[0] and stack[0][0] == "<string>":
+                    for stackEntry in stack:
+                        if stackEntry[0] == "<string>":
+                            stackEntry[0] = self.__fileName
+                        else:
+                            break
+            self.sigClientException.emit(params['type'], params['message'],
+                                         stack)
+        else:
+            self.sigClientException.emit('', '', [])
 
     def onProcessFinished(self, procuuid, retCode):
         """Process finished. The retCode may indicate a disconnection."""

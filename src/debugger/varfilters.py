@@ -60,43 +60,18 @@ def filterClassMethods(isGlobal, varName, varType):
     return varType.lower() == 'class method'
 
 
-def filterClassProperties(isGlobal, varName, varType):
-    """Filters out class properties"""
-    del isGlobal    # unused argument
-    del varName     # unused argument
-    del varType     # unused argument
-    return False
-
-
-def filterGenerators(isGlobal, varName, varType):
-    """Filters out generators"""
-    del isGlobal    # unused argument
-    del varName     # unused argument
-    del varType     # unused argument
-    return False
-
-
 def filterFunctions(isGlobal, varName, varType):
     """Filters out functions"""
     del isGlobal    # unused argument
     del varName     # unused argument
-    return varType.lower() == 'builtin function'
+    return varType.lower() == 'function'
 
 
 def filterBuiltinFunctions(isGlobal, varName, varType):
     """Filters out builtin functions"""
     del isGlobal    # unused argument
     del varName     # unused argument
-    del varType     # unused argument
-    return False
-
-
-def filterCode(isGlobal, varName, varType):
-    """Filters out code"""
-    del isGlobal    # unused argument
-    del varName     # unused argument
-    del varType     # unused argument
-    return False
+    return varType.lower() in ['method-wrapper', 'builtin function']
 
 
 def filterModules(isGlobal, varName, varType):
@@ -104,30 +79,6 @@ def filterModules(isGlobal, varName, varType):
     del isGlobal    # unused argument
     del varName     # unused argument
     return varType.lower() == 'module'
-
-
-def filterEllipsis(isGlobal, varName, varType):
-    """Filters out ellipsis"""
-    del isGlobal    # unused argument
-    del varName     # unused argument
-    del varType     # unused argument
-    return False
-
-
-def filterTracebacks(isGlobal, varName, varType):
-    """Filters out tracebacks"""
-    del isGlobal    # unused argument
-    del varName     # unused argument
-    del varType     # unused argument
-    return False
-
-
-def filterFrames(isGlobal, varName, varType):
-    """Filters out frames"""
-    del isGlobal    # unused argument
-    del varName     # unused argument
-    del varType     # unused argument
-    return False
 
 
 def filterNones(isGlobal, varName, varType):
@@ -139,18 +90,12 @@ def filterNones(isGlobal, varName, varType):
 
 
 VARIABLE_FILTERS = [
-    ['Local Variables', filterLocalVariables],
-    ['Global Variables', filterGlobalVariables],
-    ['Hidden Attributes', filterHiddenAttributes],
-    ['Types', filterTypes],
-    ['Class Methods', filterClassMethods],
-    ['Class Properties', filterClassProperties],
-    ['Generators', filterGenerators],
-    ['Functions', filterFunctions],
-    ['Builtin Functions', filterBuiltinFunctions],
-    ['Code', filterCode],
-    ['Modules', filterModules],
-    ['Ellipsis', filterEllipsis],
-    ['Tracebacks', filterTracebacks],
-    ['Frames', filterFrames],
-    ['No Types', filterNones]]
+    ['Local Variables', 'dbgfltlocal', filterLocalVariables],
+    ['Global Variables', 'dbgfltglobal', filterGlobalVariables],
+    ['Hidden Attributes', 'dbgflthidden', filterHiddenAttributes],
+    ['Types', 'dbgflttype', filterTypes],
+    ['Class Methods', 'dbgfltmethod', filterClassMethods],
+    ['Functions', 'dbgfltfunc', filterFunctions],
+    ['Builtin Functions', 'dbgfltbuiltin', filterBuiltinFunctions],
+    ['Modules', 'dbgfltmodule', filterModules],
+    ['No Types', 'dbgfltnotype', filterNones]]

@@ -138,7 +138,6 @@ _DEFAULT_SETTINGS = {
     'showMainToolBar': True,
     'profilerLimits': ProfilerSettings(),
     'debuggerSettings': DebuggerSettings(),
-    'debugHideMCF': True,
     'debugGLFilter': 0,
     'editorEdge': 80,
     'projectTooltips': True,
@@ -168,6 +167,17 @@ _DEFAULT_SETTINGS = {
     'maxHighlightedMatches': 256,
     'maxBreakpoints': 63,               # per file
     'encoding': 'utf-8',
+
+    # Debug variable filters
+    'dbgfltlocal': True,
+    'dbgfltglobal': True,
+    'dbgflthidden': True,
+    'dbgflttype': False,
+    'dbgfltmethod': False,
+    'dbgfltfunc': False,
+    'dbgfltbuiltin': False,
+    'dbgfltmodule': False,
+    'dbgfltnotype': False,
 
     # The IO redirect console
     'ioconsolemaxmsgs': 10000,

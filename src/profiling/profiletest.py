@@ -21,6 +21,19 @@
 """Profiler test"""
 import sys
 
+v = range(175)
+z = (x*x for x in range(10))
+c = compile('sum([1, 2, 3])', '', 'single')
+e = Ellipsis
+
+raise Exception('dkdkdkd')
+
+try:
+    raise Exception('hey')
+except Exception as exc:
+    import sys
+    x1, x2, x3 = sys.exc_info()
+
 class A:
     def __init__(self):
         self.__d = 10

@@ -22,10 +22,12 @@
 
 from ui.qt import (Qt, QRegExp, QAbstractItemView, QHeaderView, QTreeWidget)
 from ui.itemdelegates import NoOutlineHeightDelegate
+from utils.settings import Settings
 from .variableitems import (VariableItem, SpecialVariableItem,
                             ArrayElementVariableItem,
                             SpecialArrayElementVariableItem,
                             INDICATORS)
+from .varfilters import VARIABLE_FILTERS
 from .viewvariable import ViewVariableDialog
 from .client.protocol_cdm_dbg import VAR_TYPE_DISP_STRINGS
 
@@ -83,11 +85,7 @@ class VariablesBrowser(QTreeWidget):
         self.__debugger = debugger
 
         # Ugly filtering support
-        self.__hideMCFFilter = False
-        self.__scopeFilter = 0  # Global and local
         self.__filterIsSet = False
-        self.__textFilters = []
-        self.__textFiltersCount = 0
 
         self.setSortingEnabled(True)
 
@@ -443,32 +441,13 @@ class VariablesBrowser(QTreeWidget):
 
         QTreeWidget.clear(self)
 
-    def clearFilters(self):
-        """Clears the variable filters"""
-        self.__hideMCFFilter = False
-        self.__scopeFilter = 0
-        self.__textFilters = []
-        self.__textFiltersCount = 0
-        self.__filterIsSet = False
-
-    def setFilter(self, hideMCFFilter, scopeFilter, textFilter):
+    def filterChanged(self):
         """Sets the new filter"""
-        self.__hideMCFFilter = hideMCFFilter
-        self.__scopeFilter = scopeFilter
-
-        self.__textFilters = []
-        self.__textFiltersCount = 0
-        for part in textFilter.split():
-            regexp = QRegExp(part, Qt.CaseInsensitive, QRegExp.RegExp2)
-            self.__textFilters.append(regexp)
-            self.__textFiltersCount += 1
-
-        if not self.__hideMCFFilter and \
-           self.__scopeFilter == 0 and \
-           self.__textFiltersCount == 0:
-            self.__filterIsSet = False
-        else:
-            self.__filterIsSet = True
+        self.__filterIsSet = False
+        for _, settingName, _ in VARIABLE_FILTERS:
+            if not Settings()[settingName]:
+                self.__filterIsSet = True
+                break
         self.__applyFilters()
 
     def __applyFilters(self):
@@ -510,28 +489,16 @@ class VariablesBrowser(QTreeWidget):
         if not self.__filterIsSet:
             return True
 
-        if self.__hideMCFFilter:
-            if self.__isMCF(varType):
-                return False
-
-        # Something is set so start checking
+        # Strip indicators from the name
         varName = str(varName)
         if varName.endswith("]") or \
            varName.endswith("}") or \
            varName.endswith(")"):
             varName = varName[:-2]   # Strip display purpose decor if so
 
-        if self.__scopeFilter == 1:
-            # Global only
-            if not isGlobal:
-                return False
-        elif self.__scopeFilter == 2:
-            # Local only
-            if isGlobal:
-                return False
-
+        settings = Settings()
+        for _, settingName, matchFunction in VARIABLE_FILTERS:
+            if settings[settingName] is False:
+                if matchFunction(isGlobal, varName, varType):
+                    return False
         return True
-
-    def __isMCF(self, varType):
-        """Returns True if it is a module, a function or a class"""
-        return varType in ["Module", "Class", "Function", "Type"]

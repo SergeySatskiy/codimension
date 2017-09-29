@@ -66,13 +66,7 @@ def getTooltipValue(value):
     """Takes a potentially multilined string and converts it to
        the form suitable for tooltips
     """
-    value = str(value)
-    if Qt.mightBeRichText(value):
-        tooltipValue = str(Qt.escape(value))
-    else:
-        tooltipValue = value
-
-    lines = tooltipValue.splitlines()
+    lines = value.splitlines()
     lineCount = len(lines)
     if lineCount > 1:
         value = ""
