@@ -46,7 +46,7 @@ class CodimensionDebugger(QObject):
 
     sigDebuggerStateChanged = pyqtSignal(int)
     sigClientLine = pyqtSignal(str, int, bool)
-    sigClientException = pyqtSignal(str, str, list)
+    sigClientException = pyqtSignal(str, str, list, bool)
     sigClientSyntaxError = pyqtSignal(str, str, str, int, int)
     sigEvalOK = pyqtSignal(str)
     sigEvalError = pyqtSignal(str)
@@ -236,10 +236,16 @@ class CodimensionDebugger(QObject):
                             stackEntry[0] = self.__fileName
                         else:
                             break
-            self.sigClientException.emit(params['type'], params['message'],
-                                         stack)
+            excType = params['type']
+            isUnhandled = excType is None or \
+                excType.lower().startswith('unhandled') or \
+                not stack
+            self.sigClientException.emit(excType, params['message'],
+                                         stack, isUnhandled)
         else:
-            self.sigClientException.emit('', '', [])
+            isUnhandled = True
+            self.sigClientException.emit('', '', [], True)
+
 
     def onProcessFinished(self, procuuid, retCode):
         """Process finished. The retCode may indicate a disconnection."""

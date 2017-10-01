@@ -276,6 +276,10 @@ class SideBar(QWidget):
         """Provide a reference to the current widget"""
         return self.__stackedWidget.currentWidget()
 
+    def currentTabName(self):
+        """Provides the name of the current tab"""
+        return self.getTabName(self.currentIndex())
+
     def __getWidgetIndex(self, indexOrNameOrWidget):
         """Provides the widget index via the provided index, name or widget"""
         if indexOrNameOrWidget is None:

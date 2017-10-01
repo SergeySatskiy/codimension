@@ -1400,10 +1400,10 @@ class CodimensionMainWindow(QMainWindow):
 
         # Tabs at the right
         if newState:
-            self._rightSideBar.setTabEnabled(1, True)    # vars etc.
+            self._rightSideBar.setTabEnabled('debugger', True)    # vars etc.
             self.debuggerContext.clear()
             self.debuggerExceptions.clear()
-            self._rightSideBar.setTabText(2, "Exceptions")
+            self._rightSideBar.setTabText('exceptions', 'Exceptions')
             self._rightSideBar.show()
             self._rightSideBar.setCurrentTab('debugger')
             self._rightSideBar.raise_()
@@ -1412,9 +1412,9 @@ class CodimensionMainWindow(QMainWindow):
             self._debugDumpSettingsEnvAct.setEnabled(True)
         else:
             if not self._rightSideBar.isMinimized():
-                if self._rightSideBar.currentIndex() == 1:
+                if self._rightSideBar.currentTabName() == 'debugger':
                     self._rightSideBar.setCurrentTab('fileoutline')
-            self._rightSideBar.setTabEnabled(1, False)    # vars etc.
+            self._rightSideBar.setTabEnabled('debugger', False)    # vars etc.
 
         self.debugModeChanged.emit(newState)
 
@@ -1460,49 +1460,33 @@ class CodimensionMainWindow(QMainWindow):
         self.__lastDebugAsException = asException
         self._onDbgJumpToCurrent()
 
-    def __onDebuggerClientException(self, excType, excMessage, excStackTrace):
+    def __onDebuggerClientException(self, excType, excMessage,
+                                    excStackTrace, isUnhandled):
         """Debugged program exception handler"""
         self.debuggerExceptions.addException(excType, excMessage,
                                              excStackTrace)
         count = self.debuggerExceptions.getTotalClientExceptionCount()
-        self._rightSideBar.setTabText(2, "Exceptions (" + str(count) + ")")
+        self._rightSideBar.setTabText('exceptions',
+                                      'Exceptions (' + str(count) + ')')
+        self.debuggerExceptions.setFocus()
 
         # The information about the exception is stored in the exception window
         # regardless whether there is a stack trace or not. So, there is no
         # need to show the exception info in the closing dialog (if this dialog
         # is required).
 
-        if excType is None or excType.startswith("unhandled") or not excStackTrace:
+        if isUnhandled:
             self._rightSideBar.show()
             self._rightSideBar.setCurrentTab('exceptions')
             self._rightSideBar.raise_()
 
+            message = 'Unhandled exception'
             if not excStackTrace:
-                message = "An exception did not report the stack trace.\n" \
-                          "The debugging session will be closed."
-            else:
-                message = "An unhandled exception occured.\n" \
-                          "The debugging session will be closed."
+                message += ": no stack trace reported"
+            message += ". The debugging session is closed"
 
-            dlg = QMessageBox(QMessageBox.Critical, "Debugging session",
-                              message)
-            dlg.addButton(QMessageBox.Ok)
-            dlg.addButton(QMessageBox.Cancel)
-
-            btn1 = dlg.button(QMessageBox.Ok)
-            btn1.setText("&Close debug console")
-            btn1.setIcon(getIcon(''))
-
-            btn2 = dlg.button(QMessageBox.Cancel)
-            btn2.setText("&Keep debug console")
-            btn2.setIcon(getIcon(''))
-
-            dlg.setDefaultButton(QMessageBox.Ok)
-            res = dlg.exec_()
-
-            if res == QMessageBox.Cancel:
-                QTimer.singleShot(0, self._onStopDbgSession)
-            self.debuggerExceptions.setFocus()
+            logging.error(message)
+            QTimer.singleShot(0, self._onStopDbgSession)
             return
 
         if self.debuggerExceptions.isIgnored(str(excType)):
@@ -2114,7 +2098,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def __onClientExceptionsCleared(self):
         """Triggered when the user cleared the client exceptions"""
-        self._rightSideBar.setTabText(2, "Exceptions")
+        self._rightSideBar.setTabText('exceptions', "Exceptions")
 
     def __onBreakpointsModelChanged(self):
         """Triggered when something is changed in the breakpoints list"""
@@ -2124,7 +2108,7 @@ class CodimensionMainWindow(QMainWindow):
         title = "Breakpoints"
         if total > 0:
             title += " (" + str(total) + ")"
-        self._rightSideBar.setTabText(3, title)
+        self._rightSideBar.setTabText('breakpoints', title)
 
     @staticmethod
     def __onEvalOK(message):
