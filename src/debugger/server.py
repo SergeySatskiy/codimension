@@ -479,9 +479,12 @@ class CodimensionDebugger(QObject):
         """Sets the given thread as the current"""
         self.__sendCommand(RequestThreadSet + str(tid) + "\n")
 
-    def stopDebugging(self):
+    def stopDebugging(self, exitCode=None):
         """Stops the debugging session"""
-        self.__sendJSONCommand(METHOD_STEP_QUIT, None)
+        if exitCode is None:
+            self.__sendJSONCommand(METHOD_STEP_QUIT, None)
+        else:
+            self.__sendJSONCommand(METHOD_STEP_QUIT, {'exitCode': exitCode})
 
     def __sendJSONCommand(self, method, params):
         """Sends a message to the debuggee"""

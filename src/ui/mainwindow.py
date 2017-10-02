@@ -43,6 +43,7 @@ from debugger.server import CodimensionDebugger
 from debugger.excpt import DebuggerExceptions
 from debugger.bpwp import DebuggerBreakWatchPoints
 from debugger.bputils import clearValidBreakpointLinesCache
+from debugger.client.protocol_cdm_dbg import UNHANDLED_EXCEPTION
 from analysis.notused import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
 from analysis.disasm import (getFileDisassembled, getCompiledfileDisassembled,
@@ -1486,7 +1487,7 @@ class CodimensionMainWindow(QMainWindow):
             message += ". The debugging session is closed"
 
             logging.error(message)
-            QTimer.singleShot(0, self._onStopDbgSession)
+            QTimer.singleShot(0, self.__stopOnUnhandledException)
             return
 
         if self.debuggerExceptions.isIgnored(str(excType)):
@@ -1604,6 +1605,10 @@ class CodimensionMainWindow(QMainWindow):
     def _onStopDbgSession(self):
         """Debugger stop debugging clicked"""
         self.__debugger.stopDebugging()
+
+    def __stopOnUnhandledException(self):
+        """Stop debuging due to an unhandled exception"""
+        self.__debugger.stopDebugging(UNHANDLED_EXCEPTION)
 
     def _onRestartDbgSession(self):
         """Debugger restart session clicked"""

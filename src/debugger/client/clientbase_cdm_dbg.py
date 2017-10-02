@@ -444,9 +444,14 @@ class DebugClientBase(object):
         self.currentThreadExec.stepOut()
         self.eventExit = True
 
-    def __handleStepQuit(self, _):
+    def __handleStepQuit(self, params):
         """Handling METHOD_STEP_QUIT"""
         if self.passive:
+            if params:
+                if 'exitCode' in params:
+                    # The IDE requested to exit with a certain code
+                    self.progTerminated(params['exitCode'])
+                    return
             self.progTerminated(STOPPED_BY_REQUEST)
         else:
             self.set_quit()

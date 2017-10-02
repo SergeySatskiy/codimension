@@ -35,7 +35,8 @@ from debugger.client.protocol_cdm_dbg import (METHOD_PROC_ID_INFO,
                                               METHOD_STDIN, KILLED,
                                               DISCONNECTED, FAILED_TO_START,
                                               STOPPED_BY_REQUEST,
-                                              SYNTAX_ERROR_AT_START)
+                                              SYNTAX_ERROR_AT_START,
+                                              UNHANDLED_EXCEPTION)
 from debugger.client.cdm_dbg_utils import getParsedJSONMessage, sendJSONCommand
 from ui.runparamsdlg import RunDialog
 from ui.qt import (QObject, Qt, QTimer, QDialog, QApplication, QCursor,
@@ -570,6 +571,11 @@ class RunManager(QObject):
                 # Debugging only: user clicked 'stop'
                 msg = "Script finished by the user request"
                 tooltip = "stopped by user"
+                item.procWrapper.wait()
+            elif retCode == UNHANDLED_EXCEPTION:
+                # Debugging only: unhandled exception
+                msg = "Script finished due to an unhandled exception"
+                tooltip = "unhandled exception"
                 item.procWrapper.wait()
             elif retCode == SYNTAX_ERROR_AT_START:
                 msg = "Failure to run due to a syntax error"

@@ -634,7 +634,7 @@ class DebugBase(object):
             excval = ''
 
         if unhandled:
-            exctypetxt = "unhandled {0!s}".format(str(exctype))
+            exctypetxt = "Unhandled {0!s}".format(str(exctype))
         else:
             exctypetxt = str(exctype)
 
