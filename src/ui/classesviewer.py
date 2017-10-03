@@ -55,7 +55,7 @@ class ClassesViewer(QWidget):
             getIcon('findusage.png'), 'Find occurences', self.__findWhereUsed)
         self.__menu.addSeparator()
         self.__copyMenuItem = self.__menu.addAction(
-            getIcon('copytoclipboard.png'), 'Copy path to clipboard',
+            getIcon('copymenu.png'), 'Copy path to clipboard',
             self.clViewer.copyToClipboard)
         self.clViewer.setContextMenuPolicy(Qt.CustomContextMenu)
         self.clViewer.customContextMenuRequested.connect(
@@ -87,7 +87,7 @@ class ClassesViewer(QWidget):
             'Find highlighted item occurences', self)
         self.findButton.triggered.connect(self.__findWhereUsed)
         self.copyPathButton = QAction(
-            getIcon('copytoclipboard.png'), 'Copy path to clipboard', self)
+            getIcon('copymenu.png'), 'Copy path to clipboard', self)
         self.copyPathButton.triggered.connect(self.clViewer.copyToClipboard)
 
         self.findNotUsedButton = QAction(

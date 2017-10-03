@@ -134,6 +134,9 @@ def getTerminalCommandToDebug(fileName, arguments, params,
         else:
             parts.append('--fork-parent')
 
+    if not Settings()['calltrace']:
+        parts.append('--no-call-trace')
+
     if params['redirected']:
         parts += ['--', script] + prepareArguments(arguments)
         return ' '.join(parts)

@@ -178,7 +178,7 @@ class ProjectViewer(QWidget):
             getIcon('newdir.png'), 'Create sub directory', self)
         self.prjNewDirButton.triggered.connect(self.__createDir)
         self.prjCopyToClipboardButton = QAction(
-            getIcon('copytoclipboard.png'), 'Copy path to clipboard', self)
+            getIcon('copymenu.png'), 'Copy path to clipboard', self)
         self.prjCopyToClipboardButton.triggered.connect(
             self.projectTreeView.copyToClipboard)
 
@@ -224,7 +224,7 @@ class ProjectViewer(QWidget):
             getIcon('findusage.png'), 'Find occurences', self.__findWhereUsed)
         self.prjPythonMenu.addSeparator()
         self.prjCopyAct = self.prjPythonMenu.addAction(
-            getIcon('copytoclipboard.png'),
+            getIcon('copymenu.png'),
             'Copy path to clipboard', self.projectTreeView.copyToClipboard)
 
         # popup menu for directories
@@ -244,7 +244,7 @@ class ProjectViewer(QWidget):
             getIcon('findindir.png'),
             'Find in this directory', self.projectTreeView.findInDirectory)
         self.prjDirCopyPathAct = self.prjDirMenu.addAction(
-            getIcon('copytoclipboard.png'),
+            getIcon('copymenu.png'),
             'Copy path to clipboard', self.projectTreeView.copyToClipboard)
         self.prjDirMenu.addSeparator()
         self.prjDirRemoveFromDiskAct = self.prjDirMenu.addAction(
@@ -264,7 +264,7 @@ class ProjectViewer(QWidget):
             'Fine tuned imports diagram', self.__onImportDgmTuned)
         self.prjFileMenu.addSeparator()
         self.prjFileCopyPathAct = self.prjFileMenu.addAction(
-            getIcon('copytoclipboard.png'),
+            getIcon('copymenu.png'),
             'Copy path to clipboard', self.projectTreeView.copyToClipboard)
         self.prjFileShowErrorsAct = self.prjFileMenu.addAction(
             getIcon('showparsingerrors.png'),
@@ -353,7 +353,7 @@ class ProjectViewer(QWidget):
         self.fsShowParsingErrorsButton.triggered.connect(
             self.showFsParserError)
         self.fsCopyToClipboardButton = QAction(
-            getIcon('copytoclipboard.png'), 'Copy path to clipboard', self)
+            getIcon('copymenu.png'), 'Copy path to clipboard', self)
         self.fsCopyToClipboardButton.triggered.connect(
             self.filesystemView.copyToClipboard)
         self.fsReloadButton = QAction(getIcon('reload.png'),
@@ -399,7 +399,7 @@ class ProjectViewer(QWidget):
         self.fsFileMenu = QMenu(self)
         self.fsFileMenu.aboutToShow.connect(self.__updatePluginMenuData)
         self.fsFileCopyPathAct = self.fsFileMenu.addAction(
-            getIcon('copytoclipboard.png'),
+            getIcon('copymenu.png'),
             'Copy path to clipboard', self.filesystemView.copyToClipboard)
         self.fsFileShowErrorsAct = self.fsFileMenu.addAction(
             getIcon('showparsingerrors.png'),
@@ -439,7 +439,7 @@ class ProjectViewer(QWidget):
             getIcon('findindir.png'),
             'Find in this directory', self.filesystemView.findInDirectory)
         self.fsDirCopyPathAct = self.fsDirMenu.addAction(
-            getIcon('copytoclipboard.png'),
+            getIcon('copymenu.png'),
             'Copy path to clipboard', self.filesystemView.copyToClipboard)
         self.fsDirMenu.addSeparator()
         self.fsDirRemoveAct = self.fsDirMenu.addAction(
@@ -460,7 +460,7 @@ class ProjectViewer(QWidget):
             getIcon('findusage.png'),
             'Find occurences', self.__fsFindWhereUsed)
         self.fsCopyAct = self.fsPythonMenu.addAction(
-            getIcon('copytoclipboard.png'),
+            getIcon('copymenu.png'),
             'Copy path to clipboard', self.filesystemView.copyToClipboard)
 
     @staticmethod

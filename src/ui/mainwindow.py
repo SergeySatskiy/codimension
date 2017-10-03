@@ -41,6 +41,7 @@ from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from debugger.server import CodimensionDebugger
 from debugger.excpt import DebuggerExceptions
+from debugger.calltraceviewer import CallTraceViewer
 from debugger.bpwp import DebuggerBreakWatchPoints
 from debugger.bputils import clearValidBreakpointLinesCache
 from debugger.client.protocol_cdm_dbg import UNHANDLED_EXCEPTION
@@ -359,6 +360,10 @@ class CodimensionMainWindow(QMainWindow):
         self._rightSideBar.addTab(
             self.debuggerBreakWatchPoints,
             getIcon(''), 'Breakpoints', 'breakpoints', 3)
+
+        self.debuggerCallTrace = CallTraceViewer(self.__debugger, self)
+        self._rightSideBar.addTab(
+            self.debuggerCallTrace, getIcon(''), 'Call Trace', 'calltrace', 4)
 
         # Create splitters
         self.__horizontalSplitter = QSplitter(Qt.Horizontal)
@@ -1404,6 +1409,7 @@ class CodimensionMainWindow(QMainWindow):
             self._rightSideBar.setTabEnabled('debugger', True)    # vars etc.
             self.debuggerContext.clear()
             self.debuggerExceptions.clear()
+            self.debuggerCallTrace.clear()
             self._rightSideBar.setTabText('exceptions', 'Exceptions')
             self._rightSideBar.show()
             self._rightSideBar.setCurrentTab('debugger')

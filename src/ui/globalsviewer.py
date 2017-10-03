@@ -56,7 +56,7 @@ class GlobalsViewer(QWidget):
             getIcon('findusage.png'), 'Find occurence', self.__findWhereUsed)
         self.__menu.addSeparator()
         self.__copyMenuItem = self.__menu.addAction(
-            getIcon('copytoclipboard.png'),
+            getIcon('copymenu.png'),
             'Copy path to clipboard', self.globalsViewer.copyToClipboard)
         self.globalsViewer.setContextMenuPolicy(Qt.CustomContextMenu)
         self.globalsViewer.customContextMenuRequested.connect(
@@ -83,7 +83,7 @@ class GlobalsViewer(QWidget):
             getIcon('findusage.png'), 'Find highlighted item occurences', self)
         self.findButton.triggered.connect(self.__findWhereUsed)
         self.copyPathButton = QAction(
-            getIcon('copytoclipboard.png'), 'Copy path to clipboard', self)
+            getIcon('copymenu.png'), 'Copy path to clipboard', self)
         self.copyPathButton.triggered.connect(
             self.globalsViewer.copyToClipboard)
 

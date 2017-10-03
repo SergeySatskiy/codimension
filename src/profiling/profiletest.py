@@ -26,7 +26,7 @@ z = (x*x for x in range(10))
 c = compile('sum([1, 2, 3])', '', 'single')
 e = Ellipsis
 
-raise Exception('dkdkdkd')
+# raise Exception('dkdkdkd')
 
 try:
     raise Exception('hey')

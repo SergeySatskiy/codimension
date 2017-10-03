@@ -123,6 +123,13 @@ def getComponentInfo():
                        None, "GPL-2.0/GPL-3.0/Commercial/Embedded",
                        "http://www.riverbankcomputing.com/software/pyqt/license",
                        path))
+    version, path = getPackageVersionAndLocation('qutepart')
+    components.append(("qutepart", version,
+                       "https://github.com/andreikop/qutepart",
+                       None,
+                       "LGPL-2.1",
+                       "http://www.gnu.org/licenses/lgpl-2.1.html",
+                       path))
     components.append(("Qt", getQtVersion(),
                        "http://qt-project.org/", None,
                        "LGPL-2.1/Commercial",

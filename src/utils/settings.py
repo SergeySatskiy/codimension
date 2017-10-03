@@ -179,6 +179,8 @@ _DEFAULT_SETTINGS = {
     'dbgfltmodule': False,
     'dbgfltnotype': False,
 
+    'calltrace': True,
+
     # The IO redirect console
     'ioconsolemaxmsgs': 10000,
     'ioconsoledelchunk': 512,

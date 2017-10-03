@@ -58,7 +58,7 @@ class LogViewer(QWidget):
         self.__selectAllMenuItem = self.__menu.addAction(
             getIcon('selectall.png'), 'Select All', self.messages.selectAll)
         self.__copyMenuItem = self.__menu.addAction(
-            getIcon('copytoclipboard.png'), 'Copy', self.messages.copy)
+            getIcon('copymenu.png'), 'Copy', self.messages.copy)
         self.__menu.addSeparator()
         self.__clearMenuItem = self.__menu.addAction(
             getIcon('trash.png'), 'Clear', self.__clear)
@@ -93,7 +93,7 @@ class LogViewer(QWidget):
         self.selectAllButton = QAction(getIcon('selectall.png'),
                                        'Select all', self)
         self.selectAllButton.triggered.connect(self.messages.selectAll)
-        self.copyButton = QAction(getIcon('copytoclipboard.png'),
+        self.copyButton = QAction(getIcon('copymenu.png'),
                                   'Copy to clipboard', self)
         self.copyButton.triggered.connect(self.messages.copy)
         spacer = QWidget()

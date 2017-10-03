@@ -143,7 +143,7 @@ class MainWindowStatusBarMixin:
     def _showPathLabelContextMenu(self, pos):
         """Triggered when a context menu is requested for the path label"""
         contextMenu = QMenu(self)
-        contextMenu.addAction(getIcon('copytoclipboard.png'),
+        contextMenu.addAction(getIcon('copymenu.png'),
                               'Copy full path to clipboard (double click)',
                               self._onPathLabelDoubleClick)
         contextMenu.addSeparator()

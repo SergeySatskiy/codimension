@@ -225,7 +225,7 @@ class RecentProjectsViewer(QWidget):
         self.__openMenuItem = self.__fileMenu.addAction(
             getIcon('openitem.png'), 'Open', self.__openFile)
         self.__copyPathFileMenuItem = self.__fileMenu.addAction(
-            getIcon('copytoclipboard.png'),
+            getIcon('copymenu.png'),
             'Copy path to clipboard', self.__filePathToClipboard)
         self.__fileMenu.addSeparator()
         self.__delFileMenuItem = self.__fileMenu.addAction(
@@ -245,7 +245,7 @@ class RecentProjectsViewer(QWidget):
         self.__propsMenuItem = self.__projectMenu.addAction(
             getIcon('smalli.png'), 'Properties', self.__viewProperties)
         self.__prjCopyPathMenuItem = self.__projectMenu.addAction(
-            getIcon('copytoclipboard.png'),
+            getIcon('copymenu.png'),
             'Copy path to clipboard', self.__prjPathToClipboard)
         self.__projectMenu.addSeparator()
         self.__delPrjMenuItem = self.__projectMenu.addAction(
@@ -294,7 +294,7 @@ class RecentProjectsViewer(QWidget):
         self.openFileButton = QAction(getIcon('openitem.png'),
                                       'Open the highlighted file', self)
         self.openFileButton.triggered.connect(self.__openFile)
-        self.copyFilePathButton = QAction(getIcon('copytoclipboard.png'),
+        self.copyFilePathButton = QAction(getIcon('copymenu.png'),
                                           'Copy path to clipboard', self)
         self.copyFilePathButton.triggered.connect(self.__filePathToClipboard)
         spacer = QWidget()
@@ -367,7 +367,7 @@ class RecentProjectsViewer(QWidget):
                                         'Show the highlighted project '
                                         'properties', self)
         self.propertiesButton.triggered.connect(self.__viewProperties)
-        self.copyPrjPathButton = QAction(getIcon('copytoclipboard.png'),
+        self.copyPrjPathButton = QAction(getIcon('copymenu.png'),
                                          'Copy path to clipboard', self)
         self.copyPrjPathButton.triggered.connect(self.__prjPathToClipboard)
         spacer = QWidget()

@@ -153,7 +153,7 @@ class EditorsManager(QTabWidget):
         self.__cloneAct = self.__tabContextMenu.addAction(
             getIcon("clonetabmenu.png"), "&Clone", self.onClone)
         self.__copyFullPathAct = self.__tabContextMenu.addAction(
-            getIcon("copytoclipboard.png"), "Copy full &path to clipboard",
+            getIcon("copymenu.png"), "Copy full &path to clipboard",
             self.__copyTabFullPath)
         self.__copyDirPathAct = self.__tabContextMenu.addAction(
             getIcon(""), "Copy directory p&ath to clipboard",

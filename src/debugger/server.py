@@ -33,7 +33,8 @@ from .client.protocol_cdm_dbg import (METHOD_LINE, METHOD_STACK, METHOD_STEP,
                                       METHOD_BP_CONDITION_ERROR,
                                       METHOD_SET_BP, METHOD_STEP_OUT,
                                       METHOD_BP_ENABLE, METHOD_BP_IGNORE,
-                                      METHOD_STEP_QUIT)
+                                      METHOD_STEP_QUIT,
+                                      METHOD_CALL_TRACE)
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
@@ -59,6 +60,7 @@ class CodimensionDebugger(QObject):
     sigClientThreadSet = pyqtSignal()
     sigClientClearBreak = pyqtSignal(str, int)
     sigClientBreakConditionError = pyqtSignal(str, int)
+    sigClientCallTrace = pyqtSignal(bool, str, int, str, str, int, str)
 
     STATE_STOPPED = 0
     STATE_IN_CLIENT = 1
@@ -108,7 +110,8 @@ class CodimensionDebugger(QObject):
             METHOD_SYNTAX_ERROR: self.__handleSyntaxError,
             METHOD_VARIABLE: self.__handleVariable,
             METHOD_BP_CONDITION_ERROR: self.__handleBPConditionError,
-            METHOD_EXCEPTION: self.__handleException}
+            METHOD_EXCEPTION: self.__handleException,
+            METHOD_CALL_TRACE: self.__handleCallTrace}
 
     def getScriptPath(self):
         """Provides the path to the debugged script"""
@@ -246,6 +249,14 @@ class CodimensionDebugger(QObject):
             isUnhandled = True
             self.sigClientException.emit('', '', [], True)
 
+    def __handleCallTrace(self, params):
+        """Handles METHOD_CALL_TRACE"""
+        isCall = params['event'] == 'c'
+        src= params['from']
+        dest =  params['to']
+        self.sigClientCallTrace.emit(
+            isCall, src['filename'], src['linenumber'], src['codename'],
+            dest['filename'], dest['linenumber'], dest['codename'])
 
     def onProcessFinished(self, procuuid, retCode):
         """Process finished. The retCode may indicate a disconnection."""
@@ -485,6 +496,16 @@ class CodimensionDebugger(QObject):
             self.__sendJSONCommand(METHOD_STEP_QUIT, None)
         else:
             self.__sendJSONCommand(METHOD_STEP_QUIT, {'exitCode': exitCode})
+
+    def stopCalltrace(self):
+        """Sends a message to stop call tracing"""
+        if self.__procWrapper:
+            self.__sendJSONCommand(METHOD_CALL_TRACE, {'enable': False})
+
+    def startCalltrace(self):
+        """Sends a message to start call tracing"""
+        if self.__procWrapper:
+            self.__sendJSONCommand(METHOD_CALL_TRACE, {'enable': True})
 
     def __sendJSONCommand(self, method, params):
         """Sends a message to the debuggee"""

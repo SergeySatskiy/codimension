@@ -92,9 +92,6 @@ class ThreadExtension(object):
             name = 'MainThread'
             newThread = self.mainThread
             newThread.isMainThread = True
-            if self.debugging:
-                sys.setprofile(newThread.profile)
-
         else:
             newThread = DebugBase(self)
             ident = self._original_start_new_thread(

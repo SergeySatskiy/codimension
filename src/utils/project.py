@@ -27,7 +27,8 @@ import copy
 import json
 import shutil
 import os
-from os.path import realpath, islink, isdir, sep, exists, dirname, isabs, join
+from os.path import (realpath, islink, isdir, sep, exists, dirname, isabs,
+                     join, relpath)
 from ui.qt import QObject, pyqtSignal
 from .settings import Settings, SETTINGS_DIR
 from .watcher import Watcher
@@ -403,6 +404,20 @@ class CodimensionProject(QObject,
         if ret:
             self.sigRecentFilesChanged.emit()
         return ret
+
+    def getRelativePath(self, path):
+        """Provides a relative path if so"""
+        if self.isProjectFile(path):
+            return relpath(path, dirname(self.fileName))
+        return path
+
+    def getAbsolutePath(self, path):
+        """Provides an absolute path if so"""
+        if isabs(path):
+            return path
+        if self.isLoaded():
+            return join(dirname(self.fileName), path)
+        return path
 
 
 def getProjectProperties(projectFile):

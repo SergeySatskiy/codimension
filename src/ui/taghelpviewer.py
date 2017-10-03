@@ -47,7 +47,7 @@ class TagHelpViewer(QWidget):
         self.__selectAllMenuItem = self.__menu.addAction(
             getIcon('selectall.png'), 'Select All', self.__textEdit.selectAll)
         self.__copyMenuItem = self.__menu.addAction(
-            getIcon('copytoclipboard.png'), 'Copy', self.__textEdit.copy)
+            getIcon('copymenu.png'), 'Copy', self.__textEdit.copy)
         self.__menu.addSeparator()
         self.__clearMenuItem = self.__menu.addAction(
             getIcon('trash.png'), 'Clear', self.__clear)
@@ -72,7 +72,7 @@ class TagHelpViewer(QWidget):
             getIcon('selectall.png'), 'Select all', self)
         self.__selectAllButton.triggered.connect(self.__textEdit.selectAll)
         self.__copyButton = QAction(
-            getIcon('copytoclipboard.png'), 'Copy to clipboard', self)
+            getIcon('copymenu.png'), 'Copy to clipboard', self)
         self.__copyButton.triggered.connect(self.__textEdit.copy)
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)

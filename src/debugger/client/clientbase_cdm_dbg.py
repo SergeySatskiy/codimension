@@ -314,16 +314,7 @@ class DebugClientBase(object):
 
     def __handleCallTrace(self, params):
         """Handling METHOD_CALL_TRACE"""
-        if params['enable']:
-            callTraceEnabled = self.profile
-        else:
-            callTraceEnabled = None
-
-        if self.debugging:
-            sys.setprofile(callTraceEnabled)
-        else:
-            # remember for later
-            self.callTraceEnabled = callTraceEnabled
+        self.setCallTrace(params['enable'])
 
     def __handleSetEnvironment(self, params):
         """Handling METHOD_SET_ENVIRONMENT"""
@@ -571,6 +562,15 @@ class DebugClientBase(object):
     def __handleThreadList(self, _):
         """Handling METHOD_THREAD_LIST"""
         self.dumpThreadList()
+
+    def setCallTrace(self, enabled):
+        """Sets up the call trace"""
+        if enabled:
+            sys.setprofile(self.profile)
+            self.callTraceEnabled = self.profile
+        else:
+            sys.setprofile(None)
+            self.callTraceEnabled = None
 
     def sendClearTemporaryBreakpoint(self, filename, lineno):
         """Signals the deletion of a temporary breakpoint"""
@@ -1155,7 +1155,8 @@ class DebugClientBase(object):
             self.localsFilterObjects = patternFilterObjects[:]
 
     def startProgInDebugger(self, progargs, host,
-                            port, exceptions=True, tracePython=False):
+                            port, exceptions, tracePython,
+                            enableCallTrace):
         """Starts the remote debugger"""
         remoteAddress = self.resolveHost(host)
         self.connect(remoteAddress, port)
@@ -1198,7 +1199,7 @@ class DebugClientBase(object):
 
         code = self.__compileFileSource(self.running)
         if code:
-            sys.setprofile(self.profile)
+            self.setCallTrace(enableCallTrace)
             res = self.mainThread.run(code, self.debugMod.__dict__, debug=True)
         else:
             res = SYNTAX_ERROR_AT_START
@@ -1226,6 +1227,7 @@ class DebugClientBase(object):
             port = None
             tracePython = False
             exceptions = True
+            enableCallTrace = True
             while args[0]:
                 if args[0] == '--host':
                     host = args[1]
@@ -1260,6 +1262,9 @@ class DebugClientBase(object):
                     self.procuuid = args[1]
                     del args[0]
                     del args[0]
+                elif args[0] == '--no-call-trace':
+                    enableCallTrace = False
+                    del args[0]
                 elif args[0] == '--':
                     del args[0]
                     break
@@ -1271,8 +1276,9 @@ class DebugClientBase(object):
                 print("Network address is not provided. Aborting...")
             else:
                 self.startProgInDebugger(args, host, port,
-                                         exceptions=exceptions,
-                                         tracePython=tracePython)
+                                         exceptions,
+                                         tracePython,
+                                         enableCallTrace)
         else:
             print("No script to debug. Aborting...")
 
