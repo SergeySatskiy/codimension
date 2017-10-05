@@ -142,6 +142,9 @@ class CodimensionMainWindow(QMainWindow):
         self.__lastDebugAsException = None
         self.__lastDebugAction = None
 
+        # Restart debugging support
+        self.__previousDebugging = None
+
         self.vcsManager = VCSManager()
 
         self.__debugger = CodimensionDebugger(self)
@@ -1618,9 +1621,22 @@ class CodimensionMainWindow(QMainWindow):
 
     def _onRestartDbgSession(self):
         """Debugger restart session clicked"""
-        fileName = self.__debugger.getScriptPath()
+        self.__previousDebugging = self.__debugger.getScriptPath()
         self._onStopDbgSession()
-        self._runManager.debug(fileName, False)
+
+        # The debugging session is stopped in an asynchronous way
+        # and the previous session must be stopped before a new one starts
+        QTimer.singleShot(100, self.__onRestartSessionTimer)
+
+    def __onRestartSessionTimer(self):
+        """Timer triggered debugging session restart"""
+        if self.__previousDebugging is not None:
+            if self.__debugger.getState() == self.__debugger.STATE_STOPPED:
+                fileName = self.__previousDebugging
+                self.__previousDebugging = None
+                self._runManager.debug(fileName, False)
+            else:
+                QTimer.singleShot(100, self.__onRestartSessionTimer)
 
     def _onDbgGo(self):
         """Debugger continue clicked"""
