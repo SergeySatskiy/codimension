@@ -212,19 +212,22 @@ class Skin:
 
     def __reset(self):
         """Resets all the values to the default"""
-        self.__values = deepcopy(_DEFAULT_SKIN_SETTINGS)
-        for key, value in self.__values.items():
-            # deepcopy() does not work properly for QFont: the underlied C++
-            # wrapper is not initialized in this case. So...
+        # Note: python 3.5 and 3.6 deepcopy() behaves different. The 3.6
+        # fails to copy QFont at all while 3.5 copies it improperly.
+        # So to be 100% sure it works, here is a manual copying...
+        self.__values = {}
+        for key, value in _DEFAULT_SKIN_SETTINGS.items():
             if isinstance(value, QFont):
                 self.__values[key] = QFont(_DEFAULT_SKIN_SETTINGS[key])
+            else:
+                self.__values[key] = value
 
-        self.__cfValues = deepcopy(_DEFAULT_CFLOW_SETTINGS)
-        for key, value in self.__cfValues.items():
-            # deepcopy() does not work properly for QFont: the underlied C++
-            # wrapper is not initialized in this case. So...
+        self.__cfValues = {}
+        for key, value in _DEFAULT_CFLOW_SETTINGS.items():
             if isinstance(value, QFont):
                 self.__cfValues[key] = QFont(_DEFAULT_CFLOW_SETTINGS[key])
+            else:
+                self.__cfValues[key] = value
 
         self.__appCSS = deepcopy(_DEFAULT_APP_CSS)
 
