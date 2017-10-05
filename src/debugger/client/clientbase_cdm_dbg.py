@@ -644,8 +644,16 @@ class DebugClientBase(object):
     def eventPoll(self):
         """Polls for events like 'set break point'"""
         if not self.pollingDisabled:
-            while self.socket.canReadLine():
-                self.readReady(self.readstream)
+            # without
+            # if self.socket.waitForReadyRead(0):
+            # canReadLine() always returns False. I have no idea why.
+            # An option with
+            # if self.socket.bytesAvailable() > 0:
+            # does not work either. So I use a 0 timeout to make it as quick as
+            # possible
+            if self.socket.waitForReadyRead(0):
+                while self.socket.canReadLine():
+                    self.readReady(self.readstream)
 
     def connect(self, remoteAddress, port):
         """Establishes a session with the debugger"""
@@ -790,7 +798,9 @@ class DebugClientBase(object):
                                         'message': message})
         waitForIDEMessage(self.socket, METHOD_EPILOGUE_EXIT,
                           WAIT_EXIT_COMMAND_TIMEOUT)
-        self.eventExit = True
+        # The final message exchange with the IDE has been completed
+        # It is safe just to abort
+        raise SystemExit
 
     def __dumpVariables(self, frmnr, scope, filterList):
         """Returns the variables of a frame to the debug server"""

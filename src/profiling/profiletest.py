@@ -20,13 +20,20 @@
 
 """Profiler test"""
 import sys
+import time
+
+x = 0
+while True:
+    time.sleep(0.1)
+    x += 1
+
 
 v = range(175)
 z = (x*x for x in range(10))
 c = compile('sum([1, 2, 3])', '', 'single')
 e = Ellipsis
 
-# raise Exception('dkdkdkd')
+raise Exception('dkdkdkd')
 
 try:
     raise Exception('hey')
@@ -48,8 +55,8 @@ def f( bla ):
     " F function docstring "
     if bla == -1:
         return -1
-    if bla >= 5:
-        return -1
+#    if bla >= 5:
+#        return -1
     return f( bla + 1 )
 
 def g( foo ):
