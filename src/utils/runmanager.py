@@ -51,7 +51,6 @@ from .diskvaluesrelay import getRunParameters, addRunParams
 
 IDE_DEBUG = True
 HANDSHAKE_TIMEOUT = 15
-PROC_WAIT_TIMEOUT = 15
 
 STATE_PROLOGUE = 0
 STATE_RUNNING = 1
@@ -147,13 +146,13 @@ class RemoteProcessWrapper(QObject):
 
     def wait(self):
         """Waits for the process"""
+        self.__closeSocket()
         if self.__proc is not None:
             try:
-                self.__proc.wait(PROC_WAIT_TIMEOUT)
+                self.__proc.wait()
             except:
                 # E.g. wait timeout
                 pass
-        self.__closeSocket()
 
     def waitDetached(self):
         """Needs to avoid zombies"""
