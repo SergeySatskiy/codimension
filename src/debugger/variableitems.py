@@ -107,7 +107,7 @@ class VariableItem(QTreeWidgetItem):
         displayValue = getDisplayValue(displayValue)
 
         # Decide about the tooltip
-        self.__tooltip = "Name: " + displayName + "\n" + \
+        self.__tooltip = "Name: " + self.__name + "\n" + \
                          "Type: " + displayType + "\n" + \
                          "Value: "
 
@@ -117,7 +117,7 @@ class VariableItem(QTreeWidgetItem):
         else:
             self.__tooltip += tooltipDisplayValue
 
-        QTreeWidgetItem.__init__(self, parent, [displayName, displayValue,
+        QTreeWidgetItem.__init__(self, parent, [self.__name, displayValue,
                                                 displayType])
         self.populated = True
 

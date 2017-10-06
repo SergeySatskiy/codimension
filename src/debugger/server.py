@@ -117,6 +117,10 @@ class CodimensionDebugger(QObject):
         """Provides the path to the debugged script"""
         return self.__fileName
 
+    def getState(self):
+        """Provides the debugger state"""
+        return self.__state
+
     def getRunDebugParameters(self):
         """Provides the running and debugging parameters"""
         return self.__runParameters, self.__debugSettings

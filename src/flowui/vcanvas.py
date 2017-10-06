@@ -18,7 +18,8 @@
 #
 
 """
-Virtual canvas to represent a control flow
+Virtual canvas to represent a control flow.
+
 The basic idea is to split the canvas into cells and each cell could
 be whether a vacant or filled with a certain graphics element.
 
@@ -103,10 +104,13 @@ class VirtualCanvas:
 
     def __init__(self, settings, x, y, parent):
         self.kind = CellElement.VCANVAS
-        self.cells = []         # Stores the item instances
-                                # from items.py or other virtual canvases
-        self.canvas = parent    # Reference to the upper level canvas or
-                                # None for the most upper canvas
+
+        # the item instances from items.py or other virtual canvases
+        self.cells = []
+
+        # Reference to the upper level canvas or None for the most upper canvas
+        self.canvas = parent
+
         self.settings = settings
         self.addr = [x, y]
 
@@ -121,8 +125,10 @@ class VirtualCanvas:
         self.minWidth = 0
         self.minHeight = 0
         self.linesInHeader = 0
-        self.dependentRegions = []  # inclusive regions of rows with columns
-                                    # which affect each other width
+
+        # inclusive regions of rows with columns which affect each other width
+        self.dependentRegions = []
+
         self.tailComment = False
 
         # Painting support
@@ -132,8 +138,8 @@ class VirtualCanvas:
 
     def getScopeName(self):
         """Provides the name of the scope drawn on the canvas"""
-        for rowNumber, row in enumerate(self.cells):
-            for columnNumber, cell in enumerate(row):
+        for _, row in enumerate(self.cells):
+            for _, cell in enumerate(row):
                 if cell.kind in _scopeToName:
                     return _scopeToName[cell.kind]
                 if cell.kind == CellElement.FUNC_SCOPE:
@@ -156,19 +162,20 @@ class VirtualCanvas:
 
     def __str__(self):
         """Rather debug support"""
-        s = 'Rows: ' + str(len(self.cells))
-        c = 0
+        val = 'Rows: ' + str(len(self.cells))
+        count = 0
         for row in self.cells:
-            s += '\nRow ' + str(c) + ': [ '
+            val += '\nRow ' + str(count) + ': [ '
             for item in row:
-                s += str(item) + ', '
-            s += ']'
-            c += 1
-        return s
+                val += str(item) + ', '
+            val += ']'
+            count += 1
+        return val
 
     def __isTerminalCell(self, row, column):
-        """Tells if a cell is terminal,
-           i.e. no need to continue the control flow line
+        """Tells if a cell is terminal.
+
+        i.e. no need to continue the control flow line.
         """
         try:
             cell = self.cells[row][column]
@@ -186,8 +193,9 @@ class VirtualCanvas:
             return True
 
     def __allocateCell(self, row, column, needScopeEdge=True):
-        """Allocates a cell as Vacant if it is not available yet
-           Can only allocate bottom and right growing cells
+        """Allocates a cell as Vacant if it is not available yet.
+
+        Can only allocate bottom and right growing cells.
         """
         lastIndex = len(self.cells) - 1
         while lastIndex < row:
@@ -226,7 +234,8 @@ class VirtualCanvas:
             return row + 1
         return row
 
-    def __needLoopCommentRow(self, item):
+    @staticmethod
+    def __needLoopCommentRow(item):
         """Tells if a row for comments need to be reserved"""
         if item.leadingComment:
             return True
@@ -235,7 +244,8 @@ class VirtualCanvas:
                 return True
         return False
 
-    def __needTryCommentRow(self, item):
+    @staticmethod
+    def __needTryCommentRow(item):
         """Tells if a row for comments need to be reserved"""
         if item.leadingComment:
             return True
@@ -245,10 +255,10 @@ class VirtualCanvas:
         return False
 
     def layoutSuite(self, vacantRow, suite,
-                    scopeKind=None, cf=None, column=1):
+                    scopeKind=None, cflow=None, column=1):
         """Does a single suite layout"""
         if scopeKind:
-            self.__currentCF = cf
+            self.__currentCF = cflow
             self.__currentScopeClass = _scopeToClass[scopeKind]
 
         for item in suite:
@@ -622,9 +632,9 @@ class VirtualCanvas:
 
         self.dependentRegions.append((0, vacantRow))
 
-    def layoutModule(self, cf):
+    def layoutModule(self, cflow):
         """Lays out a module"""
-        if cf.leadingComment:
+        if cflow.leadingComment:
             self.isNoScope = True
 
             vacantRow = 0
@@ -634,16 +644,16 @@ class VirtualCanvas:
             self.__allocateCell(vacantRow, 2, False)
             self.cells[vacantRow][1] = ConnectorCell(CONN_N_S,
                                                      self, 1, vacantRow)
-            self.cells[vacantRow][2] = LeadingCommentCell(cf,
+            self.cells[vacantRow][2] = LeadingCommentCell(cflow,
                                                           self, 2, vacantRow)
             vacantRow += 1
-            self.__allocateScope(cf, CellElement.FILE_SCOPE, vacantRow, 0)
+            self.__allocateScope(cflow, CellElement.FILE_SCOPE, vacantRow, 0)
         else:
-            self.layout(cf, CellElement.FILE_SCOPE)
+            self.layout(cflow, CellElement.FILE_SCOPE)
 
-    def layout(self, cf, scopeKind, rowsToAllocate=1):
+    def layout(self, cflow, scopeKind, rowsToAllocate=1):
         """Does the layout"""
-        self.__currentCF = cf
+        self.__currentCF = cflow
         self.__currentScopeClass = _scopeToClass[scopeKind]
 
         vacantRow = 0
@@ -651,30 +661,30 @@ class VirtualCanvas:
         # Allocate the scope header
         self.__allocateCell(vacantRow, 0, False)
         self.cells[vacantRow][0] = self.__currentScopeClass(
-            cf, self, 0, vacantRow, ScopeCellElement.TOP_LEFT)
+            cflow, self, 0, vacantRow, ScopeCellElement.TOP_LEFT)
         self.linesInHeader += 1
         vacantRow += 1
         self.__allocateCell(vacantRow, 1)
         self.cells[vacantRow][1] = self.__currentScopeClass(
-            cf, self, 1, vacantRow, ScopeCellElement.DECLARATION)
+            cflow, self, 1, vacantRow, ScopeCellElement.DECLARATION)
         self.linesInHeader += 1
 
-        if hasattr(cf, "sideComment"):
-            if cf.sideComment:
+        if hasattr(cflow, "sideComment"):
+            if cflow.sideComment:
                 self.__allocateCell(vacantRow - 1, 2)
                 self.cells[vacantRow - 1][2] = self.__currentScopeClass(
-                    cf, self, 2, vacantRow - 1, ScopeCellElement.TOP)
+                    cflow, self, 2, vacantRow - 1, ScopeCellElement.TOP)
                 self.__allocateCell(vacantRow, 2)
                 self.cells[vacantRow][2] = self.__currentScopeClass(
-                    cf, self, 2, vacantRow, ScopeCellElement.SIDE_COMMENT)
+                    cflow, self, 2, vacantRow, ScopeCellElement.SIDE_COMMENT)
 
         vacantRow += 1
-        if hasattr(cf, "docstring"):
-            if cf.docstring:
-                if cf.docstring.getDisplayValue():
+        if hasattr(cflow, "docstring"):
+            if cflow.docstring:
+                if cflow.docstring.getDisplayValue():
                     self.__allocateCell(vacantRow, 1)
                     self.cells[vacantRow][1] = self.__currentScopeClass(
-                        cf, self, 1, vacantRow, ScopeCellElement.DOCSTRING)
+                        cflow, self, 1, vacantRow, ScopeCellElement.DOCSTRING)
                     vacantRow += 1
                     self.linesInHeader += 1
 
@@ -693,12 +703,12 @@ class VirtualCanvas:
         else:
             # walk the suite
             # no changes in the scope kind or control flow object
-            vacantRow = self.layoutSuite(vacantRow, cf.suite)
+            vacantRow = self.layoutSuite(vacantRow, cflow.suite)
 
         # Allocate the scope footer
         self.__allocateCell(vacantRow, 0, False)
         self.cells[vacantRow][0] = self.__currentScopeClass(
-            cf, self, 0, vacantRow, ScopeCellElement.BOTTOM_LEFT)
+            cflow, self, 0, vacantRow, ScopeCellElement.BOTTOM_LEFT)
 
     def __dependentRegion(self, rowIndex):
         """True if it is a dependent region"""
@@ -718,7 +728,6 @@ class VirtualCanvas:
         """Renders a region where the rows affect each other"""
         start, end = self.dependentRegions.pop(0)
         maxColumns = self.__getRangeMaxColumns(start, end)
-        totalWidth = 0
 
         # Detect the region tail comment cells
         index = start
@@ -820,9 +829,11 @@ class VirtualCanvas:
         return (self.width, self.height)
 
     def adjustLastCellHeight(self, maxHeight):
-        """The last cell in the first column of the non-scope virtual canvas
-           may need to be adjusted to occupy the whole row hight in the upper
-           level canvas. This happens mostly in 'if' statements
+        """Adjusts the cell height if needed.
+
+        The last cell in the first column of the non-scope virtual canvas
+        may need to be adjusted to occupy the whole row hight in the upper
+        level canvas. This happens mostly in 'if' statements.
         """
         allButLastHeight = 0
         for index in range(len(self.cells) - 1):
