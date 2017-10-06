@@ -190,12 +190,21 @@ class CDMBreakpointMargin(QWidget):
 
     def restoreBreakpoints(self):
         """Restores the breakpoints"""
+        for _, bpoint in self.__breakpoints.items():
+            line = bpoint.getLineNumber()
+            self.setBlockValue(
+                self._qpart.document().findBlockByNumber(line - 1), 0)
+        self.__breakpoints = {}
         self.__addBreakPoints(
             QModelIndex(), 0,
             self.__debugger.getBreakPointModel().rowCount() - 1)
+        self.validateBreakpoints()
+        self.update()
 
     def setDebugMode(self, debugOn, disableEditing):
         """Called to switch between debug/development"""
+        del debugOn         # unused argument
+        del disableEditing  # unused argument
         self.__breakableLines = None
 
     def isLineBreakable(self, line=None, enforceRecalc=False,
@@ -280,7 +289,7 @@ class CDMBreakpointMargin(QWidget):
                           'breakpoint is deleted.'
                 else:
                     msg = 'Breakpoint at ' + location + ' does not point to ' \
-                          'a breakable line anymore. The breakpoint is' \
+                          'a breakable line anymore. The breakpoint is ' \
                           'deleted.'
                 logging.warning(msg)
                 index = model.getBreakPointIndex(fileName, line)
@@ -350,7 +359,6 @@ class CDMBreakpointMargin(QWidget):
 
     def __toggleBreakpoint(self, line, temporary=False):
         """Toggles the line breakpoint"""
-
         # Clicking loop: none->regular->temporary->disabled->none
         fileName = self._qpart._parent.getFileName()
         model = self.__debugger.getBreakPointModel()
