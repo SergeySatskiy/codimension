@@ -382,6 +382,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             if pos != 0:
                 char = self.lines[line][pos - 1]
                 if char != ' ' and currentPosition != self.__lastTabPosition:
+                    self.__lastTabPosition = currentPosition
                     self.onAutoComplete()
                     event.accept()
                 else:
@@ -482,7 +483,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def onAutoComplete(self):
         """Triggered when ctrl+space or TAB is clicked"""
-        self.__lastTabPosition = None
         if self.isReadOnly():
             return
 
@@ -522,6 +522,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             cRectangle.setTop(cRectangle.top() + self.viewport().y() + 2)
             self.__completer.complete(cRectangle)
         self.__inCompletion = False
+        self.__lastTabPosition = None
 
     def onTagHelp(self):
         """Provides help for an item if available"""
