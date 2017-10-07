@@ -521,8 +521,12 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             cRectangle.setLeft(cRectangle.left() + self.viewport().x())
             cRectangle.setTop(cRectangle.top() + self.viewport().y() + 2)
             self.__completer.complete(cRectangle)
+            # If something was selected then the next tab does not need to
+            # bring the completion again. This is covered in the
+            # insertCompletion() method. Here we reset the last tab position
+            # preliminary because it is unknown if something will be inserted.
+            self.__lastTabPosition = None
         self.__inCompletion = False
-        self.__lastTabPosition = None
 
     def onTagHelp(self):
         """Provides help for an item if available"""
@@ -782,6 +786,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
             self.__completionPrefix = ''
             self.__completer.hide()
+
+            # The next time there is nothing to insert for sure
+            self.__lastTabPosition = self.absCursorPosition
 
     def insertLines(self, text, line):
         """Inserts the given text into new lines starting from 1-based line"""

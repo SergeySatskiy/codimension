@@ -35,18 +35,21 @@ class StackFrameItem(QTreeWidgetItem):
 
     """Single stack frame item data structure"""
 
-    def __init__(self, fileName, lineNumber, funcName, frameNumber):
+    def __init__(self, fileName, lineNumber, funcName, funcArgs, frameNumber):
         shortened = os.path.basename(fileName) + ":" + str(lineNumber)
-        full = fileName + ":" + str(lineNumber)
 
         self.__lineNumber = lineNumber
-        QTreeWidgetItem.__init__(self, ["", shortened, funcName, fileName])
+        QTreeWidgetItem.__init__(self, ["", shortened,
+                                        funcName, funcArgs, fileName])
 
         self.__isCurrent = False
         self.__frameNumber = frameNumber
 
-        for index in range(4):
-            self.setToolTip(index, full)
+        tooltip = ['Location: ' + fileName + ':' + str(lineNumber)]
+        if funcName:
+            tooltip += ['Function: ' + funcName,
+                        'Arguments: ' + funcArgs]
+        self.setToolTip(0, '\n'.join(tooltip))
 
     def setCurrent(self, value):
         """Mark the current stack frame with an icon if so"""
@@ -62,7 +65,7 @@ class StackFrameItem(QTreeWidgetItem):
 
     def getFilename(self):
         """Provides the full project filename"""
-        return str(self.text(3))
+        return str(self.text(4))
 
     def getLineNumber(self):
         """Provides the line number"""
@@ -153,7 +156,8 @@ class StackViewer(QWidget):
             self.__showContextMenu)
 
         self.__framesList.setHeaderLabels(["", "File:line",
-                                           "Function", "Full path"])
+                                           "Function", "Arguments",
+                                           "Full path"])
 
         verticalLayout.addWidget(self.headerFrame)
         verticalLayout.addWidget(self.__framesList)
@@ -204,12 +208,21 @@ class StackViewer(QWidget):
         self.currentFrame = 0
         frameNumber = 0
         for item in stack:
-            if len(item) == 2:
-                # This is when an exception comes
-                funcName = ""
-            else:
+            fName = item[0]
+            lineNo = item[1]
+            funcName = ''
+            funcArgs = ''
+            if len(item) >= 3:
                 funcName = item[2]
-            item = StackFrameItem(item[0], item[1], funcName, frameNumber)
+            if len(item) >= 4:
+                funcArgs = item[3]
+
+            if funcName.startswith('<'):
+                funcName = ''
+                funcArgs = ''
+
+            item = StackFrameItem(fName, lineNo,
+                                  funcName, funcArgs, frameNumber)
             self.__framesList.addTopLevelItem(item)
             frameNumber += 1
         self.__resizeColumns()

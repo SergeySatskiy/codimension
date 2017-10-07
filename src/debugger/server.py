@@ -33,8 +33,8 @@ from .client.protocol_cdm_dbg import (METHOD_LINE, METHOD_STACK, METHOD_STEP,
                                       METHOD_BP_CONDITION_ERROR,
                                       METHOD_SET_BP, METHOD_STEP_OUT,
                                       METHOD_BP_ENABLE, METHOD_BP_IGNORE,
-                                      METHOD_STEP_QUIT,
-                                      METHOD_CALL_TRACE)
+                                      METHOD_STEP_QUIT, METHOD_CALL_TRACE,
+                                      METHOD_EXECUTE_STATEMENT)
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
@@ -472,15 +472,11 @@ class CodimensionDebugger(QObject):
                                {'frameNumber': framenr, 'variable': var,
                                 'scope': scope, 'filters': filters})
 
-    def remoteEval(self, expression, framenr):
-        """Evaluates the expression in the current context of the debuggee"""
-        self.__sendCommand(RequestEval +
-                           str(framenr) + ", " + expression + "\n")
-
-    def remoteExec(self, statement, framenr):
+    def remoteExecuteStatement(self, statement, framenr):
         """Executes the expression in the current context of the debuggee"""
-        self.__sendCommand(RequestExec +
-                           str(framenr) + ", " + statement + "\n")
+        self.__sendJSONCommand(METHOD_EXECUTE_STATEMENT,
+                               {'statement': statement,
+                                'frameNumber': framenr})
 
     def remoteBreakpoint(self, fileName, line,
                          isSetting, condition=None, temporary=False):

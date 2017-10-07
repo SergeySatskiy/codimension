@@ -50,8 +50,6 @@ class VariablesViewer(QWidget):
 
         self.setTabOrder(self.__browser, self.__execStatement)
         self.setTabOrder(self.__execStatement, self.__execButton)
-        self.setTabOrder(self.__execButton, self.__evalStatement)
-        self.setTabOrder(self.__evalStatement, self.__evalButton)
 
         self.__updateFilter()
 
@@ -96,7 +94,7 @@ class VariablesViewer(QWidget):
         self.__execStatement.setSizePolicy(QSizePolicy.Expanding,
                                            QSizePolicy.Expanding)
         self.__execStatement.lineEdit().setToolTip(
-            "Expression to be executed")
+            "Execute statement")
         self.__execStatement.setFixedHeight(26)
         self.__execStatement.editTextChanged.connect(
             self.__execStatementChanged)
@@ -105,20 +103,6 @@ class VariablesViewer(QWidget):
         self.__execButton.setEnabled(False)
         self.__execButton.setFixedHeight(26)
         self.__execButton.clicked.connect(self.__onExec)
-
-        self.__evalStatement = CDMComboBox(True)
-        self.__evalStatement.setSizePolicy(QSizePolicy.Expanding,
-                                           QSizePolicy.Expanding)
-        self.__evalStatement.lineEdit().setToolTip(
-            "Expression to be evaluated")
-        self.__evalStatement.setFixedHeight(26)
-        self.__evalStatement.editTextChanged.connect(
-            self.__evalStatementChanged)
-        self.__evalStatement.enterClicked.connect(self.__onEnterInEval)
-        self.__evalButton = QPushButton("Eval")
-        self.__evalButton.setEnabled(False)
-        self.__evalButton.setFixedHeight(26)
-        self.__evalButton.clicked.connect(self.__onEval)
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins(0, 0, 0, 0)
@@ -129,17 +113,15 @@ class VariablesViewer(QWidget):
         headerLayout.addWidget(self.__filterButton)
         headerFrame.setLayout(headerLayout)
 
-        execEvalLayout = QGridLayout()
-        execEvalLayout.setContentsMargins(1, 1, 1, 1)
-        execEvalLayout.setSpacing(1)
-        execEvalLayout.addWidget(self.__execStatement, 0, 0)
-        execEvalLayout.addWidget(self.__execButton, 0, 1)
-        execEvalLayout.addWidget(self.__evalStatement, 1, 0)
-        execEvalLayout.addWidget(self.__evalButton, 1, 1)
+        execLayout = QGridLayout()
+        execLayout.setContentsMargins(1, 1, 1, 1)
+        execLayout.setSpacing(1)
+        execLayout.addWidget(self.__execStatement, 0, 0)
+        execLayout.addWidget(self.__execButton, 0, 1)
 
         verticalLayout.addWidget(headerFrame)
         verticalLayout.addWidget(self.__browser)
-        verticalLayout.addLayout(execEvalLayout)
+        verticalLayout.addLayout(execLayout)
 
     def __filterMenuAboutToShow(self):
         """Debug variable filter menu is about to show"""
@@ -190,26 +172,6 @@ class VariablesViewer(QWidget):
         self.clear()
         self.__execStatement.lineEdit().setText("")
         self.__execStatement.clear()
-        self.__evalStatement.lineEdit().setText("")
-        self.__evalStatement.clear()
-
-    def __evalStatementChanged(self, text):
-        """Triggered when a eval statement is changed"""
-        text = str(text).strip()
-        self.__evalButton.setEnabled(text != "")
-
-    def __onEnterInEval(self):
-        """Enter/return in eval"""
-        self.__onEval()
-
-    def __onEval(self):
-        """Triggered when the Eval button is clicked"""
-        text = self.__evalStatement.currentText().strip()
-        if text != "":
-            currentFrame = GlobalData().mainWindow.getCurrentFrameNumber()
-            self.__debugger.remoteEval(text, currentFrame)
-            self.__debugger.remoteClientVariables(1, currentFrame)  # globals
-            self.__debugger.remoteClientVariables(0, currentFrame)  # locals
 
     def __execStatementChanged(self, text):
         """Triggered when a exec statement is changed"""
@@ -225,7 +187,7 @@ class VariablesViewer(QWidget):
         text = self.__execStatement.currentText().strip()
         if text != "":
             currentFrame = GlobalData().mainWindow.getCurrentFrameNumber()
-            self.__debugger.remoteExec(text, currentFrame)
+            self.__debugger.remoteExecuteStatement(text, currentFrame)
             self.__debugger.remoteClientVariables(1, currentFrame)  # globals
             self.__debugger.remoteClientVariables(0, currentFrame)  # locals
 
@@ -240,10 +202,3 @@ class VariablesViewer(QWidget):
             self.__execButton.setEnabled(text != "")
         else:
             self.__execButton.setEnabled(False)
-
-        self.__evalStatement.setEnabled(isInIDE)
-        if isInIDE:
-            text = self.__evalStatement.currentText().strip()
-            self.__evalButton.setEnabled(text != "")
-        else:
-            self.__evalButton.setEnabled(False)

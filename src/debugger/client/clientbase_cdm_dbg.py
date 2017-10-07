@@ -49,7 +49,7 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_BP_CONDITION_ERROR, METHOD_BP_ENABLE,
                               METHOD_BP_IGNORE, METHOD_SET_WP,
                               METHOD_WP_CONDITION_ERROR, METHOD_WP_ENABLE,
-                              METHOD_WP_IGNORE, METHOD_CLEAR_BP, METHOD_OK,
+                              METHOD_WP_IGNORE, METHOD_CLEAR_BP,
                               METHOD_CLEAR_WP, METHOD_SYNTAX_ERROR,
                               METHOD_SET_ENVIRONMENT, METHOD_EXECUTE_STATEMENT,
                               METHOD_SIGNAL, METHOD_SHUTDOWN,
@@ -329,96 +329,96 @@ class DebugClientBase(object):
 
     def __handleExecuteStatement(self, params):
         """Handling METHOD_EXECUTE_STATEMENT"""
-        if self.buffer:
-            self.buffer = self.buffer + '\n' + params['statement']
-        else:
-            self.buffer = params['statement']
-
+        statement =  params['statement']
         try:
-            code = self.compile_command(self.buffer, self.readstream.name)
+            code = self.compileCommand(statement, self.readstream.name)
         except (OverflowError, SyntaxError, ValueError):
             # Report the exception
             sys.last_type, sys.last_value, sys.last_traceback = \
                 sys.exc_info()
-            sendJSONCommand(self.socket, METHOD_CLIENT_OUTPUT,
+            sendJSONCommand(self.socket, METHOD_EXEC_STATEMENT_ERROR,
                             self.procuuid,
-                            {'text':
-                                ''.join(traceback.format_exception_only(
-                                    sys.last_type, sys.last_value))})
-            self.buffer = ''
-        else:
-            if code is None:
-                sendJSONCommand(self.socket, METHOD_CONTINUE,
-                                self.procuuid, None)
-                return
+                            {'text': ''.join(traceback.format_exception_only(
+                                sys.last_type, sys.last_value))})
+            return
+
+        if code is None:
+            sendJSONCommand(self.socket, METHOD_EXEC_STATEMENT_ERROR,
+                            self.procuuid,
+                            {'text': 'Incomplete statement to execute'})
+            return
+
+        try:
+            if self.running is None:
+                print('Executing because running is None.', file=sys.__stderr__)
+                exec(code, self.debugMod.__dict__)
             else:
-                self.buffer = ''
-
-                try:
-                    if self.running is None:
-                        exec(code, self.debugMod.__dict__)
+                print('Executing because running is NOT None.', file=sys.__stderr__)
+                if self.currentThread is None:
+                    print('111', file=sys.__stderr__)
+                    # program has terminated
+                    self.running = None
+                    _globals = self.debugMod.__dict__
+                    _locals = _globals
+                else:
+                    print('222', file=sys.__stderr__)
+                    cf = self.currentThread.getCurrentFrame()
+                    # program has terminated
+                    if cf is None:
+                        print('333', file=sys.__stderr__)
+                        self.running = None
+                        _globals = self.debugMod.__dict__
+                        _locals = _globals
                     else:
-                        if self.currentThread is None:
-                            # program has terminated
-                            self.running = None
-                            _globals = self.debugMod.__dict__
-                            _locals = _globals
-                        else:
-                            cf = self.currentThread.getCurrentFrame()
-                            # program has terminated
-                            if cf is None:
-                                self.running = None
-                                _globals = self.debugMod.__dict__
-                                _locals = _globals
-                            else:
-                                frmnr = self.framenr
-                                while cf is not None and frmnr > 0:
-                                    cf = cf.f_back
-                                    frmnr -= 1
-                                _globals = cf.f_globals
-                                _locals = self.currentThread.getFrameLocals(
-                                    self.framenr)
-                        # reset sys.stdout to our redirector
-                        # (unconditionally)
-                        if 'sys' in _globals:
-                            __stdout = _globals['sys'].stdout
-                            _globals['sys'].stdout = self.writestream
-                            exec(code, _globals, _locals)
-                            _globals['sys'].stdout = __stdout
-                        elif 'sys' in _locals:
-                            __stdout = _locals['sys'].stdout
-                            _locals['sys'].stdout = self.writestream
-                            exec(code, _globals, _locals)
-                            _locals['sys'].stdout = __stdout
-                        else:
-                            exec(code, _globals, _locals)
+                        print('444', file=sys.__stderr__)
+                        frmnr = self.framenr
+                        while cf is not None and frmnr > 0:
+                            cf = cf.f_back
+                            frmnr -= 1
+                        _globals = cf.f_globals
+                        _locals = self.currentThread.getFrameLocals(
+                            self.framenr)
+                # reset sys.stdout to our redirector
+                # (unconditionally)
+                if 'sys' in _globals:
+                    print('Executing 1...', file=sys.__stderr__)
+                    __stdout = _globals['sys'].stdout
+                    _globals['sys'].stdout = self.writestream
+                    exec(code, _globals, _locals)
+                    _globals['sys'].stdout = __stdout
+                elif 'sys' in _locals:
+                    print('Executing 2...', file=sys.__stderr__)
+                    __stdout = _locals['sys'].stdout
+                    _locals['sys'].stdout = self.writestream
+                    exec(code, _globals, _locals)
+                    _locals['sys'].stdout = __stdout
+                else:
+                    print('Executing 3...', file=sys.__stderr__)
+                    exec(code, _globals, _locals)
 
-                        self.currentThread.storeFrameLocals(self.framenr)
-                except SystemExit as exc:
-                    self.progTerminated(exc.code)
-                except Exception:
-                    # Report the exception and the traceback
-                    tlist = []
-                    try:
-                        exc_type, exc_value, exc_tb = sys.exc_info()
-                        sys.last_type = exc_type
-                        sys.last_value = exc_value
-                        sys.last_traceback = exc_tb
-                        tblist = traceback.extract_tb(exc_tb)
-                        del tblist[:1]
-                        tlist = traceback.format_list(tblist)
-                        if tlist:
-                            tlist.insert(
-                                0, '"Traceback (innermost last):\n')
-                            tlist.extend(traceback.format_exception_only(
-                                exc_type, exc_value))
-                    finally:
-                        tblist = exc_tb = None
+                self.currentThread.storeFrameLocals(self.framenr)
+        except SystemExit as exc:
+            self.progTerminated(exc.code)
+        except Exception:
+            # Report the exception and the traceback
+            tlist = []
+            try:
+                exc_type, exc_value, exc_tb = sys.exc_info()
+                sys.last_type = exc_type
+                sys.last_value = exc_value
+                sys.last_traceback = exc_tb
+                tblist = traceback.extract_tb(exc_tb)
+                del tblist[:1]
+                tlist = traceback.format_list(tblist)
+                if tlist:
+                    tlist.insert(0, '"Traceback (innermost last):\n')
+                    tlist.extend(traceback.format_exception_only(
+                        exc_type, exc_value))
+            finally:
+                tblist = exc_tb = None
 
-                    sendJSONCommand(self.socket, METHOD_CLIENT_OUTPUT,
-                                    self.procuuid, {'text': ''.join(tlist)})
-
-        sendJSONCommand(self.socket, METHOD_OK, self.procuuid, None)
+            sendJSONCommand(self.socket, METHOD_EXEC_STATEMENT_ERROR,
+                            self.procuuid, {'text': ''.join(tlist)})
 
     def __handleStep(self, _):
         """Handling METHOD_STEP"""

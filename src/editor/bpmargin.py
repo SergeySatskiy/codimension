@@ -285,13 +285,11 @@ class CDMBreakpointMargin(QWidget):
                 location = ':'.join([fileName, str(line)])
                 if breakableLines is None:
                     msg = 'Breakpoint at ' + location + ' does not point to ' \
-                          'a breakable line (file is not compilable). The ' \
-                          'breakpoint is deleted.'
+                          'a breakable line (file is not compilable).'
                 else:
                     msg = 'Breakpoint at ' + location + ' does not point to ' \
-                          'a breakable line anymore. The breakpoint is ' \
-                          'deleted.'
-                logging.warning(msg)
+                          'a breakable line anymore.'
+                logging.warning(msg + ' The breakpoint is deleted.')
                 index = model.getBreakPointIndex(fileName, line)
                 self.setBlockValue(
                     self._qpart.document().findBlockByNumber(line - 1), 0)

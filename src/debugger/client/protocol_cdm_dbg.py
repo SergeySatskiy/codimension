@@ -43,7 +43,6 @@ METHOD_THREAD_SET = 'ThreadSet'                     # to/from IDE
 METHOD_VARIABLES = 'Variables'                      # to/from IDE
 METHOD_VARIABLE = 'Variable'                        # to/from IDE
 METHOD_FORK_TO = 'ForkTo'                           # to/from IDE
-METHOD_CONTINUE = 'Continue'                        # to/from IDE
 METHOD_CALL_TRACE = 'CallTrace'                     # to/from IDE
 
 METHOD_DEBUG_STARTUP = 'DebugStartup'               # to IDE
@@ -56,8 +55,9 @@ METHOD_CLEAR_BP = 'ClearBreakpoint'                 # to IDE
 METHOD_CLEAR_WP = 'ClearWatchpoint'                 # to IDE
 METHOD_SYNTAX_ERROR = 'SyntaxError'                 # to IDE
 METHOD_SIGNAL = 'Signal'                            # to IDE
-METHOD_OK = 'OK'                                    # to IDE
+METHOD_EXEC_STATEMENT_ERROR = 'ExecStatementError'  # to IDE
 
+METHOD_CONTINUE = 'Continue'                        # from IDE
 METHOD_STEP_QUIT = 'StepQuit'                       # from IDE
 METHOD_STEP_OUT = 'StepOut'                         # from IDE
 METHOD_STEP_OVER = 'StepOver'                       # from IDE
