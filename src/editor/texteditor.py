@@ -490,6 +490,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.__inCompletion = True
         self.__completionPrefix = self.getWordBeforeCursor()
         words = getCompletionList(self, self._parent.getFileName())
+        print('Prefix: ' + self.__completionPrefix)
+        print('words: ' + repr(words))
+
         QApplication.restoreOverrideCursor()
 
         if len(words) == 0:
@@ -776,13 +779,16 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             currentWord = self.getCurrentWord()
             line, pos = self.cursorPosition
             prefixLength = len(self.__completionPrefix)
-            if text != currentWord:
+
+            if text != currentWord and text != self.__completionPrefix:
                 with self:
                     lineContent = self.lines[line]
                     leftPart = lineContent[0:pos - prefixLength]
-                    rightPart = lineContent[pos + len(currentWord) - prefixLength:]
+                    rightPart = lineContent[pos:]
                     self.lines[line] = leftPart + text + rightPart
-            self.cursorPosition = line, pos + len(text) - prefixLength
+
+            newPos = pos + len(text) - prefixLength
+            self.cursorPosition = line, newPos
 
             self.__completionPrefix = ''
             self.__completer.hide()
