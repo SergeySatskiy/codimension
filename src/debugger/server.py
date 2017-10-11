@@ -34,7 +34,8 @@ from .client.protocol_cdm_dbg import (METHOD_LINE, METHOD_STACK, METHOD_STEP,
                                       METHOD_SET_BP, METHOD_STEP_OUT,
                                       METHOD_BP_ENABLE, METHOD_BP_IGNORE,
                                       METHOD_STEP_QUIT, METHOD_CALL_TRACE,
-                                      METHOD_EXECUTE_STATEMENT)
+                                      METHOD_EXECUTE_STATEMENT,
+                                      METHOD_EXEC_STATEMENT_ERROR)
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
@@ -111,7 +112,8 @@ class CodimensionDebugger(QObject):
             METHOD_VARIABLE: self.__handleVariable,
             METHOD_BP_CONDITION_ERROR: self.__handleBPConditionError,
             METHOD_EXCEPTION: self.__handleException,
-            METHOD_CALL_TRACE: self.__handleCallTrace}
+            METHOD_CALL_TRACE: self.__handleCallTrace,
+            METHOD_EXEC_STATEMENT_ERROR: self.__handleExecStatementError}
 
     def getScriptPath(self):
         """Provides the path to the debugged script"""
@@ -261,6 +263,10 @@ class CodimensionDebugger(QObject):
         self.sigClientCallTrace.emit(
             isCall, src['filename'], src['linenumber'], src['codename'],
             dest['filename'], dest['linenumber'], dest['codename'])
+
+    def __handleExecStatementError(self, params):
+        """Handles METHOD_EXEC_STATEMENT_ERROR"""
+        logging.error('Execute statement error:\n' + params['text'])
 
     def onProcessFinished(self, procuuid, retCode):
         """Process finished. The retCode may indicate a disconnection."""

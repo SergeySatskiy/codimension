@@ -55,7 +55,7 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_SIGNAL, METHOD_SHUTDOWN,
                               METHOD_SET_FILTER, METHOD_EPILOGUE_EXIT_CODE,
                               METHOD_EPILOGUE_EXIT, SYNTAX_ERROR_AT_START,
-                              STOPPED_BY_REQUEST)
+                              STOPPED_BY_REQUEST, METHOD_EXEC_STATEMENT_ERROR)
 from base_cdm_dbg import setRecursionLimit
 from asyncfile_cdm_dbg import AsyncFile
 from outredir_cdm_dbg import OutStreamRedirector
