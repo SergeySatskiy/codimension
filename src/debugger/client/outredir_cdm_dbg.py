@@ -179,10 +179,6 @@ class OutStreamCollector():
 
     def write(self, data):
         """Writes a string to the file"""
-        try:
-            data = data.encode('utf8')
-        except (UnicodeEncodeError, UnicodeDecodeError):
-            pass
         self.buf += data
 
     def writelines(self, lines):

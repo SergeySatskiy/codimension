@@ -40,7 +40,7 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_STDIN, VAR_TYPE_DISP_STRINGS,
                               METHOD_VARIABLES, METHOD_VARIABLE,
                               METHOD_THREAD_LIST, METHOD_THREAD_SET,
-                              METHOD_CLIENT_OUTPUT, METHOD_FORK_TO,
+                              METHOD_FORK_TO,
                               METHOD_CONTINUE, METHOD_DEBUG_STARTUP,
                               METHOD_CALL_TRACE, METHOD_LINE,
                               METHOD_EXCEPTION, METHOD_STACK, METHOD_STEP_QUIT,
@@ -55,10 +55,11 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_SIGNAL, METHOD_SHUTDOWN,
                               METHOD_SET_FILTER, METHOD_EPILOGUE_EXIT_CODE,
                               METHOD_EPILOGUE_EXIT, SYNTAX_ERROR_AT_START,
-                              STOPPED_BY_REQUEST, METHOD_EXEC_STATEMENT_ERROR)
+                              STOPPED_BY_REQUEST, METHOD_EXEC_STATEMENT_ERROR,
+                              METHOD_EXEC_STATEMENT_OUTPUT)
 from base_cdm_dbg import setRecursionLimit
 from asyncfile_cdm_dbg import AsyncFile
-from outredir_cdm_dbg import OutStreamRedirector
+from outredir_cdm_dbg import OutStreamRedirector, OutStreamCollector
 from bp_wp_cdm_dbg import Breakpoint, Watch
 from cdm_dbg_utils import (sendJSONCommand, formatArgValues, getArgValues,
                            printerr, waitForIDEMessage,
@@ -329,7 +330,7 @@ class DebugClientBase(object):
 
     def __handleExecuteStatement(self, params):
         """Handling METHOD_EXECUTE_STATEMENT"""
-        statement =  params['statement']
+        statement = params['statement']
         try:
             code = self.compileCommand(statement, self.readstream.name)
         except (OverflowError, SyntaxError, ValueError):
@@ -349,54 +350,30 @@ class DebugClientBase(object):
             return
 
         try:
-            if self.running is None:
-                print('Executing because running is None.', file=sys.__stderr__)
-                exec(code, self.debugMod.__dict__)
+            cf = self.currentThread.getCurrentFrame()
+            # program has terminated
+            if cf is None:
+                self.running = None
+                _globals = self.debugMod.__dict__
+                _locals = _globals
             else:
-                print('Executing because running is NOT None.', file=sys.__stderr__)
-                if self.currentThread is None:
-                    print('111', file=sys.__stderr__)
-                    # program has terminated
-                    self.running = None
-                    _globals = self.debugMod.__dict__
-                    _locals = _globals
-                else:
-                    print('222', file=sys.__stderr__)
-                    cf = self.currentThread.getCurrentFrame()
-                    # program has terminated
-                    if cf is None:
-                        print('333', file=sys.__stderr__)
-                        self.running = None
-                        _globals = self.debugMod.__dict__
-                        _locals = _globals
-                    else:
-                        print('444', file=sys.__stderr__)
-                        frmnr = self.framenr
-                        while cf is not None and frmnr > 0:
-                            cf = cf.f_back
-                            frmnr -= 1
-                        _globals = cf.f_globals
-                        _locals = self.currentThread.getFrameLocals(
-                            self.framenr)
-                # reset sys.stdout to our redirector
-                # (unconditionally)
-                if 'sys' in _globals:
-                    print('Executing 1...', file=sys.__stderr__)
-                    __stdout = _globals['sys'].stdout
-                    _globals['sys'].stdout = self.writestream
-                    exec(code, _globals, _locals)
-                    _globals['sys'].stdout = __stdout
-                elif 'sys' in _locals:
-                    print('Executing 2...', file=sys.__stderr__)
-                    __stdout = _locals['sys'].stdout
-                    _locals['sys'].stdout = self.writestream
-                    exec(code, _globals, _locals)
-                    _locals['sys'].stdout = __stdout
-                else:
-                    print('Executing 3...', file=sys.__stderr__)
-                    exec(code, _globals, _locals)
+                frmnr = self.framenr
+                while cf is not None and frmnr > 0:
+                    cf = cf.f_back
+                    frmnr -= 1
+                _globals = cf.f_globals
+                _locals = self.currentThread.getFrameLocals(self.framenr)
 
-                self.currentThread.storeFrameLocals(self.framenr)
+            # reset sys.stdout to our redirector
+            # (unconditionally)
+            collector = OutStreamCollector()
+            self.__execWithCollector(code, _globals, _locals, collector)
+            self.currentThread.storeFrameLocals(self.framenr)
+
+            sendJSONCommand(self.socket, METHOD_EXEC_STATEMENT_OUTPUT,
+                            self.procuuid,
+                            {'text': collector.buf})
+
         except SystemExit as exc:
             self.progTerminated(exc.code)
         except Exception:
@@ -411,7 +388,7 @@ class DebugClientBase(object):
                 del tblist[:1]
                 tlist = traceback.format_list(tblist)
                 if tlist:
-                    tlist.insert(0, '"Traceback (innermost last):\n')
+                    tlist.insert(0, 'Traceback (innermost last):\n')
                     tlist.extend(traceback.format_exception_only(
                         exc_type, exc_value))
             finally:
@@ -419,6 +396,37 @@ class DebugClientBase(object):
 
             sendJSONCommand(self.socket, METHOD_EXEC_STATEMENT_ERROR,
                             self.procuuid, {'text': ''.join(tlist)})
+
+    @staticmethod
+    def __execWithCollector(code, globalVars, localVars, collector):
+        collector = OutStreamCollector()
+        oldStreams = [None for _ in range(6)]
+        if 'sys' in globalVars:
+            oldStreams[0] = globalVars['sys'].stdout
+            oldStreams[1] = globalVars['sys'].stderr
+            globalVars['sys'].stdout = collector
+            globalVars['sys'].stderr = collector
+        if 'sys' in localVars:
+            oldStreams[2] = localVars['sys'].stdout
+            oldStreams[3] = localVars['sys'].stderr
+            localVars['sys'].stdout = collector
+            localVars['sys'].stderr = collector
+        oldStreams[4] = sys.stdout
+        oldStreams[5] = sys.stderr
+        sys.stdout = collector
+        sys.stderr = collector
+
+        try:
+            exec(code, globalVars, localVars)
+        finally:
+            if 'sys' in globalVars:
+                globalVars['sys'].stdout = oldStreams[0]
+                globalVars['sys'].stderr = oldStreams[1]
+            if 'sys' in localVars:
+                localVars['sys'].stdout = oldStreams[2]
+                localVars['sys'].stderr = oldStreams[3]
+            sys.stdout = oldStreams[4]
+            sys.stderr = oldStreams[5]
 
     def __handleStep(self, _):
         """Handling METHOD_STEP"""
