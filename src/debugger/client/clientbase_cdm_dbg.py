@@ -364,8 +364,8 @@ class DebugClientBase(object):
                 _globals = cf.f_globals
                 _locals = self.currentThread.getFrameLocals(self.framenr)
 
-            # reset sys.stdout to our redirector
-            # (unconditionally)
+            # Execute a statement using a collector to collect both
+            # stdout and stderr. The combined output is sent to the IDE
             collector = OutStreamCollector()
             self.__execWithCollector(code, _globals, _locals, collector)
             self.currentThread.storeFrameLocals(self.framenr)
@@ -399,7 +399,6 @@ class DebugClientBase(object):
 
     @staticmethod
     def __execWithCollector(code, globalVars, localVars, collector):
-        collector = OutStreamCollector()
         oldStreams = [None for _ in range(6)]
         if 'sys' in globalVars:
             oldStreams[0] = globalVars['sys'].stdout
@@ -717,7 +716,7 @@ class DebugClientBase(object):
         else:
             message = "Unknown Signal '{0}'".format(signalNumber)
 
-        filename = self.absPath(stackFrame)
+        filename = self.absPath(stackFrame.f_code.co_filename)
 
         linenr = stackFrame.f_lineno
         ffunc = stackFrame.f_code.co_name

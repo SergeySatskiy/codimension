@@ -35,7 +35,9 @@ from .client.protocol_cdm_dbg import (METHOD_LINE, METHOD_STACK, METHOD_STEP,
                                       METHOD_BP_ENABLE, METHOD_BP_IGNORE,
                                       METHOD_STEP_QUIT, METHOD_CALL_TRACE,
                                       METHOD_EXECUTE_STATEMENT,
-                                      METHOD_EXEC_STATEMENT_ERROR)
+                                      METHOD_EXEC_STATEMENT_ERROR,
+                                      METHOD_EXEC_STATEMENT_OUTPUT,
+                                      METHOD_SIGNAL)
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
@@ -113,7 +115,9 @@ class CodimensionDebugger(QObject):
             METHOD_BP_CONDITION_ERROR: self.__handleBPConditionError,
             METHOD_EXCEPTION: self.__handleException,
             METHOD_CALL_TRACE: self.__handleCallTrace,
-            METHOD_EXEC_STATEMENT_ERROR: self.__handleExecStatementError}
+            METHOD_EXEC_STATEMENT_ERROR: self.__handleExecStatementError,
+            METHOD_EXEC_STATEMENT_OUTPUT: self.__handleExecuteStatementOutput,
+            METHOD_SIGNAL: self.__handleSignal}
 
     def getScriptPath(self):
         """Provides the path to the debugged script"""
@@ -267,6 +271,26 @@ class CodimensionDebugger(QObject):
     def __handleExecStatementError(self, params):
         """Handles METHOD_EXEC_STATEMENT_ERROR"""
         logging.error('Execute statement error:\n' + params['text'])
+
+    def __handleExecuteStatementOutput(self, params):
+        """Handles METHOD_EXEC_STATEMENT_OUTPUT"""
+        text = params['text']
+        if text:
+            logging.info('Statement execution succeeded. Output:\n' + text)
+        else:
+            logging.info('Statement execution succeeded. No output generated.')
+
+    def __handleSignal(self, params):
+        """Handles METHOD_SIGNAL"""
+        message = params['message']
+        fileName = params['filename']
+        linenumber = params['linenumber']
+        # funcName = params['function']
+        # arguments = params['arguments']
+
+        self.sigClientLine.emit(fileName, linenumber, False)
+        logging.error('The program generated the signal "' + message + '"\n'
+                      'File: ' + fileName + ' Line: ' + str(linenumber))
 
     def onProcessFinished(self, procuuid, retCode):
         """Process finished. The retCode may indicate a disconnection."""
