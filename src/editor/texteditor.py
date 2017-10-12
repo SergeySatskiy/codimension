@@ -23,7 +23,8 @@
 import os.path
 import logging
 from ui.qt import (Qt, QTimer, pyqtSignal, QEvent,
-                   QCursor, QApplication, QTextOption, QAction)
+                   QCursor, QApplication, QTextOption, QAction,
+                   QPlainTextEdit)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.completer import CodeCompleter
 from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
@@ -165,12 +166,18 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         """Event filter to catch shortcuts on UBUNTU"""
         if event.type() == QEvent.KeyPress:
             key = event.key()
+            if self.isReadOnly():
+                if key in [Qt.Key_Delete, Qt.Key_Backspace, Qt.Key_Backtab,
+                           Qt.Key_X, Qt.Key_Tab, Qt.Key_Space, Qt.Key_Slash,
+                           Qt.Key_Z, Qt.Key_Y]:
+                    return True
+
             modifiers = int(event.modifiers())
             try:
-                if modifiers in self.__hotKeys:
-                    if key in self.__hotKeys[modifiers]:
-                        self.__hotKeys[modifiers][key]()
-                        return True
+                self.__hotKeys[modifiers][key]()
+                return True
+            except KeyError:
+                return False
             except Exception as exc:
                 logging.warning(str(exc))
         return False
@@ -311,10 +318,43 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         QApplication.restoreOverrideCursor()
         return True
 
+    def setReadOnly(self, mode):
+        """Overridden version"""
+        QPlainTextEdit.setReadOnly(self, mode)
+        if mode:
+            # Otherwise the cursor is suppressed in the RO mode
+            self.setTextInteractionFlags(self.textInteractionFlags() |
+                                         Qt.TextSelectableByKeyboard)
+        self.increaseIndentAction.setEnabled(not mode)
+        self.decreaseIndentAction.setEnabled(not mode)
+        self.autoIndentLineAction.setEnabled(not mode)
+        self.indentWithSpaceAction.setEnabled(not mode)
+        self.unIndentWithSpaceAction.setEnabled(not mode)
+        self.undoAction.setEnabled(not mode)
+        self.redoAction.setEnabled(not mode)
+        self.moveLineUpAction.setEnabled(not mode)
+        self.moveLineDownAction.setEnabled(not mode)
+        self.deleteLineAction.setEnabled(not mode)
+        self.pasteLineAction.setEnabled(not mode)
+        self.cutLineAction.setEnabled(not mode)
+        self.duplicateLineAction.setEnabled(not mode)
+
     def keyPressEvent(self, event):
         """Handles the key press events"""
-        self.__skipChangeCursor = True
         key = event.key()
+        if self.isReadOnly():
+            # Space scrolls
+            # Ctrl+X/Shift+Del/Alt+D/Alt+X deletes something
+            if key in [Qt.Key_Delete, Qt.Key_Backspace,
+                       Qt.Key_Space, Qt.Key_X, Qt.Key_Tab,
+                       Qt.Key_Z, Qt.Key_Y]:
+                return
+
+            # Qutepart has its own handler and lets to insert new lines when
+            # ENTER is clicked, so use the QPlainTextEdit
+            return QPlainTextEdit.keyPressEvent(self, event)
+
+        self.__skipChangeCursor = True
         if self.__completer.isVisible():
             self.__skipChangeCursor = False
             if key == Qt.Key_Escape:
@@ -490,8 +530,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.__inCompletion = True
         self.__completionPrefix = self.getWordBeforeCursor()
         words = getCompletionList(self, self._parent.getFileName())
-        print('Prefix: ' + self.__completionPrefix)
-        print('words: ' + repr(words))
 
         QApplication.restoreOverrideCursor()
 

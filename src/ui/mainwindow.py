@@ -155,10 +155,6 @@ class CodimensionMainWindow(QMainWindow):
             self.__onDebuggerClientException)
         self.__debugger.sigClientSyntaxError.connect(
             self.__onDebuggerClientSyntaxError)
-        self.__debugger.sigEvalOK.connect(self.__onEvalOK)
-        self.__debugger.sigEvalError.connect(self.__onEvalError)
-        self.__debugger.sigExecOK.connect(self.__onExecOK)
-        self.__debugger.sigExecError.connect(self.__onExecError)
         self.__debugger.getBreakPointModel().sigBreakpoinsChanged.connect(
             self.__onBreakpointsModelChanged)
 
@@ -2136,30 +2132,6 @@ class CodimensionMainWindow(QMainWindow):
         if total > 0:
             title += " (" + str(total) + ")"
         self._rightSideBar.setTabText('breakpoints', title)
-
-    @staticmethod
-    def __onEvalOK(message):
-        """Triggered when Eval completed successfully"""
-        if message:
-            logging.info("Eval succeeded:\n" + message)
-
-    @staticmethod
-    def __onEvalError(message):
-        """Triggered when Eval failed"""
-        if message:
-            logging.error("Eval failed:\n" + message)
-
-    @staticmethod
-    def __onExecOK(message):
-        """Triggered when Exec completed successfully"""
-        if message:
-            logging.info("Exec succeeded:\n" + message)
-
-    @staticmethod
-    def __onExecError(message):
-        """Triggered when Eval failed"""
-        if message:
-            logging.error("Exec failed:\n" + message)
 
     def setDebugTabAvailable(self, enabled):
         """Sets a new status of the corresponding actions.

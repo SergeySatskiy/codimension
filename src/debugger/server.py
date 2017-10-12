@@ -37,7 +37,7 @@ from .client.protocol_cdm_dbg import (METHOD_LINE, METHOD_STACK, METHOD_STEP,
                                       METHOD_EXECUTE_STATEMENT,
                                       METHOD_EXEC_STATEMENT_ERROR,
                                       METHOD_EXEC_STATEMENT_OUTPUT,
-                                      METHOD_SIGNAL)
+                                      METHOD_SIGNAL, METHOD_THREAD_SET)
 from .bputils import getBreakpointLines
 from .breakpointmodel import BreakPointModel
 from .watchpointmodel import WatchPointModel
@@ -52,10 +52,6 @@ class CodimensionDebugger(QObject):
     sigClientLine = pyqtSignal(str, int, bool)
     sigClientException = pyqtSignal(str, str, list, bool)
     sigClientSyntaxError = pyqtSignal(str, str, str, int, int)
-    sigEvalOK = pyqtSignal(str)
-    sigEvalError = pyqtSignal(str)
-    sigExecOK = pyqtSignal(str)
-    sigExecError = pyqtSignal(str)
     sigClientStack = pyqtSignal(list)
     sigClientThreadList = pyqtSignal(int, list)
     sigClientVariables = pyqtSignal(int, list)
@@ -117,7 +113,8 @@ class CodimensionDebugger(QObject):
             METHOD_CALL_TRACE: self.__handleCallTrace,
             METHOD_EXEC_STATEMENT_ERROR: self.__handleExecStatementError,
             METHOD_EXEC_STATEMENT_OUTPUT: self.__handleExecuteStatementOutput,
-            METHOD_SIGNAL: self.__handleSignal}
+            METHOD_SIGNAL: self.__handleSignal,
+            METHOD_THREAD_SET: self.__handleThreadSet}
 
     def getScriptPath(self):
         """Provides the path to the debugged script"""
@@ -262,17 +259,19 @@ class CodimensionDebugger(QObject):
     def __handleCallTrace(self, params):
         """Handles METHOD_CALL_TRACE"""
         isCall = params['event'] == 'c'
-        src= params['from']
-        dest =  params['to']
+        src = params['from']
+        dest = params['to']
         self.sigClientCallTrace.emit(
             isCall, src['filename'], src['linenumber'], src['codename'],
             dest['filename'], dest['linenumber'], dest['codename'])
 
-    def __handleExecStatementError(self, params):
+    @staticmethod
+    def __handleExecStatementError(params):
         """Handles METHOD_EXEC_STATEMENT_ERROR"""
         logging.error('Execute statement error:\n' + params['text'])
 
-    def __handleExecuteStatementOutput(self, params):
+    @staticmethod
+    def __handleExecuteStatementOutput(params):
         """Handles METHOD_EXEC_STATEMENT_OUTPUT"""
         text = params['text']
         if text:
@@ -291,6 +290,11 @@ class CodimensionDebugger(QObject):
         self.sigClientLine.emit(fileName, linenumber, False)
         logging.error('The program generated the signal "' + message + '"\n'
                       'File: ' + fileName + ' Line: ' + str(linenumber))
+
+    def __handleThreadSet(self, params):
+        """Handles METHOD_THREAD_SET"""
+        del params  # unused argument
+        self.sigClientThreadSet.emit()
 
     def onProcessFinished(self, procuuid, retCode):
         """Process finished. The retCode may indicate a disconnection."""
@@ -518,7 +522,7 @@ class CodimensionDebugger(QObject):
 
     def remoteSetThread(self, tid):
         """Sets the given thread as the current"""
-        self.__sendCommand(RequestThreadSet + str(tid) + "\n")
+        self.__sendJSONCommand(METHOD_THREAD_SET, {'threadID': tid})
 
     def stopDebugging(self, exitCode=None):
         """Stops the debugging session"""
