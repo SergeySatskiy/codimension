@@ -665,9 +665,6 @@ class MainWindowMenuMixin:
         self.__contextHelpAct = helpMenu.addAction(
             getIcon('helpviewer.png'),
             'Current &word help', self._onContextHelp)
-        self.__callHelpAct = helpMenu.addAction(
-            getIcon('helpviewer.png'),
-            '&Current call help', self._onCallHelp)
         helpMenu.addSeparator()
         self.__allShotcutsAct = helpMenu.addAction(
             getIcon('allshortcutsmenu.png'),
@@ -898,14 +895,11 @@ class MainWindowMenuMixin:
         """Triggered when help menu is about to show"""
         isPythonBuffer = self._isPythonBuffer()
         self.__contextHelpAct.setEnabled(isPythonBuffer)
-        self.__callHelpAct.setEnabled(isPythonBuffer)
         self.__contextHelpAct.setShortcut("Ctrl+F1")
-        self.__callHelpAct.setShortcut("Ctrl+Shift+F1")
 
     def __helpAboutToHide(self):
         """Triggered when help menu is about to hide"""
         self.__contextHelpAct.setShortcut("")
-        self.__callHelpAct.setShortcut("")
 
     def __editAboutToShow(self):
         """Triggered when edit menu is about to show"""

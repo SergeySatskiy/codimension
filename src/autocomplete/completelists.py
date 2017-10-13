@@ -80,23 +80,6 @@ def getProjectSpecificModules(path='', onlySpecified=False):
     return specificModules
 
 
-def getCalltipAndDoc(fileName, editor, position=None, tryQt=False):
-    """Provides a calltip and docstring"""
-    try:
-        if position is None:
-            position = editor.currentPosition()
-        text = editor.text()
-
-        calltip = None
-        docstring = None
-
-        # Note: should be replaced with jedi
-
-        return calltip, docstring
-    except:
-        return None, None
-
-
 def getCallSignatures(editor, fileName):
     """Provides a list of call signatures"""
     line, pos = editor.cursorPosition
@@ -129,7 +112,8 @@ def getDefinitions(editor, fileName):
                 continue
             result.append([path if path else fileName,
                            definition.line, definition.column,
-                           definition.type])
+                           definition.type, definition.docstring(),
+                           definition.module_name])
     except Exception as exc:
         logging.error('jedi library failed to provide definitions: ' +
                       str(exc))

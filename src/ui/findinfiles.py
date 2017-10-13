@@ -822,6 +822,7 @@ class FindInFilesDialog(QDialog):
         if historyIndex is not None:
             self.__history[historyIndex] = historyItem
         else:
+            historyIndex = 0
             self.__history.insert(0, historyItem)
             if len(self.__history) > self.__maxEntries:
                 self.__history = self.__history[:self.__maxEntries]
@@ -830,6 +831,9 @@ class FindInFilesDialog(QDialog):
         self.filterCombo.clear()
         self.dirEditCombo.clear()
         self.__populateHistory()
+
+        self.findCombo.setCurrentIndex(historyIndex)
+        self.findCombo.setCurrentText(historyItem['term'])
 
         # Save the combo values for further usage
         setFindInFilesHistory(self.__history)

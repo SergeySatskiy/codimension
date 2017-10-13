@@ -59,7 +59,6 @@ from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QToolBar, QWidget,
 from .about import AboutDialog
 from .sidebar import SideBar
 from .logviewer import LogViewer
-from .taghelpviewer import TagHelpViewer
 from .redirector import Redirector
 from .functionsviewer import FunctionsViewer
 from .globalsviewer import GlobalsViewer
@@ -315,21 +314,11 @@ class CodimensionMainWindow(QMainWindow):
             getIcon('findindir.png'), 'Search results', 'search', 1)
         self._bottomSideBar.tabButton('search', QTabBar.RightSide).resize(0, 0)
 
-        # Create tag help viewer
-        self.tagHelpViewer = TagHelpViewer()
-        self._bottomSideBar.addTab(
-            self.tagHelpViewer,
-            getIcon('helpviewer.png'), 'Context help', 'contexthelp', 2)
-        self._bottomSideBar.tabButton('contexthelp',
-                                      QTabBar.RightSide).resize(0, 0)
-        self._bottomSideBar.setTabToolTip('contexthelp',
-                                          "Ctrl+F1 in python file")
-
         # Create diff viewer
         self.diffViewer = DiffViewer()
         self._bottomSideBar.addTab(
             self.diffViewer,
-            getIcon('diffviewer.png'), 'Diff viewer', 'diff', 3)
+            getIcon('diffviewer.png'), 'Diff viewer', 'diff', 2)
         self._bottomSideBar.tabButton('diff', QTabBar.RightSide).resize(0, 0)
         self._bottomSideBar.setTabToolTip('diff', 'No diff shown')
 
@@ -1748,10 +1737,6 @@ class CodimensionMainWindow(QMainWindow):
     def _onContextHelp(self):
         """Triggered when Ctrl+F1 is clicked"""
         self.em.currentWidget().getEditor().onTagHelp()
-
-    def _onCallHelp(self):
-        """Triggered when a context help for the current call is requested"""
-        self.em.currentWidget().getEditor().onCallHelp()
 
     @staticmethod
     def _onHomePage():

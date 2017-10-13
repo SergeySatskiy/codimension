@@ -22,7 +22,7 @@
 
 import os.path
 import logging
-from ui.qt import (Qt, QTimer, pyqtSignal, QEvent,
+from ui.qt import (Qt, QTimer, pyqtSignal, QEvent, QToolTip,
                    QCursor, QApplication, QTextOption, QAction,
                    QPlainTextEdit)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
@@ -37,7 +37,7 @@ from utils.fileutils import getFileProperties, isPythonMime
 from utils.diskvaluesrelay import setFileEncoding, getFileEncoding
 from autocomplete.bufferutils import (getContext, getCallPosition,
                                       getCommaCount)
-from autocomplete.completelists import (getCompletionList, getCalltipAndDoc,
+from autocomplete.completelists import (getCompletionList,
                                         getDefinitions, getOccurrences,
                                         getCallSignatures)
 from cdmpyparser import getBriefModuleInfoFromMemory
@@ -117,8 +117,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.autoIndentLineAction.setShortcut('Ctrl+Shift+I')
         self.invokeCompletionAction.setEnabled(False)
         self.__hotKeys = {
-            CTRL_SHIFT: {Qt.Key_F1: self.onCallHelp,
-                         Qt.Key_T: self.onJumpToTop,
+            CTRL_SHIFT: {Qt.Key_T: self.onJumpToTop,
                          Qt.Key_M: self.onJumpToMiddle,
                          Qt.Key_B: self.onJumpToBottom},
             SHIFT: {Qt.Key_Delete: self.onShiftDel,
@@ -572,49 +571,31 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def onTagHelp(self):
         """Provides help for an item if available"""
-#        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        signatures = getCallSignatures(self, self._parent.getFileName())
-        for signature in signatures:
-            print("Signature: index: " + str(signature.index) +
-                  " name: " + signature.name + " params: " + str(signature.params))
-            for param in signature.params:
-                print("Name: " + param.name)
+        if not self.isPythonBuffer():
+            return
 
-#        calltip, docstring = getCalltipAndDoc(self._parent.getFileName(), self)
-#        if calltip is None and docstring is None:
-#            QApplication.restoreOverrideCursor()
-#            GlobalData().mainWindow.showStatusBarMessage("Doc is not found")
-#            return True
-
-#        QApplication.restoreOverrideCursor()
-#        GlobalData().mainWindow.showTagHelp(calltip, docstring)
-        return
-
-    def onCallHelp(self):
-        """Provides help for the current call"""
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        callPosition = getCallPosition(self)
-        if callPosition is None:
-            QApplication.restoreOverrideCursor()
-            GlobalData().mainWindow.showStatusBarMessage("Not a function call")
-            return True
-
-        calltip, docstring = getCalltipAndDoc(self._parent.getFileName(),
-                                              self, callPosition)
-        if calltip is None and docstring is None:
-            QApplication.restoreOverrideCursor()
-            GlobalData().mainWindow.showStatusBarMessage("Doc is not found")
-            return True
-
+        definitions = getDefinitions(self, self._parent.getFileName())
         QApplication.restoreOverrideCursor()
-        GlobalData().mainWindow.showTagHelp(calltip, docstring)
-        return True
+
+        parts = []
+        for definition in definitions:
+            header = 'Type: ' + definition[3]
+            if definition[5]:
+                header += '\nModule: ' + definition[5]
+            parts.append(header + '\n\n' + definition[4])
+
+        if parts:
+            QToolTip.showText(self.mapToGlobal(self.cursorRect().bottomLeft()),
+                              '<pre>' + '\n\n'.join(parts) + '</pre>')
+        else:
+            GlobalData().mainWindow.showStatusBarMessage(
+                "Definition is not found")
 
     def makeLineFirst(self):
         """Make the cursor line the first on the screen"""
         currentLine, _ = self.cursorPosition
         self.setFirstVisibleLine(currentLine)
-        return True
 
     def onJumpToTop(self):
         """Jumps to the first position of the first visible line"""
@@ -639,7 +620,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                 shift -= 1
             jumpTo += 1
         self.cursorPosition = jumpTo, 0
-        return True
 
     def onJumpToBottom(self):
         """Jumps to the first position of the last line"""
@@ -655,12 +635,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             while not self.isLineVisible(safeLastVisible):
                 safeLastVisible -= 1
             self.cursorPosition = safeLastVisible, 0
-        return True
 
     def onGotoDefinition(self):
         """The user requested a jump to definition"""
         if not self.isPythonBuffer():
-            return True
+            return
 
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         definitions = getDefinitions(self, self._parent.getFileName())
@@ -685,26 +664,31 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             context = getContext(self, info, True)
             if context.getScope() != context.GlobalScope:
                 GlobalData().mainWindow.jumpToLine(context.getLastScopeLine())
-        return True
+        return
 
     def onShowCalltip(self, showMessage=True, showKeyword=True):
         """The user requested show calltip"""
         if self.__calltip is not None:
             self.__resetCalltip()
-            return True
+            return
         if not self.isPythonBuffer():
-            return True
+            return
+
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        signatures = getCallSignatures(self, self._parent.getFileName())
+        QApplication.restoreOverrideCursor()
+
+        if not signatures:
+            return
+
+        for signature in signatures:
+            print("Signature: index: " + str(signature.index) +
+                  " name: " + signature.name + " params: " + str(signature.params))
+            for param in signature.params:
+                print("Name: " + param.name + " Description: " + param.description)
 
         # Temporary
-        return True
-
-        if self.styleAt(self.currentPosition()) in [
-            QsciLexerPython.TripleDoubleQuotedString,
-            QsciLexerPython.TripleSingleQuotedString,
-            QsciLexerPython.DoubleQuotedString,
-            QsciLexerPython.SingleQuotedString,
-            QsciLexerPython.UnclosedString]:
-            return True
+        return
 
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         callPosition = getCallPosition(self)
@@ -714,13 +698,13 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             if showMessage:
                 GlobalData().mainWindow.showStatusBarMessage(
                     "Not a function call")
-            return True
+            return
 
         if not showKeyword and \
            self.styleAt(callPosition) == QsciLexerPython.Keyword:
             QApplication.restoreOverrideCursor()
             self.__resetCalltip()
-            return True
+            return
 
         calltip, docstring = getCalltipAndDoc(self._parent.getFileName(),
                                               self, callPosition, True)
@@ -730,7 +714,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             if showMessage:
                 GlobalData().mainWindow.showStatusBarMessage(
                     "Calltip is not found")
-            return True
+            return
 
         currentPos = self.currentPosition()
         commas = getCommaCount(self, callPosition, currentPos)
@@ -740,7 +724,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
         # Memorize how the tooltip was shown
         self.__callPosition = callPosition
-        return True
+        return
 
     def __resetCalltip(self):
         """Hides the calltip and resets how it was shown"""
@@ -775,20 +759,20 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def onOccurences(self):
         """The user requested a list of occurences"""
         if not self.isPythonBuffer():
-            return True
+            return
         if self._parent.getType() in [MainWindowTabWidgetBase.VCSAnnotateViewer]:
-            return True
+            return
         if not os.path.isabs(self._parent.getFileName()):
             GlobalData().mainWindow.showStatusBarMessage(
                 "Save the buffer first")
-            return True
+            return
         if self.document().isModified():
             # Check that the directory is writable for a temporary file
             dirName = os.path.dirname(self._parent.getFileName())
             if not os.access(dirName, os.W_OK):
                 GlobalData().mainWindow.showStatusBarMessage(
                     "File directory is not writable. Cannot run rope.")
-                return True
+                return
 
         # Prerequisites were checked, run the rope library
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
@@ -797,7 +781,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             QApplication.restoreOverrideCursor()
             GlobalData().mainWindow.showStatusBarMessage(
                 "No occurences of " + name + " found")
-            return True
+            return
 
         # There are found items
         result = []
@@ -817,7 +801,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         QApplication.restoreOverrideCursor()
 
         GlobalData().mainWindow.displayFindInFiles("", result)
-        return True
+        return
 
     def insertCompletion(self, text):
         """Triggered when a completion is selected"""
