@@ -849,14 +849,14 @@ class FindInFilesDialog(QDialog):
             regexpText = re.escape(regexpText)
         if self.wordCheckBox.isChecked():
             regexpText = "\\b%s\\b" % regexpText
-        flags = re.UNICODE | re.LOCALE
+        flags = re.UNICODE
         if not self.caseCheckBox.isChecked():
             flags |= re.IGNORECASE
 
         try:
             self.searchRegexp = re.compile(regexpText, flags)
-        except:
-            logging.error("Invalid search expression")
+        except Exception as exc:
+            logging.error("Invalid search expression: " + str(exc))
             self.close()
             return
 
