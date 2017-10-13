@@ -97,6 +97,19 @@ def getCalltipAndDoc(fileName, editor, position=None, tryQt=False):
         return None, None
 
 
+def getCallSignatures(editor, fileName):
+    """Provides a list of call signatures"""
+    line, pos = editor.cursorPosition
+    try:
+        script = getJediScript(editor.text, line + 1, pos,
+                               fileName if fileName else '')
+        return script.call_signatures()
+    except Exception as exc:
+        logging.error('jedi library failed to provide call signatures: ' +
+                      str(exc))
+    return result
+
+
 def getDefinitions(editor, fileName):
     """Provides the definition location or None"""
     result = []

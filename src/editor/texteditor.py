@@ -38,7 +38,8 @@ from utils.diskvaluesrelay import setFileEncoding, getFileEncoding
 from autocomplete.bufferutils import (getContext, getCallPosition,
                                       getCommaCount)
 from autocomplete.completelists import (getCompletionList, getCalltipAndDoc,
-                                        getDefinitions, getOccurrences)
+                                        getDefinitions, getOccurrences,
+                                        getCallSignatures)
 from cdmpyparser import getBriefModuleInfoFromMemory
 from .qpartwrap import QutepartWrapper
 from .editorcontextmenus import EditorContextMenuMixin
@@ -571,16 +572,23 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def onTagHelp(self):
         """Provides help for an item if available"""
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        calltip, docstring = getCalltipAndDoc(self._parent.getFileName(), self)
-        if calltip is None and docstring is None:
-            QApplication.restoreOverrideCursor()
-            GlobalData().mainWindow.showStatusBarMessage("Doc is not found")
-            return True
+#        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        signatures = getCallSignatures(self, self._parent.getFileName())
+        for signature in signatures:
+            print("Signature: index: " + str(signature.index) +
+                  " name: " + signature.name + " params: " + str(signature.params))
+            for param in signature.params:
+                print("Name: " + param.name)
 
-        QApplication.restoreOverrideCursor()
-        GlobalData().mainWindow.showTagHelp(calltip, docstring)
-        return True
+#        calltip, docstring = getCalltipAndDoc(self._parent.getFileName(), self)
+#        if calltip is None and docstring is None:
+#            QApplication.restoreOverrideCursor()
+#            GlobalData().mainWindow.showStatusBarMessage("Doc is not found")
+#            return True
+
+#        QApplication.restoreOverrideCursor()
+#        GlobalData().mainWindow.showTagHelp(calltip, docstring)
+        return
 
     def onCallHelp(self):
         """Provides help for the current call"""
