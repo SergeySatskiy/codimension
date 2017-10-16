@@ -22,8 +22,7 @@
 import os.path
 from utils.fileutils import getFileContent
 from utils.colorfont import getZoomedMonoFont
-from .qt import (QFrame, QHBoxLayout, QDesktopServices, QFont, QTextBrowser,
-                 Qt, pyqtSignal)
+from .qt import QFrame, QHBoxLayout, QTextBrowser, Qt, pyqtSignal
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 

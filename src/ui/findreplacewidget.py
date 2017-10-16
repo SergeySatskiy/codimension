@@ -142,8 +142,8 @@ class FindReplaceWidget(QWidget):
         self.findtextCombo.setCompleter(None)
         self.findtextCombo.setDuplicatesEnabled(False)
         self.findtextCombo.setEnabled(False)
-        self.findtextCombo.sigNext.connect(self.__onNext)
-        self.findtextCombo.sigPrevious.connect(self.__onPrev)
+        self.findtextCombo.sigNext.connect(self.onNext)
+        self.findtextCombo.sigPrevious.connect(self.onPrev)
         self.findtextCombo.sigEnter.connect(self.__onFindEnter)
 
         self.findPrevButton = QToolButton(self)
@@ -152,7 +152,7 @@ class FindReplaceWidget(QWidget):
         self.findPrevButton.setIconSize(QSize(24, 16))
         self.findPrevButton.setFocusPolicy(Qt.NoFocus)
         self.findPrevButton.setEnabled(False)
-        self.findPrevButton.clicked.connect(self.__onPrev)
+        self.findPrevButton.clicked.connect(self.onPrev)
 
         self.findNextButton = QToolButton(self)
         self.findNextButton.setToolTip("Next match (Ctrl+.)")
@@ -160,7 +160,7 @@ class FindReplaceWidget(QWidget):
         self.findNextButton.setIconSize(QSize(24, 16))
         self.findNextButton.setFocusPolicy(Qt.NoFocus)
         self.findNextButton.setEnabled(False)
-        self.findNextButton.clicked.connect(self.__onNext)
+        self.findNextButton.clicked.connect(self.onNext)
 
         self.caseCheckBox = QCheckBox(self)
         self.caseCheckBox.setText("Match case")
@@ -193,8 +193,8 @@ class FindReplaceWidget(QWidget):
         self.replaceCombo.setCompleter(None)
         self.replaceCombo.setDuplicatesEnabled(False)
         self.replaceCombo.setEnabled(False)
-        self.replaceCombo.sigNext.connect(self.__onNext)
-        self.replaceCombo.sigPrevious.connect(self.__onPrev)
+        self.replaceCombo.sigNext.connect(self.onNext)
+        self.replaceCombo.sigPrevious.connect(self.onPrev)
         self.replaceCombo.sigEnter.connect(self.__onReplaceEnter)
 
         self.replaceButton = QToolButton(self)
@@ -681,9 +681,9 @@ class FindReplaceWidget(QWidget):
     def __onFindEnter(self, modifier):
         """Triggered when ENTER is pressed in the find combo"""
         if modifier == int(Qt.NoModifier):
-            self.__onNext()
+            self.onNext()
         else:
-            self.__onPrev()
+            self.onPrev()
 
     def __onReplaceEnter(self, modifier):
         """Triggered when ENTER is pressed in the replace combo"""
@@ -692,14 +692,14 @@ class FindReplaceWidget(QWidget):
         else:
             self.__onReplaceAndMove()
 
-    def __onNext(self):
+    def onNext(self):
         """Triggered when the find next is clicked"""
         if self.__onPrevNext():
             self.__performSearch(False, True,
                                  self.__editor.absCursorPosition + 1)
             self.__updateHistory()
 
-    def __onPrev(self):
+    def onPrev(self):
         """Triggered when the find prev is clicked"""
         if self.__onPrevNext():
             self.__performSearch(False, False,
@@ -778,4 +778,3 @@ class FindReplaceWidget(QWidget):
             self.replaceAllButton.setEnabled(
                 self.__isCriteriaValid() and
                 self.__editor.getCurrentMatchesCount() > 0)
-

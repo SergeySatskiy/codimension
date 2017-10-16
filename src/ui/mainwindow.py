@@ -45,15 +45,15 @@ from debugger.calltraceviewer import CallTraceViewer
 from debugger.bpwp import DebuggerBreakWatchPoints
 from debugger.bputils import clearValidBreakpointLinesCache
 from debugger.client.protocol_cdm_dbg import UNHANDLED_EXCEPTION
-from analysis.notused import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
+from analysis.notused import NotUsedAnalysisProgress
 from analysis.disasm import (getFileDisassembled, getCompiledfileDisassembled,
                              getBufferDisassembled)
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
 from profiling.profwidget import ProfileResultsWidget
 from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QToolBar, QWidget,
-                 QMessageBox, QVBoxLayout, QSplitter, QSizePolicy, QAction,
+                 QVBoxLayout, QSplitter, QSizePolicy, QAction,
                  QMainWindow, QApplication, QCursor, QToolButton, QTabBar,
                  QToolTip, QFileDialog, QDialog, QMenu, QDesktopServices)
 from .about import AboutDialog
@@ -911,18 +911,6 @@ class CodimensionMainWindow(QMainWindow):
         if docstring.strip() == "":
             return False
         return True
-
-    def showTagHelp(self, calltip, docstring):
-        """Shows a tag help"""
-        if not self.__calltipDisplayable(calltip) and \
-           not self.__docstringDisplayable(docstring):
-            return
-
-        self._bottomSideBar.show()
-        self._bottomSideBar.setCurrentTab('contexthelp')
-        self._bottomSideBar.raise_()
-
-        self.tagHelpViewer.display(calltip, docstring)
 
     def showDiff(self, diff, tooltip):
         """Shows the diff"""
@@ -2296,7 +2284,8 @@ class CodimensionMainWindow(QMainWindow):
             return True
         return False
 
-    def __dumpProjectDbgSettingsAvailable(self):
+    @staticmethod
+    def __dumpProjectDbgSettingsAvailable():
         """True if dumping dbg session settings for the project is available"""
         project = GlobalData().project
         if not project.isLoaded():

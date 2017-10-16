@@ -459,6 +459,7 @@ class FilesBrowser(QTreeView):
 
     def onFileUpdated(self, fileName, uuid):
         """Triggered when the file is updated"""
+        del uuid    # unused argument
         mime, icon, _ = getFileProperties(fileName)
         if isPythonMime(mime):
             path = os.path.realpath(fileName)
@@ -673,7 +674,7 @@ class FilesBrowser(QTreeView):
             for index in range(len(importsCopy)):
                 if importsCopy[index].getDisplayName() == name:
                     found = True
-                    importItem.updateData( importsCopy[index])
+                    importItem.updateData(importsCopy[index])
                     # No need to send the update signal because the name is
                     # still the same, but need to update the importwhat items
                     # if so

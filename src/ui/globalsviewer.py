@@ -142,6 +142,8 @@ class GlobalsViewer(QWidget):
 
     def itemActivated(self, path, line):
         """Handles the item activation"""
+        del path    # unused argument
+        del line    # unused argument
         self.filterEdit.addItem(self.filterEdit.lineEdit().text())
 
     def __filterItemAdded(self):
@@ -210,7 +212,8 @@ class GlobalsViewer(QWidget):
                 self.__contextItem.getPath(),
                 self.__contextItem.sourceObj)
 
-    def __findNotUsed(self):
+    @staticmethod
+    def __findNotUsed():
         """Runs the unused global variable analysis"""
         GlobalData().mainWindow.onNotUsedGlobals()
 
@@ -235,6 +238,7 @@ class GlobalsViewer(QWidget):
 
     def onFileUpdated(self, fileName, uuid):
         """Triggered when the file is updated"""
+        del uuid    # unused argument
         self.globalsViewer.onFileUpdated(fileName)
         self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
                                           self.getItemCount() > 0)

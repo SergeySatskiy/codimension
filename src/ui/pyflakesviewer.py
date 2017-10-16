@@ -19,7 +19,7 @@
 
 """Pyflakes results viewer"""
 
-import cgi
+from html import escape
 from utils.pixmapcache import getIcon, getPixmap
 from utils.fileutils import isPythonMime, isPythonFile
 from analysis.ierrors import getBufferErrors
@@ -147,7 +147,7 @@ class PyflakesViewer(QObject):
 
         self.__updateTimer.stop()
         if self.__currentUUID in self.__flakesResults:
-            if self.__flakesResults[self.__currentUUID].changed == False:
+            if not self.__flakesResults[self.__currentUUID].changed:
                 self.__flakesResults[self.__currentUUID].changed = True
                 self.setFlakesWaiting(self.__uiLabel)
         self.__updateTimer.start(1500)
@@ -161,7 +161,7 @@ class PyflakesViewer(QObject):
         if widget is None:
             return
 
-        if self.__flakesResults[self.__currentUUID].changed == False:
+        if not self.__flakesResults[self.__currentUUID].changed:
             return
 
         editor = widget.getEditor()
@@ -188,6 +188,7 @@ class PyflakesViewer(QObject):
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when the current buffer file type is changed, e.g. .cgi"""
+        del fileName    # unused argument
         if isPythonMime(newFileType):
             # The file became a python one
             if uuid not in self.__flakesResults:
@@ -281,10 +282,10 @@ class PyflakesViewer(QObject):
                     complains += '<br/>'
                     if lineNo == -1:
                         # Special case: compilation error
-                        complains += cgi.escape(item)
+                        complains += escape(item)
                     else:
                         complains += "Line " + str(lineNo) + \
-                                     ": " + cgi.escape(item)
+                                     ": " + escape(item)
             label.setToolTip(complains.replace(' ', '&nbsp;'))
             label.setPixmap(getPixmap('flakeserrors.png'))
             if editor is not None:

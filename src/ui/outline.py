@@ -298,7 +298,7 @@ class FileOutlineViewer(QWidget):
 
         self.__updateTimer.stop()
         if self.__currentUUID in self.__outlineBrowsers:
-            if self.__outlineBrowsers[self.__currentUUID].changed == False:
+            if not self.__outlineBrowsers[self.__currentUUID].changed:
                 self.__outlineBrowsers[self.__currentUUID].changed = True
                 browser = self.__outlineBrowsers[self.__currentUUID].browser
                 fName = self.__outlineBrowsers[
@@ -375,6 +375,7 @@ class FileOutlineViewer(QWidget):
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when the current buffer file type is changed, e.g. .cgi"""
+        del fileName    # unused argument
         if isPythonMime(newFileType):
             # The file became a python one
             if uuid not in self.__outlineBrowsers:

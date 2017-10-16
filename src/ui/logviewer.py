@@ -26,10 +26,8 @@
 """The log viewer implementation"""
 
 from utils.pixmapcache import getIcon
-from utils.globals import GlobalData
-from utils.settings import Settings
 from utils.colorfont import getZoomedMonoFont
-from .qt import (Qt, QSize, QColor, QBrush, QTextCursor, QCursor, QFont,
+from .qt import (Qt, QSize, QColor, QBrush, QTextCursor, QCursor,
                  QPlainTextEdit, QMenu, QHBoxLayout, QWidget, QAction,
                  QToolBar, QSizePolicy)
 

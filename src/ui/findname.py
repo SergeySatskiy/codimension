@@ -20,9 +20,9 @@
 """Find name feature implementation"""
 
 
+from cdmpyparser import getBriefModuleInfoFromMemory
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
-from cdmpyparser import getBriefModuleInfoFromMemory
 from utils.settings import Settings
 from utils.fileutils import isPythonFile
 from utils.diskvaluesrelay import getFindNameHistory, setFindNameHistory
@@ -199,9 +199,9 @@ class FindNameModel(QAbstractItemModel):
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         for record in editorsManager.getTextEditors():
-            # uuid = record[ 0 ]
-            fname = record[ 1 ]
-            widget = record[ 2 ]
+            # uuid = record[0]
+            fname = record[1]
+            widget = record[2]
             if isPythonFile(fname):
                 content = widget.getEditor().text()
                 info = getBriefModuleInfoFromMemory(content)

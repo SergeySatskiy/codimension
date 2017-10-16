@@ -41,7 +41,7 @@ class TabHistoryEntry:
         """Compares two entries"""
         return self.uuid == other.uuid and \
                self.line == other.line and \
-               self.pos  == other.pos
+               self.pos == other.pos
 
 
 class TabsHistory(QObject):

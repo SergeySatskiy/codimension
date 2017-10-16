@@ -399,6 +399,7 @@ class DebugClientBase(object):
 
     @staticmethod
     def __execWithCollector(code, globalVars, localVars, collector):
+        """The actual execution with the output collected"""
         oldStreams = [None for _ in range(6)]
         if 'sys' in globalVars:
             oldStreams[0] = globalVars['sys'].stdout

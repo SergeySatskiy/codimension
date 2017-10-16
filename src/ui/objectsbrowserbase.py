@@ -158,6 +158,9 @@ class ObjectsBrowser(QTreeView):
 
     def updateCounter(self, parent=None, start=0, end=0):
         """Updates the header with the currently visible and total items"""
+        del parent  # unused argument
+        del start   # unused argument
+        del end     # unused argument
         text = "Name (" + str(self.model().rowCount()) + " of " + \
                           str(self.__model.totalRowCount()) + ")"
         self.__model.updateRootData(0, text)
@@ -250,7 +253,8 @@ class ObjectsBrowser(QTreeView):
         self.sigOpeningItem.emit(str(path), line)
         GlobalData().mainWindow.openFile(path, line)
 
-    def getDisassembled(self, item):
+    @staticmethod
+    def getDisassembled(item):
         """Handles showing disassembled code"""
         if item.itemType not in [FunctionItemType, ClassItemType]:
             return

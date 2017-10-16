@@ -20,12 +20,12 @@
 """find in files dialog"""
 
 
-import os
+from os import listdir
+from os.path import sep, isabs, exists, isdir, normpath, isfile, realpath
 import re
 import time
 import logging
-from cgi import escape
-from os.path import sep, isabs, exists, isdir, normpath, isfile, realpath
+from html import escape
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import isFileSearchable, isPythonFile, getFileContent
@@ -644,7 +644,7 @@ class FindInFilesDialog(QDialog):
         """Provides the 'match' and 'too long' statuses"""
         matched = False
         tooLong = False
-        for item in os.listdir(path):
+        for item in listdir(path):
             if time.time() - startTime > 0.1:
                 tooLong = True
                 return matched, tooLong
@@ -753,7 +753,7 @@ class FindInFilesDialog(QDialog):
 
     def __dirFiles(self, path, filters, files):
         """Files recursively for the dir"""
-        for item in os.listdir(path):
+        for item in listdir(path):
             QApplication.processEvents()
             if self.__cancelRequest:
                 raise Exception("Cancel request")

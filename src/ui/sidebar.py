@@ -32,7 +32,8 @@ from .qt import (QEvent, QSize, Qt, QTabBar, QWidget, QStackedWidget,
 class SideBar(QWidget):
 
     """Sidebar with a widget area which is hidden or shown.
-       On by clicking any tab, off by clicking the current tab.
+
+    On by clicking any tab, off by clicking the current tab.
     """
 
     North = 0

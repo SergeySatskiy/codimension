@@ -60,7 +60,7 @@ class MainWindowTabWidgetBase():
         """Tells what file name of the widget"""
         return None
 
-    def setFileName(self, name):
+    def setFileName(self, path):
         """Sets the file name"""
         raise Exception("setFilename() is not implemented")
 

@@ -285,10 +285,12 @@ class PixmapTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __onContextMenu(self, pos):
         """Triggered when a context menu is requested"""
+        del pos     # unused argument
         pluginMenus = self.__editorsManager.getPluginMenus()
         if pluginMenus:
             contextMenu = QMenu()
             for pluginPath, pluginMenu in pluginMenus.iteritems():
+                del pluginPath  # unused variable
                 contextMenu.addMenu(pluginMenu)
             contextMenu.exec_(QCursor.pos())
             del contextMenu

@@ -146,6 +146,8 @@ class FunctionsViewer(QWidget):
 
     def itemActivated(self, path, line):
         """Handles the item activation"""
+        del path    # unused argument
+        del line    # unused argument
         self.filterEdit.addItem(self.filterEdit.lineEdit().text())
 
     def __filterItemAdded(self):
@@ -212,7 +214,8 @@ class FunctionsViewer(QWidget):
                 self.__contextItem.getPath(),
                 self.__contextItem.sourceObj)
 
-    def __findNotUsed(self):
+    @staticmethod
+    def __findNotUsed():
         """Runs the unused function analysis"""
         GlobalData().mainWindow.onNotUsedFunctions()
 
@@ -237,6 +240,7 @@ class FunctionsViewer(QWidget):
 
     def onFileUpdated(self, fileName, uuid):
         """Triggered when the file is updated"""
+        del uuid    # unused argument
         self.funcViewer.onFileUpdated(fileName)
         self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
                                           self.getItemCount() > 0)

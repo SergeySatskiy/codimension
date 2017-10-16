@@ -158,6 +158,11 @@ class RedirectedIORunWrapper():
             raise Exception('Cannot connect to the IDE')
         self.__socket.setSocketOption(QAbstractSocket.KeepAliveOption, 1)
         self.__socket.setSocketOption(QAbstractSocket.LowDelayOption, 1)
+        self.__socket.disconnected.connect(self.__onDisconnected)
+
+    def __onDisconnected(self):
+        """IDE dropped the socket"""
+        sys.exit(0)
 
     def __runScript(self, arguments):
         """Runs the python script"""

@@ -20,7 +20,7 @@
 """Diff viewer tab widget"""
 
 from utils.settings import Settings
-from .qt import Qt, QEvent, pyqtSignal, QApplication
+from .qt import Qt, QEvent, QApplication
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .htmltabwidget import HTMLTabWidget
 

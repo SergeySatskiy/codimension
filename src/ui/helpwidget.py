@@ -19,8 +19,8 @@
 
 """Quick help screen"""
 
-from .texttabwidget import TextTabWidget
 from flowui.cml import CMLVersion
+from .texttabwidget import TextTabWidget
 
 
 class QuickHelpWidget(TextTabWidget):
@@ -284,7 +284,8 @@ class QuickHelpWidget(TextTabWidget):
         self.setFileName("")
         self.setShortName("Quick help")
 
-    def generateCMLHelp(self):
+    @staticmethod
+    def generateCMLHelp():
         """Generates CML comments help"""
         cmlHelpHeader = """<h3 align="center">CML Comments Reference<br>
                         (CML version """ + str(CMLVersion.VERSION) + ")</h3>"

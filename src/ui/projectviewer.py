@@ -1170,11 +1170,10 @@ class ProjectViewer(QWidget):
                 fMenu = self.__pluginFileMenus[path]
                 del self.__pluginFileMenus[path]
                 self.prjFileMenu.removeAction(fMenu.menuAction())
-                self.__prjFilePluginSeparator.setVisible(
-                    len(self.__pluginFileMenus) > 0)
+                pluginMenuCount = len(self.__pluginFileMenus)
+                self.__prjFilePluginSeparator.setVisible(pluginMenuCount > 0)
                 self.fsFileMenu.removeAction(fMenu.menuAction())
-                self.__fsFilePluginSeparator.setVisible(
-                    len(self.__pluginFileMenus) > 0)
+                self.__fsFilePluginSeparator.setVisible(pluginMenuCount > 0)
                 fMenu = None
         except Exception as exc:
             pluginName = plugin.getName()
@@ -1188,11 +1187,10 @@ class ProjectViewer(QWidget):
                 dMenu = self.__pluginDirMenus[path]
                 del self.__pluginDirMenus[path]
                 self.prjDirMenu.removeAction(dMenu.menuAction())
-                self.__prjDirPluginSeparator.setVisible(
-                    len(self.__pluginDirMenus) > 0)
+                dirMenuCount = len(self.__pluginDirMenus)
+                self.__prjDirPluginSeparator.setVisible(dirMenuCount > 0)
                 self.fsDirMenu.removeAction(dMenu.menuAction())
-                self.__fsDirPluginSeparator.setVisible(
-                    len(self.__pluginDirMenus) > 0)
+                self.__fsDirPluginSeparator.setVisible(dirMenuCount > 0)
                 dMenu = None
         except Exception as exc:
             pluginName = plugin.getName()

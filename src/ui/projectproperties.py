@@ -115,7 +115,7 @@ class ProjectPropertiesDialog(QDialog):
                                      " (double click to copy path)")
 
             for item in props['importdirs']:
-                self.importDirList.addItem( item )
+                self.importDirList.addItem(item)
 
             self.disableEditing()
         else:
