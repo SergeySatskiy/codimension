@@ -19,11 +19,11 @@
 #
 
 """Profiler test"""
-import sys
-import time
+# import sys
+#import time
 
 x = 0
-while True:
+while False:
     time.sleep(0.1)
     x += 1
 

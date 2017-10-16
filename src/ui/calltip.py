@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2016  Sergey Satskiy sergey.satskiy@gmail.com
+# Copyright (C) 2010-2017  Sergey Satskiy sergey.satskiy@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ from .qt import (Qt, QEventLoop, QSizePolicy, QFrame, QLabel, QApplication,
 
 
 class Calltip(QFrame):
+
     """Frameless panel with a calltip"""
 
     def __init__(self, parent):
@@ -34,7 +35,7 @@ class Calltip(QFrame):
         # Make the frame nice looking
         palette = self.palette()
         palette.setColor(self.backgroundRole(),
-                         GlobalData().skin.calltipPaper)
+                         GlobalData().skin['calltipPaper'])
         self.setPalette(palette)
 
         self.setFrameShape(QFrame.StyledPanel)
@@ -60,7 +61,7 @@ class Calltip(QFrame):
         self.__calltipLabel.setAlignment(Qt.AlignLeft)
         palette = self.__calltipLabel.palette()
         palette.setColor(self.foregroundRole(),
-                         GlobalData().skin.calltipColor)
+                         GlobalData().skin['calltipColor'])
         self.__calltipLabel.setPalette(palette)
 
         gridLayout = QGridLayout(self)
@@ -121,7 +122,7 @@ class Calltip(QFrame):
             return
         positions = self.__paramPositions[number]
         highlight = self.__text[0:positions[0]] + "<font color='" + \
-                    GlobalData().skin.calltipHighColor.name() + "'>" + \
+                    GlobalData().skin['calltipHighColor'].name() + "'>" + \
                     self.__text[positions[0]:positions[1] + 1] + \
                     "</font>" + self.__text[positions[1] + 1:]
         self.__calltipLabel.setText(highlight)

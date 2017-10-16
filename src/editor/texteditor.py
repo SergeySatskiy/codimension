@@ -35,8 +35,7 @@ from utils.encoding import (readEncodedFile, detectEolString,
                             detectWriteEncoding, writeEncodedFile)
 from utils.fileutils import getFileProperties, isPythonMime
 from utils.diskvaluesrelay import setFileEncoding, getFileEncoding
-from autocomplete.bufferutils import (getContext, getCallPosition,
-                                      getCommaCount)
+from autocomplete.bufferutils import getContext
 from autocomplete.completelists import (getCompletionList,
                                         getDefinitions, getOccurrences,
                                         getCallSignatures)
@@ -439,7 +438,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         elif key == Qt.Key_ParenLeft:
             if Settings()['editorCalltips']:
                 QutepartWrapper.keyPressEvent(self, event)
-                self.onShowCalltip(False, False)
+                self.onShowCalltip(False)
             else:
                 QutepartWrapper.keyPressEvent(self, event)
         else:
@@ -458,7 +457,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         if self.__calltip:
             if self.__calltipTimer.isActive():
                 self.__calltipTimer.stop()
-            self.__calltipTimer.start(500)
+            if self.absCursorPosition < self.__callPosition:
+                self.__resetCalltip()
+            else:
+                self.__calltipTimer.start(500)
 
         if not self.__skipChangeCursor:
             if line == self.__openedLine:
@@ -666,7 +668,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                 GlobalData().mainWindow.jumpToLine(context.getLastScopeLine())
         return
 
-    def onShowCalltip(self, showMessage=True, showKeyword=True):
+    def onShowCalltip(self, showMessage=True):
         """The user requested show calltip"""
         if self.__calltip is not None:
             self.__resetCalltip()
@@ -679,52 +681,23 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         QApplication.restoreOverrideCursor()
 
         if not signatures:
-            return
-
-        for signature in signatures:
-            print("Signature: index: " + str(signature.index) +
-                  " name: " + signature.name + " params: " + str(signature.params))
-            for param in signature.params:
-                print("Name: " + param.name + " Description: " + param.description)
-
-        # Temporary
-        return
-
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        callPosition = getCallPosition(self)
-        if callPosition is None:
-            QApplication.restoreOverrideCursor()
-            self.__resetCalltip()
             if showMessage:
                 GlobalData().mainWindow.showStatusBarMessage(
-                    "Not a function call")
+                    "No calltip found")
             return
 
-        if not showKeyword and \
-           self.styleAt(callPosition) == QsciLexerPython.Keyword:
-            QApplication.restoreOverrideCursor()
-            self.__resetCalltip()
-            return
+        # For the time being let's take only the first signature...
+        calltipParams = []
+        for param in signatures[0].params:
+            calltipParams.append(param.description[len(param.type) + 1:])
+        calltip = signatures[0].name + '(' + ', '.join(calltipParams) + ')'
 
-        calltip, docstring = getCalltipAndDoc(self._parent.getFileName(),
-                                              self, callPosition, True)
-        if calltip is None:
-            QApplication.restoreOverrideCursor()
-            self.__resetCalltip()
-            if showMessage:
-                GlobalData().mainWindow.showStatusBarMessage(
-                    "Calltip is not found")
-            return
-
-        currentPos = self.currentPosition()
-        commas = getCommaCount(self, callPosition, currentPos)
         self.__calltip = Calltip(self)
-        self.__calltip.showCalltip(str(calltip), commas)
-        QApplication.restoreOverrideCursor()
+        self.__calltip.showCalltip(calltip, signatures[0].index)
 
-        # Memorize how the tooltip was shown
-        self.__callPosition = callPosition
-        return
+        line = signatures[0].bracket_start[0]
+        column = signatures[0].bracket_start[1]
+        self.__callPosition = self.mapToAbsPosition(line - 1, column)
 
     def __resetCalltip(self):
         """Hides the calltip and resets how it was shown"""
@@ -742,19 +715,27 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def __onCalltipTimer(self):
         """Handles the calltip update timer"""
         if self.__calltip:
-            currentPos = self.currentPosition()
-            if currentPos < self.__callPosition:
+            if self.absCursorPosition < self.__callPosition:
                 self.__resetCalltip()
                 return
+
             QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-            callPosition = getCallPosition(self, currentPos)
+            signatures = getCallSignatures(self, self._parent.getFileName())
+            QApplication.restoreOverrideCursor()
+
+            if not signatures:
+                self.__resetCalltip()
+                return
+
+            line = signatures[0].bracket_start[0]
+            column = signatures[0].bracket_start[1]
+            callPosition = self.mapToAbsPosition(line - 1, column)
+
             if callPosition != self.__callPosition:
                 self.__resetCalltip()
             else:
                 # It is still the same call, check the commas
-                commas = getCommaCount(self, callPosition, currentPos)
-                self.__calltip.highlightParameter(commas)
-            QApplication.restoreOverrideCursor()
+                self.__calltip.highlightParameter(signatures[0].index)
 
     def onOccurences(self):
         """The user requested a list of occurences"""
