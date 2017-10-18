@@ -5,9 +5,6 @@ max-line-length: 80
 autodetect: true
 ignore-paths:
   - doc
-  - debian
-  - thirdparty
   - resources
-  - pkg
 python-targets:
   - 3
