@@ -349,10 +349,9 @@ class FileOutlineViewer(QWidget):
 
     def __onSavedBufferAs(self, fileName, uuid):
         """Triggered when a file is saved with a new name"""
-
         if uuid in self.__outlineBrowsers:
             baseName = os.path.basename(fileName)
-            if isPythonFile(fileName):
+            if not isPythonFile(fileName):
                 # It's not a python file anymore
                 if uuid == self.__currentUUID:
                     self.__outlineBrowsers[uuid].browser.hide()
