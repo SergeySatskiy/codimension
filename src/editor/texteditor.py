@@ -416,20 +416,24 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             event.accept()
 
         elif key == Qt.Key_Tab:
-            line, pos = self.cursorPosition
-            currentPosition = self.absCursorPosition
-            if pos != 0:
-                char = self.lines[line][pos - 1]
-                if char != ' ' and currentPosition != self.__lastTabPosition:
-                    self.__lastTabPosition = currentPosition
-                    self.onAutoComplete()
-                    event.accept()
+            if self.selectedText:
+                QutepartWrapper.keyPressEvent(self, event)
+                self.__lastTabPosition = None
+            else:
+                line, pos = self.cursorPosition
+                currentPosition = self.absCursorPosition
+                if pos != 0:
+                    char = self.lines[line][pos - 1]
+                    if char != ' ' and currentPosition != self.__lastTabPosition:
+                        self.__lastTabPosition = currentPosition
+                        self.onAutoComplete()
+                        event.accept()
+                    else:
+                        QutepartWrapper.keyPressEvent(self, event)
+                        self.__lastTabPosition = currentPosition
                 else:
                     QutepartWrapper.keyPressEvent(self, event)
                     self.__lastTabPosition = currentPosition
-            else:
-                QutepartWrapper.keyPressEvent(self, event)
-                self.__lastTabPosition = currentPosition
 
         elif key == Qt.Key_Z and \
             int(event.modifiers()) == (Qt.ControlModifier + Qt.ShiftModifier):
