@@ -526,10 +526,12 @@ class CodimensionDebugger(QObject):
 
     def stopDebugging(self, exitCode=None):
         """Stops the debugging session"""
-        if exitCode is None:
-            self.__sendJSONCommand(METHOD_STEP_QUIT, None)
-        else:
-            self.__sendJSONCommand(METHOD_STEP_QUIT, {'exitCode': exitCode})
+        if self.__procWrapper:
+            if exitCode is None:
+                self.__sendJSONCommand(METHOD_STEP_QUIT, None)
+            else:
+                self.__sendJSONCommand(METHOD_STEP_QUIT,
+                                       {'exitCode': exitCode})
 
     def stopCalltrace(self):
         """Sends a message to stop call tracing"""
