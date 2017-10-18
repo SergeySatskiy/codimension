@@ -95,7 +95,7 @@ class RemoteProcessWrapper(QObject):
                                             self.__serverPort, self.procuuid)
         else:
             cmd, environment = getCwdCmdEnv(self.kind, self.path, params,
-                                            None, self.procuuid)
+                                            self.__serverPort, self.procuuid)
 
         self.__proc = Popen(cmd, shell=True,
                             cwd=getWorkingDir(self.path, params),
@@ -422,12 +422,13 @@ class RunManager(QObject):
         remoteProc.kind = kind
         remoteProc.procWrapper = RemoteProcessWrapper(
             path, self.__tcpServer.serverPort(), redirected, kind)
-        if redirected:
-            remoteProc.procWrapper.state = STATE_PROLOGUE
+        remoteProc.procWrapper.state = STATE_PROLOGUE
+        if redirected or kind == DEBUG:
             self.__prologueProcesses.append((remoteProc.procWrapper.procuuid,
                                              time.time()))
             if not self.__prologueTimer.isActive():
                 self.__prologueTimer.start(1000)
+        if redirected:
             remoteProc.widget = self.__pickWidget(
                 remoteProc.procWrapper.procuuid, kind)
             remoteProc.widget.appendIDEMessage(
