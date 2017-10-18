@@ -1361,6 +1361,10 @@ class EditorsManager(QTabWidget):
             # Failed to write, inform and exit
             return False
 
+        # Sets the proper file name even if there were no changes in the
+        # content
+        self.setTabText(self.currentIndex(), widget.getShortName())
+
         if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
             editor = widget.getEditor()
             editor.document().setModified(False)
@@ -1686,7 +1690,7 @@ class EditorsManager(QTabWidget):
         editor.sigEscapePressed.connect(self.__onESC)
 
     # Arguments: modified
-    def __modificationChanged(self, _):
+    def __modificationChanged(self, _=None):
         """Triggered when the file is changed"""
         index = self.currentIndex()
         currentWidget = self.currentWidget()
