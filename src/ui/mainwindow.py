@@ -71,7 +71,6 @@ from .editorsmanager import EditorsManager
 from .projectproperties import ProjectPropertiesDialog
 from .findreplacewidget import FindReplaceWidget
 from .gotolinewidget import GotoLineWidget
-from .diffviewer import DiffViewer
 from .findinfiles import FindInFilesDialog, ItemToSearchIn, getSearchItemIndex
 from .findinfilesviewer import FindInFilesViewer, hideSearchTooltip
 from .findname import FindNameDialog
@@ -313,14 +312,6 @@ class CodimensionMainWindow(QMainWindow):
             self.findInFilesViewer,
             getIcon('findindir.png'), 'Search results', 'search', 1)
         self._bottomSideBar.tabButton('search', QTabBar.RightSide).resize(0, 0)
-
-        # Create diff viewer
-        self.diffViewer = DiffViewer()
-        self._bottomSideBar.addTab(
-            self.diffViewer,
-            getIcon('diffviewer.png'), 'Diff viewer', 'diff', 2)
-        self._bottomSideBar.tabButton('diff', QTabBar.RightSide).resize(0, 0)
-        self._bottomSideBar.setTabToolTip('diff', 'No diff shown')
 
         # Create outline viewer
         self.outlineViewer = FileOutlineViewer(self.em, self)
@@ -912,27 +903,9 @@ class CodimensionMainWindow(QMainWindow):
             return False
         return True
 
-    def showDiff(self, diff, tooltip):
-        """Shows the diff"""
-        self._bottomSideBar.show()
-        self._bottomSideBar.setCurrentTab('diff')
-        self._bottomSideBar.raise_()
-
-        try:
-            self._bottomSideBar.setTabToolTip('diff', tooltip)
-            self.diffViewer.setHTML(parse_from_memory(diff, False, True),
-                                    tooltip)
-        except Exception as exc:
-            logging.error("Error showing diff: " + str(exc))
-
-    def showDiffInMainArea(self, content, tooltip):
-        """Shows the given diff in the main editing area"""
-        self.em.showDiff(content, tooltip)
-
     def onTextZoomChanged(self):
         """Triggered when a text zoom is changed"""
         self.logViewer.onTextZoomChanged()
-        self.diffViewer.onTextZoomChanged()
 
         # Handle run/profile IO consoles and the debug IO console
         index = self._bottomSideBar.count - 1
@@ -1752,11 +1725,12 @@ class CodimensionMainWindow(QMainWindow):
             self._leftSideBar.show()
             self._leftSideBar.setCurrentTab(name)
             self._leftSideBar.raise_()
-        elif name in ['fileoutline', 'debugger', 'exceptions', 'breakpoints']:
+        elif name in ['fileoutline', 'debugger', 'exceptions',
+                      'breakpoints', 'calltrace']:
             self._rightSideBar.show()
             self._rightSideBar.setCurrentTab(name)
             self._rightSideBar.raise_()
-        elif name in ['log', 'search', 'contexthelp', 'diff']:
+        elif name in ['log', 'search']:
             self._bottomSideBar.show()
             self._bottomSideBar.setCurrentTab(name)
             self._bottomSideBar.raise_()

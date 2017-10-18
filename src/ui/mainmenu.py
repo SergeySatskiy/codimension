@@ -412,7 +412,7 @@ class MainWindowMenuMixin:
         self.__rightSideBarMenu = QMenu("&Right sidebar", self)
         self.__rightSideBarMenu.triggered.connect(self._activateSideTab)
         self.__outlineBarAct = self.__rightSideBarMenu.addAction(
-            getIcon('filepython.png'), 'Activate &outline tab')
+            getIcon('filepython.png'), 'Activate file &outline tab')
         self.__outlineBarAct.setData('fileoutline')
         self.__debugBarAct = self.__rightSideBarMenu.addAction(
             getIcon(''), 'Activate &debug tab')
@@ -423,6 +423,9 @@ class MainWindowMenuMixin:
         self.__bpointBarAct = self.__rightSideBarMenu.addAction(
             getIcon(''), 'Activate &breakpoints tab')
         self.__bpointBarAct.setData('breakpoints')
+        self.__calltraceBarAct = self.__rightSideBarMenu.addAction(
+            getIcon(''), 'Activate &call trace tab')
+        self.__calltraceBarAct.setData('calltrace')
         self.__rightSideBarMenu.addSeparator()
         self.__hideRightSideBarAct = self.__rightSideBarMenu.addAction(
             getIcon(""), '&Hide right sidebar', self._rightSideBar.shrink)
@@ -436,12 +439,6 @@ class MainWindowMenuMixin:
         self.__searchBarAct = self.__bottomSideBarMenu.addAction(
             getIcon('findindir.png'), 'Activate &search tab')
         self.__searchBarAct.setData('search')
-        self.__contextHelpBarAct = self.__bottomSideBarMenu.addAction(
-            getIcon('helpviewer.png'), 'Activate context &help tab')
-        self.__contextHelpBarAct.setData('contexthelp')
-        self.__diffBarAct = self.__bottomSideBarMenu.addAction(
-            getIcon('diffviewer.png'), 'Activate &diff tab')
-        self.__diffBarAct.setData('diff')
         self.__bottomSideBarMenu.addSeparator()
         self.__hideBottomSideBarAct = self.__bottomSideBarMenu.addAction(
             getIcon(""), '&Hide bottom sidebar', self._bottomSideBar.shrink)

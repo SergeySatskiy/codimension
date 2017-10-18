@@ -48,7 +48,6 @@ from .helpwidget import QuickHelpWidget
 from .pixmapwidget import PixmapTabWidget
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .tabshistory import TabsHistory
-from .difftabwidget import DiffTabWidget
 
 
 class ClickableTabBar(QTabBar):
@@ -99,7 +98,6 @@ class EditorsManager(QTabWidget):
 
         self.__newIndex = -1
         self.newCloneIndex = -1
-        self.newDiffIndex = -1
         self.__mainWindow = parent
         self.__navigationMenu = None
         self.__historyBackMenu = None
@@ -435,11 +433,6 @@ class EditorsManager(QTabWidget):
 
         # No '.' in the name
         return shortName + "-clone" + str(self.newCloneIndex)
-
-    def getNewDiffName(self):
-        """Provides a new name for a diff tab"""
-        self.newDiffIndex += 1
-        return "diff #" + str(self.newDiffIndex)
 
     def activateTab(self, index):
         """Activates the given tab"""
@@ -985,33 +978,6 @@ class EditorsManager(QTabWidget):
             logging.error(str(exc))
             return False
         return True
-
-    def showDiff(self, content, tooltip):
-        """Shows diff (expected HTML format)"""
-        try:
-            newWidget = DiffTabWidget()
-            newWidget.sigEscapePressed.connect(self.__onESC)
-
-            newWidget.setHTML(content)
-            newWidget.setFileName("")
-            newWidget.setShortName(self.getNewDiffName())
-
-            if self.widget(0) == self.__welcomeWidget:
-                # It is the only welcome widget on the screen
-                self.removeTab(0)
-                self.setTabsClosable(True)
-
-            self.insertTab(0, newWidget, newWidget.getShortName())
-            if tooltip != "":
-                self.setTabToolTip(0, tooltip)
-                newWidget.setTooltip(tooltip)
-            self.activateTab(0)
-            self.__updateControls()
-            self.updateStatusBar()
-            newWidget.setFocus()
-            self.saveTabsStatus()
-        except Exception as exc:
-            logging.error(str(exc))
 
     def showProfileReport(self, newWidget, tooltip):
         """Shows profiling report"""
