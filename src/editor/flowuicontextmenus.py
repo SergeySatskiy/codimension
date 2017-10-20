@@ -20,7 +20,7 @@
 """Sets up and handles the flow UI context menus"""
 
 
-from ui.qt import QMenu, QAction
+from ui.qt import QMenu
 from flowui.items import CellElement, IfCell
 from utils.pixmapcache import getIcon
 

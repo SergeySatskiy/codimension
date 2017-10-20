@@ -29,10 +29,11 @@ class CFSceneMouseMixin:
 
     """Encapsulates mouse clicks handling and related functionality"""
 
-    def __init__( self ):
+    def __init__(self):
         pass
 
-    def __getLogicalItem(self, item):
+    @staticmethod
+    def __getLogicalItem(item):
         """Provides a logical item or None"""
         if item is None:
             return None
@@ -222,7 +223,7 @@ class CFSceneMouseMixin:
         return item.ref.body.begin, item.ref.body.end
 
     def findItemsForRef(self, ref):
-        " Provides graphics items for the given ref "
+        """Provides graphics items for the given ref"""
         result = []
         for item in self.items():
             if hasattr(item, "ref"):
@@ -231,11 +232,13 @@ class CFSceneMouseMixin:
         return result
 
     def getNearestItem(self, absPos, line, pos):
-        """Provides a logical item which is the closest
-           to the specified absPos, line:pos as well as the distance to the
-           item (0 - within the item)
-           line and pos are 1-based
+        """Provides a logical item and the distance.
+
+        The item is the closest to the specified absPos, line:pos.
+        The distance to the item (0 - within the item).
+        line and pos are 1-based.
         """
+        del pos     # unused argument
         candidates = []
         distance = maxsize
 

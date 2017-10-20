@@ -22,11 +22,10 @@
 import os.path
 import logging
 from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QRectF, QPoint,
-                   QPainter, QTransform, QImage, QToolBar, QWidget,
+                   QPainter, QImage, QToolBar, QWidget, QPrinter,
                    QGraphicsView, QApplication, QGraphicsScene, QHBoxLayout,
                    QLabel, QVBoxLayout, QFrame, QSizePolicy, QFileDialog,
-                   QDialog, QMenu, QToolButton, QMessageBox, QSvgGenerator,
-                   QPrinter)
+                   QDialog, QMenu, QToolButton, QMessageBox, QSvgGenerator)
 from cdmcfparser import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas
 from flowui.cflowsettings import getCflowSettings

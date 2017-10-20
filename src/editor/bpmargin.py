@@ -21,11 +21,11 @@
 """Breakpoints margin: shows breakpoints and the current debug line"""
 
 import os.path
-import qutepart
 import logging
 import math
 from sys import maxsize
 from ui.qt import QWidget, QPainter, QModelIndex, QToolTip
+import qutepart
 from qutepart.margins import MarginBase
 from utils.misc import extendInstance
 from utils.pixmapcache import getPixmap
@@ -182,6 +182,7 @@ class CDMBreakpointMargin(QWidget):
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered on the changed file type"""
+        del fileName    # unused argument
         if uuid == self.myUUID:
             if isPythonMime(newFileType):
                 self.setVisible(True)
@@ -383,7 +384,7 @@ class CDMBreakpointMargin(QWidget):
         """Deletes breakpoints which fall into the given lines range"""
         toBeDeleted = []
         limit = startFrom + count - 1
-        for handle, bpoint in self.__breakpoints.items():
+        for _, bpoint in self.__breakpoints.items():
             bpointLine = bpoint.getLineNumber()
             if bpointLine >= startFrom and bpointLine <= limit:
                 toBeDeleted.append(bpointLine)
@@ -400,7 +401,7 @@ class CDMBreakpointMargin(QWidget):
     def __onBlockClicked(self, block):
         """Margin of the block has been clicked"""
         lineNo = block.blockNumber() + 1
-        for handle, bpoint in self.__breakpoints.items():
+        for _, bpoint in self.__breakpoints.items():
             if bpoint.getLineNumber() == lineNo:
                 # Breakpoint marker is set for this line already
                 self.__toggleBreakpoint(lineNo)
