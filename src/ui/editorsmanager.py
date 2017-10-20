@@ -608,7 +608,9 @@ class EditorsManager(QTabWidget):
         if widgetType in [MainWindowTabWidgetBase.PlainTextEditor,
                           MainWindowTabWidgetBase.VCSAnnotateViewer]:
             # Terminate the syntax highlight if needed
-            self.widget(index).getEditor().terminate()
+            editor = self.widget(index).getEditor()
+            editor.textChanged.disconnect(self.__contentChanged)
+            editor.terminate()
 
         closingUUID = self.widget(index).getUUID()
         if not wasDiscard and not enforced:
@@ -1821,7 +1823,9 @@ class EditorsManager(QTabWidget):
                 editorWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
                                  MainWindowTabWidgetBase.VCSAnnotateViewer]
                 if self.widget(index).getType() in editorWidgets:
-                    self.widget(index).getEditor().terminate()
+                    editor = self.widget(index).getEditor()
+                    editor.textChanged.disconnect(self.__contentChanged)
+                    editor.terminate()
 
             event.accept()
             return True

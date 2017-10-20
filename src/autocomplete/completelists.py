@@ -25,6 +25,7 @@ import sys
 import logging
 import jedi
 from utils.globals import GlobalData
+from utils.fileutils import getFileContent
 from .listmodules import getSysModules, getModules
 from .bufferutils import getEditorTags
 
@@ -90,7 +91,7 @@ def getCallSignatures(editor, fileName):
     except Exception as exc:
         logging.error('jedi library failed to provide call signatures: ' +
                       str(exc))
-    return result
+    return []
 
 
 def getDefinitions(editor, fileName):
@@ -120,89 +121,29 @@ def getDefinitions(editor, fileName):
     return result
 
 
-def _switchFileAndBuffer(fileName, editor):
-    """Saves the original file under a temporary name and
-       writes the content into the original file if needed
-    """
-    if editor.isModified():
-        content = editor.text()
-        dirName = os.path.dirname(fileName)
-        fName = os.path.basename(fileName)
-        temporaryName = dirName + os.path.sep + "." + fName + ".rope-temp"
-        os.rename(fileName, temporaryName)
-
-        f = open(fileName, "wb")
+def getOccurrences(editor, fileName, line=None, pos=None):
+    """Provides occurences for the current editor position"""
+    if editor is not None:
+        line, pos = editor.cursorPosition
+        line += 1
+        text = editor.text
+    else:
+        if pos > 0:
+            pos -= 1
         try:
-            f.write(content)
-        except:
-            # Revert the change back
-            f.close()
-            os.rename(temporaryName, fileName)
-            raise
-        f.close()
-        return temporaryName
+            text = getFileContent(fileName)
+        except Exception as exc:
+            logging.error('Cannot read file ' + fileName + ': ' + str(exc))
+            return []
 
-    # The file is not modified, no need to create a temporary one
-    return fileName
-
-
-def _restoreOriginalFile(fileName, temporaryName, editor):
-    """Removes the temporary file and validete the project if needed"""
-    if editor.isModified():
-        if temporaryName != "":
-            os.rename(temporaryName, fileName)
-
-def _buildOccurrencesImplementationsResult(locations):
-    """Cleans up the rope locations"""
-    result = []
-    for loc in locations:
-        path = os.path.realpath(loc.resource.real_path)
-        result.append([path, loc.lineno])
-    return result
-
-
-def getOccurrences(fileName, editorOrPosition, throwException=False):
-    """Provides occurences for the current editor position or
-       for a position in a file
-    """
-    if type(editorOrPosition) == type(1):
-        # This is called for a position in the existing file
-        return getOccurencesForFilePosition(fileName, editorOrPosition,
-                                            throwException)
-    return getOccurencesForEditor(fileName, editorOrPosition,
-                                  throwException)
-
-
-def getOccurencesForEditor(fileName, editor, throwException):
-    """Provides a list of the current token occurences"""
-    temporaryName = ""
-    result = []
-    nameToSearch = ""
     try:
-        temporaryName = _switchFileAndBuffer(fileName, editor)
-        position = editor.currentPosition()
-        resource = path_to_resource(ropeProject, fileName)
-
-        nameToSearch = worder.get_name_at(resource, position)
-        result = find_occurrences(ropeProject, resource, position, True)
-    except:
-        if throwException:
-            raise
-
-    _restoreOriginalFile(fileName, temporaryName, editor)
-    return nameToSearch, _buildOccurrencesImplementationsResult(result)
-
-
-def getOccurencesForFilePosition(fileName, position, throwException):
-    """Provides a list of the token at position occurences"""
-    result = []
-    try:
-        # Note: replace with jedi implementation
-        pass
-    except:
-        if throwException:
-            raise
-    return _buildOccurrencesImplementationsResult(result)
+        script = getJediScript(text, line, pos,
+                               fileName if fileName else '')
+        return script.usages()
+    except Exception as exc:
+        logging.error('jedi library failed to provide usages: ' +
+                      str(exc))
+    return []
 
 
 def getJediScript(source, line, column, srcPath):
@@ -234,7 +175,7 @@ def getJediScript(source, line, column, srcPath):
         if dirName not in paths:
             paths.append(dirName)
 
-    return jedi.Script(source, line, column, sys_path=paths)
+    return jedi.Script(source, line, column, srcPath, sys_path=paths)
 
 
 def getCompletionList(editor, fileName):

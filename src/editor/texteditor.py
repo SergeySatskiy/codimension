@@ -745,48 +745,43 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         """The user requested a list of occurences"""
         if not self.isPythonBuffer():
             return
-        if self._parent.getType() in [MainWindowTabWidgetBase.VCSAnnotateViewer]:
+        if self._parent.getType() == MainWindowTabWidgetBase.VCSAnnotateViewer:
             return
         if not os.path.isabs(self._parent.getFileName()):
             GlobalData().mainWindow.showStatusBarMessage(
-                "Save the buffer first")
+                "Please save the buffer and try again")
             return
-        if self.document().isModified():
-            # Check that the directory is writable for a temporary file
-            dirName = os.path.dirname(self._parent.getFileName())
-            if not os.access(dirName, os.W_OK):
-                GlobalData().mainWindow.showStatusBarMessage(
-                    "File directory is not writable. Cannot run rope.")
-                return
 
-        # Prerequisites were checked, run the rope library
+        fileName = self._parent.getFileName()
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        name, locations = getOccurrences(self._parent.getFileName(), self)
-        if len(locations) == 0:
-            QApplication.restoreOverrideCursor()
-            GlobalData().mainWindow.showStatusBarMessage(
-                "No occurences of " + name + " found")
+        definitions = getOccurrences(self, fileName)
+        QApplication.restoreOverrideCursor()
+
+        if len(definitions) == 0:
+            GlobalData().mainWindow.showStatusBarMessage('No occurences found')
             return
 
         # There are found items
+        GlobalData().mainWindow.showStatusBarMessage('')
         result = []
-        for loc in locations:
-            index = getSearchItemIndex(result, loc[0])
+        for definition in definitions:
+            fName = definition.module_path
+            if not fName:
+                fName = fileName
+            lineno = definition.line
+            index = getSearchItemIndex(result, fName)
             if index < 0:
-                widget = GlobalData().mainWindow.getWidgetForFileName(loc[0])
+                widget = GlobalData().mainWindow.getWidgetForFileName(fName)
                 if widget is None:
                     uuid = ""
                 else:
                     uuid = widget.getUUID()
-                newItem = ItemToSearchIn(loc[0], uuid)
+                newItem = ItemToSearchIn(fName, uuid)
                 result.append(newItem)
                 index = len(result) - 1
-            result[index].addMatch(name, loc[1])
+            result[index].addMatch(definition.name, lineno)
 
-        QApplication.restoreOverrideCursor()
-
-        GlobalData().mainWindow.displayFindInFiles("", result)
-        return
+        GlobalData().mainWindow.displayFindInFiles('', result)
 
     def insertCompletion(self, text):
         """Triggered when a completion is selected"""

@@ -85,7 +85,7 @@ class ItemToSearchIn:
                 mainWindow = GlobalData().mainWindow
                 widget = mainWindow.getWidgetByUUID(self.bufferUUID)
                 if widget is not None:
-                    content = widget.getEditor().text().splitlines()
+                    content = widget.getEditor().lines
                 else:
                     raise Exception('Inconsistency. Buffer disappeared.')
             else:
@@ -100,7 +100,7 @@ class ItemToSearchIn:
         # Form the regexp corresponding to a single word search
         regexpText = re.escape(name)
         regexpText = "\\b%s\\b" % regexpText
-        flags = re.UNICODE | re.LOCALE
+        flags = re.UNICODE
         searchRegexp = re.compile(regexpText, flags)
 
         line = content[lineNumber - 1]

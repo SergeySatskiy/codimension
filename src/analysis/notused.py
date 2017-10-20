@@ -176,7 +176,7 @@ class NotUsedAnalysisProgress(QDialog):
             name = str(treeItem.data(0)).split('(')[0]
             path = os.path.realpath(treeItem.getPath())
             lineNumber = int(treeItem.data(2))
-            absPosition = treeItem.sourceObj.absPosition
+            pos = treeItem.sourceObj.pos
 
             count += 1
             self.__progressBar.setValue(count)
@@ -185,35 +185,21 @@ class NotUsedAnalysisProgress(QDialog):
 
             # Analyze the name
             found = False
-            try:
-                # True is for throwing exceptions
-                locations = getOccurrences(path, absPosition, True)
+            definitions = getOccurrences(None, path, lineNumber, pos)
 
-                if len(locations) == 1 and locations[0][1] == lineNumber:
-                    found = True
-                    index = getSearchItemIndex(candidates, path)
-                    if index < 0:
-                        widget = mainWindow.getWidgetForFileName(path)
-                        if widget is None:
-                            uuid = ""
-                        else:
-                            uuid = widget.getUUID()
-                        newItem = ItemToSearchIn(path, uuid)
-                        candidates.append(newItem)
-                        index = len(candidates) - 1
-                    candidates[index].addMatch(name, lineNumber)
-
-            except Exception as exc:
-                # There is nothing interesting with exceptions here.
-                # It seems to me that rope throws them in case if the same item
-                # is declared multiple times in a file. I also suspect that
-                # exceptions may come up in case of syntactic errors.
-                # So I just suppress them.
-                pass
-
-                # logging.warning("Error detected while analysing " +
-                #                 self.__whatAsString() + " '" + name +
-                #                 "'. Message: " + str( exc ) )
+            if len(definitions) == 1:
+                found = True
+                index = getSearchItemIndex(candidates, path)
+                if index < 0:
+                    widget = mainWindow.getWidgetForFileName(path)
+                    if widget is None:
+                        uuid = ""
+                    else:
+                        uuid = widget.getUUID()
+                    newItem = ItemToSearchIn(path, uuid)
+                    candidates.append(newItem)
+                    index = len(candidates) - 1
+                candidates[index].addMatch(name, lineNumber)
 
             if found:
                 self.__found += 1

@@ -5,5 +5,5 @@ PyQt5~=5.7
 python-magic==0.4.13
 qutepart
 yapsy==1.11.223
-jedi==0.9.0
+jedi
 gprof2dot

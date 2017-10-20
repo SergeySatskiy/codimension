@@ -168,7 +168,6 @@ class MatchTableItem(QTreeWidgetItem):
         global screenWidth
         screenSize = GlobalData().application.desktop().screenGeometry()
         screenWidth = screenSize.width()
-        return
 
     def __lt__(self, other):
         """Integer or string custom sorting"""
@@ -331,9 +330,7 @@ class FindInFilesViewer(QWidget):
         self.__noneLabel.setPalette(noneLabelPalette)
 
         # Keep pylint happy
-        self.printButton = None
         self.clearButton = None
-        self.printPreviewButton = None
 
         self.__createLayout(parent)
 
@@ -345,17 +342,6 @@ class FindInFilesViewer(QWidget):
         """Creates the toolbar and layout"""
 
         # Buttons
-        self.printButton = QAction(getIcon('printer.png'), 'Print', self)
-        # printButton.setShortcut('Ctrl+')
-        self.printButton.triggered.connect(self.__onPrint)
-        self.printButton.setVisible(False)
-
-        self.printPreviewButton = QAction(getIcon('printpreview.png'),
-                                          'Print preview', self)
-        # printPreviewButton.setShortcut('Ctrl+')
-        self.printPreviewButton.triggered.connect(self.__onPrintPreview)
-        self.printPreviewButton.setVisible(False)
-
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -371,8 +357,6 @@ class FindInFilesViewer(QWidget):
         self.toolbar.setFixedWidth(28)
         self.toolbar.setContentsMargins(0, 0, 0, 0)
 
-        self.toolbar.addAction(self.printPreviewButton)
-        self.toolbar.addAction(self.printButton)
         self.toolbar.addWidget(spacer)
         self.toolbar.addAction(self.clearButton)
 
@@ -405,17 +389,7 @@ class FindInFilesViewer(QWidget):
 
     def __updateButtonsStatus(self):
         """Updates the buttons status"""
-        self.printButton.setEnabled(self.__reportShown)
-        self.printPreviewButton.setEnabled(self.__reportShown)
         self.clearButton.setEnabled(self.__reportShown)
-
-    def __onPrint(self):
-        """Triggered when the print button is pressed"""
-        pass
-
-    def __onPrintPreview(self):
-        """Triggered when the print preview button is pressed"""
-        pass
 
     def setFocus(self):
         """Overridden setFocus"""

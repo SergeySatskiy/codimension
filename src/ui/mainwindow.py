@@ -1750,33 +1750,33 @@ class CodimensionMainWindow(QMainWindow):
     def findWhereUsed(self, fileName, item):
         """Find occurences for c/f/g browsers"""
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        definitions = getOccurrences(None, fileName, item.line, item.pos)
+        QApplication.restoreOverrideCursor()
 
-        # False for no exceptions
-        locations = getOccurrences(fileName, item.absPosition, False)
-        if len(locations) == 0:
-            QApplication.restoreOverrideCursor()
-            self.showStatusBarMessage("No occurrences of " +
-                                      item.name + " found.", 0)
+        if len(definitions) == 0:
+            self.showStatusBarMessage('No occurrences found')
             return
 
-        # Process locations for find results window
+        self.showStatusBarMessage('')
         result = []
-        for loc in locations:
-            index = getSearchItemIndex(result, loc[0])
+        for definition in definitions:
+            fName = definition.module_path
+            if not fName:
+                fName = fileName
+            lineno = definition.line
+            index = getSearchItemIndex(result, fName)
             if index < 0:
-                widget = self.getWidgetForFileName(loc[0])
+                widget = self.getWidgetForFileName(fName)
                 if widget is None:
                     uuid = ""
                 else:
                     uuid = widget.getUUID()
-                newItem = ItemToSearchIn(loc[0], uuid)
+                newItem = ItemToSearchIn(fName, uuid)
                 result.append(newItem)
                 index = len(result) - 1
-            result[index].addMatch(item.name, loc[1])
+            result[index].addMatch(item.name, lineno)
 
-        QApplication.restoreOverrideCursor()
-
-        self.displayFindInFiles("", result)
+        self.displayFindInFiles('', result)
 
     def _onTabOpenImport(self):
         """Triggered when open import is requested"""
