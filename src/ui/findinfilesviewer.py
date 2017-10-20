@@ -159,10 +159,12 @@ class MatchTableItem(QTreeWidgetItem):
     """Match item"""
 
     def __init__(self, items, tooltip):
+        items.insert(1, '')
         QTreeWidgetItem.__init__(self, items)
         self.__intColumn = 0
         self.__tooltip = tooltip
         self.__fileModified = False
+        self.setIcon(1, getIcon('findtooltip.png'))
 
         # Memorize the screen width
         global screenWidth
@@ -366,7 +368,7 @@ class FindInFilesViewer(QWidget):
         self.__resultsTree.setItemsExpandable(True)
         self.__resultsTree.setUniformRowHeights(True)
         self.__resultsTree.setItemDelegate(NoOutlineHeightDelegate(4))
-        headerLabels = ["File name / line", "Text"]
+        headerLabels = ['File name / line', '', 'Text']
         self.__resultsTree.setHeaderLabels(headerLabels)
         self.__resultsTree.itemActivated.connect(self.__resultActivated)
         self.__resultsTree.itemClicked.connect(self.__resultClicked)
@@ -440,7 +442,7 @@ class FindInFilesViewer(QWidget):
                 matchText = " (1 match)"
             else:
                 matchText = " (" + str(matched) + " matches)"
-            columns = [item.fileName, matchText]
+            columns = [item.fileName, '', matchText]
             fileItem = MatchTableFileItem(columns, item.bufferUUID)
             _, icon, _ = getFileProperties(item.fileName)
             fileItem.setIcon(0, icon)
@@ -458,12 +460,15 @@ class FindInFilesViewer(QWidget):
         # Update the header with the total number of matches
         headerLabels = ["File name / line (total files: " +
                         str(len(results)) + ")",
+                        '',
                         "Text (total matches: " + str(totalMatched) + ")"]
         self.__resultsTree.setHeaderLabels(headerLabels)
 
         # Resizing the table
         self.__resultsTree.header().resizeSections(
             QHeaderView.ResizeToContents)
+        self.__resultsTree.header().setSectionResizeMode(1, QHeaderView.Fixed)
+        self.__resultsTree.header().resizeSection(1, 30)
 
         # Show the complete information
         self.__resultsTree.show()
