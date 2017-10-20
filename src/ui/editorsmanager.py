@@ -1787,8 +1787,9 @@ class EditorsManager(QTabWidget):
 
     def closeRequest(self):
         """Returns True if it could be closed.
-           If it cannot then an error messages is logged, first unsaved tab
-           is activated and False is returned.
+
+        If it cannot then an error messages is logged, first unsaved tab
+        is activated and False is returned.
         """
         notSaved = []
         firstIndex = -1
@@ -1826,6 +1827,8 @@ class EditorsManager(QTabWidget):
                     editor = self.widget(index).getEditor()
                     editor.textChanged.disconnect(self.__contentChanged)
                     editor.terminate()
+            # That's the end of the session, so let's save the tabs status
+            self.saveTabsStatus()
 
             event.accept()
             return True
