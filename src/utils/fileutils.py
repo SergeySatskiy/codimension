@@ -124,6 +124,10 @@ def isFileSearchable(fName, checkForBrokenLink=True):
     mime, _, syntaxFile = getFileProperties(fName, checkForBrokenLink,
                                             skipCache=False)
     if syntaxFile is not None:
+        # lpc.xml is bound to .o extension i.e. matches object files!
+        if syntaxFile == 'lpc.xml':
+            if 'object' in mime:
+                return False
         return True
     if mime is None:
         return False
