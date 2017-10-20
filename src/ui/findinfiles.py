@@ -162,7 +162,21 @@ class ItemToSearchIn:
             "</b>" + \
             escape(lines[matchIndex][finishPos:])
 
-        return "<pre>" + "\n".join(lines) + "</pre>"
+        # Strip empty lines at the end and at the beginning
+        index = len(lines) - 1
+        while index >= 0:
+            if lines[index].strip() == '':
+                del lines[index]
+                index -= 1
+                continue
+            break
+        while len(lines) > 0:
+            if lines[0].strip() == '':
+                del lines[0]
+                continue
+            break
+
+        return '<p>' + '<br/>'.join(lines).replace(' ', '&nbsp;') + '</p>'
 
     def __lookThroughLines(self, content, expression):
         """Searches through all the given lines"""

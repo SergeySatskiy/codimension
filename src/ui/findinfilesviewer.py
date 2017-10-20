@@ -74,17 +74,21 @@ class Tooltip(QFrame):
     def __createLayout(self):
         """Creates the tooltip layout"""
         verticalLayout = QVBoxLayout(self)
+        verticalLayout.setContentsMargins(0, 0, 0, 0)
+
         self.info = QLabel()
         self.info.setAutoFillBackground(True)
         self.info.setFont(getZoomedMonoFont())
         self.info.setFrameShape(QFrame.StyledPanel)
+        self.info.setStyleSheet('padding: 4px')
         verticalLayout.addWidget(self.info)
-        verticalLayout.setContentsMargins(0, 0, 0, 0)
+
         self.location = QLabel()
-        verticalLayout.addWidget(self.location)
+        # verticalLayout.addWidget(self.location)
 
     def setText(self, text):
         """Sets the tooltip text"""
+        self.info.setFont(getZoomedMonoFont())
         self.info.setText(text)
 
     def setLocation(self, text):
@@ -195,19 +199,17 @@ class MatchTableItem(QTreeWidgetItem):
 
     def itemEntered(self):
         """Triggered when mouse cursor entered the match"""
-        if self.__tooltip == "":
-            return
+        if self.__tooltip:
+            global inside
+            inside = True
 
-        global inside
-        inside = True
-
-        if searchTooltip.isVisible():
-            hideSearchTooltip()
-            self.__updateTooltipProperties()
-            searchTooltip.show()
-        else:
-            searchTooltip.startShowTimer()
-            self.__updateTooltipProperties()
+            if searchTooltip.isVisible():
+                hideSearchTooltip()
+                self.__updateTooltipProperties()
+                searchTooltip.show()
+            else:
+                searchTooltip.startShowTimer()
+                self.__updateTooltipProperties()
 
 
 class MatchTableFileItem(QTreeWidgetItem):
@@ -342,6 +344,7 @@ class FindInFilesViewer(QWidget):
 
     def __createLayout(self, parent):
         """Creates the toolbar and layout"""
+        del parent  # unused argument
 
         # Buttons
         spacer = QWidget()
@@ -485,12 +488,16 @@ class FindInFilesViewer(QWidget):
             editorsManager.sigBufferModified.connect(
                 self.__resultsTree.onBufferModified)
 
-    def __resultClicked(self, item, column):
+    @staticmethod
+    def __resultClicked(item, column):
         """Handles the single click"""
+        del item    # unused argument
+        del column  # unused argument
         hideSearchTooltip()
 
     def __resultActivated(self, item, column):
         """Handles the double click (or Enter) on a match"""
+        del column  # unused argument
         if isinstance(item, MatchTableItem):
             fileName = item.parent().data(0, Qt.DisplayRole)
             lineNumber = int(item.data(0, Qt.DisplayRole))
