@@ -476,6 +476,16 @@ class FindInFilesDialog(QDialog):
                     return index, self.findCombo.itemData(index)
         return None, None
 
+    @staticmethod
+    def __indexByText(combo, text):
+        """Provides the text entry index"""
+        index = 0
+        for index in range(combo.count()):
+            if combo.itemText(index) == text:
+                return index
+            index += 1
+        return -1
+
     def setSearchInProject(self, what=None):
         """Set search ready for the whole project"""
         if not GlobalData().project.isLoaded():
@@ -694,9 +704,9 @@ class FindInFilesDialog(QDialog):
         self.dirEditCombo.setFocus()
         self.__testSearchability()
 
-    # Arguments: text
-    def __someTextChanged(self, _):
+    def __someTextChanged(self, text):
         """Text to search, filter or dir name has been changed"""
+        del text    # unused argument
         self.__testSearchability()
 
     def __whatIndexChanged(self, index):
@@ -849,6 +859,18 @@ class FindInFilesDialog(QDialog):
         self.findCombo.setCurrentIndex(historyIndex)
         self.findCombo.setCurrentText(historyItem['term'])
 
+        fltValue = historyItem['filters']
+        if fltValue:
+            index = self.__indexByText(self.filterCombo, fltValue)
+            self.filterCombo.setCurrentIndex(index)
+        self.filterCombo.setCurrentText(fltValue)
+
+        dirValue = historyItem['dir']
+        if dirValue:
+            index = self.__indexByText(self.dirEditCombo, dirValue)
+            self.dirEditCombo.setCurrentIndex(index)
+        self.dirEditCombo.setCurrentText(dirValue)
+
         # Save the combo values for further usage
         setFindInFilesHistory(self.__history)
 
@@ -884,15 +906,11 @@ class FindInFilesDialog(QDialog):
         try:
             files = self.__buildFilesList()
         except Exception as exc:
-            if 'Cancel request' in str(exc):
-                QApplication.restoreOverrideCursor()
-                self.close()
-                return
-            else:
-                QApplication.restoreOverrideCursor()
+            QApplication.restoreOverrideCursor()
+            if 'Cancel request' not in str(exc):
                 logging.error(str(exc))
-                self.close()
-                return
+            self.close()
+            return
         QApplication.restoreOverrideCursor()
         QApplication.processEvents()
 
