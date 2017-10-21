@@ -124,10 +124,6 @@ def isFileSearchable(fName, checkForBrokenLink=True):
     mime, _, syntaxFile = getFileProperties(fName, checkForBrokenLink,
                                             skipCache=False)
     if syntaxFile is not None:
-        # lpc.xml is bound to .o extension i.e. matches object files!
-        if syntaxFile == 'lpc.xml':
-            if 'object' in mime:
-                return False
         return True
     if mime is None:
         return False
@@ -591,6 +587,11 @@ def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
         mime = __getMimeByXmlSyntaxFile(syntaxFile)
         if mime is None:
             mime, _ = __getMagicMime(fName)
+
+    if fileExtension == 'o' and syntaxFile == 'lpc.xml':
+        # lpc.xml is bound to .o extension i.e. exactly object files!
+        if 'object' in mime:
+            syntaxFile = None
 
     cacheValue = [mime, __getIcon(syntaxFile, mime, fBaseName), syntaxFile]
     __filePropertiesCache[fName] = cacheValue
