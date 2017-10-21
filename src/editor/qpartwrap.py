@@ -335,12 +335,45 @@ class QutepartWrapper(Qutepart):
 
     def removeTrailingWhitespaces(self):
         """Removes trailing whitespaces"""
+        # Note: two loops are for the case when there is nothing to expand.
+        # The 'with' statement leads to a detection of a changed position
+        # which triggers the other actions.
+        for index, line in enumerate(self.lines):
+            stripped = line.rstrip()
+            if stripped != line:
+                break
+        else:
+            self.__showStatusBarMessage('No trailing spaces found')
+            return
+
         with self:
-            for index in range(len(self.lines)):
-                orig = self.lines[index]
-                stripped = orig.rstrip()
-                if orig != stripped:
+            lastIndex = len(self.lines) - 1
+            while index <= lastIndex:
+                stripped = self.lines[index].rstrip()
+                if stripped != self.lines[index]:
                     self.lines[index] = stripped
+                index += 1
+
+    def expandTabs(self, tabsize):
+        """Expands tabs if needed"""
+        # Note: two loops are for the case when there is nothing to expand.
+        # The 'with' statement leads to a detection of a changed position
+        # which triggers the other actions.
+        for index, line in enumerate(self.lines):
+            expanded = line.expandtabs(tabsize)
+            if expanded != line:
+                break
+        else:
+            self.__showStatusBarMessage('No tabs found')
+            return
+
+        with self:
+            lastIndex = len(self.lines) - 1
+            while index <= lastIndex:
+                expanded = self.lines[index].expandtabs(tabsize)
+                if expanded != self.lines[index]:
+                    self.lines[index] = expanded
+                index += 1
 
     def getEncoding(self):
         """Provides the encoding"""
