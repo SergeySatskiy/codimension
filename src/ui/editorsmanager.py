@@ -1724,12 +1724,12 @@ class EditorsManager(QTabWidget):
         mainWindow.sbEol.setText(eol if eol else 'n/a')
 
         cPos = currentWidget.getPos()
-        if cPos:
+        if cPos is not None:
             mainWindow.sbPos.setText('Pos: ' + str(cPos + 1))
         else:
             mainWindow.sbPos.setText('Pos: n/a')
         cLine = currentWidget.getLine()
-        if cLine:
+        if cLine is not None:
             mainWindow.sbLine.setText('Line: ' + str(cLine + 1))
         else:
             mainWindow.sbLine.setText('Line: n/a')
