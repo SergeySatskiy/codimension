@@ -138,7 +138,7 @@ def getOccurrences(editor, fileName, line=None, pos=None):
 
     try:
         script = getJediScript(text, line, pos,
-                               fileName if fileName else '')
+                               fileName if fileName else '', False)
         return script.usages()
     except Exception as exc:
         logging.error('jedi library failed to provide usages: ' +
@@ -146,9 +146,16 @@ def getOccurrences(editor, fileName, line=None, pos=None):
     return []
 
 
-def getJediScript(source, line, column, srcPath):
+def getJediScript(source, line, column, srcPath, needSysPath=True):
     """Provides the jedi Script object considering the current project"""
     jedi.settings.additional_dynamic_modules = []
+    paths = sys.path[:] if needSysPath else []
+
+    # This make relative imports resolvable
+    if os.path.isabs(srcPath):
+        dirName = os.path.dirname(srcPath)
+        if dirName not in paths:
+            paths.append(dirName)
 
     project = GlobalData().project
     if not project.isLoaded():
@@ -158,22 +165,14 @@ def getJediScript(source, line, column, srcPath):
             if path[0]:
                 if path[0].lower().endswith('.py'):
                     jedi.settings.additional_dynamic_modules.append(path[0])
-        return jedi.Script(source, line, column, srcPath)
+        return jedi.Script(source, line, column, srcPath, sys_path=paths)
 
-    # need to deal with sys.path
-    paths = sys.path[:]
     for path in project.getImportDirsAsAbsolutePaths():
         if path not in paths:
             paths.append(path)
     projectDir = project.getProjectDir()
     if projectDir not in paths:
         paths.append(projectDir)
-
-    # This make relative imports resolvable
-    if os.path.abspath(srcPath):
-        dirName = os.path.dirname(srcPath)
-        if dirName not in paths:
-            paths.append(dirName)
 
     return jedi.Script(source, line, column, srcPath, sys_path=paths)
 
