@@ -1,3 +1,9 @@
+2017 Oct 23 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 4.0.0
+* First public version for Python 3. From now on Python 2 is not supported.
+* pip installable
+
 2016 Dec 26 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Version 3.0.2

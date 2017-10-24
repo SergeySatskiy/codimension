@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component type="desktop-application">
+    <id>codimension.desktop</id>
+    <name>Codimension</name>
+    <summary>Experimental Python 3 Development Environment</summary>
+
+    <metadata_license>GPLv3</metadata_license>
+    <project_license>GPLv3</project_license>
+    <developer_name>Sergey Satskiy</developer_name>
+
+    <description>
+        <p>
+            Codimension is an experimental Python 3 IDE written mostly
+            in Python. It aims a two way development using a traditional
+            text based coding as well as its graphics representation.
+            The graphics is generated when the code is updated. The ultimate
+            goal of the IDE is to make graphics editable too.
+        </p>
+    </description>
+
+    <screenshots>
+        <screenshot type="default">
+            <image>http://codimension.org/assets/components/gallery/connector.php?action=web/phpthumb&amp;ctx=web&amp;w=0&amp;h=0&amp;zc=0&amp;far=&amp;q=90&amp;src=%2Fassets%2Fgallery%2F1%2F5.png</image>
+        </screenshot>
+    </screenshots>
+</component>
+

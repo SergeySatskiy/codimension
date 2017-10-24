@@ -65,7 +65,7 @@ __delayedWarnings = []
 
 try:
     import cdmverspec
-    VER = cdmverspec.__version__
+    VER = cdmverspec.version
 except:
     VER = '0.0.0'
 
