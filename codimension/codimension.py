@@ -414,7 +414,8 @@ def exceptionHook(excType, excValue, tracebackObj):
         globalData.application.exit(1)
 
 
-if __name__ == '__main__':
+def main():
+    """The main entry point"""
     retCode = codimensionMain()
 
     # restore root logging handlers
@@ -423,3 +424,7 @@ if __name__ == '__main__':
 
     logging.debug("Exiting codimension")
     sys.exit(retCode)
+
+
+if __name__ == '__main__':
+    main()

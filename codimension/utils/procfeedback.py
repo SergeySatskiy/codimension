@@ -19,7 +19,8 @@
 #
 
 """Sends a short message to the specified port.
-   Usually used to signal that a program has finished
+
+Usually used to signal that a program has finished
 """
 
 import socket

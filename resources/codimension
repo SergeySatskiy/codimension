@@ -1,0 +1,3 @@
+#!/usr/bin/python3
+from codimension.codimension import main
+main()
