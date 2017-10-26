@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -39,23 +38,28 @@ class CDMPluginBase(IPlugin, QObject):
         self.ide = IDEAccess(self)
 
     def activate(self, ideSettings, ideGlobalData):
-        """Activates the plugin and saves references to
-           the IDE settings and global data"""
+        """Activates the plugin.
+
+        Also saves references to the IDE settings and global data
+        """
         IPlugin.activate(self)
         self.ide.activate(ideSettings, ideGlobalData)
 
     def deactivate(self):
-        """Deactivates the plugin and clears references to
-           the IDE settings and global data"""
+        """Deactivates the plugin.
+
+        Also clears references to the IDE settings and global data
+        """
         self.ide.deactivate()
         IPlugin.deactivate(self)
 
     def getConfigFunction(self):
-        """ The plugin can provide a function which will be called when the
-            user requests plugin configuring.
-            If a plugin does not require any config parameters then None
-            should be returned.
-            By default no configuring is required."""
+        """A plugin may provide a function for configuring it.
+
+        If a plugin does not require any config parameters then None
+        should be returned.
+        By default no configuring is required.
+        """
         return None
 
 
@@ -215,21 +219,23 @@ class IDEAccess():
 
     @property
     def sidePanels(self):
-        """Reference to a side panel widget map, i.e. a plugin class
-           can use e.g. the following code:
-           self.sidePanels[ "project" ].widget
-           A side panel is identified by its string identifier.
+        """Reference to a side panel widget map.
 
-           Supported panel names are (case sensitive):
-           project, recent, classes, functions, globals, log, pylint,
-           pymetrics, search, contextHelp, diff, debuger,
-           exceptions, breakpoints.
+        I.e. a plugin class can use e.g. the following code:
+        self.sidePanels[ "project" ].widget
+        A side panel is identified by its string identifier.
 
-           Each side panel contains one or more views with thier toolbars. To
-           get access to them a plugin class can use e.g. the following code:
-           self.sidePanels[ "recent" ].views[ "files" ].widget
-           self.sidePanels[ "recent" ].views[ "files" ].toolbar
-           The names of views depend on the side panel."""
+        Supported panel names are (case sensitive):
+        project, recent, classes, functions, globals, log, pylint,
+        pymetrics, search, contextHelp, diff, debuger,
+        exceptions, breakpoints.
+
+        Each side panel contains one or more views with thier toolbars. To
+        get access to them a plugin class can use e.g. the following code:
+        self.sidePanels[ "recent" ].views[ "files" ].widget
+        self.sidePanels[ "recent" ].views[ "files" ].toolbar
+        The names of views depend on the side panel.
+        """
         if self.__sidePanels is None:
             self.__initializeSidePanels()
         return self.__sidePanels
@@ -356,16 +362,18 @@ class IDEAccess():
 
     def sendLogMessage(self, level, msg, *args):
         """Sends a log message asynchronously.
-           The method could be used safely from a non-GUI thread.
 
-           level => integer, one of those found in logging:
-                             logging.CRITICAL
-                             logging.ERROR
-                             logging.WARNING
-                             logging.INFO
-                             logging.DEBUG
-           msg => message
-           args => message arguments to be substituted (mgs % args)"""
+        The method could be used safely from a non-GUI thread.
+
+        level => integer, one of those found in logging:
+                          logging.CRITICAL
+                          logging.ERROR
+                          logging.WARNING
+                          logging.INFO
+                          logging.DEBUG
+        msg => message
+        args => message arguments to be substituted (mgs % args)
+        """
         try:
             self.__parent.pluginLogMessage.emit(level, msg % args)
         except Exception as exc:

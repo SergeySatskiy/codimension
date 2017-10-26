@@ -176,8 +176,7 @@ class CDMPluginManager(PluginManager, QObject):
                         break
 
     def __applyDisabledPlugins(self, collectedPlugins):
-        """Takes the disabled plugins from settings and marks
-           collected plugins accordingly"""
+        """Marks the disabled plugins in accordance to settings"""
         for disabledPlugin in Settings()['disabledPlugins']:
             # Parse the record
             try:
@@ -353,7 +352,8 @@ class CDMPluginManager(PluginManager, QObject):
 
     def checkConflict(self, cdmPlugin):
         """Checks for the conflict and returns a message if so.
-           If there is no conflict then returns None
+
+        If there is no conflict then returns None
         """
         # First, check the base class
         baseClasses = getBaseClassNames(cdmPlugin.getObject())
@@ -394,7 +394,8 @@ class CDMPluginManager(PluginManager, QObject):
             self.__onPluginLogMessage)
         self.sigPluginDeactivated.emit(plugin)
 
-    def __onPluginLogMessage(self, logLevel, message):
+    @staticmethod
+    def __onPluginLogMessage(logLevel, message):
         """Triggered when a plugin message is received"""
         logging.log(logLevel, str(message))
 
@@ -525,22 +526,3 @@ def getBaseClassNames(inst):
 
     baseClassNames(inst, baseNames)
     return baseNames
-
-
-if __name__ == "__main__":
-    class A1():
-        def f():
-            pass
-
-    class A(A1):
-        def f():
-            pass
-
-    class B:
-        def f():
-            pass
-
-    class C(A, B):
-        def f():
-            pass
-    print(getBaseClassNames(C()))

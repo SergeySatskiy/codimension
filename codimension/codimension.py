@@ -24,8 +24,16 @@ It performs necessery initialization and starts the Qt main loop.
 """
 
 import sys
-import os
 import os.path
+
+# Workaround if link is used
+sys.argv[0] = os.path.realpath(__file__)
+
+# Make it possible to import from the subdirectories
+srcDir = os.path.dirname(sys.argv[0])
+if srcDir not in sys.path:
+    sys.path.insert(0, srcDir)
+
 import gc
 import traceback
 import logging
@@ -33,25 +41,15 @@ import shutil
 import datetime
 from optparse import OptionParser
 from ui.qt import QTimer, QDir, QMessageBox
-from utils.config import DEFAULT_ENCODING
-
-
-# Workaround if link is used
-sys.argv[0] = os.path.realpath(sys.argv[0])
-
-# Make it possible to import from the subdirectories
-srcDir = os.path.dirname(sys.argv[0])
-if srcDir not in sys.path:
-    sys.path.insert(0, srcDir)
-
-from autocomplete.completelists import buildSystemWideModulesList
-from utils.settings import Settings, SETTINGS_DIR
-from utils.globals import GlobalData
 from ui.application import CodimensionApplication
 from ui.splashscreen import SplashScreen
+from autocomplete.completelists import buildSystemWideModulesList
 from utils.project import CodimensionProject
 from utils.skin import Skin
 from utils.config import CONFIG_DIR
+from utils.config import DEFAULT_ENCODING
+from utils.settings import Settings, SETTINGS_DIR
+from utils.globals import GlobalData
 
 
 # Saving the root logging handlers

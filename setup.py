@@ -81,9 +81,44 @@ def getRequirements():
 
 def getDataFiles():
     """Provides the data files"""
-    return [('share/applications', ['resources/codimension.desktop']),
-            ('share/pixmaps', ['resources/codimension.png']),
-            ('share/metainfo', ['resources/codimension.appdata.xml'])]
+    extensions = ['.png', '.svg', '.svgz', '.json', '.css']
+    data_files = [('/codimension/pixmaps', 'codimension/pixmaps/'),
+                  ('/codimension/skins/default', 'codimension/skins/default/')]
+
+    result = [('share/applications', ['resources/codimension.desktop']),
+              ('share/pixmaps', ['resources/codimension.png']),
+              ('share/metainfo', ['resources/codimension.appdata.xml'])]
+
+    for item in data_files:
+        targetDir = item[0]
+        matchFiles = []
+        for fName in os.listdir(item[1]):
+            for ext in extensions:
+                if fName.endswith(ext):
+                    matchFiles.append(item[1] + fName)
+                    break
+        if matchFiles:
+            result.append((targetDir, matchFiles))
+
+    return result
+
+
+def getPackages():
+    """Provides packages"""
+    return ['codimension',
+            'codimension/analysis',
+            'codimension/autocomplete',
+            'codimension/diagram',
+            'codimension/editor',
+            'codimension/flowui',
+            'codimension/profiling',
+            'codimension/ui',
+            'codimension/utils',
+            'codimension/debugger', 'codimension/debugger/client',
+            'codimension/plugins',
+            'codimension/plugins/categories',
+            'codimension/plugins/manager',
+            'codimension/plugins/vcssupport']
 
 
 # install_requires=['pypandoc'] could be added but really it needs to only
@@ -104,21 +139,9 @@ setup(name='codimension',
            'License :: OSI Approved :: GNU General Public License (GPL)',
            'Operating System :: POSIX :: Linux',
            'Programming Language :: Python :: 3'],
-       platforms=['any'],
-       packages=['codimension',
-                 'codimension/analysis',
-                 'codimension/autocomplete',
-                 'codimension/diagram',
-                 'codimension/editor',
-                 'codimension/flowui',
-                 'codimension/profiling',
-                 'codimension/ui',
-                 'codimension/utils',
-                 'codimension/debugger', 'codimension/debugger/client',
-                 'codimension/plugins',
-                 'codimension/plugins/categories',
-                 'codimension/plugins/manager',
-                 'codimension/plugins/vcssupport'],
-       install_requires=getRequirements(),
-       data_files=getDataFiles(),
-       scripts=['resources/codimension'])
+      platforms=['any'],
+      packages=getPackages(),
+      install_requires=getRequirements(),
+      data_files=getDataFiles(),
+      entry_points={'gui_scripts':
+                    ['codimension = codimension.codimension:main']})
