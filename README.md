@@ -31,6 +31,8 @@ Thus the main focus of the project is to implement more features for the graphic
 
 ## Installation
 
+**Note:** python 3.5/3.6 is required
+
 The IDE is pip installable:
 
 ```shell
