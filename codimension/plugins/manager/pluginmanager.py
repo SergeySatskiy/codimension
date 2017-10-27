@@ -21,6 +21,7 @@
 
 import logging
 import os.path
+import sys
 from ui.qt import QObject, pyqtSignal
 from yapsy.PluginManager import PluginManager
 from utils.settings import SETTINGS_DIR, Settings
@@ -30,6 +31,9 @@ from distutils.version import StrictVersion
 # List of the supported plugin categories, i.e. base class names
 CATEGORIES = ["VersionControlSystemInterface",
               "WizardInterface"]
+
+VENV_PLUGINS_PATH = os.path.normpath(
+    os.path.dirname(sys.argv[0]) + '/../cdmplugins')
 
 
 class CDMPluginManager(PluginManager, QObject):
@@ -58,7 +62,8 @@ class CDMPluginManager(PluginManager, QObject):
         QObject.__init__(self)
         PluginManager.__init__(self, None,
                                [SETTINGS_DIR + "plugins",
-                                "/usr/share/codimension3-plugins"], "cdmp")
+                                "/usr/share/codimension3-plugins",
+                                VENV_PLUGINS_PATH], "cdmp")
 
         self.inactivePlugins = {}   # Categorized inactive plugins
         self.activePlugins = {}     # Categorized active plugins
