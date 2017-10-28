@@ -37,6 +37,7 @@ from .itemdelegates import NoOutlineHeightDelegate
 
 
 class RecentProjectViewItem(QTreeWidgetItem):
+
     """Single recent projects view item data structure"""
 
     def __init__(self, fileName):

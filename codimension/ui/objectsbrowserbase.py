@@ -191,7 +191,6 @@ class ObjectsBrowser(QTreeView):
 
     def _resizeColumns(self, index):
         """Resizes the view when items get expanded or collapsed"""
-
         rowCount = self.model().rowCount()
         columnCount = self.model().columnCount()
         self.header().setStretchLastSection(rowCount == 0)
@@ -212,8 +211,9 @@ class ObjectsBrowser(QTreeView):
                           self.header().sortIndicatorOrder())
 
     def mouseDoubleClickEvent(self, mouseEvent):
-        """Reimplemented to disable expanding/collapsing of items when
-           double-clicking. Instead the double-clicked entry is opened.
+        """Reimplemented to disable expanding/collapsing of items on dbl click.
+
+        Instead the double-clicked entry is opened.
         """
         index = self.indexAt(mouseEvent.pos())
         if not index.isValid():
@@ -270,7 +270,6 @@ class ObjectsBrowser(QTreeView):
 
     def onFileUpdated(self, fileName):
         """Triggered when the file is updated"""
-
         if not GlobalData().project.isProjectFile(fileName):
             # Not a project file
             return

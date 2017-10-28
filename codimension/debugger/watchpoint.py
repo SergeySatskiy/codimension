@@ -19,8 +19,6 @@
 
 """Debugger watchpoint"""
 
-from utils.globals import GlobalData
-
 
 class Watchpoint:
 

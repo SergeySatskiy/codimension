@@ -25,7 +25,7 @@
 # accordingly.
 
 
-from ui.qt import QFont, QFontMetrics
+from ui.qt import QFontMetrics
 from utils.globals import GlobalData
 from utils.colorfont import getZoomedCFMonoFont, getZoomedCFBadgeFont
 

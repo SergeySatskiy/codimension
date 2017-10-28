@@ -27,7 +27,7 @@ import os.path
 import imp
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket, QHostAddress
 from outredir_cdm_dbg import OutStreamRedirector
-from cdm_dbg_utils import sendJSONCommand, parseJSONMessage, waitForIDEMessage
+from cdm_dbg_utils import sendJSONCommand, waitForIDEMessage
 from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
                               METHOD_EPILOGUE_EXIT, METHOD_EPILOGUE_EXIT_CODE,
                               METHOD_STDIN)

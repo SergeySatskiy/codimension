@@ -62,6 +62,7 @@ class CodimensionProject(QObject,
                          RunParametersCache,
                          FilePositions,
                          FileEncodings):
+
     """Provides codimension project singleton facility"""
 
     # Constants for the sigProjectChanged signal

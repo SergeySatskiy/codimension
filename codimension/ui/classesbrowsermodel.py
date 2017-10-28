@@ -55,10 +55,8 @@ class ClassesBrowserModel(BrowserModelBase):
 
     def __onProjectChanged(self, what):
         " Triggered when a project is changed"""
-
         if what == CodimensionProject.CompleteProject:
             self.__populateModel()
-        return
 
     def onFSChanged(self, addedPythonFiles, deletedPythonFiles):
         """Triggered when some files appeared or disappeared"""

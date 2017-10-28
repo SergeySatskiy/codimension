@@ -27,7 +27,6 @@
 
 import sys
 import socket
-import select
 import codeop
 import codecs
 import traceback

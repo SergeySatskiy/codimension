@@ -93,7 +93,6 @@ def getBreakpointLines(fileName, srcCode,
 
 def calcBreakpointLines(sourceCode):
     """Calculates valid breakpoint lines"""
-
     def __safeOrd(char):
         """Exception safe ord"""
         try:

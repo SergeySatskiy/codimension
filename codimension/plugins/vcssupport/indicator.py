@@ -20,7 +20,6 @@
 """VCS plugin support: indicators for the status bar and project viewer"""
 
 import os.path
-import sys
 from ui.qt import QColor, QPixmap, QFrame, QLabel, QPalette, QSize, Qt
 from utils.pixmapcache import getPixmapPath
 

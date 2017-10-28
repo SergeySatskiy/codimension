@@ -224,7 +224,7 @@ def getContext(editor, info=None,
     """Detects the context at the text cursor position.
 
     skipBlankLinesBack == False => current cursor position is used
-    skipBlankLinesBack == True => skip blank lines back and use the first 
+    skipBlankLinesBack == True => skip blank lines back and use the first
                                   non-blank line as the cursor position.
     skipDef == True => treat a definition as belonging to an upper
                        level context (not included into the context stack)

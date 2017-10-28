@@ -21,9 +21,8 @@
 
 # pylint: disable=no-self-use, unused-argument
 
-import socket
 from protocol_cdm_dbg import METHOD_STDOUT, METHOD_STDERR
-from cdm_dbg_utils import prepareJSONMessage, sendJSONCommand
+from cdm_dbg_utils import sendJSONCommand
 
 
 class OutStreamRedirector():

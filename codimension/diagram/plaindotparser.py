@@ -27,7 +27,6 @@ from utils.run import checkOutput
 
 def splitWithQuotasRespect(line):
     """Splits the space separated values and respects quoted values"""
-
     def skipSpaces(line, startPos):
         """Provides index of first non-space char"""
         while startPos < len(line):

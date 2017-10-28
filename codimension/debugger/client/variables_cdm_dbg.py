@@ -452,7 +452,6 @@ _TypeMap = None
 
 def _initTypeMap():
     """Initializes the type map"""
-
     global _TypeMap
 
     _TypeMap = [

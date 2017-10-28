@@ -276,6 +276,7 @@ class ThreadExtension(object):
                     sys.settrace(None)
 
             class ThreadWrapper(module.Thread):
+
                 """Wrapper class for threading.Thread"""
 
                 def __init__(self, *args, **kwargs):

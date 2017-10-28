@@ -149,7 +149,6 @@ class CallTraceViewer(QWidget):
 
     def __createLayout(self):
         """Creates the widget layout"""
-
         verticalLayout = QVBoxLayout(self)
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)

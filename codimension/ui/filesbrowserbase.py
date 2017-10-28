@@ -154,11 +154,10 @@ class FilesBrowser(QTreeView):
                           self.header().sortIndicatorOrder())
 
     def mouseDoubleClickEvent(self, mouseEvent):
+        """Reimplemented to disable expanding/collapsing of items on dbl click.
 
-        """Reimplemented to disable expanding/collapsing of items when
-           double-clicking. Instead the double-clicked entry is opened.
+        Instead the double-clicked entry is opened.
         """
-
         index = self.indexAt(mouseEvent.pos())
         if not index.isValid():
             return

@@ -503,6 +503,7 @@ class CodeBlockCell(CellElement, QGraphicsRectItem):
 
 
 class BreakCell(CellElement, QGraphicsRectItem):
+
     """Represents a single break statement"""
 
     def __init__(self, ref, canvas, x, y):

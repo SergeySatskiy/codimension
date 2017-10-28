@@ -205,6 +205,7 @@ class ProfilerTreeWidget(QTreeWidget):
 
 
 class ProfileTableViewer(QWidget):
+
     """Profiling results table viewer"""
 
     sigEscapePressed = pyqtSignal()

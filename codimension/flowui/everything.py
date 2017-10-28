@@ -552,7 +552,7 @@ else:       # Side 4
 # cml 1 rt text="Salary is too high"
 if a > 456 and \
    b < 76 or \
-   p == 99:
+   d == 99:
     pass
 elif a < 456 and \
      b > 76 or \
@@ -561,11 +561,9 @@ elif a < 456 and \
 else:
     pass
 
-def ff( x ):
+def ff(x):
     if True:
         # Something
         if x > 32:
             x = 32
     return
-
-
