@@ -1,16 +1,16 @@
 {
-    "encoding": "utf-8",
-    "copyright": "Copyright (c) Sergey V. Satskiy, 2017",
-    "version": "0.0.1",
     "license": "GPL v3",
-    "email": "satskyse@iebdev13",
-    "author": "Sergey V. Satskiy",
-    "creationdate": "02/01/17",
-    "scriptname": "",
-    "description": "",
+    "copyright": "Copyright (c) Sergey V. Satskiy, 2017",
     "uuid": "ac348efe-e8cf-11e6-9d27-3417ebe867d4",
     "importdirs": [
-        "thirdparty",
-        "src"
-    ]
+        "src",
+        "codimension"
+    ],
+    "creationdate": "02/01/17",
+    "encoding": "utf-8",
+    "version": "0.0.1",
+    "author": "Sergey V. Satskiy",
+    "scriptname": "",
+    "description": "",
+    "email": "satskyse@iebdev13"
 }
