@@ -1,0 +1,16 @@
+{
+    "license": "GPL v3",
+    "copyright": "Copyright (c) Sergey V. Satskiy, 2017",
+    "uuid": "ac348efe-e8cf-11e6-9d27-3417ebe867d4",
+    "importdirs": [
+        "src",
+        "codimension"
+    ],
+    "creationdate": "02/01/17",
+    "encoding": "utf-8",
+    "version": "0.0.1",
+    "author": "Sergey V. Satskiy",
+    "scriptname": "",
+    "description": "",
+    "email": "satskyse@iebdev13"
+}

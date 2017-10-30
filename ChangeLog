@@ -1,0 +1,407 @@
+2017 Oct 29 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 4.0.0
+* First public version for Python 3. From now on Python 2 is not supported.
+* pip installable
+
+2016 Dec 26 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 3.0.2
+* Getting rid of QWebKit dependency. It is not found in newer Ubuntu releases
+
+2016 Sep 14 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 3.0.1
+* Fixes packaging for Fedora and Centos
+
+2016 Sep 05 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 3.0.0
+* Major new feature: automatic flow chart generation on a separate pane
+
+2015 Oct 15 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Replacing old style SIGNAL with pyqtSignal in many places
+* Bug fix: clear find-in-files results when a project is changed
+* Bug fix: exception is case when files in a project directory are created
+  and deleted very quickly
+* Fix for pylint 1.2.1
+* GC plugin: mimic standard GC procedure
+* Fix: 'remove all ignored exception types' did not clear the list in memory
+* New feature: saving profiling results table in a CSV file
+* F12: make the cursor line the first on the screen
+* Get rid of QString, use python strings instead
+* Fix: ESC handling on a VCS annotate view
+* Improvement: more robust processing of a VCS revision information
+* Many minor fixes
+
+2014 May 06 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 2.3.1
+* New feature: navigation bar
+* Bug fix: mouse click in the editor led to a sporadic crash
+* New feature: implementation of a context menu for the redirected IO console
+  including copying everything with timestamps
+* Main toolbar could be hidden/shown via a setting
+
+2014 Mar 11 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 2.3.0
+* New feature: debugging and running script now can have IO redirected to IDE
+* New feature: allow selecting multiple files in the 'Open file' dialog
+* New feature: display the number of highlighted occurences on the status bar
+* Bug fix: crash when 'Edit' main menu is opened on the startup screen
+* New feature: detect TAB TAB clicks after a character and add spaces if
+  there is no completion
+* Better pylint messages parser: collects positions in line if available and
+  jumps to the certain column if so
+* Bug fix: opening recent project from the project main menu lead to crash if
+  the project does not exist anymore
+* New feature: custom garbage collector which runs in the GUI thread
+* Get rid of checking if a new version is available when IDE starts
+
+2013 Dec 26 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 2.2.2
+* Bug fix: wrong brutal stop of a debug session on Fedora
+* Bug fix: side bars must not be expanded via clicking on disabled tabs
+* Improvement: get rid of serialization/deserialization of the python files
+  parser info cache
+* New feature: user selectable sorting order for the tabs in the navigation menu
+* New feature: editor 'highlight in outline browser' context menu item
+* Bug fix: exception in some cases when 'highlight in FS browser' is selected
+* New feature: user selectable behavior - to preserve or not the tab order upon
+  selection a tab in the tab list button menu
+* Bug fix: on some systems find/replace comboboxes expanded too much in case of
+  long patterns
+* Bug fix: SVN plugin log window - incorrect revision number based sorting
+* New feature: debug session button added to dump debug session settings
+* Replacing redo shortcut Ctrl+Shift+Z with Ctrl+Y
+* Bug fix: allow replacing with an empty string
+
+2013 Dec 14 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 2.2.1
+* Improvement: debugger variable view displays the number of lines and the number
+  of characters for python strings and QStrings. Unnecessary '.' in the QString
+  variable name is stripped.
+* Bug fix: proper signalling VCS status change in the project browser
+* Rectangular selection: Ctrl+mouse or Alt+Shift+cursor keys
+* Better help widget
+* Better welcome widget
+* pylint 1.0.0 is now working
+* Fix: Ctrl++, Ctrl+- on numpad did not change the font size on all tabs.
+* Fix for FC19: diff viewer font was not monospaced
+* Improvement: diff viewer font is scaled in sync with the main editor
+* Bug fix: VCS annotate in debug mode caused crash
+* Bug fix: newly opened files withing a debug session are editable
+* Removing zoom buttons from the text editor toolbar
+* Bug fix: SVN plugin delete warning dialog failed
+* Bug fix: do not show calltip for calls in string literals
+* Bug fix: in case if many files were modified outside one of the outside
+  modification notice dialogs did not show 'reload all' choice
+
+2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 2.2.0
+* Improvement: scaling of diagram and pictures is now via Ctrl + Mouse wheel
+* Improvement: scaling text editor fonts via Ctrl + Mouse wheel
+* Project tab is activated automatically when a project is loaded from the
+  recent projects tab
+* Reset pyflakes labels when a file changed its type due to 'save as' action
+* New feature: SVN plugin
+* Do not show improper calltips provided by the rope library
+* Bug fix: find in files crash if the found line is the last one
+* New feature: Ctrl+Shift+T/M/B to move the text cursor to the first visible
+  line/to the line in the middle of the visible text/to the last visible line
+* Minor improvements and bug fixes
+
+
+2013 Aug 23 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 2.1.1
+* Fix: completion did not offer anything for relative imports. Issue #402.
+
+2013 Aug 12 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 2.1.0
+* Better calltips for PyQt objects.
+* About dialog added.
+* Ctrl+Shift+F1 added for the current call help.
+* Better handling of the outline window redrawing - no redraw if syntax is broken.
+* Better jumps from the outline window. Last good and the current parsed
+  info are taken into account.
+* Better undo of the automatically trimmed empty opened lines.
+* Search indicators are now configurable (per skin).
+* Make Ctrl+PgUp going to the previous tab while Ctrl+PgDwn to the next one.
+* New feature: ui configurable monospaced font.
+* Fix: opening another user (read only) project now works.
+* New feature: plugin interface.
+* New feature: garbage collector plugin.
+* Bug fix: pyflakes analysis crashed if there was an invalid escape character
+  or null characters in the buffer (Issue #399)
+* Bug fix: pylint fails to run on files in projects which have no import dirs.
+* Updating pyflakes to 0.7.3
+
+2013 Jun 29 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 2.0.2
+* New feature: editor calltips (Ctrl+/) and auto calltips (switchable via the
+  Options menu) when '(' is entered.
+* Fix: crash on Ubuntu 12.04 (possibly on other platforms too) in case of some
+  styles. Issue #388.
+* Fix: extra commas in the 'author' field when a new project is created on
+  Ubuntu. Issue #387.
+* Fix: extra long signatures in a context help do not limit min window width.
+  Issue #386.
+* Better completion for numpy and scipy names
+* Including scipy for better rope help
+
+2013 Jun 18 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 2.0.1
+* Replacing the 'file' utility calls with magic module included in thirdparty
+  directory.
+
+
+2013 Jun 02 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 2.0
+* Initial implementation of the debugger.
+* Project viewer restores the previous session expanded directories at the
+  start automatically.
+* More bound scintilla lexers
+* Unhandled exceptions hook now saves the trace back and the log window content
+  in a file.
+* Some autocomplete improvements
+* Allow explicit reloading even if a buffer is not modified.
+* File outside modification detection now includes a file size.
+* Files deleted via IDE UI are removed from the recent files list as well.
+* Bug fix: respect multibyte chars when search incrementally
+* Bug fix: autocomplition for non-ascii text did not work.
+* Main menu and the text editor context menu now have 'open in browser'
+  item.
+* Main menu and the text editor context menu now have 'downdload and show'
+  item.
+* Main menu 'tab' now has 'highlight in...' items.
+* Bug fix: 'highlight in file system browser' did not work if it was not a
+  project file.
+* Basic pyflakes support.
+* Python .cgi support in outline browser.
+* Bash/sh file type recognition added.
+* Pylint and other tools support for python .cgi files.
+* Bug fix: improper tooltips and text in similarities pylint sections
+  if contained html.
+* Bug fix: double slashes in full file names when opened via Ctrl+I.
+* New feature: access to the project rope settings file via the Project menu.
+* Better dialogs for the cases when both the disk version and the buffer
+  content were modified and the user closes the tab or saves the tab content.
+* New feature: tab context menu and current path label context menu on the
+  status bar are extended with copying directory path and copying file name
+  options.
+* Minor bug fixes and improvements.
+
+
+2013 Jan 20 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 1.8
+* Bug fix: running python tidy with settings led to an exception.
+* Improvement: focus is moved to the current editor widget automatically when
+  it is received by the editor tab widget. Issue #350.
+* Improvement: 'highilight in project' and 'highlight in filesystem'
+  editor tab context menu added. Issue #258.
+* Improvement: better handling the fact that an editing buffer is changed by
+  the find-in-files result window. Issue #318.
+* New feature: IDE-wide pylintrc support. Issue #344.
+* Performance improvement and bug fixes in the file content trees, e.g
+  file outline browser, project files browser etc.
+* Bug fix: files with national characters with not-recognized type could
+  lead to unpredicted behaviour (up to core dumps). Issue #348
+* Bug fix: tab expanding (replace all) did not replace everything.
+* Bug fix: main menu -> tools -> pylint for project led to an exception.
+  Issue #346.
+* Sometimes pylint reports absolute paths so it is respected now.
+* When completion is called and a temporary rope project is created,
+  exclude all the subdirectories where there are no __init__.py[3] files.
+  This mitigate a setup with a network home dir (or network file location)
+  in a directory where there are lots of subdirectories
+* Add a shortcut in the 'Open file' dialog to the directory where the
+  current tab file (if so) is.
+* Add file to the recent files list at the time of closing a tab as well
+  (not only at the time of opening). Otherwise a file is not there when it
+  was loaded from a command line and then its tab is closed.
+* Do not lose the current editor position when there was an incremental
+  search on a tab and then another tab is closed.
+* Prevent losing selection in case switching between history positions
+  if nothing has been changed in the required buffer.
+* Have the find-in-files dialog interruptible at the stage of building
+  the list of files to search in.
+
+
+2012 Oct 31 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 1.7
+* Bug fix: core dump if 'Cancel' is clicked in a dialog window. It is caused
+  by saving the last focus widget and excessive generation of
+  QT activate/deactivate signals.
+* Shift+Tab intercepted properly in the editor window in Windows based X
+  Server. Issue #334
+* Early logging on Windows based X Server could lead to crashes so some
+  warnings were delayed.
+* Setting the default encoding to 'utf-8' for codimension itself.
+* Explicitly pass focus to the current editor when codimension is activated.
+
+
+2012 Sep 17  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 1.6
+* New feature: PythonTidy integration and diff viewers
+* New Project button is removed from the main window toolbar
+* New feature: copying a diagram to the clipboard (main menu and Ctrl+C)
+* New feature: new file template support for the case when no new
+  project is loaded. UI to create/edit/delete new file templates added.
+* Editor settings are moved from the main toolbar button with menu to the
+  introduced main menu 'Options'
+* New feature: unused class/function/global variable analysis
+* New feature: find occurences for classes/functions/global variables viewers
+* Bug fix: incorrect file icons in the editing history
+* Bug fix: incorrect file name in the editing history after save as
+* Bug fix: impossible to save non-modified file when it disappeared from disk
+* New feature: total number of matches is now shown in the search results
+  header
+* New feature: disassember for functions and classes in the function/class
+  viewers
+* New feature: profiling support: representing the results as a graphics
+  diagram and as a table
+* New feature: exporting profiling and imports diagrams in png format
+* Improvement of import diagrams: performance; tooltips for modules;
+  better text alignment; better recognition of the system modules
+* Ctrl+' now highlight the current word, instead of Ctrl+N. Issue #323
+* Ctrl+N now creates a new file, instead of Ctrl+T. Issue #323
+* Ctrl+T is now not used for anything. Issue #323
+* Bug fix: no more exception while building a completion list. Issue #321
+* Bug fix: removing from FS tree via a context menu did not update the view.
+  Issue #325
+* Bug fix: impossible to create a nested project directory
+* Bug fix: do not show the 'reload' menu item for deleted file
+* Bug fix: saving as into a file which is opened in another tab. Issue #317
+* Bug fix: updating project properties when a script name is empty
+* Python built in functions (as of python 2.7) are now highlighted as keywords
+* File encoding is displayed and can be changed via a context menu. Issue #69
+* New feature: the editor context menu
+* New feature: Alt+U tp jump to the first line of the current function or
+  class. Issue #316
+* New feature: dumb line counter for the buffer. Issue #107
+* Open project via an OS file selection dialog (Ctrl+Shift+O)
+* Main menu has been added
+* Bug fix: hot keys on Ubuntu
+* Bug fix: imports diagram reset scale action
+* Replacing Ctrl++ with Ctrl+= for zooming in
+* Adding the editor edge column number to the settings file
+
+
+2012 Jan 26  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 1.4
+* Bug fix: proper search result window notifications that a buffer has changed.
+* Improvement: no unnecessary scrolling of a buffer if a line to which jump is
+  requested is visible on the screen.
+* New feature: Ctrl+] searches for occurrences of a current word.
+* New feature: Ctrl+F3 starts search of a current word without bringing up the
+  find dialog.
+* Ctrl+F/Ctrl+R keep the 'match case' and 'whole word' flags as they were
+  before.
+* Bug fix: copy/paste buffer content was overwritten when the user selected an
+  item in a completion list. Issue #310.
+* Bug fix: exception while creating a new project
+* New feature: run a script in a separate terminal. The running parameters are
+  cached and stored. The stored parameters are used to run the same script
+  later.
+* Bug fix: update tabs history properly when jumping within the same file.
+* New feature: goto definition (Ctrl+backslash)
+* New feature: docstring for a buffer tag when Ctrl+F1 is pressed.
+* Bug fix: no more cursor jumping to another line if the feature of stripping
+  trailing spaces on save is switched on and a line has trailing spaces and the
+  cursor is at the end of the line.
+* Strip ability to have many non-nested dirs in a project.
+* New feature: project specific paths to resolve imports.
+* New feature: code completion (TAB, Ctrl+Space).
+* Dependency from the rope library is introduced.
+
+
+2011 Nov 29  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 1.3
+* Bug fix: correct tooltips for search results in the HTML files. Issue #188.
+* Bug fix: prevent NUL characters appear in the text editor. Issue #203.
+* New feature: auto trimming empty lines when a cursor is moved. Issue #294.
+* New feature: Ctrl+N will iterate over highlighted words if the current word
+  matches the previously highlighted. Ctrl+,/. will iterate over the
+  highlighted words regardless on what word the cursor is. Issue #303.
+* New feature: double click on the status bar path label copies the file path
+  to the clipboard.
+* New feature: detecting files changed outside of codimension.
+* Bug fix: loading project from the filesystem browser checks if the opened
+  files are saved. Issue #295.
+* Some fixes in the replace implementation.
+* Bug fix: incorrect interpretation of the search pattern in 'Find in files'.
+  Issue #301.
+* Ctrl+C/Ctrl+Insert to copy the current line if there is no selection.
+  Issue #304.
+* New editor setting: auto remove trailing spaces on saving. Issue #300.
+* New setting: HOME moves the cursor to position 0 or to the first non space
+  character. Issue #302.
+* Share the 'find' and 'replace what' search history. Issue #298.
+* Make the match selected in the incremental find/replace. Issue #297.
+* Bug fix in the replace implementation. Adding separate button 'replace and
+  move'. Issue #277.
+* Making Ctrl+F and Ctrl+R select the text to search even if the widget has
+  already been displayed. Issue #291.
+* Making Ctrl+X a synonym to Shift+Del. Issue #290.
+* Bug fix: F3/Shift F3 now work for the find/replace search string depending of
+  what dialog was shown last. Issue #289.
+* Updating the help screen. Issue #281.
+* Updating the welcome screen. Issue #279.
+* Making Shift+Home/End select till the beginning/end of a visible line.
+  Issue #286.
+* Adding support for Alt+Shift+Left/Right - select a word part. Issue #287.
+* Adding support for Alt+Shift+Up/Down - select till the beginning/end of a
+  paragraph. Issue #288.
+* Adding support for Shift+Del - copy to a buffer and delete a selected text
+  (if so) or the current line. Issue #285.
+* Making HOME/END jumping to the beginning/end of the visible line. Issue #284.
+* Adding support for Alt+Up and Alt+Down hot keys
+* Switching history hot keys to Alt+PgDown and Alt+PgUp
+* Adding support for Alt+Left and Alt+Right hot keys
+* Bug fix: check that all the modified files are saved before letting a new
+  project to be created. Issue #273.
+* Move the focus to the text editor if the focus was not in the editor and the
+  currently active tab is clicked. Issue #264.
+
+2011 Oct 19  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 1.2
+* Adding support for commenting/uncommenting a single line or selected lines.
+  Issue #11.
+* Adding support for Shift+Tab in the text editor: dedent a line or the selected
+  lines. Issue #282.
+* Making the format string for modified files configurable. The default value
+  is "%s *". Issue #280.
+* Making autoindent switched on by default. Issue #279.
+* Do not set the font size explicitly in the simple line counter window.
+* Bug fix: exception during checking for a newer version. Issue #272.
+* Bug fix: proper on/off of the braces highlight. Issue #238.
+* Bug fix: enable 'remove recent project' toolbar button properly. Issue #271.
+* Expand/collapse grouping items in the object browsers regardless what column
+  was double clicked. Issue #242
+
+2011 Sep 13  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 1.1
+* Improvement: provide a hint message in case if pymetrics failed. Issue #265.
+* Bug fix: exception in the files browser if there is a syntactically incorrect
+  python file in it. Issue #266.
+
+2011 Sep 2  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for first release.

@@ -1,0 +1,9 @@
+include README.md
+include LICENSE
+include ChangeLog
+include resources/*.*
+include requirements.txt
+include codimension/plugins/README
+include codimension/skins/README
+recursive-include codimension *.png *.svg *.svgz
+recursive-include codimension/skins *.*

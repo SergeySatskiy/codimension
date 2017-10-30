@@ -1,0 +1,137 @@
+{
+    "boxBGColor": {
+        "__class__": "QColor",
+        "__value__": "250,250,250,255"
+    },
+    "ifWidth": 10,
+    "classScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "230,255,230,255"
+    },
+    "elseScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "209,196,233,255"
+    },
+    "finallyScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "192,192,192,255"
+    },
+    "cfMonoFont": {
+        "__class__": "QFont",
+        "__value__": "Monospace,12,-1,5,50,0,0,0,0,0"
+    },
+    "lineColor": {
+        "__class__": "QColor",
+        "__value__": "16,16,16,255"
+    },
+    "minWidth": 100,
+    "breakBGColor": {
+        "__class__": "QColor",
+        "__value__": "144,202,249,255"
+    },
+    "vHeaderPadding": 5,
+    "labelFGColor": {
+        "__class__": "QColor",
+        "__value__": "0,0,0,255"
+    },
+    "debug": false,
+    "labelLineWidth": 1,
+    "exceptScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "255,255,255,255"
+    },
+    "funcScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "230,230,255,255"
+    },
+    "badgeFont": {
+        "__class__": "QFont",
+        "__value__": "Monospace,9,-1,5,50,0,0,0,0,0"
+    },
+    "commentFGColor": {
+        "__class__": "QColor",
+        "__value__": "0,0,0,255"
+    },
+    "labelLineColor": {
+        "__class__": "QColor",
+        "__value__": "0,0,0,255"
+    },
+    "decorScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "230,255,255,255"
+    },
+    "badgeBGColor": {
+        "__class__": "QColor",
+        "__value__": "230,230,230,255"
+    },
+    "commentCorner": 6,
+    "badgeLineColor": {
+        "__class__": "QColor",
+        "__value__": "180,180,180,255"
+    },
+    "tryScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "255,255,255,255"
+    },
+    "vTextPadding": 5,
+    "badgeLineWidth": 1,
+    "vSpacer": 10,
+    "continueBGColor": {
+        "__class__": "QColor",
+        "__value__": "144,202,249,255"
+    },
+    "boxFGColor": {
+        "__class__": "QColor",
+        "__value__": "0,0,0,255"
+    },
+    "commentLineColor": {
+        "__class__": "QColor",
+        "__value__": "102,102,61,255"
+    },
+    "vCellPadding": 8,
+    "returnRectRadius": 16,
+    "hHeaderPadding": 5,
+    "labelBGColor": {
+        "__class__": "QColor",
+        "__value__": "230,230,230,255"
+    },
+    "badgeFGColor": {
+        "__class__": "QColor",
+        "__value__": "0,0,0,255"
+    },
+    "fileScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "255,255,230,255"
+    },
+    "forScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "187,222,251,255"
+    },
+    "hTextPadding": 5,
+    "lineWidth": 1,
+    "whileScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "187,222,251,255"
+    },
+    "withScopeBGColor": {
+        "__class__": "QColor",
+        "__value__": "255,255,255,255"
+    },
+    "mainLine": 25,
+    "selectPenWidth": 3,
+    "hCellPadding": 8,
+    "commentBGColor": {
+        "__class__": "QColor",
+        "__value__": "255,255,153,255"
+    },
+    "selectColor": {
+        "__class__": "QColor",
+        "__value__": "63,81,181,255"
+    },
+    "commentLineWidth": 1,
+    "rectRadius": 6,
+    "ifBGColor": {
+        "__class__": "QColor",
+        "__value__": "255,229,127,255"
+    }
+}

@@ -1,0 +1,245 @@
+{
+    "diffunmodifiedColor": {
+        "__value__": "102,102,102,255",
+        "__class__": "QColor"
+    },
+    "debugExcptLineMarkerColor": {
+        "__value__": "255,255,127,255",
+        "__class__": "QColor"
+    },
+    "diffaddedPaper": {
+        "__value__": "197,250,175,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleStdoutColor": {
+        "__value__": "0,0,0,255",
+        "__class__": "QColor"
+    },
+    "currentLinePaper": {
+        "__value__": "232,232,255,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleStdinColor": {
+        "__value__": "0,0,0,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleStderrBold": false,
+    "ioconsoleStdinItalic": false,
+    "monoFont": {
+        "__value__": "Monospace,12,-1,5,50,0,0,0,0,0",
+        "__class__": "QFont"
+    },
+    "diffunmodifiedPaper": {
+        "__value__": "238,238,238,255",
+        "__class__": "QColor"
+    },
+    "matchedBracePaper": {
+        "__value__": "132,117,245,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleStdinBold": false,
+    "matchMarkColor": {
+        "__value__": "0,0,255,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleIDEMsgColor": {
+        "__value__": "0,0,255,255",
+        "__class__": "QColor"
+    },
+    "diffponctColor": {
+        "__value__": "166,72,72,255",
+        "__class__": "QColor"
+    },
+    "revisionMarginPaper": {
+        "__value__": "228,228,228,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleStdoutPaper": {
+        "__value__": "255,255,255,255",
+        "__class__": "QColor"
+    },
+    "indentGuideColor": {
+        "__value__": "127,127,127,255",
+        "__class__": "QColor"
+    },
+    "revisionMarginColor": {
+        "__value__": "0,128,0,255",
+        "__class__": "QColor"
+    },
+    "name": "default",
+    "searchMarkPaper": {
+        "__value__": "255,0,255,255",
+        "__class__": "QColor"
+    },
+    "diffthPaper": {
+        "__value__": "102,102,102,255",
+        "__class__": "QColor"
+    },
+    "calltipColor": {
+        "__value__": "0,0,0,255",
+        "__class__": "QColor"
+    },
+    "marginColorDebug": {
+        "__value__": "128,128,128,255",
+        "__class__": "QColor"
+    },
+    "revisionAlterPaper": {
+        "__value__": "238,240,241,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleColor": {
+        "__value__": "0,0,0,255",
+        "__class__": "QColor"
+    },
+    "difflineColor": {
+        "__value__": "102,102,102,255",
+        "__class__": "QColor"
+    },
+    "diffchanged2Paper": {
+        "__value__": "247,254,0,255",
+        "__class__": "QColor"
+    },
+    "searchMarkColor": {
+        "__value__": "0,255,0,255",
+        "__class__": "QColor"
+    },
+    "diffhunkinfoColor": {
+        "__value__": "166,72,72,255",
+        "__class__": "QColor"
+    },
+    "edgeColor": {
+        "__value__": "127,127,127,128",
+        "__class__": "QColor"
+    },
+    "debugCurrentLineMarkerColor": {
+        "__value__": "0,0,255,255",
+        "__class__": "QColor"
+    },
+    "diffchanged2Color": {
+        "__value__": "0,0,0,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleStdinPaper": {
+        "__value__": "255,255,255,255",
+        "__class__": "QColor"
+    },
+    "diffchangedColor": {
+        "__value__": "102,102,102,255",
+        "__class__": "QColor"
+    },
+    "marginPaper": {
+        "__value__": "228,228,228,255",
+        "__class__": "QColor"
+    },
+    "nolexerColor": {
+        "__value__": "0,0,0,255",
+        "__class__": "QColor"
+    },
+    "diffchangedPaper": {
+        "__value__": "244,255,221,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleStderrItalic": false,
+    "unmatchedBracePaper": {
+        "__value__": "250,89,68,255",
+        "__class__": "QColor"
+    },
+    "ioconsolePaper": {
+        "__value__": "255,255,255,255",
+        "__class__": "QColor"
+    },
+    "marginColor": {
+        "__value__": "128,128,128,255",
+        "__class__": "QColor"
+    },
+    "diffhunkinfoPaper": {
+        "__value__": "255,255,255,255",
+        "__class__": "QColor"
+    },
+    "calltipPaper": {
+        "__value__": "220,255,220,255",
+        "__class__": "QColor"
+    },
+    "calltipHighColor": {
+        "__value__": "250,89,68,255",
+        "__class__": "QColor"
+    },
+    "unmatchedBraceColor": {
+        "__value__": "0,0,255,255",
+        "__class__": "QColor"
+    },
+    "nolexerPaper": {
+        "__value__": "255,255,255,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleStdoutBold": false,
+    "ioconsoleStderrColor": {
+        "__value__": "0,0,0,255",
+        "__class__": "QColor"
+    },
+    "ioconsolemarginFont": {
+        "__value__": "Monospace,12,-1,5,50,0,0,0,0,0",
+        "__class__": "QFont"
+    },
+    "outdatedOutlineColor": {
+        "__value__": "255,154,154,255",
+        "__class__": "QColor"
+    },
+    "matchedBraceColor": {
+        "__value__": "255,255,255,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleIDEMsgPaper": {
+        "__value__": "228,228,228,255",
+        "__class__": "QColor"
+    },
+    "diffdeletedPaper": {
+        "__value__": "255,204,204,255",
+        "__class__": "QColor"
+    },
+    "indentGuidePaper": {
+        "__value__": "230,230,230,255",
+        "__class__": "QColor"
+    },
+    "spellingMarkColor": {
+        "__value__": "139,0,0,255",
+        "__class__": "QColor"
+    },
+    "ioconsolemarginPaper": {
+        "__value__": "228,228,228,255",
+        "__class__": "QColor"
+    },
+    "debugCurrentLineMarkerPaper": {
+        "__value__": "255,255,127,255",
+        "__class__": "QColor"
+    },
+    "ioconsolemarginColor": {
+        "__value__": "128,128,128,255",
+        "__class__": "QColor"
+    },
+    "diffthColor": {
+        "__value__": "255,255,255,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleStderrPaper": {
+        "__value__": "255,228,228,255",
+        "__class__": "QColor"
+    },
+    "ioconsoleStdoutItalic": false,
+    "marginPaperDebug": {
+        "__value__": "255,228,228,255",
+        "__class__": "QColor"
+    },
+    "lineNumFont": {
+        "__value__": "Monospace,12,-1,5,50,0,0,0,0,0",
+        "__class__": "QFont"
+    },
+    "debugExcptLineMarkerPaper": {
+        "__value__": "255,64,64,255",
+        "__class__": "QColor"
+    },
+    "matchMarkPaper": {
+        "__value__": "255,255,0,255",
+        "__class__": "QColor"
+    }
+}
