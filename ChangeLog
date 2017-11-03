@@ -1,3 +1,9 @@
+2017 Nov 02 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 4.0.1
+* Removing debugging printouts
+* pypi friendlier package description
+
 2017 Oct 29 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Version 4.0.0

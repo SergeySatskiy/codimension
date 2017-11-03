@@ -35,7 +35,7 @@ from protocol_cdm_dbg import (METHOD_PROC_ID_INFO, METHOD_PROLOGUE_CONTINUE,
 
 
 # If set to true then the client prints debug messages on the original stderr
-CLIENT_DEBUG = True
+CLIENT_DEBUG = False
 
 WAIT_CONTINUE_TIMEOUT = 5       # in seconds
 WAIT_EXIT_COMMAND_TIMEOUT = 5   # in seconds

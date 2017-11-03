@@ -49,7 +49,7 @@ from .settings import Settings, CLEAR_AND_REUSE, NO_REUSE
 from .diskvaluesrelay import getRunParameters, addRunParams
 
 
-IDE_DEBUG = True
+IDE_DEBUG = False
 HANDSHAKE_TIMEOUT = 15
 
 STATE_PROLOGUE = 0

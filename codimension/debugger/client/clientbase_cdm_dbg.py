@@ -67,7 +67,7 @@ from variables_cdm_dbg import getType, TOO_LARGE_ATTRIBUTE
 
 
 # If set to true then the client prints debug messages on the original stderr
-CLIENT_DEBUG = True
+CLIENT_DEBUG = False
 
 DEBUG_CLIENT_INSTANCE = None
 VAR_TYPE_STRINGS = list(VAR_TYPE_DISP_STRINGS.keys())

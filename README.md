@@ -1,6 +1,7 @@
 # Codimension Python 3 IDE
 
 Essential links:
+
 - [Presentation of the technology and the tool](http://codimension.org/documentation/technologypresentation/)
 - [Project home page](http://codimension.org/)
 - [Packages and installation](http://codimension.org/download/linuxdownload.html)
@@ -12,6 +13,7 @@ Essential links:
 **Codimension** is yet another free experimental Python IDE licensed under GPL v3.
 
 Codimension aims to provide an integrated system for:
+
 - traditional text-based code editing, and
 - diagram-based code analysis.
 
@@ -21,7 +23,7 @@ while the code is typed. The screenshot below shows the main area divided into t
 The left one is a traditional text editor while the right one is a generated diagram.
 The diagram is updated when the IDE detects a pause in typing the code.
 
-![Screenshot](http://satsky.spb.ru/codimension/screenshots/00-upcomingCommonView.png "Screenshot")
+![Screenshot](http://satsky.spb.ru/codimension/screenshots/overall.png "Screenshot")
 
 
 The IDE implements many of the typical features to support the development process.
