@@ -21,6 +21,7 @@
 
 import os
 import os.path
+import importlib
 from ui.qt import QApplication
 from cdmpyparser import (getBriefModuleInfoFromMemory,
                          getBriefModuleInfoFromFile)
@@ -105,7 +106,108 @@ def resolveImport(basePath, importString):
     return ""
 
 
-def resolveImports(basePath, imports):
+def resolveImports(fileName, imports):
+    """Resolves a list of imports.
+
+    fileName: the file where the imports come from
+    imports: a list of the Import classes coming from the cdmpyparser module
+
+    return: ([resolved imports], [errors])
+    Each resolved import is a triple [name, path, [what imported]]
+        path could be .py or .so or '' if embedded
+    errors is a list of strings
+    """
+    errors = []
+    result = []
+
+    basePath = os.path.dirname(fileName)    # no '/' at the end
+    project = GlobalData().project
+
+    for importObj in imports:
+        # case 1: import x1, y1
+        if not importObj.what:
+            spec = importlib.util.find_spec(importObj.name)
+            if spec:
+                # Found system wide or in venv
+                result.apppend([importObj.name, spec.origin, []])
+                continue
+
+            # Try in the base path and the project location if so
+            pathsToSearch = [basePath]
+            if project.isLoaded():
+                pathsToSearch += project.getImportDirsAsAbsolutePaths()
+            spec = importlib.machinery.PathFinder.find_spec(importObj.name,
+                                                            pathsToSearch)
+            if spec:
+                result.apppend([importObj.name, spec.origin, []])
+            else:
+                errors.append("Could not resolve 'import " +
+                              importObj.name + "'")
+            continue
+
+        # case 2: from i2 import x2, y2
+        if not importObj.name.startswith('.'):
+            spec = importlib.util.find_spec(importObj.name)
+            if spec:
+                # Found system wide or in venv
+                result.apppend([importObj.name, spec.origin, importObj.what])
+                continue
+
+            # try the name as a directory name
+            importNameAsPath = importObj.name.replace('.', os.path.sep)
+            pathsToSearch = [os.path.normpath(basePath + os.path.sep +
+                                              importNameAsPath)]
+            if project.isLoaded():
+                for importPath in project.getImportDirsAsAbsolutePaths():
+                    pathsToSearch.append(os.path.normpath(importPath +
+                                                          os.path.sep +
+                                                          importNameAsPath))
+            for name in importObj.what:
+                spec = importlib.machinery.PathFinder.find_spec(name,
+                                                                pathsToSearch)
+                if spec:
+                    result.apppend([name, spec.origin, []])
+                else:
+                    errors.append("Could not resolve 'from " +
+                                  importObj.name + " import " + name)
+            continue
+
+        # case 3: from .i3 import x3, y3
+        #      or from . import x4, y4
+        path = basePath
+        current = importObj.name[1:]
+        error = False
+        while current.startswith('.'):
+            if not path:
+                error = True
+                break
+            current = current[1:]
+            path = os.path.dirname(path)
+        if error:
+            errors.append("Could not resolve 'from " +
+                          importObj.name + " import " + name)
+            continue
+        if not path:
+            path = os.path.sep  # reached the root directory
+
+        # try the name as a directory name
+        importNameAsPath = current.replace('.', os.path.sep)
+        pathsToSearch = [os.path.normpath(path + os.path.sep +
+                                          importNameAsPath)]
+        for name in importObj.what:
+            spec = importlib.machinery.PathFinder.find_spec(name,
+                                                            pathsToSearch)
+            if spec:
+                result.apppend([name, spec.origin, []])
+            else:
+                errors.append("Could not resolve 'from " +
+                              importObj.name + " import " + name)
+        continue
+
+    return result, errors
+
+
+def resolveImportsObsolete(basePath, imports):
     """Resolves a list of imports"""
     specificModules = getProjectSpecificModules(basePath)
     systemwideModules = getSystemWideModules()
