@@ -447,20 +447,18 @@ class TextEditorTabWidget(QWidget):
     def onOpenImport(self):
         """Triggered when Ctrl+I is received"""
         if isPythonMime(self.__editor.mime):
-            basePath = os.path.dirname(self.__fileName)
-
             # Take all the file imports and resolve them
             fileImports = getImportsList(self.__editor.text)
             if not fileImports:
                 GlobalData().mainWindow.showStatusBarMessage(
                     "There are no imports")
             else:
-                self.__onImportList(basePath, fileImports)
+                self.__onImportList(self.__fileName, fileImports)
 
-    def __onImportList(self, basePath, imports):
+    def __onImportList(self, fileName, imports):
         """Works with a list of imports"""
         # It has already been checked that the file is a Python one
-        resolvedList = resolveImports(basePath, imports)
+        resolvedList, errors = resolveImports(fileName, imports)
         if resolvedList:
             # Display the import selection widget
             self.importsBar.showResolvedImports(resolvedList)
@@ -656,7 +654,6 @@ class TextEditorTabWidget(QWidget):
 
     def setDebugMode(self, debugOn, disableEditing):
         """Called to switch debug/development"""
-        skin = GlobalData().skin
         self.__debugMode = debugOn
         self.__editor.setDebugMode(debugOn, disableEditing)
 

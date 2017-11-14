@@ -35,10 +35,7 @@ def getImportsList(fileContent):
     """Parses a python file and provides a list imports in it"""
     result = []
     info = getBriefModuleInfoFromMemory(fileContent)
-    for importObj in info.imports:
-        if importObj.name not in result:
-            result.append(importObj.name)
-    return result
+    return info.imports
 
 
 def getImportsInLine(fileContent, lineNumber):
@@ -98,14 +95,6 @@ def buildDirModules(path, infoLabel=None):
     return __scanDir("", abspath, infoLabel)
 
 
-def resolveImport(basePath, importString):
-    """Resolves a single import"""
-    result = resolveImports(basePath, [importString])
-    if result:
-        return result[0][1]
-    return ""
-
-
 def resolveImports(fileName, imports):
     """Resolves a list of imports.
 
@@ -129,7 +118,7 @@ def resolveImports(fileName, imports):
             spec = importlib.util.find_spec(importObj.name)
             if spec:
                 # Found system wide or in venv
-                result.apppend([importObj.name, spec.origin, []])
+                result.append([importObj.name, spec.origin, []])
                 continue
 
             # Try in the base path and the project location if so
@@ -139,7 +128,7 @@ def resolveImports(fileName, imports):
             spec = importlib.machinery.PathFinder.find_spec(importObj.name,
                                                             pathsToSearch)
             if spec:
-                result.apppend([importObj.name, spec.origin, []])
+                result.append([importObj.name, spec.origin, []])
             else:
                 errors.append("Could not resolve 'import " +
                               importObj.name + "'")
@@ -150,7 +139,8 @@ def resolveImports(fileName, imports):
             spec = importlib.util.find_spec(importObj.name)
             if spec:
                 # Found system wide or in venv
-                result.apppend([importObj.name, spec.origin, importObj.what])
+                result.append([importObj.name, spec.origin,
+                               [what.name for what in importObj.what]])
                 continue
 
             # try the name as a directory name
@@ -162,14 +152,14 @@ def resolveImports(fileName, imports):
                     pathsToSearch.append(os.path.normpath(importPath +
                                                           os.path.sep +
                                                           importNameAsPath))
-            for name in importObj.what:
-                spec = importlib.machinery.PathFinder.find_spec(name,
+            for what in importObj.what:
+                spec = importlib.machinery.PathFinder.find_spec(what.name,
                                                                 pathsToSearch)
                 if spec:
-                    result.apppend([name, spec.origin, []])
+                    result.append([what.name, spec.origin, []])
                 else:
                     errors.append("Could not resolve 'from " +
-                                  importObj.name + " import " + name)
+                                  importObj.name + " import " + what.name)
             continue
 
         # case 3: from .i3 import x3, y3
@@ -194,14 +184,22 @@ def resolveImports(fileName, imports):
         importNameAsPath = current.replace('.', os.path.sep)
         pathsToSearch = [os.path.normpath(path + os.path.sep +
                                           importNameAsPath)]
-        for name in importObj.what:
-            spec = importlib.machinery.PathFinder.find_spec(name,
+
+        spec = importlib.machinery.PathFinder.find_spec(
+            current, [os.path.normpath(path)])
+        if spec:
+            result.append([importObj.name, spec.origin,
+                           [what.name for what in importObj.what]])
+            continue
+
+        for what in importObj.what:
+            spec = importlib.machinery.PathFinder.find_spec(what.name,
                                                             pathsToSearch)
             if spec:
-                result.apppend([name, spec.origin, []])
+                result.append([what.name, spec.origin, []])
             else:
                 errors.append("Could not resolve 'from " +
-                              importObj.name + " import " + name)
+                              importObj.name + " import " + what.name)
         continue
 
     return result, errors

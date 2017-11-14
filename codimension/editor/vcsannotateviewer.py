@@ -29,7 +29,7 @@ from utils.fileutils import getFileProperties, isPythonMime
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
-from utils.importutils import (getImportsList, getImportsInLine, resolveImport,
+from utils.importutils import (getImportsList, getImportsInLine,
                                getImportedNameDefinitionLine, resolveImports)
 from ui.importlist import ImportListWidget
 from autocomplete.bufferutils import isImportLine
