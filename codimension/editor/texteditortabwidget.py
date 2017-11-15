@@ -459,6 +459,7 @@ class TextEditorTabWidget(QWidget):
         """Works with a list of imports"""
         # It has already been checked that the file is a Python one
         resolvedList, errors = resolveImports(fileName, imports)
+        del errors  # errors are OK here
         if resolvedList:
             # Display the import selection widget
             self.importsBar.showResolvedImports(resolvedList)

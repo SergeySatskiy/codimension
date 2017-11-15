@@ -68,6 +68,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         EditorContextMenuMixin.__init__(self)
 
         self.setAttribute(Qt.WA_KeyCompression)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
         skin = GlobalData().skin
         self.setPaper(skin['nolexerPaper'])
@@ -893,3 +894,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             if hasattr(margin, 'onClose'):
                 margin.onClose()
         QutepartWrapper.terminate(self)
+
+    def resizeEvent(self, event):
+        """Resize the parent panels if required"""
+        QutepartWrapper.resizeEvent(self, event)
+        self.hideCompleter()
+        if hasattr(self._parent, 'resizeBars'):
+            self._parent.resizeBars()

@@ -1,3 +1,9 @@
+2017 XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 
+* reworked import resolution procedure
+* bug fix: imports/definitions panel resizing when a text editor is resized
+
 2017 Nov 02 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Version 4.0.1

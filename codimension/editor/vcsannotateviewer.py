@@ -29,8 +29,7 @@ from utils.fileutils import getFileProperties, isPythonMime
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
-from utils.importutils import (getImportsList, getImportsInLine,
-                               getImportedNameDefinitionLine, resolveImports)
+from utils.importutils import getImportsList, resolveImports
 from ui.importlist import ImportListWidget
 from autocomplete.bufferutils import isImportLine
 from .texteditor import TextEditor
@@ -308,79 +307,26 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def onOpenImport(self):
         """Triggered when Ctrl+I is received"""
-        if not isPythonMime(self.__viewer.mime):
-            return True
-
-        # Python file, we may continue
-        importLine, lineNo = isImportLine(self.__viewer)
-        basePath = os.path.dirname(self.__fileName)
-
-        if importLine:
-            lineImports, importWhat = getImportsInLine(self.__viewer.text(),
-                                                       lineNo + 1)
-            currentWord = str(self.__viewer.getCurrentWord("."))
-            if currentWord in lineImports:
-                # The cursor is on some import
-                path = resolveImport(basePath, currentWord)
-                if path != '':
-                    GlobalData().mainWindow.openFile(path, -1)
-                    return True
+        if isPythonMime(self.__editor.mime):
+            # Take all the file imports and resolve them
+            fileImports = getImportsList(self.__editor.text)
+            if not fileImports:
                 GlobalData().mainWindow.showStatusBarMessage(
-                    "The import '" + currentWord + "' is not resolved.", 0)
-                return True
-            # We are not on a certain import.
-            # Check if it is a line with exactly one import
-            if len(lineImports) == 1:
-                path = resolveImport(basePath, lineImports[0])
-                if path == '':
-                    GlobalData().mainWindow.showStatusBarMessage(
-                        "The import '" + lineImports[0] +
-                        "' is not resolved.", 0)
-                    return True
-                # The import is resolved. Check where we are.
-                if currentWord in importWhat:
-                    # We are on a certain imported name in a resolved import
-                    # So, jump to the definition line
-                    line = getImportedNameDefinitionLine(path, currentWord)
-                    GlobalData().mainWindow.openFile(path, line)
-                    return True
-                GlobalData().mainWindow.openFile(path, -1)
-                return True
+                    "There are no imports")
+            else:
+                self.__onImportList(self.__fileName, fileImports)
 
-            # Take all the imports in the line and resolve them.
-            self.__onImportList(basePath, lineImports)
-            return True
-
-        # Here: the cursor is not on the import line. Take all the file imports
-        # and resolve them
-        fileImports = getImportsList(self.__viewer.text())
-        if not fileImports:
-            GlobalData().mainWindow.showStatusBarMessage(
-                "There are no imports", 0)
-            return True
-        if len(fileImports) == 1:
-            path = resolveImport(basePath, fileImports[0])
-            if path == '':
-                GlobalData().mainWindow.showStatusBarMessage(
-                    "The import '" + fileImports[0] + "' is not resolved.", 0)
-                return True
-            GlobalData().mainWindow.openFile(path, -1)
-            return True
-
-        self.__onImportList(basePath, fileImports)
-        return True
-
-    def __onImportList(self, basePath, imports):
+    def __onImportList(self, fileName, imports):
         """Works with a list of imports"""
         # It has already been checked that the file is a Python one
-        resolvedList = resolveImports(basePath, imports)
-        if not resolvedList:
+        resolvedList, errors = resolveImports(fileName, imports)
+        del errors  # errors are OK here
+        if resolvedList:
+            # Display the import selection widget
+            self.__importsBar.showResolvedImports(resolvedList)
+        else:
             GlobalData().mainWindow.showStatusBarMessage(
-                "No imports are resolved.", 0)
-            return
-
-        # Display the import selection widget
-        self.__importsBar.showResolvedList(resolvedList)
+                "Could not resolve any imports")
 
     def resizeEvent(self, event):
         """Resizes the import selection dialogue if necessary"""
@@ -393,10 +339,6 @@ class VCSAnnotateViewerTabWidget(QWidget, MainWindowTabWidgetBase):
             self.__importsBar.resize()
         self.__viewer.resizeCalltip()
 
-    def onPylint(self):
-        return True
-    def onPymetrics(self):
-        return True
     def onRunScript(self, action=False):
         return True
     def onRunScriptSettings(self):

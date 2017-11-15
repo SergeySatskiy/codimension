@@ -22,6 +22,7 @@
 
 import os.path
 from utils.globals import GlobalData
+from utils.fileutils import isPythonFile
 from .qt import (Qt, QEventLoop, QSizePolicy, QFrame, QTreeWidget,
                  QApplication, QTreeWidgetItem, QHeaderView, QVBoxLayout,
                  QAbstractItemView)
@@ -114,8 +115,12 @@ class ImportListWidget(QFrame):
         headerItem = QTreeWidgetItem(["Import (" + info + ")", "Path"])
         self.__importList.setHeaderItem(headerItem)
         for item in importsList:
-            importItem = QTreeWidgetItem([item[0], item[1]])
-            importItem.setToolTip(0, self.__getFileTooltip(item[1]))
+            importName = item[0]
+            resolvedPath = item[1]
+            if resolvedPath is None:
+                resolvedPath = ''
+            importItem = QTreeWidgetItem([importName, resolvedPath])
+            importItem.setToolTip(0, self.__getFileTooltip(resolvedPath))
             self.__importList.addTopLevelItem(importItem)
 
         self.__importList.header().resizeSections(
@@ -151,9 +156,11 @@ class ImportListWidget(QFrame):
     def __getFileTooltip(path):
         """Provides the python file docstring for a tooltip"""
         path = os.path.normpath(path)
-        modInfo = GlobalData().briefModinfoCache.get(path)
-        if modInfo.docstring is not None:
-            return modInfo.docstring.text
+        if os.path.exists(path):
+            if isPythonFile(path):
+                modInfo = GlobalData().briefModinfoCache.get(path)
+                if modInfo.docstring is not None:
+                    return modInfo.docstring.text
         return ''
 
     def setFocus(self):
@@ -174,7 +181,8 @@ class ImportListWidget(QFrame):
         """Handles the import selection"""
         path = str(item.text(1))
         if self.__mode == ImportListWidget.IMPORT_MODE:
-            GlobalData().mainWindow.openFile(path, -1)
+            if os.path.exists(path):
+                GlobalData().mainWindow.openFile(path, -1)
         else:
             line = int(item.text(2))
             column = int(item.text(3))
