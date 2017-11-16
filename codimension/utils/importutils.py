@@ -23,10 +23,7 @@ import os
 import os.path
 import importlib
 from ui.qt import QApplication
-from cdmpyparser import (getBriefModuleInfoFromMemory,
-                         getBriefModuleInfoFromFile)
-from autocomplete.completelists import (getSystemWideModules,
-                                        getProjectSpecificModules)
+from cdmpyparser import getBriefModuleInfoFromMemory
 from .globals import GlobalData
 from .fileutils import isPythonFile
 
@@ -109,7 +106,7 @@ def __resolveImport(importObj, baseAndProjectPaths, result, errors):
 
         # Try in the base path and the project imports if so
         spec = importlib.machinery.PathFinder.find_spec(importObj.name,
-                                                        baseAndPrjPaths)
+                                                        baseAndProjectPaths)
         if spec:
             result.append([importObj.name, spec.origin, []])
         else:
@@ -137,7 +134,7 @@ def __resolveFromImport(importObj, basePath, baseAndProjectPaths,
         # Try in the base path and the project imports if so
         try:
             spec = importlib.machinery.PathFinder.find_spec(
-                importObj.name, baseAndPrjPaths)
+                importObj.name, baseAndProjectPaths)
             if spec:
                 result.append([importObj.name, spec.origin,
                                [what.name for what in importObj.what]])
@@ -146,6 +143,7 @@ def __resolveFromImport(importObj, basePath, baseAndProjectPaths,
             pass
 
         # try the name as a directory name
+        project = GlobalData().project
         importNameAsPath = importObj.name.replace('.', os.path.sep)
         pathsToSearch = [os.path.normpath(basePath + os.path.sep +
                                           importNameAsPath)]
@@ -184,8 +182,8 @@ def __resolveRelativeImport(importObj, basePath, result, errors):
             path = os.path.dirname(path)
         if error:
             errors.append("Could not resolve 'from " +
-                          importObj.name + " import " + name +
-                          "' at line " + str(importObj.line))
+                          importObj.name + " import ...' at line " +
+                          str(importObj.line))
             return
 
         if not path:

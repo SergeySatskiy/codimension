@@ -28,7 +28,6 @@ from utils.globals import GlobalData
 from utils.fileutils import isPythonFile
 from utils.importutils import resolveImports
 from cdmpyparser import getBriefModuleInfoFromMemory
-from autocomplete.completelists import getSystemWideModules
 from .plaindotparser import getGraphFromDescriptionData
 from .importsdgmgraphics import (ImportsDgmDocConn, ImportsDgmDependConn,
                                  ImportsDgmSystemWideModule,
