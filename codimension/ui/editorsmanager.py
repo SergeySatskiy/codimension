@@ -34,7 +34,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import (getFileProperties, isImageViewable,
                              isPythonMime, isPythonFile,
-                             getXmlSyntaxFileByMime)
+                             getXmlSyntaxFileByMime, isFileSearchable)
 from utils.diskvaluesrelay import getFilePosition, updateFilePosition
 from utils.encoding import detectEolString
 from diagram.importsdgmgraphics import ImportDgmTabWidget
@@ -1055,6 +1055,8 @@ class EditorsManager(QTabWidget):
     def openFile(self, fileName, lineNo, pos=0):
         """Opens the required file"""
         if not fileName:
+            return
+        if not isFileSearchable(fileName):
             return
         try:
             fileName = os.path.realpath(fileName)

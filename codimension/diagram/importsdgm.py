@@ -26,6 +26,7 @@ from ui.qt import (Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                    QCheckBox, QProgressBar, QApplication, QGraphicsScene)
 from utils.globals import GlobalData
 from utils.fileutils import isPythonFile
+from utils.importutils import resolveImports
 from cdmpyparser import getBriefModuleInfoFromMemory
 from autocomplete.completelists import getSystemWideModules
 from .plaindotparser import getGraphFromDescriptionData
@@ -52,7 +53,6 @@ class DgmConnection:
         self.source = ""        # Connection start point
         self.target = ""        # Connection end point
         self.labels = []        # Connection labels: list of what imported
-                                # ImportWhat objects
 
     def toGraphviz(self):
         """Serialize the connection in graphviz format"""
@@ -61,7 +61,7 @@ class DgmConnection:
         for what in self.labels:
             if label != "":
                 label += "\\n"
-            label += what.name
+            label += what
         if label != "":
             attributes += ', label="' + label + \
                           '", fontname=Arial, fontsize=10'
@@ -518,57 +518,6 @@ class ImportsDiagramProgress(QDialog):
             if isPythonFile(fName):
                 self.__participantFiles.append(fName)
 
-    def isProjectImport(self, importString):
-        """Checks if it is a project import string and provides a path if so"""
-        if importString in self.__projectImportsCache:
-            return self.__projectImportsCache[importString]
-
-        subpath = importString.replace('.', os.path.sep)
-        candidates = [subpath + ".py", subpath + os.path.sep + "__init__.py"]
-        for path in self.__projectImportDirs:
-            for item in candidates:
-                fName = path + os.path.sep + item
-                if os.path.isfile(fName):
-                    self.__projectImportsCache[importString] = fName
-                    return fName
-        return None
-
-    def isLocalImport(self, dirName, importString):
-        """Checks if it is local dir import string and provides a path if so"""
-        dirFound = False
-        if dirName in self.__dirsToImportsCache:
-            dirFound = True
-            importsDict = self.__dirsToImportsCache[dirName]
-            if importString in importsDict:
-                return importsDict[importString]
-
-        subpath = importString.replace('.', os.path.sep)
-        candidates = [subpath + ".py", subpath + os.path.sep + "__init__.py"]
-        for item in candidates:
-            fName = dirName + os.path.sep + item
-            if os.path.isfile(fName):
-                # Found on the FS. Add to the dictionary
-                if dirFound:
-                    importsDict[importString] = fName
-                else:
-                    self.__dirsToImportsCache[dirName] = {importString: fName}
-                return fName
-        return None
-
-    def isSystemWideImport(self, importString):
-        """Provides a path to the system wide import or None"""
-        # Systemwide modules may not have a path if it is a
-        # built-in module, or to have a path to an .so library
-        try:
-            path = getSystemWideModules()[importString]
-            if path is None:
-                return True, None
-            if path.endswith(".py"):
-                return True, path
-            return True, None
-        except:
-            return False, None
-
     def __addBoxInfo(self, box, info):
         """Adds information to the given box if so configured"""
         if info.docstring is not None:
@@ -615,16 +564,14 @@ class ImportsDiagramProgress(QDialog):
 
     def __getSytemWideImportDocstring(self, path):
         """Provides the system wide module docstring"""
-        if not path.endswith('.py'):
-            return ""
-
-        try:
-            info = GlobalData().briefModinfoCache.get(path)
-            if info.docstring is not None:
-                return info.docstring.text
-            return ""
-        except:
-            return ""
+        if isPythonFile(path):
+            try:
+                info = GlobalData().briefModinfoCache.get(path)
+                if info.docstring is not None:
+                    return info.docstring.text
+            except:
+                pass
+        return ''
 
     @staticmethod
     def __getModuleTitle(fName):
@@ -638,9 +585,23 @@ class ImportsDiagramProgress(QDialog):
         topDir = os.path.basename(dirName)
         return topDir + "(" + baseTitle + ")"
 
+    @staticmethod
+    def __isLocalOrProject(fName, resolvedPath):
+        """True if the module is a project one or is in the nested dirs"""
+        if resolvedPath is None:
+            return False
+        if not os.path.isabs(resolvedPath):
+            return False
+        if GlobalData().project.isProjectFile(resolvedPath):
+            return True
+
+        resolvedDir = os.path.dirname(resolvedPath)
+        baseDir = os.path.dirname(fName)
+        return resolvedDir.startswith(baseDir)
+
     def __addSingleFileToDataModel(self, info, fName):
         """Adds a single file to the data model"""
-        if fName.endswith("__init__.py"):
+        if fName.endswith('__init__.py'):
             if not info.classes and not info.functions and \
                not info.globals and not info.imports:
                 # Skip dummy init files
@@ -656,43 +617,41 @@ class ImportsDiagramProgress(QDialog):
         modBoxName = self.dataModel.addModule(modBox)
         self.__addDocstringBox(info, fName, modBoxName)
 
-        # Add what is imported
-        isProjectFile = GlobalData().project.isProjectFile(fName)
-        for item in info.imports:
+        # Analyze what was imported
+        resolvedImports, errors = resolveImports(fName, info.imports)
+        if errors:
+            message = 'Errors while analyzing ' + fName + ':'
+            for err in errors:
+                message += '\n    ' + err
+            logging.warning(message)
+
+        for item in resolvedImports:
+            importName = item[0]        # from name
+            resolvedPath = item[1]      # 'built-in', None or absolute path
+            importedNames = item[2]     # list of strings
+
             impBox = DgmModule()
+            impBox.title = importName
 
-            importPath = None
-            systemWideImportPath = None
-            if isProjectFile:
-                importPath = self.isProjectImport(item.name)
-            if importPath is None:
-                importPath = self.isLocalImport(os.path.dirname(fName),
-                                                item.name)
-
-            if importPath is not None:
+            if self.__isLocalOrProject(fName, resolvedPath):
                 impBox.kind = DgmModule.OtherProjectModule
-                impBox.title = os.path.basename(importPath).split('.')[0]
-                impBox.refFile = importPath
-                otherInfo = GlobalData().briefModinfoCache.get(importPath)
-
-                # It's a local or project import
-                self.__addBoxInfo(impBox, otherInfo)
-
+                impBox.refFile = resolvedPath
+                if isPythonFile(resolvedPath):
+                    otherInfo = GlobalData().briefModinfoCache.get(
+                        resolvedPath)
+                    self.__addBoxInfo(impBox, otherInfo)
             else:
-                impBox.kind = DgmModule.UnknownModule
-                impBox.title = item.name
-
-                found, systemWideImportPath = \
-                    self.isSystemWideImport(item.name)
-                if found:
-                    if systemWideImportPath is not None:
-                        impBox.kind = DgmModule.SystemWideModule
-                        impBox.refFile = systemWideImportPath
-                        impBox.docstring = \
-                            self.__getSytemWideImportDocstring(
-                                systemWideImportPath)
-                    else:
-                        impBox.kind = DgmModule.BuiltInModule
+                if resolvedPath is None:
+                    # e.g. 'import sys' will have None for the path
+                    impBox.kind = DgmModule.UnknownModule
+                elif os.path.isabs(resolvedPath):
+                    impBox.kind = DgmModule.SystemWideModule
+                    impBox.refFile = resolvedPath
+                    impBox.docstring = \
+                        self.__getSytemWideImportDocstring(resolvedPath)
+                else:
+                    # e.g. 'import time' will have 'built-in' in the path
+                    impBox.kind = DgmModule.BuiltInModule
 
             impBoxName = self.dataModel.addModule(impBox)
 
@@ -702,8 +661,8 @@ class ImportsDiagramProgress(QDialog):
             impConn.target = impBoxName
 
             if self.__options.includeConnText:
-                for impWhat in item.what:
-                    if impWhat.name != "":
+                for impWhat in importedNames:
+                    if impWhat:
                         impConn.labels.append(impWhat)
             self.dataModel.addConnection(impConn)
 
