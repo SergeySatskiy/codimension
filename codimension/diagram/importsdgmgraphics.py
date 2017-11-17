@@ -28,7 +28,7 @@ from ui.qt import (QFont, QPen, QColor, QPainterPath, QFontMetrics, QPainter,
                    QStyleOptionGraphicsItem, QStyle, Qt, QSize, QPointF,
                    pyqtSignal)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from utils.pixmapcache import getPixmap, getIcon
+from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 
 
@@ -237,14 +237,6 @@ class ImportsDgmBuiltInModule(QGraphicsRectItem):
                          self.__node.width, self.__node.height,
                          Qt.AlignCenter, self.__node.label)
 
-        pixmap = getPixmap("binarymod.png")
-        pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
-                     pixmap.width() / 2.0
-        pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
-                     pixmap.height() / 2.0
-        painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        painter.drawPixmap(pixmapPosX, pixmapPosY, pixmap)
-
 
 class ImportsDgmSystemWideModule(QGraphicsRectItem):
 
@@ -264,22 +256,10 @@ class ImportsDgmSystemWideModule(QGraphicsRectItem):
         pen.setWidth(2)
         self.setPen(pen)
 
-        self.__setTooltip()
         self.setBrush(QColor(220, 255, 220))
 
         # System modules are clickable
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-
-    def __setTooltip(self):
-        """Sets the module tooltip"""
-        tooltip = ""
-        if self.__refFile != "":
-            tooltip = self.__refFile
-        if self.__docstring != "":
-            if tooltip != "":
-                tooltip += "\n\n"
-            tooltip += self.__docstring
-        self.setToolTip(tooltip)
 
     def paint(self, painter, option, widget):
         """Draws a filled rectangle and then adds a title"""
@@ -299,14 +279,6 @@ class ImportsDgmSystemWideModule(QGraphicsRectItem):
                          self.__node.posY - self.__node.height / 2.0,
                          self.__node.width, self.__node.height,
                          Qt.AlignCenter, self.__node.label)
-
-        pixmap = getPixmap("systemmod.png")
-        pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
-                     pixmap.width() / 2.0
-        pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
-                     pixmap.height() / 2.0
-        painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        painter.drawPixmap(pixmapPosX, pixmapPosY, pixmap)
 
     def mouseDoubleClickEvent(self, event):
         """Open the clicked file as the new one"""
@@ -333,8 +305,6 @@ class ImportsDgmDetailedModuleBase(QGraphicsRectItem):
         pen.setWidth(2)
         self.setPen(pen)
 
-        self.__setTooltip()
-
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
@@ -353,17 +323,6 @@ class ImportsDgmDetailedModuleBase(QGraphicsRectItem):
         # One line a spare for half a line at the top and half a line at the
         # bottom
         return int(float(self.__node.height) / float(len(self.__lines) + 1))
-
-    def __setTooltip(self):
-        """Sets the module tooltip"""
-        tooltip = ""
-        if self.__refFile != "":
-            tooltip = self.__refFile
-        if self.__srcobj.docstring != "":
-            if tooltip != "":
-                tooltip += "\n\n"
-            tooltip += self.__srcobj.docstring
-        self.setToolTip(tooltip)
 
     def paint(self, painter, option, widget):
         """Draws a rectangle, adds title, classes/funcs/globs sections"""
@@ -470,18 +429,13 @@ class ImportsDgmDocNote(QGraphicsRectItem):
         # Draw text over the rectangle
         font = QFont("Arial", 10)
         painter.setFont(font)
-        painter.drawText(self.__node.posX - self.__node.width / 2.0,
-                         self.__node.posY - self.__node.height / 2.0,
-                         self.__node.width, self.__node.height,
-                         Qt.AlignCenter, self.__srcobj.text)
-
-        pixmap = getPixmap("docstring.png")
-        pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
-                     pixmap.width() / 2.0
-        pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
-                     pixmap.height() / 2.0
-        painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        painter.drawPixmap(pixmapPosX, pixmapPosY, pixmap)
+        hSpacer = 10
+        ySpacer = 5
+        painter.drawText(self.__node.posX - self.__node.width / 2.0 + hSpacer,
+                         self.__node.posY - self.__node.height / 2.0 + ySpacer,
+                         self.__node.width - hSpacer,
+                         self.__node.height - ySpacer,
+                         Qt.AlignLeft, self.__srcobj.text)
 
     def mouseDoubleClickEvent(self, event):
         """Open the clicked file as the new one"""

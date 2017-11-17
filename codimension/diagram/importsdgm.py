@@ -23,10 +23,12 @@ import os
 import os.path
 import logging
 from ui.qt import (Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
-                   QCheckBox, QProgressBar, QApplication, QGraphicsScene)
+                   QCheckBox, QProgressBar, QApplication, QGraphicsScene,
+                   QGraphicsPixmapItem)
 from utils.globals import GlobalData
 from utils.fileutils import isPythonFile
 from utils.importutils import resolveImports
+from utils.pixmapcache import getPixmap
 from cdmpyparser import getBriefModuleInfoFromMemory
 from .plaindotparser import getGraphFromDescriptionData
 from .importsdgmgraphics import (ImportsDgmDocConn, ImportsDgmDependConn,
@@ -154,6 +156,17 @@ class DgmModule:
             return self.refFile == other.refFile
         return self.refFile == other.refFile and \
                self.kind == other.kind and self.title == other.title
+
+    def getTooltip(self):
+        """Provides a tooltip"""
+        tooltip = ''
+        if self.refFile != "":
+            tooltip = self.refFile
+        if self.docstring != "":
+            if tooltip != "":
+                tooltip += "\n\n"
+            tooltip += self.docstring
+        return tooltip
 
 
 class DgmRank:
@@ -806,29 +819,30 @@ class ImportsDiagramProgress(QDialog):
                     ImportsDgmModuleOfInterest(node, dataModelObj.refFile,
                                                dataModelObj,
                                                self.physicalDpiX()))
-                continue
-
-            if dataModelObj.kind == DgmModule.OtherProjectModule:
+            elif dataModelObj.kind == DgmModule.OtherProjectModule:
                 self.scene.addItem(
                     ImportsDgmOtherPrjModule(node, dataModelObj.refFile,
                                              dataModelObj,
                                              self.physicalDpiX()))
-                continue
-
-            if dataModelObj.kind == DgmModule.SystemWideModule:
+            elif dataModelObj.kind == DgmModule.SystemWideModule:
                 self.scene.addItem(
                     ImportsDgmSystemWideModule(node,
                                                dataModelObj.refFile,
                                                dataModelObj.docstring))
-                continue
-
-            if dataModelObj.kind == DgmModule.BuiltInModule:
+            elif dataModelObj.kind == DgmModule.BuiltInModule:
                 self.scene.addItem(ImportsDgmBuiltInModule(node))
-                continue
-
-            if dataModelObj.kind == DgmModule.UnknownModule:
+            elif dataModelObj.kind == DgmModule.UnknownModule:
                 self.scene.addItem(ImportsDgmUnknownModule(node))
-                continue
+            else:
+                raise Exception("Unexpected type of module: " +
+                                str(dataModelObj.kind))
 
-            raise Exception("Unexpected type of module: " +
-                            str(dataModelObj.kind))
+            tooltip = dataModelObj.getTooltip()
+            if tooltip:
+                pixmap = getPixmap('diagramdoc.png')
+                docItem = QGraphicsPixmapItem(pixmap)
+                docItem.setToolTip(tooltip)
+                posX = node.posX + node.width / 2.0 - pixmap.width() / 2.0
+                posY = node.posY - node.height / 2.0 - pixmap.height() / 2.0
+                docItem.setPos(posX, posY)
+                self.scene.addItem(docItem)
