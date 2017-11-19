@@ -1,8 +1,9 @@
-2017 XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+2017 Nov 19 Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Version 
+* Version 4.0.2
 * reworked import resolution procedure
 * bug fix: imports/definitions panel resizing when a text editor is resized
+* bug fix: do not use native dialogs to open/save files
 
 2017 Nov 02 Sergey Satskiy <sergey.satskiy@gmail.com>
 
