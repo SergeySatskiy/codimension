@@ -699,18 +699,22 @@ class RunDialog(QDialog):
 
     def __selectDirClicked(self):
         """Selects the script working dir"""
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog | QFileDialog.ShowDirsOnly
         dirName = QFileDialog.getExistingDirectory(
             self, "Select the script working directory",
-            self.__dirEdit.text(),
-            QFileDialog.Options(QFileDialog.ShowDirsOnly))
+            self.__dirEdit.text(), options=options)
 
         if dirName:
             self.__dirEdit.setText(os.path.normpath(dirName))
 
     def __selectIntClicked(self):
         """Selects a python interpreter"""
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select python series 3 interpreter")
+            self, "Select python series 3 interpreter",
+            options=options)
 
         if path:
             self.__intEdit.setText(os.path.normpath(path))

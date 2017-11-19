@@ -1649,6 +1649,7 @@ class CodimensionMainWindow(QMainWindow):
         """Triggers when Ctrl+O is pressed"""
         dialog = QFileDialog(self, 'Open file')
         dialog.setFileMode(QFileDialog.ExistingFiles)
+        dialog.setOption(QFileDialog.DontUseNativeDialog, True)
         urls = []
         for dname in QDir.drives():
             urls.append(QUrl.fromLocalFile(dname.absoluteFilePath()))
@@ -1926,6 +1927,7 @@ class CodimensionMainWindow(QMainWindow):
             return
         dialog = QFileDialog(self, 'Open project')
         dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setOption(QFileDialog.DontUseNativeDialog, True)
         dialog.setNameFilter("Codimension project files (*.cdm3)")
         urls = []
         for dname in QDir.drives():

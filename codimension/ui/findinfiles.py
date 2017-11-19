@@ -719,10 +719,11 @@ class FindInFilesDialog(QDialog):
 
     def __selectDirClicked(self):
         """The user selects a directory"""
+        options = QFileDialog.Options()
+        options |= QFileDialog.ShowDirsOnly | QFileDialog.DontUseNativeDialog
         dirName = QFileDialog.getExistingDirectory(
-            self, "Select directory to search in",
-            self.dirEditCombo.currentText(),
-            QFileDialog.Options(QFileDialog.ShowDirsOnly))
+            self, 'Select directory to search in',
+            self.dirEditCombo.currentText(), options)
 
         if dirName:
             self.dirEditCombo.setEditText(normpath(dirName))

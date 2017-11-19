@@ -331,16 +331,22 @@ class ProjectPropertiesDialog(QDialog):
 
     def onDirButton(self):
         """Displays a directory selection dialog"""
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog | QFileDialog.ShowDirsOnly
         dirName = QFileDialog.getExistingDirectory(
             self, "Select project directory", self.dirEdit.text(),
-            QFileDialog.Options(QFileDialog.ShowDirsOnly))
+            options)
         if dirName:
             self.dirEdit.setText(os.path.normpath(dirName))
 
     def onScriptButton(self):
         """Displays a file selection dialog"""
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
         scriptName = QFileDialog.getOpenFileName(
-            self, "Select project main script", self.dirEdit.text())
+            self, 'Select project main script', self.dirEdit.text(),
+            'Python Files (*.py);;All Files (*)',
+            options=options)
         if isinstance(scriptName, tuple):
             scriptName = scriptName[0]
         if scriptName:
@@ -352,9 +358,11 @@ class ProjectPropertiesDialog(QDialog):
 
     def onAddImportDir(self):
         """Displays a directory selection dialog"""
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog | QFileDialog.ShowDirsOnly
         dirName = QFileDialog.getExistingDirectory(
-            self, "Select import directory", self.dirEdit.text(),
-            QFileDialog.Options(QFileDialog.ShowDirsOnly))
+            self, 'Select import directory', self.dirEdit.text(),
+            options=options)
 
         if not dirName:
             return
