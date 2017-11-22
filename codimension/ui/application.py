@@ -92,11 +92,12 @@ class CodimensionApplication(QApplication):
         return first, second
 
     def eventFilter(self, obj, event):
-        """Event filter to catch ESC application wide;
-           Pass focus explicitly on broken window managers when the app
-           is activated;
-           Catch Ctrl+1 and Ctrl+2 application wide;
-         """
+        """Event filter to catch ESC application wide.
+
+        Pass focus explicitly on broken window managers when the app is
+        activated; Catch Ctrl+1 and Ctrl+2 application wide;
+        """
+        del obj     # unused argument
         try:
             eventType = event.type()
             if eventType == KEY_PRESS:

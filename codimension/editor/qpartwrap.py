@@ -32,7 +32,6 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.colorfont import getZoomedMonoFont
 from utils.encoding import decodeURLContent
-from autocomplete.bufferutils import isImportLine
 
 
 WORD_AT_END_REGEXP = re.compile("\w+$")
@@ -323,21 +322,12 @@ class QutepartWrapper(Qutepart):
             return
         print(str(line+1) + ":" + str(pos+1) + " " + repr(data.data))
 
-    def isStringLiteral(self, line, pos):
-        """True if it is a string literal"""
-        if self._highlighter is None:
-            return False
-        block = self.document().findBlockByNumber(line)
-        data = block.userData()
-        if data is None:
-            return False
-        return self._highlighter._syntax._getTextType(data.data, pos) == 's'
-
     def removeTrailingWhitespaces(self):
         """Removes trailing whitespaces"""
         # Note: two loops are for the case when there is nothing to expand.
         # The 'with' statement leads to a detection of a changed position
         # which triggers the other actions.
+        index = 0
         for index, line in enumerate(self.lines):
             stripped = line.rstrip()
             if stripped != line:
@@ -359,6 +349,7 @@ class QutepartWrapper(Qutepart):
         # Note: two loops are for the case when there is nothing to expand.
         # The 'with' statement leads to a detection of a changed position
         # which triggers the other actions.
+        index = 0
         for index, line in enumerate(self.lines):
             expanded = line.expandtabs(tabsize)
             if expanded != line:
@@ -397,6 +388,16 @@ class QutepartWrapper(Qutepart):
         """Returns True if the line is empty. Line is 0 based"""
         return self.lines[line].strip() == ""
 
+    def isStringLiteral(self, line, pos):
+        """True if it is a string literal"""
+        if self._highlighter is None:
+            return False
+        block = self.document().findBlockByNumber(line)
+        data = block.userData()
+        if data is None:
+            return False
+        return self._highlighter._syntax._getTextType(data.data, pos) == 's'
+
     # Search supporting members
 
     def resetHighlight(self):
@@ -411,8 +412,9 @@ class QutepartWrapper(Qutepart):
         self.__matchesCache = None
 
     def resetMatchCache(self):
-        """Resets the matches cache when a search criteria changed in the
-           otehr editors
+        """Resets the matches cache.
+
+        Happens when a search criteria changed in the otehr editors.
         """
         if not self.isVisible():
             if self._userExtraSelections:
@@ -797,20 +799,15 @@ class QutepartWrapper(Qutepart):
 
     def openAsFileAvailable(self):
         """True if there is something to try to open as a file"""
-        importLine, _ = isImportLine(self)
-        if not importLine:
-            selectedText = self.selectedText.strip()
-            if selectedText:
-                return '\n' not in selectedText and \
-                       '\r' not in selectedText
+        selectedText = self.selectedText.strip()
+        if selectedText:
+            return '\n' not in selectedText and '\r' not in selectedText
         return False
 
     def downloadAndShowAvailable(self):
         """True if download and show available"""
-        importLine, _ = isImportLine(self)
-        if not importLine:
-            selectedText = self.selectedText.strip()
-            if '\n' not in selectedText and '\r' not in selectedText:
-                return selectedText.lower().startswith('http://') or \
-                       selectedText.lower().startswith('www.')
+        selectedText = self.selectedText.strip()
+        if '\n' not in selectedText and '\r' not in selectedText:
+            return selectedText.lower().startswith('http://') or \
+                   selectedText.lower().startswith('www.')
         return False

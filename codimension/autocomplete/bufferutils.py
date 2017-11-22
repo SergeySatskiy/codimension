@@ -31,8 +31,9 @@ EDITOR_TAG_TIMEOUT = 0.5
 
 def getEditorTags(editor, exclude=None, excludePythonKeywords=False):
     """Builds a list of the tags in the editor.
-       The current line could be excluded.
-       The only tags are included which start with prefix
+
+    The current line could be excluded.
+    The only tags are included which start with prefix
     """
     start = time.time()
 
@@ -210,15 +211,6 @@ def _getFirstNonSpacePos(text):
     return -1
 
 
-def _endsWithTripleQuotedString(editor, line, pos):
-    """True if the position is a triple quoted string literal"""
-    return False
-    editorPos = editor.positionFromLineIndex(line, pos)
-    return editor.styleAt(editorPos) in \
-        [QsciLexerPython.TripleDoubleQuotedString,
-         QsciLexerPython.TripleSingleQuotedString]
-
-
 def getContext(editor, info=None,
                skipBlankLinesBack=False, skipDef=True):
     """Detects the context at the text cursor position.
@@ -244,7 +236,7 @@ def getContext(editor, info=None,
         info = getBriefModuleInfoFromMemory(editor.text)
 
     line, pos = editor.cursorPosition
-    if skipBlankLinesBack == True:
+    if skipBlankLinesBack:
         while line >= 0:
             text = editor.lines[line]
             trimmedText = text.strip()
@@ -274,7 +266,7 @@ def getContext(editor, info=None,
 
         text = editor.lines[currentLine]
         trimmedText = text.strip()
-        if continueLine == False:
+        if not continueLine:
             if trimmedText == "" or trimmedText.startswith("#"):
                 continue
 
@@ -285,7 +277,7 @@ def getContext(editor, info=None,
                 return context
 
         if trimmedText.endswith(",") or trimmedText.endswith('\\') or \
-           _endsWithTripleQuotedString(editor, currentLine, len(text) - 1):
+           editor.isStringLiteral(currentLine, len(text) - 1):
             continueLine = True
         else:
             continueLine = False
@@ -302,9 +294,10 @@ def getContext(editor, info=None,
 
 
 def _isOnDefinitionLine(infoObj, line, pos):
-    """Returns True if the cursor is within the definition line of the
-       given object (class or function)
-       Line and pos are 1-based
+    """True if the cursor is within the definition line of the infoObj.
+
+    infoObj is a class or function
+    Line and pos are 1-based
     """
     lowLimit = infoObj.keywordLine << 16
     upLimit = (infoObj.colonLine << 16) + infoObj.colonPos
@@ -319,9 +312,9 @@ def _isOnDefinitionLine(infoObj, line, pos):
 
 
 def _getDefinitionObject(info, line, pos):
-    """Returns an object (class or function) if the cursor is on the definition
-       line. None if it is not.
-       Line and pos are 1-based
+    """Returns a class or a function if the cursor is on the definition line.
+
+    Line and pos are 1-based
     """
     for cls in info.classes:
         if _isOnDefinitionLine(cls, line, pos):
@@ -338,80 +331,11 @@ def _getDefinitionObject(info, line, pos):
     return None
 
 
-# Note: docstrings are considered as comments
-def isStringLiteral(editor, line=None, pos=None):
-    """True if the position is inside a string literal"""
-    if line is None or pos is None:
-        line, pos = editor.cursorPosition
-    text = editor.lines[line]
-    if not text.strip():
-        return False
-
-    return editor.styleAt(pos) in \
-                    [QsciLexerPython.TripleDoubleQuotedString,
-                     QsciLexerPython.TripleSingleQuotedString,
-                     QsciLexerPython.DoubleQuotedString,
-                     QsciLexerPython.SingleQuotedString,
-                     QsciLexerPython.UnclosedString]
-
-
-# Note: The docstrings are considered as comments as well
-def isComment(editor, line=None, pos=None):
-    """True if the position is inside a comment or a docstring"""
-    if line is None or pos is None:
-        line, pos = editor.cursorPosition
-    text = editor.lines[line]
-    if not text.strip():
-        return False
-    if pos >= len(text):
-        pos = len(text) - 1
-
-    return editor.isComment(line, pos)
-
-
-def isImportLine(editor):
-    """True if the current line is a part of an import line"""
-    line, pos = editor.cursorPosition
-    text = editor.lines[line]
-    if not text.strip():
-        return False, None
-    if pos >= len(text):
-        pos = len(text) - 1
-
-    if editor.isComment(line, pos):
-        return False, None
-    if editor.isStringLiteral(line, pos):
-        return False, None
-
-    return False, None
-
-    # Find the beginning of the line
-    while True:
-        if line == 0:
-            break
-        prevLine = editor.lines[line - 1]
-
-    while True:
-        if line == 0:
-            break
-        prevLine = editor.lines[line - 1].strip()
-        if not prevLine.endswith('\\') and not prevLine.endswith(','):
-            break
-        line -= 1
-
-    text = editor.lines[line].strip()
-    if text.startswith("import ") or text.startswith("from ") or \
-       text.startswith("import\\") or text.startswith("from\\"):
-        if not isStringLiteral(editor,
-                               editor.positionFromLineIndex(line, 0)):
-            return True, line
-    return False, None
-
-
 def getItemForDisplayPath(info, displayPath):
     """Info is what the parser provides.
-       displayPath is a list of what displayed in a tree.
-       The method provides the certain item from the info if it is still there
+
+    displayPath is a list of what displayed in a tree.
+    The method provides the certain item from the info if it is still there
     """
     # Ugly but helps to avoid initialization obstacles
     from ui.viewitems import (FunctionItemType, ClassesItemType,

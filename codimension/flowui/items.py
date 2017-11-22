@@ -132,9 +132,7 @@ class CellElement:
                         kindToString(self.kind))
 
     def draw(self, scene, baseX, baseY):
-        """Draws the element on the real canvas
-           in the given rect respecting settings
-        """
+        """Draws the element on the real canvas. Should respect settings."""
         del scene   # unused argument
         del baseX   # unused argument
         del baseY   # unused argument
@@ -229,6 +227,9 @@ class CellElement:
 
     def addCMLIndicator(self, baseX, baseY, penWidth, scene, ref=None):
         """Adds a CML indicator for an item if needed"""
+        if not self.canvas.settings.showCMLIndicator:
+            return
+
         if ref is None:
             hasCML = self.ref.leadingCMLComments or self.ref.sideCMLComments
         else:

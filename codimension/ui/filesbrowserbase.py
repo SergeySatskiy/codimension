@@ -45,9 +45,9 @@ from .findinfiles import FindInFilesDialog
 
 class FilesBrowserSortFilterProxyModel(QSortFilterProxyModel):
 
-    """
-    Files (filesystem and project) browser sort filter proxy model
-    implementation. It allows filtering basing on top level items.
+    """Files (filesystem and project) browser sort filter proxy model.
+
+    It allows filtering basing on top level items.
     """
 
     def __init__(self, isProjectFilter, parent=None):
@@ -142,6 +142,7 @@ class FilesBrowser(QTreeView):
 
     def _resizeColumns(self, index):
         """Resizes the view when items get expanded or collapsed"""
+        del index   # unused argument
         # rowCount = self.model().rowCount()
         self.header().setStretchLastSection(True)
 
@@ -251,7 +252,8 @@ class FilesBrowser(QTreeView):
                 paths.append(treeItem.getPath())
                 self.__getExpanded(srcModel, treeItem, paths)
 
-    def openItem(self, item):
+    @staticmethod
+    def openItem(item):
         """Handles the case when an item is activated"""
         if item.itemType in [GlobalsItemType,
                              ImportsItemType, FunctionsItemType,
@@ -298,7 +300,8 @@ class FilesBrowser(QTreeView):
         path = item.getPath()
         QApplication.clipboard().setText(path)
 
-    def showParsingErrors(self, path):
+    @staticmethod
+    def showParsingErrors(path):
         """Fires the show errors dialog window"""
         try:
             dialog = ParserErrorsDialog(path)
@@ -654,7 +657,7 @@ class FilesBrowser(QTreeView):
 
         # Add those which have been introduced
         for glob in globalsObj:
-            if not glob.name in existingGlobals:
+            if glob.name not in existingGlobals:
                 newItem = TreeViewGlobalItem(treeItem, glob)
                 self.__addTreeItem(treeItem, newItem)
 

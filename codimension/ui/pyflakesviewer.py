@@ -297,9 +297,7 @@ class PyflakesViewer(QObject):
 
     @staticmethod
     def setFlakesWaiting(label):
-        """Displays the appropriate icon that pyflakes is waiting
-           for a time slice to start checking
-        """
+        """Displays the waiting for a time slice to start checking icon"""
         label.setToolTip("File is modified: "
                          "pyflakes is waiting for time slice")
         label.setPixmap(getPixmap('flakesmodified.png'))

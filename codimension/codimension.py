@@ -286,7 +286,8 @@ def processCommandLineArgs(args):
 
 def copySkin():
     """Copies the new system-wide skins to the user settings dir.
-       Tests if the configured skin is in place. Sets the default if not.
+
+    Also tests if the configured skin is in place. Sets the default if not.
     """
     systemWideSkinsDir = srcDir + os.path.sep + "skins" + os.path.sep
     userSkinsDir = os.path.normpath(QDir.homePath()) + \

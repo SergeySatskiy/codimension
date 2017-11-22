@@ -105,9 +105,7 @@ class MainWindowTabWidgetBase():
         return True
 
     def setReloadDialogShown(self, value=True):
-        """Sets the new value of the flag which tells if the reloading
-           dialogue has already been displayed
-        """
+        """Memorizes if the reloading dialogue has already been displayed"""
         pass
 
     def getReloadDialogShown(self):

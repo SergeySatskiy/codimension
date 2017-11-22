@@ -290,9 +290,10 @@ class TextEditorTabWidget(QWidget):
         self.__splitter.splitterMoved.connect(self.flowSplitterMoved)
         Settings().sigFlowSplitterChanged.connect(self.otherFlowSplitterMoved)
 
-    # Arguments: pos, index
-    def flowSplitterMoved(self, _, __):
+    def flowSplitterMoved(self, pos, index):
         """Splitter has been moved"""
+        del pos     # unused argument
+        del index   # unused argument
         Settings()['flowSplitterSizes'] = list(self.__splitter.sizes())
 
     def otherFlowSplitterMoved(self):
@@ -509,9 +510,10 @@ class TextEditorTabWidget(QWidget):
         """Request to reload all the non-modified files"""
         self.reloadAllNonModifiedRequest.emit()
 
-    # Arguments: action
-    def onRunScript(self, _=None):
+    @staticmethod
+    def onRunScript(action=None):
         """Runs the script"""
+        del action  # unused argument
         GlobalData().mainWindow.onRunTab()
 
     @staticmethod
@@ -519,9 +521,10 @@ class TextEditorTabWidget(QWidget):
         """Shows the run parameters dialogue"""
         GlobalData().mainWindow.onRunTabDlg()
 
-    # Arguments: action
-    def onProfileScript(self, _=None):
+    @staticmethod
+    def onProfileScript(action=None):
         """Profiles the script"""
+        del action  # unused argument
         GlobalData().mainWindow.onProfileTab()
 
     @staticmethod
@@ -529,9 +532,10 @@ class TextEditorTabWidget(QWidget):
         """Shows the profile parameters dialogue"""
         GlobalData().mainWindow.onProfileTabDlg()
 
-    # Arguments: action
-    def onDebugScript(self, _=None):
+    @staticmethod
+    def onDebugScript(action=None):
         """Starts debugging"""
+        del action  # unused argument
         GlobalData().mainWindow.onDebugTab()
 
     @staticmethod
@@ -574,7 +578,8 @@ class TextEditorTabWidget(QWidget):
         """Provides the buffer mime"""
         return self.__editor.mime
 
-    def getType(self):
+    @staticmethod
+    def getType():
         """Tells the widget type"""
         return MainWindowTabWidgetBase.PlainTextEditor
 
@@ -637,9 +642,7 @@ class TextEditorTabWidget(QWidget):
         return os.path.exists(self.__fileName)
 
     def setReloadDialogShown(self, value=True):
-        """Sets the new value of the flag which tells if the reloading
-           dialogue has already been displayed
-        """
+        """Memorizes if the reloading dialogue has already been displayed"""
         self.__reloadDlgShown = value
 
     def getReloadDialogShown(self):

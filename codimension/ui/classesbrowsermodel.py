@@ -54,7 +54,7 @@ class ClassesBrowserModel(BrowserModelBase):
                     self.rootItem.appendChild(item)
 
     def __onProjectChanged(self, what):
-        " Triggered when a project is changed"""
+        """Triggered when a project is changed"""
         if what == CodimensionProject.CompleteProject:
             self.__populateModel()
 

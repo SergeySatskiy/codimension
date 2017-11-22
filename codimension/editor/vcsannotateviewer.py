@@ -31,7 +31,6 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.importutils import getImportsList, resolveImports
 from ui.importlist import ImportListWidget
-from autocomplete.bufferutils import isImportLine
 from .texteditor import TextEditor
 
 

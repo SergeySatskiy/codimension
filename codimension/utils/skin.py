@@ -193,7 +193,9 @@ _DEFAULT_CFLOW_SETTINGS = {
     'finallyScopeBGColor': QColor(192, 192, 192, 255),
     'breakBGColor': QColor(144, 202, 249, 255),
     'continueBGColor': QColor(144, 202, 249, 255),
-    'ifBGColor': QColor(255, 229, 127, 255)}
+    'ifBGColor': QColor(255, 229, 127, 255),
+
+    'showCMLIndicator': False}
 
 
 class Skin:

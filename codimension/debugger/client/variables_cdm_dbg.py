@@ -23,9 +23,7 @@
 # Copyright (c) 2016 - 2017 Detlev Offenbach <detlev@die-offenbachs.de>
 #
 
-"""
-Module implementing classes and functions to dump variable contents
-"""
+"""Module implementing classes and functions to dump variable contents"""
 
 #
 # This code was inspired by pydevd.
@@ -44,9 +42,7 @@ TOO_LARGE_ATTRIBUTE = "Too large to be handled"
 
 class BaseResolver(object):
 
-    """
-    Base class of the resolver class tree
-    """
+    """Base class of the resolver class tree"""
 
     def resolve(self, var, attribute):
         """Provides an attribute from a variable"""
@@ -62,9 +58,7 @@ class BaseResolver(object):
 #
 class DefaultResolver(BaseResolver):
 
-    """
-    Class used to resolve the default way
-    """
+    """Class used to resolve the default way"""
 
     def resolve(self, var, attribute):
         """Provides an attribute from a variable"""
@@ -91,9 +85,7 @@ class DefaultResolver(BaseResolver):
 #
 class DictResolver(BaseResolver):
 
-    """
-    Class used to resolve from a dictionary
-    """
+    """Class used to resolve from a dictionary"""
 
     def resolve(self, var, attribute):
         """Provides an attribute from a variable"""
@@ -145,9 +137,7 @@ class DictResolver(BaseResolver):
 #
 class ListResolver(BaseResolver):
 
-    """
-    Class used to resolve from a tuple or list
-    """
+    """Class used to resolve from a tuple or list"""
 
     def resolve(self, var, attribute):
         """Provides an attribute from a variable"""
@@ -183,9 +173,7 @@ class ListResolver(BaseResolver):
 #
 class SetResolver(BaseResolver):
 
-    """
-    Class used to resolve from a set or frozenset
-    """
+    """Class used to resolve from a set or frozenset"""
 
     def resolve(self, var, attribute):
         """Provides an attribute from a variable"""
@@ -228,9 +216,7 @@ class SetResolver(BaseResolver):
 #
 class NdArrayResolver(BaseResolver):
 
-    """
-    Class used to resolve from numpy ndarray including some meta data
-    """
+    """Class used to resolve from numpy ndarray including some meta data"""
 
     @staticmethod
     def __isNumeric(arr):
@@ -309,9 +295,7 @@ class NdArrayResolver(BaseResolver):
 
 class NdArrayItemsContainer:
 
-    """
-    Class to store ndarray items
-    """
+    """Class to store ndarray items"""
 
     pass
 
@@ -321,9 +305,7 @@ class NdArrayItemsContainer:
 #
 class MultiValueDictResolver(DictResolver):
 
-    """
-    Class used to resolve from Django multi value dictionaries
-    """
+    """Class used to resolve from Django multi value dictionaries"""
 
     def resolve(self, var, attribute):
         """Provides an attribute from a variable"""
@@ -365,9 +347,7 @@ class MultiValueDictResolver(DictResolver):
 #
 class ArrayResolver(BaseResolver):
 
-    """
-    Class used to resolve from array.array including some meta data
-    """
+    """Class used to resolve from array.array including some meta data"""
 
     TypeCodeMap = {
         "b": "int (signed char)",
@@ -426,9 +406,7 @@ class ArrayResolver(BaseResolver):
 
 class ArrayItemsContainer:
 
-    """
-    Class to store array.array items
-    """
+    """Class to store array.array items"""
 
     pass
 

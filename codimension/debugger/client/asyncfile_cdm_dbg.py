@@ -32,14 +32,6 @@ from cdm_dbg_utils import prepareJSONMessage
 from protocol_cdm_dbg import METHOD_CLIENT_OUTPUT
 
 
-def AsyncPendingWrite(fileObj):
-    """Checks for data to be written"""
-    try:
-        return fileObj.pendingWrite()
-    except:
-        return 0
-
-
 class AsyncFile(object):
 
     """Wrapps a socket object with a file interface"""

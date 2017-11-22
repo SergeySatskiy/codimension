@@ -226,7 +226,7 @@ class RedirectedIORunWrapper():
                 self.__socket = None
 
     def input(self, prompt, echo):
-        """Implements input() using the redirected input"""
+        """Implements 'input' using the redirected input"""
         sendJSONCommand(self.__socket, METHOD_STDIN, self.__procuuid,
                         {'prompt': prompt, 'echo': echo})
         params = waitForIDEMessage(self.__socket, METHOD_STDIN,

@@ -681,7 +681,8 @@ class DebugClientBase(object):
 
     def __setupStreams(self):
         """Sets up all the required streams"""
-        self.readstream = AsyncFile(self.socket, sys.stdin.mode, sys.stdin.name)
+        self.readstream = AsyncFile(self.socket,
+                                    sys.stdin.mode, sys.stdin.name)
 
         if self.redirect:
             sys.stdout = OutStreamRedirector(self.socket, True, self.procuuid)
