@@ -20,7 +20,7 @@
 
 """Profiler test"""
 # import sys
-#import time
+import time
 
 x = 0
 while False:
