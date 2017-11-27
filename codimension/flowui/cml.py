@@ -45,19 +45,20 @@ class CMLCommentBase:
         # The only first part needs to be checked
         firstPart = self.ref.parts[0]
         # Editor has 0-based lines
-        leftStripped = editor.text(firstPart.beginLine - 1).lstrip()
+        leftStripped = editor.lines[firstPart.beginLine - 1].lstrip()
         return not leftStripped.startswith(firstPart.getContent())
 
     def removeFromText(self, editor):
         """Removes the comment from the code"""
+        # Note: it is supposed that the 'with editor:' is done outside.
+        #       This is because the required changes could be done for more
+        #       than one place.
         if editor is None:
             return
 
         isSideComment = self.__isSideComment(editor)
 
-        editor.beginUndoAction()
         oldLine, oldPos = editor.cursorPosition
-
         line = self.ref.endLine
         while line >= self.ref.beginLine:
             if isSideComment:
@@ -65,12 +66,12 @@ class CMLCommentBase:
                                 "has not been implemented yet")
             else:
                 # Editor has 0-based lines
-                editor.cursorPosition = line - 1, 0
-                editor.deleteLine()
+                del editor.lines[line - 1]
+                if oldLine >= line - 1:
+                    oldLine -= 1
             line -= 1
 
         editor.cursorPosition = oldLine, oldPos
-        editor.endUndoAction()
 
 
 class CMLsw(CMLCommentBase):

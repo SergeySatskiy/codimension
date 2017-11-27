@@ -102,6 +102,7 @@ class CellElement:
 
     def __init__(self, ref, canvas, x, y):
         self.kind = self.UNKNOWN
+        self.subKind = self.UNKNOWN
         self.ref = ref              # reference to the control flow object
         self.addr = [x, y]          # indexes in the current canvas
         self.canvas = canvas        # reference to the canvas
@@ -180,6 +181,10 @@ class CellElement:
         """Sets the editor counterpart"""
         self._editor = editor
 
+    def getEditor(self):
+        """Provides a reference to the editor"""
+        return self._editor
+
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor.
 
@@ -209,6 +214,10 @@ class CellElement:
 
     def isComment(self):
         """True if it is a comment"""
+        return False
+
+    def isDocstring(self):
+        """True if it is a docstring"""
         return False
 
     def getDistance(self, absPos):
@@ -281,7 +290,7 @@ class CellElement:
                 self.setToolTip("<pre>" + escape(displayText) + "</pre>")
         return self._text
 
-    def _getFirstLine(self):
+    def getFirstLine(self):
         """Provides the first line"""
         line = maxsize
         if hasattr(self.ref, "leadingCMLComments"):
@@ -1530,21 +1539,6 @@ class IfCell(CellElement, QGraphicsRectItem):
         """Provides the tooltip"""
         lineRange = self.ref.body.getLineRange()
         return "If at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
-
-    def switchBranches(self):
-        """Switches branches for the if statement"""
-        if self._editor is None:
-            return
-
-        cmlComment = CMLVersion.find(self.ref.leadingCMLComments, CMLsw)
-        if cmlComment is None:
-            # Did not exist, so needs to be generated
-            line = CMLsw.generate(self.ref.body.beginPos)
-            lineNo = self._getFirstLine()
-            self._editor.insertLines(line, lineNo)
-        else:
-            # Existed, so it just needs to be deleted
-            cmlComment.removeFromText(self._editor)
 
 
 def getCommentBoxPath(settings, baseX, baseY, width, height):

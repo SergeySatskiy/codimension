@@ -4,6 +4,8 @@
 * Cosmetic changes (pep8 compatibility)
 * New flow setting to enable CML indicators on the diagram (default: False)
 * Better icon for the 'build imports diagram' buttons/menu items
+* Context menu on the flow UI to switch if branches when many of them are
+  selected
 
 2017 Nov 19 Sergey Satskiy <sergey.satskiy@gmail.com>
 

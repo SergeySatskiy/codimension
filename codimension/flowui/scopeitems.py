@@ -60,6 +60,10 @@ class ScopeCellElement(CellElement):
             self.docstringText = self.ref.docstring.getDisplayValue()
         return self.docstringText
 
+    def isDocstring(self):
+        """True if it is a docstring"""
+        return self.subKind == self.DOCSTRING
+
     def _render(self):
         """Provides rendering for the scope elements"""
         s = self.canvas.settings

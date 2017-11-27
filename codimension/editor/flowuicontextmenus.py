@@ -22,7 +22,9 @@
 
 from ui.qt import QMenu
 from flowui.items import CellElement, IfCell
+from flowui.cml import CMLVersion, CMLsw
 from utils.pixmapcache import getIcon
+from . flowuireplacetextdlg import ReplaceTextDialog
 
 
 class CFSceneContextMenuMixin:
@@ -56,13 +58,13 @@ class CFSceneContextMenuMixin:
         #    getIcon("trash.png"), "Delete (Del)", self.onDelete)
 
         # Non-comment common menu for the individually selected items
-        self.nonCommentCommonMenu = QMenu()
-        # self.nonCommentCommonMenu.addAction(
-        #    getIcon("customcolors.png"), "Custom colors...",
-        #    self.onCustomColors)
-        # self.nonCommentCommonMenu.addAction(
-        #    getIcon("replacetitle.png"), "Replace text...",
-        #    self.onReplaceText)
+        self.nonCommentNonDocCommonMenu = QMenu()
+        self.nonCommentNonDocCommonMenu.addAction(
+            getIcon("customcolors.png"), "Custom colors...",
+            self.onCustomColors)
+        self.nonCommentNonDocCommonMenu.addAction(
+            getIcon("replacetitle.png"), "Replace text...",
+            self.onReplaceText)
 
         # Individual items specific menu: begin
         ifContextMenu = QMenu()
@@ -78,12 +80,9 @@ class CFSceneContextMenuMixin:
         # self.groupMenu.addAction(
         #    getIcon( "cfgroup.png" ), "Group...",
         #    self.onGroup )
-        # self.groupMenu.addAction(
-        #    getIcon( "customcolors.png" ), "Custom colors...",
-        #    self.onCustomColors )
         # self.groupMenu.addSeparator()
-        # self.groupMenu.addAction(
-        #    getIcon( "trash.png" ), "Delete (Del)", self.onDelete )
+        self.groupMenu.addAction(
+            getIcon( "trash.png" ), "Delete (Del)", self.onDelete )
 
     def onContextMenu(self, event):
         """Triggered when a context menu should be shown"""
@@ -106,8 +105,8 @@ class CFSceneContextMenuMixin:
             individualPart = self.individualMenus[type(item)]
             self.menu.addActions(individualPart.actions())
             self.menu.addSeparator()
-        if not item.isComment():
-            self.menu.addActions(self.nonCommentCommonMenu.actions())
+        if not self.isDocOrCommentInSelection():
+            self.menu.addActions(self.nonCommentNonDocCommonMenu.actions())
             self.menu.addSeparator()
         self.menu.addActions(self.commonMenu.actions())
 
@@ -117,6 +116,14 @@ class CFSceneContextMenuMixin:
     def __buildGroupMenu(self, items):
         """Builds a context menu for the group of items"""
         self.menu = QMenu()
+        if type(items[0]) in self.individualMenus:
+            if self.areSelectedOfTypes([[items[0].kind, items[0].subKind]]):
+                individualPart = self.individualMenus[type(items[0])]
+                self.menu.addActions(individualPart.actions())
+                self.menu.addSeparator()
+        if not self.isDocOrCommentInSelection():
+            self.menu.addActions(self.nonCommentNonDocCommonMenu.actions())
+            self.menu.addSeparator()
         self.menu.addActions(self.groupMenu.actions())
 
         # Note: if certain items need to be disabled then it should be done
@@ -125,9 +132,26 @@ class CFSceneContextMenuMixin:
     def onSwitchIfBranch(self):
         """If primitive should switch the branches"""
         selectedItems = self.selectedItems()
-        for item in selectedItems:
-            if item.kind == CellElement.IF:
-                item.switchBranches()
+        if not selectedItems:
+            return
+        editor = selectedItems[0].getEditor()
+        if editor is None:
+            return
+
+        # The selected items need to be sorted in the reverse line no oreder
+        with editor:
+            for item in self.sortSelectedReverse():
+                if item.kind == CellElement.IF:
+                    cmlComment = CMLVersion.find(item.ref.leadingCMLComments,
+                                                 CMLsw)
+                    if cmlComment is None:
+                        # Did not exist, so needs to be generated
+                        line = CMLsw.generate(item.ref.body.beginPos)
+                        lineNo = item.getFirstLine()
+                        editor.insertLines(line, lineNo)
+                    else:
+                        # Existed, so it just needs to be deleted
+                        cmlComment.removeFromText(editor)
 
     def onCustomColors(self):
         """Custom background and foreground colors"""
@@ -135,7 +159,13 @@ class CFSceneContextMenuMixin:
 
     def onReplaceText(self):
         """Replace the code with a title"""
-        print("Replace title")
+        dlg = ReplaceTextDialog(self.parent())
+        if dlg.exec_():
+            replacementText = dlg.text()
+            if replacementText:
+                for item in self.selectedItems():
+                    if not item.isComment():
+                        item.replaceText(replacementText)
 
     def onDelete(self):
         """Delete the item"""
@@ -152,3 +182,62 @@ class CFSceneContextMenuMixin:
     def onCut(self):
         """Cutting..."""
         print("Cut")
+
+    def areSelectedOfTypes(self, matchList):
+        """Checks if the selected items belong to the match"""
+        # match is a list of pairs [kind, subKind]
+        #   None would mean 'match any'
+        selectedItems = self.selectedItems()
+        if selectedItems:
+            for selectedItem in selectedItems:
+                for kind, subKind in matchList:
+                    match = True
+                    if kind is not None:
+                        if kind != selectedItem.kind:
+                            match = False
+                    if subKind is not None:
+                        if subKind != selectedItem.subKind:
+                            match = False
+                    if match:
+                        break
+                else:
+                    return False
+            return True
+        return False
+
+    def isInSelected(self, matchList):
+        """Checks if any if the match list items is in the selection"""
+        # match is a list of pairs [kind, subKind]
+        #   None would mean 'match any'
+        for selectedItem in self.selectedItems():
+            for kind, subKind in matchList:
+                match = True
+                if kind is not None:
+                    if kind != selectedItem.kind:
+                        match = False
+                if subKind is not None:
+                    if subKind != selectedItem.subKind:
+                        match = False
+                if match:
+                    return True
+        return False
+
+    def isDocOrCommentInSelection(self):
+        """True if a docstring item or a comment item in the selection"""
+        for item in self.selectedItems():
+            if item.isComment() or item.isDocstring():
+                return True
+        return False
+
+    def sortSelectedReverse(self):
+        """Sorts the selected items in reverse order"""
+        result = []
+        for item in self.selectedItems():
+            itemBegin = item.ref.body.begin
+            for index in range(len(result)):
+                if itemBegin > result[index].ref.body.begin:
+                    result.insert(index, item)
+                    break
+            else:
+                result.append(item)
+        return result
