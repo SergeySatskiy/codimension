@@ -50,7 +50,7 @@ from PyQt5.QtWidgets import (QApplication, QToolBar, QMenuBar, QLabel,
                              QGraphicsRectItem, QGraphicsPathItem, QSpinBox,
                              QGraphicsItem, QStyleOptionGraphicsItem,
                              QGraphicsView, QGraphicsTextItem, QDockWidget,
-                             QGraphicsPixmapItem)
+                             QGraphicsPixmapItem, QColorDialog)
 from PyQt5.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 from PyQt5.QtSvg import QSvgGenerator, QGraphicsSvgItem
 from PyQt5.QtPrintSupport import QPrinter

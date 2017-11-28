@@ -24,7 +24,8 @@ from ui.qt import QMenu
 from flowui.items import CellElement, IfCell
 from flowui.cml import CMLVersion, CMLsw
 from utils.pixmapcache import getIcon
-from . flowuireplacetextdlg import ReplaceTextDialog
+from .flowuireplacetextdlg import ReplaceTextDialog
+from .customcolordlg import CustomColorsDialog
 
 
 class CFSceneContextMenuMixin:
@@ -82,7 +83,7 @@ class CFSceneContextMenuMixin:
         #    self.onGroup )
         # self.groupMenu.addSeparator()
         self.groupMenu.addAction(
-            getIcon( "trash.png" ), "Delete (Del)", self.onDelete )
+            getIcon("trash.png"), "Delete (Del)", self.onDelete)
 
     def onContextMenu(self, event):
         """Triggered when a context menu should be shown"""
@@ -129,13 +130,19 @@ class CFSceneContextMenuMixin:
         # Note: if certain items need to be disabled then it should be done
         #       here
 
-    def onSwitchIfBranch(self):
-        """If primitive should switch the branches"""
+    def __actionPrerequisites(self):
+        """True if an editor related action can be done"""
         selectedItems = self.selectedItems()
         if not selectedItems:
-            return
+            return False
         editor = selectedItems[0].getEditor()
         if editor is None:
+            return False
+        return True
+
+    def onSwitchIfBranch(self):
+        """If primitive should switch the branches"""
+        if not self.__actionPrerequisites():
             return
 
         # The selected items need to be sorted in the reverse line no oreder
@@ -155,10 +162,22 @@ class CFSceneContextMenuMixin:
 
     def onCustomColors(self):
         """Custom background and foreground colors"""
-        print("Custom colors")
+        if not self.__actionPrerequisites():
+            return
+
+        bgcolor, fgcolor, bordercolor = self.selectedItems()[0].getColors()
+        dlg = CustomColorsDialog(bgcolor, fgcolor, bordercolor, self.parent())
+        if dlg.exec_():
+            print('Colors selected')
+        else:
+            print('Action canceled')
+
 
     def onReplaceText(self):
         """Replace the code with a title"""
+        if not self.__actionPrerequisites():
+            return
+
         dlg = ReplaceTextDialog(self.parent())
         if dlg.exec_():
             replacementText = dlg.text()

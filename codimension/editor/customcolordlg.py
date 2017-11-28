@@ -20,7 +20,8 @@
 """custom colors dialog"""
 
 from ui.qt import (QDialog, QVBoxLayout, QGridLayout, QLabel, QDialogButtonBox,
-                   Qt, QGraphicsRectItem, QPen, QBrush)
+                   Qt, QGraphicsRectItem, QPen, QBrush, QGraphicsScene,
+                   QGraphicsView)
 from ui.colorbutton import ColorButton
 
 
@@ -33,36 +34,36 @@ class CustomColorsDialog(QDialog):
         QDialog.__init__(self, parent)
 
         self.__createLayout()
-        self.__bgColorButton.setColor(bgcolor.name())
+        self.__bgColorButton.setColor(bgcolor)
         self.__bgColorButton.sigColorChanged.connect(self.__onColorChanged)
-        self.__fgColorButton.setColor(fgcolor.name())
+        self.__fgColorButton.setColor(fgcolor)
         self.__fgColorButton.sigColorChanged.connect(self.__onColorChanged)
-        self.__borderColorButton.setColor(bordercolor.name())
+        self.__borderColorButton.setColor(bordercolor)
         self.__borderColorButton.sigColorChanged.connect(self.__onColorChanged)
 
         self.__onColorChanged()
 
     def __createLayout(self):
         """Creates the dialog layout"""
-        self.resize(600, 400)
+        self.resize(400, 200)
         self.setSizeGripEnabled(True)
 
         verticalLayout = QVBoxLayout(self)
         gridLayout = QGridLayout()
 
-        bgLabel = QLabel('Background color:', self)
+        bgLabel = QLabel('Select background color:', self)
         gridLayout.addWidget(bgLabel, 0, 0, 1, 1)
-        self.__bgColorButton = ColorButton('Select')
+        self.__bgColorButton = ColorButton('Select', self)
         gridLayout.addWidget(self.__bgColorButton, 0, 1, 1, 1)
 
-        fgLabel = QLabel('Foreground color:', self)
-        gridLayout.addWidget(fgLabel, 1, 0. 1, 1)
-        self.__fgColorButton = ColorButton('Select')
+        fgLabel = QLabel('Select foreground color:', self)
+        gridLayout.addWidget(fgLabel, 1, 0, 1, 1)
+        self.__fgColorButton = ColorButton('Select', self)
         gridLayout.addWidget(self.__fgColorButton, 1, 1, 1, 1)
 
-        borderLabel = QLabel('Border color:', self)
+        borderLabel = QLabel('Select border color:', self)
         gridLayout.addWidget(borderLabel, 2, 0, 1, 1)
-        self.__borderColorButton = ColorButton('Select')
+        self.__borderColorButton = ColorButton('Select', self)
         gridLayout.addWidget(self.__borderColorButton, 2, 1, 1, 1)
 
         verticalLayout.addLayout(gridLayout)
@@ -93,9 +94,9 @@ class CustomColorsDialog(QDialog):
         height = 40
 
         self.__scene.clear()
-        block = SampleBlock()
+        #block = SampleBlock()
 
-        self.__scene.addItem(block)
+        #self.__scene.addItem(block)
 
     def backgroundColor(self):
         """Provides the background color"""

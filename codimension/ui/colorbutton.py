@@ -51,9 +51,10 @@ class ColorButton(QPushButton):
 
     def onColorPicker(self):
         """Brings up the standard color picking dialog"""
-        dlg = QColorDialog(self)
+        dlg = QColorDialog(self.parent())
+        dlg.setOptions(QColorDialog.DontUseNativeDialog)
         if self.__color:
-            dlg.setCurrentColor(QColor(self.__color))
+            dlg.setCurrentColor(self.__color)
 
         if dlg.exec_():
             self.setColor(dlg.currentColor())

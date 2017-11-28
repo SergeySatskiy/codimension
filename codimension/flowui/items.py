@@ -425,6 +425,11 @@ class CodeBlockCell(CellElement, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def getColors(self):
+        """Provides the item colors"""
+        return self.getCustomColors(self.canvas.settings.boxBGColor,
+                                    self.canvas.settings.boxFGColor)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -462,10 +467,7 @@ class CodeBlockCell(CellElement, QGraphicsRectItem):
         scene.addItem(self)
 
         self.addCMLIndicator(baseX, baseY, penWidth, scene)
-
-        self.__bgColor, self.__fgColor, self.__borderColor = \
-                    self.getCustomColors(settings.boxBGColor,
-                                         settings.boxFGColor)
+        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
@@ -534,6 +536,11 @@ class BreakCell(CellElement, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def getColors(self):
+        """Provides the item colors"""
+        return self.getCustomColors(self.canvas.settings.breakBGColor,
+                                    self.canvas.settings.boxFGColor)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -576,10 +583,7 @@ class BreakCell(CellElement, QGraphicsRectItem):
         scene.addItem(self)
 
         self.addCMLIndicator(baseX, baseY, penWidth, scene)
-
-        self.__bgColor, self.__fgColor, self.__borderColor = \
-                    self.getCustomColors(settings.breakBGColor,
-                                         settings.boxFGColor)
+        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
         """Draws the break statement"""
@@ -638,6 +642,11 @@ class ContinueCell(CellElement, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def getColors(self):
+        """Provides the item colors"""
+        return self.getCustomColors(self.canvas.settings.continueBGColor,
+                                    self.canvas.settings.boxFGColor)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -681,9 +690,7 @@ class ContinueCell(CellElement, QGraphicsRectItem):
         scene.addItem(self)
 
         self.addCMLIndicator(baseX, baseY, penWidth, scene)
-
-        self.__bgColor, self.__fgColor, self.__borderColor = \
-            self.getCustomColors(settings.continueBGColor, settings.boxFGColor)
+        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
         """Draws the break statement"""
@@ -739,6 +746,11 @@ class ReturnCell(CellElement, QGraphicsRectItem):
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def getColors(self):
+        """Provides the item colors"""
+        return self.getCustomColors(self.canvas.settings.boxBGColor,
+                                    self.canvas.settings.boxFGColor)
 
     def _getText(self):
         """Provides the text"""
@@ -799,9 +811,7 @@ class ReturnCell(CellElement, QGraphicsRectItem):
         scene.addItem(self.arrowItem)
 
         self.addCMLIndicator(baseX, baseY, penWidth, scene)
-
-        self.__bgColor, self.__fgColor, self.__borderColor = \
-            self.getCustomColors(settings.boxBGColor, settings.boxFGColor)
+        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
@@ -891,6 +901,11 @@ class RaiseCell(CellElement, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def getColors(self):
+        """Provides the item colors"""
+        return self.getCustomColors(self.canvas.settings.boxBGColor,
+                                    self.canvas.settings.boxFGColor)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -936,9 +951,7 @@ class RaiseCell(CellElement, QGraphicsRectItem):
         scene.addItem(self.arrowItem)
 
         self.addCMLIndicator(baseX, baseY, penWidth, scene)
-
-        self.__bgColor, self.__fgColor, self.__borderColor = \
-            self.getCustomColors(settings.boxBGColor, settings.boxFGColor)
+        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
         """Draws the raise statement"""
@@ -1028,6 +1041,11 @@ class AssertCell(CellElement, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def getColors(self):
+        """Provides the item colors"""
+        return self.getCustomColors(self.canvas.settings.boxBGColor,
+                                    self.canvas.settings.boxFGColor)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -1081,9 +1099,7 @@ class AssertCell(CellElement, QGraphicsRectItem):
         scene.addItem(self.arrowItem)
 
         self.addCMLIndicator(baseX, baseY, penWidth, scene)
-
-        self.__bgColor, self.__fgColor, self.__borderColor = \
-            self.getCustomColors(settings.boxBGColor, settings.boxFGColor)
+        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
@@ -1184,6 +1200,11 @@ class SysexitCell(CellElement, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def getColors(self):
+        """Provides the item colors"""
+        return self.getCustomColors(self.canvas.settings.boxBGColor,
+                                    self.canvas.settings.boxFGColor)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -1230,9 +1251,7 @@ class SysexitCell(CellElement, QGraphicsRectItem):
         scene.addItem(self.xItem)
 
         self.addCMLIndicator(baseX, baseY, penWidth, scene)
-
-        self.__bgColor, self.__fgColor, self.__borderColor = \
-            self.getCustomColors(settings.boxBGColor, settings.boxFGColor)
+        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
         """Draws the sys.exit call"""
@@ -1305,6 +1324,11 @@ class ImportCell(CellElement, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def getColors(self):
+        """Provides the item colors"""
+        return self.getCustomColors(self.canvas.settings.boxBGColor,
+                                    self.canvas.settings.boxFGColor)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -1349,9 +1373,7 @@ class ImportCell(CellElement, QGraphicsRectItem):
         scene.addItem(self.arrowItem)
 
         self.addCMLIndicator(baseX, baseY, penWidth, scene)
-
-        self.__bgColor, self.__fgColor, self.__borderColor = \
-            self.getCustomColors(settings.boxBGColor, settings.boxFGColor)
+        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
         """Draws the import statement"""
@@ -1417,6 +1439,11 @@ class IfCell(CellElement, QGraphicsRectItem):
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def getColors(self):
+        """Provides the item colors"""
+        return self.getCustomColors(self.canvas.settings.ifBGColor,
+                                    self.canvas.settings.boxFGColor)
 
     def render(self):
         """Renders the cell"""
@@ -1494,9 +1521,7 @@ class IfCell(CellElement, QGraphicsRectItem):
         scene.addItem(self)
 
         self.addCMLIndicator(baseX, baseY, penWidth, scene)
-
-        self.__bgColor, self.__fgColor, self.__borderColor = \
-            self.getCustomColors(settings.ifBGColor, settings.boxFGColor)
+        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
         """Draws the code block"""

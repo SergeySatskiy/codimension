@@ -54,15 +54,15 @@ class ScopeCellElement(CellElement):
         self.scene = None
         self.__sideCommentPath = None
 
+        self.__bgColor = None
+        self.__fgColor = None
+        self.__borderColor = None
+
     def getDocstringText(self):
         """Provides the docstring text"""
         if self.docstringText is None:
             self.docstringText = self.ref.docstring.getDisplayValue()
         return self.docstringText
-
-    def isDocstring(self):
-        """True if it is a docstring"""
-        return self.subKind == self.DOCSTRING
 
     def _render(self):
         """Provides rendering for the scope elements"""
@@ -278,14 +278,19 @@ class ScopeCellElement(CellElement):
                 baseX - s.rectRadius - s.hCellPadding,
                 baseY - penWidth, penWidth, scene, self.ref.docstring)
 
+    def getColors(self):
+        """Provides the item colors"""
+        return self.__bgColor, self.__fgColor, self.__borderColor
+
     def _paint(self, painter, option, widget):
         """Draws the corresponding scope element"""
         s = self.canvas.settings
 
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            bgColor, _, borderColor = self.getCustomColors(
-                painter.brush().color(), painter.brush().color())
-            brush = QBrush(bgColor)
+            self.__bgColor, self.__fgColor, self.__borderColor = \
+                self.getCustomColors(painter.brush().color(),
+                                     painter.brush().color())
+            brush = QBrush(self.__bgColor)
             painter.setBrush(brush)
 
             if self.isSelected():
@@ -294,7 +299,7 @@ class ScopeCellElement(CellElement):
                 selectPen.setJoinStyle(Qt.RoundJoin)
                 painter.setPen(selectPen)
             else:
-                pen = QPen(borderColor)
+                pen = QPen(self.__borderColor)
                 pen.setWidth(s.lineWidth)
                 painter.setPen(pen)
 
@@ -305,12 +310,12 @@ class ScopeCellElement(CellElement):
                                     s.rectRadius, s.rectRadius)
 
         elif self.subKind == ScopeCellElement.DECLARATION:
-            bgColor, fgColor, borderColor = self.getCustomColors(
-                painter.brush().color(), s.boxFGColor)
-            brush = QBrush(bgColor)
+            self.__bgColor, self.__fgColor, self.__borderColor = \
+                self.getCustomColors(painter.brush().color(), s.boxFGColor)
+            brush = QBrush(self.__bgColor)
             painter.setBrush(brush)
 
-            pen = QPen(fgColor)
+            pen = QPen(self.__fgColor)
             painter.setFont(s.monoFont)
             painter.setPen(pen)
             canvasLeft = self.baseX - s.rectRadius
@@ -324,7 +329,7 @@ class ScopeCellElement(CellElement):
                              self._headerRect.width(), textHeight,
                              Qt.AlignLeft, self._getText())
 
-            pen = QPen(borderColor)
+            pen = QPen(self.__borderColor)
             pen.setWidth(s.lineWidth)
             painter.setPen(pen)
 
@@ -372,18 +377,18 @@ class ScopeCellElement(CellElement):
                              self._sideCommentRect.height(),
                              Qt.AlignLeft, self._getSideComment())
         elif self.subKind == ScopeCellElement.DOCSTRING:
-            bgColor, fgColor, borderColor = self.getCustomColors(
-                painter.brush().color(), s.boxFGColor)
+            self.__bgColor, self.__fgColor, self.__borderColor = \
+                self.getCustomColors(painter.brush().color(), s.boxFGColor)
             if self.ref.docstring.leadingCMLComments:
                 colorSpec = CMLVersion.find(
                     self.ref.docstring.leadingCMLComments, CMLcc)
                 if colorSpec:
                     if colorSpec.bg:
-                        bgColor = colorSpec.bg
+                        self.__bgColor = colorSpec.bg
                     if colorSpec.fg:
-                        fgColor = colorSpec.fg
+                        self.__fgColor = colorSpec.fg
 
-            brush = QBrush(bgColor)
+            brush = QBrush(self.__bgColor)
             painter.setBrush(brush)
 
             canvasLeft = self.baseX - s.rectRadius
@@ -406,7 +411,7 @@ class ScopeCellElement(CellElement):
                     correction = s.selectPenWidth - 1
 
                 # The background could also be custom
-                pen = QPen(bgColor)
+                pen = QPen(self.__bgColor)
                 pen.setWidth(s.lineWidth)
                 pen.setJoinStyle(Qt.MiterJoin)
                 painter.setPen(pen)
@@ -421,7 +426,7 @@ class ScopeCellElement(CellElement):
                                  2.0 * float(s.hCellPadding) - 2.0 * dsCorr,
                                  self.height - 2 * s.lineWidth)
 
-                pen = QPen(borderColor)
+                pen = QPen(self.__borderColor)
                 pen.setWidth(s.lineWidth)
                 painter.setPen(pen)
                 painter.drawLine(canvasLeft + correction,
@@ -430,7 +435,7 @@ class ScopeCellElement(CellElement):
                                  2 * s.hCellPadding - correction,
                                  self.baseY + self.height)
 
-            pen = QPen(fgColor)
+            pen = QPen(self.__fgColor)
             painter.setFont(s.monoFont)
             painter.setPen(pen)
             painter.drawText(canvasLeft + s.hHeaderPadding,
@@ -462,6 +467,10 @@ class ScopeCellElement(CellElement):
     def isComment(self):
         """True if it is a comment"""
         return self.subKind == self.SIDE_COMMENT
+
+    def isDocstring(self):
+        """True if it is a docstring"""
+        return self.subKind == self.DOCSTRING
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
