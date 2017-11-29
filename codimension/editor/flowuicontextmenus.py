@@ -22,7 +22,7 @@
 
 from ui.qt import QMenu
 from flowui.items import CellElement, IfCell
-from flowui.cml import CMLVersion, CMLsw
+from flowui.cml import CMLVersion, CMLsw, CMLcc
 from utils.pixmapcache import getIcon
 from .flowuireplacetextdlg import ReplaceTextDialog
 from .customcolordlg import CustomColorsDialog
@@ -146,6 +146,7 @@ class CFSceneContextMenuMixin:
             return
 
         # The selected items need to be sorted in the reverse line no oreder
+        editor = selectedItems[0].getEditor()
         with editor:
             for item in self.sortSelectedReverse():
                 if item.kind == CellElement.IF:
@@ -167,11 +168,25 @@ class CFSceneContextMenuMixin:
 
         bgcolor, fgcolor, bordercolor = self.selectedItems()[0].getColors()
         dlg = CustomColorsDialog(bgcolor, fgcolor, bordercolor, self.parent())
+        bgcolor = dlg.backgroundColor()
+        fgcolor = dlg.foregroundColor()
+        bordercolor = dlg.borderColor()
         if dlg.exec_():
-            print('Colors selected')
-        else:
-            print('Action canceled')
+            editor = selectedItems[0].getEditor()
+            with editor:
+                for item in self.sortSelectedReverse():
+                    cmlComment = CMLVersion.find(item.ref.leadingCMLComments,
+                                                 CMLcc)
+                    if cmlComment is not None:
+                        # Existed, so remove the old one first
+                        lineNo = cmlComment.ref.beginLine
+                        cmlComment.removeFromText(editor)
+                    else:
+                        lineNo = item.getFirstLine()
 
+                    line = CMLcc.generate(bgcolor, fgcolor, bordercolor,
+                                          item.ref.body.beginPos)
+                    editor.insertLines(line, lineNo)
 
     def onReplaceText(self):
         """Replace the code with a title"""

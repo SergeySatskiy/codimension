@@ -22,7 +22,7 @@
 from sys import maxsize
 from ui.qt import (QDialog, QVBoxLayout, QGridLayout, QLabel, QDialogButtonBox,
                    Qt, QGraphicsRectItem, QPen, QBrush, QGraphicsScene,
-                   QGraphicsView)
+                   QGraphicsView, QTimer)
 from ui.colorbutton import ColorButton
 from flowui.cflowsettings import getCflowSettings
 
@@ -34,6 +34,7 @@ class CustomColorsDialog(QDialog):
     def __init__(self, bgcolor, fgcolor, bordercolor, parent=None):
         """colors are instances of QColor"""
         QDialog.__init__(self, parent)
+        self.setWindowTitle('Custom colors')
 
         self.__createLayout()
         self.__bgColorButton.setColor(bgcolor)
@@ -43,14 +44,17 @@ class CustomColorsDialog(QDialog):
         self.__borderColorButton.setColor(bordercolor)
         self.__borderColorButton.sigColorChanged.connect(self.__onColorChanged)
 
-        self.__onColorChanged()
+        QTimer.singleShot(1, self.__onColorChanged)
 
     def __createLayout(self):
         """Creates the dialog layout"""
-        self.resize(400, 200)
-        # self.setSizeGripEnabled(True)
+        self.setMinimumWidth(300)
+        self.setMinimumHeight(200)
+        self.resize(300, 200)
+        self.setSizeGripEnabled(True)
 
         verticalLayout = QVBoxLayout(self)
+        verticalLayout.setContentsMargins(5, 5, 5, 5)
         gridLayout = QGridLayout()
 
         bgLabel = QLabel('Select background color:', self)
@@ -75,7 +79,6 @@ class CustomColorsDialog(QDialog):
         self.__view = QGraphicsView()
         self.__view.setScene(self.__scene)
         verticalLayout.addWidget(self.__view)
-        #self.__scene.setSceneRect(0, 0, 300, 100)
 
         # Buttons at the bottom
         buttonBox = QDialogButtonBox(self)
@@ -89,18 +92,25 @@ class CustomColorsDialog(QDialog):
 
     def __onColorChanged(self):
         """The user changed the color so redraw the sample"""
+        viewWidth = self.__view.width()
+        viewHeight = self.__view.height()
+
         self.__scene.clear()
+        # without '-4' scrollbar will appear
+        self.__scene.setSceneRect(0, 0, viewWidth - 4, viewHeight - 4)
         block = SampleBlock(getCflowSettings(self),
                             self.backgroundColor(),
                             self.foreroundColor(),
-                            self.borderColor())
+                            self.borderColor(),
+                            viewWidth, viewHeight)
         self.__scene.addItem(block)
+        self.__scene.update()
 
     def backgroundColor(self):
         """Provides the background color"""
         return self.__bgColorButton.color()
 
-    def foreroundColor(self):
+    def foregroundColor(self):
         """Provides the foreground color"""
         return self.__fgColorButton.color()
 
@@ -113,36 +123,35 @@ class SampleBlock(QGraphicsRectItem):
 
     """Sample block"""
 
-    def __init__(self, settings, bgColor, fgColor, borderColor, parent=None):
-        QGraphicsRectItem.__init__(self, parent)
+    def __init__(self, settings, bgColor, fgColor, borderColor, width, height):
+        QGraphicsRectItem.__init__(self)
         self.__settings = settings
         self.__bgColor = bgColor
         self.__fgColor = fgColor
         self.__borderColor = borderColor
-
-        self.baseX = 0
-        self.baseY = 0
+        self.__viewWidth = width
+        self.__viewHeight = height
 
         self.__textRect = self.__settings.monoFontMetrics.boundingRect(
             0, 0, maxsize, maxsize, 0, 'Sample')
-        vPadding = 2 * (settings.vCellPadding + settings.vTextPadding)
-        self.minHeight = self.__textRect.height() + vPadding
-        hPadding = 2 * (settings.hCellPadding + settings.hTextPadding)
-        self.minWidth = max(self.__textRect.width() + hPadding,
-                            settings.minWidth)
+
+
+        vPadding = 2 * settings.vTextPadding
+        self.__rectHeight = self.__textRect.height() + vPadding
+        hPadding = 2 * settings.hTextPadding
+        self.__rectWidth = max(self.__textRect.width() + hPadding,
+                               settings.minWidth)
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
-        rectWidth = self.minWidth - 2 * self.__settings.hCellPadding
-        rectHeight = self.minHeight - 2 * self.__settings.vCellPadding
+        baseX = (self.__viewWidth - self.__rectWidth) / 2
+        baseY = (self.__viewHeight - self.__rectHeight) / 2
 
         pen = QPen(self.__borderColor)
         painter.setPen(pen)
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
-        painter.drawRect(self.baseX + self.__settings.hCellPadding,
-                         self.baseY + self.__settings.vCellPadding,
-                         rectWidth, rectHeight)
+        painter.drawRect(baseX, baseY, self.__rectWidth, self.__rectHeight)
 
         # Draw the text in the rectangle
         pen = QPen(self.__fgColor)
@@ -150,10 +159,8 @@ class SampleBlock(QGraphicsRectItem):
         painter.setPen(pen)
 
         textWidth = self.__textRect.width() + 2 * self.__settings.hTextPadding
-        textShift = (rectWidth - textWidth) / 2
-        painter.drawText(
-            self.baseX + self.__settings.hCellPadding +
-            self.__settings.hTextPadding + textShift,
-            self.baseY + self.__settings.vCellPadding + self.__settings.vTextPadding,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, 'Sample')
+        textShift = (self.__rectWidth - textWidth) / 2
+        painter.drawText(baseX + self.__settings.hTextPadding + textShift,
+                         baseY + self.__settings.vTextPadding,
+                         self.__textRect.width(), self.__textRect.height(),
+                         Qt.AlignLeft, 'Sample')
