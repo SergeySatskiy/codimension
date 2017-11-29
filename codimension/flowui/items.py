@@ -259,10 +259,10 @@ class CellElement:
             if colorSpec:
                 bg = defaultBG
                 fg = defaultFG
-                if colorSpec.bg:
-                    bg = colorSpec.bg
-                if colorSpec.fg:
-                    fg = colorSpec.fg
+                if colorSpec.bgColor:
+                    bg = colorSpec.bgColor
+                if colorSpec.fgColor:
+                    fg = colorSpec.fgColor
                 if colorSpec.border:
                     border = colorSpec.border
                 else:

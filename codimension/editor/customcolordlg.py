@@ -100,7 +100,7 @@ class CustomColorsDialog(QDialog):
         self.__scene.setSceneRect(0, 0, viewWidth - 4, viewHeight - 4)
         block = SampleBlock(getCflowSettings(self),
                             self.backgroundColor(),
-                            self.foreroundColor(),
+                            self.foregroundColor(),
                             self.borderColor(),
                             viewWidth, viewHeight)
         self.__scene.addItem(block)
