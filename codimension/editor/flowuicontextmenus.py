@@ -319,9 +319,15 @@ class CFSceneContextMenuMixin:
         """Counts items with have a certain type of a CML comment"""
         count = 0
         for item in self.selectedItems():
-            if CMLVersion.find(item.ref.leadingCMLComments,
-                               cmlType) is not None:
-                count += 1
+            if hasattr(item.ref, 'leadingCMLComments'):
+                if CMLVersion.find(item.ref.leadingCMLComments,
+                                   cmlType) is not None:
+                    count += 1
+                    continue
+            if hasattr(item.ref, 'sideCMLComments'):
+                if CMLVersion.find(item.ref.sideCMLComments,
+                                   cmlType) is not None:
+                    count += 1
         return count
 
     def sortSelectedReverse(self):
