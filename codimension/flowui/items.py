@@ -275,8 +275,7 @@ class CellElement:
         if hasattr(self.ref, "leadingCMLComments"):
             rt = CMLVersion.find(self.ref.leadingCMLComments, CMLrt)
             if rt:
-                if rt.text is not None:
-                    return rt.text.replace('\\n', '\n')
+                return rt.getText()
         return None
 
     def _getText(self):

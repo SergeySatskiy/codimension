@@ -26,6 +26,43 @@ from cdmcfparser import (IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT,
 from utils.colorfont import buildColor
 
 
+def escapeCMLTextValue(src):
+    """Escapes the string before inserting it to the code (CML value)"""
+    dst = ''
+    for char in src:
+        if char == '\n':
+            dst += '\\n'
+        elif char in ('"', '\\'):
+            dst += '\\' + char
+        else:
+            dst += char
+    return dst
+
+
+def unescapeCMLTextValue(src):
+    """Removes escaping from the value received from the code"""
+    dst = ''
+    lastIndex = len(src) - 1
+    index = 0
+    while index <= lastIndex:
+        if src[index] == '\\' and index < lastIndex:
+            if src[index + 1] == '\\':
+                dst += '\\'
+                index += 1
+            elif src[index + 1] == 'n':
+                dst += '\n'
+                index += 1
+            elif src[index + 1] == '"':
+                dst += '"'
+                index += 1
+            else:
+                dst += '\\'     # forgiving the other escape characters
+        else:
+            dst += src[index]
+        index += 1
+    return dst
+
+
 class CMLCommentBase:
 
     """Base class for all the CML comments"""
@@ -222,8 +259,14 @@ class CMLrt(CMLCommentBase):
         """Generates a complete line to be inserted"""
         res = " " * (pos - 1) + "# cml 1 rt"
         if txt is not None:
-            res += " text=\"" + txt.replace('"', '\\"') + "\""
+            res += " text=\"" + escapeCMLTextValue(txt) + "\""
         return res
+
+    def getText(self):
+        """Provides unescaped text"""
+        if self.text is None:
+            return None
+        return unescapeCMLTextValue(self.text)
 
 
 class CMLVersion:

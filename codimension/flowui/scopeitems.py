@@ -115,6 +115,7 @@ class ScopeCellElement(CellElement):
                     self.minWidth += s.hHeaderPadding
             else:
                 self.minWidth += s.hHeaderPadding
+            self.minWidth = max(self.minWidth, s.minWidth)
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             self._sideCommentRect = self.getBoundingRect(
                 self._getSideComment())
@@ -383,10 +384,10 @@ class ScopeCellElement(CellElement):
                 colorSpec = CMLVersion.find(
                     self.ref.docstring.leadingCMLComments, CMLcc)
                 if colorSpec:
-                    if colorSpec.bg:
-                        self.__bgColor = colorSpec.bg
-                    if colorSpec.fg:
-                        self.__fgColor = colorSpec.fg
+                    if colorSpec.bgColor:
+                        self.__bgColor = colorSpec.bgColor
+                    if colorSpec.fgColor:
+                        self.__fgColor = colorSpec.fgColor
 
             brush = QBrush(self.__bgColor)
             painter.setBrush(brush)

@@ -195,23 +195,32 @@ class CFSceneContextMenuMixin:
             return
 
         dlg = ReplaceTextDialog(self.parent())
+
+        # If it was one item selection and there was a previous text then
+        # set it for editing
+        if len(self.selectedItems()) == 1:
+            cmlComment = CMLVersion.find(
+                self.selectedItems()[0].ref.leadingCMLComments, CMLrt)
+            if cmlComment is not None:
+                dlg.setText(
+                    cmlComment.text.replace('\\n', '\n').replace('\\\\','\\'))
+
         if dlg.exec_():
             replacementText = dlg.text()
-            if replacementText:
-                editor = self.selectedItems()[0].getEditor()
-                with editor:
-                    for item in self.sortSelectedReverse():
-                        cmlComment = CMLVersion.find(
-                            item.ref.leadingCMLComments, CMLrt)
-                        if cmlComment is not None:
-                            # Existed, so remove the old one first
-                            lineNo = cmlComment.ref.beginLine
-                            cmlComment.removeFromText(editor)
-                        else:
-                            lineNo = item.getFirstLine()
+            editor = self.selectedItems()[0].getEditor()
+            with editor:
+                for item in self.sortSelectedReverse():
+                    cmlComment = CMLVersion.find(
+                        item.ref.leadingCMLComments, CMLrt)
+                    if cmlComment is not None:
+                        # Existed, so remove the old one first
+                        lineNo = cmlComment.ref.beginLine
+                        cmlComment.removeFromText(editor)
+                    else:
+                        lineNo = item.getFirstLine()
 
-                        line = CMLrt.generate(replacementText,
-                                              item.ref.body.beginPos)
+                    line = CMLrt.generate(replacementText,
+                                          item.ref.body.beginPos)
                     editor.insertLines(line, lineNo)
 
     def onDelete(self):

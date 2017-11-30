@@ -57,6 +57,10 @@ class ReplaceTextDialog(QDialog):
 
         self.__newCaption.setFocus()
 
+    def setText(self, txt):
+        """Sets the text to be edited"""
+        self.__newCaption.setPlainText(txt)
+
     def text(self):
         """Provides the new text"""
         return self.__newCaption.toPlainText()
