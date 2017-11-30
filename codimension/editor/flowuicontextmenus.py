@@ -50,22 +50,27 @@ class CFSceneContextMenuMixin:
 
         # Common menu for all the individually selected items
         self.commonMenu = QMenu()
-        # self.commonMenu.addAction(
-        #    getIcon("cutmenu.png"), "Cut (Ctrl+X)", self.onCut)
-        # self.commonMenu.addAction(
-        #    getIcon("copymenu.png"), "Copy (Ctrl+C)", self.onCopy)
-        # self.commonMenu.addSeparator()
-        # self.commonMenu.addAction(
-        #    getIcon("trash.png"), "Delete (Del)", self.onDelete)
-
-        # Non-comment common menu for the individually selected items
-        self.nonCommentNonDocCommonMenu = QMenu()
-        self.nonCommentNonDocCommonMenu.addAction(
+        self.__ccAction = self.commonMenu.addAction(
             getIcon("customcolors.png"), "Custom colors...",
             self.onCustomColors)
-        self.nonCommentNonDocCommonMenu.addAction(
+        self.__rtAction = self.commonMenu.addAction(
             getIcon("replacetitle.png"), "Replace text...",
             self.onReplaceText)
+        self.commonMenu.addSeparator()
+        self.__removeCCAction = self.commonMenu.addAction(
+            getIcon('trash.png'), 'Remove custom colors',
+            self.onRemoveCustomColors)
+        self.__removeRTAction = self.commonMenu.addAction(
+            getIcon('trash.png'), 'Remove replacement text',
+            self.onRemoveReplacementText)
+        self.commonMenu.addSeparator()
+        self.__cutAction = self.commonMenu.addAction(
+            getIcon("cutmenu.png"), "Cut", self.onCut)
+        self.__copyAction = self.commonMenu.addAction(
+            getIcon("copymenu.png"), "Copy", self.onCopy)
+        self.commonMenu.addSeparator()
+        self.commonMenu.addAction(
+            getIcon("trash.png"), "Delete", self.onDelete)
 
         # Individual items specific menu: begin
         ifContextMenu = QMenu()
@@ -78,12 +83,9 @@ class CFSceneContextMenuMixin:
 
         # Menu for a group of selected items
         self.groupMenu = QMenu()
-        # self.groupMenu.addAction(
-        #    getIcon( "cfgroup.png" ), "Group...",
-        #    self.onGroup )
-        # self.groupMenu.addSeparator()
-        self.groupMenu.addAction(
-            getIcon("trash.png"), "Delete (Del)", self.onDelete)
+        self.__groupAction = self.groupMenu.addAction(
+            getIcon("cfgroup.png"), "Group...",
+            self.onGroup)
 
     def onContextMenu(self, event):
         """Triggered when a context menu should be shown"""
@@ -106,13 +108,11 @@ class CFSceneContextMenuMixin:
             individualPart = self.individualMenus[type(item)]
             self.menu.addActions(individualPart.actions())
             self.menu.addSeparator()
-        if not self.isDocOrCommentInSelection():
-            self.menu.addActions(self.nonCommentNonDocCommonMenu.actions())
-            self.menu.addSeparator()
         self.menu.addActions(self.commonMenu.actions())
 
         # Note: if certain items need to be disabled then it should be done
         #       here
+        self.__disableMenuItems()
 
     def __buildGroupMenu(self, items):
         """Builds a context menu for the group of items"""
@@ -122,13 +122,29 @@ class CFSceneContextMenuMixin:
                 individualPart = self.individualMenus[type(items[0])]
                 self.menu.addActions(individualPart.actions())
                 self.menu.addSeparator()
-        if not self.isDocOrCommentInSelection():
-            self.menu.addActions(self.nonCommentNonDocCommonMenu.actions())
-            self.menu.addSeparator()
+        self.menu.addActions(self.commonMenu.actions())
+        self.menu.addSeparator()
         self.menu.addActions(self.groupMenu.actions())
 
         # Note: if certain items need to be disabled then it should be done
         #       here
+        self.__groupAction.setEnabled(False)
+        self.__disableMenuItems()
+
+    def __disableMenuItems(self):
+        """Disables the common menu items as needed"""
+        hasComment = self.isCommentInSelection()
+        hasDocstring = self.isDocstringInSelection()
+        count = len(self.selectedItems())
+
+        self.__ccAction.setEnabled(not hasComment)
+        self.__rtAction.setEnabled(not hasComment and not hasDocstring)
+        self.__removeCCAction.setEnabled(
+            self.countItemsWithCML(CMLcc) == count)
+        self.__removeRTAction.setEnabled(
+            self.countItemsWithCML(CMLrt) == count)
+        self.__cutAction.setEnabled(count == 1)
+        self.__copyAction.setEnabled(count == 1)
 
     def __actionPrerequisites(self):
         """True if an editor related action can be done"""
@@ -202,8 +218,7 @@ class CFSceneContextMenuMixin:
             cmlComment = CMLVersion.find(
                 self.selectedItems()[0].ref.leadingCMLComments, CMLrt)
             if cmlComment is not None:
-                dlg.setText(
-                    cmlComment.text.replace('\\n', '\n').replace('\\\\','\\'))
+                dlg.setText(cmlComment.getText())
 
         if dlg.exec_():
             replacementText = dlg.text()
@@ -239,6 +254,14 @@ class CFSceneContextMenuMixin:
         """Cutting..."""
         print("Cut")
 
+    def onRemoveCustomColors(self):
+        """Removing the previously set custom colors"""
+        print("Remove custom colors")
+
+    def onRemoveReplacementText(self):
+        """Removing replacement text"""
+        print("Remove replacement text")
+ 
     def areSelectedOfTypes(self, matchList):
         """Checks if the selected items belong to the match"""
         # match is a list of pairs [kind, subKind]
@@ -278,12 +301,28 @@ class CFSceneContextMenuMixin:
                     return True
         return False
 
-    def isDocOrCommentInSelection(self):
-        """True if a docstring item or a comment item in the selection"""
+    def isDocstringInSelection(self):
+        """True if a docstring item in the selection"""
         for item in self.selectedItems():
-            if item.isComment() or item.isDocstring():
+            if item.isDocstring():
                 return True
         return False
+
+    def isCommentInSelection(self):
+        """True if a comment item in the selection"""
+        for item in self.selectedItems():
+            if item.isComment():
+                return True
+        return False
+
+    def countItemsWithCML(self, cmlType):
+        """Counts items with have a certain type of a CML comment"""
+        count = 0
+        for item in self.selectedItems():
+            if CMLVersion.find(item.ref.leadingCMLComments,
+                               cmlType) is not None:
+                count += 1
+        return count
 
     def sortSelectedReverse(self):
         """Sorts the selected items in reverse order"""
