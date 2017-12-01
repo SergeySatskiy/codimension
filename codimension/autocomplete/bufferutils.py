@@ -265,6 +265,7 @@ def getContext(editor, info=None,
             break
 
         text = editor.lines[currentLine]
+        textLen = len(text)
         trimmedText = text.strip()
         if not continueLine:
             if trimmedText == "" or trimmedText.startswith("#"):
@@ -277,7 +278,7 @@ def getContext(editor, info=None,
                 return context
 
         if trimmedText.endswith(",") or trimmedText.endswith('\\') or \
-           editor.isStringLiteral(currentLine, len(text) - 1):
+           (textLen > 0 and editor.isStringLiteral(currentLine, textLen - 1)):
             continueLine = True
         else:
             continueLine = False

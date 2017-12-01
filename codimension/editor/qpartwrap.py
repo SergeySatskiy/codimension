@@ -392,11 +392,19 @@ class QutepartWrapper(Qutepart):
         """True if it is a string literal"""
         if self._highlighter is None:
             return False
+        if pos < 0:
+            # May happened if the line is empty
+            return False
+
         block = self.document().findBlockByNumber(line)
         data = block.userData()
         if data is None:
             return False
-        return self._highlighter._syntax._getTextType(data.data, pos) == 's'
+        try:
+            return self._highlighter._syntax._getTextType(data.data,
+                                                          pos) == 's'
+        except IndexError:
+            return False
 
     # Search supporting members
 

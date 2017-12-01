@@ -192,8 +192,13 @@ class CFSceneContextMenuMixin:
             editor = self.selectedItems()[0].getEditor()
             with editor:
                 for item in self.sortSelectedReverse():
-                    cmlComment = CMLVersion.find(item.ref.leadingCMLComments,
-                                                 CMLcc)
+                    if item.isDocstring():
+                        cmlComment = CMLVersion.find(
+                            item.ref.docstring.leadingCMLComments,
+                            CMLcc)
+                    else:
+                        cmlComment = CMLVersion.find(
+                            item.ref.leadingCMLComments, CMLcc)
                     if cmlComment is not None:
                         # Existed, so remove the old one first
                         lineNo = cmlComment.ref.beginLine
@@ -256,12 +261,34 @@ class CFSceneContextMenuMixin:
 
     def onRemoveCustomColors(self):
         """Removing the previously set custom colors"""
-        print("Remove custom colors")
+        if not self.__actionPrerequisites():
+            return
+
+        editor = self.selectedItems()[0].getEditor()
+        with editor:
+            for item in self.sortSelectedReverse():
+                if item.isDocstring():
+                    cmlComment = CMLVersion.find(
+                        item.ref.docstring.leadingCMLComments, CMLcc)
+                else:
+                    cmlComment = CMLVersion.find(
+                        item.ref.leadingCMLComments, CMLcc)
+                if cmlComment is not None:
+                    cmlComment.removeFromText(editor)
 
     def onRemoveReplacementText(self):
         """Removing replacement text"""
-        print("Remove replacement text")
- 
+        if not self.__actionPrerequisites():
+            return
+
+        editor = self.selectedItems()[0].getEditor()
+        with editor:
+            for item in self.sortSelectedReverse():
+                cmlComment = CMLVersion.find(item.ref.leadingCMLComments,
+                                             CMLrt)
+                if cmlComment is not None:
+                    cmlComment.removeFromText(editor)
+
     def areSelectedOfTypes(self, matchList):
         """Checks if the selected items belong to the match"""
         # match is a list of pairs [kind, subKind]
@@ -319,6 +346,14 @@ class CFSceneContextMenuMixin:
         """Counts items with have a certain type of a CML comment"""
         count = 0
         for item in self.selectedItems():
+            if item.isDocstring():
+                # Side comments for docstrings? Nonesense! So they are ignored
+                # even if they are collected
+                if CMLVersion.find(item.ref.docstring.leadingCMLComments,
+                                   cmlType) is not None:
+                    count += 1
+                continue
+
             if hasattr(item.ref, 'leadingCMLComments'):
                 if CMLVersion.find(item.ref.leadingCMLComments,
                                    cmlType) is not None:

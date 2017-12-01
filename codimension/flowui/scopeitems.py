@@ -563,6 +563,19 @@ class ScopeCellElement(CellElement):
                                 self.ref.body.endLine)
         return maxsize
 
+    def getFirstLine(self):
+        """Provides the first line"""
+        if self.isDocstring():
+            line = maxsize
+            if self.ref.docstring.leadingCMLComments:
+                line = CMLVersion.getFirstLine(self.ref.leadingCMLComments)
+            if self.ref.docstring.leadingComment:
+                if self.ref.docstring.leadingComment.parts:
+                    line = min(self.ref.docstring.leadingComment.parts[0].beginLine,
+                               line)
+            return min(self.ref.docstring.beginLine, line)
+        return CellElement.getFirstLine(self)
+
 
 _scopeCellElementToString = {
     ScopeCellElement.UNKNOWN: "UNKNOWN",
