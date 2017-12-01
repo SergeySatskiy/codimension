@@ -1,4 +1,3 @@
-wheel
 cdmpyparser
 cdmcfparser
 cdmgcplugin
