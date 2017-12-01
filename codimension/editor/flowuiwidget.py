@@ -534,6 +534,12 @@ class FlowUIWidget(QWidget):
             self.__navBar.updateInfoIcon(self.__navBar.STATE_BROKEN_CHN)
         self.__updateTimer.start(IDLE_TIMEOUT)
 
+    def redrawNow(self):
+        """Redraw the diagram regardless of the timer"""
+        if self.__updateTimer.isActive():
+            self.__updateTimer.stop()
+        self.process()
+
     def updateNavigationToolbar(self, text):
         """Updates the toolbar text"""
         if self.__needPathUpdate:

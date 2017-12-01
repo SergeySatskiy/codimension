@@ -20,7 +20,7 @@
 """Sets up and handles the flow UI context menus"""
 
 
-from ui.qt import QMenu
+from ui.qt import QMenu, QApplication
 from flowui.items import CellElement, IfCell
 from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt
 from utils.pixmapcache import getIcon
@@ -176,6 +176,8 @@ class CFSceneContextMenuMixin:
                     else:
                         # Existed, so it just needs to be deleted
                         cmlComment.removeFromText(editor)
+        QApplication.processEvents()
+        self.parent().redrawNow()
 
     def onCustomColors(self):
         """Custom background and foreground colors"""
@@ -209,6 +211,8 @@ class CFSceneContextMenuMixin:
                     line = CMLcc.generate(bgcolor, fgcolor, bordercolor,
                                           item.ref.body.beginPos)
                     editor.insertLines(line, lineNo)
+            QApplication.processEvents()
+            self.parent().redrawNow()
 
     def onReplaceText(self):
         """Replace the code with a title"""
@@ -242,6 +246,8 @@ class CFSceneContextMenuMixin:
                     line = CMLrt.generate(replacementText,
                                           item.ref.body.beginPos)
                     editor.insertLines(line, lineNo)
+            QApplication.processEvents()
+            self.parent().redrawNow()
 
     def onDelete(self):
         """Delete the item"""
@@ -275,6 +281,8 @@ class CFSceneContextMenuMixin:
                         item.ref.leadingCMLComments, CMLcc)
                 if cmlComment is not None:
                     cmlComment.removeFromText(editor)
+        QApplication.processEvents()
+        self.parent().redrawNow()
 
     def onRemoveReplacementText(self):
         """Removing replacement text"""
@@ -288,6 +296,8 @@ class CFSceneContextMenuMixin:
                                              CMLrt)
                 if cmlComment is not None:
                     cmlComment.removeFromText(editor)
+        QApplication.processEvents()
+        self.parent().redrawNow()
 
     def areSelectedOfTypes(self, matchList):
         """Checks if the selected items belong to the match"""
@@ -346,6 +356,8 @@ class CFSceneContextMenuMixin:
         """Counts items with have a certain type of a CML comment"""
         count = 0
         for item in self.selectedItems():
+            if item.isComment():
+                continue
             if item.isDocstring():
                 # Side comments for docstrings? Nonesense! So they are ignored
                 # even if they are collected
