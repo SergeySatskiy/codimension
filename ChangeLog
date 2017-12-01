@@ -1,11 +1,13 @@
-2017 XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+2017 Nov 30 Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Version X.X.X
+* Version 4.0.3
 * Cosmetic changes (pep8 compatibility)
 * New flow setting to enable CML indicators on the diagram (default: False)
 * Better icon for the 'build imports diagram' buttons/menu items
 * Context menu on the flow UI to switch if branches when many of them are
   selected
+* Multiple bug fixes
+* UI for the control flow to replace text and for custom colors
 
 2017 Nov 19 Sergey Satskiy <sergey.satskiy@gmail.com>
 
