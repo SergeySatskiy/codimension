@@ -81,44 +81,53 @@ def getRequirements():
 
 def getDataFiles():
     """Provides the data files"""
-    extensions = ['.png', '.svg', '.svgz', '.json', '.css']
-    data_files = [('/codimension/pixmaps', 'codimension/pixmaps/'),
-                  ('/codimension/skins/default', 'codimension/skins/default/')]
-
     result = [('share/applications', ['resources/codimension.desktop']),
               ('share/pixmaps', ['resources/codimension.png']),
               ('share/metainfo', ['resources/codimension.appdata.xml'])]
+    return result
 
-    for item in data_files:
-        targetDir = item[0]
+
+def getPackageData():
+    """Provides the data files"""
+    extensions = ['.png', '.svg', '.svgz', '.json', '.css']
+    package_data = [('codimension.pixmaps',
+                     'codimension/pixmaps/'),
+                    ('codimension.skins.default',
+                     'codimension/skins/default/')]
+
+    result = {}
+    for item in package_data:
+        package = item[0]
         matchFiles = []
         for fName in os.listdir(item[1]):
             for ext in extensions:
                 if fName.endswith(ext):
-                    matchFiles.append(item[1] + fName)
+                    matchFiles.append(fName)
                     break
         if matchFiles:
-            result.append((targetDir, matchFiles))
-
+            result[package] = matchFiles
+    print(result)
     return result
 
 
 def getPackages():
     """Provides packages"""
     return ['codimension',
-            'codimension/analysis',
-            'codimension/autocomplete',
-            'codimension/diagram',
-            'codimension/editor',
-            'codimension/flowui',
-            'codimension/profiling',
-            'codimension/ui',
-            'codimension/utils',
-            'codimension/debugger', 'codimension/debugger/client',
-            'codimension/plugins',
-            'codimension/plugins/categories',
-            'codimension/plugins/manager',
-            'codimension/plugins/vcssupport']
+            'codimension.analysis',
+            'codimension.autocomplete',
+            'codimension.diagram',
+            'codimension.editor',
+            'codimension.flowui',
+            'codimension.profiling',
+            'codimension.ui',
+            'codimension.utils',
+            'codimension.debugger', 'codimension.debugger.client',
+            'codimension.plugins',
+            'codimension.plugins.categories',
+            'codimension.plugins.manager',
+            'codimension.plugins.vcssupport',
+            'codimension.pixmaps',
+            'codimension.skins', 'codimension.skins.default']
 
 
 # install_requires=['pypandoc'] could be added but really it needs to only
@@ -141,6 +150,7 @@ setup(name='codimension',
            'Programming Language :: Python :: 3'],
       platforms=['any'],
       packages=getPackages(),
+      package_data=getPackageData(),
       install_requires=getRequirements(),
       data_files=getDataFiles(),
       entry_points={'gui_scripts':
