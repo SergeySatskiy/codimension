@@ -106,7 +106,6 @@ def getPackageData():
                     break
         if matchFiles:
             result[package] = matchFiles
-    print(result)
     return result
 
 
