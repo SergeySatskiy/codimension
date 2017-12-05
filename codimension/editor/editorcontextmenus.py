@@ -316,9 +316,9 @@ class EditorContextMenuMixin:
             self.redo()
             self._parent.modificationChanged()
 
-    # __onPluginMenuAdded(self, menu, count)
-    def __onPluginMenuAdded(self, menu, _):
+    def __onPluginMenuAdded(self, menu, count):
         """Triggered when a new menu was added"""
+        del count   # unused argument
         self._menu.addMenu(menu)
         self.__pluginMenuSeparator.setVisible(True)
 

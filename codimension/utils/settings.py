@@ -167,6 +167,9 @@ _DEFAULT_SETTINGS = {
     'maxHighlightedMatches': 256,
     'maxBreakpoints': 63,               # per file
     'encoding': 'utf-8',
+    'hidedocstrings': False,
+    'hidecomments': False,
+    'hideexcepts': False,
 
     # Debug variable filters
     'dbgfltlocal': True,
@@ -239,6 +242,9 @@ class SettingsWrapper(QObject,
     sigFlowSplitterChanged = pyqtSignal()
     sigFlowZoomChanged = pyqtSignal()
     sigTextZoomChanged = pyqtSignal()
+    sigHideDocstringsChanged = pyqtSignal()
+    sigHideCommentsChanged = pyqtSignal()
+    sigHideExceptsChanged = pyqtSignal()
 
     def __init__(self):
         QObject.__init__(self)
@@ -426,6 +432,12 @@ class SettingsWrapper(QObject,
             self.sigFlowZoomChanged.emit()
         elif key == 'zoom':
             self.sigTextZoomChanged.emit()
+        elif key == 'hidedocstrings':
+            self.sigHideDocstringsChanged.emit()
+        elif key == 'hidecomments':
+            self.sigHideCommentsChanged.emit()
+        elif key == 'hideexcepts':
+            self.sigHideExceptsChanged.emit()
         self.flush()
 
     def onTextZoomIn(self):

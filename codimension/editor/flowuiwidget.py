@@ -359,6 +359,11 @@ class FlowUIWidget(QWidget):
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
 
+        Settings().sigHideDocstringsChanged.connect(
+            self.__onHideDocstringsChanged)
+        Settings().sigHideCommentsChanged.connect(self.__onHideCommentsChanged)
+        Settings().sigHideExceptsChanged.connect(self.__onHideExceptsChanged)
+
     def __createToolbar(self):
         """Creates the toolbar"""
         self.__toolbar = QToolBar(self)
@@ -393,7 +398,36 @@ class FlowUIWidget(QWidget):
         self.__saveAsButton.setMenu(saveAsMenu)
         self.__saveAsButton.setFocusPolicy(Qt.NoFocus)
 
+        self.__hideDocstrings = QToolButton(self)
+        self.__hideDocstrings.setCheckable(True)
+        self.__hideDocstrings.setIcon(getIcon('hidedocstrings.png'))
+        self.__hideDocstrings.setToolTip('Show/hide docstrings')
+        self.__hideDocstrings.setFocusPolicy(Qt.NoFocus)
+        self.__hideDocstrings.setChecked(Settings()['hidedocstrings'])
+        self.__hideDocstrings.clicked.connect(self.__onHideDocstrings)
+        self.__hideComments = QToolButton(self)
+        self.__hideComments.setCheckable(True)
+        self.__hideComments.setIcon(getIcon('hidecomments.png'))
+        self.__hideComments.setToolTip('Show/hide comments')
+        self.__hideComments.setFocusPolicy(Qt.NoFocus)
+        self.__hideCommants.setChecked(settings()['hidecomments'])
+        self.__hideComments.clicked.connect(self.__onHideComments)
+        self.__hideExcepts = QToolButton(self)
+        self.__hideExcepts.setCheckable(True)
+        self.__hideExcepts.setIcon(getIcon('hideexcepts.png'))
+        self.__hideExcepts.setToolTip('Show/hide except blocks')
+        self.__hideExcepts.setFocusPolicy(Qt.NoFocus)
+        self.__hideExcepts.setChecked(Settings()['hideexcepts'])
+        self.__hideExcepts.clicked.connect(self.__onHideExcepts)
+
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         self.__toolbar.addWidget(self.__saveAsButton)
+        self.__toolbar.addWidget(spacer)
+        self.__toolbar.addWidget(self.__hideDocstrings)
+        self.__toolbar.addWidget(self.__hideComments)
+        self.__toolbar.addWidget(self.__hideExcepts)
         return self.__toolbar
 
     def __createNavigationBar(self):
@@ -730,3 +764,27 @@ class FlowUIWidget(QWidget):
         """Sets the scrollbar positions for the view"""
         self.view.horizontalScrollBar().setValue(hPos)
         self.view.verticalScrollBar().setValue(vPos)
+
+    def __onHideDocstrings(self):
+        """Triggered when a hide docstring button is pressed"""
+        Settings()['hidedocstrings'] = not Settings()['hidedocstrings']
+
+    def __onHideDocstringsChanged(self):
+        """Signalled by settings"""
+        self.__hideDocstrings.setChecked(Settings()['hidedocstrings'])
+
+    def __onHideComments(self):
+        """Triggered when a hide comments button is pressed"""
+        Settings()['hidecomments'] = not Settings()['hidecomments']
+
+    def __onHideCommentsChanged(self):
+        """Signalled by settings"""
+        self.__hideComments.setChecked(Settings()['hidecomments'])
+
+    def __onHideExcepts(self):
+        """Triggered when a hide except blocks button is pressed"""
+        Settings()['hideexcepts'] = not Settings()['hideexcepts']
+
+    def __onHideExceptsChanged(self):
+        """Signalled by settings"""
+        self.__hideExcepts.setChecked(Settings()['hideexcepts'])
