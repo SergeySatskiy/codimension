@@ -195,7 +195,10 @@ _DEFAULT_CFLOW_SETTINGS = {
     'continueBGColor': QColor(144, 202, 249, 255),
     'ifBGColor': QColor(255, 229, 127, 255),
 
-    'showCMLIndicator': False}
+    'showCMLIndicator': False,
+
+    'hiddenCommentText': 'c',
+    'hiddenExceptText': 'e'}
 
 
 class Skin:

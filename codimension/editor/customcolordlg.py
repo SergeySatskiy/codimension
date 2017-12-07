@@ -25,6 +25,7 @@ from ui.qt import (QDialog, QVBoxLayout, QGridLayout, QLabel, QDialogButtonBox,
                    QGraphicsView, QTimer)
 from ui.colorbutton import ColorButton
 from flowui.cflowsettings import getCflowSettings
+from utils.pixmapcache import getIcon
 
 
 class CustomColorsDialog(QDialog):
@@ -41,8 +42,14 @@ class CustomColorsDialog(QDialog):
         self.__bgColorButton.sigColorChanged.connect(self.__onColorChanged)
         self.__fgColorButton.setColor(fgcolor)
         self.__fgColorButton.sigColorChanged.connect(self.__onColorChanged)
-        self.__borderColorButton.setColor(bordercolor)
-        self.__borderColorButton.sigColorChanged.connect(self.__onColorChanged)
+        if bordercolor is None:
+            self.__borderColorButton.setEnabled(False)
+            self.__borderColorButton.setToolTip(
+                'Border colors are not supported for docstrings')
+            self.__borderColorButton.setIcon(getIcon('warning.png'))
+        else:
+            self.__borderColorButton.setColor(bordercolor)
+            self.__borderColorButton.sigColorChanged.connect(self.__onColorChanged)
 
         QTimer.singleShot(1, self.__onColorChanged)
 
@@ -147,7 +154,10 @@ class SampleBlock(QGraphicsRectItem):
         baseX = (self.__viewWidth - self.__rectWidth) / 2
         baseY = (self.__viewHeight - self.__rectHeight) / 2
 
-        pen = QPen(self.__borderColor)
+        if self.__borderColor is None:
+            pen = QPen(self.__bgColor)
+        else:
+            pen = QPen(self.__borderColor)
         painter.setPen(pen)
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)

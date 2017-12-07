@@ -21,6 +21,7 @@
 
 from sys import maxsize
 import os.path
+from cgi import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .auxitems import BadgeItem, Connector
 from .items import CellElement, getNoCellCommentBoxPath, distance
@@ -658,15 +659,23 @@ class FunctionScopeCell(ScopeCellElement, QGraphicsRectItem):
         """Provides a side comment"""
         if self._sideComment is None:
             # The comment may start not at the first line of the function
-            linesBefore = self.ref.sideComment.beginLine - \
-                          self.ref.name.beginLine
+            if self.canvas.settings.hidecomments:
+                linesBefore = 0
+            else:
+                linesBefore = self.ref.sideComment.beginLine - \
+                              self.ref.name.beginLine
             self._sideComment = '\n' * linesBefore + \
                                 self.ref.sideComment.getDisplayValue()
-            # The comment may stop before the end of the arguments list
-            linesAfter = self.ref.arguments.endLine - \
-                         self.ref.sideComment.endLine
-            if linesAfter > 0:
-                self._sideComment += '\n' * linesAfter
+
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
+                self._sideComment = self.canvas.settings.hiddenCommentText
+            else:
+                # The comment may stop before the end of the arguments list
+                linesAfter = self.ref.arguments.endLine - \
+                             self.ref.sideComment.endLine
+                if linesAfter > 0:
+                    self._sideComment += '\n' * linesAfter
         return self._sideComment
 
     def render(self):
@@ -725,18 +734,26 @@ class ClassScopeCell(ScopeCellElement, QGraphicsRectItem):
         """Provides a side comment"""
         if self._sideComment is None:
             # The comment may start not at the first line of the class
-            linesBefore = self.ref.sideComment.beginLine - \
-                          self.ref.name.beginLine
+            if self.canvas.settings.hidecomments:
+                linesBefore = 0
+            else:
+                linesBefore = self.ref.sideComment.beginLine - \
+                              self.ref.name.beginLine
             self._sideComment = '\n' * linesBefore + \
                                 self.ref.sideComment.getDisplayValue()
             if self.ref.baseClasses is None:
                 lastLine = self.ref.name.endLine
             else:
                 lastLine = self.ref.baseClasses.endLine
-            # The comment may stop before the end of the arguments list
-            linesAfter = lastLine - self.ref.sideComment.endLine
-            if linesAfter > 0:
-                self._sideComment += '\n' * linesAfter
+
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
+                self._sideComment = self.canvas.settings.hiddenCommentText
+            else:
+                # The comment may stop before the end of the arguments list
+                linesAfter = lastLine - self.ref.sideComment.endLine
+                if linesAfter > 0:
+                    self._sideComment += '\n' * linesAfter
         return self._sideComment
 
     def render(self):
@@ -794,15 +811,23 @@ class ForScopeCell(ScopeCellElement, QGraphicsRectItem):
         """Provides a side comment"""
         if self._sideComment is None:
             # The comment may start not at the first line of the function
-            linesBefore = self.ref.sideComment.beginLine - \
-                          self.ref.iteration.beginLine
+            if self.canvas.settings.hidecomments:
+                linesBefore = 0
+            else:
+                linesBefore = self.ref.sideComment.beginLine - \
+                              self.ref.iteration.beginLine
             self._sideComment = '\n' * linesBefore + \
                                 self.ref.sideComment.getDisplayValue()
-            # The comment may stop before the end of the arguments list
-            linesAfter = self.ref.iteration.endLine - \
-                         self.ref.sideComment.endLine
-            if linesAfter > 0:
-                self._sideComment += '\n' * linesAfter
+
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
+                self._sideComment = self.canvas.settings.hiddenCommentText
+            else:
+                # The comment may stop before the end of the arguments list
+                linesAfter = self.ref.iteration.endLine - \
+                             self.ref.sideComment.endLine
+                if linesAfter > 0:
+                    self._sideComment += '\n' * linesAfter
         return self._sideComment
 
     def render(self):
@@ -857,15 +882,23 @@ class WhileScopeCell(ScopeCellElement, QGraphicsRectItem):
         """Provides a side comment"""
         if self._sideComment is None:
             # The comment may start not at the first line of the function
-            linesBefore = self.ref.sideComment.beginLine - \
-                          self.ref.condition.beginLine
+            if self.canvas.settings.hidecomments:
+                linesBefore = 0
+            else:
+                linesBefore = self.ref.sideComment.beginLine - \
+                              self.ref.condition.beginLine
             self._sideComment = '\n' * linesBefore + \
                                 self.ref.sideComment.getDisplayValue()
-            # The comment may stop before the end of the arguments list
-            linesAfter = self.ref.condition.endLine - \
-                         self.ref.sideComment.endLine
-            if linesAfter > 0:
-                self._sideComment += '\n' * linesAfter
+
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
+                self._sideComment = self.canvas.settings.hiddenCommentText
+            else:
+                # The comment may stop before the end of the arguments list
+                linesAfter = self.ref.condition.endLine - \
+                             self.ref.sideComment.endLine
+                if linesAfter > 0:
+                    self._sideComment += '\n' * linesAfter
         return self._sideComment
 
     def render(self):
@@ -920,6 +953,9 @@ class TryScopeCell(ScopeCellElement, QGraphicsRectItem):
         """Provides a side comment"""
         if self._sideComment is None:
             self._sideComment = self.ref.sideComment.getDisplayValue()
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
+                self._sideComment = self.canvas.settings.hiddenCommentText
         return self._sideComment
 
     def render(self):
@@ -976,15 +1012,22 @@ class WithScopeCell(ScopeCellElement, QGraphicsRectItem):
         """Provides a side comment"""
         if self._sideComment is None:
             # The comment may start not at the first line of the function
-            linesBefore = self.ref.sideComment.beginLine - \
-                          self.ref.items.beginLine
+            if self.canvas.settings.hidecomments:
+                linesBefore = 0
+            else:
+                linesBefore = self.ref.sideComment.beginLine - \
+                              self.ref.items.beginLine
             self._sideComment = '\n' * linesBefore + \
                                 self.ref.sideComment.getDisplayValue()
-            # The comment may stop before the end of the arguments list
-            linesAfter = self.ref.items.endLine - \
-                         self.ref.sideComment.endLine
-            if linesAfter > 0:
-                self._sideComment += '\n' * linesAfter
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
+                self._sideComment = self.canvas.settings.hiddenCommentText
+            else:
+                # The comment may stop before the end of the arguments list
+                linesAfter = self.ref.items.endLine - \
+                             self.ref.sideComment.endLine
+                if linesAfter > 0:
+                    self._sideComment += '\n' * linesAfter
         return self._sideComment
 
     def render(self):
@@ -1039,18 +1082,25 @@ class DecoratorScopeCell(ScopeCellElement, QGraphicsRectItem):
         """Provides a side comment"""
         if self._sideComment is None:
             # The comment may start not at the first line of the function
-            linesBefore = self.ref.sideComment.beginLine - \
-                          self.ref.name.beginLine
+            if self.canvas.settings.hidecomments:
+                linesBefore = 0
+            else:
+                linesBefore = self.ref.sideComment.beginLine - \
+                              self.ref.name.beginLine
             self._sideComment = '\n' * linesBefore + \
                                 self.ref.sideComment.getDisplayValue()
             if self.ref.arguments is None:
                 lastLine = self.ref.name.endLine
             else:
                 lastLine = self.ref.arguments.endLine
-            # The comment may stop before the end of the arguments list
-            linesAfter = lastLine - self.ref.sideComment.endLine
-            if linesAfter > 0:
-                self._sideComment += '\n' * linesAfter
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
+                self._sideComment = self.canvas.settings.hiddenCommentText
+            else:
+                # The comment may stop before the end of the arguments list
+                linesAfter = lastLine - self.ref.sideComment.endLine
+                if linesAfter > 0:
+                    self._sideComment += '\n' * linesAfter
         return self._sideComment
 
     def render(self):
@@ -1106,6 +1156,9 @@ class ElseScopeCell(ScopeCellElement, QGraphicsRectItem):
         """Provides a side comment"""
         if self._sideComment is None:
             self._sideComment = self.ref.sideComment.getDisplayValue()
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
+                self._sideComment = self.canvas.settings.hiddenCommentText
         return self._sideComment
 
     def render(self):
@@ -1162,15 +1215,22 @@ class ExceptScopeCell(ScopeCellElement, QGraphicsRectItem):
             if self.ref.clause is None:
                 self._sideComment = self.ref.sideComment.getDisplayValue()
             else:
-                linesBefore = self.ref.sideComment.beginLine - \
-                              self.ref.clause.beginLine
+                if self.canvas.settings.hidecomments:
+                    linesBefore = 0
+                else:
+                    linesBefore = self.ref.sideComment.beginLine - \
+                                  self.ref.clause.beginLine
                 self._sideComment = '\n' * linesBefore + \
                                     self.ref.sideComment.getDisplayValue()
                 lastLine = self.ref.clause.endLine
-                # The comment may stop before the end of the arguments list
-                linesAfter = lastLine - self.ref.sideComment.endLine
-                if linesAfter > 0:
-                    self._sideComment += '\n' * linesAfter
+                if not self.canvas.settings.hidecomments:
+                    # The comment may stop before the end of the arguments list
+                    linesAfter = lastLine - self.ref.sideComment.endLine
+                    if linesAfter > 0:
+                        self._sideComment += '\n' * linesAfter
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
+                self._sideComment = self.canvas.settings.hiddenCommentText
         return self._sideComment
 
     def render(self):
@@ -1224,6 +1284,9 @@ class FinallyScopeCell(ScopeCellElement, QGraphicsRectItem):
         """Provides the side comment"""
         if self._sideComment is None:
             self._sideComment = self.ref.sideComment.getDisplayValue()
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
+                self._sideComment = self.canvas.settings.hiddenCommentText
         return self._sideComment
 
     def render(self):

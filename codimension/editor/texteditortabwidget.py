@@ -226,7 +226,6 @@ class TextEditorTabWidget(QWidget):
             getIcon('expandtabs.png'), 'Expand tabs (4 spaces)', self)
         self.expandTabsButton.triggered.connect(self.onExpandTabs)
 
-
         # The toolbar
         toolbar = QToolBar(self)
         toolbar.setOrientation(Qt.Vertical)

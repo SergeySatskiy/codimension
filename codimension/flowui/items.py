@@ -543,7 +543,7 @@ class BreakCell(CellElement, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect("break")
+        self.__textRect = self.getBoundingRect('break')
         vPadding = 2 * (self.__vSpacing + settings.vCellPadding)
         self.minHeight = self.__textRect.height() + vPadding
         hPadding = 2 * (self.__hSpacing + settings.hCellPadding)
@@ -649,7 +649,7 @@ class ContinueCell(CellElement, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect("continue")
+        self.__textRect = self.getBoundingRect('continue')
         vPadding = 2 * (self.__vSpacing + settings.vCellPadding)
         self.minHeight = self.__textRect.height() + vPadding
         hPadding = 2 * (self.__hSpacing + settings.hCellPadding)
@@ -1048,12 +1048,10 @@ class AssertCell(CellElement, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = settings.monoFontMetrics.boundingRect(
-            0, 0, maxsize, maxsize, 0, self._getText())
+        self.__textRect = self.getBoundingRect(self._getText())
 
         # for an arrow box
-        singleCharRect = settings.monoFontMetrics.boundingRect(
-            0, 0, maxsize, maxsize, 0, "W")
+        singleCharRect = self.getBoundingRect('W')
         self.__diamondDiagonal = \
             singleCharRect.height() + 2 * settings.vTextPadding
 
@@ -1331,8 +1329,7 @@ class ImportCell(CellElement, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = settings.monoFontMetrics.boundingRect(
-            0, 0, maxsize, maxsize, 0, self._getText())
+        self.__textRect = self.getBoundingRect(self._getText())
         self.minHeight = \
             self.__textRect.height() + 2 * settings.vCellPadding + \
             2 * settings.vTextPadding
@@ -1447,8 +1444,7 @@ class IfCell(CellElement, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = settings.monoFontMetrics.boundingRect(
-            0, 0, maxsize, maxsize, 0, self._getText())
+        self.__textRect = self.getBoundingRect(self._getText())
 
         self.minHeight = self.__textRect.height() + \
                          2 * settings.vCellPadding + 2 * settings.vTextPadding
@@ -1567,6 +1563,11 @@ class IfCell(CellElement, QGraphicsRectItem):
 
 def getCommentBoxPath(settings, baseX, baseY, width, height):
     """Provides the comomment box path"""
+    if settings.hidecomments:
+        return getHiddenCommentPath(baseX + settings.hCellPadding,
+                                    baseY + settings.vCellPadding,
+                                    width - 2 * settings.hCellPadding,
+                                    height - 2 * settings.vCellPadding)
     return getNoCellCommentBoxPath(baseX + settings.hCellPadding,
                                    baseY + settings.vCellPadding,
                                    width - 2 * settings.hCellPadding,
@@ -1591,6 +1592,14 @@ def getNoCellCommentBoxPath(x, y, width, height, corner):
     return path
 
 
+def getHiddenCommentPath(x, y, width, height):
+    """Provides the path for the hidden comment"""
+    path = QPainterPath()
+    path.moveTo(x, y)
+    path.addRoundedRect(x, y, width, height, 3, 3)
+    return path
+
+
 class IndependentCommentCell(CellElement, QGraphicsPathItem):
 
     """Represents a single independent comment"""
@@ -1599,6 +1608,7 @@ class IndependentCommentCell(CellElement, QGraphicsPathItem):
         CellElement.__init__(self, ref, canvas, x, y)
         QGraphicsPathItem.__init__(self)
         self.kind = CellElement.INDEPENDENT_COMMENT
+        self.__text = None
         self.__textRect = None
         self.leadingForElse = False
         self.sideForElse = False
@@ -1608,11 +1618,19 @@ class IndependentCommentCell(CellElement, QGraphicsPathItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def __getText(self):
+        """Provides text"""
+        if self.__text is None:
+            self.__text = self.ref.getDisplayValue()
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self.__text) + '</pre>')
+                self.__text = self.canvas.settings.hiddenCommentText
+        return self.__text
+
     def render(self):
         """Renders the cell"""
         setings = self.canvas.settings
-        self.__textRect = setings.monoFontMetrics.boundingRect(
-            0, 0, maxsize, maxsize, 0, self._getText())
+        self.__textRect = self.getBoundingRect(self.__getText())
 
         self.minHeight = self.__textRect.height() + \
                          2 * (setings.vCellPadding + setings.vTextPadding)
@@ -1714,7 +1732,7 @@ class IndependentCommentCell(CellElement, QGraphicsPathItem):
             self.__leftEdge + settings.hCellPadding + settings.hTextPadding,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
             self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self._getText())
+            Qt.AlignLeft, self.__getText())
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
@@ -1755,6 +1773,12 @@ class LeadingCommentCell(CellElement, QGraphicsPathItem):
         self.__leftEdge = None
         self.connector = None
 
+        self.__vTextPadding = canvas.settings.vTextPadding
+        self.__hTextPadding = canvas.settings.hTextPadding
+        if canvas.settings.hidecomments:
+            self.__vTextPadding = 0.0
+            self.__hTextPadding /= 2.0
+
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
@@ -1762,21 +1786,24 @@ class LeadingCommentCell(CellElement, QGraphicsPathItem):
         """Provides text"""
         if self.__text is None:
             self.__text = self.ref.leadingComment.getDisplayValue()
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self.__text) + '</pre>')
+                self.__text = self.canvas.settings.hiddenCommentText
         return self.__text
 
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = settings.monoFontMetrics.boundingRect(
-            0, 0, maxsize, maxsize, 0, self.__getText())
+        self.__textRect = self.getBoundingRect(self.__getText())
 
         self.minHeight = \
             self.__textRect.height() + \
-            2 * settings.vCellPadding + 2 * settings.vTextPadding
-        self.minWidth = max(
-            self.__textRect.width() +
-            2 * settings.hCellPadding + 2 * settings.hTextPadding,
-            settings.minWidth)
+            2 * settings.vCellPadding + 2 * self.__vTextPadding
+        self.minWidth = \
+            self.__textRect.width() + \
+            2 * settings.hCellPadding + 2 * self.__hTextPadding
+        if not settings.hidecomments:
+            self.minWidth = max(self.minWidth, settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1798,9 +1825,10 @@ class LeadingCommentCell(CellElement, QGraphicsPathItem):
         #       safely
         settings = self.canvas.settings
         spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
-        boxWidth = max(self.__textRect.width() +
-                       2 * (settings.hCellPadding + settings.hTextPadding),
-                       settings.minWidth)
+        boxWidth = self.__textRect.width() + \
+                   2 * (settings.hCellPadding + self.__hTextPadding)
+        if not settings.hidecomments:
+            boxWidth = max(boxWidth, settings.minWidth)
         if spareWidth >= boxWidth:
             self.minWidth = 0
         else:
@@ -1831,9 +1859,10 @@ class LeadingCommentCell(CellElement, QGraphicsPathItem):
             self.__leftEdge = \
                 cellToTheLeft.baseX + \
                 settings.mainLine + settings.hCellPadding
-        boxWidth = max(self.__textRect.width() +
-                       2 * (settings.hCellPadding + settings.hTextPadding),
-                       settings.minWidth)
+        boxWidth = self.__textRect.width() + \
+                   2 * (settings.hCellPadding + self.__hTextPadding)
+        if not settings.hidecomments:
+            boxWidth = max(boxWidth, settings.minWidth)
 
         path = getCommentBoxPath(settings, self.__leftEdge, baseY,
                                  boxWidth, self.minHeight)
@@ -1884,8 +1913,8 @@ class LeadingCommentCell(CellElement, QGraphicsPathItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
         painter.drawText(
-            self.__leftEdge + settings.hCellPadding + settings.hTextPadding,
-            baseY + settings.vCellPadding + settings.vTextPadding,
+            self.__leftEdge + settings.hCellPadding + self.__hTextPadding,
+            baseY + settings.vCellPadding + self.__vTextPadding,
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self.__getText())
 
@@ -1951,13 +1980,15 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
                     '\n' * (self.ref.sideComment.beginLine -
                             self.ref.body.beginLine) + \
                     self.ref.sideComment.getDisplayValue()
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self.__text) + '</pre>')
+                self.__text = self.canvas.settings.hiddenCommentText
         return self.__text
 
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = settings.monoFontMetrics.boundingRect(
-            0, 0, maxsize, maxsize, 0, self.__getText())
+        self.__textRect = self.getBoundingRect(self.__getText())
 
         self.minHeight = self.__textRect.height() + \
             2 * settings.vCellPadding + 2 * settings.vTextPadding
@@ -2147,13 +2178,15 @@ class AboveCommentCell(CellElement, QGraphicsPathItem):
         """Provides text"""
         if self.__text is None:
             self.__text = self.ref.leadingComment.getDisplayValue()
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self.__text) + '</pre>')
+                self.__text = self.canvas.settings.hiddenCommentText
         return self.__text
 
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = settings.monoFontMetrics.boundingRect(
-            0, 0, maxsize, maxsize, 0, self.__getText())
+        self.__textRect = self.getBoundingRect(self.__getText())
 
         self.minHeight = self.__textRect.height() + \
                          2 * (settings.vCellPadding + settings.vTextPadding)

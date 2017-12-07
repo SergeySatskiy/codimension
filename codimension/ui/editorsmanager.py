@@ -832,7 +832,10 @@ class EditorsManager(QTabWidget):
         if widget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
             self.sigTabRunChanged.emit(False)
         else:
+            # This is a text editor with flow UI
             self.sigTabRunChanged.emit(widget.isTabRunEnabled())
+            if widget.getCFEditor().dirty():
+                widget.getCFEditor().process()
 
     def onHelp(self):
         """Triggered when F1 is received"""

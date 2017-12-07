@@ -185,7 +185,10 @@ class CFSceneContextMenuMixin:
             return
 
         bgcolor, fgcolor, bordercolor = self.selectedItems()[0].getColors()
-        dlg = CustomColorsDialog(bgcolor, fgcolor, bordercolor, self.parent())
+        hasDocstring = self.isDocstringInSelection()
+        dlg = CustomColorsDialog(bgcolor, fgcolor,
+                                 None if hasDocstring else bordercolor,
+                                 self.parent())
         if dlg.exec_():
             bgcolor = dlg.backgroundColor()
             fgcolor = dlg.foregroundColor()
@@ -208,8 +211,10 @@ class CFSceneContextMenuMixin:
                     else:
                         lineNo = item.getFirstLine()
 
-                    line = CMLcc.generate(bgcolor, fgcolor, bordercolor,
-                                          item.ref.body.beginPos)
+                    pos = item.ref.body.beginPos
+                    if item.isDocstring():
+                        pos = item.ref.docstring.beginPos
+                    line = CMLcc.generate(bgcolor, fgcolor, bordercolor, pos)
                     editor.insertLines(line, lineNo)
             QApplication.processEvents()
             self.parent().redrawNow()

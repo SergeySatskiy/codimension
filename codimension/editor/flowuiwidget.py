@@ -326,6 +326,9 @@ class FlowUIWidget(QWidget):
         self.__needPathUpdate = False
 
         self.cflowSettings = getCflowSettings(self)
+        self.__displayProps = (self.cflowSettings.hidedocstrings,
+                               self.cflowSettings.hidecomments,
+                               self.cflowSettings.hideexcepts)
 
         hLayout = QHBoxLayout()
         hLayout.setContentsMargins(0, 0, 0, 0)
@@ -355,8 +358,8 @@ class FlowUIWidget(QWidget):
         self.updateSettings()
 
         # Connect to the change file type signal
-        mainWindow = GlobalData().mainWindow
-        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        self.__mainWindow = GlobalData().mainWindow
+        editorsManager = self.__mainWindow.editorsManagerWidget.editorsManager
         editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
 
         Settings().sigHideDocstringsChanged.connect(
@@ -410,7 +413,7 @@ class FlowUIWidget(QWidget):
         self.__hideComments.setIcon(getIcon('hidecomments.png'))
         self.__hideComments.setToolTip('Show/hide comments')
         self.__hideComments.setFocusPolicy(Qt.NoFocus)
-        self.__hideCommants.setChecked(settings()['hidecomments'])
+        self.__hideComments.setChecked(Settings()['hidecomments'])
         self.__hideComments.clicked.connect(self.__onHideComments)
         self.__hideExcepts = QToolButton(self)
         self.__hideExcepts.setCheckable(True)
@@ -492,6 +495,12 @@ class FlowUIWidget(QWidget):
 
     def redrawScene(self):
         """Redraws the scene"""
+        if self.dirty():
+            self.cflowSettings = getCflowSettings(self)
+            self.__displayProps = (self.cflowSettings.hidedocstrings,
+                                   self.cflowSettings.hidecomments,
+                                   self.cflowSettings.hideexcepts)
+
         self.scene.clear()
         try:
             # Top level canvas has no adress and no parent canvas
@@ -771,7 +780,9 @@ class FlowUIWidget(QWidget):
 
     def __onHideDocstringsChanged(self):
         """Signalled by settings"""
-        self.__hideDocstrings.setChecked(Settings()['hidedocstrings'])
+        settings = Settings()
+        self.__hideDocstrings.setChecked(settings['hidedocstrings'])
+        self.__checkNeedRedraw()
 
     def __onHideComments(self):
         """Triggered when a hide comments button is pressed"""
@@ -779,7 +790,9 @@ class FlowUIWidget(QWidget):
 
     def __onHideCommentsChanged(self):
         """Signalled by settings"""
-        self.__hideComments.setChecked(Settings()['hidecomments'])
+        settings = Settings()
+        self.__hideComments.setChecked(settings['hidecomments'])
+        self.__checkNeedRedraw()
 
     def __onHideExcepts(self):
         """Triggered when a hide except blocks button is pressed"""
@@ -787,4 +800,19 @@ class FlowUIWidget(QWidget):
 
     def __onHideExceptsChanged(self):
         """Signalled by settings"""
-        self.__hideExcepts.setChecked(Settings()['hideexcepts'])
+        settings = Settings()
+        self.__hideExcepts.setChecked(settings['hideexcepts'])
+        self.__checkNeedRedraw()
+
+    def __checkNeedRedraw(self):
+        """Redraws the scene if necessary when a display setting is changed"""
+        editorsManager = self.__mainWindow.editorsManagerWidget.editorsManager
+        if self.__parentWidget == editorsManager.currentWidget():
+            self.process()
+
+    def dirty(self):
+        """True if some other tab has switched display settings"""
+        settings = Settings()
+        return self.__displayProps[0] != settings['hidedocstrings'] or \
+            self.__displayProps[1] != settings['hidecomments'] or \
+            self.__displayProps[2] != settings['hideexcepts']

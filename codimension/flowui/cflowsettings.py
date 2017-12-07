@@ -28,6 +28,7 @@
 from ui.qt import QFontMetrics
 from utils.globals import GlobalData
 from utils.colorfont import getZoomedCFMonoFont, getZoomedCFBadgeFont
+from utils.settings import Settings
 
 
 class CFlowSettings:
@@ -40,6 +41,12 @@ class CFlowSettings:
 
         for key, value in params.items():
             setattr(self, key, value)
+
+        # Some display related settings are coming from the IDE wide settings
+        settings = Settings()
+        setattr(self, 'hidedocstrings', settings['hidedocstrings'])
+        setattr(self, 'hidecomments', settings['hidecomments'])
+        setattr(self, 'hideexcepts', settings['hideexcepts'])
 
         self.onFlowZoomChanged()
 
