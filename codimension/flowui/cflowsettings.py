@@ -36,8 +36,10 @@ class CFlowSettings:
     """Holds the control flow rendering and drawing settings"""
 
     def __init__(self, paintDevice, params):
-        # Visibility of the virtual cells (dotted outline)
         self.__paintDevice = paintDevice
+
+        # Used to generate each item unique sequential ID
+        self.itemID = 0
 
         for key, value in params.items():
             setattr(self, key, value)

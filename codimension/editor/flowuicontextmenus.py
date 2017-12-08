@@ -161,6 +161,9 @@ class CFSceneContextMenuMixin:
         if not self.__actionPrerequisites():
             return
 
+        # Memorize the current selection
+        selection = self.serializeSelection()
+
         # The selected items need to be sorted in the reverse line no oreder
         editor = self.selectedItems()[0].getEditor()
         with editor:
@@ -178,11 +181,15 @@ class CFSceneContextMenuMixin:
                         cmlComment.removeFromText(editor)
         QApplication.processEvents()
         self.parent().redrawNow()
+        self.restoreSelectionByID(selection)
 
     def onCustomColors(self):
         """Custom background and foreground colors"""
         if not self.__actionPrerequisites():
             return
+
+        # Memorize the current selection
+        selection = self.serializeSelection()
 
         bgcolor, fgcolor, bordercolor = self.selectedItems()[0].getColors()
         hasDocstring = self.isDocstringInSelection()
@@ -218,11 +225,15 @@ class CFSceneContextMenuMixin:
                     editor.insertLines(line, lineNo)
             QApplication.processEvents()
             self.parent().redrawNow()
+            self.restoreSelectionByID(selection)
 
     def onReplaceText(self):
         """Replace the code with a title"""
         if not self.__actionPrerequisites():
             return
+
+        # Memorize the current selection
+        selection = self.serializeSelection()
 
         dlg = ReplaceTextDialog(self.parent())
 
@@ -253,6 +264,7 @@ class CFSceneContextMenuMixin:
                     editor.insertLines(line, lineNo)
             QApplication.processEvents()
             self.parent().redrawNow()
+            self.restoreSelectionByID(selection)
 
     def onDelete(self):
         """Delete the item"""
@@ -275,6 +287,9 @@ class CFSceneContextMenuMixin:
         if not self.__actionPrerequisites():
             return
 
+        # Memorize the current selection
+        selection = self.serializeSelection()
+
         editor = self.selectedItems()[0].getEditor()
         with editor:
             for item in self.sortSelectedReverse():
@@ -288,11 +303,15 @@ class CFSceneContextMenuMixin:
                     cmlComment.removeFromText(editor)
         QApplication.processEvents()
         self.parent().redrawNow()
+        self.restoreSelectionByID(selection)
 
     def onRemoveReplacementText(self):
         """Removing replacement text"""
         if not self.__actionPrerequisites():
             return
+
+        # Memorize the current selection
+        selection = self.serializeSelection()
 
         editor = self.selectedItems()[0].getEditor()
         with editor:
@@ -303,6 +322,7 @@ class CFSceneContextMenuMixin:
                     cmlComment.removeFromText(editor)
         QApplication.processEvents()
         self.parent().redrawNow()
+        self.restoreSelectionByID(selection)
 
     def areSelectedOfTypes(self, matchList):
         """Checks if the selected items belong to the match"""

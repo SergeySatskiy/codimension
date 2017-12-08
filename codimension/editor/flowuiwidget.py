@@ -74,6 +74,36 @@ class CFGraphicsScene(QGraphicsScene,
         else:
             self.__navBar.setSelectionLabel(0, None)
 
+    def serializeSelection(self):
+        """Builds a list of pairs: (id->int, tooltip->str)"""
+        selection = []
+        for item in self.selectedItems():
+            selection.append((item.itemID, item.getSelectTooltip()))
+        return selection
+
+    # The selection can be restored by item IDs if the number of items on the
+    # diagram has not changed. E.g. when zoom is done or a cml comment is
+    # added/removed
+    def restoreSelectionByID(self, selection):
+        """Restores the selection by the item ID"""
+        ids = [item[0] for item in selection]
+        for item in self.items():
+            if hasattr(item, "itemID"):
+                if item.itemID in ids:
+                    item.setSelected(True)
+
+    # The selection can be restored by item tooltips if there is no text
+    # modifications but there are representation changes. E.g. the selection
+    # can be roughly preserved between the smart zoom levels or when except
+    # blocks are hidden/shown
+    def restoreSelectionByTooltip(self, selection):
+        """Restores the selection by the item tooltip"""
+        tooltips = [item[1] for item in selection]
+        for item in self.items():
+            if hasattr(item, "getSelectTooltip"):
+                if item.getSelectTooltip() in tooltips:
+                    item.setSelected(True)
+
 
 class CFGraphicsView(QGraphicsView):
 
@@ -500,6 +530,7 @@ class FlowUIWidget(QWidget):
             self.__displayProps = (self.cflowSettings.hidedocstrings,
                                    self.cflowSettings.hidecomments,
                                    self.cflowSettings.hideexcepts)
+        self.cflowSettings.itemID = 0
 
         self.scene.clear()
         try:
@@ -517,9 +548,11 @@ class FlowUIWidget(QWidget):
     def onFlowZoomChanged(self):
         """Triggered when a flow zoom is changed"""
         if self.__cf:
+            selection = self.scene.serializeSelection()
             self.cflowSettings.onFlowZoomChanged()
             self.redrawScene()
             self.updateNavigationToolbar('')
+            self.scene.restoreSelectionByID(selection)
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when a buffer content type has changed"""
