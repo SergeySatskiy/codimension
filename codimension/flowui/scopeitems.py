@@ -24,7 +24,8 @@ import os.path
 from cgi import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .auxitems import BadgeItem, Connector
-from .items import CellElement, getNoCellCommentBoxPath, distance
+from .items import (CellElement, getNoCellCommentBoxPath, distance,
+                    getHiddenCommentPath)
 from .cml import CMLVersion, CMLcc
 
 
@@ -63,6 +64,10 @@ class ScopeCellElement(CellElement):
         """Provides the docstring text"""
         if self.docstringText is None:
             self.docstringText = self.ref.docstring.getDisplayValue()
+            if self.canvas.settings.hidedocstrings:
+                self.setToolTip('<pre>' + escape(self.docstringText) +
+                                '</pre>')
+                self.docstringText = ''
         return self.docstringText
 
     def _render(self):
@@ -120,18 +125,31 @@ class ScopeCellElement(CellElement):
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             self._sideCommentRect = self.getBoundingRect(
                 self._getSideComment())
-            self.minHeight = self._sideCommentRect.height() + \
-                2 * (s.vHeaderPadding + s.vTextPadding) - \
-                s.rectRadius
-            self.minWidth = s.hCellPadding + s.hTextPadding + \
-                self._sideCommentRect.width() + s.hTextPadding + \
-                s.hHeaderPadding - s.rectRadius
+            if s.hidecomments:
+                self.minHeight = self._sideCommentRect.height() + \
+                    2 * (s.vHeaderPadding + s.vHiddenTextPadding) - \
+                    s.rectRadius
+                self.minWidth = s.hCellPadding + s.hHiddenTextPadding + \
+                    self._sideCommentRect.width() + s.hHiddenTextPadding + \
+                    s.hHeaderPadding - s.rectRadius
+            else:
+                self.minHeight = self._sideCommentRect.height() + \
+                    2 * (s.vHeaderPadding + s.vTextPadding) - \
+                    s.rectRadius
+                self.minWidth = s.hCellPadding + s.hTextPadding + \
+                    self._sideCommentRect.width() + s.hTextPadding + \
+                    s.hHeaderPadding - s.rectRadius
         elif self.subKind == ScopeCellElement.DOCSTRING:
-            rect = s.monoFontMetrics.boundingRect(0, 0, maxsize, maxsize, 0,
-                                                  self.getDocstringText())
-            self.minHeight = rect.height() + 2 * s.vHeaderPadding
-            self.minWidth = rect.width() + 2 * (s.hHeaderPadding -
-                                                s.rectRadius)
+            docstringText = self.getDocstringText()
+            if not s.hidedocstrings:
+                rect = s.monoFontMetrics.boundingRect(0, 0, maxsize, maxsize, 0,
+                                                      docstringText)
+                self.minHeight = rect.height() + 2 * s.vHeaderPadding
+                self.minWidth = rect.width() + 2 * (s.hHeaderPadding -
+                                                    s.rectRadius)
+            else:
+                self.minHeight = 5
+                self.minWidth = 2 * (s.hHeaderPadding - s.rectRadius)
         elif self.subKind == ScopeCellElement.UNKNOWN:
             raise Exception("Unknown scope element")
         else:
@@ -253,20 +271,36 @@ class ScopeCellElement(CellElement):
             canvasTop = self.baseY - s.rectRadius
             movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
                 self.width - s.rectRadius - s.vHeaderPadding
-            self.__sideCommentPath = getNoCellCommentBoxPath(
-                movedBaseX + s.hHeaderPadding,
-                canvasTop + s.vHeaderPadding,
-                self._sideCommentRect.width() + 2 * s.hTextPadding,
-                self._sideCommentRect.height() + 2 * s.vTextPadding,
-                s.commentCorner)
+            if s.hidecomments:
+                self.__sideCommentPath = getHiddenCommentPath(
+                    movedBaseX + s.hHeaderPadding,
+                    canvasTop + s.vHeaderPadding,
+                    self._sideCommentRect.width() + 2 * s.hHiddenTextPadding,
+                    self._sideCommentRect.height() + 2 * s.vHiddenTextPadding)
+            else:
+                self.__sideCommentPath = getNoCellCommentBoxPath(
+                    movedBaseX + s.hHeaderPadding,
+                    canvasTop + s.vHeaderPadding,
+                    self._sideCommentRect.width() + 2 * s.hTextPadding,
+                    self._sideCommentRect.height() + 2 * s.vTextPadding,
+                    s.commentCorner)
             penWidth = s.selectPenWidth - 1
-            self.setRect(
-                movedBaseX + s.hHeaderPadding - penWidth,
-                canvasTop + s.vHeaderPadding - penWidth,
-                self._sideCommentRect.width() +
-                2 * s.hTextPadding + 2 * penWidth,
-                self._sideCommentRect.height() +
-                2 * s.vTextPadding + 2 * penWidth)
+            if s.hidecomments:
+                self.setRect(
+                    movedBaseX + s.hHeaderPadding - penWidth,
+                    canvasTop + s.vHeaderPadding - penWidth,
+                    self._sideCommentRect.width() +
+                    2 * s.hHiddenTextPadding + 2 * penWidth,
+                    self._sideCommentRect.height() +
+                    2 * s.vHiddenTextPadding + 2 * penWidth)
+            else:
+                self.setRect(
+                    movedBaseX + s.hHeaderPadding - penWidth,
+                    canvasTop + s.vHeaderPadding - penWidth,
+                    self._sideCommentRect.width() +
+                    2 * s.hTextPadding + 2 * penWidth,
+                    self._sideCommentRect.height() +
+                    2 * s.vTextPadding + 2 * penWidth)
             scene.addItem(self)
         elif self.subKind == ScopeCellElement.DOCSTRING:
             penWidth = s.selectPenWidth - 1
@@ -373,11 +407,18 @@ class ScopeCellElement(CellElement):
             pen = QPen(s.boxFGColor)
             painter.setFont(s.monoFont)
             painter.setPen(pen)
-            painter.drawText(movedBaseX + s.hHeaderPadding + s.hTextPadding,
-                             canvasTop + s.vHeaderPadding + s.vTextPadding,
-                             self._sideCommentRect.width(),
-                             self._sideCommentRect.height(),
-                             Qt.AlignLeft, self._getSideComment())
+            if s.hidecomments:
+                painter.drawText(movedBaseX + s.hHeaderPadding + s.hHiddenTextPadding,
+                                 canvasTop + s.vHeaderPadding + s.vHiddenTextPadding,
+                                 self._sideCommentRect.width(),
+                                 self._sideCommentRect.height(),
+                                 Qt.AlignLeft, self._getSideComment())
+            else:
+                painter.drawText(movedBaseX + s.hHeaderPadding + s.hTextPadding,
+                                 canvasTop + s.vHeaderPadding + s.vTextPadding,
+                                 self._sideCommentRect.width(),
+                                 self._sideCommentRect.height(),
+                                 Qt.AlignLeft, self._getSideComment())
         elif self.subKind == ScopeCellElement.DOCSTRING:
             self.__bgColor, self.__fgColor, self.__borderColor = \
                 self.getCustomColors(painter.brush().color(), s.boxFGColor)
@@ -437,14 +478,15 @@ class ScopeCellElement(CellElement):
                                  2 * s.hCellPadding - correction,
                                  self.baseY + self.height)
 
-            pen = QPen(self.__fgColor)
-            painter.setFont(s.monoFont)
-            painter.setPen(pen)
-            painter.drawText(canvasLeft + s.hHeaderPadding,
-                             self.baseY + s.vHeaderPadding,
-                             self.canvas.width - 2 * s.hHeaderPadding,
-                             self.height - 2 * s.vHeaderPadding,
-                             Qt.AlignLeft, self.getDocstringText())
+            if not s.hidedocstrings:
+                pen = QPen(self.__fgColor)
+                painter.setFont(s.monoFont)
+                painter.setPen(pen)
+                painter.drawText(canvasLeft + s.hHeaderPadding,
+                                 self.baseY + s.vHeaderPadding,
+                                 self.canvas.width - 2 * s.hHeaderPadding,
+                                 self.height - 2 * s.vHeaderPadding,
+                                 Qt.AlignLeft, self.getDocstringText())
 
     def hoverEnterEvent(self, event):
         """Handling mouse enter event"""

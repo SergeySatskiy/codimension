@@ -135,6 +135,10 @@ _DEFAULT_CFLOW_SETTINGS = {
     'hTextPadding': 5,      # in pixels (left and right)
     'vTextPadding': 5,      # in pixels (top and bottom)
 
+    # E.g. comments could be hidden so they need to become smaller
+    'vHiddenTextPadding': 0,
+    'hHiddenTextPadding': 2,
+
     # Scope header (file, decor, loops etc) paddings
     'hHeaderPadding': 5,
     'vHeaderPadding': 5,

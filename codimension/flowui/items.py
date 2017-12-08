@@ -1618,8 +1618,8 @@ class IndependentCommentCell(CellElement, QGraphicsPathItem):
         self.__vTextPadding = canvas.settings.vTextPadding
         self.__hTextPadding = canvas.settings.hTextPadding
         if canvas.settings.hidecomments:
-            self.__vTextPadding = 0.0
-            self.__hTextPadding /= 2.0
+            self.__vTextPadding = canvas.settings.vHiddenTextPadding
+            self.__hTextPadding = canvas.settings.hHiddenTextPadding
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -1785,8 +1785,8 @@ class LeadingCommentCell(CellElement, QGraphicsPathItem):
         self.__vTextPadding = canvas.settings.vTextPadding
         self.__hTextPadding = canvas.settings.hTextPadding
         if canvas.settings.hidecomments:
-            self.__vTextPadding = 0.0
-            self.__hTextPadding /= 2.0
+            self.__vTextPadding = canvas.settings.vHiddenTextPadding
+            self.__hTextPadding = canvas.settings.hHiddenTextPadding
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -1968,6 +1968,12 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         self.__leftEdge = None
         self.connector = None
 
+        self.__vTextPadding = canvas.settings.vTextPadding
+        self.__hTextPadding = canvas.settings.hTextPadding
+        if canvas.settings.hidecomments:
+            self.__vTextPadding = canvas.settings.vHiddenTextPadding
+            self.__hTextPadding = canvas.settings.hHiddenTextPadding
+
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
@@ -1976,19 +1982,21 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         if self.__text is None:
             self.__text = ""
             cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
-            if cellToTheLeft.kind == CellElement.IMPORT:
-                importRef = cellToTheLeft.ref
-                if importRef.fromPart is not None:
-                    self.__text = "\n"
-                self.__text += \
-                    '\n' * (self.ref.sideComment.beginLine -
-                            importRef.whatPart.beginLine) + \
-                    self.ref.sideComment.getDisplayValue()
+            if self.canvas.settings.hidecomments:
+                linesBefore = 0
             else:
-                self.__text = \
-                    '\n' * (self.ref.sideComment.beginLine -
-                            self.ref.body.beginLine) + \
-                    self.ref.sideComment.getDisplayValue()
+                if cellToTheLeft.kind == CellElement.IMPORT:
+                    importRef = cellToTheLeft.ref
+                    linesBefore = self.ref.sideComment.beginLine - \
+                                  importRef.whatPart.beginLine
+                    if importRef.fromPart is not None:
+                        linesBefore += 1
+                else:
+                    linesBefore = self.ref.sideComment.beginLine - \
+                                  self.ref.body.beginLine
+            self.__text = '\n' * linesBefore + \
+                          self.ref.sideComment.getDisplayValue()
+
             if self.canvas.settings.hidecomments:
                 self.setToolTip('<pre>' + escape(self.__text) + '</pre>')
                 self.__text = self.canvas.settings.hiddenCommentText
@@ -2000,10 +2008,11 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         self.__textRect = self.getBoundingRect(self.__getText())
 
         self.minHeight = self.__textRect.height() + \
-            2 * settings.vCellPadding + 2 * settings.vTextPadding
-        self.minWidth = max(
-            self.__textRect.width() + 2 * settings.hCellPadding +
-            2 * settings.hTextPadding, settings.minWidth)
+            2 * settings.vCellPadding + 2 * self.__vTextPadding
+        self.minWidth = self.__textRect.width() + \
+                        2 * settings.hCellPadding + 2 * self.__hTextPadding
+        if not settings.hidecomments:
+            self.minWidth = max(self.minWidth, settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -2019,9 +2028,10 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         settings = self.canvas.settings
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
-        boxWidth = max(self.__textRect.width() +
-                       2 * (settings.hCellPadding + settings.hTextPadding),
-                       settings.minWidth)
+        boxWidth = self.__textRect.width() + \
+                   2 * (settings.hCellPadding + self.__hTextPadding)
+        if not settings.hidecomments:
+            boxWidth = max(boxWidth, settings.minWidth)
         if spareWidth >= boxWidth:
             self.minWidth = 0
         else:
@@ -2041,9 +2051,10 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         settings = self.canvas.settings
 
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
-        boxWidth = max(self.__textRect.width() +
-                       2 * (settings.hCellPadding + settings.hTextPadding),
-                       settings.minWidth)
+        boxWidth = self.__textRect.width() + \
+                   2 * (settings.hCellPadding + self.__hTextPadding)
+        if not settings.hidecomments:
+            boxWidth = max(boxWidth, settings.minWidth)
         self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
         cellKind = self.canvas.cells[self.addr[1]][self.addr[0] - 1].kind
         if cellKind == CellElement.CONNECTOR:
@@ -2117,8 +2128,8 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
         painter.drawText(
-            self.__leftEdge + settings.hCellPadding + settings.hTextPadding,
-            self.baseY + settings.vCellPadding + settings.vTextPadding,
+            self.__leftEdge + settings.hCellPadding + self.__hTextPadding,
+            self.baseY + settings.vCellPadding + self.__vTextPadding,
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self.__getText())
 
@@ -2180,6 +2191,12 @@ class AboveCommentCell(CellElement, QGraphicsPathItem):
         self.connector = None
         self.commentConnector = None
 
+        self.__vTextPadding = canvas.settings.vTextPadding
+        self.__hTextPadding = canvas.settings.hTextPadding
+        if canvas.settings.hidecomments:
+            self.__vTextPadding = canvas.settings.vHiddenTextPadding
+            self.__hTextPadding = canvas.settings.hHiddenTextPadding
+
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
@@ -2198,11 +2215,13 @@ class AboveCommentCell(CellElement, QGraphicsPathItem):
         self.__textRect = self.getBoundingRect(self.__getText())
 
         self.minHeight = self.__textRect.height() + \
-                         2 * (settings.vCellPadding + settings.vTextPadding)
+                         2 * (settings.vCellPadding + self.__vTextPadding)
         # Width of the comment box itself
-        self.minWidth = max(self.__textRect.width() +
-                            2 * (settings.hCellPadding +
-                                 settings.hTextPadding), settings.minWidth)
+        self.minWidth = self.__textRect.width() + \
+                        2 * (settings.hCellPadding + self.__hTextPadding)
+        if not settings.hidecomments:
+            self.minWidth = max(self.minWidth, settings.minWidth)
+
         # Add the connector space
         self.minWidth += settings.mainLine + settings.hCellPadding
 
@@ -2236,9 +2255,10 @@ class AboveCommentCell(CellElement, QGraphicsPathItem):
 
         self.__leftEdge = \
             self.baseX + settings.mainLine + settings.hCellPadding
-        boxWidth = max(self.__textRect.width() +
-                       2 * (settings.hCellPadding + settings.hTextPadding),
-                       settings.minWidth)
+        boxWidth = self.__textRect.width() + \
+                   2 * (settings.hCellPadding + self.__hTextPadding)
+        if not settings.hidecomments:
+            boxWidth = max(boxWidth, settings.minWidth)
 
         path = getCommentBoxPath(settings, self.__leftEdge, baseY,
                                  boxWidth, self.minHeight)
@@ -2288,8 +2308,8 @@ class AboveCommentCell(CellElement, QGraphicsPathItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
         painter.drawText(
-            self.__leftEdge + settings.hCellPadding + settings.hTextPadding,
-            baseY + settings.vCellPadding + settings.vTextPadding,
+            self.__leftEdge + settings.hCellPadding + self.__hTextPadding,
+            baseY + settings.vCellPadding + self.__vTextPadding,
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self.__getText())
 
