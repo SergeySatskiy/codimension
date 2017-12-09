@@ -305,6 +305,10 @@ class CellElement:
                                line)
         return min(self.ref.body.beginLine, line)
 
+    def getLineRange(self):
+        """Default implementation of the line range"""
+        return self.ref.body.getLineRange()
+
 
 __kindToString = {
     CellElement.UNKNOWN: "UNKNOWN",
@@ -511,7 +515,7 @@ class CodeBlockCell(CellElement, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.ref.body.getLineRange()
+        lineRange = self.getLineRange()
         return 'Code block at lines ' + \
                str(lineRange[0]) + "-" + str(lineRange[1])
 
@@ -618,7 +622,7 @@ class BreakCell(CellElement, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.ref.body.getLineRange()
+        lineRange = self.getLineRange()
         return 'Break at lines ' + str(lineRange[0]) + '-' + str(lineRange[1])
 
 
@@ -725,7 +729,7 @@ class ContinueCell(CellElement, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.ref.body.getLineRange()
+        lineRange = self.getLineRange()
         return "Continue at lines " + \
                str(lineRange[0]) + "-" + str(lineRange[1])
 
@@ -861,14 +865,16 @@ class ReturnCell(CellElement, QGraphicsRectItem):
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self._getText())
 
+    def getLineRange(self):
+        """Provides the item line range"""
+        if self.ref.value is not None:
+            return [self.ref.body.beginLine, self.ref.value.endLine]
+        return [self.ref.body.beginLine, self.ref.body.endLine]
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        beginLine = self.ref.body.beginLine
-        if self.ref.value is not None:
-            endLine = self.ref.value.endLine
-        else:
-            endLine = self.ref.body.endLine
-        return "Return at lines " + str(beginLine) + "-" + str(endLine)
+        lineRange = self.getLineRange()
+        return "Return at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
 
     def getDistance(self, absPos):
         """Provides a distance between the absPos and the item"""
@@ -1000,14 +1006,16 @@ class RaiseCell(CellElement, QGraphicsRectItem):
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self._getText())
 
+    def getLineRange(self):
+        """Provides the line range"""
+        if self.ref.value is not None:
+            return [self.ref.body.beginLine, self.ref.value.endLine]
+        return [self.ref.body.beginLine, self.ref.body.endLine]
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        beginLine = self.ref.body.beginLine
-        if self.ref.value is not None:
-            endLine = self.ref.value.endLine
-        else:
-            endLine = self.ref.body.endLine
-        return "Raise at lines " + str(beginLine) + "-" + str(endLine)
+        lineRange = self.getLineRange()
+        return "Raise at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
 
     def getDistance(self, absPos):
         """Provides a distance between the absPos and the item"""
@@ -1151,16 +1159,18 @@ class AssertCell(CellElement, QGraphicsRectItem):
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self._getText())
 
+    def getLineRange(self):
+        """Provides the line range"""
+        if self.ref.message is not None:
+            return [self.ref.body.beginLine, self.ref.message.endLine]
+        if self.ref.test is not None:
+            return[self.ref.body.beginLine, self.ref.test.endLine]
+        return [self.ref.body.beginLine, self.ref.body.endLine]
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        beginLine = self.ref.body.beginLine
-        if self.ref.message is not None:
-            endLine = self.ref.message.endLine
-        elif self.ref.test is not None:
-            endLine = self.ref.test.endLine
-        else:
-            endLine = self.ref.body.endLine
-        return "Assert at lines " + str(beginLine) + "-" + str(endLine)
+        lineRange = self.getLineRange()
+        return "Assert at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
 
     def getDistance(self, absPos):
         """Provides a distance between the absPos and the item"""
@@ -1301,7 +1311,7 @@ class SysexitCell(CellElement, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides tooltip"""
-        lineRange = self.ref.body.getLineRange()
+        lineRange = self.getLineRange()
         return "Sys.exit() at lines " + str(lineRange[0]) + \
                "-" + str(lineRange[1])
 
@@ -1418,7 +1428,7 @@ class ImportCell(CellElement, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.ref.body.getLineRange()
+        lineRange = self.getLineRange()
         return "Import at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
 
 
@@ -1560,7 +1570,7 @@ class IfCell(CellElement, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.ref.body.getLineRange()
+        lineRange = self.getLineRange()
         return "If at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
 
 

@@ -216,9 +216,13 @@ class IndependentCommentCell(CellElement, QGraphicsPathItem):
                                   self.ref.beginPos)
             self._editor.setFocus()
 
+    def getLineRange(self):
+        """Provides the line range"""
+        return self.ref.getLineRange()
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.ref.getLineRange()
+        lineRange = self.getLineRange()
         return "Independent comment at lines " + \
                str(lineRange[0]) + "-" + str(lineRange[1])
 
@@ -400,9 +404,13 @@ class LeadingCommentCell(CellElement, QGraphicsPathItem):
                                   self.ref.leadingComment.beginPos)
             self._editor.setFocus()
 
+    def getLineRange(self):
+        """Provides the line range"""
+        return self.ref.leadingComment.getLineRange()
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.ref.leadingComment.getLineRange()
+        lineRange = self.getLineRange()
         return "Leading comment at lines " + \
                str(lineRange[0]) + "-" + str(lineRange[1])
 
@@ -606,9 +614,13 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
                                   self.ref.sideComment.beginPos)
             self._editor.setFocus()
 
+    def getLineRange(self):
+        """Provides the line range"""
+        return self.ref.sideComment.getLineRange()
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.ref.sideComment.getLineRange()
+        lineRange = self.getLineRange()
         return "Side comment at lines " + \
                str(lineRange[0]) + "-" + str(lineRange[1])
 
@@ -787,9 +799,13 @@ class AboveCommentCell(CellElement, QGraphicsPathItem):
             self._editor.setFocus()
         return
 
+    def getLineRange(self):
+        """Provides the line range"""
+        return self.ref.leadingComment.getLineRange()
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.ref.leadingComment.getLineRange()
+        lineRange = self.getLineRange()
         return "Leading comment at lines " + \
                str(lineRange[0]) + "-" + str(lineRange[1])
 
