@@ -530,8 +530,8 @@ class ScopeCellElement(CellElement):
             self._editor.setFocus()
             return
         if self.subKind == self.DOCSTRING:
-            self._editor.gotoLine(self.ref.docstring.beginLine,
-                                  self.ref.docstring.beginPos)
+            self._editor.gotoLine(self.ref.docstring.body.beginLine,
+                                  self.ref.docstring.body.beginPos)
             self._editor.setFocus()
             return
         if self.subKind == self.DECLARATION:
@@ -676,7 +676,15 @@ class FileScopeCell(ScopeCellElement, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return self.ref.body.getLineRange()
         if self.subKind == self.DOCSTRING:
-            return self.ref.docstring.getLineRange
+            return self.ref.docstring.body.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.body.end]
+        if self.subKind == self.DOCSTRING:
+            return [self.ref.docstring.body.begin,
+                    self.ref.docstring.body.end]
 
     def getSelectTooltip(self):
         """Provides a file scope selected tooltip"""
@@ -754,9 +762,18 @@ class FunctionScopeCell(ScopeCellElement, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.DOCSTRING:
-            return self.ref.docstring.getLineRange()
+            return self.ref.docstring.body.getLineRange()
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.end]
+        if self.subKind == self.DOCSTRING:
+            return [self.ref.docstring.body.begin, self.ref.docstring.body.end]
+        if self.subKind == self.SIDE_COMMENT:
+            return [self.ref.sideComment.begin, self.ref.sideComment.end]
 
     def getSelectTooltip(self):
         """Provides a selected function block tooltip"""
@@ -840,9 +857,18 @@ class ClassScopeCell(ScopeCellElement, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.DOCSTRING:
-            return self.ref.docstring.getLineRange()
+            return self.ref.docstring.body.getLineRange()
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.end]
+        if self.subKind == self.DOCSTRING:
+            return [self.ref.docstring.body.begin, self.ref.docstring.body.end]
+        if self.subKind == self.SIDE_COMMENT:
+            return [self.ref.sideComment.begin, self.ref.sideComment.end]
 
     def getSelectTooltip(self):
         """Provides the selection tooltip"""
@@ -925,6 +951,14 @@ class ForScopeCell(ScopeCellElement, QGraphicsRectItem):
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
 
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.end]
+        if self.subKind == self.SIDE_COMMENT:
+            return [self.ref.sideComment.begin,
+                    self.ref.sideComment.end]
+
     def getSelectTooltip(self):
         """Provides a selected for block tooltip"""
         lineRange = self.getLineRange()
@@ -1003,6 +1037,14 @@ class WhileScopeCell(ScopeCellElement, QGraphicsRectItem):
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
 
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.end]
+        if self.subKind == self.SIDE_COMMENT:
+            return [self.ref.sideComment.begin,
+                    self.ref.sideComment.end]
+
     def getSelectTooltip(self):
         """Provides the selected while scope element tooltip"""
         lineRange = self.getLineRange()
@@ -1066,6 +1108,14 @@ class TryScopeCell(ScopeCellElement, QGraphicsRectItem):
             return [self.ref.body.beginLine, self.ref.suite[-1].endLine]
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.suite[-1].end]
+        if self.subKind == self.SIDE_COMMENT:
+            return [self.ref.sideComment.begin,
+                    self.ref.sideComment.end]
 
     def getSelectTooltip(self):
         """Provides the selected try block tooltip"""
@@ -1144,9 +1194,17 @@ class WithScopeCell(ScopeCellElement, QGraphicsRectItem):
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
 
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.end]
+        if self.subKind == self.SIDE_COMMENT:
+            return [self.ref.sideComment.begin,
+                    self.ref.sideComment.end]
+
     def getSelectTooltip(self):
         """Provides the selected with block tooltip"""
-        lineRange = getLineRange()
+        lineRange = self.getLineRange()
         tooltip = "With "
         if self.subKind == self.TOP_LEFT:
             return tooltip + "scope at lines " + \
@@ -1224,6 +1282,13 @@ class DecoratorScopeCell(ScopeCellElement, QGraphicsRectItem):
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
 
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.end]
+        if self.subKind == self.SIDE_COMMENT:
+            return [self.ref.sideComment.begin, self.ref.sideComment.end]
+
     def getSelectTooltip(self):
         """Provides the selected decorator tooltip"""
         lineRange = self.getLineRange()
@@ -1288,6 +1353,14 @@ class ElseScopeCell(ScopeCellElement, QGraphicsRectItem):
             return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.end]
+        if self.subKind == self.SIDE_COMMENT:
+            return [self.ref.sideComment.begin,
+                    self.ref.sideComment.end]
 
     def getSelectTooltip(self):
         lineRange = self.getLineRange()
@@ -1368,6 +1441,14 @@ class ExceptScopeCell(ScopeCellElement, QGraphicsRectItem):
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
 
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.end]
+        if self.subKind == self.SIDE_COMMENT:
+            return [self.ref.sideComment.begin,
+                    self.ref.sideComment.end]
+
     def getSelectTooltip(self):
         lineRange = self.getLineRange()
         tooltip = "Except "
@@ -1430,6 +1511,14 @@ class FinallyScopeCell(ScopeCellElement, QGraphicsRectItem):
             return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.subKind == self.TOP_LEFT:
+            return [self.ref.body.begin, self.ref.end]
+        if self.subKind == self.SIDE_COMMENT:
+            return [self.ref.sideComment.begin,
+                    self.ref.sideComment.end]
 
     def getSelectTooltip(self):
         """Provides a tooltip for the selected finally block"""

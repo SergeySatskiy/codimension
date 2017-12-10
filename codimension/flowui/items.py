@@ -309,6 +309,10 @@ class CellElement:
         """Default implementation of the line range"""
         return self.ref.body.getLineRange()
 
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.ref.body.begin, self.ref.body.end]
+
 
 __kindToString = {
     CellElement.UNKNOWN: "UNKNOWN",
@@ -871,6 +875,12 @@ class ReturnCell(CellElement, QGraphicsRectItem):
             return [self.ref.body.beginLine, self.ref.value.endLine]
         return [self.ref.body.beginLine, self.ref.body.endLine]
 
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.ref.value is not None:
+            return [self.ref.body.begin, self.ref.value.end]
+        return [self.ref.body.begin, self.ref.body.end]
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
         lineRange = self.getLineRange()
@@ -1011,6 +1021,12 @@ class RaiseCell(CellElement, QGraphicsRectItem):
         if self.ref.value is not None:
             return [self.ref.body.beginLine, self.ref.value.endLine]
         return [self.ref.body.beginLine, self.ref.body.endLine]
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.ref.value is not None:
+            return [self.ref.body.begin, self.ref.value.end]
+        return [self.ref.body.begin, self.ref.body.end]
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -1166,6 +1182,14 @@ class AssertCell(CellElement, QGraphicsRectItem):
         if self.ref.test is not None:
             return[self.ref.body.beginLine, self.ref.test.endLine]
         return [self.ref.body.beginLine, self.ref.body.endLine]
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        if self.ref.message is not None:
+            return [self.ref.body.begin, self.ref.message.end]
+        if self.ref.test is not None:
+            return[self.ref.body.begin, self.ref.test.end]
+        return [self.ref.body.begin, self.ref.body.end]
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
