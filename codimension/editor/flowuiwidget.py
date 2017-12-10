@@ -61,7 +61,8 @@ class CFGraphicsScene(QGraphicsScene,
 
     def selChanged(self):
         """Triggered when a selection changed"""
-        items = self.selectedItems()
+        items = self.sortSelectedReverse()
+        items.reverse()
         count = len(items)
         if count:
             tooltip = []
@@ -813,9 +814,11 @@ class FlowUIWidget(QWidget):
 
     def __onHideDocstringsChanged(self):
         """Signalled by settings"""
+        selection = self.scene.serializeSelection()
         settings = Settings()
         self.__hideDocstrings.setChecked(settings['hidedocstrings'])
-        self.__checkNeedRedraw()
+        if self.__checkNeedRedraw():
+            self.scene.restoreSelectionByID(selection)
 
     def __onHideComments(self):
         """Triggered when a hide comments button is pressed"""
@@ -823,9 +826,11 @@ class FlowUIWidget(QWidget):
 
     def __onHideCommentsChanged(self):
         """Signalled by settings"""
+        selection = self.scene.serializeSelection()
         settings = Settings()
         self.__hideComments.setChecked(settings['hidecomments'])
-        self.__checkNeedRedraw()
+        if self.__checkNeedRedraw():
+            self.scene.restoreSelectionByID(selection)
 
     def __onHideExcepts(self):
         """Triggered when a hide except blocks button is pressed"""
@@ -833,15 +838,19 @@ class FlowUIWidget(QWidget):
 
     def __onHideExceptsChanged(self):
         """Signalled by settings"""
+        selection = self.scene.serializeSelection()
         settings = Settings()
         self.__hideExcepts.setChecked(settings['hideexcepts'])
-        self.__checkNeedRedraw()
+        if self.__checkNeedRedraw():
+            self.scene.restoreSelectionByTooltip(selection)
 
     def __checkNeedRedraw(self):
         """Redraws the scene if necessary when a display setting is changed"""
         editorsManager = self.__mainWindow.editorsManagerWidget.editorsManager
         if self.__parentWidget == editorsManager.currentWidget():
             self.process()
+            return True
+        return False
 
     def dirty(self):
         """True if some other tab has switched display settings"""

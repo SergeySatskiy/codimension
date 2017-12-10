@@ -835,7 +835,9 @@ class EditorsManager(QTabWidget):
             # This is a text editor with flow UI
             self.sigTabRunChanged.emit(widget.isTabRunEnabled())
             if widget.getCFEditor().dirty():
+                selection = widget.getCFEditor().scene.serializeSelection()
                 widget.getCFEditor().process()
+                widget.getCFEditor().scene.restoreSelectionByTooltip(selection)
 
     def onHelp(self):
         """Triggered when F1 is received"""

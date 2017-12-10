@@ -220,6 +220,10 @@ class IndependentCommentCell(CellElement, QGraphicsPathItem):
         """Provides the line range"""
         return self.ref.getLineRange()
 
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.ref.begin, self.ref.end]
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
         lineRange = self.getLineRange()
@@ -407,6 +411,10 @@ class LeadingCommentCell(CellElement, QGraphicsPathItem):
     def getLineRange(self):
         """Provides the line range"""
         return self.ref.leadingComment.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.ref.leadingComment.begin, self.ref.leadingComment.end]
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -618,6 +626,10 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         """Provides the line range"""
         return self.ref.sideComment.getLineRange()
 
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.ref.sideComment.begin, self.ref.sideComment.end]
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
         lineRange = self.getLineRange()
@@ -802,6 +814,10 @@ class AboveCommentCell(CellElement, QGraphicsPathItem):
     def getLineRange(self):
         """Provides the line range"""
         return self.ref.leadingComment.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.ref.leadingComment.begin, self.ref.leadingComment.end]
 
     def getSelectTooltip(self):
         """Provides the tooltip"""

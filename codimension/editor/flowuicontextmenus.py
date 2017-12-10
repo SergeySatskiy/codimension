@@ -406,9 +406,9 @@ class CFSceneContextMenuMixin:
         """Sorts the selected items in reverse order"""
         result = []
         for item in self.selectedItems():
-            itemBegin = item.ref.body.begin
+            itemBegin = item.getAbsPosRange()[0]
             for index in range(len(result)):
-                if itemBegin > result[index].ref.body.begin:
+                if itemBegin > result[index].getAbsPosRange()[0]:
                     result.insert(index, item)
                     break
             else:
