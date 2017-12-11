@@ -25,10 +25,12 @@
 # accordingly.
 
 
+from math import ceil
 from ui.qt import QFontMetrics
 from utils.globals import GlobalData
 from utils.colorfont import getZoomedCFMonoFont, getZoomedCFBadgeFont
 from utils.settings import Settings
+from utils.skin import _DEFAULT_CFLOW_SETTINGS
 
 
 class CFlowSettings:
@@ -41,6 +43,9 @@ class CFlowSettings:
         # Used to generate each item unique sequential ID
         self.itemID = 0
 
+        self.__noZoomFontMetrics = QFontMetrics(
+            _DEFAULT_CFLOW_SETTINGS['cfMonoFont'])
+
         for key, value in params.items():
             setattr(self, key, value)
 
@@ -52,6 +57,10 @@ class CFlowSettings:
 
         self.onFlowZoomChanged()
 
+    def __getNormalized(self, value, coefficient):
+        """Normalize a defalt value to the current zoom"""
+        return ceil(float(_DEFAULT_CFLOW_SETTINGS[value]) * coefficient)
+
     def onFlowZoomChanged(self):
         """Triggered when a flow zoom is changed"""
         self.monoFont = getZoomedCFMonoFont()
@@ -60,6 +69,27 @@ class CFlowSettings:
         self.badgeFont = getZoomedCFBadgeFont()
         self.badgeFontMetrics = QFontMetrics(self.badgeFont,
                                              self.__paintDevice)
+
+        # Recalculate various paddings. If they are not recalculated then the
+        # badges may overlap the text and even boxes
+        newHeight = self.monoFontMetrics.boundingRect('W').height()
+        noZoomHeight = self.__noZoomFontMetrics.boundingRect('W').height()
+        coefficient = float(newHeight) / float(noZoomHeight)
+
+        self.hCellPadding = self.__getNormalized('hCellPadding', coefficient)
+        self.vCellPadding = self.__getNormalized('vCellPadding', coefficient)
+        self.hTextPadding = self.__getNormalized('hTextPadding', coefficient)
+        self.vTextPadding = self.__getNormalized('vTextPadding', coefficient)
+        self.vHiddenTextPadding = self.__getNormalized('vHiddenTextPadding',
+                                                       coefficient)
+        self.hHiddenTextPadding = self.__getNormalized('hHiddenTextPadding',
+                                                       coefficient)
+        self.hHeaderPadding = self.__getNormalized('hHeaderPadding',
+                                                   coefficient)
+        self.vHeaderPadding = self.__getNormalized('vHeaderPadding',
+                                                   coefficient)
+        self.vSpacer = self.__getNormalized('vSpacer', coefficient)
+        self.mainLine = self.__getNormalized('mainLine', coefficient)
 
 
 def getCflowSettings(paintDevice):
