@@ -148,7 +148,9 @@ class ScopeCellElement(CellElement):
                 self.minWidth = rect.width() + 2 * (s.hHeaderPadding -
                                                     s.rectRadius)
             else:
-                self.minHeight = 5
+                self.__docBadge = BadgeItem(self, 'doc')
+                self.minHeight = self.__docBadge.height() + \
+                    2 * (s.selectPenWidth - 1)
                 self.minWidth = 2 * (s.hHeaderPadding - s.rectRadius)
         elif self.subKind == ScopeCellElement.UNKNOWN:
             raise Exception("Unknown scope element")
@@ -313,6 +315,10 @@ class ScopeCellElement(CellElement):
             self.addCMLIndicator(
                 baseX - s.rectRadius - s.hCellPadding,
                 baseY - penWidth, penWidth, scene, self.ref.docstring)
+            if s.hidedocstrings:
+                scene.addItem(self.__docBadge)
+                self.__docBadge.moveTo(
+                    baseX - s.rectRadius + penWidth, baseY + penWidth)
 
     def getColors(self):
         """Provides the item colors"""
