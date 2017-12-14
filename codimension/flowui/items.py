@@ -96,6 +96,7 @@ class CellElement:
     INDEPENDENT_COMMENT = 210
     SIDE_COMMENT = 211
     ABOVE_COMMENT = 212
+    EXCEPT_MINIMIZED = 213
 
     CONNECTOR = 300
 
@@ -1739,3 +1740,176 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
     def setEditor(self, editor):
         """Sets the editor"""
         return  # To be on the safe side: override the default implementation
+
+
+class MinimizedExceptCell(CellElement, QGraphicsPathItem):
+
+    """Represents a minimized except block"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsPathItem.__init__(self)
+        self.kind = CellElement.EXCEPT_MINIMIZED
+        self.__text = None
+        self.__textRect = None
+        self.__leftEdge = None
+        self.connector = None
+
+        self.__vTextPadding = canvas.settings.vHiddenTextPadding
+        self.__hTextPadding = canvas.settings.hHiddenTextPadding
+
+        # To make double click delivered
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def __getText(self):
+        """Provides the text"""
+        if self.__text is None:
+            self.__text = self.canvas.settings.hiddenExceptText
+            self.setToolTip('<pre>' + escape(self.__text) + '</pre>')
+        return self.__text
+
+    def render(self):
+        """Renders the cell"""
+        settings = self.canvas.settings
+        self.__textRect = self.getBoundingRect(self.__getText())
+
+        self.minHeight = self.__textRect.height() + \
+            2 * settings.vCellPadding + 2 * self.__vTextPadding
+        self.minWidth = self.__textRect.width() + \
+                        2 * settings.hCellPadding + 2 * self.__hTextPadding
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def adjustWidth(self):
+        """Used during rendering to adjust the width of the cell.
+
+        The comment now can take some space on the left and the left hand
+        side cell has to be rendered already.
+        The width of this cell will take whatever is needed considering
+        the comment shift to the left.
+        """
+        settings = self.canvas.settings
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
+        boxWidth = self.__textRect.width() + \
+                   2 * (settings.hCellPadding + self.__hTextPadding)
+        if spareWidth >= boxWidth:
+            self.minWidth = 0
+        else:
+            self.minWidth = boxWidth - spareWidth
+        self.width = self.minWidth
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        self.baseX = baseX
+        self.baseY = baseY
+        self.__setupPath()
+        scene.addItem(self.connector)
+        scene.addItem(self)
+
+    def __setupPath(self):
+        """Sets the comment path"""
+        settings = self.canvas.settings
+
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        boxWidth = self.__textRect.width() + \
+                   2 * (settings.hCellPadding + self.__hTextPadding)
+        if not settings.hidecomments:
+            boxWidth = max(boxWidth, settings.minWidth)
+        self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
+        cellKind = self.canvas.cells[self.addr[1]][self.addr[0] - 1].kind
+
+        self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
+        path = getCommentBoxPath(settings, self.__leftEdge, self.baseY,
+                                 boxWidth, self.minHeight)
+
+        height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
+
+        self.connector = Connector(
+            settings, self.__leftEdge + settings.hCellPadding,
+            self.baseY + height,
+            cellToTheLeft.baseX +
+            cellToTheLeft.minWidth - settings.hCellPadding,
+            self.baseY + height)
+
+        self.connector.penColor = settings.commentLineColor
+        self.connector.penWidth = settings.commentLineWidth
+
+        self.setPath(path)
+
+    def paint(self, painter, option, widget):
+        """Draws the side comment"""
+        settings = self.canvas.settings
+
+        brush = QBrush(settings.commentBGColor)
+        self.setBrush(brush)
+
+        if self.isSelected():
+            selectPen = QPen(settings.selectColor)
+            selectPen.setWidth(settings.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(selectPen)
+        else:
+            pen = QPen(settings.commentLineColor)
+            pen.setWidth(settings.commentLineWidth)
+            pen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(pen)
+
+        # Hide the dotted outline
+        itemOption = QStyleOptionGraphicsItem(option)
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
+        QGraphicsPathItem.paint(self, painter, itemOption, widget)
+
+        # Draw the text in the rectangle
+        pen = QPen(settings.commentFGColor)
+        painter.setFont(settings.monoFont)
+        painter.setPen(pen)
+        painter.drawText(
+            self.__leftEdge + settings.hCellPadding + self.__hTextPadding,
+            self.baseY + settings.vCellPadding + self.__vTextPadding,
+            self.__textRect.width(), self.__textRect.height(),
+            Qt.AlignLeft, self.__getText())
+
+    def mouseDoubleClickEvent(self, event):
+        """Jump to the appropriate line in the text editor"""
+        if self._editor:
+            self._editor.gotoLine(self.ref.sideComment.beginLine,
+                                  self.ref.sideComment.beginPos)
+            self._editor.setFocus()
+
+    def getLineRange(self):
+        """Provides the line range"""
+        return self.ref.sideComment.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.ref.sideComment.begin, self.ref.sideComment.end]
+
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        lineRange = self.getLineRange()
+        return "Side comment at lines " + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
+
+    def getDistance(self, absPos):
+        """Provides a distance between the absPos and the item"""
+        retval = maxsize
+        for part in self.ref.sideComment.parts:
+            # +1 is for finishing \n character
+            dist = distance(absPos, part.begin, part.end + 1)
+            if dist == 0:
+                return 0
+            retval = min(retval, dist)
+        return retval
+
+    def getLineDistance(self, line):
+        """Provides a distance between the line and the item"""
+        retval = maxsize
+        for part in self.ref.sideComment.parts:
+            dist = distance(line, part.beginLine, part.endLine)
+            if dist == 0:
+                return 0
+            retval = min(retval, dist)
+        return retval
