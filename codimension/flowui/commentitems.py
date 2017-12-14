@@ -24,46 +24,8 @@ from cgi import escape
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
                    QGraphicsItem, QStyleOptionGraphicsItem, QStyle)
 from .auxitems import Connector
-from .items import CellElement, distance
-
-
-def getCommentBoxPath(settings, baseX, baseY, width, height):
-    """Provides the comomment box path"""
-    if settings.hidecomments:
-        return getHiddenCommentPath(baseX + settings.hCellPadding,
-                                    baseY + settings.vCellPadding,
-                                    width - 2 * settings.hCellPadding,
-                                    height - 2 * settings.vCellPadding)
-    return getNoCellCommentBoxPath(baseX + settings.hCellPadding,
-                                   baseY + settings.vCellPadding,
-                                   width - 2 * settings.hCellPadding,
-                                   height - 2 * settings.vCellPadding,
-                                   settings.commentCorner)
-
-
-def getNoCellCommentBoxPath(x, y, width, height, corner):
-    """Provides the path for exactly specified rectangle"""
-    path = QPainterPath()
-    path.moveTo(x, y)
-    path.lineTo(x + width - corner, y)
-    path.lineTo(x + width, y + corner)
-    path.lineTo(x + width, y + height)
-    path.lineTo(x, y + height)
-    path.lineTo(x, y)
-
-    # -1 is to avoid sharp corners of the lines
-    path.moveTo(x + width - corner, y + 1)
-    path.lineTo(x + width - corner, y + corner)
-    path.lineTo(x + width - 1, y + corner)
-    return path
-
-
-def getHiddenCommentPath(x, y, width, height):
-    """Provides the path for the hidden comment"""
-    path = QPainterPath()
-    path.moveTo(x, y)
-    path.addRoundedRect(x, y, width, height, 3, 3)
-    return path
+from .items import CellElement
+from .routines import distance, getCommentBoxPath
 
 
 class IndependentCommentCell(CellElement, QGraphicsPathItem):

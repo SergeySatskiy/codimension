@@ -41,7 +41,7 @@ from .cml import CMLVersion, CMLsw
 from .items import (CellElement, VacantCell, CodeBlockCell, BreakCell,
                     ContinueCell, ReturnCell, RaiseCell, AssertCell,
                     SysexitCell, ImportCell,  ConnectorCell, IfCell,
-                    VSpacerCell)
+                    VSpacerCell, MinimizedExceptCell)
 from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
                          ClassScopeCell, ForScopeCell, WhileScopeCell,
                          TryScopeCell, WithScopeCell, DecoratorScopeCell,
@@ -245,14 +245,14 @@ class VirtualCanvas:
                 return True
         return False
 
-    @staticmethod
-    def __needTryCommentRow(item):
+    def __needTryCommentRow(self, item):
         """Tells if a row for comments need to be reserved"""
         if item.leadingComment:
             return True
-        for exceptPart in item.exceptParts:
-            if exceptPart.leadingComment:
-                return True
+        if not self.settings.hideexcepts:
+            for exceptPart in item.exceptParts:
+                if exceptPart.leadingComment:
+                    return True
         return False
 
     def layoutSuite(self, vacantRow, suite,
@@ -395,22 +395,30 @@ class VirtualCanvas:
                                               ConnectorCell(CONN_N_S, self,
                                                             column,
                                                             commentRow))
-                    if item.exceptParts:
+                    if item.exceptParts and not self.settings.hideexcepts:
                         self.dependentRegions.append((tryRegionBegin,
                                                       vacantRow))
 
                 self.__allocateScope(item, CellElement.TRY_SCOPE,
                                      vacantRow, column)
-                nextColumn = column + 1
-                for exceptPart in item.exceptParts:
-                    if exceptPart.leadingComment:
-                        self.__allocateAndSet(
-                            commentRow, nextColumn,
-                            AboveCommentCell(exceptPart, self,
-                                             nextColumn, commentRow))
-                    self.__allocateScope(exceptPart, CellElement.EXCEPT_SCOPE,
-                                         vacantRow, nextColumn)
-                    nextColumn += 1
+                if self.settings.hideexcepts:
+                    if item.exceptParts:
+                        miniExcept = MinimizedExceptCell(item, self,
+                                                         column + 1, vacantRow)
+                        self.__allocateAndSet(vacantRow, column + 1,
+                                              miniExcept)
+                else:
+                    nextColumn = column + 1
+                    for exceptPart in item.exceptParts:
+                        if exceptPart.leadingComment:
+                            self.__allocateAndSet(
+                                commentRow, nextColumn,
+                                AboveCommentCell(exceptPart, self,
+                                                 nextColumn, commentRow))
+                        self.__allocateScope(exceptPart,
+                                             CellElement.EXCEPT_SCOPE,
+                                             vacantRow, nextColumn)
+                        nextColumn += 1
                 # The else part goes below
                 if item.elsePart:
                     vacantRow += 1

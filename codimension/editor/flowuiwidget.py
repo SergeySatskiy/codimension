@@ -87,11 +87,12 @@ class CFGraphicsScene(QGraphicsScene,
     # added/removed
     def restoreSelectionByID(self, selection):
         """Restores the selection by the item ID"""
-        ids = [item[0] for item in selection]
-        for item in self.items():
-            if hasattr(item, "itemID"):
-                if item.itemID in ids:
-                    item.setSelected(True)
+        if selection:
+            ids = [item[0] for item in selection]
+            for item in self.items():
+                if hasattr(item, "itemID"):
+                    if item.itemID in ids:
+                        item.setSelected(True)
 
     # The selection can be restored by item tooltips if there is no text
     # modifications but there are representation changes. E.g. the selection
@@ -99,11 +100,12 @@ class CFGraphicsScene(QGraphicsScene,
     # blocks are hidden/shown
     def restoreSelectionByTooltip(self, selection):
         """Restores the selection by the item tooltip"""
-        tooltips = [item[1] for item in selection]
-        for item in self.items():
-            if hasattr(item, "getSelectTooltip"):
-                if item.getSelectTooltip() in tooltips:
-                    item.setSelected(True)
+        if selection:
+            tooltips = [item[1] for item in selection]
+            for item in self.items():
+                if hasattr(item, "getSelectTooltip"):
+                    if item.getSelectTooltip() in tooltips:
+                        item.setSelected(True)
 
 
 class CFGraphicsView(QGraphicsView):

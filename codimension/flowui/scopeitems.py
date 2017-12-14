@@ -24,8 +24,8 @@ import os.path
 from cgi import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .auxitems import BadgeItem, Connector
-from .items import CellElement, distance
-from .commentitems import getNoCellCommentBoxPath, getHiddenCommentPath
+from .items import CellElement
+from .routines import distance, getNoCellCommentBoxPath, getHiddenCommentPath
 from .cml import CMLVersion, CMLcc
 
 

@@ -22,40 +22,11 @@
 from sys import maxsize
 from cgi import escape
 from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
-                   QGraphicsRectItem, QGraphicsPathItem, QGraphicsItem)
+                   QGraphicsRectItem, QGraphicsPathItem, QGraphicsItem,
+                   QStyleOptionGraphicsItem, QStyle)
 from .auxitems import SVGItem, Connector, Text, CMLLabel
 from .cml import CMLVersion, CMLsw, CMLcc, CMLrt
-
-
-def getBorderColor(color):
-    """Creates a darker version of the color"""
-    red = color.red()
-    green = color.green()
-    blue = color.blue()
-
-    delta = 60
-    if isDark(red, green, blue):
-        # Need lighter color
-        return QColor(min(red + delta, 255),
-                      min(green + delta, 255),
-                      min(blue + delta, 255), color.alpha())
-    # Need darker color
-    return QColor(max(red - delta, 0),
-                  max(green - delta, 0),
-                  max(blue - delta, 0), color.alpha())
-
-
-def isDark(red, green, blue):
-    """True if the color is dark"""
-    yiq = ((red * 299) + (green * 587) + (blue * 114)) / 1000
-    return yiq < 128
-
-
-def distance(val, begin, end):
-    """Provides a distance between the absPos and an item"""
-    if val >= begin and val <= end:
-        return 0
-    return min(abs(val - begin), abs(val - end))
+from .routines import getBorderColor, getCommentBoxPath
 
 
 class CellElement:
@@ -1822,7 +1793,7 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
 
         self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
         path = getCommentBoxPath(settings, self.__leftEdge, self.baseY,
-                                 boxWidth, self.minHeight)
+                                 boxWidth, self.minHeight, True)
 
         height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
 
