@@ -26,7 +26,7 @@ from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
                    QStyleOptionGraphicsItem, QStyle)
 from .auxitems import SVGItem, Connector, Text, CMLLabel
 from .cml import CMLVersion, CMLsw, CMLcc, CMLrt
-from .routines import getBorderColor, getCommentBoxPath
+from .routines import getBorderColor, getCommentBoxPath, distance
 
 
 class CellElement:
@@ -1736,7 +1736,7 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
         """Provides the text"""
         if self.__text is None:
             self.__text = self.canvas.settings.hiddenExceptText + \
-                '(' + str(len(self.ref.exceptParts)) + ')'
+                '[' + str(len(self.ref.exceptParts)) + ']'
             self.__setTooltip()
         return self.__text
 
@@ -1744,7 +1744,7 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
         """Sets the item tooltip"""
         parts = []
         for part in self.ref.exceptParts:
-            lines = self.ref.getDisplayValue().splitlines()
+            lines = part.getDisplayValue().splitlines()
             if len(lines) > 1:
                 parts.append('except: ' + lines[0] + '...')
             elif len(lines) == 1:
@@ -1843,8 +1843,8 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
         """Jump to the appropriate line in the text editor"""
         if self._editor:
             firstExcept = self.ref.exceptParts[0]
-            self._editor.gotoLine(firstExcept.beginLine,
-                                  firstExcept.beginPos)
+            self._editor.gotoLine(firstExcept.body.beginLine,
+                                  firstExcept.body.beginPos)
             self._editor.setFocus()
 
     def getLineRange(self):
@@ -1871,21 +1871,10 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
 
     def getDistance(self, absPos):
         """Provides a distance between the absPos and the item"""
-        retval = maxsize
-        for part in self.ref.sideComment.parts:
-            # +1 is for finishing \n character
-            dist = distance(absPos, part.begin, part.end + 1)
-            if dist == 0:
-                return 0
-            retval = min(retval, dist)
-        return retval
+        absPosRange = self.getAbsPosRange()
+        return distance(absPos, absPosRange[0], absPosRange[1])
 
     def getLineDistance(self, line):
         """Provides a distance between the line and the item"""
-        retval = maxsize
-        for part in self.ref.sideComment.parts:
-            dist = distance(line, part.beginLine, part.endLine)
-            if dist == 0:
-                return 0
-            retval = min(retval, dist)
-        return retval
+        lineRange = self.getLineRange()
+        return distance(line, lineRange[0], lineRange[1])

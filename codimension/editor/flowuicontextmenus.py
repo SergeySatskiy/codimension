@@ -135,10 +135,14 @@ class CFSceneContextMenuMixin:
         """Disables the common menu items as needed"""
         hasComment = self.isCommentInSelection()
         hasDocstring = self.isDocstringInSelection()
+        hasMinimizedExcepts = self.isInSelected([(CellElement.EXCEPT_MINIMIZED,
+                                                  None)])
         count = len(self.selectedItems())
 
-        self.__ccAction.setEnabled(not hasComment)
-        self.__rtAction.setEnabled(not hasComment and not hasDocstring)
+        self.__ccAction.setEnabled(not hasComment and not hasMinimizedExcepts)
+        self.__rtAction.setEnabled(not hasComment and
+                                   not hasDocstring and
+                                   not hasMinimizedExcepts)
         self.__removeCCAction.setEnabled(
             self.countItemsWithCML(CMLcc) == count)
         self.__removeRTAction.setEnabled(
