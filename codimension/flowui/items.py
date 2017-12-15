@@ -1735,9 +1735,23 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
     def __getText(self):
         """Provides the text"""
         if self.__text is None:
-            self.__text = self.canvas.settings.hiddenExceptText
-            self.setToolTip('<pre>' + escape(self.__text) + '</pre>')
+            self.__text = self.canvas.settings.hiddenExceptText + \
+                '(' + str(len(self.ref.exceptParts)) + ')'
+            self.__setTooltip()
         return self.__text
+
+    def __setTooltip(self):
+        """Sets the item tooltip"""
+        parts = []
+        for part in self.ref.exceptParts:
+            lines = self.ref.getDisplayValue().splitlines()
+            if len(lines) > 1:
+                parts.append('except: ' + lines[0] + '...')
+            elif len(lines) == 1:
+                parts.append('except: ' + lines[0])
+            else:
+                parts.append('except:')
+        self.setToolTip('<pre>' + escape('\n'.join(parts)) + '</pre>')
 
     def render(self):
         """Renders the cell"""
@@ -1751,25 +1765,6 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
-
-    def adjustWidth(self):
-        """Used during rendering to adjust the width of the cell.
-
-        The comment now can take some space on the left and the left hand
-        side cell has to be rendered already.
-        The width of this cell will take whatever is needed considering
-        the comment shift to the left.
-        """
-        settings = self.canvas.settings
-        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
-        spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
-        boxWidth = self.__textRect.width() + \
-                   2 * (settings.hCellPadding + self.__hTextPadding)
-        if spareWidth >= boxWidth:
-            self.minWidth = 0
-        else:
-            self.minWidth = boxWidth - spareWidth
-        self.width = self.minWidth
 
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
@@ -1804,8 +1799,9 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
             cellToTheLeft.minWidth - settings.hCellPadding,
             self.baseY + height)
 
-        self.connector.penColor = settings.commentLineColor
-        self.connector.penWidth = settings.commentLineWidth
+        # self.connector.penColor = settings.commentLineColor
+        # self.connector.penWidth = settings.commentLineWidth
+        self.connector.penStyle = Qt.DotLine
 
         self.setPath(path)
 
@@ -1813,7 +1809,7 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
         """Draws the side comment"""
         settings = self.canvas.settings
 
-        brush = QBrush(settings.commentBGColor)
+        brush = QBrush(settings.exceptScopeBGColor)
         self.setBrush(brush)
 
         if self.isSelected():
@@ -1822,8 +1818,8 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
             selectPen.setJoinStyle(Qt.RoundJoin)
             self.setPen(selectPen)
         else:
-            pen = QPen(settings.commentLineColor)
-            pen.setWidth(settings.commentLineWidth)
+            pen = QPen(getBorderColor(settings.exceptScopeBGColor))
+            pen.setWidth(settings.lineWidth)
             pen.setJoinStyle(Qt.RoundJoin)
             self.setPen(pen)
 
@@ -1834,7 +1830,7 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
         QGraphicsPathItem.paint(self, painter, itemOption, widget)
 
         # Draw the text in the rectangle
-        pen = QPen(settings.commentFGColor)
+        pen = QPen(settings.boxFGColor)
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
         painter.drawText(
@@ -1846,22 +1842,31 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
         if self._editor:
-            self._editor.gotoLine(self.ref.sideComment.beginLine,
-                                  self.ref.sideComment.beginPos)
+            firstExcept = self.ref.exceptParts[0]
+            self._editor.gotoLine(firstExcept.beginLine,
+                                  firstExcept.beginPos)
             self._editor.setFocus()
 
     def getLineRange(self):
         """Provides the line range"""
-        return self.ref.sideComment.getLineRange()
+        firstLineRange = self.ref.exceptParts[0].getLineRange()
+        lastLineRange = self.ref.exceptParts[-1].getLineRange()
+        return [firstLineRange[0], lastLineRange[1]]
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        return [self.ref.sideComment.begin, self.ref.sideComment.end]
+        firstExcept = self.ref.exceptParts[0]
+        lastExcept = self.ref.exceptParts[-1]
+        return [firstExcept.begin, lastExcept.end]
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
         lineRange = self.getLineRange()
-        return "Side comment at lines " + \
+        count = len(self.ref.exceptParts)
+        if count == 1:
+            return 'Minimized except block at lines ' + \
+                   str(lineRange[0]) + "-" + str(lineRange[1])
+        return str(count) + ' minimized except blocks at lines ' + \
                str(lineRange[0]) + "-" + str(lineRange[1])
 
     def getDistance(self, absPos):

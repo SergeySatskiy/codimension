@@ -279,14 +279,21 @@ try:
 except:
     pass
 
-try:
-    pass
-except Exception:
-    pass
-except Exception as ex:
-    pass
-except:
-    pass
+if True:
+    try:
+        pass
+    except Exception:
+        pass
+    except Exception as ex:
+        pass
+    except:
+        pass
+else:
+    try:
+        pass
+    except Exception:
+        pass
+
 
 # Leading 1
 try:        # Side 1
