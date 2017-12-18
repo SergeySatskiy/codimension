@@ -1735,8 +1735,8 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
     def __getText(self):
         """Provides the text"""
         if self.__text is None:
-            self.__text = self.canvas.settings.hiddenExceptText + \
-                '[' + str(len(self.ref.exceptParts)) + ']'
+            self.__text = self.canvas.settings.hiddenExceptText
+            #  + '[' + str(len(self.ref.exceptParts)) + ']'
             self.__setTooltip()
         return self.__text
 
