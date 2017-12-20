@@ -45,12 +45,6 @@ class QuickHelpWidget(TextTabWidget):
       <table border="0" cellspacing="1"
              cellpadding="4" width="95%" align="center">
         <tr>
-          <td width="15%" bgcolor="#E9E9F3">Ctrl+L</td>
-          <td width="35%" bgcolor="#F6F4E4">Pylint for a file</td>
-          <td width="15%" bgcolor="#E9E9F3">Ctrl+K</td>
-          <td width="35%" bgcolor="#F6F4E4">Pymetrics for a file</td>
-        </tr>
-        <tr>
           <td bgcolor="#E9E9F3">Alt+Shift+S</td>
           <td bgcolor="#F6F4E4">Search a name</td>
           <td bgcolor="#E9E9F3">Alt+Shift+O</td>

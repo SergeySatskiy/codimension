@@ -19,6 +19,7 @@
 
 """Interactive errors report using pyflakes"""
 
+import re
 from _ast import PyCF_ONLY_AST
 from pyflakes.checker import Checker
 
@@ -26,6 +27,9 @@ from pyflakes.checker import Checker
 # Returns a dictionary:
 # {lineno1: [msg1, msg2, ...],
 #  lineno2: [msg3, ...]}
+
+
+IGNORE_REGEXP = re.compile(r'analysis:\s*(off|disable|ignore)', re.IGNORECASE)
 
 
 def getBufferErrors(sourceCode):
@@ -60,7 +64,7 @@ def getBufferErrors(sourceCode):
         else:
             # By some reasons I see ast NAME node here (pyflakes 0.7.3)
             lineno = warning.lineno.lineno
-        if 'analysis:ignore' not in lines[lineno - 1]:
+        if not IGNORE_REGEXP.search(lines[lineno - 1]):
             if lineno in results:
                 results[lineno].append(warning.message % warning.message_args)
             else:

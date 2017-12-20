@@ -403,6 +403,8 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
 
     """Represents a single side comment"""
 
+    IF_SIDE_SHIFT = 6
+
     def __init__(self, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
         QGraphicsPathItem.__init__(self)
@@ -411,6 +413,7 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         self.__textRect = None
         self.__leftEdge = None
         self.connector = None
+        self.__isIfSide = False
 
         self.__vTextPadding = canvas.settings.vTextPadding
         self.__hTextPadding = canvas.settings.hTextPadding
@@ -503,9 +506,13 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         cellKind = self.canvas.cells[self.addr[1]][self.addr[0] - 1].kind
         if cellKind == CellElement.CONNECTOR:
             # 'if' or 'elif' side comment
+            self.__isIfSide = True
             self.__leftEdge = \
                 cellToTheLeft.baseX + settings.mainLine + settings.hCellPadding
-            path = getCommentBoxPath(settings, self.__leftEdge, self.baseY,
+            boxBaseY = self.baseY
+            if self.canvas.settings.hidecomments:
+                boxBaseY += self.IF_SIDE_SHIFT
+            path = getCommentBoxPath(settings, self.__leftEdge, boxBaseY,
                                      boxWidth, self.minHeight)
 
             width = 0
@@ -520,9 +527,9 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
 
             self.connector = Connector(
                 settings, self.__leftEdge + settings.hCellPadding,
-                self.baseY + ifCell.minHeight / 2 + 6,
+                self.baseY + ifCell.minHeight / 2 + self.IF_SIDE_SHIFT,
                 ifCell.baseX + ifCell.minWidth - settings.hCellPadding,
-                self.baseY + ifCell.minHeight / 2 + 6)
+                self.baseY + ifCell.minHeight / 2 + self.IF_SIDE_SHIFT)
         else:
             # Regular box
             self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
@@ -571,9 +578,12 @@ class SideCommentCell(CellElement, QGraphicsPathItem):
         pen = QPen(settings.commentFGColor)
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
+        boxBaseY = self.baseY
+        if settings.hidecomments and self.__isIfSide:
+            boxBaseY += self.IF_SIDE_SHIFT
         painter.drawText(
             self.__leftEdge + settings.hCellPadding + self.__hTextPadding,
-            self.baseY + settings.vCellPadding + self.__vTextPadding,
+            boxBaseY + settings.vCellPadding + self.__vTextPadding,
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self.__getText())
 
