@@ -43,7 +43,6 @@ from optparse import OptionParser
 from ui.qt import QTimer, QDir, QMessageBox
 from ui.application import CodimensionApplication
 from ui.splashscreen import SplashScreen
-from autocomplete.completelists import buildSystemWideModulesList
 from utils.project import CodimensionProject
 from utils.skin import Skin
 from utils.config import CONFIG_DIR
@@ -140,9 +139,6 @@ Runs codimension UI"""
 
     splash.showMessage("Importing packages...")
     from ui.mainwindow import CodimensionMainWindow
-
-    splash.showMessage("Building system wide modules list...")
-    buildSystemWideModulesList()
 
     splash.showMessage("Generating main window...")
     mainWindow = CodimensionMainWindow(splash, settings)

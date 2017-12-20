@@ -21,7 +21,8 @@
 """file related utils"""
 
 import os
-from os.path import islink, exists, split, join, sep, basename, realpath
+from os.path import (islink, exists, split, join, sep, basename, realpath,
+                     normpath, isabs, dirname)
 import logging
 import json
 import magic
@@ -730,3 +731,21 @@ def makeTempFile(prefix='cdm_', suffix=None):
     fileHandle, fileName = tempfile.mkstemp(suffix, prefix)
     os.close(fileHandle)
     return fileName
+
+
+def resolveLink(path):
+    """Resolves links and detects loops"""
+    paths_seen = []
+    while islink(path):
+        if path in paths_seen:
+            # Already seen this path, so we must have a symlink loop
+            return path, True
+        paths_seen.append(path)
+        # Resolve where the link points to
+        resolved = os.readlink(path)
+        if not isabs(resolved):
+            dir_name = dirname(path)
+            path = normpath(dir_name + sep + resolved)
+        else:
+            path = normpath(resolved)
+    return path, False

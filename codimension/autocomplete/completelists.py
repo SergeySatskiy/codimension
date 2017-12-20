@@ -26,59 +26,7 @@ import logging
 import jedi
 from utils.globals import GlobalData
 from utils.fileutils import getFileContent
-from .listmodules import getSysModules, getModules
 from .bufferutils import getEditorTags
-
-
-__systemwideModules = {}
-__systemwideInitialized = False
-
-
-def buildSystemWideModulesList():
-    """Builds a map for the system wide modules"""
-    global __systemwideModules
-    global __systemwideInitialized
-
-    if not __systemwideInitialized:
-        __systemwideModules = getSysModules()
-        __systemwideInitialized = True
-
-
-def getSystemWideModules():
-    """Provides a list of system wide modules"""
-    buildSystemWideModulesList()
-    return __systemwideModules
-
-
-def getProjectSpecificModules(path='', onlySpecified=False):
-    """Provides a dictionary of the project specific modules"""
-    specificModules = {}
-    importDirs = []
-
-    if not onlySpecified:
-        importDirs = GlobalData().getProjectImportDirs()
-        for importPath in importDirs:
-            specificModules.update(getModules(importPath))
-
-        projectFile = GlobalData().project.fileName
-        if projectFile != "":
-            basedir = os.path.dirname(projectFile)
-            if basedir not in importDirs:
-                importDirs.append(basedir)
-                specificModules.update(getModules(basedir))
-
-    if path and os.path.isabs(path):
-        path = os.path.normpath(path)
-        basedir = ""
-        if os.path.isfile(path):
-            basedir = os.path.dirname(path)
-        elif os.path.isdir(path):
-            basedir = path
-
-        if basedir and basedir not in importDirs:
-            specificModules.update(getModules(basedir))
-
-    return specificModules
 
 
 def getCallSignatures(editor, fileName):

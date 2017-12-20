@@ -28,10 +28,10 @@ import logging
 from html import escape
 from utils.globals import GlobalData
 from utils.settings import Settings
-from utils.fileutils import isFileSearchable, isPythonFile, getFileContent
+from utils.fileutils import (isFileSearchable, isPythonFile, getFileContent,
+                             resolveLink)
 from utils.diskvaluesrelay import getFindInFilesHistory, setFindInFilesHistory
 from cdmpyparser import getBriefModuleInfoFromMemory
-from autocomplete.listmodules import resolveLink
 from .qt import (QCursor, Qt, QDialog, QDialogButtonBox, QVBoxLayout,
                  QSizePolicy, QLabel, QProgressBar, QApplication, QComboBox,
                  QGridLayout, QHBoxLayout, QCheckBox, QRadioButton,
