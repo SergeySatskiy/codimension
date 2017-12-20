@@ -137,7 +137,7 @@ class GlobalDataWrapper:
     @staticmethod
     def __checkGraphviz():
         """Checks if the graphviz available"""
-        if 'win' in sys.platform.lower():
+        if sys.platform.lower().starswith('win'):
             return os.system('which dot > /NUL 2>&1') == 0
         return os.system('which dot > /dev/null 2>&1') == 0
 
