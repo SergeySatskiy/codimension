@@ -107,6 +107,7 @@ _DEFAULT_SETTINGS = {
     # general
     'zoom': 0,
     'flowZoom': 0,
+    'smartZoom': 0,
     'xpos': 50,
     'ypos': 50,
     'width': 750,
@@ -238,6 +239,8 @@ class SettingsWrapper(QObject,
 
     """Provides settings singleton facility"""
 
+    MAX_SMART_ZOOM = 4
+
     sigRecentListChanged = pyqtSignal()
     sigFlowSplitterChanged = pyqtSignal()
     sigFlowZoomChanged = pyqtSignal()
@@ -245,6 +248,7 @@ class SettingsWrapper(QObject,
     sigHideDocstringsChanged = pyqtSignal()
     sigHideCommentsChanged = pyqtSignal()
     sigHideExceptsChanged = pyqtSignal()
+    sigSmartZoomChanged = pyqtSignal()
 
     def __init__(self):
         QObject.__init__(self)
@@ -406,17 +410,30 @@ class SettingsWrapper(QObject,
         self.minCFlowZoom = minCFlowZoom
         warnings = []
         if self.__values['zoom'] < minTextZoom:
-            warnings.append("The current text zoom (" +
+            warnings.append('The current text zoom (' +
                             str(self.__values['zoom']) +
-                            ") will be adjusted to " + str(minTextZoom) +
-                            " due to it is less than min fonts allowed.")
+                            ') will be adjusted to ' + str(minTextZoom) +
+                            ' due to it is less than min fonts allowed.')
             self.__values['zoom'] = minTextZoom
         if self.__values['flowZoom'] < minCFlowZoom:
-            warnings.append("The current flow zoom (" +
+            warnings.append('The current flow zoom (' +
                             str(self.__values['flowZoom']) +
-                            ") will be adjusted to " + str(minCFlowZoom) +
-                            " due to it is less than min fonts allowed.")
+                            ') will be adjusted to ' + str(minCFlowZoom) +
+                            ' due to it is less than min fonts allowed.')
             self.__values['flowZoom'] = minCFlowZoom
+        if self.__values['smartZoom'] < 0:
+            warnings.append('The current smart zoom (' +
+                            str(self.__values['smartZoom']) +
+                            ') will be adjusted to 0 due to it must be >= 0')
+            self.__values['smartZoom'] = 0
+        elif self.__values['smartZoom'] > SettingsWrapper.MAX_SMART_ZOOM:
+            warnings.append('The current smart zoom (' +
+                            str(self.__values['smartZoom']) +
+                            ') will be adjusted to ' +
+                            str(SettingsWrapper.MAX_SMART_ZOOM) +
+                            ' due to it is larger than max allowed.')
+            self.__values['smartZoom'] = SettingsWrapper.MAX_SMART_ZOOM
+
         if warnings:
             self.flush()
         return warnings
@@ -432,6 +449,8 @@ class SettingsWrapper(QObject,
             self.sigFlowZoomChanged.emit()
         elif key == 'zoom':
             self.sigTextZoomChanged.emit()
+        elif key == 'smartZoom':
+            self.sigSmartZoomChanged.emit()
         elif key == 'hidedocstrings':
             self.sigHideDocstringsChanged.emit()
         elif key == 'hidecomments':
@@ -459,6 +478,20 @@ class SettingsWrapper(QObject,
             self.__values['zoom'] = 0
             self.flush()
             self.sigTextZoomChanged.emit()
+
+    def onSmartZoomIn(self):
+        """Triggered when the smart zoom is changed"""
+        if self.__values['smartZoom'] < SettingsWrapper.MAX_SMART_ZOOM:
+            self.__values['smartZoom'] += 1
+            self.flush()
+            self.sigSmartZoomChanged.emit()
+
+    def onSmartZoomOut(self):
+        """Triggered when the smart zoom is changed"""
+        if self.__values['smartZoom'] > 0:
+            self.__values['smartZoom'] -= 1
+            self.flush()
+            self.sigSmartZoomChanged.emit()
 
     def onFlowZoomIn(self):
         """Triggered when the flow is zoomed in"""

@@ -232,7 +232,7 @@ class TextEditorTabWidget(QWidget):
         toolbar.setMovable(False)
         toolbar.setAllowedAreas(Qt.RightToolBarArea)
         toolbar.setIconSize(QSize(16, 16))
-        toolbar.setFixedWidth(28)
+        toolbar.setFixedWidth(30)
         toolbar.setContentsMargins(0, 0, 0, 0)
 
         toolbar.addAction(printPreviewButton)
