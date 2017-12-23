@@ -60,7 +60,8 @@ class FlowUIWidget(QWidget):
         self.cflowSettings = getCflowSettings(self)
         self.__displayProps = (self.cflowSettings.hidedocstrings,
                                self.cflowSettings.hidecomments,
-                               self.cflowSettings.hideexcepts)
+                               self.cflowSettings.hideexcepts,
+                               Settings()['smartZoom'])
 
         hLayout = QHBoxLayout()
         hLayout.setContentsMargins(0, 0, 0, 0)
@@ -98,6 +99,9 @@ class FlowUIWidget(QWidget):
             self.__onHideDocstringsChanged)
         Settings().sigHideCommentsChanged.connect(self.__onHideCommentsChanged)
         Settings().sigHideExceptsChanged.connect(self.__onHideExceptsChanged)
+        Settings().sigSmartZoomChanged.connect(self.__onSmartZoomChanged)
+
+        self.setSmartZoomLevel(Settings()['smartZoom'])
 
     def __createToolbar(self):
         """Creates the toolbar"""
@@ -137,6 +141,7 @@ class FlowUIWidget(QWidget):
         self.__levelUpButton.setFocusPolicy(Qt.NoFocus)
         self.__levelUpButton.setIcon(getIcon('levelup.png'))
         self.__levelUpButton.setToolTip('Smart zoom level up (Alt+wheel)')
+        self.__levelUpButton.clicked.connect(self.onSmartZoomLevelUp)
         self.__levelIndicator = QLabel('<b>0</b>', self)
         self.__levelIndicator.setToolTip('Current smart zoom level')
         self.__levelIndicator.setAlignment(Qt.AlignCenter)
@@ -144,6 +149,7 @@ class FlowUIWidget(QWidget):
         self.__levelDownButton.setFocusPolicy(Qt.NoFocus)
         self.__levelDownButton.setIcon(getIcon('leveldown.png'))
         self.__levelDownButton.setToolTip('Smart zoom level down (Alt+wheel)')
+        self.__levelDownButton.clicked.connect(self.onSmartZoomLevelDown)
 
         fixedSpacer = QWidget()
         fixedSpacer.setFixedHeight(10)
@@ -250,7 +256,8 @@ class FlowUIWidget(QWidget):
             self.cflowSettings = getCflowSettings(self)
             self.__displayProps = (self.cflowSettings.hidedocstrings,
                                    self.cflowSettings.hidecomments,
-                                   self.cflowSettings.hideexcepts)
+                                   self.cflowSettings.hideexcepts,
+                                   Settings()['smartZoom'])
         self.cflowSettings.itemID = 0
 
         self.scene.clear()
@@ -578,4 +585,35 @@ class FlowUIWidget(QWidget):
         settings = Settings()
         return self.__displayProps[0] != settings['hidedocstrings'] or \
             self.__displayProps[1] != settings['hidecomments'] or \
-            self.__displayProps[2] != settings['hideexcepts']
+            self.__displayProps[2] != settings['hideexcepts'] or \
+            self.__displayProps[3] != settings['smartZoom']
+
+    def onSmartZoomLevelUp(self):
+        """Triggered when an upper smart zoom level was requested"""
+        maxSmartZoom = Settings().MAX_SMART_ZOOM
+        currentLevel = Settings()['smartZoom']
+        if currentLevel < maxSmartZoom:
+            Settings()['smartZoom'] = currentLevel + 1
+
+    def onSmartZoomLevelDown(self):
+        """Triggered when an lower smart zoom level was requested"""
+        currentLevel = Settings()['smartZoom']
+        if currentLevel > 0:
+            Settings()['smartZoom'] = currentLevel - 1
+
+    def setSmartZoomLevel(self, smartZoomLevel):
+        """Sets the new smart zoom level"""
+        maxSmartZoom = Settings().MAX_SMART_ZOOM
+        if smartZoomLevel < 0 or smartZoomLevel > maxSmartZoom:
+            return
+
+        self.__levelIndicator.setText('<b>' + str(smartZoomLevel) + '</b>')
+        self.__levelUpButton.setEnabled(smartZoomLevel < maxSmartZoom)
+        self.__levelDownButton.setEnabled(smartZoomLevel > 0)
+
+    def __onSmartZoomChanged(self):
+        """Triggered when a smart zoom changed"""
+        selection = self.scene.serializeSelection()
+        self.setSmartZoomLevel(Settings()['smartZoom'])
+        if self.__checkNeedRedraw():
+            self.scene.restoreSelectionByTooltip(selection)
