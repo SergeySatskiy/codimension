@@ -261,7 +261,13 @@ class CellElement:
             if self._text is None:
                 self._text = displayText
             else:
-                self.setToolTip("<pre>" + escape(displayText) + "</pre>")
+                if displayText:
+                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
+            if self.canvas.settings.noContent and \
+               self.kind not in [self.CLASS_SCOPE, self.FUNC_SCOPE]:
+                if displayText:
+                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
+                self._text = ''
         return self._text
 
     def getFirstLine(self):
@@ -523,14 +529,31 @@ class BreakCell(CellElement, QGraphicsRectItem):
         return self.getCustomColors(self.canvas.settings.breakBGColor,
                                     self.canvas.settings.boxFGColor)
 
+    def _getText(self):
+        """Provides the text"""
+        if self._text is None:
+            self._text = self.getReplacementText()
+            displayText = 'break'
+            if self._text is None:
+                self._text = displayText
+            else:
+                if displayText:
+                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
+            if self.canvas.settings.noContent:
+                if displayText:
+                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
+                self._text = ''
+        return self._text
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect('break')
+        self.__textRect = self.getBoundingRect(self._getText())
         vPadding = 2 * (self.__vSpacing + settings.vCellPadding)
         self.minHeight = self.__textRect.height() + vPadding
         hPadding = 2 * (self.__hSpacing + settings.hCellPadding)
-        self.minWidth = self.__textRect.width() + hPadding
+        self.minWidth = max(self.__textRect.width() + hPadding,
+                            settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -540,8 +563,8 @@ class BreakCell(CellElement, QGraphicsRectItem):
         settings = self.canvas.settings
         self.x1 = self.baseX + settings.hCellPadding
         self.y1 = self.baseY + settings.vCellPadding
-        self.w = 2 * self.__hSpacing + self.__textRect.width()
-        self.h = 2 * self.__vSpacing + self.__textRect.height()
+        self.w = self.minWidth - 2 * settings.hCellPadding
+        self.h = self.minHeight - 2 * settings.hCellPadding
 
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
@@ -594,7 +617,7 @@ class BreakCell(CellElement, QGraphicsRectItem):
         painter.setPen(pen)
         painter.drawText(self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
                          self.__textRect.width(), self.__textRect.height(),
-                         Qt.AlignLeft, "break")
+                         Qt.AlignLeft, self._getText())
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -629,14 +652,31 @@ class ContinueCell(CellElement, QGraphicsRectItem):
         return self.getCustomColors(self.canvas.settings.continueBGColor,
                                     self.canvas.settings.boxFGColor)
 
+    def _getText(self):
+        """Provides the text"""
+        if self._text is None:
+            self._text = self.getReplacementText()
+            displayText = 'continue'
+            if self._text is None:
+                self._text = displayText
+            else:
+                if displayText:
+                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
+            if self.canvas.settings.noContent:
+                if displayText:
+                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
+                self._text = ''
+        return self._text
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect('continue')
+        self.__textRect = self.getBoundingRect(self._getText())
         vPadding = 2 * (self.__vSpacing + settings.vCellPadding)
         self.minHeight = self.__textRect.height() + vPadding
         hPadding = 2 * (self.__hSpacing + settings.hCellPadding)
-        self.minWidth = self.__textRect.width() + hPadding
+        self.minWidth = max(self.__textRect.width() + hPadding,
+                            settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -646,8 +686,8 @@ class ContinueCell(CellElement, QGraphicsRectItem):
         settings = self.canvas.settings
         self.x1 = self.baseX + settings.hCellPadding
         self.y1 = self.baseY + settings.vCellPadding
-        self.w = 2 * self.__hSpacing + self.__textRect.width()
-        self.h = 2 * self.__vSpacing + self.__textRect.height()
+        self.w = self.minWidth - 2 * settings.hCellPadding
+        self.h = self.minHeight - 2 * settings.hCellPadding
 
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
@@ -701,7 +741,7 @@ class ContinueCell(CellElement, QGraphicsRectItem):
         painter.setPen(pen)
         painter.drawText(self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
                          self.__textRect.width(), self.__textRect.height(),
-                         Qt.AlignLeft, "continue")
+                         Qt.AlignLeft, self._getText())
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -744,7 +784,12 @@ class ReturnCell(CellElement, QGraphicsRectItem):
                 if not self._text:
                     self._text = "None"
             else:
-                self.setToolTip("<pre>" + escape(displayText) + "</pre>")
+                if displayText:
+                    self.setToolTip("<pre>" + escape(displayText) + "</pre>")
+            if self.canvas.settings.noContent:
+                if displayText:
+                    self.setToolTip("<pre>" + escape(displayText) + "</pre>")
+                self._text = ''
         return self._text
 
     def render(self):

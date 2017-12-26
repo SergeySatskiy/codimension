@@ -24,7 +24,8 @@ import logging
 from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QPainter, QImage,
                    QToolBar, QWidget, QPrinter, QApplication, QHBoxLayout,
                    QLabel, QVBoxLayout, QSizePolicy, QFileDialog,
-                   QDialog, QMenu, QToolButton, QMessageBox, QSvgGenerator)
+                   QDialog, QMenu, QToolButton, QMessageBox, QSvgGenerator,
+                   QStackedWidget)
 from cdmcfparser import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas
 from flowui.cflowsettings import getCflowSettings
@@ -35,10 +36,28 @@ from utils.fileutils import isPythonMime
 from utils.settings import Settings
 from utils.diskvaluesrelay import getFilePosition
 from .flowuinavbar import ControlFlowNavigationBar
-from .flowuisceneview import CFGraphicsScene, CFGraphicsView
+from .flowuisceneview import CFGraphicsView
 
 
 IDLE_TIMEOUT = 1500
+
+SMART_ZOOM_ALL = 0          # Show everything
+SMART_ZOOM_NO_CONTENT = 1   # All the boxes are without a content
+
+
+def tweakSmartSettings(cflowSettings, smartZoom):
+    """Tweaks settings in accordance to the smart level"""
+    if smartZoom == SMART_ZOOM_ALL:
+        cflowSettings.noContent = False
+        cflowSettings.noComment = False
+        cflowSettings.noDocstring = False
+        return cflowSettings
+    if smartZoom == SMART_ZOOM_NO_CONTENT:
+        cflowSettings.noContent = True
+        cflowSettings.noComment = True
+        cflowSettings.noDocstring = True
+        return cflowSettings
+    return cflowSettings
 
 
 class FlowUIWidget(QWidget):
@@ -82,7 +101,7 @@ class FlowUIWidget(QWidget):
         self.__updateTimer.timeout.connect(self.process)
 
         vLayout.addWidget(self.__createNavigationBar())
-        vLayout.addWidget(self.__createGraphicsView())
+        vLayout.addWidget(self.__createStackedViews())
 
         hLayout.addLayout(vLayout)
         hLayout.addWidget(self.__createToolbar())
@@ -102,6 +121,14 @@ class FlowUIWidget(QWidget):
         Settings().sigSmartZoomChanged.connect(self.__onSmartZoomChanged)
 
         self.setSmartZoomLevel(Settings()['smartZoom'])
+
+    def view(self):
+        """Provides a reference to the current view"""
+        return self.smartViews.currentWidget()
+
+    def scene(self):
+        """Provides a reference to the current scene"""
+        return self.view().scene
 
     def __createToolbar(self):
         """Creates the toolbar"""
@@ -195,12 +222,14 @@ class FlowUIWidget(QWidget):
         self.__navBar = ControlFlowNavigationBar(self)
         return self.__navBar
 
-    def __createGraphicsView(self):
+    def __createStackedViews(self):
         """Creates the graphics view"""
-        self.scene = CFGraphicsScene(self.__navBar, self)
-        self.view = CFGraphicsView(self)
-        self.view.setScene(self.scene)
-        return self.view
+        self.smartViews = QStackedWidget(self)
+        self.smartViews.setContentsMargins(0, 0, 0, 0)
+
+        self.smartViews.addWidget(CFGraphicsView(self.__navBar, self))
+        self.smartViews.addWidget(CFGraphicsView(self.__navBar, self))
+        return self.smartViews
 
     def process(self):
         """Parses the content and displays the results"""
@@ -252,23 +281,26 @@ class FlowUIWidget(QWidget):
 
     def redrawScene(self):
         """Redraws the scene"""
+        smartZoomLevel = Settings()['smartZoom']
         if self.dirty():
             self.cflowSettings = getCflowSettings(self)
             self.__displayProps = (self.cflowSettings.hidedocstrings,
                                    self.cflowSettings.hidecomments,
                                    self.cflowSettings.hideexcepts,
-                                   Settings()['smartZoom'])
+                                   smartZoomLevel)
         self.cflowSettings.itemID = 0
+        self.cflowSettings = tweakSmartSettings(self.cflowSettings,
+                                                smartZoomLevel)
 
-        self.scene.clear()
+        self.scene().clear()
         try:
             # Top level canvas has no adress and no parent canvas
             canvas = VirtualCanvas(self.cflowSettings, None, None, None)
             canvas.layoutModule(self.__cf)
             canvas.setEditor(self.__editor)
             width, height = canvas.render()
-            self.scene.setSceneRect(0, 0, width, height)
-            canvas.draw(self.scene, 0, 0)
+            self.scene().setSceneRect(0, 0, width, height)
+            canvas.draw(self.scene(), 0, 0)
         except Exception as exc:
             logging.error(str(exc))
             raise
@@ -276,11 +308,11 @@ class FlowUIWidget(QWidget):
     def onFlowZoomChanged(self):
         """Triggered when a flow zoom is changed"""
         if self.__cf:
-            selection = self.scene.serializeSelection()
+            selection = self.scene().serializeSelection()
             self.cflowSettings.onFlowZoomChanged()
             self.redrawScene()
             self.updateNavigationToolbar('')
-            self.scene.restoreSelectionByID(selection)
+            self.scene().restoreSelectionByID(selection)
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when a buffer content type has changed"""
@@ -360,16 +392,16 @@ class FlowUIWidget(QWidget):
 
         line and pos are 1-based
         """
-        item, _ = self.scene.getNearestItem(absPos, line, pos)
+        item, _ = self.scene().getNearestItem(absPos, line, pos)
         if item:
-            self.scene.clearSelection()
+            self.scene().clearSelection()
             item.setSelected(True)
-            self.view.scrollTo(item)
+            self.view().scrollTo(item)
             self.setFocus()
 
     def setFocus(self):
         """Sets the focus"""
-        self.view.setFocus()
+        self.view().setFocus()
 
     @staticmethod
     def __getDefaultSaveDir():
@@ -459,9 +491,9 @@ class FlowUIWidget(QWidget):
         """Saves the flowchart as an SVG file"""
         generator = QSvgGenerator()
         generator.setFileName(fileName)
-        generator.setSize(QSize(self.scene.width(), self.scene.height()))
+        generator.setSize(QSize(self.scene().width(), self.scene().height()))
         painter = QPainter(generator)
-        self.scene.render(painter)
+        self.scene().render(painter)
         painter.end()
 
     def onSaveAsPDF(self):
@@ -481,13 +513,13 @@ class FlowUIWidget(QWidget):
         """Saves the flowchart as an PDF file"""
         printer = QPrinter()
         printer.setOutputFormat(QPrinter.PdfFormat)
-        printer.setPaperSize(QSizeF(self.scene.width(),
-                                    self.scene.height()), QPrinter.Point)
+        printer.setPaperSize(QSizeF(self.scene().width(),
+                                    self.scene().height()), QPrinter.Point)
         printer.setFullPage(True)
         printer.setOutputFileName(fileName)
 
         painter = QPainter(printer)
-        self.scene.render(painter)
+        self.scene().render(painter)
         painter.end()
 
     def onSaveAsPNG(self):
@@ -505,12 +537,12 @@ class FlowUIWidget(QWidget):
 
     def __getPNG(self):
         """Renders the scene as PNG"""
-        image = QImage(self.scene.width(), self.scene.height(),
+        image = QImage(self.scene().width(), self.scene().height(),
                        QImage.Format_ARGB32_Premultiplied)
         painter = QPainter(image)
         # It seems that the better results are without antialiasing
         # painter.setRenderHint( QPainter.Antialiasing )
-        self.scene.render(painter)
+        self.scene().render(painter)
         painter.end()
         return image
 
@@ -527,14 +559,14 @@ class FlowUIWidget(QWidget):
 
     def getScrollbarPositions(self):
         """Provides the scrollbar positions"""
-        hScrollBar = self.view.horizontalScrollBar()
-        vScrollBar = self.view.verticalScrollBar()
+        hScrollBar = self.view().horizontalScrollBar()
+        vScrollBar = self.view().verticalScrollBar()
         return hScrollBar.value(), vScrollBar.value()
 
     def setScrollbarPositions(self, hPos, vPos):
         """Sets the scrollbar positions for the view"""
-        self.view.horizontalScrollBar().setValue(hPos)
-        self.view.verticalScrollBar().setValue(vPos)
+        self.view().horizontalScrollBar().setValue(hPos)
+        self.view().verticalScrollBar().setValue(vPos)
 
     def __onHideDocstrings(self):
         """Triggered when a hide docstring button is pressed"""
@@ -542,11 +574,11 @@ class FlowUIWidget(QWidget):
 
     def __onHideDocstringsChanged(self):
         """Signalled by settings"""
-        selection = self.scene.serializeSelection()
+        selection = self.scene().serializeSelection()
         settings = Settings()
         self.__hideDocstrings.setChecked(settings['hidedocstrings'])
         if self.__checkNeedRedraw():
-            self.scene.restoreSelectionByID(selection)
+            self.scene().restoreSelectionByID(selection)
 
     def __onHideComments(self):
         """Triggered when a hide comments button is pressed"""
@@ -554,11 +586,11 @@ class FlowUIWidget(QWidget):
 
     def __onHideCommentsChanged(self):
         """Signalled by settings"""
-        selection = self.scene.serializeSelection()
+        selection = self.scene().serializeSelection()
         settings = Settings()
         self.__hideComments.setChecked(settings['hidecomments'])
         if self.__checkNeedRedraw():
-            self.scene.restoreSelectionByID(selection)
+            self.scene().restoreSelectionByID(selection)
 
     def __onHideExcepts(self):
         """Triggered when a hide except blocks button is pressed"""
@@ -566,16 +598,17 @@ class FlowUIWidget(QWidget):
 
     def __onHideExceptsChanged(self):
         """Signalled by settings"""
-        selection = self.scene.serializeSelection()
+        selection = self.scene().serializeSelection()
         settings = Settings()
         self.__hideExcepts.setChecked(settings['hideexcepts'])
         if self.__checkNeedRedraw():
-            self.scene.restoreSelectionByTooltip(selection)
+            self.scene().restoreSelectionByTooltip(selection)
 
     def __checkNeedRedraw(self):
         """Redraws the scene if necessary when a display setting is changed"""
         editorsManager = self.__mainWindow.editorsManagerWidget.editorsManager
         if self.__parentWidget == editorsManager.currentWidget():
+            self.updateNavigationToolbar('')
             self.process()
             return True
         return False
@@ -610,10 +643,11 @@ class FlowUIWidget(QWidget):
         self.__levelIndicator.setText('<b>' + str(smartZoomLevel) + '</b>')
         self.__levelUpButton.setEnabled(smartZoomLevel < maxSmartZoom)
         self.__levelDownButton.setEnabled(smartZoomLevel > 0)
+        self.smartViews.setCurrentIndex(smartZoomLevel)
 
     def __onSmartZoomChanged(self):
         """Triggered when a smart zoom changed"""
-        selection = self.scene.serializeSelection()
+        selection = self.scene().serializeSelection()
         self.setSmartZoomLevel(Settings()['smartZoom'])
         if self.__checkNeedRedraw():
-            self.scene.restoreSelectionByTooltip(selection)
+            self.scene().restoreSelectionByTooltip(selection)

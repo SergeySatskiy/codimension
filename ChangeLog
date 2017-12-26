@@ -4,6 +4,8 @@
 * Proportional change of spacings when a mono font changed for the flow UI
 * New feature: show/hide comments/docstrings/except blocks on the flowUI
 * More flexible pyflakes suppression line
+* New feature: smart zoom; two levels are available now: full view and no
+  content-no comment-no docstring
 
 2017 Dec 3 Sergey Satskiy <sergey.satskiy@gmail.com>
 

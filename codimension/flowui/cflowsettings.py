@@ -55,6 +55,11 @@ class CFlowSettings:
         setattr(self, 'hidecomments', settings['hidecomments'])
         setattr(self, 'hideexcepts', settings['hideexcepts'])
 
+        # Dynamic settings for the smart zoom feature
+        setattr(self, 'noContent', False)
+        setattr(self, 'noComment', False)
+        setattr(self, 'noDocstring', False)
+
         self.onFlowZoomChanged()
 
     def __getNormalized(self, value, coefficient):

@@ -226,7 +226,7 @@ class VirtualCanvas:
 
     def __allocateLeadingComment(self, item, row, column):
         """Allocates a leading comment if so"""
-        if item.leadingComment:
+        if item.leadingComment and not self.settings.noComment:
             self.__allocateCell(row, column + 1)
             self.cells[row][column] = ConnectorCell(CONN_N_S, self,
                                                     column, row)
@@ -235,9 +235,10 @@ class VirtualCanvas:
             return row + 1
         return row
 
-    @staticmethod
-    def __needLoopCommentRow(item):
+    def __needLoopCommentRow(self, item):
         """Tells if a row for comments need to be reserved"""
+        if self.settings.noComment:
+            return False
         if item.leadingComment:
             return True
         if item.elsePart:
@@ -247,6 +248,8 @@ class VirtualCanvas:
 
     def __needTryCommentRow(self, item):
         """Tells if a row for comments need to be reserved"""
+        if self.settings.noComment:
+            return False
         if item.leadingComment:
             return True
         if not self.settings.hideexcepts:
@@ -281,7 +284,7 @@ class VirtualCanvas:
                         decScope = VirtualCanvas(self.settings,
                                                  None, None, self)
                         decScopeRows = len(decScope.cells)
-                        if scopeItem.leadingComment:
+                        if scopeItem.leadingComment and not self.settings.noComment:
                             # Need two rows; one for the comment
                             #                + one for the scope
                             decScope.layout(dec, CellElement.DECOR_SCOPE, 2)
@@ -308,7 +311,7 @@ class VirtualCanvas:
                         scopeCanvas = decScope
                         scopeItem = dec
 
-                if scopeItem.leadingComment:
+                if scopeItem.leadingComment and not self.settings.noComment:
                     self.__allocateCell(vacantRow, column + 1)
                     self.cells[vacantRow][column] = \
                         ConnectorCell(CONN_N_S, self, column, vacantRow)
@@ -325,7 +328,7 @@ class VirtualCanvas:
                 continue
 
             if item.kind == WITH_FRAGMENT:
-                if item.leadingComment:
+                if item.leadingComment and not self.settings.noComment:
                     self.__allocateCell(vacantRow, column + 1)
                     self.cells[vacantRow][column] = \
                         ConnectorCell(CONN_N_S, self, column, vacantRow)
@@ -345,7 +348,7 @@ class VirtualCanvas:
 
                 loopRegionBegin = vacantRow
                 if self.__needLoopCommentRow(item):
-                    if item.leadingComment:
+                    if item.leadingComment and not self.settings.noComment:
                         comment = AboveCommentCell(item, self, column,
                                                    vacantRow)
                         comment.needConnector = True
@@ -355,7 +358,7 @@ class VirtualCanvas:
                         self.cells[vacantRow][column] = \
                             ConnectorCell(CONN_N_S, self, column, vacantRow)
                     if item.elsePart:
-                        if item.elsePart.leadingComment:
+                        if item.elsePart.leadingComment and not self.settings.noComment:
                             self.__allocateAndSet(
                                 vacantRow, column + 1,
                                 AboveCommentCell(item.elsePart, self,
@@ -372,12 +375,14 @@ class VirtualCanvas:
                 continue
 
             if item.kind == COMMENT_FRAGMENT:
-                self.__allocateCell(vacantRow, column + 1)
-                self.cells[vacantRow][column] = \
-                    ConnectorCell(CONN_N_S, self, column, vacantRow)
-                self.cells[vacantRow][column + 1] = \
-                    IndependentCommentCell(item, self, column + 1, vacantRow)
-                vacantRow += 1
+                if not self.settings.noComment:
+                    self.__allocateCell(vacantRow, column + 1)
+                    self.cells[vacantRow][column] = \
+                        ConnectorCell(CONN_N_S, self, column, vacantRow)
+                    self.cells[vacantRow][column + 1] = \
+                        IndependentCommentCell(item, self, column + 1,
+                                               vacantRow)
+                    vacantRow += 1
                 continue
 
             if item.kind == TRY_FRAGMENT:
@@ -385,7 +390,7 @@ class VirtualCanvas:
                 if self.__needTryCommentRow(item):
                     commentRow = vacantRow
                     vacantRow += 1
-                    if item.leadingComment:
+                    if item.leadingComment and not self.settings.noComment:
                         comment = AboveCommentCell(item, self, column,
                                                    commentRow)
                         comment.needConnector = True
@@ -410,7 +415,7 @@ class VirtualCanvas:
                 else:
                     nextColumn = column + 1
                     for exceptPart in item.exceptParts:
-                        if exceptPart.leadingComment:
+                        if exceptPart.leadingComment and not self.settings.noComment:
                             self.__allocateAndSet(
                                 commentRow, nextColumn,
                                 AboveCommentCell(exceptPart, self,
@@ -473,7 +478,7 @@ class VirtualCanvas:
             self.__allocateAndSet(vacantRow, column,
                                   cellClass(item, self, column, vacantRow))
 
-            if item.sideComment:
+            if item.sideComment and not self.settings.noComment:
                 self.__allocateAndSet(vacantRow, column + 1,
                                       SideCommentCell(item, self, column + 1,
                                                       vacantRow))
@@ -493,7 +498,7 @@ class VirtualCanvas:
         self.__allocateAndSet(vacantRow, 1,
                               ConnectorCell(CONN_W_S, self, 1, vacantRow))
 
-        if yBranch.sideComment:
+        if yBranch.sideComment and not self.settings.noComment:
             self.__allocateAndSet(vacantRow, 2,
                                   SideCommentCell(yBranch, self, 2, vacantRow))
         vacantRow += 1
@@ -566,9 +571,9 @@ class VirtualCanvas:
             else:
                 # This is 'else' suite
                 scopeCommentRows = 0
-                if nBranch.leadingComment:
+                if nBranch.leadingComment and not self.settings.noComment:
                     scopeCommentRows += 1
-                if nBranch.sideComment:
+                if nBranch.sideComment and not self.settings.noComment:
                     scopeCommentRows += 1
 
                 if yBelow:
@@ -578,7 +583,7 @@ class VirtualCanvas:
                     branchLayout = VirtualCanvas(self.settings,
                                                  0, vacantRow, self)
 
-                if nBranch.leadingComment:
+                if nBranch.leadingComment and not self.settings.noComment:
                     # Draw as an independent comment: insert into the layout
                     conn = ConnectorCell(CONN_N_S, branchLayout, 0, 0)
                     cItem = IndependentCommentCell(nBranch.leadingComment,
@@ -587,7 +592,7 @@ class VirtualCanvas:
                     branchLayout.cells[0].append(conn)
                     branchLayout.cells[0].append(cItem)
 
-                if nBranch.sideComment:
+                if nBranch.sideComment and not self.settings.noComment:
                     # Draw as an independent comment: insert into the layout
                     rowIndex = scopeCommentRows - 1
                     conn = ConnectorCell(CONN_N_S, branchLayout, 0, rowIndex)
@@ -643,7 +648,7 @@ class VirtualCanvas:
 
     def layoutModule(self, cflow):
         """Lays out a module"""
-        if cflow.leadingComment:
+        if cflow.leadingComment and not self.settings.noComment:
             self.isNoScope = True
 
             vacantRow = 0
@@ -679,7 +684,7 @@ class VirtualCanvas:
         self.linesInHeader += 1
 
         if hasattr(cflow, "sideComment"):
-            if cflow.sideComment:
+            if cflow.sideComment and not self.settings.noComment:
                 self.__allocateCell(vacantRow - 1, 2)
                 self.cells[vacantRow - 1][2] = self.__currentScopeClass(
                     cflow, self, 2, vacantRow - 1, ScopeCellElement.TOP)
@@ -689,7 +694,7 @@ class VirtualCanvas:
 
         vacantRow += 1
         if hasattr(cflow, "docstring"):
-            if cflow.docstring:
+            if cflow.docstring and not self.settings.noDocstring:
                 if cflow.docstring.getDisplayValue():
                     self.__allocateCell(vacantRow, 1)
                     self.cells[vacantRow][1] = self.__currentScopeClass(

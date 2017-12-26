@@ -96,8 +96,10 @@ class CFGraphicsView(QGraphicsView):
 
     """Central widget"""
 
-    def __init__(self, parent=None):
+    def __init__(self, navBar, parent):
         super(CFGraphicsView, self).__init__(parent)
+        self.scene = CFGraphicsScene(navBar, parent)
+        self.setScene(self.scene)
 
         self.__currentFactor = 1.0
         self.setRenderHint(QPainter.Antialiasing)
