@@ -167,7 +167,7 @@ class FlowUIWidget(QWidget):
         self.__levelUpButton = QToolButton(self)
         self.__levelUpButton.setFocusPolicy(Qt.NoFocus)
         self.__levelUpButton.setIcon(getIcon('levelup.png'))
-        self.__levelUpButton.setToolTip('Smart zoom level up (Alt+wheel)')
+        self.__levelUpButton.setToolTip('Smart zoom level up (Shift+wheel)')
         self.__levelUpButton.clicked.connect(self.onSmartZoomLevelUp)
         self.__levelIndicator = QLabel('<b>0</b>', self)
         self.__levelIndicator.setToolTip('Current smart zoom level')
@@ -175,7 +175,7 @@ class FlowUIWidget(QWidget):
         self.__levelDownButton = QToolButton(self)
         self.__levelDownButton.setFocusPolicy(Qt.NoFocus)
         self.__levelDownButton.setIcon(getIcon('leveldown.png'))
-        self.__levelDownButton.setToolTip('Smart zoom level down (Alt+wheel)')
+        self.__levelDownButton.setToolTip('Smart zoom level down (Shift+wheel)')
         self.__levelDownButton.clicked.connect(self.onSmartZoomLevelDown)
 
         fixedSpacer = QWidget()

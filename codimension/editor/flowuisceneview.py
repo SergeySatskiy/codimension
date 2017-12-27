@@ -101,19 +101,29 @@ class CFGraphicsView(QGraphicsView):
         self.scene = CFGraphicsScene(navBar, parent)
         self.setScene(self.scene)
 
+        self.__parentWidget = parent
         self.__currentFactor = 1.0
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.TextAntialiasing)
 
     def wheelEvent(self, event):
         """Mouse wheel event"""
-        if QApplication.keyboardModifiers() == Qt.ControlModifier:
+        modifiers = QApplication.keyboardModifiers()
+        if modifiers == Qt.ControlModifier:
             angleDelta = event.angleDelta()
             if not angleDelta.isNull():
                 if angleDelta.y() > 0:
                     Settings().onFlowZoomIn()
                 else:
                     Settings().onFlowZoomOut()
+            event.accept()
+        elif modifiers == Qt.ShiftModifier:
+            angleDelta = event.angleDelta()
+            if not angleDelta.isNull():
+                if angleDelta.y() > 0:
+                    self.__parentWidget.onSmartZoomLevelUp()
+                else:
+                    self.__parentWidget.onSmartZoomLevelDown()
             event.accept()
         else:
             QGraphicsView.wheelEvent(self, event)

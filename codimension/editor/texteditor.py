@@ -425,7 +425,9 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                 currentPosition = self.absCursorPosition
                 if pos != 0:
                     char = self.lines[line][pos - 1]
-                    if char != ' ' and currentPosition != self.__lastTabPosition:
+                    if char not in [' ', ':', '{', '}', '[', ']', ',',
+                                    '<', '>', '+', '!', ')'] and \
+                       currentPosition != self.__lastTabPosition:
                         self.__lastTabPosition = currentPosition
                         self.onAutoComplete()
                         event.accept()
