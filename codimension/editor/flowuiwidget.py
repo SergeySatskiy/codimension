@@ -650,6 +650,14 @@ class FlowUIWidget(QWidget):
     def __onSmartZoomChanged(self):
         """Triggered when a smart zoom changed"""
         selection = self.scene().serializeSelection()
+        firstOnScreen = self.scene().getFirstLogicalItem()
         self.setSmartZoomLevel(Settings()['smartZoom'])
         if self.__checkNeedRedraw():
             self.scene().restoreSelectionByTooltip(selection)
+            if firstOnScreen:
+                lineRange = firstOnScreen.getLineRange()
+                absPosRange = firstOnScreen.getAbsPosRange()
+                item, _ = self.scene().getNearestItem(absPosRange[0], lineRange[0], 0)
+                if item:
+                    self.view().scrollTo(item, True)
+                    self.view().horizontalScrollBar().setValue(0)

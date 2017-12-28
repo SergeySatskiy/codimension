@@ -66,6 +66,15 @@ class CFSceneKeyboardMixin:
 
     def highlightInText(self):
         """Sync the text with the graphics"""
+        firstItem = self.getFirstLogicalItem()
+        if firstItem:
+            self.clearSelection()
+            firstItem.setSelected(True)
+            self.parent().view().scrollTo(firstItem)
+            firstItem.mouseDoubleClickEvent(None)
+
+    def getFirstLogicalItem(self):
+        """Provides the first visible on the screen logical item"""
         view = self.parent().view()
         visibleRect = view.getVisibleRect()
 
@@ -97,16 +106,13 @@ class CFSceneKeyboardMixin:
             item = candidateBefore
         else:
             # No suitable item to select
-            return
+            return None
 
-        self.clearSelection()
         logicalItem = item
         if item.scopedItem():
             if item.subKind in [ScopeCellElement.DECLARATION]:
                 logicalItem = item.getTopLeftItem()
-        logicalItem.setSelected(True)
-        view.scrollTo(logicalItem)
-        item.mouseDoubleClickEvent(None)
+        return logicalItem
 
     def scrollToTop(self):
         """Scrolls the view to the top"""

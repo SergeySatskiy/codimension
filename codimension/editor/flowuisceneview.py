@@ -135,22 +135,29 @@ class CFGraphicsView(QGraphicsView):
                                              self.viewport().height()))
         return QRectF(topLeft, bottomRight)
 
-    def scrollTo(self, item):
+    def scrollTo(self, item, makeFirstOnScreen=False):
         """Scrolls the view to the item"""
         if item is None:
             return
 
+        # When there is a change on the diagram, e.g. when a font was changed,
+        # when a smart zoom was changed or a display mode was changed then
+        # the sync between the views is done basing on what is the first
+        # visible item. So the vertical scroll is required to make the item of
+        # interest first on the screen
+
         visibleRect = self.getVisibleRect()
         itemRect = item.boundingRect()
-        if visibleRect.contains(itemRect):
-            # The item is fully visible
-            return
+        if not makeFirstOnScreen:
+            if visibleRect.contains(itemRect):
+                # The item is fully visible
+                return
 
-        # The item is fully visible vertically
-        if itemRect.topLeft().y() >= visibleRect.topLeft().y() and \
-           itemRect.bottomLeft().y() <= visibleRect.bottomLeft().y():
-            self.__hScrollToItem(item)
-            return
+            # The item is fully visible vertically
+            if itemRect.topLeft().y() >= visibleRect.topLeft().y() and \
+               itemRect.bottomLeft().y() <= visibleRect.bottomLeft().y():
+                self.__hScrollToItem(item)
+                return
 
         # The item top left is visible
         if visibleRect.contains(itemRect.topLeft()):
