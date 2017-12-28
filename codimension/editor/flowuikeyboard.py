@@ -66,7 +66,7 @@ class CFSceneKeyboardMixin:
 
     def highlightInText(self):
         """Sync the text with the graphics"""
-        view = self.parent().view
+        view = self.parent().view()
         visibleRect = view.getVisibleRect()
 
         firstLine = visibleRect.y()
@@ -110,24 +110,24 @@ class CFSceneKeyboardMixin:
 
     def scrollToTop(self):
         """Scrolls the view to the top"""
-        view = self.parent().view
+        view = self.parent().view()
         view.horizontalScrollBar().setValue(0)
         view.verticalScrollBar().setValue(0)
 
     def scrollToBottom(self):
         """Scrolls the view to the bottom"""
-        view = self.parent().view
+        view = self.parent().view()
         view.horizontalScrollBar().setValue(0)
         view.verticalScrollBar().setValue(view.verticalScrollBar().maximum())
 
     def scrollToHBegin(self):
         """Scrolls horizontally to the very beginning"""
-        view = self.parent().view
+        view = self.parent().view()
         view.horizontalScrollBar().setValue(0)
 
     def scrollToHEnd(self):
         """Scrolls horizontally to the very end"""
-        view = self.parent().view
+        view = self.parent().view()
         view.horizontalScrollBar().setValue(
             view.horizontalScrollBar().maximum())
 
@@ -149,10 +149,10 @@ class CFSceneKeyboardMixin:
 
     def onZoomOut(self):
         """Zoom out the view"""
-        view = self.parent().view
+        view = self.parent().view()
         view.zoomOut()
 
     def onZoomIn(self):
         """Zoom in the view"""
-        view = self.parent().view
+        view = self.parent().view()
         view.zoomIn()

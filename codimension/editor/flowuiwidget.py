@@ -21,6 +21,7 @@
 
 import os.path
 import logging
+from math import ceil
 from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QPainter, QImage,
                    QToolBar, QWidget, QPrinter, QApplication, QHBoxLayout,
                    QLabel, QVBoxLayout, QSizePolicy, QFileDialog,
@@ -56,6 +57,7 @@ def tweakSmartSettings(cflowSettings, smartZoom):
         cflowSettings.noContent = True
         cflowSettings.noComment = True
         cflowSettings.noDocstring = True
+        cflowSettings.minWidth = ceil(float(cflowSettings.minWidth) * 0.66)
         return cflowSettings
     return cflowSettings
 

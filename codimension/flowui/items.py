@@ -21,6 +21,7 @@
 
 from sys import maxsize
 from cgi import escape
+from math import ceil
 from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
                    QGraphicsRectItem, QGraphicsPathItem, QGraphicsItem,
                    QStyleOptionGraphicsItem, QStyle)
@@ -552,8 +553,9 @@ class BreakCell(CellElement, QGraphicsRectItem):
         vPadding = 2 * (self.__vSpacing + settings.vCellPadding)
         self.minHeight = self.__textRect.height() + vPadding
         hPadding = 2 * (self.__hSpacing + settings.hCellPadding)
-        self.minWidth = max(self.__textRect.width() + hPadding,
-                            settings.minWidth)
+        self.minWidth = self.__textRect.width() + hPadding
+        if settings.noContent:
+            self.minWidth = max(self.minWidth, settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -675,8 +677,9 @@ class ContinueCell(CellElement, QGraphicsRectItem):
         vPadding = 2 * (self.__vSpacing + settings.vCellPadding)
         self.minHeight = self.__textRect.height() + vPadding
         hPadding = 2 * (self.__hSpacing + settings.hCellPadding)
-        self.minWidth = max(self.__textRect.width() + hPadding,
-                            settings.minWidth)
+        self.minWidth = self.__textRect.width() + hPadding
+        if settings.noContent:
+            self.minWidth = max(self.minWidth, settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -762,6 +765,9 @@ class ReturnCell(CellElement, QGraphicsRectItem):
         self.__arrowWidth = 16
         self.connector = None
 
+        self.__arrowWidth = min(self.__arrowWidth,
+                                ceil(self.__arrowWidth *
+                                     self.canvas.settings.coefficient))
         self.arrowItem = SVGItem("return.svgz", self)
         self.arrowItem.setWidth(self.__arrowWidth)
         self.arrowItem.setToolTip("return")
@@ -928,6 +934,10 @@ class RaiseCell(CellElement, QGraphicsRectItem):
         self.__textRect = None
         self.__arrowWidth = 16
 
+        self.__arrowWidth = min(self.__arrowWidth,
+                                ceil(self.__arrowWidth *
+                                     self.canvas.settings.coefficient))
+
         self.arrowItem = SVGItem("raise.svg", self)
         self.arrowItem.setWidth(self.__arrowWidth)
         self.arrowItem.setToolTip("raise")
@@ -1076,6 +1086,10 @@ class AssertCell(CellElement, QGraphicsRectItem):
         self.__diamondDiagonal = None
         self.__arrowWidth = 16
         self.connector = None
+
+        self.__arrowWidth = min(self.__arrowWidth,
+                                ceil(self.__arrowWidth *
+                                     self.canvas.settings.coefficient))
 
         self.arrowItem = SVGItem("assert.svg", self)
         self.arrowItem.setWidth(self.__arrowWidth)
@@ -1244,6 +1258,10 @@ class SysexitCell(CellElement, QGraphicsRectItem):
         self.__xWidth = 16
         self.connector = None
 
+        self.__xWidth = min(self.__xWidth,
+                            ceil(self.__xWidth *
+                                 self.canvas.settings.coefficient))
+
         self.xItem = SVGItem("sysexit.svgz", self)
         self.xItem.setWidth(self.__xWidth)
         self.xItem.setToolTip("sys.exit()")
@@ -1367,6 +1385,11 @@ class ImportCell(CellElement, QGraphicsRectItem):
         self.kind = CellElement.IMPORT
         self.__arrowWidth = 16
         self.__textRect = None
+
+        self.__arrowWidth = min(self.__arrowWidth,
+                                ceil(self.__arrowWidth *
+                                     self.canvas.settings.coefficient))
+
         self.arrowItem = SVGItem("import.svgz", self)
         self.arrowItem.setWidth(self.__arrowWidth)
         self.arrowItem.setToolTip("import")
