@@ -56,6 +56,7 @@ CONN_E_W = [(ConnectorCell.EAST, ConnectorCell.WEST)]
 CONN_N_W = [(ConnectorCell.NORTH, ConnectorCell.WEST)]
 CONN_W_S = [(ConnectorCell.WEST, ConnectorCell.SOUTH)]
 CONN_E_S = [(ConnectorCell.EAST, ConnectorCell.SOUTH)]
+CONN_N_C = [(ConnectorCell.NORTH, ConnectorCell.CENTER)]
 
 _scopeToClass = {
     CellElement.NO_SCOPE: None,
@@ -181,7 +182,15 @@ class VirtualCanvas:
         try:
             cell = self.cells[row][column]
             if cell.kind == CellElement.VCANVAS:
-                return cell.cells[-1][0].kind in _terminalCellTypes
+                # If it is a scope then the last item in the scope should be
+                # checked
+                cell = cell.cells[-1][0]
+            if cell.kind == CellElement.CONNECTOR:
+                if cell.connections == CONN_N_C:
+                    # On some smart zoom levels the primitives are replaced
+                    # with connectors. The terminal cells are replaced with a
+                    # half a connector from NORTH to CENTER
+                    return True
             return cell.kind in _terminalCellTypes
         except:
             return False
@@ -278,7 +287,7 @@ class VirtualCanvas:
                 else:
                     scopeCanvas.layout(item, CellElement.CLASS_SCOPE)
 
-                if item.decorators:
+                if item.decorators and not self.settings.noDecor:
                     for dec in reversed(item.decorators):
                         # Create a decorator scope virtual canvas
                         decScope = VirtualCanvas(self.settings,
@@ -328,6 +337,8 @@ class VirtualCanvas:
                 continue
 
             if item.kind == WITH_FRAGMENT:
+                if self.settings.noWith:
+                    continue
                 if item.leadingComment and not self.settings.noComment:
                     self.__allocateCell(vacantRow, column + 1)
                     self.cells[vacantRow][column] = \
@@ -345,6 +356,11 @@ class VirtualCanvas:
                 targetScope = CellElement.WHILE_SCOPE
                 if item.kind == FOR_FRAGMENT:
                     targetScope = CellElement.FOR_SCOPE
+
+                if item.kind == FOR_FRAGMENT and self.settings.noFor:
+                    continue
+                if item.kind == WHILE_FRAGMENT and self.settings.noWhile:
+                    continue
 
                 loopRegionBegin = vacantRow
                 if self.__needLoopCommentRow(item):
@@ -375,17 +391,22 @@ class VirtualCanvas:
                 continue
 
             if item.kind == COMMENT_FRAGMENT:
-                if not self.settings.noComment:
-                    self.__allocateCell(vacantRow, column + 1)
-                    self.cells[vacantRow][column] = \
-                        ConnectorCell(CONN_N_S, self, column, vacantRow)
-                    self.cells[vacantRow][column + 1] = \
-                        IndependentCommentCell(item, self, column + 1,
-                                               vacantRow)
-                    vacantRow += 1
+                if self.settings.noComment:
+                    continue
+
+                self.__allocateCell(vacantRow, column + 1)
+                self.cells[vacantRow][column] = \
+                    ConnectorCell(CONN_N_S, self, column, vacantRow)
+                self.cells[vacantRow][column + 1] = \
+                    IndependentCommentCell(item, self, column + 1,
+                                           vacantRow)
+                vacantRow += 1
                 continue
 
             if item.kind == TRY_FRAGMENT:
+                if self.settings.noTry:
+                    continue
+
                 tryRegionBegin = vacantRow
                 if self.__needTryCommentRow(item):
                     commentRow = vacantRow
@@ -444,6 +465,9 @@ class VirtualCanvas:
                 continue
 
             if item.kind == IF_FRAGMENT:
+                if self.settings.noIf:
+                    continue
+
                 lastNonElseIndex = len(item.parts) - 1
                 for index in range(len(item.parts)):
                     if item.parts[index].condition is None:
@@ -473,6 +497,55 @@ class VirtualCanvas:
                 continue
 
             # Below are the single cell fragments possibly with comments
+            if item.kind == CODEBLOCK_FRAGMENT and self.settings.noBlock:
+                self.__allocateCell(vacantRow, column)
+                self.cells[vacantRow][column] = ConnectorCell(CONN_N_S, self,
+                                                              column, vacantRow)
+                vacantRow += 1
+                continue
+            if item.kind == IMPORT_FRAGMENT and self.settings.noImport:
+                self.__allocateCell(vacantRow, column)
+                self.cells[vacantRow][column] = ConnectorCell(CONN_N_S, self,
+                                                              column, vacantRow)
+                vacantRow += 1
+                continue
+            if item.kind == BREAK_FRAGMENT and self.settings.noBreak:
+                self.__allocateCell(vacantRow, column)
+                self.cells[vacantRow][column] = ConnectorCell(CONN_N_C, self,
+                                                              column, vacantRow)
+                vacantRow += 1
+                continue
+            if item.kind == CONTINUE_FRAGMENT and self.settings.noContinue:
+                self.__allocateCell(vacantRow, column)
+                self.cells[vacantRow][column] = ConnectorCell(CONN_N_C, self,
+                                                              column, vacantRow)
+                vacantRow += 1
+                continue
+            if item.kind == RETURN_FRAGMENT and self.settings.noReturn:
+                self.__allocateCell(vacantRow, column)
+                self.cells[vacantRow][column] = ConnectorCell(CONN_N_C, self,
+                                                              column, vacantRow)
+                vacantRow += 1
+                continue
+            if item.kind == RAISE_FRAGMENT and self.settings.noRaise:
+                self.__allocateCell(vacantRow, column)
+                self.cells[vacantRow][column] = ConnectorCell(CONN_N_C, self,
+                                                              column, vacantRow)
+                vacantRow += 1
+                continue
+            if item.kind == ASSERT_FRAGMENT and self.settings.noAssert:
+                self.__allocateCell(vacantRow, column)
+                self.cells[vacantRow][column] = ConnectorCell(CONN_N_S, self,
+                                                              column, vacantRow)
+                vacantRow += 1
+                continue
+            if item.kind == SYSEXIT_FRAGMENT and self.settings.noSysExit:
+                self.__allocateCell(vacantRow, column)
+                self.cells[vacantRow][column] = ConnectorCell(CONN_N_C, self,
+                                                              column, vacantRow)
+                vacantRow += 1
+                continue
+
             cellClass = _fragmentKindToCellClass[item.kind]
             vacantRow = self.__allocateLeadingComment(item, vacantRow, column)
             self.__allocateAndSet(vacantRow, column,
@@ -854,12 +927,13 @@ class VirtualCanvas:
             allButLastHeight += self.cells[index][0].height
 
         # Update the height for all the cells in the last row
-        for cell in self.cells[-1]:
-            if allButLastHeight + cell.height < maxHeight:
-                cell.height = maxHeight - allButLastHeight
-                if cell.kind == CellElement.VCANVAS:
-                    if not cell.hasScope():
-                        cell.adjustLastCellHeight(cell.height)
+        if self.cells:
+            for cell in self.cells[-1]:
+                if allButLastHeight + cell.height < maxHeight:
+                    cell.height = maxHeight - allButLastHeight
+                    if cell.kind == CellElement.VCANVAS:
+                        if not cell.hasScope():
+                            cell.adjustLastCellHeight(cell.height)
 
     def setEditor(self, editor):
         """Provides the editor counterpart"""

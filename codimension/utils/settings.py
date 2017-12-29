@@ -239,7 +239,7 @@ class SettingsWrapper(QObject,
 
     """Provides settings singleton facility"""
 
-    MAX_SMART_ZOOM = 1
+    MAX_SMART_ZOOM = 3
 
     sigRecentListChanged = pyqtSignal()
     sigFlowSplitterChanged = pyqtSignal()

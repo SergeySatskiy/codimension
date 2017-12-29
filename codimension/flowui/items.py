@@ -1750,6 +1750,15 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
             else:
                 path.moveTo(startX, startY)
                 path.lineTo(endX, endY)
+        # It does not look nice so commented out
+        #if len(self.connections) == 1:
+        #    if self.connections[0][0] == self.NORTH:
+        #        if self.connections[0][1] == self.CENTER:
+        #            # That's a half connector used when terminal items are
+        #            # suppressed.
+        #            radius = self.canvas.settings.vCellPadding / 2.0
+        #            path.addEllipse(endX - radius / 2.0,
+        #                            endY - radius / 2.0, radius, radius)
         self.setPath(path)
         scene.addItem(self)
 
@@ -1849,8 +1858,6 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         boxWidth = self.__textRect.width() + \
                    2 * (settings.hCellPadding + self.__hTextPadding)
-        if not settings.hidecomments:
-            boxWidth = max(boxWidth, settings.minWidth)
         self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
         cellKind = self.canvas.cells[self.addr[1]][self.addr[0] - 1].kind
 

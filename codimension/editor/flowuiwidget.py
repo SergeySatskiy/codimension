@@ -44,19 +44,54 @@ IDLE_TIMEOUT = 1500
 
 SMART_ZOOM_ALL = 0          # Show everything
 SMART_ZOOM_NO_CONTENT = 1   # All the boxes are without a content
+SMART_ZOOM_CONTROL_ONLY = 2 # Only scopes (except decorators) and ifs
+SMART_ZOOM_CLASS_FUNC = 3   # Only top level classes and functions
 
 
 def tweakSmartSettings(cflowSettings, smartZoom):
     """Tweaks settings in accordance to the smart level"""
+    # Default is to show everything
     if smartZoom == SMART_ZOOM_ALL:
-        cflowSettings.noContent = False
-        cflowSettings.noComment = False
-        cflowSettings.noDocstring = False
         return cflowSettings
     if smartZoom == SMART_ZOOM_NO_CONTENT:
         cflowSettings.noContent = True
         cflowSettings.noComment = True
         cflowSettings.noDocstring = True
+        cflowSettings.minWidth = ceil(float(cflowSettings.minWidth) * 0.66)
+        return cflowSettings
+    if smartZoom == SMART_ZOOM_CONTROL_ONLY:
+        cflowSettings.noContent = True
+        cflowSettings.noComment = True
+        cflowSettings.noDocstring = True
+        cflowSettings.noBlock = True
+        cflowSettings.noImport = True
+        cflowSettings.noContinue = True
+        cflowSettings.noBreak = True
+        cflowSettings.noReturn = True
+        cflowSettings.noRaise = True
+        cflowSettings.noAssert = True
+        cflowSettings.noSysExit = True
+        cflowSettings.noDecor = True
+        cflowSettings.minWidth = ceil(float(cflowSettings.minWidth) * 0.66)
+        return cflowSettings
+    if smartZoom == SMART_ZOOM_CLASS_FUNC:
+        cflowSettings.noContent = True
+        cflowSettings.noComment = True
+        cflowSettings.noDocstring = True
+        cflowSettings.noBlock = True
+        cflowSettings.noImport = True
+        cflowSettings.noContinue = True
+        cflowSettings.noBreak = True
+        cflowSettings.noReturn = True
+        cflowSettings.noRaise = True
+        cflowSettings.noAssert = True
+        cflowSettings.noSysExit = True
+        cflowSettings.noDecor = True
+        cflowSettings.noFor = True
+        cflowSettings.noWhile = True
+        cflowSettings.noWith = True
+        cflowSettings.noTry = True
+        cflowSettings.noIf = True
         cflowSettings.minWidth = ceil(float(cflowSettings.minWidth) * 0.66)
         return cflowSettings
     return cflowSettings
@@ -311,10 +346,12 @@ class FlowUIWidget(QWidget):
         """Triggered when a flow zoom is changed"""
         if self.__cf:
             selection = self.scene().serializeSelection()
+            firstOnScreen = self.scene().getFirstLogicalItem()
             self.cflowSettings.onFlowZoomChanged()
             self.redrawScene()
             self.updateNavigationToolbar('')
             self.scene().restoreSelectionByID(selection)
+            self.__restoreScroll(firstOnScreen)
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when a buffer content type has changed"""
@@ -577,10 +614,12 @@ class FlowUIWidget(QWidget):
     def __onHideDocstringsChanged(self):
         """Signalled by settings"""
         selection = self.scene().serializeSelection()
+        firstOnScreen = self.scene().getFirstLogicalItem()
         settings = Settings()
         self.__hideDocstrings.setChecked(settings['hidedocstrings'])
         if self.__checkNeedRedraw():
             self.scene().restoreSelectionByID(selection)
+            self.__restoreScroll(firstOnScreen)
 
     def __onHideComments(self):
         """Triggered when a hide comments button is pressed"""
@@ -589,10 +628,12 @@ class FlowUIWidget(QWidget):
     def __onHideCommentsChanged(self):
         """Signalled by settings"""
         selection = self.scene().serializeSelection()
+        firstOnScreen = self.scene().getFirstLogicalItem()
         settings = Settings()
         self.__hideComments.setChecked(settings['hidecomments'])
         if self.__checkNeedRedraw():
             self.scene().restoreSelectionByID(selection)
+            self.__restoreScroll(firstOnScreen)
 
     def __onHideExcepts(self):
         """Triggered when a hide except blocks button is pressed"""
@@ -601,10 +642,12 @@ class FlowUIWidget(QWidget):
     def __onHideExceptsChanged(self):
         """Signalled by settings"""
         selection = self.scene().serializeSelection()
+        firstOnScreen = self.scene().getFirstLogicalItem()
         settings = Settings()
         self.__hideExcepts.setChecked(settings['hideexcepts'])
         if self.__checkNeedRedraw():
             self.scene().restoreSelectionByTooltip(selection)
+            self.__restoreScroll(firstOnScreen)
 
     def __checkNeedRedraw(self):
         """Redraws the scene if necessary when a display setting is changed"""
@@ -654,10 +697,15 @@ class FlowUIWidget(QWidget):
         self.setSmartZoomLevel(Settings()['smartZoom'])
         if self.__checkNeedRedraw():
             self.scene().restoreSelectionByTooltip(selection)
-            if firstOnScreen:
-                lineRange = firstOnScreen.getLineRange()
-                absPosRange = firstOnScreen.getAbsPosRange()
-                item, _ = self.scene().getNearestItem(absPosRange[0], lineRange[0], 0)
-                if item:
-                    self.view().scrollTo(item, True)
-                    self.view().horizontalScrollBar().setValue(0)
+            self.__restoreScroll(firstOnScreen)
+
+    def __restoreScroll(self, toItem):
+        """Restores the view scrolling to the best possible position"""
+        if toItem:
+            lineRange = toItem.getLineRange()
+            absPosRange = toItem.getAbsPosRange()
+            item, _ = self.scene().getNearestItem(absPosRange[0],
+                                                  lineRange[0], 0)
+            if item:
+                self.view().scrollTo(item, True)
+                self.view().horizontalScrollBar().setValue(0)
