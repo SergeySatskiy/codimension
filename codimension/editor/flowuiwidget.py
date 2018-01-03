@@ -48,6 +48,19 @@ SMART_ZOOM_CONTROL_ONLY = 2 # Only scopes (except decorators) and ifs
 SMART_ZOOM_CLASS_FUNC = 3   # Only top level classes and functions
 
 
+def getSmartZoomDescription(smartZoomLevel):
+    """Provides a tooltip for the smart zoom level"""
+    if smartZoomLevel == SMART_ZOOM_ALL:
+        return 'Smart zoom level: everything is shown'
+    elif smartZoomLevel == SMART_ZOOM_NO_CONTENT:
+        return 'Smart zoom level: everything without a content'
+    elif smartZoomLevel == SMART_ZOOM_CONTROL_ONLY:
+        return 'Smart zoom level: scopes (except decorators) and ifs'
+    elif smartZoomLevel == SMART_ZOOM_CLASS_FUNC:
+        return 'Smart zoom level: top level classes and functions'
+    return 'Unknown smart zoom level'
+
+
 def tweakSmartSettings(cflowSettings, smartZoom):
     """Tweaks settings in accordance to the smart level"""
     # Default is to show everything
@@ -207,7 +220,6 @@ class FlowUIWidget(QWidget):
         self.__levelUpButton.setToolTip('Smart zoom level up (Shift+wheel)')
         self.__levelUpButton.clicked.connect(self.onSmartZoomLevelUp)
         self.__levelIndicator = QLabel('<b>0</b>', self)
-        self.__levelIndicator.setToolTip('Current smart zoom level')
         self.__levelIndicator.setAlignment(Qt.AlignCenter)
         self.__levelDownButton = QToolButton(self)
         self.__levelDownButton.setFocusPolicy(Qt.NoFocus)
@@ -686,6 +698,8 @@ class FlowUIWidget(QWidget):
             return
 
         self.__levelIndicator.setText('<b>' + str(smartZoomLevel) + '</b>')
+        self.__levelIndicator.setToolTip(
+            getSmartZoomDescription(smartZoomLevel))
         self.__levelUpButton.setEnabled(smartZoomLevel < maxSmartZoom)
         self.__levelDownButton.setEnabled(smartZoomLevel > 0)
         self.smartViews.setCurrentIndex(smartZoomLevel)
