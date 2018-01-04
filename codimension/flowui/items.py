@@ -24,7 +24,9 @@ from cgi import escape
 from math import ceil
 from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
                    QGraphicsRectItem, QGraphicsPathItem, QGraphicsItem,
-                   QStyleOptionGraphicsItem, QStyle)
+                   QStyleOptionGraphicsItem, QStyle, QApplication,
+                   QMimeData, QByteArray)
+from utils.config import DEFAULT_ENCODING
 from .auxitems import SVGItem, Connector, Text, CMLLabel
 from .cml import CMLVersion, CMLsw, CMLcc, CMLrt
 from .routines import getBorderColor, getCommentBoxPath, distance
@@ -291,6 +293,17 @@ class CellElement:
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         return [self.ref.body.begin, self.ref.body.end]
+
+    @staticmethod
+    def _putMimeToClipboard(value):
+        """Copies the value (string) to a clipboard as mime data"""
+        mimeData = QMimeData()
+        mimeData.setData('text/codimension', value.encode(DEFAULT_ENCODING))
+        QApplication.clipboard().setMimeData(mimeData)
+
+    def copyToClipboard(self):
+        """Placeholder"""
+        return
 
 
 __kindToString = {

@@ -45,7 +45,8 @@ class CFSceneContextMenuMixin:
         self.sceneMenu.addAction(getIcon('filepixmap.png'), 'Save as PNG...',
                                  self.parent().onSaveAsPNG)
         self.sceneMenu.addSeparator()
-        self.sceneMenu.addAction(getIcon('copymenu.png'), 'Copy to clipboard',
+        self.sceneMenu.addAction(getIcon('copymenu.png'),
+                                 'Copy image to clipboard',
                                  self.parent().copyToClipboard)
 
         # Common menu for all the individually selected items
@@ -65,9 +66,11 @@ class CFSceneContextMenuMixin:
             self.onRemoveReplacementText)
         self.commonMenu.addSeparator()
         self.__cutAction = self.commonMenu.addAction(
-            getIcon("cutmenu.png"), "Cut", self.onCut)
+            getIcon("cutmenu.png"), "Cut (specific for graphics pane)",
+            self.onCut)
         self.__copyAction = self.commonMenu.addAction(
-            getIcon("copymenu.png"), "Copy", self.onCopy)
+            getIcon("copymenu.png"), "Copy (specific for graphics pane)",
+            self.onCopy)
         self.commonMenu.addSeparator()
         self.commonMenu.addAction(
             getIcon("trash.png"), "Delete", self.onDelete)
@@ -280,7 +283,12 @@ class CFSceneContextMenuMixin:
 
     def onCopy(self):
         """Copying..."""
-        print("Copy")
+        selectedItems = self.selectedItems()
+        if selectedItems:
+            if len(selectedItems) > 1:
+                print('Copying multiple items has not been implemented yet')
+                return
+            selectedItems[0].copyToClipboard()
 
     def onCut(self):
         """Cutting..."""

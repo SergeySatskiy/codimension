@@ -25,7 +25,8 @@ from PyQt5.QtCore import (Qt, QFileInfo, QSize, QUrl, QTimer, pyqtSignal,
                           QModelIndex, QAbstractItemModel, QItemSelectionModel,
                           QStringListModel, QDir, QRegExp, QPointF, QSizeF,
                           QSortFilterProxyModel, QObject, QFileSystemWatcher,
-                          QThread, QMutex, QWaitCondition, QT_VERSION_STR)
+                          QThread, QMutex, QWaitCondition, QT_VERSION_STR,
+                          QMimeData, QByteArray)
 from PyQt5.QtGui import (QCursor, QFontMetrics, QDesktopServices, QFont, QIcon,
                          QPalette, QColor, QBrush, QKeySequence, QIntValidator,
                          QPainter, QTextCursor, QImage, QPixmap, QPen,

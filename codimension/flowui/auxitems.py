@@ -89,6 +89,10 @@ class SVGItem(QGraphicsSvgItem):
         """True if it is a comment"""
         return False
 
+    def scopedItem(self):
+        """True if it is a scoped item"""
+        return False
+
 
 class CMLLabel(SVGItem):
 
@@ -214,6 +218,11 @@ class BadgeItem(QGraphicsRectItem):
         """True if it is a comment"""
         return False
 
+    def scopedItem(self):
+        """True if it is a scoped item"""
+        return False
+
+
 
 class Connector(QGraphicsPathItem):
 
@@ -266,6 +275,11 @@ class Connector(QGraphicsPathItem):
         """True if it is a comment"""
         return False
 
+    def scopedItem(self):
+        """True if it is a scoped item"""
+        return False
+
+
 
 class Text(QGraphicsSimpleTextItem):
 
@@ -303,4 +317,8 @@ class Text(QGraphicsSimpleTextItem):
 
     def isComment(self):
         """True if it is a comment"""
+        return False
+
+    def scopedItem(self):
+        """True if it is a scoped item"""
         return False

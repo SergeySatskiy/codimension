@@ -63,7 +63,7 @@ class CFSceneMouseMixin:
            mousePressEvent however adding items is done on mouseReleaseEvent.
            The second thing is that the QT library does not support
            hierarchical relationships between the items.
-           The third thig is the selection proxy which is not supported either.
+           The third thing is the selection proxy which is not supported either.
            So the whole mouse[Press,Release]Event members are overridden
         """
         item = self.itemAt(event.scenePos(), QTransform())
@@ -226,6 +226,11 @@ class CFSceneMouseMixin:
         """Provides graphics items for the given ref"""
         result = []
         for item in self.items():
+            if item.scopedItem():
+                if item.subKind not in [ScopeCellElement.TOP_LEFT,
+                                        ScopeCellElement.SIDE_COMMENT,
+                                        ScopeCellElement.DOCSTRING]:
+                    continue
             if hasattr(item, "ref"):
                 if item.ref is ref:
                     result.append(item)
