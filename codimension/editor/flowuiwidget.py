@@ -486,6 +486,7 @@ class FlowUIWidget(QWidget):
         dialog.setDirectory(self.__getDefaultSaveDir())
         dialog.selectFile(suggestedFName + "." + extension.lower())
         dialog.setOption(QFileDialog.DontConfirmOverwrite, False)
+        dialog.setOption(QFileDialog.DontUseNativeDialog, True)
         if dialog.exec_() != QDialog.Accepted:
             return None
 
