@@ -163,4 +163,10 @@ def getComponentInfo():
                        "BSD License",
                        "http://opensource.org/licenses/bsd-license.php",
                        path))
+    version, path = getPackageVersionAndLocation('jedi')
+    components.append(("jedi", version,
+                       "http://jedi.readthedocs.io", None,
+                       "MIT License",
+                       "https://opensource.org/licenses/MIT",
+                       path))
     return components

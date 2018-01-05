@@ -22,7 +22,7 @@
 from sys import maxsize
 from cdmcfparser import (IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT,
                          TRY_FRAGMENT, CONTROL_FLOW_FRAGMENT, CLASS_FRAGMENT,
-                         FUNCTION_FRAGMENT)
+                         FUNCTION_FRAGMENT, CML_COMMENT_FRAGMENT)
 from utils.colorfont import buildColor
 
 
@@ -257,7 +257,7 @@ class CMLrt(CMLCommentBase):
     @staticmethod
     def generate(txt, pos=1):
         """Generates a complete line to be inserted"""
-        res = " " * (pos - 1) + "# cml 1 rt"
+        res = " " * (pos - 1) + "# cml 1 " + CMLrt.CODE
         if txt is not None:
             res += " text=\"" + escapeCMLTextValue(txt) + "\""
         return res
@@ -269,6 +269,111 @@ class CMLrt(CMLCommentBase):
         return unescapeCMLTextValue(self.text)
 
 
+class CMLgb(CMLCommentBase):
+
+    """Covers the 'group begin' comment"""
+
+    CODE = 'gb'
+
+    def __init__(self, ref):
+        CMLCommentBase.__init__(self, ref)
+        self.uuid = None
+        self.title = None
+        self.validate()
+
+    def validate(self):
+        """Validates the CML gb comment"""
+        self.validateRecordType(CMLgb.CODE)
+        CMLVersion.validate(self.ref)
+
+        if 'title' in self.ref.properties:
+            self.title = self.ref.properties['title']
+        if 'uuid' in self.ref.properties:
+            self.uuid = self.ref.properties['uuid'].strip()
+
+        if self.uuid is None:
+            raise Exception("The '" + CMLgb.CODE +
+                            "' CML comment does not supply uuid")
+        if self.uuid.strip() == '':
+            raise Exception("The '" + CMLgb.CODE +
+                            "' CML comment does not supply uuid")
+
+    @staticmethod
+    def description():
+        """Provides the CML comment description"""
+        return "The '" + CMLgb.CODE + \
+               "' is used to indicate the beginning of the visual group. It " \
+               "needs a counterpart " + CMLge.CODE + " CML comment which " \
+               "indicates the end of the visual group.\n" \
+               "Supported properties:\n" \
+               "- 'title': title to be shown when the group is collapsed\n" \
+               "- 'uuid': unique identifier of the visual group\n\n" \
+               "Example:\n" \
+               "# cml 1 " + CMLgb.CODE + " uuid=\"1234-5678-444444\" " \
+               "title=\"MD5 calculation\""
+
+    @staticmethod
+    def generate(uuid, title, pos=1):
+        """Generates a complete line to be inserted"""
+        res = " " * (pos - 1) + "# cml 1 " + CMLgb.CODE
+        res += " uuid=\"" + uuid + "\""
+        if title:
+            res += " title=\"" + escapeCMLTextValue(txt) + "\""
+        return res
+
+    def getTitle(self):
+        """Provides unescaped title"""
+        if self.title is None:
+            return None
+        return unescapeCMLTextValue(self.title)
+
+
+class CMLge(CMLCommentBase):
+
+    """Covers the 'group end' comment"""
+
+    CODE = 'ge'
+
+    def __init__(self, ref):
+        CMLCommentBase.__init__(self, ref)
+        self.uuid = None
+        self.validate()
+
+    def validate(self):
+        """Validates the CML ge comment"""
+        self.validateRecordType(CMLge.CODE)
+        CMLVersion.validate(self.ref)
+
+        if 'uuid' in self.ref.properties:
+            self.uuid = self.ref.properties['uuid'].strip()
+
+        if self.uuid is None:
+            raise Exception("The '" + CMLge.CODE +
+                            "' CML comment does not supply uuid")
+        if self.uuid.strip() == '':
+            raise Exception("The '" + CMLge.CODE +
+                            "' CML comment does not supply uuid")
+
+    @staticmethod
+    def description():
+        """Provides the CML comment description"""
+        return "The '" + CMLge.CODE + \
+               "' is used to indicate the end of the visual group. It " \
+               "needs a counterpart " + CMLgb.CODE + " CML comment which " \
+               "indicates the beginning of the visual group.\n" \
+               "Supported properties:\n" \
+               "- 'uuid': unique identifier of the visual group\n\n" \
+               "Example:\n" \
+               "# cml 1 " + CMLge.CODE + " uuid=\"1234-5678-444444\""
+
+    @staticmethod
+    def generate(uuid, pos=1):
+        """Generates a complete line to be inserted"""
+        return " " * (pos - 1) + \
+               "# cml 1 " + CMLge.CODE + " uuid=\"" + uuid + "\""
+
+
+
 class CMLVersion:
 
     """Describes the current CML version"""
@@ -276,7 +381,9 @@ class CMLVersion:
     VERSION = 1     # Current CML version
     COMMENT_TYPES = {CMLsw.CODE: CMLsw,
                      CMLcc.CODE: CMLcc,
-                     CMLrt.CODE: CMLrt}
+                     CMLrt.CODE: CMLrt,
+                     CMLgb.CODE: CMLgb,
+                     CMLge.CODE: CMLge}
 
     def __init__(self):
         pass
@@ -346,8 +453,16 @@ class CMLVersion:
             warnings += CMLVersion.validateCMLList(item.sideCMLComments)
 
         if hasattr(item, "suite"):
-            for nestedItem in item.suite:
-                warnings += CMLVersion.validateCMLComments(nestedItem)
+            for index, nestedItem in enumerate(item.suite):
+                if nestedItem.kind == CML_COMMENT_FRAGMENT:
+                    # independent CML comment
+                    warn, replace = CMLVersion.validateCMLComment(nestedItem)
+                    if replace is not None:
+                        item.suite[index] = replace
+                    if warn is not None:
+                        warnings.append(warn)
+                else:
+                    warnings += CMLVersion.validateCMLComments(nestedItem)
         return warnings
 
     @staticmethod
@@ -355,27 +470,34 @@ class CMLVersion:
         """Validates the CML comments in the provided list (internal use)"""
         warnings = []
         if comments:
-            count = len(comments)
-            for index in range(count):
-                cmlComment = comments[index]
-                cmlType = CMLVersion.getType(cmlComment)
-                if cmlType:
-                    try:
-                        highLevel = cmlType(cmlComment)
-                        comments[index] = highLevel
-                    except Exception as exc:
-                        line = cmlComment.parts[0].beginLine
-                        pos = cmlComment.parts[0].beginPos
-                        warnings.append((line, pos,
-                                         "Invalid CML comment: " + str(exc)))
-                else:
-                    line = cmlComment.parts[0].beginLine
-                    pos = cmlComment.parts[0].beginPos
-                    warnings.append((line, pos,
-                                     "CML comment type '" +
-                                     cmlComment.recordType +
-                                     "' is not supported"))
+            for index, item in enumerate(comments):
+                warn, replace = CMLVersion.validateCMLComment(item)
+                if replace is not None:
+                    comments[index] = replace
+                if warn is not None:
+                    warnings.append(warn)
         return warnings
+
+    @staticmethod
+    def validateCMLComment(cmlComment):
+        """Validates a CML comment (internal use)"""
+        warning = None
+        highLevel = None
+        cmlType = CMLVersion.getType(cmlComment)
+        if cmlType:
+            try:
+                highLevel = cmlType(cmlComment)
+            except Exception as exc:
+                line = cmlComment.parts[0].beginLine
+                pos = cmlComment.parts[0].beginPos
+                warning = (line, pos, "Invalid CML comment: " + str(exc))
+        else:
+            line = cmlComment.parts[0].beginLine
+            pos = cmlComment.parts[0].beginPos
+            warning = (line, pos,
+                       "CML comment type '" + cmlComment.recordType +
+                       "' is not supported")
+        return warning, highLevel
 
     @staticmethod
     def getFirstLine(comments):

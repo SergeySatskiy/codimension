@@ -680,6 +680,9 @@ class FileScopeCell(ScopeCellElement, QGraphicsRectItem):
     def getLineRange(self):
         """Provides the line range"""
         if self.subKind == self.TOP_LEFT:
+            if self.ref.body is None:
+                # Special case: the buffer is empty so no body exists
+                return [0, 0]
             return self.ref.body.getLineRange()
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getLineRange()
@@ -687,6 +690,9 @@ class FileScopeCell(ScopeCellElement, QGraphicsRectItem):
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.TOP_LEFT:
+            if self.ref.body is None:
+                # Special case: the buffer is empty so no body exists
+                return [0, 0]
             return [self.ref.body.begin, self.ref.body.end]
         if self.subKind == self.DOCSTRING:
             return [self.ref.docstring.body.begin,
