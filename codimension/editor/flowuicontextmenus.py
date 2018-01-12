@@ -64,16 +64,16 @@ class CFSceneContextMenuMixin:
         self.__removeRTAction = self.commonMenu.addAction(
             getIcon('trash.png'), 'Remove replacement text',
             self.onRemoveReplacementText)
-        self.commonMenu.addSeparator()
-        self.__cutAction = self.commonMenu.addAction(
-            getIcon("cutmenu.png"), "Cut (specific for graphics pane)",
-            self.onCut)
-        self.__copyAction = self.commonMenu.addAction(
-            getIcon("copymenu.png"), "Copy (specific for graphics pane)",
-            self.onCopy)
-        self.commonMenu.addSeparator()
-        self.commonMenu.addAction(
-            getIcon("trash.png"), "Delete", self.onDelete)
+        #self.commonMenu.addSeparator()
+        #self.__cutAction = self.commonMenu.addAction(
+        #    getIcon("cutmenu.png"), "Cut (specific for graphics pane)",
+        #    self.onCut)
+        #self.__copyAction = self.commonMenu.addAction(
+        #    getIcon("copymenu.png"), "Copy (specific for graphics pane)",
+        #    self.onCopy)
+        #self.commonMenu.addSeparator()
+        #self.commonMenu.addAction(
+        #    getIcon("trash.png"), "Delete", self.onDelete)
 
         # Individual items specific menu: begin
         ifContextMenu = QMenu()
@@ -150,8 +150,8 @@ class CFSceneContextMenuMixin:
             self.countItemsWithCML(CMLcc) == count)
         self.__removeRTAction.setEnabled(
             self.countItemsWithCML(CMLrt) == count)
-        self.__cutAction.setEnabled(count == 1)
-        self.__copyAction.setEnabled(count == 1)
+        #self.__cutAction.setEnabled(count == 1)
+        #self.__copyAction.setEnabled(count == 1)
 
     def __actionPrerequisites(self):
         """True if an editor related action can be done"""

@@ -1,6 +1,6 @@
-2017 xxx xx Sergey Satskiy <sergey.satskiy@gmail.com>
+2017 Jan 11 Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Version 4.0.5
+* Version 4.1.0
 * Proportional change of spacings when a mono font changed for the flow UI
 * New feature: show/hide comments/docstrings/except blocks on the flowUI
 * More flexible pyflakes suppression line
@@ -9,6 +9,7 @@
   - no content, no comment, no docstring
   - no content, no comment, no docstring, no plain items, no decorators
   - only top level classes and functions
+* Minor bug fixes
 
 2017 Dec 3 Sergey Satskiy <sergey.satskiy@gmail.com>
 
