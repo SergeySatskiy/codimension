@@ -304,8 +304,11 @@ class FlowUIWidget(QWidget):
         self.__cf = cf
 
         # Collect warnings: parser + CML warnings
+        validGroups = []
         allWarnings = self.__cf.warnings + \
-                      CMLVersion.validateCMLComments(self.__cf)
+                      CMLVersion.validateCMLComments(self.__cf, validGroups)
+        print('Valid groups:')
+        print(repr(validGroups))
 
         # That will clear the error tooltip as well
         self.__navBar.updateInfoIcon(self.__navBar.STATE_OK_UTD)

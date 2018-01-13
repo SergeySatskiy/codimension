@@ -33,6 +33,7 @@ from .searchenv import SearchEnvironment
 from .fsenv import FileSystemEnvironment
 from .filepositions import FilePositions
 from .userencodings import FileEncodings
+from .flowgroups import FlowUICollapsedGroups
 
 
 SETTINGS_DIR = os.path.join(os.path.realpath(QDir.homePath()),
@@ -235,7 +236,8 @@ class SettingsWrapper(QObject,
                       FileSystemEnvironment,
                       RunParametersCache,
                       FilePositions,
-                      FileEncodings):
+                      FileEncodings,
+                      FlowUICollapsedGroups):
 
     """Provides settings singleton facility"""
 
@@ -258,6 +260,7 @@ class SettingsWrapper(QObject,
         RunParametersCache.__init__(self)
         FilePositions.__init__(self)
         FileEncodings.__init__(self)
+        FlowUICollapsedGroups.__init__(self)
 
         self.minTextZoom = None
         self.minCFlowZoom = None
@@ -274,6 +277,7 @@ class SettingsWrapper(QObject,
         FileSystemEnvironment.setup(self, SETTINGS_DIR)
         FilePositions.setup(self, SETTINGS_DIR)
         FileEncodings.setup(self, SETTINGS_DIR)
+        FlowUICollapsedGroups.setup(self, SETTINGS_DIR)
 
         # Save the config file name
         self.__fullFileName = SETTINGS_DIR + "settings.json"

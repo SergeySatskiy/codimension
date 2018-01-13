@@ -39,6 +39,7 @@ from .fsenv import FileSystemEnvironment
 from .runparamscache import RunParametersCache
 from .filepositions import FilePositions
 from .userencodings import FileEncodings
+from .flowgroups import FlowUICollapsedGroups
 
 
 # Saved in .cdm3 file
@@ -61,7 +62,8 @@ class CodimensionProject(QObject,
                          FileSystemEnvironment,
                          RunParametersCache,
                          FilePositions,
-                         FileEncodings):
+                         FileEncodings,
+                         FlowUICollapsedGroups):
 
     """Provides codimension project singleton facility"""
 
@@ -83,6 +85,7 @@ class CodimensionProject(QObject,
         RunParametersCache.__init__(self)
         FilePositions.__init__(self)
         FileEncodings.__init__(self)
+        FlowUICollapsedGroups.__init__(self)
 
         self.__dirWatcher = None
 
@@ -125,6 +128,7 @@ class CodimensionProject(QObject,
         FileSystemEnvironment.reset(self)
         FilePositions.reset(self)
         FileEncodings.reset(self)
+        FlowUICollapsedGroups.reset(self)
 
         # Reset the dir watchers if so
         if self.__dirWatcher is not None:
@@ -166,6 +170,7 @@ class CodimensionProject(QObject,
         FileSystemEnvironment.setup(self, self.userProjectDir)
         FilePositions.setup(self, self.userProjectDir)
         FileEncodings.setup(self, self.userProjectDir)
+        FlowUICollapsedGroups.setup(self, self.userProjectDir)
 
         self.__generateFilesList()
 
@@ -259,6 +264,7 @@ class CodimensionProject(QObject,
         RunParametersCache.setup(self, self.userProjectDir)
         FilePositions.setup(self, self.userProjectDir)
         FileEncodings.setup(self, self.userProjectDir)
+        FlowUICollapsedGroups.setup(self, self.userProjectDir)
 
         # The project might have been moved...
         self.__createProjectFile()  # ~/.codimension3/uuidNN/project

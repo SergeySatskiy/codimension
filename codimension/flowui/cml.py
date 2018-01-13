@@ -69,6 +69,7 @@ class CMLCommentBase:
 
     def __init__(self, ref=None):
         self.ref = ref
+        self.kind = CML_COMMENT_FRAGMENT
 
     def validateRecordType(self, code):
         """Validates the record type"""
@@ -277,7 +278,7 @@ class CMLgb(CMLCommentBase):
 
     def __init__(self, ref):
         CMLCommentBase.__init__(self, ref)
-        self.uuid = None
+        self.id = None
         self.title = None
         self.validate()
 
@@ -288,15 +289,15 @@ class CMLgb(CMLCommentBase):
 
         if 'title' in self.ref.properties:
             self.title = self.ref.properties['title']
-        if 'uuid' in self.ref.properties:
-            self.uuid = self.ref.properties['uuid'].strip()
+        if 'id' in self.ref.properties:
+            self.id = self.ref.properties['id'].strip()
 
-        if self.uuid is None:
+        if self.id is None:
             raise Exception("The '" + CMLgb.CODE +
-                            "' CML comment does not supply uuid")
-        if self.uuid.strip() == '':
+                            "' CML comment does not supply id")
+        if self.id.strip() == '':
             raise Exception("The '" + CMLgb.CODE +
-                            "' CML comment does not supply uuid")
+                            "' CML comment does not supply id")
 
     @staticmethod
     def description():
@@ -307,16 +308,16 @@ class CMLgb(CMLCommentBase):
                "indicates the end of the visual group.\n" \
                "Supported properties:\n" \
                "- 'title': title to be shown when the group is collapsed\n" \
-               "- 'uuid': unique identifier of the visual group\n\n" \
+               "- 'id': unique identifier of the visual group\n\n" \
                "Example:\n" \
-               "# cml 1 " + CMLgb.CODE + " uuid=\"1234-5678-444444\" " \
+               "# cml 1 " + CMLgb.CODE + " id=\"1234-5678-444444\" " \
                "title=\"MD5 calculation\""
 
     @staticmethod
-    def generate(uuid, title, pos=1):
+    def generate(groupid, title, pos=1):
         """Generates a complete line to be inserted"""
         res = " " * (pos - 1) + "# cml 1 " + CMLgb.CODE
-        res += " uuid=\"" + uuid + "\""
+        res += " id=\"" + groupid + "\""
         if title:
             res += " title=\"" + escapeCMLTextValue(txt) + "\""
         return res
@@ -336,7 +337,7 @@ class CMLge(CMLCommentBase):
 
     def __init__(self, ref):
         CMLCommentBase.__init__(self, ref)
-        self.uuid = None
+        self.id = None
         self.validate()
 
     def validate(self):
@@ -344,15 +345,15 @@ class CMLge(CMLCommentBase):
         self.validateRecordType(CMLge.CODE)
         CMLVersion.validate(self.ref)
 
-        if 'uuid' in self.ref.properties:
-            self.uuid = self.ref.properties['uuid'].strip()
+        if 'id' in self.ref.properties:
+            self.id = self.ref.properties['id'].strip()
 
-        if self.uuid is None:
+        if self.id is None:
             raise Exception("The '" + CMLge.CODE +
-                            "' CML comment does not supply uuid")
-        if self.uuid.strip() == '':
+                            "' CML comment does not supply id")
+        if self.id.strip() == '':
             raise Exception("The '" + CMLge.CODE +
-                            "' CML comment does not supply uuid")
+                            "' CML comment does not supply id")
 
     @staticmethod
     def description():
@@ -362,15 +363,15 @@ class CMLge(CMLCommentBase):
                "needs a counterpart " + CMLgb.CODE + " CML comment which " \
                "indicates the beginning of the visual group.\n" \
                "Supported properties:\n" \
-               "- 'uuid': unique identifier of the visual group\n\n" \
+               "- 'id': unique identifier of the visual group\n\n" \
                "Example:\n" \
-               "# cml 1 " + CMLge.CODE + " uuid=\"1234-5678-444444\""
+               "# cml 1 " + CMLge.CODE + " id=\"1234-5678-444444\""
 
     @staticmethod
-    def generate(uuid, pos=1):
+    def generate(groupid, pos=1):
         """Generates a complete line to be inserted"""
         return " " * (pos - 1) + \
-               "# cml 1 " + CMLge.CODE + " uuid=\"" + uuid + "\""
+               "# cml 1 " + CMLge.CODE + " id=\"" + groupid + "\""
 
 
 
@@ -415,13 +416,15 @@ class CMLVersion:
             return None
 
     @staticmethod
-    def validateCMLComments(item):
+    def validateCMLComments(item, validGroups):
         """Validates recursively all the CML items in the control flow.
 
-           Replaces the recognized CML comments from the
-           module with their higher level counterparts.
-           Returns back a list of warnings.
+        Replaces the recognized CML comments from the module with their higher
+        level counterparts.
+        Returns back a list of warnings.
         """
+        scopeGroupStack = []    # [(id, line), ...]
+
         warnings = []
         if hasattr(item, "leadingCMLComments"):
             warnings += CMLVersion.validateCMLList(item.leadingCMLComments)
@@ -429,17 +432,20 @@ class CMLVersion:
         # Some items are containers
         if item.kind == IF_FRAGMENT:
             for part in item.parts:
-                warnings += CMLVersion.validateCMLComments(part)
+                warnings += CMLVersion.validateCMLComments(part, validGroups)
         elif item.kind in [FOR_FRAGMENT, WHILE_FRAGMENT]:
             if item.elsePart:
-                warnings += CMLVersion.validateCMLComments(item.elsePart)
+                warnings += CMLVersion.validateCMLComments(item.elsePart,
+                                                           validGroups)
         elif item.kind == TRY_FRAGMENT:
             if item.elsePart:
-                warnings += CMLVersion.validateCMLComments(item.elsePart)
+                warnings += CMLVersion.validateCMLComments(item.elsePart,
+                                                           validGroups)
             if item.finallyPart:
-                warnings += CMLVersion.validateCMLComments(item.finallyPart)
+                warnings += CMLVersion.validateCMLComments(item.finallyPart,
+                                                           validGroups)
             for part in item.exceptParts:
-                warnings += CMLVersion.validateCMLComments(part)
+                warnings += CMLVersion.validateCMLComments(part, validGroups)
 
         if item.kind in [CONTROL_FLOW_FRAGMENT,
                          CLASS_FRAGMENT, FUNCTION_FRAGMENT]:
@@ -459,11 +465,43 @@ class CMLVersion:
                     warn, replace = CMLVersion.validateCMLComment(nestedItem)
                     if replace is not None:
                         item.suite[index] = replace
+                        if replace.CODE in [CMLgb.CODE, CMLge.CODE]:
+                            CMLVersion.handleScopeGroup(replace,
+                                                        scopeGroupStack,
+                                                        warnings,
+                                                        validGroups)
                     if warn is not None:
                         warnings.append(warn)
                 else:
-                    warnings += CMLVersion.validateCMLComments(nestedItem)
+                    warnings += CMLVersion.validateCMLComments(nestedItem,
+                                                               validGroups)
+
+        for group in scopeGroupStack:
+            warnings.append((group[1], -1, 'CML gb comment does not have '
+                             'a matching CML ge comment'))
+
         return warnings
+
+    @staticmethod
+    def handleScopeGroup(cmlComment, groupStack, warnings, validGroups):
+        """Processes the cml grouping comments"""
+        line = cmlComment.ref.parts[0].beginLine
+        if cmlComment.CODE == CMLgb.CODE:
+            groupStack.append((cmlComment.id, line))
+            return
+        if cmlComment.CODE == CMLge.CODE:
+            if not groupStack:
+                warnings.append((line, -1,
+                                 'CML ge comment without CML gb comment'))
+                return
+            if groupStack[-1][0] != cmlComment.id:
+                warnings.append((line, -1,
+                                 'CML ge comment id does not match '
+                                 'the previous CML gb comment id at line ' +
+                                 str(groupStack[-1][1])))
+                return
+            validGroups.append((cmlComment.id, groupStack[-1][1]))
+            groupStack.pop()
 
     @staticmethod
     def validateCMLList(comments):
