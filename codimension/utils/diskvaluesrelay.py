@@ -28,6 +28,49 @@ from .globals import GlobalData
 from .settings import Settings
 
 
+def getCollupsedGroups(fileName):
+    """Provides None if not found"""
+    project = GlobalData().project
+    if project.isLoaded():
+        if project.isProjectFile(fileName):
+            key = relpath(fileName, dirname(project.fileName))
+            return project.getFileGroups(key)
+    return Settings().getFileGroups(fileName)
+
+
+def setCollupsedGroups(fileName, groups):
+    """Sets the file collupsed groups"""
+    project = GlobalData().project
+    if project.isLoaded():
+        if project.isProjectFile(fileName):
+            key = relpath(fileName, dirname(project.fileName))
+            project.setFileGroups(key, groups)
+            return
+    Settings().setFileGroups(fileName, groups)
+
+
+def addCollupsedGroup(fileName, group):
+    """Adds a group into a list collupsed group for a file"""
+    project = GlobalData().project
+    if project.isLoaded():
+        if project.isProjectFile(fileName):
+            key = relpath(fileName, dirname(project.fileName))
+            project.addFileGroup(key, group)
+            return
+    Settings().addFileGroup(fileName, group)
+
+
+def removeCollupsedGroup(fileName, group):
+    """Removes a group from a list of collupsed groups for a file"""
+    project = GlobalData().project
+    if project.isLoaded():
+        if project.isProjectFile(fileName):
+            key = relpath(fileName, dirname(project.fileName))
+            project.removeFileGroup(key, group)
+            return
+    Settings().removeFileGroup(fileName, group)
+
+
 def getFileEncoding(fileName):
     """Provides None if not found"""
     project = GlobalData().project
