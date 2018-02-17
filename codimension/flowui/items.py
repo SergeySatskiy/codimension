@@ -74,6 +74,11 @@ class CellElement:
 
     CONNECTOR = 300
 
+    EMPTY_GROUP = 500
+    OPENED_GROUP_BEGIN = 501
+    OPENED_GROUP_END = 502
+    COLLAPSED_GROUP = 503
+
     def __init__(self, ref, canvas, x, y):
         self.kind = self.UNKNOWN
         self.subKind = self.UNKNOWN
