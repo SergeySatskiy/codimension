@@ -719,7 +719,7 @@ class VirtualCanvas:
 
         self.dependentRegions.append((0, vacantRow))
 
-    def layoutModule(self, cflow):
+    def layoutModule(self, cflow, validGroups):
         """Lays out a module"""
         if cflow.leadingComment and not self.settings.noComment:
             self.isNoScope = True

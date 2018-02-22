@@ -202,7 +202,12 @@ _DEFAULT_CFLOW_SETTINGS = {
     'showCMLIndicator': False,
 
     'hiddenCommentText': 'c',
-    'hiddenExceptText': 'e'}
+    'hiddenExceptText': 'e',
+
+    # Groups
+    'collapsedOutlineWidth': 5,
+    'collapsedBGColor': QColor(250, 250, 250, 255),
+    'collapsedFGColor': QColor(0, 0, 0, 255)}
 
 
 class Skin:

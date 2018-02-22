@@ -144,6 +144,7 @@ class FlowUIWidget(QWidget):
         self.__toolbar = None
         self.__navBar = None
         self.__cf = None
+        self.__validGroups = []
 
         # Create the update timer
         self.__updateTimer = QTimer(self)
@@ -303,12 +304,13 @@ class FlowUIWidget(QWidget):
             return
         self.__cf = cf
 
-        # Collect warnings: parser + CML warnings
-        validGroups = []
+        # Collect warnings (parser + CML warnings) and valid groups
+        self.__validGroups = []
         allWarnings = self.__cf.warnings + \
-                      CMLVersion.validateCMLComments(self.__cf, validGroups)
+                      CMLVersion.validateCMLComments(self.__cf,
+                                                     self.__validGroups)
         print('Valid groups:')
-        print(repr(validGroups))
+        print(repr(self.__validGroups))
 
         # That will clear the error tooltip as well
         self.__navBar.updateInfoIcon(self.__navBar.STATE_OK_UTD)
@@ -348,7 +350,7 @@ class FlowUIWidget(QWidget):
         try:
             # Top level canvas has no adress and no parent canvas
             canvas = VirtualCanvas(self.cflowSettings, None, None, None)
-            canvas.layoutModule(self.__cf)
+            canvas.layoutModule(self.__cf, self.__validGroups)
             canvas.setEditor(self.__editor)
             width, height = canvas.render()
             self.scene().setSceneRect(0, 0, width, height)
@@ -377,6 +379,7 @@ class FlowUIWidget(QWidget):
             self.__disconnectEditorSignals()
             self.__updateTimer.stop()
             self.__cf = None
+            self.__validGroups = []
             self.setVisible(False)
             self.__navBar.updateInfoIcon(self.__navBar.STATE_UNKNOWN)
             return
