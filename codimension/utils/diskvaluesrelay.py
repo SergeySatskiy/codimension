@@ -28,7 +28,7 @@ from .globals import GlobalData
 from .settings import Settings
 
 
-def getCollupsedGroups(fileName):
+def getCollapsedGroups(fileName):
     """Provides None if not found"""
     project = GlobalData().project
     if project.isLoaded():
@@ -38,8 +38,8 @@ def getCollupsedGroups(fileName):
     return Settings().getFileGroups(fileName)
 
 
-def setCollupsedGroups(fileName, groups):
-    """Sets the file collupsed groups"""
+def setCollapsedGroups(fileName, groups):
+    """Sets the file collapsed groups"""
     project = GlobalData().project
     if project.isLoaded():
         if project.isProjectFile(fileName):
@@ -49,8 +49,8 @@ def setCollupsedGroups(fileName, groups):
     Settings().setFileGroups(fileName, groups)
 
 
-def addCollupsedGroup(fileName, group):
-    """Adds a group into a list collupsed group for a file"""
+def addCollapsedGroup(fileName, group):
+    """Adds a group into a list collapsed group for a file"""
     project = GlobalData().project
     if project.isLoaded():
         if project.isProjectFile(fileName):
@@ -60,8 +60,8 @@ def addCollupsedGroup(fileName, group):
     Settings().addFileGroup(fileName, group)
 
 
-def removeCollupsedGroup(fileName, group):
-    """Removes a group from a list of collupsed groups for a file"""
+def removeCollapsedGroup(fileName, group):
+    """Removes a group from a list of collapsed groups for a file"""
     project = GlobalData().project
     if project.isLoaded():
         if project.isProjectFile(fileName):

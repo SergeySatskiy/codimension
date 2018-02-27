@@ -48,6 +48,8 @@ from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
                          ElseScopeCell, ExceptScopeCell, FinallyScopeCell)
 from .commentitems import (AboveCommentCell, LeadingCommentCell,
                            SideCommentCell, IndependentCommentCell)
+from .groupitems import (EmptyGroup, OpenedGroupBegin, OpenedGroupEnd,
+                         CollapsedGroup)
 
 
 CONN_N_S = [(ConnectorCell.NORTH, ConnectorCell.SOUTH)]
@@ -104,7 +106,7 @@ class VirtualCanvas:
 
     """Holds the control flow representation"""
 
-    def __init__(self, settings, x, y, parent):
+    def __init__(self, settings, x, y, validGroups, parent):
         self.kind = CellElement.VCANVAS
 
         # the item instances from items.py or other virtual canvases
@@ -137,6 +139,10 @@ class VirtualCanvas:
         self.baseX = 0
         self.baseY = 0
         self.scopeRectangle = None
+
+        # Groups support
+        self.__validGroups = validGroups
+        self.__currentCollapsedGroup = None
 
     def getScopeName(self):
         """Provides the name of the scope drawn on the canvas"""
@@ -229,7 +235,8 @@ class VirtualCanvas:
 
     def __allocateScope(self, item, scopeType, row, column):
         """Allocates a scope for a suite"""
-        canvas = VirtualCanvas(self.settings, column, row, self)
+        canvas = VirtualCanvas(self.settings, column, row,
+                               self.__validGroups, self)
         canvas.layout(item, scopeType)
         self.__allocateAndSet(row, column, canvas)
 
@@ -267,6 +274,13 @@ class VirtualCanvas:
                     return True
         return False
 
+    def __isValidGroupEnd(self, item):
+        """True if it is a valid group end"""
+
+    def __isValidGroupBegin(self, item):
+        """True if it is a valid group begin"""
+
+
     def layoutSuite(self, vacantRow, suite,
                     scopeKind=None, cflow=None, column=1):
         """Does a single suite layout"""
@@ -275,12 +289,16 @@ class VirtualCanvas:
             self.__currentScopeClass = _scopeToClass[scopeKind]
 
         for item in suite:
+            if self.__currentCollapsedGroup is not None:
+                
+
             if item.kind == CML_COMMENT_FRAGMENT:
                 # CML comments are not shown on the diagram
                 continue
 
             if item.kind in [FUNCTION_FRAGMENT, CLASS_FRAGMENT]:
-                scopeCanvas = VirtualCanvas(self.settings, None, None, self)
+                scopeCanvas = VirtualCanvas(self.settings, None, None,
+                                            self.__validGroups, self)
                 scopeItem = item
                 if item.kind == FUNCTION_FRAGMENT:
                     scopeCanvas.layout(item, CellElement.FUNC_SCOPE)
@@ -291,7 +309,8 @@ class VirtualCanvas:
                     for dec in reversed(item.decorators):
                         # Create a decorator scope virtual canvas
                         decScope = VirtualCanvas(self.settings,
-                                                 None, None, self)
+                                                 None, None,
+                                                 self.__validGroups, self)
                         decScopeRows = len(decScope.cells)
                         if scopeItem.leadingComment and not self.settings.noComment:
                             # Need two rows; one for the comment
@@ -474,7 +493,8 @@ class VirtualCanvas:
                         lastNonElseIndex = index - 1
                         break
 
-                canvas = VirtualCanvas(self.settings, 0, 0, self)
+                canvas = VirtualCanvas(self.settings, 0, 0,
+                                       self.__validGroups, self)
                 canvas.isNoScope = True
 
                 if lastNonElseIndex == len(item.parts) - 1:
@@ -486,7 +506,8 @@ class VirtualCanvas:
 
                 index = lastNonElseIndex - 1
                 while index >= 0:
-                    tempCanvas = VirtualCanvas(self.settings, 0, 0, self)
+                    tempCanvas = VirtualCanvas(self.settings, 0, 0,
+                                               self.__validGroups, self)
                     tempCanvas.isNoScope = True
                     tempCanvas.layoutIfBranch(item.parts[index], canvas)
                     canvas = tempCanvas
@@ -581,9 +602,11 @@ class VirtualCanvas:
 
         # Allocate the YES branch
         if yBelow:
-            branchLayout = VirtualCanvas(self.settings, 0, vacantRow, self)
+            branchLayout = VirtualCanvas(self.settings, 0, vacantRow,
+                                         self.__validGroups, self)
         else:
-            branchLayout = VirtualCanvas(self.settings, 1, vacantRow, self)
+            branchLayout = VirtualCanvas(self.settings, 1, vacantRow,
+                                         self.__validGroups, self)
         branchLayout.isNoScope = True
         branchLayout.layoutSuite(0, yBranch.suite,
                                  CellElement.NO_SCOPE, None, 0)
@@ -651,10 +674,12 @@ class VirtualCanvas:
 
                 if yBelow:
                     branchLayout = VirtualCanvas(self.settings,
-                                                 1, vacantRow, self)
+                                                 1, vacantRow,
+                                                 self.__validGroups, self)
                 else:
                     branchLayout = VirtualCanvas(self.settings,
-                                                 0, vacantRow, self)
+                                                 0, vacantRow,
+                                                 self.__validGroups, self)
 
                 if nBranch.leadingComment and not self.settings.noComment:
                     # Draw as an independent comment: insert into the layout
@@ -719,7 +744,7 @@ class VirtualCanvas:
 
         self.dependentRegions.append((0, vacantRow))
 
-    def layoutModule(self, cflow, validGroups):
+    def layoutModule(self, cflow):
         """Lays out a module"""
         if cflow.leadingComment and not self.settings.noComment:
             self.isNoScope = True

@@ -35,7 +35,7 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.fileutils import isPythonMime
 from utils.settings import Settings
-from utils.diskvaluesrelay import getFilePosition
+from utils.diskvaluesrelay import getFilePosition, getCollapsedGroups
 from .flowuinavbar import ControlFlowNavigationBar
 from .flowuisceneview import CFGraphicsView
 
@@ -349,8 +349,9 @@ class FlowUIWidget(QWidget):
         self.scene().clear()
         try:
             # Top level canvas has no adress and no parent canvas
-            canvas = VirtualCanvas(self.cflowSettings, None, None, None)
-            canvas.layoutModule(self.__cf, self.__validGroups)
+            canvas = VirtualCanvas(self.cflowSettings, None, None,
+                                   self.__validGroups, None)
+            canvas.layoutModule(self.__cf)
             canvas.setEditor(self.__editor)
             width, height = canvas.render()
             self.scene().setSceneRect(0, 0, width, height)

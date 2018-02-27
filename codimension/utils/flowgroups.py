@@ -25,7 +25,7 @@ from .fileutils import loadJSON, saveJSON
 
 class FlowUICollapsedGroups:
 
-    """Loads/stores/saves the collupsed group list"""
+    """Loads/stores/saves the collapsed group list"""
 
     def __init__(self):
         # file name -> list of group ids
@@ -46,30 +46,30 @@ class FlowUICollapsedGroups:
         if not dirName.endswith(os.path.sep):
             dirName += os.path.sep
         if not os.path.isdir(dirName):
-            raise Exception('Directory name is expected for collupsed '
+            raise Exception('Directory name is expected for collapsed '
                             'groups. The given ' + dirName + ' is not.')
 
-        self.__groupsFileName = dirName + 'collupsedgroups.json'
+        self.__groupsFileName = dirName + 'collapsedgroups.json'
         if os.path.exists(self.__groupsFileName):
             FlowUICollapsedGroups.load(self)
 
     def load(self):
-        """Loads the saved collupsed groups file"""
+        """Loads the saved collapsed groups file"""
         if self.__groupsFileName:
             self.__groups = loadJSON(self.__groupsFileName,
-                                     'collupsed groups', {})
+                                     'collapsed groups', {})
 
     def save(self):
-        """Saves the collupsed groups into a file"""
+        """Saves the collapsed groups into a file"""
         if self.__groupsFileName:
-            saveJSON(self.__groupsFileName, self.__groups, 'collupsed groups')
+            saveJSON(self.__groupsFileName, self.__groups, 'collapsed groups')
 
     def getFileGroups(self, fileName):
         """Provides None if not found"""
         return self.__groups.get(fileName, None)
 
     def setFileGroups(self, fileName, groups):
-        """Sets the collupsed groups for the file"""
+        """Sets the collapsed groups for the file"""
         if groups:
             self.__groups[fileName] = groups
             FlowUICollapsedGroups.save(self)
