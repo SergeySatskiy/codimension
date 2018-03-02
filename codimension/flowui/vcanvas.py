@@ -37,7 +37,7 @@ from cdmcfparser import (CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                          IMPORT_FRAGMENT, COMMENT_FRAGMENT,
                          WHILE_FRAGMENT, FOR_FRAGMENT, IF_FRAGMENT,
                          WITH_FRAGMENT, TRY_FRAGMENT, CML_COMMENT_FRAGMENT)
-from .cml import CMLVersion, CMLsw
+from .cml import CMLVersion, CMLsw, CMLgb, CMLge
 from .items import (CellElement, VacantCell, CodeBlockCell, BreakCell,
                     ContinueCell, ReturnCell, RaiseCell, AssertCell,
                     SysexitCell, ImportCell,  ConnectorCell, IfCell,
@@ -106,7 +106,7 @@ class VirtualCanvas:
 
     """Holds the control flow representation"""
 
-    def __init__(self, settings, x, y, validGroups, parent):
+    def __init__(self, settings, x, y, validGroups, collapsedGroups, parent):
         self.kind = CellElement.VCANVAS
 
         # the item instances from items.py or other virtual canvases
@@ -142,6 +142,7 @@ class VirtualCanvas:
 
         # Groups support
         self.__validGroups = validGroups
+        self.__collapsedGroups = collapsedGroups
         self.__currentCollapsedGroup = None
 
     def getScopeName(self):
@@ -236,7 +237,8 @@ class VirtualCanvas:
     def __allocateScope(self, item, scopeType, row, column):
         """Allocates a scope for a suite"""
         canvas = VirtualCanvas(self.settings, column, row,
-                               self.__validGroups, self)
+                               self.__validGroups, self.__collapsedGroups,
+                               self)
         canvas.layout(item, scopeType)
         self.__allocateAndSet(row, column, canvas)
 
@@ -276,10 +278,36 @@ class VirtualCanvas:
 
     def __isValidGroupEnd(self, item):
         """True if it is a valid group end"""
+        if item.kind == CML_COMMENT_FRAGMENT:
+
+            return
 
     def __isValidGroupBegin(self, item):
-        """True if it is a valid group begin"""
+        """None if not the group or the group id otherwise"""
+        if item.kind == CML_COMMENT_FRAGMENT:
+            itemFirstLine = item.ref.parts[0].beginLine
+        else:
+            # The item may have a leading CML comment which starts a new valid
+            # group
+            if not hasattr(item, 'leadingCMLComments'):
+                return None
 
+            groupBegin = CMLVersion.find(item.leadingCMLComments, CMLgb)
+            if groupBegin is None:
+                return None
+
+            itemFirstLine = groupBegin.ref.parts[0].beginLine
+
+        for groupId, firstLine, endLine in self.__validGroups:
+            del endLine
+            if firstLine == itemFirstLine:
+                return groupId
+        return None
+
+    def __isGroupCollapsed(self, groupId):
+        """True if the group is collapsed"""
+        return True
+        return groupId in self.__collapsedGroups
 
     def layoutSuite(self, vacantRow, suite,
                     scopeKind=None, cflow=None, column=1):
@@ -290,7 +318,26 @@ class VirtualCanvas:
 
         for item in suite:
             if self.__currentCollapsedGroup is not None:
-                
+                if self.__isValidGroupEnd(self):
+                    self.__currentCollapsedGroup.groupEndRef = item
+                    self.__currentCollapsedGroup = None
+                else:
+                    self.__currentCollapsedGroup.nestedRefs.append(item)
+                continue
+
+            # It might be a group beginning
+            groupBeginId = self.__isValidGroupBegin(item)
+            if groupBeginId is not None:
+                # TODO: detect if it is an empty/collapsed/opened group
+                if self.__isGroupCollapsed(groupBeginId):
+                    # Allocate a collapsed group
+                    self.__currentCollapsedGroup = CollapsedGroup(item, self,
+                                                                  column,
+                                                                  vacantRow)
+                    self.__allocateAndSet(vacantRow, column,
+                                          self.__currentCollapsedGroup)
+                    vacantRow += 1
+                    continue
 
             if item.kind == CML_COMMENT_FRAGMENT:
                 # CML comments are not shown on the diagram
@@ -298,7 +345,8 @@ class VirtualCanvas:
 
             if item.kind in [FUNCTION_FRAGMENT, CLASS_FRAGMENT]:
                 scopeCanvas = VirtualCanvas(self.settings, None, None,
-                                            self.__validGroups, self)
+                                            self.__validGroups,
+                                            self.__collapsedGroups, self)
                 scopeItem = item
                 if item.kind == FUNCTION_FRAGMENT:
                     scopeCanvas.layout(item, CellElement.FUNC_SCOPE)
@@ -310,7 +358,8 @@ class VirtualCanvas:
                         # Create a decorator scope virtual canvas
                         decScope = VirtualCanvas(self.settings,
                                                  None, None,
-                                                 self.__validGroups, self)
+                                                 self.__validGroups,
+                                                 self.__collapsedGroups, self)
                         decScopeRows = len(decScope.cells)
                         if scopeItem.leadingComment and not self.settings.noComment:
                             # Need two rows; one for the comment
@@ -494,7 +543,8 @@ class VirtualCanvas:
                         break
 
                 canvas = VirtualCanvas(self.settings, 0, 0,
-                                       self.__validGroups, self)
+                                       self.__validGroups,
+                                       self.__collapsedGroups, self)
                 canvas.isNoScope = True
 
                 if lastNonElseIndex == len(item.parts) - 1:
@@ -507,7 +557,8 @@ class VirtualCanvas:
                 index = lastNonElseIndex - 1
                 while index >= 0:
                     tempCanvas = VirtualCanvas(self.settings, 0, 0,
-                                               self.__validGroups, self)
+                                               self.__validGroups,
+                                               self.__collapsedGroups, self)
                     tempCanvas.isNoScope = True
                     tempCanvas.layoutIfBranch(item.parts[index], canvas)
                     canvas = tempCanvas
@@ -603,10 +654,12 @@ class VirtualCanvas:
         # Allocate the YES branch
         if yBelow:
             branchLayout = VirtualCanvas(self.settings, 0, vacantRow,
-                                         self.__validGroups, self)
+                                         self.__validGroups,
+                                         self.__collapsedGroups, self)
         else:
             branchLayout = VirtualCanvas(self.settings, 1, vacantRow,
-                                         self.__validGroups, self)
+                                         self.__validGroups,
+                                         self.__collapsedGroups, self)
         branchLayout.isNoScope = True
         branchLayout.layoutSuite(0, yBranch.suite,
                                  CellElement.NO_SCOPE, None, 0)
@@ -675,11 +728,13 @@ class VirtualCanvas:
                 if yBelow:
                     branchLayout = VirtualCanvas(self.settings,
                                                  1, vacantRow,
-                                                 self.__validGroups, self)
+                                                 self.__validGroups,
+                                                 self.__collapsedGroups, self)
                 else:
                     branchLayout = VirtualCanvas(self.settings,
                                                  0, vacantRow,
-                                                 self.__validGroups, self)
+                                                 self.__validGroups,
+                                                 self.__collapsedGroups, self)
 
                 if nBranch.leadingComment and not self.settings.noComment:
                     # Draw as an independent comment: insert into the layout

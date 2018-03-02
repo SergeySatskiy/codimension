@@ -99,6 +99,8 @@ class CollapsedGroup(CellElement, QGraphicsRectItem):
         self.kind = CellElement.COLLAPSED_GROUP
         self.__textRect = None
         self.connector = None
+        self.nestedRefs = []
+        self.groupEndRef = None
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)

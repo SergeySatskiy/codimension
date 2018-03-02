@@ -348,9 +348,12 @@ class FlowUIWidget(QWidget):
 
         self.scene().clear()
         try:
+            fileName = self.__parentWidget.getFileName()
+            collapsedGroups = getCollapsedGroups(fileName)
+
             # Top level canvas has no adress and no parent canvas
             canvas = VirtualCanvas(self.cflowSettings, None, None,
-                                   self.__validGroups, None)
+                                   self.__validGroups, collapsedGroups, None)
             canvas.layoutModule(self.__cf)
             canvas.setEditor(self.__editor)
             width, height = canvas.render()
