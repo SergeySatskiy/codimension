@@ -142,8 +142,12 @@ class VirtualCanvas:
 
         # Groups support
         self.__validGroups = validGroups
+        self.__validGroupBeginLines = [item[1] for item in validGroups]
+        self.__validGroupEndLines = [item[2] for item in validGroups]
+        self.__validGroupLines = self.__validGroupBeginLines + \
+                                 self.__validGroupEndLines
         self.__collapsedGroups = collapsedGroups
-        self.__currentCollapsedGroup = None
+        self.__groupStack = []  # [item, row, column]
 
     def getScopeName(self):
         """Provides the name of the scope drawn on the canvas"""
@@ -276,38 +280,124 @@ class VirtualCanvas:
                     return True
         return False
 
-    def __isValidGroupEnd(self, item):
-        """True if it is a valid group end"""
+    def __getGroups(self, item):
+        """Provides a list of group begins and ends as they are in the item"""
+        # Only valid groups are taken into account
         if item.kind == CML_COMMENT_FRAGMENT:
+            if hasattr(item, 'ref'):
+                # High level CML comment (low level are not interesting here)
+                itemFirstLine = item.ref.parts[0].beginLine
+                if itemFirstLine in self.__validGroupLines:
+                    return [item]
+            return []
 
-            return
+        # The item may have a leading CML comment which ends a valid group
+        if not hasattr(item, 'leadingCMLComments'):
+            return []
 
-    def __isValidGroupBegin(self, item):
-        """None if not the group or the group id otherwise"""
-        if item.kind == CML_COMMENT_FRAGMENT:
-            itemFirstLine = item.ref.parts[0].beginLine
+        groups = []
+        for comment in item.leadingCMLComments:
+            if hasattr(comment, 'CODE'):
+                if comment.CODE in [CMLgb.CODE, CMLge.CODE]:
+                    itemFirstLine = comment.ref.parts[0].beginLine
+                    if itemFirstLine in self.__validGroupLines:
+                        groups.append(comment)
+        return groups
+
+    def __isGroupBegin(self, groupComment):
+        """True if it is a valid group begin"""
+        return groupComment.CODE == CMLgb.CODE
+
+    def __onGroupBegin(self, item, groupComment, vacantRow, column):
+        """Handles the group begin"""
+        if self.__groupStack:
+            if self.__groupStack[-1][0].kind == CellElement.COLLAPSED_GROUP:
+                # We are still in a collapsed group
+                return vacantRow
+
+        groupId = groupComment.id
+        if self.__isGroupCollapsed(groupId):
+            newGroup = CollapsedGroup(item, self, column, vacantRow)
         else:
-            # The item may have a leading CML comment which starts a new valid
-            # group
-            if not hasattr(item, 'leadingCMLComments'):
-                return None
+            newGroup = OpenedGroupBegin(item, self, column, vacantRow)
 
-            groupBegin = CMLVersion.find(item.leadingCMLComments, CMLgb)
-            if groupBegin is None:
-                return None
+        # allocate new cell, memo the group begin ref,
+        # add the group to the stack and return a new vacant row
+        self.__allocateAndSet(vacantRow, column, newGroup)
+        newGroup.groupBeginCMLRef = groupComment
+        self.__groupStack.append([newGroup, vacantRow, column])
+        return vacantRow + 1
 
-            itemFirstLine = groupBegin.ref.parts[0].beginLine
+    def __onGroupEnd(self, item, groupComment, vacantRow, column):
+        """Handles the group end"""
+        # At least one group must be in the stack!
+        currentGroup = self.__groupStack[-1][0]
+        if currentGroup.getGroupId() != groupComment.id:
+            # It is not a close of the current group
+            return vacantRow
 
-        for groupId, firstLine, endLine in self.__validGroups:
-            del endLine
-            if firstLine == itemFirstLine:
-                return groupId
-        return None
+        # There are three cases here:
+        # - end of a collapsed group
+        # - end of an empty group
+        # - end of an open group
+        if currentGroup.kind == CellElement.COLLAPSED_GROUP:
+            # Collapsed group
+            pass
+
+        elif currentGroup.nestedRefs:
+            # opened group
+            pass
+        else:
+            # empty group: replace the beginning of the group with an empty one
+            groupBegin = self.__groupStack[-1][0]
+            groupRow = self.__groupStack[-1][1]
+            groupColumn = self.__groupStack[-1][2]
+            emptyGroup = EmptyGroup(groupBegin.ref, self, groupColumn, groupRow)
+            emptyGroup.groupBeginCMLRef = groupBegin.groupBeginCMLRef
+            self.cells[groupRow][groupColumn] = emptyGroup
+
+        self.__groupStack[-1][0].groupEndCMLRef = groupComment
+
+        self.__groupStack.pop()
+        return vacantRow
 
     def __isGroupCollapsed(self, groupId):
         """True if the group is collapsed"""
         return True
         return groupId in self.__collapsedGroups
+
+    def __handleGroups(self, item, vacantRow, column):
+        """
+        Picks all the valid group begins and ends
+        Decides what to do and returns True if it is a collapsed group and
+        the further items need to be skipped
+        """
+        for groupComment in self.__getGroups(item):
+            # The group begin/end comments are going to the nested refs as
+            # separate items regardless from where they came. This lets to
+            # detect empty groups easier.
+            if self.__groupStack:
+                currentGroupId = self.__groupStack[-1][0].getGroupId()
+                if currentGroupId != groupComment.id:
+                    # The 'if' is to avoid the end of the group to be added
+                    # to the nested refs
+                    self.__groupStack[-1][0].nestedRefs.append(groupComment)
+
+            if self.__isGroupBegin(groupComment):
+                vacantRow = self.__onGroupBegin(item, groupComment,
+                                                vacantRow, column)
+            else:
+                vacantRow = self.__onGroupEnd(item, groupComment,
+                                              vacantRow, column)
+
+        if self.__groupStack:
+            # We are in some kind of a group
+            self.__groupStack[-1][0].nestedRefs.append(item)
+            if self.__groupStack[-1][0].kind == CellElement.COLLAPSED_GROUP:
+                return True, vacantRow
+
+        # We are not in a group now, so process the item
+        return False, vacantRow
 
     def layoutSuite(self, vacantRow, suite,
                     scopeKind=None, cflow=None, column=1):
@@ -317,27 +407,10 @@ class VirtualCanvas:
             self.__currentScopeClass = _scopeToClass[scopeKind]
 
         for item in suite:
-            if self.__currentCollapsedGroup is not None:
-                if self.__isValidGroupEnd(self):
-                    self.__currentCollapsedGroup.groupEndRef = item
-                    self.__currentCollapsedGroup = None
-                else:
-                    self.__currentCollapsedGroup.nestedRefs.append(item)
-                continue
 
-            # It might be a group beginning
-            groupBeginId = self.__isValidGroupBegin(item)
-            if groupBeginId is not None:
-                # TODO: detect if it is an empty/collapsed/opened group
-                if self.__isGroupCollapsed(groupBeginId):
-                    # Allocate a collapsed group
-                    self.__currentCollapsedGroup = CollapsedGroup(item, self,
-                                                                  column,
-                                                                  vacantRow)
-                    self.__allocateAndSet(vacantRow, column,
-                                          self.__currentCollapsedGroup)
-                    vacantRow += 1
-                    continue
+            skipItem, vacantRow = self.__handleGroups(item, vacantRow, column)
+            if skipItem:
+                continue
 
             if item.kind == CML_COMMENT_FRAGMENT:
                 # CML comments are not shown on the diagram

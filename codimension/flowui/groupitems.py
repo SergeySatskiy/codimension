@@ -25,13 +25,63 @@ from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
                    QStyleOptionGraphicsItem, QStyle, QApplication,
                    QMimeData, QByteArray)
 from .items import CellElement
+from .auxitems import Connector
+from .routines import getBorderColor
 
 
-class EmptyGroup(CellElement):
+class GroupItemBase:
+
+    """Common functionality for the group items"""
+
+    def __init__(self):
+        self.nestedRefs = []
+
+        self.groupBeginCMLRef = None
+        self.groupEndCMLRef = None
+
+    def getGroupId(self):
+        """Provides the group ID"""
+        return self.groupBeginCMLRef.id
+
+    def _getText(self):
+        """Provides the box text"""
+        return self.groupBeginCMLRef.title
+
+    def getColors(self):
+        """Provides the item colors"""
+        bg = self.canvas.settings.collapsedBGColor
+        fg = self.canvas.settings.collapsedFGColor
+        if self.groupBeginCMLRef.bgColor:
+            bg = self.groupBeginCMLRef.bgColor
+        if self.groupBeginCMLRef.fgColor:
+            fg = self.groupBeginCMLRef.fgColor
+        if self.groupBeginCMLRef.border:
+            return bg, fg, self.groupBeginCMLRef.border
+        return bg, fg, getBorderColor(bg)
+
+    def getLineRange(self):
+        """Provides the line range"""
+        return [self.groupBeginCMLRef.ref.beginLine,
+                self.groupEndCMLRef.ref.endLine]
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.groupBeginCMLRef.ref.begin,
+                self.groupEndCMLRef.ref.end]
+
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        lineRange = self.getLineRange()
+        return 'Group at lines ' + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
+
+
+class EmptyGroup(GroupItemBase, CellElement):
 
     """Represents an empty group"""
 
     def __init__(self, ref, canvas, x, y):
+        GroupItemBase.__init__(self)
         CellElement.__init__(self, ref, canvas, x, y)
         self.kind = CellElement.EMPTY_GROUP
 
@@ -42,11 +92,12 @@ class EmptyGroup(CellElement):
         """Draws the cell"""
 
 
-class OpenedGroupBegin(CellElement):
+class OpenedGroupBegin(GroupItemBase, CellElement):
 
     """Represents beginning af a group which can be collapsed"""
 
     def __init__(self, ref, canvas, x, y):
+        GroupItemBase.__init__(self)
         CellElement.__init__(self, ref, canvas, x, y)
         self.kind = CellElement.OPENED_GROUP_BEGIN
 
@@ -66,11 +117,12 @@ class OpenedGroupBegin(CellElement):
         self.baseY = baseY
 
 
-class OpenedGroupEnd(CellElement):
+class OpenedGroupEnd(GroupItemBase, CellElement):
 
     """Represents the end af a group which can be collapsed"""
 
     def __init__(self, ref, canvas, x, y):
+        GroupItemBase.__init__(self)
         CellElement.__init__(self, ref, canvas, x, y)
         self.kind = CellElement.OPENED_GROUP_END
 
@@ -90,36 +142,20 @@ class OpenedGroupEnd(CellElement):
         self.baseY = baseY
 
 
-class CollapsedGroup(CellElement, QGraphicsRectItem):
+class CollapsedGroup(GroupItemBase, CellElement, QGraphicsRectItem):
 
     """Represents a collapsed group"""
 
     def __init__(self, ref, canvas, x, y):
+        GroupItemBase.__init__(self)
         CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.COLLAPSED_GROUP
         self.__textRect = None
         self.connector = None
-        self.nestedRefs = []
-        self.groupEndRef = None
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-
-    def _getText(self):
-        """Provides the box text"""
-        return self.ref.title
-
-    def getColors(self):
-        """Provides the item colors"""
-        bg = self.canvas.settings.collapsedBGColor
-        fg = self.canvas.settings.collapsedFGColor
-        if self.ref.bgColor:
-            bg = self.ref.bgColor
-        if self.ref.fgColor:
-            fg = self.ref.fgColor
-        if self.ref.border:
-            return bg, fg, self.ref.border
-        return bg, fg, getBorderColor(bg)
 
     def render(self):
         """Renders the cell"""
@@ -132,7 +168,7 @@ class CollapsedGroup(CellElement, QGraphicsRectItem):
         hPadding = 2 * (settings.hCellPadding + settings.hTextPadding +
                         settings.collapsedOutlineWidth)
         self.minWidth = max(self.__textRect.width() + hPadding,
-                            self.minWidth)
+                            settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -214,7 +250,3 @@ class CollapsedGroup(CellElement, QGraphicsRectItem):
             settings.collapsedOutlineWidth,
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self._getText())
-
-    def getSelectTooltip(self):
-        """Provides the tooltip"""
-        return 'Group at lines ...'

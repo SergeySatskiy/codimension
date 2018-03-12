@@ -179,8 +179,9 @@ class CellElement:
             if event.buttons() != Qt.LeftButton:
                 return
 
-        self._editor.gotoLine(self.ref.body.beginLine,
-                              self.ref.body.beginPos)
+        lineRange = self.getLineRange()
+        absPosRange = self.getAbsPosRange()
+        self._editor.gotoLine(lineRange[0], absPosRange[0])
         self._editor.setFocus()
 
     def scopedItem(self):
@@ -208,14 +209,16 @@ class CellElement:
 
         Provides a distance between the absPos and the item
         """
-        return distance(absPos, self.ref.body.begin, self.ref.body.end)
+        absPosRange = self.getAbsPosRange()
+        return distance(absPos, absPosRange[0], absPosRange[1])
 
     def getLineDistance(self, line):
         """Default implementation.
 
         Provides a distance between the line and the item
         """
-        return distance(line, self.ref.body.beginLine, self.ref.body.endLine)
+        lineRange = self.getLineRange()
+        return distance(line, lineRange[0], lineRange[1])
 
     def addCMLIndicator(self, baseX, baseY, penWidth, scene, ref=None):
         """Adds a CML indicator for an item if needed"""
