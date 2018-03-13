@@ -108,6 +108,9 @@ class CFlowSettings:
         self.mainLine = self.__getNormalized('mainLine')
         self.minWidth = self.__getNormalized('minWidth')
         self.returnRectRadius = self.__getNormalized('returnRectRadius')
+        self.collapsedOutlineWidth = \
+            self.__getNormalized('collapsedOutlineWidth')
+        self.openGroupVSpacer = self.__getNormalized('openGroupVSpacer')
 
 
 def getCflowSettings(paintDevice):

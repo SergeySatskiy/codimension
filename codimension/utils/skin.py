@@ -206,8 +206,13 @@ _DEFAULT_CFLOW_SETTINGS = {
 
     # Groups
     'collapsedOutlineWidth': 5,
-    'collapsedBGColor': QColor(250, 250, 250, 255),
-    'collapsedFGColor': QColor(0, 0, 0, 255)}
+    'collapsedGroupBGColor': QColor(250, 250, 250, 255),
+    'collapsedGroupFGColor': QColor(0, 0, 0, 255),
+    'emptyGroupBGColor': QColor(250, 250, 250, 255),
+    'emptyGroupFGColor': QColor(0, 0, 0, 255),
+    'openGroupVSpacer': 2,
+    'openGroupBGColor': QColor(0, 180, 0, 255),
+    'openGroupFGColor': QColor(0, 250, 0, 255)}
 
 
 class Skin:
