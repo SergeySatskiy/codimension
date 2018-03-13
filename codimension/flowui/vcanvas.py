@@ -336,34 +336,45 @@ class VirtualCanvas:
             # It is not a close of the current group
             return vacantRow
 
+        groupBegin = self.__groupStack[-1][0]
+        groupRow = self.__groupStack[-1][1]
+        groupColumn = self.__groupStack[-1][2]
+
         # There are three cases here:
         # - end of a collapsed group
         # - end of an empty group
         # - end of an open group
         if currentGroup.kind == CellElement.COLLAPSED_GROUP:
-            # Collapsed group
+            # Collapsed group: 
             pass
 
         elif currentGroup.nestedRefs:
-            # opened group
-            pass
+            # Opened group: insert a group end
+            groupEnd = OpenedGroupEnd(item, self, column, vacantRow)
+            groupEnd.groupBeginCMLRef = groupBegin.groupBeginCMLRef
+            groupEnd.groupEndCMLRef = groupComment
+            groupEnd.groupBeginRow = groupRow
+            groupEnd.groupBeginColumn = groupColumn
+            self.__allocateAndSet(vacantRow, column, groupEnd)
+
+            self.cells[groupRow][groupColumn].groupEndRow = vacantRow
+            self.cells[groupRow][groupColumn].groupEndColumn = column
+
+            vacantRow += 1
         else:
-            # empty group: replace the beginning of the group with an empty one
-            groupBegin = self.__groupStack[-1][0]
-            groupRow = self.__groupStack[-1][1]
-            groupColumn = self.__groupStack[-1][2]
+            # Empty group: replace the beginning of the group with an empty one
             emptyGroup = EmptyGroup(groupBegin.ref, self, groupColumn, groupRow)
             emptyGroup.groupBeginCMLRef = groupBegin.groupBeginCMLRef
             self.cells[groupRow][groupColumn] = emptyGroup
 
-        self.__groupStack[-1][0].groupEndCMLRef = groupComment
+        self.cells[groupRow][groupColumn].groupEndCMLRef = groupComment
 
         self.__groupStack.pop()
         return vacantRow
 
     def __isGroupCollapsed(self, groupId):
         """True if the group is collapsed"""
-        return True
+        return False
         return groupId in self.__collapsedGroups
 
     def __handleGroups(self, item, vacantRow, column):
@@ -392,7 +403,15 @@ class VirtualCanvas:
 
         if self.__groupStack:
             # We are in some kind of a group
-            self.__groupStack[-1][0].nestedRefs.append(item)
+            needToAdd = True
+            if item.kind == CML_COMMENT_FRAGMENT:
+                if hasattr(item, 'ref'):
+                    # That's a high level comment
+                    if item.CODE in [CMLgb.CODE, CMLge.CODE]:
+                        if item.id == self.__groupStack[-1][0].getGroupId():
+                            needToAdd = False
+            if needToAdd:
+                self.__groupStack[-1][0].nestedRefs.append(item)
             if self.__groupStack[-1][0].kind == CellElement.COLLAPSED_GROUP:
                 return True, vacantRow
 

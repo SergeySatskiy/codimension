@@ -156,7 +156,7 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
             painter.setPen(selectPen)
         else:
             pen = QPen(self.__borderColor)
-            pen.setStype(Qt.DashLine)
+            pen.setStyle(Qt.DashLine)
             painter.setPen(pen)
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
@@ -168,7 +168,7 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
         rectWidth -= 2 * settings.collapsedOutlineWidth
         rectHeight -= 2 * settings.collapsedOutlineWidth
         pen = QPen(self.__borderColor)
-        pen.setStype(Qt.DashLine)
+        pen.setStyle(Qt.DashLine)
         painter.setPen(pen)
         painter.drawRect(self.baseX + settings.hCellPadding +
                          settings.collapsedOutlineWidth,
@@ -208,6 +208,9 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         # items in the group
         self.groupWidth = None
         self.groupHeight = None
+
+        self.groupEndRow = None
+        self.groupEndColumn = None
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -264,7 +267,7 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
             painter.setPen(selectPen)
         else:
             pen = QPen(self.__borderColor)
-            pen.setStype(Qt.DotLine)
+            pen.setStyle(Qt.DotLine)
             painter.setPen(pen)
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
@@ -280,6 +283,9 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         GroupItemBase.__init__(self)
         CellElement.__init__(self, ref, canvas, x, y)
         self.kind = CellElement.OPENED_GROUP_END
+
+        self.groupBeginRow = None
+        self.groupBeginColumn = None
 
     def render(self):
         """Renders the cell"""
