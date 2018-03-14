@@ -345,9 +345,9 @@ class VirtualCanvas:
         # - end of an empty group
         # - end of an open group
         if currentGroup.kind == CellElement.COLLAPSED_GROUP:
-            # Collapsed group: 
+            # Collapsed group: the end of the group is memorized in the common
+            # block after ifs
             pass
-
         elif currentGroup.nestedRefs:
             # Opened group: insert a group end
             groupEnd = OpenedGroupEnd(item, self, column, vacantRow)
@@ -1054,6 +1054,7 @@ class VirtualCanvas:
         self.width = 0
         self.height = 0
 
+        openGroups = []
         maxRowIndex = len(self.cells) - 1
         index = 0
         while index <= maxRowIndex:
@@ -1063,6 +1064,11 @@ class VirtualCanvas:
                 row = self.cells[index]
                 maxHeight = 0
                 for cell in row:
+                    if cell.kind == CellElement.OPENED_GROUP_END:
+                        openGroups.append([cell.groupBeginRow,
+                                           cell.groupBeginColumn,
+                                           index])
+
                     _, height = cell.render()
                     maxHeight = max(maxHeight, height)
                     if cell.kind in [CellElement.INDEPENDENT_COMMENT,
@@ -1079,6 +1085,18 @@ class VirtualCanvas:
                 self.height += maxHeight
                 self.width = max(self.width, totalWidth)
             index += 1
+
+        # Second pass for the groups
+        for groupBeginRow, groupBeginColumn, groupEndRow in openGroups:
+            group = self.cells[groupBeginRow][groupBeginColumn]
+            group.groupHeight = 0
+            group.groupWidth = 0
+            for row in range(groupBeginRow + 1, groupEndRow):
+                group.groupHeight += self.cells[row][0].height
+                rowWidth = 0
+                for column in range(groupBeginColumn, len(self.cells[row])):
+                    rowWidth += self.cells[row][column].width
+                group.groupWidth = max(group.groupWidth, rowWidth)
 
         if self.hasScope():
             # Right hand side vertical part
