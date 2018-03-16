@@ -63,7 +63,7 @@ class GroupItemBase:
         return 'Group at lines ' + \
                str(lineRange[0]) + "-" + str(lineRange[1])
 
-    def getGroupColors(self, defaultBG, defaultFG):
+    def getGroupColors(self, defaultBG, defaultFG, defaultBorder=None):
         """Provides the item colors"""
         bg = defaultBG
         fg = defaultFG
@@ -73,7 +73,9 @@ class GroupItemBase:
             fg = self.groupBeginCMLRef.fgColor
         if self.groupBeginCMLRef.border:
             return bg, fg, self.groupBeginCMLRef.border
-        return bg, fg, getBorderColor(bg)
+        if defaultBorder is None:
+            return bg, fg, getBorderColor(bg)
+        return bg, fg, defaultBorder
 
 
 class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
@@ -218,7 +220,8 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
     def getColors(self):
         """Provides the item colors"""
         return self.getGroupColors(self.canvas.settings.openGroupBGColor,
-                                   self.canvas.settings.openGroupFGColor)
+                                   self.canvas.settings.openGroupFGColor,
+                                   self.canvas.settings.openGroupBorderColor)
 
     def render(self):
         """Renders the cell"""
