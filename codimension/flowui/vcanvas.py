@@ -983,7 +983,7 @@ class VirtualCanvas:
             start += 1
         return maxColumns
 
-    def __renderRegion(self):
+    def __renderRegion(self, openGroups):
         """Renders a region where the rows affect each other"""
         start, end = self.dependentRegions.pop(0)
         maxColumns = self.__getRangeMaxColumns(start, end)
@@ -1022,13 +1022,18 @@ class VirtualCanvas:
                         row[column].width = maxColumnWidth
                 index += 1
 
-        # Update the row height and calculate the row width
+        # Update the row height and calculate the row width.
+        # It also catches the open groups.
         index = start
         while index <= end:
             maxHeight = 0
             row = self.cells[index]
             rowWidth = 0
             for cell in row:
+                if cell.kind == CellElement.OPENED_GROUP_END:
+                    openGroups.append([cell.groupBeginRow,
+                                       cell.groupBeginColumn,
+                                       index])
                 maxHeight = max(cell.height, maxHeight)
                 rowWidth += cell.width
             self.width = max(self.width, rowWidth)
@@ -1059,7 +1064,7 @@ class VirtualCanvas:
         index = 0
         while index <= maxRowIndex:
             if self.__dependentRegion(index):
-                index = self.__renderRegion()
+                index = self.__renderRegion(openGroups)
             else:
                 row = self.cells[index]
                 maxHeight = 0
