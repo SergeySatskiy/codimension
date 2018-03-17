@@ -43,6 +43,7 @@ class CellElement:
     VACANT = 1
     H_SPACER = 2
     V_SPACER = 3
+    H_GROUP_SPACER = 4
 
     NO_SCOPE = 99
     FILE_SCOPE = 100
@@ -319,6 +320,7 @@ __kindToString = {
     CellElement.VACANT: "VACANT",
     CellElement.H_SPACER: "H_SPACER",
     CellElement.V_SPACER: "V_SPACER",
+    CellElement.H_GROUP_SPACER: "H_GROUP_SPACER",
     CellElement.FILE_SCOPE: "FILE_SCOPE",
     CellElement.FUNC_SCOPE: "FUNC_SCOPE",
     CellElement.CLASS_SCOPE: "CLASS_SCOPE",
@@ -343,7 +345,11 @@ __kindToString = {
     CellElement.INDEPENDENT_COMMENT: "INDEPENDENT_COMMENT",
     CellElement.SIDE_COMMENT: "SIDE_COMMENT",
     CellElement.ABOVE_COMMENT: "ABOVE_COMMENT",
-    CellElement.CONNECTOR: "CONNECTOR"}
+    CellElement.CONNECTOR: "CONNECTOR",
+    CellElement.EMPTY_GROUP: "EMPTY_GROUP",
+    CellElement.OPENED_GROUP_BEGIN: "OPENED_GROUP_BEGIN",
+    CellElement.OPENED_GROUP_END: "OPENED_GROUP_END",
+    CellElement.COLLAPSED_GROUP: "COLLAPSED_GROUP"}
 
 
 def kindToString(kind):

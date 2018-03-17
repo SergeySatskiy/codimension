@@ -210,7 +210,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     'collapsedGroupFGColor': QColor(0, 0, 0, 255),
     'emptyGroupBGColor': QColor(250, 250, 250, 255),
     'emptyGroupFGColor': QColor(0, 0, 0, 255),
-    'openGroupVSpacer': 2,
+    'openGroupVSpacer': 3,
+    'openGroupHSpacer': 3,
     'openGroupBGColor': QColor(228, 255, 186, 255),
     'openGroupFGColor': QColor(0, 250, 0, 255),
     'openGroupBorderColor': QColor(0, 0, 0, 255)}

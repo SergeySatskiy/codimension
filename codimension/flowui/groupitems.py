@@ -29,6 +29,33 @@ from .auxitems import Connector
 from .routines import getBorderColor
 
 
+class HGroupSpacerCell(CellElement):
+
+    """Represents a horizontal spacer cell used to shift items due to groups"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        self.kind = CellElement.H_GROUP_SPACER
+
+        # Number of spacers to be inserted
+        self.count = 0
+
+    def render(self):
+        """Renders the cell"""
+        self.width = self.count * self.canvas.settings.openGroupHSpacer
+        self.height = 0
+        self.minWidth = self.width
+        self.minHeight = self.height
+        return (self.width, self.height)
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        # There is no need to draw anything. The cell just reserves some
+        # horizontal space for better appearance
+        self.baseX = baseX
+        self.baseY = baseY
+
+
 class GroupItemBase:
 
     """Common functionality for the group items"""
