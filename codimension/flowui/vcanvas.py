@@ -49,7 +49,7 @@ from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
 from .commentitems import (AboveCommentCell, LeadingCommentCell,
                            SideCommentCell, IndependentCommentCell)
 from .groupitems import (EmptyGroup, OpenedGroupBegin, OpenedGroupEnd,
-                         CollapsedGroup)
+                         CollapsedGroup, HGroupSpacerCell)
 
 
 CONN_N_S = [(ConnectorCell.NORTH, ConnectorCell.SOUTH)]
@@ -148,6 +148,11 @@ class VirtualCanvas:
                                  self.__validGroupEndLines
         self.__collapsedGroups = collapsedGroups
         self.__groupStack = []  # [item, row, column]
+
+        # Supports the second stage of open group layout. If True => this
+        # nested layout needs to be considered on the upper levels with how
+        # the spacing is inserted for the open groups
+        self.isIfBelowLayout = False
 
     def getScopeName(self):
         """Provides the name of the scope drawn on the canvas"""
@@ -638,6 +643,7 @@ class VirtualCanvas:
                                        self.__validGroups,
                                        self.__collapsedGroups, self)
                 canvas.isNoScope = True
+                canvas.isIfBelowLayout = True
 
                 if lastNonElseIndex == len(item.parts) - 1:
                     # There is no else
@@ -748,6 +754,7 @@ class VirtualCanvas:
             branchLayout = VirtualCanvas(self.settings, 0, vacantRow,
                                          self.__validGroups,
                                          self.__collapsedGroups, self)
+            branchLayout.isIfBelowLayout = True
         else:
             branchLayout = VirtualCanvas(self.settings, 1, vacantRow,
                                          self.__validGroups,
@@ -827,6 +834,7 @@ class VirtualCanvas:
                                                  0, vacantRow,
                                                  self.__validGroups,
                                                  self.__collapsedGroups, self)
+                    branchLayout.isIfBelowLayout = True
 
                 if nBranch.leadingComment and not self.settings.noComment:
                     # Draw as an independent comment: insert into the layout
@@ -909,6 +917,94 @@ class VirtualCanvas:
             self.__allocateScope(cflow, CellElement.FILE_SCOPE, vacantRow, 0)
         else:
             self.layout(cflow, CellElement.FILE_SCOPE)
+
+        # Second stage: shifts to accomadate open groups
+        self.openGroupsAdjustments()
+
+    def getInsertIndex(self, row):
+        """Provides an insert index for a spacing and a row kind.
+
+        index: 0, 1 or -1
+               -1 => no need to insert
+        row kind: 0, 1, -1
+                  0 => regular line
+                  1 => group begin line
+                  -1 => group end line
+                  2 => nested virtual canvas which needs to be considered
+        """
+        insertIndex = 1
+        if self.isNoScope:
+            insertIndex = 0
+
+        for cell in row:
+            if cell.scopedItem():
+                if cell.subKind in [ScopeCellElement.TOP_LEFT,
+                                    ScopeCellElement.DECLARATION,
+                                    ScopeCellElement.DOCSTRING,
+                                    ScopeCellElement.BOTTOM_LEFT]:
+                    return -1, None
+            if cell.kind == CellElement.OPENED_GROUP_BEGIN:
+                return insertIndex, 1
+            if cell.kind == CellElement.OPENED_GROUP_END:
+                return inserIndex, -1
+            if cell.kind == CellElement.VCANVAS:
+                if cell.isIfBelowLayout:
+                    return insertIndex, 2
+        return insertIndex, 0
+
+    def openGroupsAdjustments(self):
+        """Adjusts the layout if needed for the open groups"""
+        localOpenGroupsStackLevel = 0
+        localStackMaxDepth = 0
+        stackMaxDepth = 0
+        for row in range(len(self.cells) - 1):
+            for cell in self.cells[row]:
+                if cell.kind == CellElement.VCANVAS:
+                    if cell.isIfBelowLayout:
+                        # Nested needs to be considered
+                        nestedStackMaxDepth = cell.openGroupsAdjustments()
+                        stackMaxDepth = max(stackMaxDepth,
+                                            localOpenGroupsStackLevel +
+                                            nestedStackMaxDepth)
+                    else:
+                        # Do the shifting independent
+                        cell.openGroupsAdjustments()
+                elif cell.kind == CellElement.OPENED_GROUP_BEGIN:
+                    localOpenGroupsStackLevel += 1
+                    stackMaxDepth = max(stackMaxDepth,
+                                        localOpenGroupsStackLevel)
+                elif cell.kind == CellElement.OPENED_GROUP_END:
+                    localOpenGroupsStackLevel -= 1
+
+        if self.isIfBelowLayout:
+            return stackMaxDepth
+
+        if stackMaxDepth > 0:
+            return
+            # Insert the shift as required
+            localOpenGroupsStackLevel = 0
+
+            for row in range(len(self.cells) - 1):
+                insertIndex, rowKind = self.getInsertIndex(row)
+                if insertIndex < 0:
+                    continue
+
+                if rowKind == 1:
+                    # group begin row
+                    localOpenGroupsStackLevel += 1
+                elif rowKind == -1:
+                    # group end line
+                    localOpenGroupsStackLevel -= 1
+                elif rowKind == 2:
+                    # there is a nested canvas to consider
+                else:
+                    # regular line
+                    spacer = HGroupSpacerCell(None, self, insertIndex, row)
+                    row.insert(insertIndex, spacer)
+
+                    TODO: adjust the addr in the following cells!
+
+            return
 
     def layout(self, cflow, scopeKind, rowsToAllocate=1):
         """Does the layout"""
