@@ -268,17 +268,19 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = settings.selectPenWidth - 1
-        self.setRect(baseX - penWidth,
+        self.setRect(baseX - penWidth + settings.openGroupHSpacer,
                      baseY - penWidth + settings.openGroupVSpacer,
-                     self.groupWidth + 2 * penWidth,
+                     self.groupWidth + 2 * (penWidth + settings.openGroupHSpacer),
                      self.groupHeight + 2 * (penWidth + settings.openGroupVSpacer))
         scene.addItem(self)
 
         # Add the connector as a separate scene item to make the selection
         # working properly. The connector must be added after a group,
         # otherwise a half of it is hidden by the group.
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
-                                   baseX + settings.mainLine,
+        self.connector = Connector(settings,
+                                   baseX + settings.mainLine + settings.openGroupHSpacer,
+                                   baseY,
+                                   baseX + settings.mainLine + settings.openGroupHSpacer,
                                    baseY + settings.openGroupVSpacer * 2)
         scene.addItem(self.connector)
 
@@ -301,12 +303,16 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         else:
             pen = QPen(self.__borderColor)
             pen.setStyle(Qt.DotLine)
+            pen.setWidth(1)
             painter.setPen(pen)
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
-        painter.drawRoundedRect(self.baseX, self.baseY + settings.openGroupVSpacer,
-                                self.groupWidth, self.groupHeight + 2 * settings.openGroupVSpacer,
-                                settings.openGroupVSpacer, settings.openGroupVSpacer)
+        painter.drawRoundedRect(self.baseX + settings.openGroupHSpacer,
+                                self.baseY + settings.openGroupVSpacer,
+                                self.groupWidth + 2 * settings.openGroupHSpacer,
+                                self.groupHeight + 2 * settings.openGroupVSpacer,
+                                settings.openGroupVSpacer,
+                                settings.openGroupVSpacer)
 
 
 class OpenedGroupEnd(GroupItemBase, CellElement):
@@ -337,8 +343,10 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
-                                   baseX + settings.mainLine,
+        self.connector = Connector(settings,
+                                   baseX + settings.mainLine + settings.openGroupHSpacer,
+                                   baseY,
+                                   baseX + settings.mainLine + settings.openGroupHSpacer,
                                    baseY + settings.openGroupVSpacer * 2)
         scene.addItem(self.connector)
 

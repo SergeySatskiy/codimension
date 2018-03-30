@@ -937,6 +937,10 @@ class VirtualCanvas:
             insertIndex = 0
 
         for cell in row:
+            if cell.kind == CellElement.VCANVAS:
+                if cell.isIfBelowLayout:
+                    return insertIndex, 2
+                continue
             if cell.scopedItem():
                 if cell.subKind in [ScopeCellElement.TOP_LEFT,
                                     ScopeCellElement.DECLARATION,
@@ -946,10 +950,7 @@ class VirtualCanvas:
             if cell.kind == CellElement.OPENED_GROUP_BEGIN:
                 return insertIndex, 1
             if cell.kind == CellElement.OPENED_GROUP_END:
-                return inserIndex, -1
-            if cell.kind == CellElement.VCANVAS:
-                if cell.isIfBelowLayout:
-                    return insertIndex, 2
+                return insertIndex, -1
         return insertIndex, 0
 
     def openGroupsAdjustments(self):
@@ -979,32 +980,56 @@ class VirtualCanvas:
         if self.isIfBelowLayout:
             return stackMaxDepth
 
-        if stackMaxDepth > 0:
+        self.insertOpenGroupShift(stackMaxDepth)
+
+    def insertOpenGroupShift(self, depth):
+        """Inserts the horizontal open group spacers"""
+        if depth <= 0:
             return
-            # Insert the shift as required
-            localOpenGroupsStackLevel = 0
 
-            for row in range(len(self.cells) - 1):
-                insertIndex, rowKind = self.getInsertIndex(row)
-                if insertIndex < 0:
-                    continue
+        # Insert the shift as required
+        localOpenGroupsStackLevel = 0
 
-                if rowKind == 1:
-                    # group begin row
-                    localOpenGroupsStackLevel += 1
-                elif rowKind == -1:
-                    # group end line
-                    localOpenGroupsStackLevel -= 1
-                elif rowKind == 2:
-                    # there is a nested canvas to consider
-                else:
-                    # regular line
-                    spacer = HGroupSpacerCell(None, self, insertIndex, row)
+        for rowIndex, row in enumerate(self.cells):
+            insertIndex, rowKind = self.getInsertIndex(row)
+            if insertIndex < 0:
+                continue
+
+            if rowKind == 1:
+                # group begin row
+                localOpenGroupsStackLevel += 1
+                if localOpenGroupsStackLevel > 1:
+                    spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
+                    spacer.count = localOpenGroupsStackLevel - 1
                     row.insert(insertIndex, spacer)
+                    self.__adjustRowAddresses(row, insertIndex + 1)
+                    print("Adjusted group address at " + str(insertIndex + 1) + ":" + str(rowIndex))
+            elif rowKind == -1:
+                # group end row. No need to insert a shift. The drawing is done
+                # at the beginning of the group
+                if localOpenGroupsStackLevel > 1:
+                    self.cells[rowIndex][insertIndex].groupBeginColumn += 1
+                localOpenGroupsStackLevel -= 1
+            elif rowKind == 2:
+                # there is a nested canvas to consider
+                spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
+                spacer.count = depth - localOpenGroupsStackLevel
+                row.insert(insertIndex, spacer)
+                self.__adjustRowAddresses(row, insertIndex + 1)
+                row[insertIndex + 1].insertOpenGroupShift(depth - localOpenGroupsStackLevel)
+            else:
+                # regular row
+                spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
+                spacer.count = depth
+                row.insert(insertIndex, spacer)
+                self.__adjustRowAddresses(row, insertIndex + 1)
 
-                    TODO: adjust the addr in the following cells!
-
-            return
+    @staticmethod
+    def __adjustRowAddresses(row, index):
+        lastIndex = len(row) - 1
+        while index <= lastIndex:
+            row[index].addr[0] += 1
+            index += 1
 
     def layout(self, cflow, scopeKind, rowsToAllocate=1):
         """Does the layout"""
@@ -1188,6 +1213,7 @@ class VirtualCanvas:
             index += 1
 
         # Second pass for the groups
+        print("Open groups: " + repr(openGroups))
         for groupBeginRow, groupBeginColumn, groupEndRow in openGroups:
             group = self.cells[groupBeginRow][groupBeginColumn]
             group.groupHeight = 0
@@ -1198,6 +1224,8 @@ class VirtualCanvas:
                 for column in range(groupBeginColumn, len(self.cells[row])):
                     rowWidth += self.cells[row][column].width
                 group.groupWidth = max(group.groupWidth, rowWidth)
+            print("Updating group with and height: " + str(group.groupHeight) + ":" + str(group.groupWidth) +
+                  " at cell " + str(groupBeginRow) + ":" + str(groupBeginColumn))
 
         if self.hasScope():
             # Right hand side vertical part
