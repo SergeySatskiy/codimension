@@ -386,8 +386,9 @@ class VirtualCanvas:
 
     def __isGroupCollapsed(self, groupId):
         """True if the group is collapsed"""
+        if self.__collapsedGroups:
+            return groupId in self.__collapsedGroups
         return False
-        return groupId in self.__collapsedGroups
 
     def __handleGroups(self, item, vacantRow, column):
         """
