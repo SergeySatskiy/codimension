@@ -285,6 +285,17 @@ class VirtualCanvas:
                     return True
         return False
 
+    def __checkLeadingCMLComments(self, leadingCMLComments):
+        """Provides a list of group begins and ends as they are in the leading comments"""
+        groups = []
+        for comment in leadingCMLComments:
+            if hasattr(comment, 'CODE'):
+                if comment.CODE in [CMLgb.CODE, CMLge.CODE]:
+                    itemFirstLine = comment.ref.parts[0].beginLine
+                    if itemFirstLine in self.__validGroupLines:
+                        groups.append(comment)
+        return groups
+
     def __getGroups(self, item):
         """Provides a list of group begins and ends as they are in the item"""
         # Only valid groups are taken into account
@@ -296,18 +307,14 @@ class VirtualCanvas:
                     return [item]
             return []
 
+        if item.kind == IF_FRAGMENT:
+            return self.__checkLeadingCMLComments(
+                item.parts[0].leadingCMLComments)
+
         # The item may have a leading CML comment which ends a valid group
         if not hasattr(item, 'leadingCMLComments'):
             return []
-
-        groups = []
-        for comment in item.leadingCMLComments:
-            if hasattr(comment, 'CODE'):
-                if comment.CODE in [CMLgb.CODE, CMLge.CODE]:
-                    itemFirstLine = comment.ref.parts[0].beginLine
-                    if itemFirstLine in self.__validGroupLines:
-                        groups.append(comment)
-        return groups
+        return self.__checkLeadingCMLComments(item.leadingCMLComments)
 
     def __isGroupBegin(self, groupComment):
         """True if it is a valid group begin"""
