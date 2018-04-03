@@ -42,7 +42,7 @@ class HGroupSpacerCell(CellElement):
 
     def render(self):
         """Renders the cell"""
-        self.width = self.count * self.canvas.settings.openGroupHSpacer
+        self.width = self.count * 2 * self.canvas.settings.openGroupHSpacer
         self.height = 0
         self.minWidth = self.width
         self.minHeight = self.height
@@ -241,6 +241,9 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         self.groupEndRow = None
         self.groupEndColumn = None
 
+        self.nestLevel = None
+        self.maxNestLevel = None
+
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
@@ -277,10 +280,12 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly. The connector must be added after a group,
         # otherwise a half of it is hidden by the group.
+        xPos = baseX + settings.mainLine
+        xPos += (self.maxNestLevel - self.nestLevel + 1) * (2 * settings.openGroupHSpacer)
         self.connector = Connector(settings,
-                                   baseX + settings.mainLine + settings.openGroupHSpacer,
+                                   xPos,
                                    baseY,
-                                   baseX + settings.mainLine + settings.openGroupHSpacer,
+                                   xPos,
                                    baseY + settings.openGroupVSpacer * 2)
         scene.addItem(self.connector)
 
@@ -307,9 +312,13 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
             painter.setPen(pen)
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
+
+        groupWidth = self.groupWidth + 2 * settings.openGroupHSpacer + \
+                     (self.maxNestLevel - self.nestLevel) * 4 * settings.openGroupHSpacer
+
         painter.drawRoundedRect(self.baseX + settings.openGroupHSpacer,
                                 self.baseY + settings.openGroupVSpacer,
-                                self.groupWidth + 2 * settings.openGroupHSpacer,
+                                groupWidth,
                                 self.groupHeight + 2 * settings.openGroupVSpacer,
                                 settings.openGroupVSpacer,
                                 settings.openGroupVSpacer)
@@ -327,6 +336,9 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         self.groupBeginRow = None
         self.groupBeginColumn = None
 
+        self.nestLevel = None
+        self.maxNestLevel = None
+
     def render(self):
         """Renders the cell"""
         self.width = 0
@@ -343,10 +355,12 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
+        xPos = baseX + settings.mainLine
+        xPos += (self.maxNestLevel - self.nestLevel + 1) * (2 * settings.openGroupHSpacer)
         self.connector = Connector(settings,
-                                   baseX + settings.mainLine + settings.openGroupHSpacer,
+                                   xPos,
                                    baseY,
-                                   baseX + settings.mainLine + settings.openGroupHSpacer,
+                                   xPos,
                                    baseY + settings.openGroupVSpacer * 2)
         scene.addItem(self.connector)
 

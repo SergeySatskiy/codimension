@@ -934,7 +934,7 @@ class VirtualCanvas:
 
         index: 0, 1 or -1
                -1 => no need to insert
-        row kind: 0, 1, -1
+        row kind: 0, 1, 2, -1
                   0 => regular line
                   1 => group begin line
                   -1 => group end line
@@ -944,10 +944,10 @@ class VirtualCanvas:
         if self.isNoScope:
             insertIndex = 0
 
-        for cell in row:
+        for cellIndex, cell in enumerate(row):
             if cell.kind == CellElement.VCANVAS:
                 if cell.isIfBelowLayout:
-                    return insertIndex, 2
+                    return cellIndex, 2
                 continue
             if cell.scopedItem():
                 if cell.subKind in [ScopeCellElement.TOP_LEFT,
@@ -999,8 +999,12 @@ class VirtualCanvas:
         localOpenGroupsStackLevel = 0
 
         for rowIndex, row in enumerate(self.cells):
+            print("Row index: " + str(rowIndex) +
+                  " isIfBelowLayout: " + str(self.isIfBelowLayout) +
+                  " isNoScope: " + str(self.isNoScope))
             insertIndex, rowKind = self.getInsertIndex(row)
             if insertIndex < 0:
+                print("  --> skip")
                 continue
 
             if rowKind == 1:
@@ -1011,26 +1015,56 @@ class VirtualCanvas:
                     spacer.count = localOpenGroupsStackLevel - 1
                     row.insert(insertIndex, spacer)
                     self.__adjustRowAddresses(row, insertIndex + 1)
-                    print("Adjusted group address at " + str(insertIndex + 1) + ":" + str(rowIndex))
+                    row[insertIndex + 1].nestLevel = localOpenGroupsStackLevel
+                    row[insertIndex + 1].maxNestLevel = depth
+                    print("  --> group begin. Adding depth: " + str(spacer.count) + " Stack level: " + str(localOpenGroupsStackLevel))
+                else:
+                    row[insertIndex].nestLevel = localOpenGroupsStackLevel
+                    row[insertIndex].maxNestLevel = depth
+                    print("  --> group begin. No adding. Stack level: " + str(localOpenGroupsStackLevel))
             elif rowKind == -1:
-                # group end row. No need to insert a shift. The drawing is done
-                # at the beginning of the group
+                # group end row
                 if localOpenGroupsStackLevel > 1:
+                    # The group begin column has been shifted 1 cell so the
+                    # reference address needs to be adjusted.
                     self.cells[rowIndex][insertIndex].groupBeginColumn += 1
+
+                    spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
+                    spacer.count = localOpenGroupsStackLevel - 1
+                    row.insert(insertIndex, spacer)
+                    self.__adjustRowAddresses(row, insertIndex + 1)
+                    row[insertIndex + 1].nestLevel = localOpenGroupsStackLevel
+                    row[insertIndex + 1].maxNestLevel = depth
+                    print("  --> group end. Adding depth: " + str(spacer.count) + " Stack level: " + str(localOpenGroupsStackLevel))
+                else:
+                    row[insertIndex].nestLevel = localOpenGroupsStackLevel
+                    row[insertIndex].maxNestLevel = depth
+                    print("  --> group end. No adding. Stack level: " + str(localOpenGroupsStackLevel))
                 localOpenGroupsStackLevel -= 1
             elif rowKind == 2:
                 # there is a nested canvas to consider
+                if not self.isIfBelowLayout or True:
+                    print("  --> virtual canvas. No adding")
+                    row[insertIndex].insertOpenGroupShift(depth - localOpenGroupsStackLevel)
+                    continue
                 spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
                 spacer.count = depth - localOpenGroupsStackLevel
+                print("Nested canvas in the row. Adding spacers: " + str(spacer.count) +
+                      " self.isIfBelowLayout: " + str(self.isIfBelowLayout))
                 row.insert(insertIndex, spacer)
                 self.__adjustRowAddresses(row, insertIndex + 1)
                 row[insertIndex + 1].insertOpenGroupShift(depth - localOpenGroupsStackLevel)
             else:
                 # regular row
+                print("  --> regular row. Inserting depth: " + str(depth))
                 spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
                 spacer.count = depth
                 row.insert(insertIndex, spacer)
                 self.__adjustRowAddresses(row, insertIndex + 1)
+
+                spacerAfter = HGroupSpacerCell(None, self, len(row), rowIndex)
+                spacerAfter.count = depth
+                row.append(spacerAfter)
 
     @staticmethod
     def __adjustRowAddresses(row, index):
@@ -1221,7 +1255,6 @@ class VirtualCanvas:
             index += 1
 
         # Second pass for the groups
-        print("Open groups: " + repr(openGroups))
         for groupBeginRow, groupBeginColumn, groupEndRow in openGroups:
             group = self.cells[groupBeginRow][groupBeginColumn]
             group.groupHeight = 0
@@ -1230,10 +1263,9 @@ class VirtualCanvas:
                 group.groupHeight += self.cells[row][0].height
                 rowWidth = 0
                 for column in range(groupBeginColumn, len(self.cells[row])):
-                    rowWidth += self.cells[row][column].width
+                    if self.cells[row][column].kind != CellElement.H_GROUP_SPACER:
+                        rowWidth += self.cells[row][column].width
                 group.groupWidth = max(group.groupWidth, rowWidth)
-            print("Updating group with and height: " + str(group.groupHeight) + ":" + str(group.groupWidth) +
-                  " at cell " + str(groupBeginRow) + ":" + str(groupBeginColumn))
 
         if self.hasScope():
             # Right hand side vertical part
