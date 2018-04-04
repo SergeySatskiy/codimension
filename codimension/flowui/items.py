@@ -103,6 +103,9 @@ class CellElement:
         self.baseX = None
         self.baseY = None
 
+        # Shift is used when open groups are involved
+        self.hShift = 0
+
         # Unique sequential ID
         self.itemID = canvas.settings.itemID
         canvas.settings.itemID += 1
@@ -1555,7 +1558,9 @@ class IfCell(CellElement, QGraphicsRectItem):
         self.minWidth = max(
             self.__textRect.width() +
             2 * settings.hCellPadding + 2 * settings.hTextPadding +
-            2 * settings.ifWidth, settings.minWidth)
+            2 * settings.ifWidth,
+            settings.minWidth)
+        self.minWidth += self.hShift * 2 * settings.openGroupHSpacer
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1563,6 +1568,8 @@ class IfCell(CellElement, QGraphicsRectItem):
     def __calcPolygon(self):
         """Calculates the polygon"""
         settings = self.canvas.settings
+
+        self.baseX += self.hShift * 2 * settings.openGroupHSpacer
 
         self.x1 = self.baseX + settings.hCellPadding
         self.y1 = self.baseY + self.minHeight / 2
@@ -1578,6 +1585,8 @@ class IfCell(CellElement, QGraphicsRectItem):
         self.x6 = self.x2
         self.y6 = self.y5
 
+        self.baseX -= self.hShift * 2 * settings.openGroupHSpacer
+
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
         self.baseX = baseX
@@ -1585,12 +1594,17 @@ class IfCell(CellElement, QGraphicsRectItem):
 
         self.__calcPolygon()
 
+        settings = self.canvas.settings
+        self.baseX += self.hShift * 2 * settings.openGroupHSpacer
+
         # Add the connectors as separate scene items to make the selection
         # working properly
         settings = self.canvas.settings
-        self.vConnector = Connector(settings, baseX + settings.mainLine, baseY,
-                                    baseX + settings.mainLine,
-                                    baseY + self.height)
+        self.vConnector = Connector(settings,
+                                    self.baseX + settings.mainLine,
+                                    self.baseY,
+                                    self.baseX + settings.mainLine,
+                                    self.baseY + self.height)
         scene.addItem(self.vConnector)
 
         self.hConnector = Connector(settings, self.x4, self.y4,
@@ -1619,8 +1633,10 @@ class IfCell(CellElement, QGraphicsRectItem):
                      self.y6 - self.y2 + 2 * penWidth)
         scene.addItem(self)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
+        self.addCMLIndicator(self.baseX, self.baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
+
+        self.baseX -= self.hShift * 2 * settings.openGroupHSpacer
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
@@ -1705,6 +1721,7 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
 
         if self.__hasVertical():
             self.minWidth = settings.mainLine + settings.hCellPadding
+            self.minWidth += self.hShift * 2 * settings.openGroupHSpacer
         else:
             self.minWidth = 0
 
@@ -1741,16 +1758,17 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
     def __getXY(self, location):
         """Provides the location coordinates"""
         settings = self.canvas.settings
+        baseX = self.baseX + self.hShift * 2 * settings.openGroupHSpacer
         if location == self.NORTH:
-            return self.baseX + settings.mainLine, self.baseY
+            return baseX + settings.mainLine, self.baseY
         if location == self.SOUTH:
-            return self.baseX + settings.mainLine, self.baseY + self.height
+            return baseX + settings.mainLine, self.baseY + self.height
         if location == self.WEST:
-            return self.baseX, self.baseY + self.__getY()
+            return baseX, self.baseY + self.__getY()
         if location == self.EAST:
-            return self.baseX + self.width, self.baseY + self.__getY()
+            return baseX + self.width, self.baseY + self.__getY()
         # It is CENTER
-        return self.baseX + settings.mainLine, self.baseY + self.__getY()
+        return baseX + settings.mainLine, self.baseY + self.__getY()
 
     def __angled(self, begin, end):
         """Returns True if the connection is not straight"""

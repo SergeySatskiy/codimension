@@ -243,6 +243,7 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
 
         self.nestLevel = None
         self.maxNestLevel = None
+        self.maxTotalNestLevel = None
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -281,7 +282,7 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         # working properly. The connector must be added after a group,
         # otherwise a half of it is hidden by the group.
         xPos = baseX + settings.mainLine
-        xPos += (self.maxNestLevel - self.nestLevel + 1) * (2 * settings.openGroupHSpacer)
+        xPos += (self.maxTotalNestLevel - self.nestLevel + 1) * (2 * settings.openGroupHSpacer)
         self.connector = Connector(settings,
                                    xPos,
                                    baseY,
@@ -338,6 +339,7 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
 
         self.nestLevel = None
         self.maxNestLevel = None
+        self.maxTotalNestLevel = None
 
     def render(self):
         """Renders the cell"""
@@ -356,7 +358,7 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         # working properly
         settings = self.canvas.settings
         xPos = baseX + settings.mainLine
-        xPos += (self.maxNestLevel - self.nestLevel + 1) * (2 * settings.openGroupHSpacer)
+        xPos += (self.maxTotalNestLevel - self.nestLevel + 1) * (2 * settings.openGroupHSpacer)
         self.connector = Connector(settings,
                                    xPos,
                                    baseY,
