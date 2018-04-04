@@ -550,7 +550,11 @@ def detectExistingFileWriteEncoding(editor, fName):
 
 def detectWriteEncoding(editor, fName):
     """Detects the write encoding for a buffer"""
-    if os.path.isabs(fName) and os.path.exists(fName):
+    # If editor.encoding is None => the file has never been saved
+    # At the same time fName may exist, i.e. a new file overwrites the existing
+    # one.
+    if os.path.isabs(fName) and os.path.exists(fName) and \
+        editor.encoding is not None:
         return detectExistingFileWriteEncoding(editor, fName)
     return detectNewFileWriteEncoding(editor, fName)
 
