@@ -1057,7 +1057,8 @@ class VirtualCanvas:
                     # It could be a connector or an if block. A shift is used
                     # instead of inserting a spacer to avoid problems with
                     # dependent region rendering
-                    row[insertIndex].hShift = depth
+                    for index in range(insertIndex, len(row)):
+                        row[index].hShift = depth
                 else:
                     spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
                     spacer.count = depth
