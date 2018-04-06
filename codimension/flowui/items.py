@@ -1569,14 +1569,15 @@ class IfCell(CellElement, QGraphicsRectItem):
         """Calculates the polygon"""
         settings = self.canvas.settings
 
-        self.baseX += self.hShift * 2 * settings.openGroupHSpacer
+        shift = self.hShift * 2 * settings.openGroupHSpacer
+        baseX = self.baseX + shift
 
-        self.x1 = self.baseX + settings.hCellPadding
+        self.x1 = baseX + settings.hCellPadding
         self.y1 = self.baseY + self.minHeight / 2
-        self.x2 = self.baseX + settings.hCellPadding + settings.ifWidth
+        self.x2 = baseX + settings.hCellPadding + settings.ifWidth
         self.y2 = self.baseY + settings.vCellPadding
-        self.x3 = self.baseX + self.minWidth - \
-                  settings.hCellPadding - settings.ifWidth
+        self.x3 = baseX + self.minWidth - \
+                  settings.hCellPadding - settings.ifWidth - shift
         self.y3 = self.y2
         self.x4 = self.x3 + settings.ifWidth
         self.y4 = self.y1
@@ -1584,8 +1585,6 @@ class IfCell(CellElement, QGraphicsRectItem):
         self.y5 = self.baseY + (self.minHeight - settings.vCellPadding)
         self.x6 = self.x2
         self.y6 = self.y5
-
-        self.baseX -= self.hShift * 2 * settings.openGroupHSpacer
 
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
@@ -1691,6 +1690,13 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
     EAST = 3
     CENTER = 4
 
+    # Connector type. In case of 'if' and groups it is necessary to calculate
+    # properly how wide the connector should be. The subKind tells what kind
+    # of correction is required
+    GENERIC = 100
+    TOP_IF = 101
+    BOTTOM_IF = 102
+
     def __init__(self, connections, canvas, x, y):
         """Connections are supposed to be a list of tuples.
 
@@ -1699,6 +1705,7 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         CellElement.__init__(self, None, canvas, x, y)
         QGraphicsPathItem.__init__(self)
         self.kind = CellElement.CONNECTOR
+        self.subKind = self.GENERIC
         self.connections = connections
 
     def __hasVertical(self):
@@ -1758,16 +1765,33 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
     def __getXY(self, location):
         """Provides the location coordinates"""
         settings = self.canvas.settings
-        baseX = self.baseX + self.hShift * 2 * settings.openGroupHSpacer
+        hShift = self.hShift * 2 * settings.openGroupHSpacer
+
+        baseX = self.baseX
+        if self.subKind not in [self.TOP_IF, self.BOTTOM_IF]:
+            baseX = self.baseX + hShift
         if location == self.NORTH:
+            if self.subKind == self.BOTTOM_IF:
+                cellAbove = self.canvas.cells[self.addr[1] - 1][self.addr[0]]
+                baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
             return baseX + settings.mainLine, self.baseY
         if location == self.SOUTH:
+            if self.subKind == self.TOP_IF:
+                cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
+                baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+                pass
             return baseX + settings.mainLine, self.baseY + self.height
         if location == self.WEST:
             return baseX, self.baseY + self.__getY()
         if location == self.EAST:
-            return baseX + self.width, self.baseY + self.__getY()
+            return baseX + self.width - hShift, self.baseY + self.__getY()
         # It is CENTER
+        if self.subKind == self.TOP_IF:
+            cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
+            baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+        elif self.subKind == self.BOTTOM_IF:
+            cellAbove = self.canvas.cells[self.addr[1] - 1][self.addr[0]]
+            baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
         return baseX + settings.mainLine, self.baseY + self.__getY()
 
     def __angled(self, begin, end):

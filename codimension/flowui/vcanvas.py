@@ -148,7 +148,8 @@ class VirtualCanvas:
                                  self.__validGroupEndLines
         self.__collapsedGroups = collapsedGroups
         self.__groupStack = []  # [item, row, column]
-        self.__maxLocalOpenGroupDepth = 0
+        self.maxLocalOpenGroupDepth = 0
+        self.maxGlobalOpenGroupDepth = 0
 
         # Supports the second stage of open group layout. If True => this
         # nested layout needs to be considered on the upper levels with how
@@ -198,11 +199,19 @@ class VirtualCanvas:
         i.e. no need to continue the control flow line.
         """
         try:
+            # The previous row could be a group end...
+            while self.cells[row][-1].kind == CellElement.OPENED_GROUP_END:
+                row -= 1
+
             cell = self.cells[row][column]
             if cell.kind == CellElement.VCANVAS:
                 # If it is a scope then the last item in the scope should be
                 # checked
-                cell = cell.cells[-1][0]
+                cells = cell.cells
+                rowIndex = len(cells) - 1
+                while cells[rowIndex][-1].kind == CellElement.OPENED_GROUP_END:
+                    rowIndex -= 1
+                cell = cell.cells[rowIndex][0]
             if cell.kind == CellElement.CONNECTOR:
                 if cell.connections == CONN_N_C:
                     # On some smart zoom levels the primitives are replaced
@@ -749,8 +758,9 @@ class VirtualCanvas:
         self.__allocateAndSet(vacantRow, 0,
                               IfCell(yBranch, self, 0, vacantRow))
 
-        self.__allocateAndSet(vacantRow, 1,
-                              ConnectorCell(CONN_W_S, self, 1, vacantRow))
+        topConnector = ConnectorCell(CONN_W_S, self, 1, vacantRow)
+        topConnector.subKind = ConnectorCell.TOP_IF
+        self.__allocateAndSet(vacantRow, 1, topConnector)
 
         if yBranch.sideComment and not self.settings.noComment:
             self.__allocateAndSet(vacantRow, 2,
@@ -788,9 +798,9 @@ class VirtualCanvas:
                                       ConnectorCell(CONN_N_S,
                                                     self, 1, vacantRow))
                 vacantRow += 1
-                self.__allocateAndSet(vacantRow, 1,
-                                      ConnectorCell(CONN_N_W,
-                                                    self, 1, vacantRow))
+                bottomConnector = ConnectorCell(CONN_N_W, self, 1, vacantRow)
+                bottomConnector.subKind = ConnectorCell.BOTTOM_IF
+                self.__allocateAndSet(vacantRow, 1, bottomConnector)
                 if self.__isTerminalCell(vacantRow - 1, 0) or \
                    self.__isVacantCell(vacantRow - 1, 0):
                     self.__allocateAndSet(vacantRow, 0,
@@ -811,9 +821,9 @@ class VirtualCanvas:
                 if not self.__isTerminalCell(vacantRow, 1) and \
                    not self.__isVacantCell(vacantRow, 1):
                     vacantRow += 1
-                    self.__allocateAndSet(vacantRow, 1,
-                                          ConnectorCell(CONN_N_W,
-                                                        self, 1, vacantRow))
+                    bottomConnector = ConnectorCell(CONN_N_W, self, 1, vacantRow)
+                    bottomConnector.subKind = ConnectorCell.BOTTOM_IF
+                    self.__allocateAndSet(vacantRow, 1, bottomConnector)
                     self.__allocateAndSet(
                         vacantRow, 0,
                         ConnectorCell([(ConnectorCell.NORTH,
@@ -886,9 +896,9 @@ class VirtualCanvas:
                 pass    # No need to do anything
             elif leftTerminal:
                 vacantRow += 1
-                self.__allocateAndSet(vacantRow, 1,
-                                      ConnectorCell(CONN_N_W,
-                                                    self, 1, vacantRow))
+                bottomConnector = ConnectorCell(CONN_N_W, self, 1, vacantRow)
+                bottomConnector.subKind = ConnectorCell.BOTTOM_IF
+                self.__allocateAndSet(vacantRow, 1, bottomConnector)
                 self.__allocateAndSet(vacantRow, 0,
                                       ConnectorCell(CONN_E_S,
                                                     self, 0, vacantRow))
@@ -897,9 +907,9 @@ class VirtualCanvas:
             else:
                 # Both are non terminal
                 vacantRow += 1
-                self.__allocateAndSet(vacantRow, 1,
-                                      ConnectorCell(CONN_N_W,
-                                                    self, 1, vacantRow))
+                bottomConnector = ConnectorCell(CONN_N_W, self, 1, vacantRow)
+                bottomConnector.subKind = ConnectorCell.BOTTOM_IF
+                self.__allocateAndSet(vacantRow, 1, bottomConnector)
                 self.__allocateAndSet(
                     vacantRow, 0,
                     ConnectorCell([(ConnectorCell.NORTH,
@@ -990,7 +1000,7 @@ class VirtualCanvas:
                     localOpenGroupsStackLevel -= 1
 
         # Memorize the max local (not considering the nested canvaces) depth
-        self.__maxLocalOpenGroupDepth = maxLocalDepth
+        self.maxLocalOpenGroupDepth = maxLocalDepth
 
         if self.isIfBelowLayout:
             return stackMaxDepth
@@ -1001,6 +1011,8 @@ class VirtualCanvas:
         """Inserts the horizontal open group spacers"""
         if depth <= 0:
             return
+
+        self.maxGlobalOpenGroupDepth = depth
 
         # Insert the shift as required
         localOpenGroupsStackLevel = 0
@@ -1022,7 +1034,7 @@ class VirtualCanvas:
                     self.__adjustRowAddresses(row, insertIndex)
                 row[insertIndex].nestLevel = localOpenGroupsStackLevel
                 row[insertIndex].maxTotalNestLevel = depth
-                row[insertIndex].maxNestLevel = self.__maxLocalOpenGroupDepth
+                row[insertIndex].maxNestLevel = self.maxLocalOpenGroupDepth
             elif rowKind == -1:
                 # group end row
                 if localOpenGroupsStackLevel > 1:
@@ -1038,7 +1050,7 @@ class VirtualCanvas:
                     self.__adjustRowAddresses(row, insertIndex)
                 row[insertIndex].nestLevel = localOpenGroupsStackLevel
                 row[insertIndex].maxTotalNestLevel = depth
-                row[insertIndex].maxNestLevel = self.__maxLocalOpenGroupDepth
+                row[insertIndex].maxNestLevel = self.maxLocalOpenGroupDepth
                 localOpenGroupsStackLevel -= 1
             elif rowKind == 2:
                 # there is a nested canvas to consider
@@ -1063,7 +1075,9 @@ class VirtualCanvas:
                     spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
                     spacer.count = depth
                     row.insert(insertIndex, spacer)
-                    self.__adjustRowAddresses(row, insertIndex + 1)
+
+                    insertIndex += 1
+                    self.__adjustRowAddresses(row, insertIndex)
 
     @staticmethod
     def __adjustRowAddresses(row, index):
@@ -1272,7 +1286,7 @@ class VirtualCanvas:
 
         # The left hand side spacing for groups is in the layout but the
         # right hand side spacing needs to be added
-        self.width += 2 * self.__maxLocalOpenGroupDepth * self.settings.openGroupHSpacer
+        self.width += 2 * self.maxLocalOpenGroupDepth * self.settings.openGroupHSpacer
 
         self.minWidth = self.width
         self.minHeight = self.height

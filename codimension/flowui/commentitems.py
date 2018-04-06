@@ -299,6 +299,12 @@ class LeadingCommentCell(CommenCellBase, QGraphicsPathItem):
             self.minWidth = 0
         else:
             self.minWidth = boxWidth - spareWidth
+
+        shift = self.hShift * 2 * settings.openGroupHSpacer
+        if shift >= self.minWidth:
+            self.minWidth = 0
+        else:
+            self.minWidth -= shift
         self.width = self.minWidth
 
     def draw(self, scene, baseX, baseY):
@@ -330,6 +336,8 @@ class LeadingCommentCell(CommenCellBase, QGraphicsPathItem):
         if not settings.hidecomments:
             boxWidth = max(boxWidth, settings.minWidth)
 
+        shift = self.hShift * 2 * settings.openGroupHSpacer
+        self._leftEdge += shift
         path = getCommentBoxPath(settings, self._leftEdge, baseY,
                                  boxWidth, self.minHeight)
         self.setPath(path)
@@ -346,6 +354,8 @@ class LeadingCommentCell(CommenCellBase, QGraphicsPathItem):
         self.connector.penColor = settings.commentLineColor
         self.connector.penWidth = settings.commentLineWidth
 
+        self._leftEdge -= shift
+
     def paint(self, painter, option, widget):
         """Draws the leading comment"""
         settings = self.canvas.settings
@@ -353,6 +363,10 @@ class LeadingCommentCell(CommenCellBase, QGraphicsPathItem):
         # Bottom adjustment
         yShift = self.height - self.minHeight
         baseY = self.baseY + yShift
+
+        # Left adjustments
+        shift = self.hShift * 2 * settings.openGroupHSpacer
+        self._leftEdge += shift
 
         brush = QBrush(settings.commentBGColor)
         self.setBrush(brush)
@@ -383,6 +397,8 @@ class LeadingCommentCell(CommenCellBase, QGraphicsPathItem):
             baseY + settings.vCellPadding + self._vTextPadding,
             self._textRect.width(), self._textRect.height(),
             Qt.AlignLeft, self.__getText())
+
+        self._leftEdge -= shift
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
