@@ -953,10 +953,6 @@ class VirtualCanvas:
                   -1 => group end line
                   2 => nested virtual canvas which needs to be considered
         """
-        insertIndex = 1
-        if self.isNoScope:
-            insertIndex = 0
-
         for cellIndex, cell in enumerate(row):
             if cell.kind == CellElement.VCANVAS:
                 if cell.isIfBelowLayout:
@@ -969,18 +965,22 @@ class VirtualCanvas:
                                     ScopeCellElement.BOTTOM_LEFT]:
                     return -1, None
             if cell.kind == CellElement.OPENED_GROUP_BEGIN:
-                return insertIndex, 1
+                return cellIndex, 1
             if cell.kind == CellElement.OPENED_GROUP_END:
-                return insertIndex, -1
-        return insertIndex, 0
+                return cellIndex, -1
+
+        # Regular row
+        if self.isNoScope:
+            return 0, 0
+        return 1, 0
 
     def openGroupsAdjustments(self):
         """Adjusts the layout if needed for the open groups"""
         localOpenGroupsStackLevel = 0
         maxLocalDepth = 0
         stackMaxDepth = 0
-        for row in range(len(self.cells) - 1):
-            for cell in self.cells[row]:
+        for row in self.cells:
+            for cell in row:
                 if cell.kind == CellElement.VCANVAS:
                     if cell.isIfBelowLayout:
                         # Nested needs to be considered
