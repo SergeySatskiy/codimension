@@ -94,16 +94,6 @@ class SVGItem(QGraphicsSvgItem):
         return False
 
 
-class CMLLabel(SVGItem):
-
-    """Represents the CML label for an item"""
-
-    def __init__(self, ref=None):
-        SVGItem.__init__(self, "cmllabel.svgz", ref)
-        self.setWidth(6)
-        self.setToolTip("CML hint is used")
-
-
 class BadgeItem(QGraphicsRectItem):
 
     """Serves the scope badges"""

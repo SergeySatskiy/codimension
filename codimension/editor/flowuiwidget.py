@@ -85,6 +85,7 @@ def tweakSmartSettings(cflowSettings, smartZoom):
         cflowSettings.noAssert = True
         cflowSettings.noSysExit = True
         cflowSettings.noDecor = True
+        cflowSettings.noGroup = True
         cflowSettings.minWidth = ceil(float(cflowSettings.minWidth) * 0.66)
         return cflowSettings
     if smartZoom == SMART_ZOOM_CLASS_FUNC:
@@ -105,6 +106,7 @@ def tweakSmartSettings(cflowSettings, smartZoom):
         cflowSettings.noWith = True
         cflowSettings.noTry = True
         cflowSettings.noIf = True
+        cflowSettings.noGroup = True
         cflowSettings.minWidth = ceil(float(cflowSettings.minWidth) * 0.66)
         return cflowSettings
     return cflowSettings

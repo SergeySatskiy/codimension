@@ -200,7 +200,8 @@ class VirtualCanvas:
         """
         try:
             # The previous row could be a group end...
-            while self.cells[row][-1].kind == CellElement.OPENED_GROUP_END:
+            while self.cells[row][-1].kind in [CellElement.OPENED_GROUP_END,
+                                               CellElement.OPENED_GROUP_BEGIN]:
                 row -= 1
 
             cell = self.cells[row][column]
@@ -209,7 +210,8 @@ class VirtualCanvas:
                 # checked
                 cells = cell.cells
                 rowIndex = len(cells) - 1
-                while cells[rowIndex][-1].kind == CellElement.OPENED_GROUP_END:
+                while cells[rowIndex][-1].kind in [CellElement.OPENED_GROUP_END,
+                                                   CellElement.OPENED_GROUP_BEGIN]:
                     rowIndex -= 1
                 cell = cell.cells[rowIndex][0]
             if cell.kind == CellElement.CONNECTOR:
@@ -343,6 +345,7 @@ class VirtualCanvas:
             newGroup = CollapsedGroup(item, self, column, vacantRow)
         else:
             newGroup = OpenedGroupBegin(item, self, column, vacantRow)
+            newGroup.isTerminal = self.__isTerminalCell(vacantRow - 1, column)
 
         # allocate new cell, memo the group begin ref,
         # add the group to the stack and return a new vacant row
@@ -378,6 +381,8 @@ class VirtualCanvas:
             groupEnd.groupEndCMLRef = groupComment
             groupEnd.groupBeginRow = groupRow
             groupEnd.groupBeginColumn = groupColumn
+
+            groupEnd.isTerminal = self.__isTerminalCell(vacantRow - 1, column)
             self.__allocateAndSet(vacantRow, column, groupEnd)
 
             self.cells[groupRow][groupColumn].groupEndRow = vacantRow
@@ -451,9 +456,11 @@ class VirtualCanvas:
 
         for item in suite:
 
-            skipItem, vacantRow = self.__handleGroups(item, vacantRow, column)
-            if skipItem:
-                continue
+            if not self.settings.noGroup:
+                skipItem, vacantRow = self.__handleGroups(item,
+                                                          vacantRow, column)
+                if skipItem:
+                    continue
 
             if item.kind == CML_COMMENT_FRAGMENT:
                 # CML comments are not shown on the diagram

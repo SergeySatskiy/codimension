@@ -252,8 +252,6 @@ class ScopeCellElement(CellElement):
                     self._connector.penStyle = Qt.DotLine
                     scene.addItem(self._connector)
 
-            self.addCMLIndicator(baseX, baseY, penWidth, scene)
-
             if hasattr(scene.parent(), "updateNavigationToolbar"):
                 self.__navBarUpdate = scene.parent().updateNavigationToolbar
                 self.setAcceptHoverEvents(True)
@@ -312,9 +310,6 @@ class ScopeCellElement(CellElement):
                 self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
                 self.height + 2 * penWidth)
             scene.addItem(self)
-            self.addCMLIndicator(
-                baseX - s.rectRadius - s.hCellPadding,
-                baseY - penWidth, penWidth, scene, self.ref.docstring)
             if s.hidedocstrings:
                 scene.addItem(self.__docBadge)
                 self.__docBadge.moveTo(

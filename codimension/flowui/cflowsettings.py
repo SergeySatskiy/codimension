@@ -74,6 +74,7 @@ class CFlowSettings:
         setattr(self, 'noWith', False)
         setattr(self, 'noTry', False)
         setattr(self, 'noIf', False)
+        setattr(self, 'noGroup', False)
 
         self.onFlowZoomChanged()
 
@@ -96,6 +97,8 @@ class CFlowSettings:
         noZoomHeight = self.__noZoomFontMetrics.boundingRect('W').height()
         self.coefficient = float(newHeight) / float(noZoomHeight)
 
+        self.ifWidth = self.__getNormalized('ifWidth')
+        self.commentCorner = self.__getNormalized('commentCorner')
         self.hCellPadding = self.__getNormalized('hCellPadding')
         self.vCellPadding = self.__getNormalized('vCellPadding')
         self.hTextPadding = self.__getNormalized('hTextPadding')
@@ -111,6 +114,7 @@ class CFlowSettings:
         self.collapsedOutlineWidth = \
             self.__getNormalized('collapsedOutlineWidth')
         self.openGroupVSpacer = self.__getNormalized('openGroupVSpacer')
+        self.openGroupHSpacer = self.__getNormalized('openGroupHSpacer')
 
 
 def getCflowSettings(paintDevice):

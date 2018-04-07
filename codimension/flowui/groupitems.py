@@ -66,6 +66,9 @@ class GroupItemBase:
         self.groupBeginCMLRef = None
         self.groupEndCMLRef = None
 
+        # True if the previous item is terminal, i.e no connector needed
+        self.isTerminal = False
+
     def getGroupId(self):
         """Provides the group ID"""
         return self.groupBeginCMLRef.id
@@ -164,7 +167,6 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
                      self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
         scene.addItem(self)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
@@ -272,25 +274,28 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = settings.selectPenWidth - 1
+        groupWidth = self.groupWidth + 2 * settings.openGroupHSpacer + \
+                     (self.maxNestLevel - self.nestLevel) * 4 * settings.openGroupHSpacer
+
         self.setRect(baseX - penWidth + settings.openGroupHSpacer,
                      baseY - penWidth + settings.openGroupVSpacer,
-                     self.groupWidth + 2 * (penWidth + settings.openGroupHSpacer),
+                     groupWidth + 2 * penWidth,
                      self.groupHeight + 2 * (penWidth + settings.openGroupVSpacer))
         scene.addItem(self)
 
         # Add the connector as a separate scene item to make the selection
         # working properly. The connector must be added after a group,
         # otherwise a half of it is hidden by the group.
-        xPos = baseX + settings.mainLine
-        xPos += (self.maxTotalNestLevel - self.nestLevel + 1) * (2 * settings.openGroupHSpacer)
-        self.connector = Connector(settings,
-                                   xPos,
-                                   baseY,
-                                   xPos,
-                                   baseY + settings.openGroupVSpacer * 2)
-        scene.addItem(self.connector)
+        if not self.isTerminal:
+            xPos = baseX + settings.mainLine
+            xPos += (self.maxTotalNestLevel - self.nestLevel + 1) * (2 * settings.openGroupHSpacer)
+            self.connector = Connector(settings,
+                                       xPos,
+                                       baseY,
+                                       xPos,
+                                       baseY + settings.openGroupVSpacer * 2)
+            scene.addItem(self.connector)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
@@ -353,6 +358,9 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
+
+        if self.isTerminal:
+            return
 
         # Add the connector as a separate scene item to make the selection
         # working properly
@@ -426,7 +434,6 @@ class CollapsedGroup(GroupItemBase, CellElement, QGraphicsRectItem):
                      self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
         scene.addItem(self)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):

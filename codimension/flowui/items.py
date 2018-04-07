@@ -27,7 +27,7 @@ from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
                    QStyleOptionGraphicsItem, QStyle, QApplication,
                    QMimeData, QByteArray)
 from utils.config import DEFAULT_ENCODING
-from .auxitems import SVGItem, Connector, Text, CMLLabel
+from .auxitems import SVGItem, Connector, Text
 from .cml import CMLVersion, CMLsw, CMLcc, CMLrt
 from .routines import getBorderColor, getCommentBoxPath, distance
 
@@ -223,24 +223,6 @@ class CellElement:
         """
         lineRange = self.getLineRange()
         return distance(line, lineRange[0], lineRange[1])
-
-    def addCMLIndicator(self, baseX, baseY, penWidth, scene, ref=None):
-        """Adds a CML indicator for an item if needed"""
-        if not self.canvas.settings.showCMLIndicator:
-            return
-
-        if ref is None:
-            hasCML = self.ref.leadingCMLComments or self.ref.sideCMLComments
-        else:
-            hasCML = ref.leadingCMLComments or ref.sideCMLComments
-
-        if hasCML:
-            settings = self.canvas.settings
-            self.cmlLabelItem = CMLLabel()
-            self.cmlLabelItem.setPos(baseX + settings.hCellPadding - penWidth -
-                                     self.cmlLabelItem.width(),
-                                     baseY + settings.vCellPadding)
-            scene.addItem(self.cmlLabelItem)
 
     def getCustomColors(self, defaultBG, defaultFG):
         """Provides the colors to be used for an item"""
@@ -485,7 +467,6 @@ class CodeBlockCell(CellElement, QGraphicsRectItem):
                      self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
         scene.addItem(self)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
@@ -619,7 +600,6 @@ class BreakCell(CellElement, QGraphicsRectItem):
                      self.w + 2 * penWidth, self.h + 2 * penWidth)
         scene.addItem(self)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
@@ -744,7 +724,6 @@ class ContinueCell(CellElement, QGraphicsRectItem):
 
         scene.addItem(self)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
@@ -873,7 +852,6 @@ class ReturnCell(CellElement, QGraphicsRectItem):
         scene.addItem(self)
         scene.addItem(self.arrowItem)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
@@ -1025,7 +1003,6 @@ class RaiseCell(CellElement, QGraphicsRectItem):
         scene.addItem(self)
         scene.addItem(self.arrowItem)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
@@ -1183,7 +1160,6 @@ class AssertCell(CellElement, QGraphicsRectItem):
         scene.addItem(self)
         scene.addItem(self.arrowItem)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
@@ -1349,7 +1325,6 @@ class SysexitCell(CellElement, QGraphicsRectItem):
         scene.addItem(self)
         scene.addItem(self.xItem)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
@@ -1475,7 +1450,6 @@ class ImportCell(CellElement, QGraphicsRectItem):
         scene.addItem(self)
         scene.addItem(self.arrowItem)
 
-        self.addCMLIndicator(baseX, baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
     def paint(self, painter, option, widget):
@@ -1594,7 +1568,8 @@ class IfCell(CellElement, QGraphicsRectItem):
         self.__calcPolygon()
 
         settings = self.canvas.settings
-        self.baseX += self.hShift * 2 * settings.openGroupHSpacer
+        hShift = self.hShift * 2 * settings.openGroupHSpacer
+        self.baseX += hShift
 
         # Add the connectors as separate scene items to make the selection
         # working properly
@@ -1607,7 +1582,7 @@ class IfCell(CellElement, QGraphicsRectItem):
         scene.addItem(self.vConnector)
 
         self.hConnector = Connector(settings, self.x4, self.y4,
-                                    self.baseX + self.width,
+                                    self.baseX + self.width - hShift,
                                     self.y4)
         scene.addItem(self.hConnector)
 
@@ -1632,10 +1607,9 @@ class IfCell(CellElement, QGraphicsRectItem):
                      self.y6 - self.y2 + 2 * penWidth)
         scene.addItem(self)
 
-        self.addCMLIndicator(self.baseX, self.baseY, penWidth, scene)
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
 
-        self.baseX -= self.hShift * 2 * settings.openGroupHSpacer
+        self.baseX -= hShift
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
@@ -1773,13 +1747,14 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         if location == self.NORTH:
             if self.subKind == self.BOTTOM_IF:
                 cellAbove = self.canvas.cells[self.addr[1] - 1][self.addr[0]]
-                baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+                if cellAbove.kind == CellElement.VCANVAS:
+                    baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
             return baseX + settings.mainLine, self.baseY
         if location == self.SOUTH:
             if self.subKind == self.TOP_IF:
                 cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
-                baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
-                pass
+                if cellBelow.kind == CellElement.VCANVAS:
+                    baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
             return baseX + settings.mainLine, self.baseY + self.height
         if location == self.WEST:
             return baseX, self.baseY + self.__getY()
@@ -1788,10 +1763,12 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         # It is CENTER
         if self.subKind == self.TOP_IF:
             cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
-            baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+            if cellBelow.kind == CellElement.VCANVAS:
+                baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
         elif self.subKind == self.BOTTOM_IF:
             cellAbove = self.canvas.cells[self.addr[1] - 1][self.addr[0]]
-            baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+            if cellAbove.kind == CellElement.VCANVAS:
+                baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
         return baseX + settings.mainLine, self.baseY + self.__getY()
 
     def __angled(self, begin, end):
