@@ -183,10 +183,10 @@ class VirtualCanvas:
 
     def __str__(self):
         """Rather debug support"""
-        val = 'Rows: ' + str(len(self.cells))
+        val = '\nRows: ' + str(len(self.cells))
         count = 0
         for row in self.cells:
-            val += '\nRow ' + str(count) + ': [ '
+            val += '\nRow ' + str(count) + ' (' + str(len(row)) + 'items): [ '
             for item in row:
                 val += str(item) + ', '
             val += ']'
@@ -949,6 +949,8 @@ class VirtualCanvas:
         # Second stage: shifts to accomadate open groups
         self.openGroupsAdjustments()
 
+        print(str(self))
+
     def getInsertIndex(self, row):
         """Provides an insert index for a spacing and a row kind.
 
@@ -1031,6 +1033,12 @@ class VirtualCanvas:
 
             if rowKind == 1:
                 # group begin row
+                self.updateGroupNestLevel(rowIndex,
+                                          row[insertIndex].groupEndRow + 1)
+
+                initialShift = depth - row[insertIndex].maxGroupNestLevel
+                print("Initial shift: " + str(initialShift))
+
                 localOpenGroupsStackLevel += 1
                 if localOpenGroupsStackLevel > 1:
                     spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
@@ -1085,6 +1093,18 @@ class VirtualCanvas:
 
                     insertIndex += 1
                     self.__adjustRowAddresses(row, insertIndex)
+
+    def updateGroupNestLevel(self, startRow, endRow):
+        """startRow inclusive, endRow exclusive"""
+        for rowIndex in range(startRow, endRow):
+            for cell in self.cells[rowIndex]:
+                if cell.kind == CellElement.OPENED_GROUP_BEGIN:
+                    cell.maxGroupNestLevel += 1
+                elif cell.kind == CellElement.OPENED_GROUP_END:
+                    cell.maxGroupNestLevel += 1
+                elif cell.kind == CellElement.VCANVAS:
+                    if cell.isIfBelowLayout:
+                        cell.updateGroupNestLevel(0, len(cell.cells))
 
     @staticmethod
     def __adjustRowAddresses(row, index):

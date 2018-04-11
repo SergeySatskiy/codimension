@@ -243,9 +243,17 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         self.groupEndRow = None
         self.groupEndColumn = None
 
+        # Nest level (starts from 1) for the group within the current scope
         self.nestLevel = None
+
+        # Max group nest level (starts from 1) for the current scope
         self.maxNestLevel = None
+
+        # Max total nest level for all the groups in the current scope
         self.maxTotalNestLevel = None
+
+        # Max nest level for the groups within the current group
+        self.maxGroupNestLevel = 0
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -345,6 +353,9 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         self.nestLevel = None
         self.maxNestLevel = None
         self.maxTotalNestLevel = None
+
+        # Max nest level for the groups within the current group
+        self.maxGroupNestLevel = 1
 
     def render(self):
         """Renders the cell"""
