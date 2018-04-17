@@ -345,7 +345,7 @@ class EditorsManager(QTabWidget):
         line, pos = editor.cursorPosition
 
         # Create a new tab
-        self.newTabClicked(editor.text(),
+        self.newTabClicked(editor.text,
                            self.getNewCloneName(widget.getShortName()))
 
         # Put the cursor to the exact same position as it was in the cloned tab
