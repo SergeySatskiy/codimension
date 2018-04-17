@@ -299,12 +299,6 @@ class LeadingCommentCell(CommenCellBase, QGraphicsPathItem):
             self.minWidth = 0
         else:
             self.minWidth = boxWidth - spareWidth
-
-        shift = self.hShift * 2 * settings.openGroupHSpacer
-        if shift >= self.minWidth:
-            self.minWidth = 0
-        else:
-            self.minWidth -= shift
         self.width = self.minWidth
 
     def draw(self, scene, baseX, baseY):
