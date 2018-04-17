@@ -255,6 +255,9 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         # Max nest level for the groups within the current group
         self.maxGroupNestLevel = 0
 
+        self.selfAndDeeperNestLevel = None
+        self.selfMaxNestLevel = None
+
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
@@ -266,7 +269,7 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
 
     def render(self):
         """Renders the cell"""
-        self.width = 0
+        self.width = self.canvas.settings.openGroupVSpacer * 2
         self.height = self.canvas.settings.openGroupVSpacer * 2
         self.minWidth = self.width
         self.minHeight = self.height
@@ -282,8 +285,8 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = settings.selectPenWidth - 1
-        groupWidth = self.groupWidth + 2 * settings.openGroupHSpacer + \
-                     (self.maxNestLevel - self.nestLevel) * 4 * settings.openGroupHSpacer
+
+        groupWidth = self.groupWidth + 2 * settings.openGroupHSpacer
 
         self.setRect(baseX - penWidth + settings.openGroupHSpacer,
                      baseY - penWidth + settings.openGroupVSpacer,
@@ -296,7 +299,7 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         # otherwise a half of it is hidden by the group.
         if not self.isTerminal:
             xPos = baseX + settings.mainLine
-            xPos += (self.maxTotalNestLevel - self.nestLevel + 1) * (2 * settings.openGroupHSpacer)
+            xPos += self.selfAndDeeperNestLevel * (2 * settings.openGroupHSpacer)
             self.connector = Connector(settings,
                                        xPos,
                                        baseY,
@@ -327,9 +330,9 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
 
-        groupWidth = self.groupWidth + 2 * settings.openGroupHSpacer + \
-                     (self.maxNestLevel - self.nestLevel) * 4 * settings.openGroupHSpacer
+        groupId = self.getGroupId()
 
+        groupWidth = self.groupWidth + 2 * settings.openGroupHSpacer
         painter.drawRoundedRect(self.baseX + settings.openGroupHSpacer,
                                 self.baseY + settings.openGroupVSpacer,
                                 groupWidth,
@@ -354,6 +357,8 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         self.maxNestLevel = None
         self.maxTotalNestLevel = None
 
+        self.selfAndDeeperNestLevel = None
+
         # Max nest level for the groups within the current group
         self.maxGroupNestLevel = 1
 
@@ -377,7 +382,7 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         # working properly
         settings = self.canvas.settings
         xPos = baseX + settings.mainLine
-        xPos += (self.maxTotalNestLevel - self.nestLevel + 1) * (2 * settings.openGroupHSpacer)
+        xPos += self.selfAndDeeperNestLevel * (2 * settings.openGroupHSpacer)
         self.connector = Connector(settings,
                                    xPos,
                                    baseY,
