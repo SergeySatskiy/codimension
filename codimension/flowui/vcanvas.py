@@ -828,7 +828,8 @@ class VirtualCanvas:
                 if not self.__isTerminalCell(vacantRow, 1) and \
                    not self.__isVacantCell(vacantRow, 1):
                     vacantRow += 1
-                    bottomConnector = ConnectorCell(CONN_N_W, self, 1, vacantRow)
+                    bottomConnector = ConnectorCell(CONN_N_W, self,
+                                                    1, vacantRow)
                     bottomConnector.subKind = ConnectorCell.BOTTOM_IF
                     self.__allocateAndSet(vacantRow, 1, bottomConnector)
                     self.__allocateAndSet(
@@ -1002,7 +1003,8 @@ class VirtualCanvas:
                     localOpenGroupsStackLevel += 1
                     stackMaxDepth = max(stackMaxDepth,
                                         localOpenGroupsStackLevel)
-                    maxLocalDepth = max(maxLocalDepth, localOpenGroupsStackLevel)
+                    maxLocalDepth = max(maxLocalDepth,
+                                        localOpenGroupsStackLevel)
                 elif cell.kind == CellElement.OPENED_GROUP_END:
                     localOpenGroupsStackLevel -= 1
 
@@ -1049,9 +1051,6 @@ class VirtualCanvas:
 
                     insertIndex += 1
                     self.__adjustRowAddresses(row, insertIndex)
-                row[insertIndex].nestLevel = localOpenGroupsStackLevel
-                row[insertIndex].maxTotalNestLevel = depth
-                row[insertIndex].maxNestLevel = self.maxLocalOpenGroupDepth
             elif rowKind == -1:
                 # group end row
                 groupEndCell = self.cells[rowIndex][insertIndex]
@@ -1067,9 +1066,6 @@ class VirtualCanvas:
 
                     insertIndex += 1
                     self.__adjustRowAddresses(row, insertIndex)
-                row[insertIndex].nestLevel = localOpenGroupsStackLevel
-                row[insertIndex].maxTotalNestLevel = depth
-                row[insertIndex].maxNestLevel = self.maxLocalOpenGroupDepth
                 localOpenGroupsStackLevel -= 1
 
                 groupBeginCell = self.cells[groupEndCell.groupBeginRow][groupEndCell.groupBeginColumn]
@@ -1082,14 +1078,22 @@ class VirtualCanvas:
                                       localOpenGroupsStackLevel, 0)
 
                     if insertCount > 0:
-                        spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
+                        spacer = HGroupSpacerCell(None, self, insertIndex,
+                                                  rowIndex)
                         spacer.count = insertCount
                         row.insert(insertIndex, spacer)
 
                         insertIndex += 1
                         self.__adjustRowAddresses(row, insertIndex)
-                row[insertIndex].insertOpenGroupShift(depth,
-                                                      insertedByUpper + insertCount)
+
+                        # To have the canvas size calculated properly
+                        spacerAfter = HGroupSpacerCell(None, self,
+                                                       len(row), rowIndex)
+                        spacerAfter.count = spacer.count
+                        row.append(spacerAfter)
+
+                row[insertIndex].insertOpenGroupShift(
+                    depth, insertedByUpper + insertCount)
             else:
                 # regular row
                 if self.isOuterIfLayout:
@@ -1099,12 +1103,19 @@ class VirtualCanvas:
                     for index in range(insertIndex, len(row)):
                         row[index].hShift = depth - insertedByUpper
                 else:
-                    spacer = HGroupSpacerCell(None, self, insertIndex, rowIndex)
+                    spacer = HGroupSpacerCell(None, self,
+                                              insertIndex, rowIndex)
                     spacer.count = depth - insertedByUpper
                     row.insert(insertIndex, spacer)
 
                     insertIndex += 1
                     self.__adjustRowAddresses(row, insertIndex)
+
+                    # To have the canvas size calculated properly
+                    spacerAfter = HGroupSpacerCell(None, self,
+                                                   len(row), rowIndex)
+                    spacerAfter.count = spacer.count
+                    row.append(spacerAfter)
 
     def updateGroupNestLevel(self, startRow, endRow):
         """startRow and endRow are inclusive"""
@@ -1115,7 +1126,8 @@ class VirtualCanvas:
             for cell in self.cells[rowIndex]:
                 if cell.kind == CellElement.OPENED_GROUP_BEGIN:
                     currentLevel += 1
-                    maxCurrentAndDeeper = max(maxCurrentAndDeeper, currentLevel)
+                    maxCurrentAndDeeper = max(maxCurrentAndDeeper,
+                                              currentLevel)
                     maxCurrentLevel = max(maxCurrentLevel, currentLevel)
                     cell.selfAndDeeperNestLevel, cell.selfMaxNestLevel = self.updateGroupNestLevel(
                         rowIndex + 1, cell.groupEndRow - 1)
@@ -1125,8 +1137,10 @@ class VirtualCanvas:
                     currentLevel -= 1
                 elif cell.kind == CellElement.VCANVAS:
                     if cell.isIfBelowLayout:
-                        level, _ = cell.updateGroupNestLevel(0, len(cell.cells) - 1)
-                        maxCurrentAndDeeper = max(maxCurrentAndDeeper, currentLevel + level)
+                        level, _ = cell.updateGroupNestLevel(
+                            0, len(cell.cells) - 1)
+                        maxCurrentAndDeeper = max(maxCurrentAndDeeper,
+                                                  currentLevel + level)
         return maxCurrentAndDeeper, maxCurrentLevel
 
     @staticmethod
@@ -1326,8 +1340,9 @@ class VirtualCanvas:
                 group.groupHeight += self.cells[row][0].height
                 rowWidth = 0
                 for column in range(groupBeginColumn, len(self.cells[row])):
-                    if self.cells[row][column].kind != CellElement.H_GROUP_SPACER:
-                        rowWidth += self.cells[row][column].width
+                    cell = self.cells[row][column]
+                    if cell.kind != CellElement.H_GROUP_SPACER:
+                        rowWidth += cell.width
                 group.groupWidth = max(group.groupWidth, rowWidth)
             group.groupWidth += (group.selfMaxNestLevel - 1) * 4 * self.settings.openGroupHSpacer
 
@@ -1335,9 +1350,9 @@ class VirtualCanvas:
             # Right hand side vertical part
             self.width += self.settings.rectRadius + self.settings.hCellPadding
 
-        # The left hand side spacing for groups is in the layout but the
-        # right hand side spacing needs to be added
-        self.width += 2 * self.maxLocalOpenGroupDepth * self.settings.openGroupHSpacer
+        # There is no need to add spacing at the right hand side for groups.
+        # The appropriate number of spacers were added for canvases and regular
+        # rows so no adjustments here.
 
         self.minWidth = self.width
         self.minHeight = self.height

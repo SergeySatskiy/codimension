@@ -22,6 +22,7 @@
 
 from ui.qt import QMenu, QApplication
 from flowui.items import CellElement, IfCell
+from flowui.groupitems import OpenedGroupBegin
 from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt
 from utils.pixmapcache import getIcon
 from .flowuireplacetextdlg import ReplaceTextDialog
@@ -81,7 +82,19 @@ class CFSceneContextMenuMixin:
             getIcon("switchbranches.png"), "Switch branch layout",
             self.onSwitchIfBranch)
 
+        groupContextMenu = QMenu()
+        groupContextMenu.addAction(
+            getIcon("collapse.png"), "Collapse",
+            self.onGroupCollapse)
+        groupContextMenu.addAction(
+            getIcon("replacetitle.png"), "Edit title...",
+            self.onGroupEditTitle)
+        groupContextMenu.addAction(
+            getIcon("ungroup.png"), "Ungroup",
+            self.onGroupUngroup)
+
         self.individualMenus[IfCell] = ifContextMenu
+        self.individualMenus[OpenedGroupBegin] = groupContextMenu
         # Individual items specific menu: end
 
         # Menu for a group of selected items
@@ -140,12 +153,15 @@ class CFSceneContextMenuMixin:
         hasDocstring = self.isDocstringInSelection()
         hasMinimizedExcepts = self.isInSelected([(CellElement.EXCEPT_MINIMIZED,
                                                   None)])
+        hasOpenGroup = self.isInSelected([(CellElement.OPENED_GROUP_BEGIN,
+                                           None)])
         count = len(self.selectedItems())
 
         self.__ccAction.setEnabled(not hasComment and not hasMinimizedExcepts)
         self.__rtAction.setEnabled(not hasComment and
                                    not hasDocstring and
-                                   not hasMinimizedExcepts)
+                                   not hasMinimizedExcepts and
+                                   not hasOpenGroup)
         self.__removeCCAction.setEnabled(
             self.countItemsWithCML(CMLcc) == count)
         self.__removeRTAction.setEnabled(
@@ -272,6 +288,15 @@ class CFSceneContextMenuMixin:
             QApplication.processEvents()
             self.parent().redrawNow()
             self.restoreSelectionByID(selection)
+
+    def onGroupCollapse(self):
+        pass
+
+    def onGroupEditTitle(self):
+        pass
+
+    def onGroupUngroup(self):
+        pass
 
     def onDelete(self):
         """Delete the item"""

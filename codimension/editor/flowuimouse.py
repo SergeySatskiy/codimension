@@ -117,8 +117,11 @@ class CFSceneMouseMixin:
             self.clearSelection()
 
             # Here: add comments
-            for item in self.findItemsForRef(logicalItem.ref):
+            if self.isOpenGroupItem(item):
                 self.addToSelection(item)
+            else:
+                for item in self.findItemsForRef(logicalItem.ref):
+                    self.addToSelection(item)
             event.accept()
             return
 
@@ -143,10 +146,12 @@ class CFSceneMouseMixin:
 
         items = self.selectedItems()
         for item in items:
-            if not item.scopedItem():
+            isGroup = self.isOpenGroupItem(item)
+            if not item.scopedItem() and not isGroup:
                 continue
-            if item.subKind != ScopeCellElement.TOP_LEFT:
-                continue
+            if item.scopedItem():
+                if item.subKind != ScopeCellElement.TOP_LEFT:
+                    continue
 
             itemBegin, itemEnd = self.__getItemVisualBeginEnd(item)
             if toSelectBegin >= itemBegin and toSelectEnd <= itemEnd:
@@ -155,12 +160,15 @@ class CFSceneMouseMixin:
 
     def deselectNested(self, itemToSelect):
         """Deselects all the nested items if needed"""
-        if not itemToSelect.scopedItem():
-            # The only scope items require deselection of the nested items
+        isGroup = itemToSelect.kind == CellElement.OPENED_GROUP_BEGIN
+        if not itemToSelect.scopedItem() and not isGroup:
+            # The only scope items and groups require
+            # deselection of the nested items
             return
-        elif itemToSelect.subKind != ScopeCellElement.TOP_LEFT:
-            # Scope docstrings and side comments cannot include anything
-            return
+        if itemToSelect.scopedItem():
+            if itemToSelect.subKind != ScopeCellElement.TOP_LEFT:
+                # Scope docstrings and side comments cannot include anything
+                return
 
         toSelectBegin, toSelectEnd = self.__getItemVisualBeginEnd(itemToSelect)
         items = self.selectedItems()
@@ -190,6 +198,7 @@ class CFSceneMouseMixin:
                 return item.ref.body.begin, lastSuiteItem.end
 
             return item.ref.body.begin, item.ref.end
+
         # Here: not a scope item.
         if item.kind in [CellElement.ABOVE_COMMENT,
                          CellElement.LEADING_COMMENT]:
@@ -218,6 +227,9 @@ class CFSceneMouseMixin:
             else:
                 end = item.ref.body.end
             return item.ref.body.begin, end
+        if item.kind == CellElement.OPENED_GROUP_BEGIN:
+            begin, end = item.getAbsPosRange()
+            return begin, end
 
         # if, import, sys.exit(), continue, break, code block
         return item.ref.body.begin, item.ref.body.end
@@ -231,10 +243,18 @@ class CFSceneMouseMixin:
                                         ScopeCellElement.SIDE_COMMENT,
                                         ScopeCellElement.DOCSTRING]:
                     continue
-            if hasattr(item, "ref"):
-                if item.ref is ref:
-                    result.append(item)
+            if not self.isOpenGroupItem(item):
+                if hasattr(item, "ref"):
+                    if item.ref is ref:
+                        result.append(item)
         return result
+
+    @staticmethod
+    def isOpenGroupItem(item):
+        """True if it is an open group item"""
+        if hasattr(item, 'kind'):
+            return item.kind == CellElement.OPENED_GROUP_BEGIN
+        return False
 
     def getNearestItem(self, absPos, line, pos):
         """Provides a logical item and the distance.

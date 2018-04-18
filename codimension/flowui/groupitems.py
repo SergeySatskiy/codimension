@@ -20,10 +20,7 @@
 """Virtual canvas items to handle groups (opened/collapsed)"""
 
 
-from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
-                   QGraphicsRectItem, QGraphicsPathItem, QGraphicsItem,
-                   QStyleOptionGraphicsItem, QStyle, QApplication,
-                   QMimeData, QByteArray)
+from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .items import CellElement
 from .auxitems import Connector
 from .routines import getBorderColor
@@ -243,20 +240,8 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         self.groupEndRow = None
         self.groupEndColumn = None
 
-        # Nest level (starts from 1) for the group within the current scope
-        self.nestLevel = None
-
-        # Max group nest level (starts from 1) for the current scope
-        self.maxNestLevel = None
-
-        # Max total nest level for all the groups in the current scope
-        self.maxTotalNestLevel = None
-
-        # Max nest level for the groups within the current group
-        self.maxGroupNestLevel = 0
-
         self.selfAndDeeperNestLevel = None
-        self.selfMaxNestLevel = None
+        self.selfMaxNestLevel = None    # Used in vcanvas.py
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -291,7 +276,8 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         self.setRect(baseX - penWidth + settings.openGroupHSpacer,
                      baseY - penWidth + settings.openGroupVSpacer,
                      groupWidth + 2 * penWidth,
-                     self.groupHeight + 2 * (penWidth + settings.openGroupVSpacer))
+                     self.groupHeight +
+                     2 * (penWidth + settings.openGroupVSpacer))
         scene.addItem(self)
 
         # Add the connector as a separate scene item to make the selection
@@ -330,13 +316,11 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
 
-        groupId = self.getGroupId()
-
-        groupWidth = self.groupWidth + 2 * settings.openGroupHSpacer
+        fullWidth = self.groupWidth + 2 * settings.openGroupHSpacer
+        fullHeight = self.groupHeight + 2 * settings.openGroupVSpacer
         painter.drawRoundedRect(self.baseX + settings.openGroupHSpacer,
                                 self.baseY + settings.openGroupVSpacer,
-                                groupWidth,
-                                self.groupHeight + 2 * settings.openGroupVSpacer,
+                                fullWidth, fullHeight,
                                 settings.openGroupVSpacer,
                                 settings.openGroupVSpacer)
 
@@ -353,14 +337,7 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         self.groupBeginRow = None
         self.groupBeginColumn = None
 
-        self.nestLevel = None
-        self.maxNestLevel = None
-        self.maxTotalNestLevel = None
-
         self.selfAndDeeperNestLevel = None
-
-        # Max nest level for the groups within the current group
-        self.maxGroupNestLevel = 1
 
     def render(self):
         """Renders the cell"""
