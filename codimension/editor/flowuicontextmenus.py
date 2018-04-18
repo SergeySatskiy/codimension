@@ -22,9 +22,10 @@
 
 from ui.qt import QMenu, QApplication
 from flowui.items import CellElement, IfCell
-from flowui.groupitems import OpenedGroupBegin
+from flowui.groupitems import OpenedGroupBegin, CollapsedGroup
 from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt
 from utils.pixmapcache import getIcon
+from utils.diskvaluesrelay import addCollapsedGroup, removeCollapsedGroup
 from .flowuireplacetextdlg import ReplaceTextDialog
 from .customcolordlg import CustomColorsDialog
 
@@ -82,19 +83,31 @@ class CFSceneContextMenuMixin:
             getIcon("switchbranches.png"), "Switch branch layout",
             self.onSwitchIfBranch)
 
-        groupContextMenu = QMenu()
-        groupContextMenu.addAction(
+        openGroupContextMenu = QMenu()
+        openGroupContextMenu.addAction(
             getIcon("collapse.png"), "Collapse",
             self.onGroupCollapse)
-        groupContextMenu.addAction(
+        openGroupContextMenu.addAction(
             getIcon("replacetitle.png"), "Edit title...",
             self.onGroupEditTitle)
-        groupContextMenu.addAction(
+        openGroupContextMenu.addAction(
+            getIcon("ungroup.png"), "Ungroup",
+            self.onGroupUngroup)
+
+        closeGroupContextMenu = QMenu()
+        closeGroupContextMenu.addAction(
+            getIcon(""), "Expand",
+            self.onGroupExpand)
+        closeGroupContextMenu.addAction(
+            getIcon("replacetitle.png"), "Edit title...",
+            self.onGroupEditTitle)
+        closeGroupContextMenu.addAction(
             getIcon("ungroup.png"), "Ungroup",
             self.onGroupUngroup)
 
         self.individualMenus[IfCell] = ifContextMenu
-        self.individualMenus[OpenedGroupBegin] = groupContextMenu
+        self.individualMenus[OpenedGroupBegin] = openGroupContextMenu
+        self.individualMenus[CollapsedGroup] = closeGroupContextMenu
         # Individual items specific menu: end
 
         # Menu for a group of selected items
@@ -155,13 +168,16 @@ class CFSceneContextMenuMixin:
                                                   None)])
         hasOpenGroup = self.isInSelected([(CellElement.OPENED_GROUP_BEGIN,
                                            None)])
+        hasCloseGroup = self.isInSelected([(CellElement.COLLAPSED_GROUP,
+                                            None)])
         count = len(self.selectedItems())
 
         self.__ccAction.setEnabled(not hasComment and not hasMinimizedExcepts)
         self.__rtAction.setEnabled(not hasComment and
                                    not hasDocstring and
                                    not hasMinimizedExcepts and
-                                   not hasOpenGroup)
+                                   not hasOpenGroup and
+                                   not hasCloseGroup)
         self.__removeCCAction.setEnabled(
             self.countItemsWithCML(CMLcc) == count)
         self.__removeRTAction.setEnabled(
@@ -290,7 +306,41 @@ class CFSceneContextMenuMixin:
             self.restoreSelectionByID(selection)
 
     def onGroupCollapse(self):
-        pass
+        """Collapses the selected group"""
+        if not self.__actionPrerequisites():
+            return
+
+        # The selected items need to be sorted in the reverse line no oreder
+        editor = self.selectedItems()[0].getEditor()
+        with editor:
+            for item in self.sortSelectedReverse():
+                if item.kind == CellElement.OPENED_GROUP_BEGIN:
+                    fileName = editor._parent.getFileName()
+                    if not fileName:
+                        fileName = editor._parent.getShortName()
+                    addCollapsedGroup(fileName, item.getGroupId())
+
+        QApplication.processEvents()
+        self.parent().redrawNow()
+
+    def onGroupExpand(self):
+        """Expands the selected group"""
+        if not self.__actionPrerequisites():
+            return
+
+        # The selected items need to be sorted in the reverse line no oreder
+        editor = self.selectedItems()[0].getEditor()
+        with editor:
+            for item in self.sortSelectedReverse():
+                if item.kind == CellElement.COLLAPSED_GROUP:
+                    fileName = editor._parent.getFileName()
+                    if not fileName:
+                        fileName = editor._parent.getShortName()
+                    removeCollapsedGroup(fileName, item.getGroupId())
+
+        QApplication.processEvents()
+        self.parent().redrawNow()
+
 
     def onGroupEditTitle(self):
         pass
