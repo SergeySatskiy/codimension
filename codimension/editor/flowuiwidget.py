@@ -336,8 +336,8 @@ class FlowUIWidget(QWidget):
     def redrawScene(self):
         """Redraws the scene"""
         smartZoomLevel = Settings()['smartZoom']
+        self.cflowSettings = getCflowSettings(self)
         if self.dirty():
-            self.cflowSettings = getCflowSettings(self)
             self.__displayProps = (self.cflowSettings.hidedocstrings,
                                    self.cflowSettings.hidecomments,
                                    self.cflowSettings.hideexcepts,

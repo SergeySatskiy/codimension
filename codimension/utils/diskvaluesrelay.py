@@ -206,6 +206,34 @@ def setFindHistory(values):
         Settings().findHistory = values
 
 
+def addRecentFile(path):
+    """Adds a recent file"""
+    project = GlobalData().project
+    if project.isLoaded():
+        project.addRecentFile(path)
+    else:
+        Settings().addRecentFile(path)
+
+
+def removeRecentFile(path):
+    """Removes a recent file"""
+    project = GlobalData().project
+    if project.isLoaded():
+        project.removeRecentFile(path)
+    else:
+        Settings().removeRecentFile(path)
+
+
+def getRecentFiles():
+    """Provides the recent files list"""
+    project = GlobalData().project
+    if project.isLoaded():
+        return project.recentFile
+    return Settings().recentFiles
+
+
+
+
 ##DebuggerEnvironment
 ##SearchEnvironment
 ##FileSystemEnvironment

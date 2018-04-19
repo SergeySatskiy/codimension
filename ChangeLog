@@ -1,3 +1,13 @@
+2018 XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 4.2.0
+* Text-to-graphics group support: empty/collapsed/expanded groups.
+* Bug fix: cloning of a tab content
+* Bug fix: incorrect saving encoding when a new file overwrites an existing one
+* Bug fix: incorrect item width on smart zoom 1 when scale is changed
+* Recent files list is populated when there is no project
+* Minor improvements
+
 2018 Jan 11 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Version 4.1.0

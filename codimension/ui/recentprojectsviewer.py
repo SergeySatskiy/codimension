@@ -28,6 +28,7 @@ from utils.globals import GlobalData
 from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 from utils.fileutils import (getFileProperties, isPythonMime,
                              isCDMProjectMime, isImageViewable)
+from utils.diskvaluesrelay import removeRecentFile, getRecentFiles
 from .qt import (Qt, QSize, QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
                  QToolButton, QWidget, QAction, QDialog, QSpacerItem,
                  QVBoxLayout, QSizePolicy, QToolBar, QApplication, QFrame,
@@ -236,6 +237,7 @@ class RecentProjectsViewer(QWidget):
             self.__handleShowFileContextMenu)
 
         GlobalData().project.sigRecentFilesChanged.connect(self.__populateFiles)
+        Settings().sigRecentFilesChanged.connect(self.__populateFiles)
 
     def __createProjectPopupMenu(self):
         """Creates the recent project popup menu"""
@@ -622,7 +624,7 @@ class RecentProjectsViewer(QWidget):
     def __populateFiles(self):
         """Populates the recent files"""
         self.recentFilesView.clear()
-        for path in GlobalData().project.recentFiles:
+        for path in getRecentFiles():
             self.recentFilesView.addTopLevelItem(RecentFileViewItem(path))
 
         self.__sortFiles()
@@ -736,7 +738,7 @@ class RecentProjectsViewer(QWidget):
 
     def removeRecentFile(self, fName):
         """Removes a single file from the recent files list"""
-        GlobalData().project.removeRecentFile(fName)
+        removeRecentFile(fName)
 
         for index in range(self.recentFilesView.topLevelItemCount()):
             candidate = self.recentFilesView.topLevelItem(index)

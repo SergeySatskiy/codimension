@@ -250,6 +250,15 @@ class CFSceneContextMenuMixin:
             editor = self.selectedItems()[0].getEditor()
             with editor:
                 for item in self.sortSelectedReverse():
+                    if item.kind in [CellElement.OPENED_GROUP_BEGIN,
+                                     CellElement.COLLAPSED_GROUP,
+                                     CellElement.EMPTY_GROUP]:
+                        # The group always exists so just add/change the colors
+                        item.groupBeginCMLRef.updateCustomColors(editor,
+                                                                 bgcolor,
+                                                                 fgcolor,
+                                                                 bordercolor)
+                        continue
                     if item.isDocstring():
                         cmlComment = CMLVersion.find(
                             item.ref.docstring.leadingCMLComments,
@@ -370,15 +379,28 @@ class CFSceneContextMenuMixin:
             editor = self.selectedItems()[0].getEditor()
             with editor:
                 for item in self.sortSelectedReverse():
-                    print("Inserting into the text...")
-
-                    # editor.insertLines(line, lineNo)
+                    item.groupBeginCMLRef.updateTitle(editor, newTitle)
             QApplication.processEvents()
             self.parent().redrawNow()
             self.restoreSelectionByID(selection)
 
     def onGroupUngroup(self):
-        pass
+        """Ungroups the items"""
+        if not self.__actionPrerequisites():
+            return
+
+        # Memorize the current selection
+        selection = self.serializeSelection()
+
+        # The selected items need to be sorted in the reverse line no oreder
+        editor = self.selectedItems()[0].getEditor()
+        with editor:
+            for item in self.sortSelectedReverse():
+                item.groupEndCMLRef.removeFromText(editor)
+                item.groupBeginCMLRef.removeFromText(editor)
+        QApplication.processEvents()
+        self.parent().redrawNow()
+        self.restoreSelectionByTooltip(selection)
 
     def onDelete(self):
         """Delete the item"""
@@ -412,6 +434,11 @@ class CFSceneContextMenuMixin:
         editor = self.selectedItems()[0].getEditor()
         with editor:
             for item in self.sortSelectedReverse():
+                if item.kind in [CellElement.OPENED_GROUP_BEGIN,
+                                 CellElement.COLLAPSED_GROUP,
+                                 CellElement.EMPTY_GROUP]:
+                    item.groupBeginCMLRef.removeCustomColors(editor)
+                    continue
                 if item.isDocstring():
                     cmlComment = CMLVersion.find(
                         item.ref.docstring.leadingCMLComments, CMLcc)

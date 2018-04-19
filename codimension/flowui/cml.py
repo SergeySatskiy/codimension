@@ -333,28 +333,34 @@ class CMLgb(CMLCommentBase):
     @staticmethod
     def generate(groupid, title, background, foreground, border, pos=1):
         """Generates a complete line to be inserted"""
-        res = " " * (pos - 1) + "# cml 1 " + CMLgb.CODE
-        res += " id=\"" + groupid + "\""
+        res = ' ' * (pos - 1) + '# cml 1 ' + CMLgb.CODE
+        if ' ' in groupid:
+            res += ' id="' + groupid + '"'
+        else:
+            res += ' id=' + groupid
         if title:
-            res += " title=\"" + escapeCMLTextValue(txt) + "\""
+            if ' ' in title:
+                res += ' title="' + escapeCMLTextValue(title) + '"'
+            else:
+                res += ' title=' + escapeCMLTextValue(title)
         if background is not None:
             bgColor = background.name()
             bgalpha = background.alpha()
             if bgalpha != 255:
                 bgColor += hex(bgalpha)[2:]
-            res += " background=" + bgColor
+            res += ' background=' + bgColor
         if foreground is not None:
             fgColor = foreground.name()
             fgalpha = foreground.alpha()
             if fgalpha != 255:
                 fgColor += hex(fgalpha)[2:]
-            res += " foreground=" + fgColor
+            res += ' foreground=' + fgColor
         if border is not None:
             brd = border.name()
             brdalpha = border.alpha()
             if brdalpha != 255:
                 brd += hex(brdalpha)[2:]
-            res += " border=" + brd
+            res += ' border=' + brd
         return res
 
     def getTitle(self):
@@ -362,6 +368,43 @@ class CMLgb(CMLCommentBase):
         if self.title is None:
             return None
         return unescapeCMLTextValue(self.title)
+
+    def updateTitle(self, editor, newTitle):
+        """Updates the group title in the editor"""
+        if newTitle == self.title:
+            return
+
+        firstCommentLine = self.ref.parts[0].beginLine
+        lastCommentLine = self.ref.parts[-1].endLine
+        if self.title is None:
+            # Need to add the title= attribute to the last comment line
+            lastLine = editor.lines[lastCommentLine - 1]
+            newLastLine = lastLine.rstrip() + ' title="' + \
+                escapeCMLTextValue(newTitle) + '"'
+            editor.lines[lastCommentLine - 1] = newLastLine
+            return
+
+        # The title was there, so re-generate the comment line, remove the old
+        # one and insert a new one
+        pos = self.ref.parts[0].beginPos
+        newCommentLine = CMLgb.generate(self.id, newTitle, self.bgColor,
+                                        self.fgColor, self.border, pos)
+        self.removeFromText(editor)
+        editor.insertLines(newCommentLine, firstCommentLine)
+
+    def updateCustomColors(self, editor, bgcolor, fgcolor, bordercolor):
+        """Updates the custom colors"""
+        firstCommentLine = self.ref.parts[0].beginLine
+        pos = self.ref.parts[0].beginPos
+        newCommentLine = CMLgb.generate(self.id, self.title, bgcolor,
+                                        fgcolor, bordercolor, pos)
+        self.removeFromText(editor)
+        editor.insertLines(newCommentLine, firstCommentLine)
+
+    def removeCustomColors(self, editor):
+        """Removes the custom colors"""
+        self.updateCustomColors(editor, None, None, None)
+
 
 
 class CMLge(CMLCommentBase):

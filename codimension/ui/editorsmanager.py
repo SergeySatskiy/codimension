@@ -35,7 +35,8 @@ from utils.settings import Settings
 from utils.fileutils import (getFileProperties, isImageViewable,
                              isPythonMime, isPythonFile,
                              getXmlSyntaxFileByMime, isFileSearchable)
-from utils.diskvaluesrelay import getFilePosition, updateFilePosition
+from utils.diskvaluesrelay import (getFilePosition, updateFilePosition,
+                                   addRecentFile)
 from utils.encoding import detectEolString
 from diagram.importsdgmgraphics import ImportDgmTabWidget
 from editor.vcsannotateviewer import VCSAnnotateViewerTabWidget
@@ -622,7 +623,7 @@ class EditorsManager(QTabWidget):
             # Yes, it needs to be saved if it was saved at least once
             fileName = self.widget(index).getFileName()
             if os.path.isabs(fileName) and os.path.exists(fileName):
-                GlobalData().project.addRecentFile(fileName)
+                addRecentFile(fileName)
 
         self.__skipHistoryUpdate = True
         self.removeTab(index)
@@ -953,7 +954,7 @@ class EditorsManager(QTabWidget):
             newWidget.setFocus()
             self.saveTabsStatus()
             if not self.__restoringTabs:
-                GlobalData().project.addRecentFile(fileName)
+                addRecentFile(fileName)
             self.setWidgetDebugMode(newWidget)
         except Exception as exc:
             logging.error(str(exc))
@@ -1106,7 +1107,7 @@ class EditorsManager(QTabWidget):
             newWidget.updateStatus()
             self.saveTabsStatus()
             if not self.__restoringTabs:
-                GlobalData().project.addRecentFile(fileName)
+                addRecentFile(fileName)
             self.setWidgetDebugMode(newWidget)
 
             self.sigFileTypeChanged.emit(fileName, newWidget.getUUID(),
@@ -1375,7 +1376,7 @@ class EditorsManager(QTabWidget):
         else:
             if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
                 self.sigBufferSavedAs.emit(fileName, uuid)
-                GlobalData().project.addRecentFile(fileName)
+                addRecentFile(fileName)
 
         if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
             self.history.updateFileNameForTab(uuid, fileName)

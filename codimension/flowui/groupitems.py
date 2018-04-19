@@ -20,6 +20,7 @@
 """Virtual canvas items to handle groups (opened/collapsed)"""
 
 
+from cgi import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .items import CellElement
 from .auxitems import Connector
@@ -72,11 +73,17 @@ class GroupItemBase:
 
     def _getText(self):
         """Provides the box text"""
-        return self.groupBeginCMLRef.getTitle()
+        if self._text is None:
+            self._text = self.groupBeginCMLRef.getTitle()
+            if self.canvas.settings.noContent:
+                if self._text:
+                    self.setToolTip('<pre>' + escape(self._text) + '</pre>')
+                self._text = ''
+        return self._text
 
     def getTitle(self):
         """Convenience for the UI"""
-        return self._getText()
+        return self.groupBeginCMLRef.getTitle()
 
     def getLineRange(self):
         """Provides the line range"""

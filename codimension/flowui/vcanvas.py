@@ -205,6 +205,9 @@ class VirtualCanvas:
                 row -= 1
 
             cell = self.cells[row][column]
+            if cell.kind == CellElement.COLLAPSED_GROUP:
+                return self.__isCollapsedGroupTerminal(cell)
+
             if cell.kind == CellElement.VCANVAS:
                 # If it is a scope then the last item in the scope should be
                 # checked
@@ -223,6 +226,16 @@ class VirtualCanvas:
             return cell.kind in _terminalCellTypes
         except:
             return False
+
+    def __isCollapsedGroupTerminal(self, group):
+        """Tells if the collapsed group has the last item terminal"""
+        print("Last item code: " + str(group.nestedRefs[-1].CODE))
+        if group.nestedRefs[-1].CODE in [BREAK_FRAGMENT,
+                                         CONTINUE_FRAGMENT,
+                                         RETURN_FRAGMENT,
+                                         RAISE_FRAGMENT,
+                                         SYSEXIT_FRAGMENT]:
+            return True
 
     def __isVacantCell(self, row, column):
         """Tells if a cell is a vacant one"""

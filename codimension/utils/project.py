@@ -406,7 +406,7 @@ class CodimensionProject(QObject,
         return realpath(self.getProjectDir() + self.props['scriptname'])
 
     def addRecentFile(self, path):
-        """Adds a single recent file. True if a new file was inserted."""
+        """Adds a recent file. True if a new file was inserted."""
         ret = FileSystemEnvironment.addRecentFile(self, path)
         if ret:
             self.sigRecentFilesChanged.emit()

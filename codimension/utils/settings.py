@@ -251,6 +251,7 @@ class SettingsWrapper(QObject,
     sigHideCommentsChanged = pyqtSignal()
     sigHideExceptsChanged = pyqtSignal()
     sigSmartZoomChanged = pyqtSignal()
+    sigRecentFilesChanged = pyqtSignal()
 
     def __init__(self):
         QObject.__init__(self)
@@ -516,6 +517,13 @@ class SettingsWrapper(QObject,
             self.__values['flowZoom'] = 0
             self.flush()
             self.sigFlowZoomChanged.emit()
+
+    def addRecentFile(self, path):
+        """Adds a recent file. True if a new file was inserted."""
+        ret = FileSystemEnvironment.addRecentFile(self, path)
+        if ret:
+            self.sigRecentFilesChanged.emit()
+        return ret
 
 
 SETTINGS_SINGLETON = SettingsWrapper()

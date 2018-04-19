@@ -29,6 +29,7 @@ from utils.colorfont import (getMonospaceFontList, getScalableFontList,
 from utils.globals import GlobalData
 from utils.misc import getIDETemplateFile, getProjectTemplateFile
 from utils.settings import CLEAR_AND_REUSE, NO_CLEAR_AND_REUSE, NO_REUSE
+from utils.diskvaluesrelay import getRecentFiles
 from .qt import QDir, QApplication, QMenu, QStyleFactory, QActionGroup
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
@@ -755,7 +756,7 @@ class MainWindowMenuMixin:
         self.__recentFilesMenu.clear()
         addedCount = 0
 
-        for item in GlobalData().project.recentFiles:
+        for item in getRecentFiles():
             addedCount += 1
             act = self.__recentFilesMenu.addAction(
                 getAccelerator(addedCount) + item)
