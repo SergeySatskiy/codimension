@@ -72,7 +72,11 @@ class GroupItemBase:
 
     def _getText(self):
         """Provides the box text"""
-        return self.groupBeginCMLRef.title
+        return self.groupBeginCMLRef.getTitle()
+
+    def getTitle(self):
+        """Convenience for the UI"""
+        return self._getText()
 
     def getLineRange(self):
         """Provides the line range"""
@@ -123,8 +127,9 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
 
     def getColors(self):
         """Provides the item colors"""
-        return self.getGroupColors(self.canvas.settings.emptyGroupBGColor,
-                                   self.canvas.settings.emptyGroupFGColor)
+        return self.getGroupColors(self.canvas.settings.groupBGColor,
+                                   self.canvas.settings.groupFGColor,
+                                   self.canvas.settings.groupBorderColor)
 
     def render(self):
         """Renders the cell"""
@@ -185,6 +190,7 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
         else:
             pen = QPen(self.__borderColor)
             pen.setStyle(Qt.DashLine)
+            pen.setWidth(1)
             painter.setPen(pen)
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
@@ -197,6 +203,7 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
         rectHeight -= 2 * settings.collapsedOutlineWidth
         pen = QPen(self.__borderColor)
         pen.setStyle(Qt.DashLine)
+        pen.setWidth(1)
         painter.setPen(pen)
         painter.drawRect(self.baseX + settings.hCellPadding +
                          settings.collapsedOutlineWidth,
@@ -248,9 +255,9 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
 
     def getColors(self):
         """Provides the item colors"""
-        return self.getGroupColors(self.canvas.settings.openGroupBGColor,
-                                   self.canvas.settings.openGroupFGColor,
-                                   self.canvas.settings.openGroupBorderColor)
+        return self.getGroupColors(self.canvas.settings.groupBGColor,
+                                   self.canvas.settings.groupFGColor,
+                                   self.canvas.settings.groupBorderColor)
 
     def render(self):
         """Renders the cell"""
@@ -386,8 +393,9 @@ class CollapsedGroup(GroupItemBase, CellElement, QGraphicsRectItem):
 
     def getColors(self):
         """Provides the item colors"""
-        return self.getGroupColors(self.canvas.settings.collapsedGroupBGColor,
-                                   self.canvas.settings.collapsedGroupFGColor)
+        return self.getGroupColors(self.canvas.settings.groupBGColor,
+                                   self.canvas.settings.groupFGColor,
+                                   self.canvas.settings.groupBorderColor)
 
     def render(self):
         """Renders the cell"""

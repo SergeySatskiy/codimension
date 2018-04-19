@@ -370,11 +370,16 @@ class VirtualCanvas:
         # - end of a collapsed group
         # - end of an empty group
         # - end of an open group
-        if currentGroup.kind == CellElement.COLLAPSED_GROUP:
+        if not currentGroup.nestedRefs:
+            # Empty group: replace the beginning of the group with an empty one
+            emptyGroup = EmptyGroup(groupBegin.ref, self, groupColumn, groupRow)
+            emptyGroup.groupBeginCMLRef = groupBegin.groupBeginCMLRef
+            self.cells[groupRow][groupColumn] = emptyGroup
+        elif currentGroup.kind == CellElement.COLLAPSED_GROUP:
             # Collapsed group: the end of the group is memorized in the common
             # block after ifs
             pass
-        elif currentGroup.nestedRefs:
+        else:
             # Opened group: insert a group end
             groupEnd = OpenedGroupEnd(item, self, column, vacantRow)
             groupEnd.groupBeginCMLRef = groupBegin.groupBeginCMLRef
@@ -389,11 +394,6 @@ class VirtualCanvas:
             self.cells[groupRow][groupColumn].groupEndColumn = column
 
             vacantRow += 1
-        else:
-            # Empty group: replace the beginning of the group with an empty one
-            emptyGroup = EmptyGroup(groupBegin.ref, self, groupColumn, groupRow)
-            emptyGroup.groupBeginCMLRef = groupBegin.groupBeginCMLRef
-            self.cells[groupRow][groupColumn] = emptyGroup
 
         self.cells[groupRow][groupColumn].groupEndCMLRef = groupComment
 

@@ -22,7 +22,7 @@
 
 from ui.qt import QMenu, QApplication
 from flowui.items import CellElement, IfCell
-from flowui.groupitems import OpenedGroupBegin, CollapsedGroup
+from flowui.groupitems import OpenedGroupBegin, CollapsedGroup, EmptyGroup
 from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt
 from utils.pixmapcache import getIcon
 from utils.diskvaluesrelay import addCollapsedGroup, removeCollapsedGroup
@@ -96,7 +96,7 @@ class CFSceneContextMenuMixin:
 
         closeGroupContextMenu = QMenu()
         closeGroupContextMenu.addAction(
-            getIcon(""), "Expand",
+            getIcon("expand.png"), "Expand",
             self.onGroupExpand)
         closeGroupContextMenu.addAction(
             getIcon("replacetitle.png"), "Edit title...",
@@ -105,9 +105,18 @@ class CFSceneContextMenuMixin:
             getIcon("ungroup.png"), "Ungroup",
             self.onGroupUngroup)
 
+        emptyGroupContextMenu = QMenu()
+        emptyGroupContextMenu.addAction(
+            getIcon("replacetitle.png"), "Edit title...",
+            self.onGroupEditTitle)
+        emptyGroupContextMenu.addAction(
+            getIcon("ungroup.png"), "Ungroup",
+            self.onGroupUngroup)
+
         self.individualMenus[IfCell] = ifContextMenu
         self.individualMenus[OpenedGroupBegin] = openGroupContextMenu
         self.individualMenus[CollapsedGroup] = closeGroupContextMenu
+        self.individualMenus[EmptyGroup] = emptyGroupContextMenu
         # Individual items specific menu: end
 
         # Menu for a group of selected items
@@ -166,20 +175,18 @@ class CFSceneContextMenuMixin:
         hasDocstring = self.isDocstringInSelection()
         hasMinimizedExcepts = self.isInSelected([(CellElement.EXCEPT_MINIMIZED,
                                                   None)])
-        hasOpenGroup = self.isInSelected([(CellElement.OPENED_GROUP_BEGIN,
-                                           None)])
-        hasCloseGroup = self.isInSelected([(CellElement.COLLAPSED_GROUP,
-                                            None)])
+        totalGroups = sum(self.countGroups())
         count = len(self.selectedItems())
 
         self.__ccAction.setEnabled(not hasComment and not hasMinimizedExcepts)
         self.__rtAction.setEnabled(not hasComment and
                                    not hasDocstring and
                                    not hasMinimizedExcepts and
-                                   not hasOpenGroup and
-                                   not hasCloseGroup)
+                                   totalGroups == 0)
+
+        totalCCGroups = sum(self.countGroupsWithCustomColors())
         self.__removeCCAction.setEnabled(
-            self.countItemsWithCML(CMLcc) == count)
+            self.countItemsWithCML(CMLcc) + totalCCGroups == count)
         self.__removeRTAction.setEnabled(
             self.countItemsWithCML(CMLrt) == count)
         #self.__cutAction.setEnabled(count == 1)
@@ -274,7 +281,7 @@ class CFSceneContextMenuMixin:
         # Memorize the current selection
         selection = self.serializeSelection()
 
-        dlg = ReplaceTextDialog(self.parent())
+        dlg = ReplaceTextDialog('Replace text', 'Item caption:', self.parent())
 
         # If it was one item selection and there was a previous text then
         # set it for editing
@@ -341,9 +348,34 @@ class CFSceneContextMenuMixin:
         QApplication.processEvents()
         self.parent().redrawNow()
 
-
     def onGroupEditTitle(self):
-        pass
+        """Edit (or view) the group title"""
+        if not self.__actionPrerequisites():
+            return
+
+        # Memorize the current selection
+        selection = self.serializeSelection()
+
+        dlg = ReplaceTextDialog('Group title', 'Group title:', self.parent())
+
+        # If it was one item selection and there was a previous text then
+        # set it for editing
+        if len(self.selectedItems()) == 1:
+            title = self.selectedItems()[0].getTitle()
+            if title:
+                dlg.setText(title)
+
+        if dlg.exec_():
+            newTitle = dlg.text()
+            editor = self.selectedItems()[0].getEditor()
+            with editor:
+                for item in self.sortSelectedReverse():
+                    print("Inserting into the text...")
+
+                    # editor.insertLines(line, lineNo)
+            QApplication.processEvents()
+            self.parent().redrawNow()
+            self.restoreSelectionByID(selection)
 
     def onGroupUngroup(self):
         pass
@@ -488,6 +520,40 @@ class CFSceneContextMenuMixin:
                                    cmlType) is not None:
                     count += 1
         return count
+
+    def countGroups(self):
+        """Counts empty, close and open groups"""
+        emptyCount = 0
+        closeCount = 0
+        openCount = 0
+        for item in self.selectedItems():
+            if item.kind == CellElement.EMPTY_GROUP:
+                emptyCount += 1
+            elif item.kind == CellElement.COLLAPSED_GROUP:
+                closeCount += 1
+            elif item.kind == CellElement.OPENED_GROUP_BEGIN:
+                openCount += 1
+        return emptyCount, closeCount, openCount
+
+    def countGroupsWithCustomColors(self):
+        """Counts the groups with any color defined"""
+        emptyCount = 0
+        closeCount = 0
+        openCount = 0
+        for item in self.selectedItems():
+            if item.kind in [CellElement.EMPTY_GROUP,
+                             CellElement.COLLAPSED_GROUP,
+                             CellElement.OPENED_GROUP_BEGIN]:
+                if item.groupBeginCMLRef.bgColor is not None or \
+                   item.groupBeginCMLRef.fgColor is not None or \
+                   item.groupBeginCMLRef.border is not None:
+                    if item.kind == CellElement.EMPTY_GROUP:
+                        emptyCount += 1
+                    elif item.kind == CellElement.COLLAPSED_GROUP:
+                        closeCount += 1
+                    else:
+                        openCount += 1
+        return emptyCount, closeCount, openCount
 
     def sortSelectedReverse(self):
         """Sorts the selected items in reverse order"""

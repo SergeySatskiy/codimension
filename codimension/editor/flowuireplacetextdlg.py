@@ -27,12 +27,12 @@ class ReplaceTextDialog(QDialog):
 
     """Replace text input dialog"""
 
-    def __init__(self, parent=None):
+    def __init__(self, windowTitle, labelText, parent=None):
         QDialog.__init__(self, parent)
-        self.setWindowTitle('Replace text')
-        self.__createLayout()
+        self.setWindowTitle(windowTitle)
+        self.__createLayout(labelText)
 
-    def __createLayout(self):
+    def __createLayout(self, labelText):
         """Creates the dialog layout"""
         self.resize(600, 250)
         self.setSizeGripEnabled(True)
@@ -40,7 +40,7 @@ class ReplaceTextDialog(QDialog):
         # Top level layout
         layout = QVBoxLayout(self)
  
-        layout.addWidget(QLabel('New item caption:'))
+        layout.addWidget(QLabel(labelText))
         self.__newCaption = QTextEdit()
         self.__newCaption.setAcceptRichText(False)
         layout.addWidget(self.__newCaption)
