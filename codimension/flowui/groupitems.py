@@ -266,7 +266,8 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         """Changes the highlight status of the group"""
         if self.highlight != newValue:
             self.highlight = newValue
-            self.update()
+            if not self.isSelected():
+                self.update()
 
     def getColors(self):
         """Provides the item colors"""

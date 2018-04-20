@@ -324,6 +324,10 @@ class VirtualCanvas:
 
     def __getGroups(self, item):
         """Provides a list of group begins and ends as they are in the item"""
+        if type(item) == list:
+            # this is a list of CML comments
+            return self.__checkLeadingCMLComments(item)
+
         # Only valid groups are taken into account
         if item.kind == CML_COMMENT_FRAGMENT:
             if hasattr(item, 'ref'):
@@ -420,8 +424,8 @@ class VirtualCanvas:
         return False
 
     def __handleGroups(self, item, vacantRow, column):
-        """
-        Picks all the valid group begins and ends
+        """Picks all the valid group begins and ends
+
         Decides what to do and returns True if it is a collapsed group and
         the further items need to be skipped
         """
@@ -443,7 +447,8 @@ class VirtualCanvas:
                 vacantRow = self.__onGroupEnd(item, groupComment,
                                               vacantRow, column)
 
-        if self.__groupStack:
+        # type(item) != list protects from dealing with a list of CML comments
+        if self.__groupStack and type(item) != list:
             # We are in some kind of a group
             needToAdd = True
             if item.kind == CML_COMMENT_FRAGMENT:
@@ -461,11 +466,17 @@ class VirtualCanvas:
         return False, vacantRow
 
     def layoutSuite(self, vacantRow, suite,
-                    scopeKind=None, cflow=None, column=1):
+                    scopeKind=None, cflow=None, column=1,
+                    leadingCMLComments=None):
         """Does a single suite layout"""
         if scopeKind:
             self.__currentCF = cflow
             self.__currentScopeClass = _scopeToClass[scopeKind]
+
+        skipItem = False
+        if not self.settings.noGroup and leadingCMLComments:
+            skipItem, vacantRow = self.__handleGroups(leadingCMLComments,
+                                                      vacantRow, column)
 
         for item in suite:
 
@@ -1215,7 +1226,8 @@ class VirtualCanvas:
         else:
             # walk the suite
             # no changes in the scope kind or control flow object
-            vacantRow = self.layoutSuite(vacantRow, cflow.suite)
+            vacantRow = self.layoutSuite(vacantRow, cflow.suite, None, None, 1,
+                                         cflow.leadingCMLComments)
 
         # Allocate the scope footer
         self.__allocateCell(vacantRow, 0, False)
