@@ -23,7 +23,7 @@
 from cgi import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .items import CellElement
-from .auxitems import Connector
+from .auxitems import Connector, GroupCornerControl
 from .routines import getBorderColor
 
 
@@ -245,6 +245,8 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.OPENED_GROUP_BEGIN
         self.connector = None
+        self.topLeftControl = None
+        self.highlight = False
 
         # These two items are filled when rendering is finished for all the
         # items in the group
@@ -260,6 +262,12 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def setHighlight(self, newValue):
+        """Changes the highlight status of the group"""
+        if self.highlight != newValue:
+            self.highlight = newValue
+            self.update()
+
     def getColors(self):
         """Provides the item colors"""
         return self.getGroupColors(self.canvas.settings.groupBGColor,
@@ -268,6 +276,7 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
 
     def render(self):
         """Renders the cell"""
+        self.topLeftControl = GroupCornerControl(self)
         self.width = self.canvas.settings.openGroupVSpacer * 2
         self.height = self.canvas.settings.openGroupVSpacer * 2
         self.minWidth = self.width
@@ -307,7 +316,14 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
                                        baseY + settings.openGroupVSpacer * 2)
             scene.addItem(self.connector)
 
+        # Top left corner control
+        self.topLeftControl.moveTo(baseX, baseY)
+        scene.addItem(self.topLeftControl)
+
         self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
+
+    def colors(self):
+        return self.__bgColor, self.__fgColor, self.__borderColor
 
     def paint(self, painter, option, widget):
         """Draws the collapsed group"""
@@ -324,7 +340,10 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
             painter.setPen(selectPen)
         else:
             pen = QPen(self.__borderColor)
-            pen.setStyle(Qt.DotLine)
+            if self.highlight:
+                pen.setStyle(Qt.SolidLine)
+            else:
+                pen.setStyle(Qt.DotLine)
             pen.setWidth(1)
             painter.setPen(pen)
         brush = QBrush(self.__bgColor)

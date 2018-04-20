@@ -22,9 +22,10 @@
 
 from sys import maxsize
 import os.path
+from cgi import escape
 from ui.qt import (QPen, QBrush, QPainterPath, Qt, QGraphicsSvgItem,
                    QGraphicsSimpleTextItem, QGraphicsRectItem,
-                   QGraphicsPathItem)
+                   QGraphicsPathItem, QColor, QGraphicsItem)
 
 
 class SVGItem(QGraphicsSvgItem):
@@ -304,6 +305,80 @@ class Text(QGraphicsSimpleTextItem):
     def getProxiedItem(self):
         """Provides the real item for a proxy one"""
         return None
+
+    def isComment(self):
+        """True if it is a comment"""
+        return False
+
+    def scopedItem(self):
+        """True if it is a scoped item"""
+        return False
+
+
+class GroupCornerControl(QGraphicsRectItem):
+
+    """Expanded group top left corner control"""
+
+    def __init__(self, ref):
+        QGraphicsRectItem.__init__(self)
+        self.ref = ref
+
+        settings = self.ref.canvas.settings
+        self.__width = settings.openGroupHSpacer * 2 - 1
+        self.__height = settings.openGroupVSpacer * 2 - 1
+
+        title = self.ref.getTitle()
+        if title:
+            self.setToolTip('<pre>' + escape(title) + '</pre>')
+
+        self.setAcceptHoverEvents(True)
+
+    def moveTo(self, x, y):
+        """Moves to the specified position"""
+        settings = self.ref.canvas.settings
+
+        # This is a mistery. I do not understand why I need to divide by 2.0
+        # however this works. I tried various combinations of initialization,
+        # setting the position and mapping. Nothing works but ../2.0. Sick!
+        self.setPos((float(x) + settings.openGroupHSpacer - 1) / 2.0,
+                    (float(y) + settings.openGroupVSpacer - 1) / 2.0)
+        self.setRect(self.x(), self.y(),
+                     self.__width, self.__height)
+
+    def paint(self, painter, option, widget):
+        """Paints the control"""
+        settings = self.ref.canvas.settings
+        bgColor, fgColor, borderColor = self.ref.colors()
+
+        #pen = QPen(borderColor)
+        pen = QPen(QColor(140, 179, 242))
+        #pen = QPen(QColor(0, 1, 2))
+        pen.setStyle(Qt.SolidLine)
+        pen.setWidth(1)
+        painter.setPen(pen)
+
+        #brush = QBrush(bgColor)
+        #brush = QBrush(QColor(140, 179, 242))
+        brush = QBrush(QColor(197, 217, 249))
+        painter.setBrush(brush)
+
+        painter.drawRoundedRect(self.x(), self.y(),
+                                self.__width, self.__height,
+                                1, 1)
+
+    def hoverEnterEvent(self, event):
+        self.ref.setHighlight(True)
+
+    def hoverLeaveEvent(self, event):
+        self.ref.setHighlight(False)
+
+    def isProxyItem(self):
+        """True if it is a proxy item"""
+        return True
+
+    def getProxiedItem(self):
+        """Provides the real item for a proxy one"""
+        return self.ref
 
     def isComment(self):
         """True if it is a comment"""
