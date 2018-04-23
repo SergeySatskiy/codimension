@@ -465,6 +465,25 @@ class VirtualCanvas:
         # We are not in a group now, so process the item
         return False, vacantRow
 
+    def __checkOpenGroupBefore(self, vacantRow, column):
+        """Checks if the previous row is an open group end"""
+        if vacantRow > 0:
+            for cell in self.cells[vacantRow - 1]:
+                if cell.kind == CellElement.OPENED_GROUP_END:
+                    # Need to insert a connector or a spacer
+                    if cell.isTerminal:
+                        spacerColumn = column
+                    else:
+                        spacerColumn = column + 1
+                        conn = ConnectorCell(CONN_N_S, self, column, vacantRow)
+                        self.__allocateAndSet(vacantRow, column, conn)
+                    spacer = VSpacerCell(None, self, spacerColumn, vacantRow)
+                    self.__allocateAndSet(vacantRow, spacerColumn, spacer)
+
+                    vacantRow += 1
+                    return vacantRow
+        return vacantRow
+
     def layoutSuite(self, vacantRow, suite,
                     scopeKind=None, cflow=None, column=1,
                     leadingCMLComments=None):
@@ -474,9 +493,10 @@ class VirtualCanvas:
             self.__currentScopeClass = _scopeToClass[scopeKind]
 
         skipItem = False
-        if not self.settings.noGroup and leadingCMLComments:
-            skipItem, vacantRow = self.__handleGroups(leadingCMLComments,
-                                                      vacantRow, column)
+        if not self.settings.noGroup:
+            if leadingCMLComments:
+                skipItem, vacantRow = self.__handleGroups(leadingCMLComments,
+                                                          vacantRow, column)
 
         for item in suite:
 
@@ -576,6 +596,8 @@ class VirtualCanvas:
                     continue
                 if item.kind == WHILE_FRAGMENT and self.settings.noWhile:
                     continue
+
+                vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
 
                 loopRegionBegin = vacantRow
                 if self.__needLoopCommentRow(item):
@@ -969,7 +991,7 @@ class VirtualCanvas:
             vacantRow += 1
             self.__allocateScope(cflow, CellElement.FILE_SCOPE, vacantRow, 0)
         else:
-            self.layout(cflow, CellElement.FILE_SCOPE)
+            self.layout(cflow, CellElement.FILE_SCOPE, needLeadingSpacer=True)
 
         # Second stage: shifts to accomadate open groups
         self.openGroupsAdjustments()
@@ -1174,12 +1196,17 @@ class VirtualCanvas:
             row[index].addr[0] += 1
             index += 1
 
-    def layout(self, cflow, scopeKind, rowsToAllocate=1):
+    def layout(self, cflow, scopeKind, rowsToAllocate=1,
+               needLeadingSpacer=False):
         """Does the layout"""
         self.__currentCF = cflow
         self.__currentScopeClass = _scopeToClass[scopeKind]
 
         vacantRow = 0
+        if needLeadingSpacer:
+            self.__allocateAndSet(vacantRow, 1,
+                                  VSpacerCell(None, self, 1, vacantRow))
+            vacantRow += 1
 
         # Allocate the scope header
         self.__allocateCell(vacantRow, 0, False)
@@ -1226,8 +1253,11 @@ class VirtualCanvas:
         else:
             # walk the suite
             # no changes in the scope kind or control flow object
+            leadingCMLComments = None
+            if scopeKind == CellElement.FILE_SCOPE:
+                leadingCMLComments = cflow.leadingCMLComments
             vacantRow = self.layoutSuite(vacantRow, cflow.suite, None, None, 1,
-                                         cflow.leadingCMLComments)
+                                         leadingCMLComments)
 
         # Allocate the scope footer
         self.__allocateCell(vacantRow, 0, False)
