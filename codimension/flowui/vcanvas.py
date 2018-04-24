@@ -563,6 +563,8 @@ class VirtualCanvas:
                         LeadingCommentCell(scopeItem, self, column + 1,
                                            vacantRow)
                     vacantRow += 1
+                else:
+                    vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
 
                 # Update the scope canvas parent and address
                 scopeCanvas.parent = self
@@ -574,6 +576,7 @@ class VirtualCanvas:
             if item.kind == WITH_FRAGMENT:
                 if self.settings.noWith:
                     continue
+
                 if item.leadingComment and not self.settings.noComment:
                     self.__allocateCell(vacantRow, column + 1)
                     self.cells[vacantRow][column] = \
@@ -581,6 +584,8 @@ class VirtualCanvas:
                     self.cells[vacantRow][column + 1] = \
                         LeadingCommentCell(item, self, column + 1, vacantRow)
                     vacantRow += 1
+                else:
+                    vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
 
                 self.__allocateScope(item, CellElement.WITH_SCOPE,
                                      vacantRow, column)
@@ -596,8 +601,6 @@ class VirtualCanvas:
                     continue
                 if item.kind == WHILE_FRAGMENT and self.settings.noWhile:
                     continue
-
-                vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
 
                 loopRegionBegin = vacantRow
                 if self.__needLoopCommentRow(item):
@@ -619,6 +622,9 @@ class VirtualCanvas:
                         self.dependentRegions.append((loopRegionBegin,
                                                       vacantRow + 1))
                     vacantRow += 1
+                else:
+                    vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
+
 
                 self.__allocateScope(item, targetScope, vacantRow, column)
                 if item.elsePart:
