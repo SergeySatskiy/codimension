@@ -982,22 +982,23 @@ class VirtualCanvas:
 
     def layoutModule(self, cflow):
         """Lays out a module"""
-        if cflow.leadingComment and not self.settings.noComment:
-            self.isNoScope = True
+        self.isNoScope = True
+        vacantRow = 0
 
-            vacantRow = 0
-            self.__allocateAndSet(vacantRow, 1,
-                                  VSpacerCell(None, self, 1, vacantRow))
-            vacantRow += 1
+        # Avoid glueing to the top view edge
+        self.__allocateAndSet(vacantRow, 1,
+                              VSpacerCell(None, self, 1, vacantRow))
+        vacantRow += 1
+
+        if cflow.leadingComment and not self.settings.noComment:
             self.__allocateCell(vacantRow, 2, False)
             self.cells[vacantRow][1] = ConnectorCell(CONN_N_S,
                                                      self, 1, vacantRow)
             self.cells[vacantRow][2] = LeadingCommentCell(cflow,
                                                           self, 2, vacantRow)
             vacantRow += 1
-            self.__allocateScope(cflow, CellElement.FILE_SCOPE, vacantRow, 0)
-        else:
-            self.layout(cflow, CellElement.FILE_SCOPE, needLeadingSpacer=True)
+
+        self.__allocateScope(cflow, CellElement.FILE_SCOPE, vacantRow, 0)
 
         # Second stage: shifts to accomadate open groups
         self.openGroupsAdjustments()
@@ -1202,17 +1203,12 @@ class VirtualCanvas:
             row[index].addr[0] += 1
             index += 1
 
-    def layout(self, cflow, scopeKind, rowsToAllocate=1,
-               needLeadingSpacer=False):
+    def layout(self, cflow, scopeKind, rowsToAllocate=1):
         """Does the layout"""
         self.__currentCF = cflow
         self.__currentScopeClass = _scopeToClass[scopeKind]
 
         vacantRow = 0
-        if needLeadingSpacer:
-            self.__allocateAndSet(vacantRow, 1,
-                                  VSpacerCell(None, self, 1, vacantRow))
-            vacantRow += 1
 
         # Allocate the scope header
         self.__allocateCell(vacantRow, 0, False)
