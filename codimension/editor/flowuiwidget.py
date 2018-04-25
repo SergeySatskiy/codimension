@@ -35,7 +35,8 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.fileutils import isPythonMime
 from utils.settings import Settings
-from utils.diskvaluesrelay import getFilePosition, getCollapsedGroups
+from utils.diskvaluesrelay import (getFilePosition, getCollapsedGroups,
+                                   setCollapsedGroups)
 from .flowuinavbar import ControlFlowNavigationBar
 from .flowuisceneview import CFGraphicsView
 
@@ -349,6 +350,8 @@ class FlowUIWidget(QWidget):
         self.scene().clear()
         try:
             fileName = self.__parentWidget.getFileName()
+            if not fileName:
+                fileName = self.__parentWidget.getShortName()
             collapsedGroups = getCollapsedGroups(fileName)
 
             # Top level canvas has no adress and no parent canvas
@@ -734,3 +737,21 @@ class FlowUIWidget(QWidget):
             if item:
                 self.view().scrollTo(item, True)
                 self.view().horizontalScrollBar().setValue(0)
+
+    def validateCollapsedGroups(self, fileName):
+        """Checks that there are no collapsed groups which are invalid"""
+        collapsedGroups = getCollapsedGroups(fileName)
+        toBeDeleted = []
+        for groupId in collapsedGroups:
+            for validId, start, end in self.__validGroups:
+                del start
+                del end
+                if validId == groupId:
+                    break
+            else:
+                toBeDeleted.append(groupId)
+
+        if toBeDeleted:
+            for groupId in toBeDeleted:
+                collapsedGroups.remove(groupId)
+            setCollapsedGroups(fileName, collapsedGroups)

@@ -74,7 +74,7 @@ class FlowUICollapsedGroups:
             self.__groups[fileName] = groups
             FlowUICollapsedGroups.save(self)
         else:
-            if self.__groups.pop(fileName, None):
+            if self.__groups.pop(fileName, None) is not None:
                 FlowUICollapsedGroups.save(self)
 
     def addFileGroup(self, fileName, group):

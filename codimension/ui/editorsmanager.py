@@ -1226,6 +1226,9 @@ class EditorsManager(QTabWidget):
                 # Otherwise the FS watcher will signal the changes
                 self.sigFileUpdated.emit(fileName, widget.getUUID())
             self.__mainWindow.vcsManager.setLocallyModified(fileName)
+
+            if isPythonMime(widget.getMime()):
+                widget.getCFEditor().validateCollapsedGroups(fileName)
             return True
 
         # This is the new one - call Save As
@@ -1400,6 +1403,7 @@ class EditorsManager(QTabWidget):
             if newFile:
                 setCollapsedGroups(oldShortName, None)
             setCollapsedGroups(fileName, collapsedGroups)
+            widget.getCFEditor().validateCollapsedGroups(fileName)
         return True
 
     def onSaveDiagramAs(self):
