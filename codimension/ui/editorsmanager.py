@@ -36,7 +36,8 @@ from utils.fileutils import (getFileProperties, isImageViewable,
                              isPythonMime, isPythonFile,
                              getXmlSyntaxFileByMime, isFileSearchable)
 from utils.diskvaluesrelay import (getFilePosition, updateFilePosition,
-                                   addRecentFile)
+                                   addRecentFile, getCollapsedGroups,
+                                   setCollapsedGroups)
 from utils.encoding import detectEolString
 from diagram.importsdgmgraphics import ImportDgmTabWidget
 from editor.vcsannotateviewer import VCSAnnotateViewerTabWidget
@@ -1321,9 +1322,14 @@ class EditorsManager(QTabWidget):
         dialog = self.__getSaveAsDialog('Save file as...')
 
         if widget.getFileName().lower() in ['', 'n/a']:
+            newFile = True
+            oldShortName = widget.getShortName()
+            collapsedGroups = getCollapsedGroups(oldShortName)
             dialog.setDirectory(self.__getDefaultSaveDir())
             dialog.selectFile(widget.getShortName())
         else:
+            newFile = False
+            collapsedGroups = getCollapsedGroups(widget.getFileName())
             dialog.setDirectory(os.path.dirname(widget.getFileName()))
             dialog.selectFile(os.path.basename(widget.getFileName()))
 
@@ -1388,6 +1394,12 @@ class EditorsManager(QTabWidget):
         if self.__debugMode:
             self.__createdWithinDebugSession.append(fileName)
             self.setWidgetDebugMode(widget)
+
+        # Update the collapsed groups information
+        if isPythonMime(widget.getMime()):
+            if newFile:
+                setCollapsedGroups(oldShortName, None)
+            setCollapsedGroups(fileName, collapsedGroups)
         return True
 
     def onSaveDiagramAs(self):
