@@ -24,7 +24,15 @@ It performs necessery initialization and starts the Qt main loop.
 """
 
 import sys
+import os
 import os.path
+import gc
+import traceback
+import logging
+import shutil
+import datetime
+import json
+from optparse import OptionParser
 
 # Workaround if link is used
 sys.argv[0] = os.path.realpath(__file__)
@@ -34,21 +42,17 @@ srcDir = os.path.dirname(sys.argv[0])
 if srcDir not in sys.path:
     sys.path.insert(0, srcDir)
 
-import gc
-import traceback
-import logging
-import shutil
-import datetime
-from optparse import OptionParser
 from ui.qt import QTimer, QDir, QMessageBox
 from ui.application import CodimensionApplication
 from ui.splashscreen import SplashScreen
 from utils.project import CodimensionProject
-from utils.skin import Skin
+from utils.skin import (Skin, _DEFAULT_SKIN_SETTINGS, _DEFAULT_CFLOW_SETTINGS,
+                        _DEFAULT_APP_CSS)
 from utils.config import CONFIG_DIR
 from utils.config import DEFAULT_ENCODING
 from utils.settings import Settings, SETTINGS_DIR
 from utils.globals import GlobalData
+from utils.colorfont import toJSON
 
 
 # Saving the root logging handlers
@@ -119,7 +123,7 @@ Runs codimension UI"""
     codimensionApp = CodimensionApplication(sys.argv, settings['style'])
     globalData.application = codimensionApp
 
-    logging.debug("Starting codimension v." + VER)
+    logging.debug("Starting codimension v.%s", VER)
 
     try:
         # Process command line arguments
@@ -151,18 +155,18 @@ Runs codimension UI"""
     if options.cleanStart:
         # Codimension will not load anything.
         pass
-    elif projectFile != '':
+    elif projectFile:
         splash.showMessage("Loading project...")
         globalData.project.loadProject(projectFile)
         needSignal = False
-    elif len(args) != 0:
+    elif args:
         # There are arguments and they are python files
         # The project should not be loaded but the files should
         # be opened
         for fName in args:
             mainWindow.openFile(os.path.abspath(fName), -1)
     elif settings['projectLoaded']:
-        if len(settings['recentProjects']) == 0:
+        if not settings['recentProjects']:
             # Some project was loaded but now it is not available.
             pass
         else:
@@ -252,8 +256,8 @@ def processCommandLineArgs(args):
     from utils.fileutils import (isFileOpenable, getFileProperties,
                                  isCDMProjectMime)
 
-    if len(args) == 0:
-        return ''
+    if not args:
+        return None
 
     # Check that all the files exist
     for fName in args:
@@ -268,7 +272,7 @@ def processCommandLineArgs(args):
         mime, _, _ = getFileProperties(args[0])
         if isCDMProjectMime(mime):
             return args[0]
-        return ''
+        return None
 
     # There are many files, check that they are python only
     for fName in args:
@@ -277,7 +281,7 @@ def processCommandLineArgs(args):
             raise Exception("Codimension project file (" +
                             fName + ") must not come "
                             "together with other files")
-    return ''
+    return None
 
 
 def copySkin():
@@ -285,9 +289,17 @@ def copySkin():
 
     Also tests if the configured skin is in place. Sets the default if not.
     """
+    # I cannot import it at the top because the fileutils want
+    # to use the pixmap cache which needs the application to be
+    # created, so the import is deferred
+    from utils.fileutils import saveToFile
+
     systemWideSkinsDir = srcDir + os.path.sep + "skins" + os.path.sep
     userSkinsDir = os.path.normpath(QDir.homePath()) + \
         os.path.sep + CONFIG_DIR + os.path.sep + "skins" + os.path.sep
+
+    skinFiles = ['app.css', 'skin.json', 'cflow.json']
+    platformSuffix = '.' + sys.platform.lower()
 
     for item in os.listdir(systemWideSkinsDir):
         candidate = systemWideSkinsDir + item
@@ -295,13 +307,74 @@ def copySkin():
             userCandidate = userSkinsDir + item
             if not os.path.exists(userCandidate):
                 try:
-                    shutil.copytree(candidate, userCandidate)
+                    os.makedirs(userCandidate, exist_ok=True)
+                    filesToCopy = []
+                    for fName in skinFiles:
+                        generalFile = candidate + os.path.sep + fName
+                        platformSpecificFile = generalFile + platformSuffix
+                        userFile = userCandidate + os.path.sep + fName
+                        if os.path.exists(platformSpecificFile):
+                            filesToCopy.append([platformSpecificFile,
+                                                userFile])
+                        elif os.path.exists(generalFile):
+                            filesToCopy.append([generalFile, userFile])
+                        else:
+                            raise Exception('The skin file ' + fName +
+                                            ' is not found in the '
+                                            'installation package')
+                    for srcDst in filesToCopy:
+                        shutil.copyfile(srcDst[0], srcDst[1])
                 except Exception as exc:
-                    logging.error("Could not copy system wide skin from " +
-                                  candidate + " to the user skin to " +
-                                  userCandidate +
-                                  ". Continue without copying skin.")
+                    logging.error("Could not copy system wide skin from %s to "
+                                  " the user skin to %s. "
+                                  "Continue without copying skin.",
+                                  candidate, userCandidate)
                     logging.error(str(exc))
+
+    # Deal with the default settings
+    defaultSkinDir = userSkinsDir + 'default'
+    defaultSkinDirOK = True
+    if not os.path.exists(defaultSkinDir):
+        # Create the default skin dir
+        try:
+            os.makedirs(defaultSkinDir, exist_ok=True)
+        except Exception as exc:
+            defaultSkinDirOK = False
+            logging.error('Error creating a default skin directory: %s',
+                          defaultSkinDir)
+            logging.error(str(exc))
+
+    if defaultSkinDirOK:
+        defaultCSS = defaultSkinDir + os.path.sep + 'app.css'
+        if not os.path.exists(defaultCSS):
+            try:
+                saveToFile(defaultCSS, _DEFAULT_APP_CSS)
+            except Exception as exc:
+                logging.error('Error creating default skin app.css file at %s',
+                              defaultCSS)
+                logging.error(str(exc))
+        defaultCommonSkin = defaultSkinDir + os.path.sep + 'skin.json'
+        if not os.path.exists(defaultCommonSkin):
+            try:
+                with open(defaultCommonSkin, 'w',
+                          encoding=DEFAULT_ENCODING) as diskfile:
+                    json.dump(_DEFAULT_SKIN_SETTINGS, diskfile, indent=4,
+                              default=toJSON)
+            except Exception as exc:
+                logging.error('Error creating default skin skin.json '
+                              'file at %s', defaultCommonSkin)
+                logging.error(str(exc))
+        defaultCFlowSkin  = defaultSkinDir + os.path.sep + 'cflow.json'
+        if not os.path.exists(defaultCFlowSkin):
+            try:
+                with open(defaultCFlowSkin, 'w',
+                          encoding=DEFAULT_ENCODING) as diskfile:
+                    json.dump(_DEFAULT_CFLOW_SETTINGS, diskfile, indent=4,
+                              default=toJSON)
+            except Exception as exc:
+                logging.error('Error creating default skin cflow.json '
+                              'file at %s', defaultCFlowSkin)
+                logging.error(str(exc))
 
     # Check that the configured skin is in place
     userSkinDir = userSkinsDir + Settings()['skin']
@@ -311,11 +384,11 @@ def copySkin():
 
     # Here: the configured skin is not found in the user dir.
     # Try to set the default.
-    if os.path.exists(userSkinsDir + 'default'):
-        if os.path.isdir(userSkinsDir + 'default'):
-            logging.warning("The configured skin '" + Settings()['skin'] +
-                            "' has not been found. "
-                            "Fallback to the 'default' skin.")
+    if os.path.exists(defaultSkinDir):
+        if os.path.isdir(defaultSkinDir):
+            logging.warning("The configured skin '%s' has not been found. "
+                            "Fallback to the 'default' skin.",
+                            Settings()['skin'])
             Settings()['skin'] = 'default'
             return
 
@@ -333,9 +406,9 @@ def copySkin():
         return
 
     # Here: last resort - fallback to the first found skin
-    logging.warning("The configured skin '" + Settings()['skin'] +
-                    "' has not been found. Fallback to the '" +
-                    anySkinName + "' skin.")
+    logging.warning("The configured skin '%s' has not been found. "
+                    "Fallback to the '%s' skin.",
+                    Settings()['skin'], anySkinName)
     Settings()['skin'] = anySkinName
 
 
@@ -383,7 +456,7 @@ def exceptionHook(excType, excValue, tracebackObj):
 
     # This output will be to a console if the application has not started yet
     # or to a log window otherwise.
-    logging.error('Unhandled exception is caught\n' + stackTraceString)
+    logging.error('Unhandled exception is caught\n%s', stackTraceString)
 
     # Display the message as a QT modal dialog box if the application
     # has started
@@ -414,10 +487,10 @@ def main():
     retCode = codimensionMain()
 
     # restore root logging handlers
-    if len(__rootLoggingHandlers) != 0:
+    if __rootLoggingHandlers:
         logging.root.handlers = __rootLoggingHandlers
 
-    logging.debug("Exiting codimension")
+    logging.debug('Exiting codimension')
     sys.exit(retCode)
 
 
