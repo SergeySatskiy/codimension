@@ -23,7 +23,7 @@ from sys import maxsize
 from cdmcfparser import (IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT,
                          TRY_FRAGMENT, CONTROL_FLOW_FRAGMENT, CLASS_FRAGMENT,
                          FUNCTION_FRAGMENT, CML_COMMENT_FRAGMENT)
-from utils.colorfont import buildColor
+from utils.colorfont import buildColor, cssLikeColor
 
 
 def escapeCMLTextValue(src):
@@ -162,10 +162,10 @@ class CMLcc(CMLCommentBase):
         self.validateRecordType(CMLcc.CODE)
         CMLVersion.validate(self.ref)
 
-        if "background" in self.ref.properties:
-            self.bgColor = buildColor(self.ref.properties["background"])
-        if "foreground" in self.ref.properties:
-            self.fgColor = buildColor(self.ref.properties["foreground"])
+        if "bg" in self.ref.properties:
+            self.bgColor = buildColor(self.ref.properties["bg"])
+        if "fg" in self.ref.properties:
+            self.fgColor = buildColor(self.ref.properties["fg"])
         if "border" in self.ref.properties:
             self.border = buildColor(self.ref.properties["border"])
 
@@ -184,40 +184,21 @@ class CMLcc(CMLCommentBase):
                "' comment is used for custom colors of most of " \
                "the graphics items.\n" \
                "Supported properties:\n" \
-               "- 'background': background color for the item\n" \
-               "- 'foreground': foreground color for the item\n" \
-               "- 'border': border color for the item\n" \
-               "Color spec formats:\n" \
-               "- '#hhhhhh': hexadecimal RGB\n" \
-               "- '#hhhhhhhh': hexadecimal RGB + alpha\n" \
-               "- 'ddd,ddd,ddd': decimal RGB\n" \
-               "- 'ddd,ddd,ddd,ddd': decimal RGB + alpha\n\n" \
+               "- color properties as described in the common section\n\n" \
                "Example:\n" \
                "# cml 1 " + CMLcc.CODE + \
-               " background=#f6f4e4 foreground=#000000 border=#ffffff"
+               " bg=#f6f4e4 fg=#000 border=#fff"
 
     @staticmethod
     def generate(background, foreground, border, pos=1):
         """Generates a complete line to be inserted"""
         res = " " * (pos - 1) + "# cml 1 cc"
         if background is not None:
-            bgColor = background.name()
-            bgalpha = background.alpha()
-            if bgalpha != 255:
-                bgColor += hex(bgalpha)[2:]
-            res += " background=" + bgColor
+            res += " bg=" + cssLikeColor(background)
         if foreground is not None:
-            fgColor = foreground.name()
-            fgalpha = foreground.alpha()
-            if fgalpha != 255:
-                fgColor += hex(fgalpha)[2:]
-            res += " foreground=" + fgColor
+            res += " fg=" + cssLikeColor(foreground)
         if border is not None:
-            brd = border.name()
-            brdalpha = border.alpha()
-            if brdalpha != 255:
-                brd += hex(brdalpha)[2:]
-            res += " border=" + brd
+            res += " border=" + cssLikeColor(border)
         return res
 
 
@@ -294,10 +275,10 @@ class CMLgb(CMLCommentBase):
             self.title = self.ref.properties['title']
         if 'id' in self.ref.properties:
             self.id = self.ref.properties['id'].strip()
-        if "background" in self.ref.properties:
-            self.bgColor = buildColor(self.ref.properties["background"])
-        if "foreground" in self.ref.properties:
-            self.fgColor = buildColor(self.ref.properties["foreground"])
+        if "bg" in self.ref.properties:
+            self.bgColor = buildColor(self.ref.properties["bg"])
+        if "fg" in self.ref.properties:
+            self.fgColor = buildColor(self.ref.properties["fg"])
         if "border" in self.ref.properties:
             self.border = buildColor(self.ref.properties["border"])
 
@@ -318,14 +299,7 @@ class CMLgb(CMLCommentBase):
                "Supported properties:\n" \
                "- 'title': title to be shown when the group is collapsed\n" \
                "- 'id': unique identifier of the visual group\n" \
-               "- 'background': background color for the item\n" \
-               "- 'foreground': foreground color for the item\n" \
-               "- 'border': border color for the item\n" \
-               "Color spec formats:\n" \
-               "- '#hhhhhh': hexadecimal RGB\n" \
-               "- '#hhhhhhhh': hexadecimal RGB + alpha\n" \
-               "- 'ddd,ddd,ddd': decimal RGB\n" \
-               "- 'ddd,ddd,ddd,ddd': decimal RGB + alpha\n\n" \
+               "- color properties as described in the common section\n\n" \
                "Example:\n" \
                "# cml 1 " + CMLgb.CODE + " id=\"1234-5678-444444\" " \
                "title=\"MD5 calculation\""
@@ -344,23 +318,11 @@ class CMLgb(CMLCommentBase):
             else:
                 res += ' title=' + escapeCMLTextValue(title)
         if background is not None:
-            bgColor = background.name()
-            bgalpha = background.alpha()
-            if bgalpha != 255:
-                bgColor += hex(bgalpha)[2:]
-            res += ' background=' + bgColor
+            res += ' bg=' + cssLikeColor(background)
         if foreground is not None:
-            fgColor = foreground.name()
-            fgalpha = foreground.alpha()
-            if fgalpha != 255:
-                fgColor += hex(fgalpha)[2:]
-            res += ' foreground=' + fgColor
+            res += ' fg=' + cssLikeColor(foreground)
         if border is not None:
-            brd = border.name()
-            brdalpha = border.alpha()
-            if brdalpha != 255:
-                brd += hex(brdalpha)[2:]
-            res += ' border=' + brd
+            res += ' border=' + cssLikeColor(border)
         return res
 
     def getTitle(self):
@@ -689,3 +651,19 @@ class CMLVersion:
             if comments[0].parts:
                 return comments[0].parts[0].beginLine
         return line
+
+    @staticmethod
+    def description():
+        """Provides the common parameters for various CML comments"""
+        return "Color properties supported by the '" + CMLcc.CODE + \
+               "' and the '" + CMLgb.CODE + "' comments:\n" \
+               "- 'bg': background color for the item\n" \
+               "- 'fg': foreground color for the item\n" \
+               "- 'border': border color for the item\n" \
+               "Color spec formats:\n" \
+               "- '#hhh': hexadecimal RGB\n" \
+               "- '#hhhh': hexadecimal RGBA\n" \
+               "- '#hhhhhh': hexadecimal RRGGBB\n" \
+               "- '#hhhhhhhh': hexadecimal RRGGBBAA\n" \
+               "- 'ddd,ddd,ddd': decimal RGB\n" \
+               "- 'ddd,ddd,ddd,ddd': decimal RGBA"
