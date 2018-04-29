@@ -287,7 +287,10 @@ class QuickHelpWidget(TextTabWidget):
         cmlCodes = list(CMLVersion.COMMENT_TYPES.keys())
         cmlCodes.sort()
 
-        rows = []
+        rows = ['<tr><td width="15%" bgcolor="#E9E9F3"></td>'
+                '<td width="85%" bgcolor="#F6F4E4">' +
+                CMLVersion.description().replace('\n', '<br/>') +
+                '</td></tr>']
         for code in cmlCodes:
             descr = CMLVersion.COMMENT_TYPES[code].description()
             descr = descr.replace("\n", "<br/>")
