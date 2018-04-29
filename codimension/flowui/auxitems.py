@@ -346,12 +346,12 @@ class GroupCornerControl(QGraphicsRectItem):
         """Paints the control"""
         settings = self.ref.canvas.settings
 
-        pen = QPen(QColor(140, 179, 242))
+        pen = QPen(settings.groupControlBorderColor)
         pen.setStyle(Qt.SolidLine)
         pen.setWidth(1)
         painter.setPen(pen)
 
-        brush = QBrush(QColor(197, 217, 249))
+        brush = QBrush(settings.groupControlBGColor)
         painter.setBrush(brush)
 
         painter.drawRoundedRect(self.x(), self.y(),
@@ -415,7 +415,7 @@ class GroupTitlePopup(QFrame):
         self.__titleLabel = QLabel()
         self.__titleLabel.setAutoFillBackground(True)
         self.__titleLabel.setFrameShape(QFrame.StyledPanel)
-        self.__titleLabel.setStyleSheet('padding: 3px')
+        self.__titleLabel.setStyleSheet('padding: 2px')
         verticalLayout.addWidget(self.__titleLabel)
 
     def setTitleForGroup(self, group):
