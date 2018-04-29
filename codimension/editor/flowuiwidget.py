@@ -740,6 +740,9 @@ class FlowUIWidget(QWidget):
 
     def validateCollapsedGroups(self, fileName):
         """Checks that there are no collapsed groups which are invalid"""
+        if self.__navBar.getCurrentState() != self.__navBar.STATE_OK_UTD:
+            return
+
         collapsedGroups = getCollapsedGroups(fileName)
         toBeDeleted = []
         for groupId in collapsedGroups:
