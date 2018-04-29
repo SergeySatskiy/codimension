@@ -22,6 +22,8 @@
 from setuptools import setup
 import os.path
 import sys
+import io
+
 
 def getVersion():
     """The version is coming from a file in the source tree"""
@@ -50,21 +52,9 @@ def getDescription():
 
 def getLongDescription():
     """Provides the long description"""
-    try:
-        import pypandoc
-        converted = pypandoc.convert('README.md', 'rst').splitlines()
-        no_travis = [line for line in converted if 'travis-ci.org' not in line]
-        long_description = '\n'.join(no_travis)
-
-        # Pypi index does not like this link
-        long_description = long_description.replace('|Build Status|', '')
-    except:
-        print('pypandoc package is not installed: the markdown '
-              'README.md convertion to rst failed', file=sys.stderr)
-        import io
-        # pandoc is not installed, fallback to using raw contents
-        with io.open('README.md', encoding='utf-8') as f:
-            long_description = f.read()
+    # pandoc is not installed, fallback to using raw contents
+    with io.open('README.md', encoding='utf-8') as f:
+        long_description = f.read()
     return long_description
 
 
@@ -136,6 +126,7 @@ setup(name='codimension',
       description=getDescription(),
       python_requires='>=3.5',
       long_description=getLongDescription(),
+      long_description_content_type='text/markdown',
       version=getVersion(),
       author='Sergey Satskiy',
       author_email='sergey.satskiy@gmail.com',
