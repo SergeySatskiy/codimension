@@ -39,31 +39,42 @@ def checkColorRange(value):
 
 
 def buildColor(color):
-    """Four options are supported:
+    """Six options are supported:
 
-    #hhhhhh             hexadecimal rgb
-    #hhhhhhhh           hexadecimal rgb and alpha
+    #hhh                hexadecimal rgb
+    #hhhh               hexadecimal rgba
+    #hhhhhh             hexadecimal rrggbb
+    #hhhhhhhh           hexadecimal rrggbbaa
     ddd,ddd,ddd         decimal rgb
-    ddd,ddd,ddd,ddd     decimal rgb and alpha
+    ddd,ddd,ddd,ddd     decimal rgba
     """
     if color.startswith('#'):
+        def normalizeLength(spec):
+            if len(spec) in [6, 8]:
+                return spec
+            normalized = ''
+            for character in spec:
+                normalized += 2 * character
+            return normalized
+
         color = color[1:]
         length = len(color)
-        if length not in [6, 8]:
+        if length not in [3, 4, 6, 8]:
             raise Exception("Invalid hexadecimal color format: #" + color)
 
         try:
             # The most common case
-            red = int(color[0:2], 16)
+            normColor = normalizeLength(color)
+            red = int(normColor[0:2], 16)
             checkColorRange(red)
-            green = int(color[2:4], 16)
+            green = int(normColor[2:4], 16)
             checkColorRange(green)
-            blue = int(color[4:6], 16)
+            blue = int(normColor[4:6], 16)
             checkColorRange(blue)
 
-            if length == 6:
+            if length in [3, 6]:
                 return QColor(red, green, blue)
-            alpha = int(color[6:8], 16)
+            alpha = int(normColor[6:8], 16)
             checkColorRange(alpha)
             return QColor(red, green, blue, alpha)
         except:
@@ -89,6 +100,32 @@ def buildColor(color):
         return QColor(red, green, blue, alpha)
     except:
         raise Exception("Invalid decimal color format: " + color)
+
+
+def cssLikeColor(color):
+    """Converts to a css like string, possibly shortened"""
+    asStr = color.name()
+    alpha = color.alpha()
+    if alpha != 255:
+        hexAlpha = hex(bgalpha)[2:]
+        if len(hexAlpha) == 1:
+            asStr += 2 * hexAlpha
+        else:
+            asStr += hexAlpha
+
+    # Shorten it if possible
+    if len(asStr) == 7:
+        # '#rgb'
+        if asStr[1] == asStr[2] and asStr[3] == asStr[4] and \
+           asStr[5] == asStr[6]:
+            return '#' + asStr[1] + asStr[3] + asStr[5]
+        return asStr
+
+    # '#rgba'
+    if asStr[1] == asStr[2] and asStr[3] == asStr[4] and \
+       asStr[5] == asStr[6] and asStr[7] == asStr[8]:
+        return '#' + asStr[1] + asStr[3] + asStr[5] + asStr[7]
+    return asStr
 
 
 def colorAsString(color, hexadecimal=False):
