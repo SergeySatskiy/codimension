@@ -31,6 +31,8 @@ from .fileutils import saveToFile, getFileContent
 from .config import DEFAULT_ENCODING
 
 
+isMac = sys.platform.lower() == 'darwin'
+
 _DEFAULT_SKIN_SETTINGS = {
     'name': 'default',
     'marginPaper': QColor(228, 228, 228, 255),
@@ -50,7 +52,8 @@ _DEFAULT_SKIN_SETTINGS = {
     'revisionMarginPaper': QColor(228, 228, 228, 255),
     'revisionMarginColor': QColor(0, 128, 0, 255),
     'revisionAlterPaper': QColor(238, 240, 241, 255),
-    'lineNumFont': buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
+    'lineNumFont': buildFont('Courier,12,-1,5,50,0,0,0,0,0') if isMac else
+                   buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
     'searchMarkColor': QColor(0, 255, 0, 255),
     'searchMarkPaper': QColor(255, 0, 255, 255),
     'matchMarkColor': QColor(0, 0, 255, 255),
@@ -58,7 +61,8 @@ _DEFAULT_SKIN_SETTINGS = {
     'spellingMarkColor': QColor(139, 0, 0, 255),
     'nolexerPaper': QColor(255, 255, 255, 255),
     'nolexerColor': QColor(0, 0, 0, 255),
-    'monoFont': buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
+    'monoFont': buildFont('Courier,12,-1,5,50,0,0,0,0,0') if isMac else
+                buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
     'currentLinePaper': QColor(232, 232, 255, 255),
     'edgeColor': QColor(127, 127, 127, 128),
     'matchedBracePaper': QColor(132, 117, 245, 255),
@@ -127,8 +131,10 @@ QListView
 
 _DEFAULT_CFLOW_SETTINGS = {
     'debug': False,
-    'cfMonoFont':  buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
-    'badgeFont': buildFont('Monospace,9,-1,5,50,0,0,0,0,0'),
+    'cfMonoFont': buildFont('Courier,12,-1,5,50,0,0,0,0,0') if isMac else
+                  buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
+    'badgeFont': buildFont('Courier,9,-1,5,50,0,0,0,0,0') if isMac else
+                 buildFont('Monospace,9,-1,5,50,0,0,0,0,0'),
 
     'hCellPadding': 8,      # in pixels (left and right)
     'vCellPadding': 8,      # in pixels (top and bottom)
@@ -208,7 +214,9 @@ _DEFAULT_CFLOW_SETTINGS = {
     'openGroupHSpacer': 3,
     'groupBGColor': QColor(228, 255, 186, 255),
     'groupFGColor': QColor(0, 0, 0, 255),
-    'groupBorderColor': QColor(0, 0, 0, 255)}
+    'groupBorderColor': QColor(0, 0, 0, 255),
+    'groupControlBGColor': QColor(197, 217, 249),
+    'groupControlBorderColor': QColor(140, 179, 242)}
 
 
 
