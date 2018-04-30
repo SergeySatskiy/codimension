@@ -81,9 +81,12 @@ def getPackageData():
     """Provides the data files"""
     extensions = ['.png', '.svg', '.svgz', '.json', '.css']
     package_data = [('codimension.pixmaps',
-                     'codimension/pixmaps/'),
-                    ('codimension.skins.default',
-                     'codimension/skins/default/')]
+                     'codimension/pixmaps/')]
+
+    # If a skin needs to be added, then the following item should be also
+    # appended:
+    # package_data.append(('codimension.skins.myskin',
+    #                      'codimension/skins/myskin/'))
 
     result = {}
     for item in package_data:
@@ -116,7 +119,9 @@ def getPackages():
             'codimension.plugins.manager',
             'codimension.plugins.vcssupport',
             'codimension.pixmaps',
-            'codimension.skins', 'codimension.skins.default']
+            'codimension.skins']
+    # If a myskin skin is to be added as well, then one more package should
+    # be mentioned: ..., 'codimension.skins.myskin']
 
 
 # install_requires=['pypandoc'] could be added but really it needs to only
