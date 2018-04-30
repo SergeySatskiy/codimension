@@ -29,48 +29,47 @@ chmod 600 ~/.pypirc
 1. Update ChangeLog
 2. Make sure git clone is clean
 3. Edit `codimension/cdmverspec.py` setting the new version
-4. Make sure pandoc is installed as well as pypandoc
-5. Run
+4. Run
 ```shell
 python setup.py sdist
 ```
-6. Make sure that `tar.gz` in the `dist` directory has all the required files
-7. Upload to pypitest
+5. Make sure that `tar.gz` in the `dist` directory has all the required files
+6. Upload to pypitest
 ```shell
 python setup.py sdist upload -r pypitest
 ```
-8. Make sure it looks all right at [pypitest](https://testpypi.python.org/pypi)
-9. Install it from pypitest
+7. Make sure it looks all right at [pypitest](https://testpypi.python.org/pypi)
+8. Install it from pypitest
 ```shell
 pip install --index-url https://test.pypi.org/simple/ codimension
 ```
-10. Check the installed version
+9. Check the installed version
 ```shell
 codimension &
 ```
-11. Uninstall the pypitest version
+10. Uninstall the pypitest version
 ```shell
 pip uninstall codimension
 ```
-12. Upload to pypy
+11. Upload to pypy
 ```shell
 python setup.py sdist upload
 ```
-13. Make sure it looks all right at [pypi](https://pypi.python.org/pypi)
-14. Install it from pypi
+12. Make sure it looks all right at [pypi](https://pypi.python.org/pypi)
+13. Install it from pypi
 ```shell
 pip install codimension
 ```
-15. Check the installed version
+14. Check the installed version
 ```shell
 codimension &
 ```
-16. Create an annotated tag
+15. Create an annotated tag
 ```shell
 git tag -a 4.0.0 -m "Release 4.0.0"
 git push --tags
 ```
-17. Publish the release on github at [releases](https://github.com/SergeySatskiy/codimension/releases)
+16. Publish the release on github at [releases](https://github.com/SergeySatskiy/codimension/releases)
 
 
 ## Development
