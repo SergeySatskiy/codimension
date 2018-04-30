@@ -19,10 +19,10 @@
 
 """Setup script for the Codimension IDE"""
 
-from setuptools import setup
 import os.path
 import sys
 import io
+from setuptools import setup
 
 
 def getVersion():
@@ -52,9 +52,22 @@ def getDescription():
 
 def getLongDescription():
     """Provides the long description"""
-    # pandoc is not installed, fallback to using raw contents
-    with io.open('README.md', encoding='utf-8') as f:
-        long_description = f.read()
+    try:
+        import pypandoc
+        converted = pypandoc.convert('README.md', 'rst').splitlines()
+        no_travis = [line for line in converted if 'travis-ci.org' not in line]
+        long_description = '\n'.join(no_travis)
+
+        # Pypi index does not like this link
+        long_description = long_description.replace('|Build Status|', '')
+    except:
+        print('pypandoc package is not installed: the markdown '
+              'README.md convertion to rst failed', file=sys.stderr)
+
+
+        # pandoc is not installed, fallback to using raw contents
+        with io.open('README.md', encoding='utf-8') as f:
+            long_description = f.read()
     return long_description
 
 
@@ -131,18 +144,18 @@ setup(name='codimension',
       description=getDescription(),
       python_requires='>=3.5',
       long_description=getLongDescription(),
-      long_description_content_type='text/markdown',
+      # long_description_content_type does not really work so far
+      # long_description_content_type='text/markdown',
       version=getVersion(),
       author='Sergey Satskiy',
       author_email='sergey.satskiy@gmail.com',
       url='https://github.com/SergeySatskiy/codimension',
       license='GPLv3',
-      classifiers=[
-           'Development Status :: 5 - Production/Stable',
-           'Intended Audience :: Developers',
-           'License :: OSI Approved :: GNU General Public License (GPL)',
-           'Operating System :: POSIX :: Linux',
-           'Programming Language :: Python :: 3'],
+      classifiers=['Development Status :: 5 - Production/Stable',
+                   'Intended Audience :: Developers',
+                   'License :: OSI Approved :: GNU General Public License (GPL)',
+                   'Operating System :: POSIX :: Linux',
+                   'Programming Language :: Python :: 3'],
       platforms=['any'],
       packages=getPackages(),
       package_data=getPackageData(),
