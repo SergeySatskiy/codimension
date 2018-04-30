@@ -229,7 +229,6 @@ class VirtualCanvas:
 
     def __isCollapsedGroupTerminal(self, group):
         """Tells if the collapsed group has the last item terminal"""
-        print("Last item code: " + str(group.nestedRefs[-1].CODE))
         if group.nestedRefs[-1].CODE in [BREAK_FRAGMENT,
                                          CONTINUE_FRAGMENT,
                                          RETURN_FRAGMENT,
