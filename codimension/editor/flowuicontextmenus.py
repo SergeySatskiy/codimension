@@ -22,6 +22,7 @@
 
 from ui.qt import QMenu, QApplication
 from flowui.items import CellElement, IfCell
+from flowui.scopeitems import ScopeCellElement
 from flowui.groupitems import OpenedGroupBegin, CollapsedGroup, EmptyGroup
 from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt
 from utils.pixmapcache import getIcon
@@ -59,6 +60,9 @@ class CFSceneContextMenuMixin:
         self.__rtAction = self.commonMenu.addAction(
             getIcon("replacetitle.png"), "Replace text...",
             self.onReplaceText)
+        self.__groupAction = self.commonMenu.addAction(
+            getIcon("cfgroup.png"), "Group...",
+            self.onGroup)
         self.commonMenu.addSeparator()
         self.__removeCCAction = self.commonMenu.addAction(
             getIcon('trash.png'), 'Remove custom colors',
@@ -121,9 +125,6 @@ class CFSceneContextMenuMixin:
 
         # Menu for a group of selected items
         self.groupMenu = QMenu()
-        self.__groupAction = self.groupMenu.addAction(
-            getIcon("cfgroup.png"), "Group...",
-            self.onGroup)
 
     def onContextMenu(self, event):
         """Triggered when a context menu should be shown"""
@@ -161,12 +162,12 @@ class CFSceneContextMenuMixin:
                 self.menu.addActions(individualPart.actions())
                 self.menu.addSeparator()
         self.menu.addActions(self.commonMenu.actions())
-        self.menu.addSeparator()
-        self.menu.addActions(self.groupMenu.actions())
+        if not self.groupMenu.isEmpty():
+            self.menu.addSeparator()
+            self.menu.addActions(self.groupMenu.actions())
 
         # Note: if certain items need to be disabled then it should be done
         #       here
-        self.__groupAction.setEnabled(False)
         self.__disableMenuItems()
 
     def __disableMenuItems(self):
@@ -189,6 +190,7 @@ class CFSceneContextMenuMixin:
             self.countItemsWithCML(CMLcc) + totalCCGroups == count)
         self.__removeRTAction.setEnabled(
             self.countItemsWithCML(CMLrt) == count)
+        self.__groupAction.setEnabled(self.__canBeGrouped())
         #self.__cutAction.setEnabled(count == 1)
         #self.__copyAction.setEnabled(count == 1)
 
@@ -594,3 +596,43 @@ class CFSceneContextMenuMixin:
             else:
                 result.append(item)
         return result
+
+    def __canBeGrouped(self):
+        """True if the selected items can be grouped"""
+        if self.__areAllSelectedComments():
+            return False
+        if self.__areScopeDocstringOrCommentSelected():
+            return False
+
+        # Extend the selection with all the selected items comments
+        selected = self.__extendSelectionForGrouping()
+
+        return False
+
+    def __areAllSelectedComments(self):
+        """True if all selected items are comments"""
+        for item in self.selectedItems():
+            if not item.isComment():
+                return False
+        return True
+
+    def __areScopeDocstringOrCommentSelected(self):
+        for item in self.selectedItems():
+            if item.scopedItem():
+                if item.subKind in [ScopeCellElement.SIDE_COMMENT,
+                                    ScopeCellElement.DOCSTRING]:
+                    return True
+        return False
+
+    def __extendSelectionForGrouping(self):
+        """Extends the selection with the leading and side comments"""
+        boundComments = []
+        selected = self.selectedItems()
+        for item in selected:
+            if not item.isComment() and not self.isOpenGroupItem(item):
+                for relatedItem in self.findItemsForRef(item.ref):
+                    if relatedItem not in selected:
+                        boundComments.append(relatedItem)
+        return selected + boundComments
+
+
