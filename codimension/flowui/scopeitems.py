@@ -60,6 +60,11 @@ class ScopeCellElement(CellElement):
         self.__fgColor = None
         self.__borderColor = None
 
+        # Will be initialized only for the TOP_LEFT item of the
+        # ELSE_SCOPE, EXCEPT_SCOPE and FINALLY_SCOPE
+        # It points to TRY, FOR and WHILE approprietely
+        self.leaderRef = None
+
     def getDocstringText(self):
         """Provides the docstring text"""
         if self.docstringText is None:

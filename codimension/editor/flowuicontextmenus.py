@@ -655,12 +655,14 @@ class CFSceneContextMenuMixin:
     def __areIncompleteScopeSelected(self):
         """True if an incomplete scope selected"""
         for item in self.selectedItems():
-            if item.kind in [CellElement.TRY_SCOPE,
-                             CellElement.FOR_SCOPE,
-                             CellElement.WHILE_SCOPE,
-                             CellElement.ELSE_SCOPE,
-                             CellElement.EXCEPT_SCOPE,
-                             CellElement.FINALLY_SCOPE]:
+            if item.kind in [CellElement.FOR_SCOPE,
+                             CellElement.WHILE_SCOPE]:
+                pass
+            elif item.kind in [CellElement.TRY_SCOPE]:
+                pass
+            elif item.kind in [CellElement.ELSE_SCOPE,
+                               CellElement.EXCEPT_SCOPE,
+                               CellElement.FINALLY_SCOPE]:
                 pass
 
     def __extendSelectionForGrouping(self):

@@ -629,6 +629,7 @@ class VirtualCanvas:
                 if item.elsePart:
                     self.__allocateScope(item.elsePart, CellElement.ELSE_SCOPE,
                                          vacantRow, column + 1)
+                    self.cells[vacantRow][column + 1].setLeaderRef(item)
                 vacantRow += 1
                 continue
 
@@ -686,6 +687,7 @@ class VirtualCanvas:
                         self.__allocateScope(exceptPart,
                                              CellElement.EXCEPT_SCOPE,
                                              vacantRow, nextColumn)
+                        self.cells[vacantRow][nextColumn].setLeaderRef(item)
                         nextColumn += 1
                 # The else part goes below
                 if item.elsePart:
@@ -695,6 +697,7 @@ class VirtualCanvas:
                                                               column)
                     self.__allocateScope(item.elsePart, CellElement.ELSE_SCOPE,
                                          vacantRow, column)
+                    self.cells[vacantRow][column].setLeaderRef(item)
                 # The finally part is located below
                 if item.finallyPart:
                     vacantRow += 1
@@ -703,6 +706,7 @@ class VirtualCanvas:
                     self.__allocateScope(
                         item.finallyPart, CellElement.FINALLY_SCOPE,
                         vacantRow, column)
+                    self.cells[vacantRow][column].setLeaderRef(item)
                 vacantRow += 1
                 continue
 
@@ -978,6 +982,16 @@ class VirtualCanvas:
                                   self, 0, vacantRow))
 
         self.dependentRegions.append((0, vacantRow))
+
+    def setLeaderRef(self, ref):
+        """Sets the leader ref for ELSE, EXCEPT and FINALLY scopes"""
+        if self.cells[0][0].kind in [CellElement.ELSE_SCOPE,
+                                     CellElement.EXCEPT_SCOPE,
+                                     CellElement.FINALLY_SCOPE]:
+            if self.cells[0][0].subKind == ScopeCellElement.TOP_LEFT:
+                self.cells[0][0].leaderRef = ref
+                return
+        raise Exception("Logic error: cannot set the leader reference")
 
     def layoutModule(self, cflow):
         """Lays out a module"""
