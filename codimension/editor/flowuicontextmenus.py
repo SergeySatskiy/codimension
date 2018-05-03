@@ -600,14 +600,35 @@ class CFSceneContextMenuMixin:
     def __canBeGrouped(self):
         """True if the selected items can be grouped"""
         if self.__areAllSelectedComments():
+            print("Refused: all are comments")
             return False
         if self.__areScopeDocstringOrCommentSelected():
+            print("Refused: docstrings or scope comments")
+            return False
+        if self.__isModuleSelected():
+            print("Refused: module selected")
             return False
 
         # Extend the selection with all the selected items comments
         selected = self.__extendSelectionForGrouping()
 
-        return False
+        if self.__areLoneCommentsSelected(selected):
+            print("Refused: comments without a main item")
+            return False
+
+        if self.__areIncompleteScopeSelected():
+            print("Refused: incomplete scopes selected")
+            return False
+
+        scopeCoveredRegions = self.__getSelectedScopeRegions(selected)
+        print("Covered regions: " + repr(scopeCoveredRegions))
+
+        
+
+
+
+        print("Allowed")
+        return True
 
     def __areAllSelectedComments(self):
         """True if all selected items are comments"""
@@ -624,6 +645,24 @@ class CFSceneContextMenuMixin:
                     return True
         return False
 
+    def __isModuleSelected(self):
+        """True if the whole module is selected"""
+        for item in self.selectedItems():
+            if item.kind == CellElement.FILE_SCOPE:
+                return True
+        return False
+
+    def __areIncompleteScopeSelected(self):
+        """True if an incomplete scope selected"""
+        for item in self.selectedItems():
+            if item.kind in [CellElement.TRY_SCOPE,
+                             CellElement.FOR_SCOPE,
+                             CellElement.WHILE_SCOPE,
+                             CellElement.ELSE_SCOPE,
+                             CellElement.EXCEPT_SCOPE,
+                             CellElement.FINALLY_SCOPE]:
+                pass
+
     def __extendSelectionForGrouping(self):
         """Extends the selection with the leading and side comments"""
         boundComments = []
@@ -635,4 +674,27 @@ class CFSceneContextMenuMixin:
                         boundComments.append(relatedItem)
         return selected + boundComments
 
+    def __areLoneCommentsSelected(self, selection):
+        """True if there are comments selected which have no main item selected"""
+        for item in selection:
+            if item.isComment():
+                if item.kind in [CellElement.SIDE_COMMENT,
+                                 CellElement.LEADING_COMMENT,
+                                 CellElement.ABOVE_COMMENT]:
+                    for relatedItem in self.findItemsForRef(item.ref):
+                        if relatedItem not in selected:
+                            return True
+        return False
 
+    def __getSelectedScopeRegions(self, selected):
+        """Provides the regions of the selected scope items"""
+        coveredRegions = []
+        for item in selected:
+            if item.scopedItem():
+                if item.subKind in [ScopeCellElement.TOP_LEFT]:
+                    if item.ref.leadingComment:
+                        coveredRegions.append((item.ref.leadingComment.begin,
+                                               item.ref.end))
+                    else:
+                        coveredRegions.append((item.ref.begin, item.ref.end))
+        return coveredRegions
