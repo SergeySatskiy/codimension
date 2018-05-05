@@ -27,6 +27,7 @@ from flowui.groupitems import OpenedGroupBegin, CollapsedGroup, EmptyGroup
 from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt
 from utils.pixmapcache import getIcon
 from utils.diskvaluesrelay import addCollapsedGroup, removeCollapsedGroup
+from utils.settings import Settings
 from .flowuireplacetextdlg import ReplaceTextDialog
 from .customcolordlg import CustomColorsDialog
 
@@ -597,8 +598,28 @@ class CFSceneContextMenuMixin:
                 result.append(item)
         return result
 
+    def sortSelected(self, selected):
+        """Sorts the selected items in direct order"""
+        result = []
+        for item in selected:
+            itemBegin = item.getAbsPosRange()[0]
+            for index in range(len(result)):
+                if itemBegin < result[index].getAbsPosRange()[0]:
+                    result.insert(index, item)
+                    break
+            else:
+                result.append(item)
+        return result
+
     def __canBeGrouped(self):
         """True if the selected items can be grouped"""
+        # Cannot import it at the top...
+        from .flowuiwidget import SMART_ZOOM_ALL, SMART_ZOOM_NO_CONTENT
+
+        if Settings()['smartZoom'] not in [SMART_ZOOM_ALL,
+                                           SMART_ZOOM_NO_CONTENT]:
+            print("Refused: smart zoom level")
+            return False
         if self.__areAllSelectedComments():
             print("Refused: all are comments")
             return False
@@ -616,16 +637,32 @@ class CFSceneContextMenuMixin:
             print("Refused: comments without a main item")
             return False
 
-        if self.__areIncompleteScopeSelected():
+        if self.__areIncompleteScopeSelected(selected):
             print("Refused: incomplete scopes selected")
             return False
 
         scopeCoveredRegions = self.__getSelectedScopeRegions(selected)
         print("Covered regions: " + repr(scopeCoveredRegions))
 
-        
+        # The __areIfFullySelected() also updates the regions with
+        # fully selected if regions
+        if not self.__areIfFullySelected(selected, scopeCoveredRegions):
+            print("Refused: If is not fully selected")
+            return False
 
+        selected = self.sortSelected(selected)
+        begin = selected[0].getAbsPosRange()[0]
+        end = selected[-1].getAbsPosRange()[1]
+        print("Selection pos range: " + str(begin) + "-" + str(end))
 
+        if not self.__isSelectionContinuous(selected, scopeCoveredRegions,
+                                            begin, end):
+            print("Refused: Selection is not continuous")
+            return False
+
+        if self.__moreThanOneIfBranchSelected(selected, scopeCoveredRegions):
+            print("Refused: items from different if branches are selected")
+            return False
 
         print("Allowed")
         return True
@@ -652,18 +689,51 @@ class CFSceneContextMenuMixin:
                 return True
         return False
 
-    def __areIncompleteScopeSelected(self):
+    def __areIncompleteScopeSelected(self, selected):
         """True if an incomplete scope selected"""
-        for item in self.selectedItems():
+        for item in selected:
             if item.kind in [CellElement.FOR_SCOPE,
                              CellElement.WHILE_SCOPE]:
-                pass
+                if item.ref.elsePart:
+                    for relatedItem in self.findItemsForRef(item.ref.elsePart):
+                        if relatedItem not in selected:
+                            return True
             elif item.kind in [CellElement.TRY_SCOPE]:
-                pass
+                # It could be that the exception blocks are hidden, so there
+                # will be exactly one more item instead of many and that item
+                # will have a ref which matches the try scope.
+                exceptPartCount = 0
+                for exceptPart in item.ref.exceptParts:
+                    for relatedItem in self.findItemsForRef(exceptPart):
+                        exceptPartCount += 1
+                        if relatedItem not in selected:
+                            return True
+                if exceptPartCount == 0:
+                    # here: no except blocks on the diagram, they are collapsed
+                    tryItems = self.findItemsForRef(item.ref)
+                    for tryItem in tryItems:
+                        if tryItem.kind == CellElement.EXCEPT_MINIMIZED:
+                            if not tryItem.isSelected():
+                                return True
+                            break
+                    else:
+                        # The minimized except is not selected
+                        return True
+                if item.ref.elsePart:
+                    for relatedItem in self.findItemsForRef(item.ref.elsePart):
+                        if relatedItem not in selected:
+                            return True
+                if item.ref.finallyPart:
+                    for relatedItem in self.findItemsForRef(item.ref.finallyPart):
+                        if relatedItem not in selected:
+                            return True
             elif item.kind in [CellElement.ELSE_SCOPE,
                                CellElement.EXCEPT_SCOPE,
                                CellElement.FINALLY_SCOPE]:
-                pass
+                for relatedItem in self.findItemsForRef(item.leaderRef):
+                    if relatedItem not in selected:
+                        return True
+        return False
 
     def __extendSelectionForGrouping(self):
         """Extends the selection with the leading and side comments"""
@@ -676,9 +746,9 @@ class CFSceneContextMenuMixin:
                         boundComments.append(relatedItem)
         return selected + boundComments
 
-    def __areLoneCommentsSelected(self, selection):
+    def __areLoneCommentsSelected(self, selected):
         """True if there are comments selected which have no main item selected"""
-        for item in selection:
+        for item in selected:
             if item.isComment():
                 if item.kind in [CellElement.SIDE_COMMENT,
                                  CellElement.LEADING_COMMENT,
@@ -699,4 +769,95 @@ class CFSceneContextMenuMixin:
                                                item.ref.end))
                     else:
                         coveredRegions.append((item.ref.begin, item.ref.end))
+            elif item.kind == CellElement.OPENED_GROUP_BEGIN:
+                coveredRegions.append(item.getAbsPosRange())
         return coveredRegions
+
+    def __areIfFullySelected(self, selected, regions):
+        """Checks if selected IFs are fully selected"""
+        for item in selected:
+            if item.kind == CellElement.IF:
+                ifBegin = item.ref.begin
+                ifEnd = item.ref.end
+                print("Selected if range: " + str(ifBegin) + '-' + str(ifEnd))
+                for item in self.items():
+                    if item.isProxyItem():
+                        continue
+                    if item.scopedItem():
+                        if item.subKind not in [ScopeCellElement.TOP_LEFT,
+                                                ScopeCellElement.DOCSTRING,
+                                                ScopeCellElement.SIDE_COMMENT]:
+                            continue
+                    if item in selected:
+                        continue
+                    itemRange = item.getAbsPosRange()
+                    if self.isInRegion(itemRange[0], itemRange[1], regions):
+                        continue
+                    if itemRange[0] > ifBegin and itemRange[0] < ifEnd:
+                        print("Not fully selected if 1")
+                        return False
+                    if itemRange[1] > ifBegin and itemRange[1] < ifEnd:
+                        print("Not fully selected if 2")
+                        return False
+                regions.append([ifBegin, ifEnd])
+        return True
+
+    @staticmethod
+    def isInRegion(start, finish, regions):
+        for region in regions:
+            if start >= region[0] and finish <= region[1]:
+                return True
+        return False
+
+    def __isSelectionContinuous(self, selected, regions, begin, end):
+        """Checks if the selection is continuous"""
+        for item in self.items():
+            if item.isProxyItem():
+                continue
+            if item.scopedItem():
+                if item.subKind not in [ScopeCellElement.TOP_LEFT,
+                                        ScopeCellElement.DOCSTRING,
+                                        ScopeCellElement.SIDE_COMMENT]:
+                    continue
+            if item in selected:
+                continue
+            itemRange = item.getAbsPosRange()
+            if self.isInRegion(itemRange[0], itemRange[1], regions):
+                continue
+
+            # It is important to keep < and > instead of <= and >=
+            # This is because the scopes start with the first statement
+            if itemRange[0] > begin and itemRange[0] < end:
+                return False
+            if itemRange[1] > begin and itemRange[1] < end:
+                return False
+        return True
+
+    def __moreThanOneIfBranchSelected(self, selected, regions):
+        """Checks that the continuous selected items belong to more than one
+        not selected IF statements
+        """
+        ifRef = None
+        for item in selected:
+            if item.kind != CellElement.IF:
+                itemRange = item.getAbsPosRange()
+                if item.kind != CellElement.OPENED_GROUP_BEGIN:
+                    if self.isInRegion(itemRange[0], itemRange[1], regions):
+                        # Here: an item is in a selected scope item, in a selected
+                        #       open group or in a fully selected if
+                        continue
+                # Test if an item belongs to an if statement branch
+                if item.kind in [CellElement.OPENED_GROUP_BEGIN,
+                                 CellElement.EMPTY_GROUP,
+                                 CellElement.COLLAPSED_GROUP]:
+                    branchId = item.groupBeginCMLRef.ref.getParentIfID()
+                else:
+                    branchId = item.ref.getParentIfID()
+                if branchId is not None:
+                    if ifRef is None:
+                        ifRef = branchId
+                    else:
+                        if branchId != ifRef:
+                            # Selected items belong to more than one branch
+                            return True
+        return False

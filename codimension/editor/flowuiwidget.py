@@ -744,17 +744,20 @@ class FlowUIWidget(QWidget):
             return
 
         collapsedGroups = getCollapsedGroups(fileName)
-        toBeDeleted = []
-        for groupId in collapsedGroups:
-            for validId, start, end in self.__validGroups:
-                del start
-                del end
-                if validId == groupId:
-                    break
-            else:
-                toBeDeleted.append(groupId)
+        if collapsedGroups:
+            toBeDeleted = []
+            for groupId in collapsedGroups:
+                for validId, start, end in self.__validGroups:
+                    del start
+                    del end
+                    if validId == groupId:
+                        break
+                else:
+                    toBeDeleted.append(groupId)
 
-        if toBeDeleted:
-            for groupId in toBeDeleted:
-                collapsedGroups.remove(groupId)
-            setCollapsedGroups(fileName, collapsedGroups)
+            if toBeDeleted:
+                for groupId in toBeDeleted:
+                    collapsedGroups.remove(groupId)
+                setCollapsedGroups(fileName, collapsedGroups)
+        else:
+            setCollapsedGroups(fileName, [])

@@ -228,7 +228,8 @@ class CFSceneMouseMixin:
                 end = item.ref.body.end
             return item.ref.body.begin, end
         if item.kind in [CellElement.OPENED_GROUP_BEGIN,
-                         CellElement.COLLAPSED_GROUP]:
+                         CellElement.COLLAPSED_GROUP,
+                         CellElement.EXCEPT_MINIMIZED]:
             begin, end = item.getAbsPosRange()
             return begin, end
 
