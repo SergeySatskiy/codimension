@@ -618,53 +618,40 @@ class CFSceneContextMenuMixin:
 
         if Settings()['smartZoom'] not in [SMART_ZOOM_ALL,
                                            SMART_ZOOM_NO_CONTENT]:
-            print("Refused: smart zoom level")
             return False
         if self.__areAllSelectedComments():
-            print("Refused: all are comments")
             return False
         if self.__areScopeDocstringOrCommentSelected():
-            print("Refused: docstrings or scope comments")
             return False
         if self.__isModuleSelected():
-            print("Refused: module selected")
             return False
 
         # Extend the selection with all the selected items comments
         selected = self.__extendSelectionForGrouping()
 
         if self.__areLoneCommentsSelected(selected):
-            print("Refused: comments without a main item")
             return False
 
         if self.__areIncompleteScopeSelected(selected):
-            print("Refused: incomplete scopes selected")
             return False
 
         scopeCoveredRegions = self.__getSelectedScopeRegions(selected)
-        print("Covered regions: " + repr(scopeCoveredRegions))
 
         # The __areIfFullySelected() also updates the regions with
         # fully selected if regions
         if not self.__areIfFullySelected(selected, scopeCoveredRegions):
-            print("Refused: If is not fully selected")
             return False
 
         selected = self.sortSelected(selected)
         begin = selected[0].getAbsPosRange()[0]
         end = selected[-1].getAbsPosRange()[1]
-        print("Selection pos range: " + str(begin) + "-" + str(end))
 
         if not self.__isSelectionContinuous(selected, scopeCoveredRegions,
                                             begin, end):
-            print("Refused: Selection is not continuous")
             return False
 
         if self.__moreThanOneIfBranchSelected(selected, scopeCoveredRegions):
-            print("Refused: items from different if branches are selected")
             return False
-
-        print("Allowed")
         return True
 
     def __areAllSelectedComments(self):
@@ -733,6 +720,18 @@ class CFSceneContextMenuMixin:
                 for relatedItem in self.findItemsForRef(item.leaderRef):
                     if relatedItem not in selected:
                         return True
+            elif item.kind == CellElement.EXCEPT_MINIMIZED:
+                # here: no except blocks on the diagram, they are collapsed
+                tryItems = self.findItemsForRef(item.ref)
+                for tryItem in tryItems:
+                    if tryItem.kind == CellElement.TRY_SCOPE:
+                        if tryItem.subKind == ScopeCellElement.TOP_LEFT:
+                            if not tryItem.isSelected():
+                                return True
+                            break
+                else:
+                    # The try is not selected
+                    return True
         return False
 
     def __extendSelectionForGrouping(self):
