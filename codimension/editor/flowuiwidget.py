@@ -21,6 +21,7 @@
 
 import os.path
 import logging
+import uuid
 from math import ceil
 from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QPainter, QImage,
                    QToolBar, QWidget, QPrinter, QApplication, QHBoxLayout,
@@ -148,6 +149,7 @@ class FlowUIWidget(QWidget):
         self.__navBar = None
         self.__cf = None
         self.__validGroups = []
+        self.__allGroupId = set()
 
         # Create the update timer
         self.__updateTimer = QTimer(self)
@@ -309,9 +311,11 @@ class FlowUIWidget(QWidget):
 
         # Collect warnings (parser + CML warnings) and valid groups
         self.__validGroups = []
+        self.__allGroupId = set()
         allWarnings = self.__cf.warnings + \
                       CMLVersion.validateCMLComments(self.__cf,
-                                                     self.__validGroups)
+                                                     self.__validGroups,
+                                                     self.__allGroupId)
 
         # That will clear the error tooltip as well
         self.__navBar.updateInfoIcon(self.__navBar.STATE_OK_UTD)
@@ -439,6 +443,17 @@ class FlowUIWidget(QWidget):
         if self.__updateTimer.isActive():
             self.__updateTimer.stop()
         self.process()
+
+    def generateNewGroupId(self):
+        """Generates a new group ID (string)"""
+        # It can also consider the current set of the groups: valid + invalid
+        # and generate an integer id which is shorter
+        for vacantGroupId in range(1000):
+            groupId = str(vacantGroupId)
+            if not groupId in self.__allGroupId:
+                return groupId
+        # Last resort
+        return str(uuid.uuid1())
 
     def updateNavigationToolbar(self, text):
         """Updates the toolbar text"""

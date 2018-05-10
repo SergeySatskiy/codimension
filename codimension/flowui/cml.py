@@ -313,7 +313,7 @@ class CMLgb(CMLCommentBase):
         else:
             res += ' id=' + groupid
         if title:
-            if ' ' in title:
+            if ' ' in title or '"' in title:
                 res += ' title="' + escapeCMLTextValue(title) + '"'
             else:
                 res += ' title=' + escapeCMLTextValue(title)
@@ -410,8 +410,12 @@ class CMLge(CMLCommentBase):
     @staticmethod
     def generate(groupid, pos=1):
         """Generates a complete line to be inserted"""
-        return " " * (pos - 1) + \
-               "# cml 1 " + CMLge.CODE + " id=\"" + groupid + "\""
+        res = ' ' * (pos - 1) + '# cml 1 ' + CMLge.CODE
+        if ' ' in groupid:
+            res += ' id="' + groupid + '"'
+        else:
+            res += ' id=' + groupid
+        return res
 
 
 
@@ -456,7 +460,8 @@ class CMLVersion:
             return None
 
     @staticmethod
-    def validateCMLComments(item, validGroups, pickLeadingComments=True):
+    def validateCMLComments(item, validGroups, allGroupId,
+                            pickLeadingComments=True):
         """Validates recursively all the CML items in the control flow.
 
         Replaces the recognized CML comments from the module with their higher
@@ -472,7 +477,7 @@ class CMLVersion:
             if hasattr(item, "leadingCMLComments"):
                 warnings += CMLVersion.validateCMLList(item.leadingCMLComments,
                                                        True, scopeGroupStack,
-                                                       validGroups)
+                                                       validGroups, allGroupId)
 
         # Some items are containers
         if item.kind == IF_FRAGMENT:
@@ -481,54 +486,54 @@ class CMLVersion:
                     # The very first part
                     warnings += CMLVersion.validateCMLList(
                         part.leadingCMLComments, True, scopeGroupStack,
-                        validGroups)
+                        validGroups, allGroupId)
                 else:
                     warnings += CMLVersion.validateCMLList(
-                        part.leadingCMLComments, False, None, None,
+                        part.leadingCMLComments, False, None, None, None,
                         'elif or else parts')
                 warnings += CMLVersion.validateCMLComments(part, validGroups,
-                                                           False)
+                                                           allGroupId, False)
         elif item.kind in [FOR_FRAGMENT, WHILE_FRAGMENT]:
             if item.elsePart:
                 warnings += CMLVersion.validateCMLList(
-                    item.elsePart.leadingCMLComments, False, None, None,
+                    item.elsePart.leadingCMLComments, False, None, None, None,
                     'loop else')
                 warnings += CMLVersion.validateCMLComments(item.elsePart,
                                                            validGroups,
-                                                           False)
+                                                           allGroupId, False)
         elif item.kind == TRY_FRAGMENT:
             if item.elsePart:
                 warnings += CMLVersion.validateCMLList(
-                    item.elsePart.leadingCMLComments, False, None, None,
+                    item.elsePart.leadingCMLComments, False, None, None, None,
                     'try else part')
                 warnings += CMLVersion.validateCMLComments(item.elsePart,
                                                            validGroups,
-                                                           False)
+                                                           allGroupId, False)
             if item.finallyPart:
                 warnings += CMLVersion.validateCMLList(
-                    item.finallyPart.leadingCMLComments, False, None, None,
+                    item.finallyPart.leadingCMLComments, False, None, None, None,
                     'try finally part')
                 warnings += CMLVersion.validateCMLComments(item.finallyPart,
                                                            validGroups,
-                                                           False)
+                                                           allGroupId, False)
             for part in item.exceptParts:
                 warnings += CMLVersion.validateCMLList(part.leadingCMLComments,
-                                                       False, None, None,
+                                                       False, None, None, None,
                                                        'try except part')
                 warnings += CMLVersion.validateCMLComments(part, validGroups,
-                                                           False)
+                                                           allGroupId, False)
 
         if item.kind in [CONTROL_FLOW_FRAGMENT,
                          CLASS_FRAGMENT, FUNCTION_FRAGMENT]:
             if item.docstring:
                 warnings += CMLVersion.validateCMLList(
-                    item.docstring.leadingCMLComments, False, None, None)
+                    item.docstring.leadingCMLComments, False, None, None, None)
                 warnings += CMLVersion.validateCMLList(
-                    item.docstring.sideCMLComments, False, None, None)
+                    item.docstring.sideCMLComments, False, None, None, None)
 
         if hasattr(item, "sideCMLComments"):
             warnings += CMLVersion.validateCMLList(item.sideCMLComments,
-                                                   False, None, None)
+                                                   False, None, None, None)
 
         if hasattr(item, "suite"):
             for index, nestedItem in enumerate(item.suite):
@@ -541,7 +546,8 @@ class CMLVersion:
                             CMLVersion.handleScopeGroup(replace,
                                                         scopeGroupStack,
                                                         warnings,
-                                                        validGroups)
+                                                        validGroups,
+                                                        allGroupId)
                     if warn is not None:
                         warnings.append(warn)
                     continue
@@ -549,15 +555,15 @@ class CMLVersion:
                 if hasattr(nestedItem, "leadingCMLComments"):
                     warnings += CMLVersion.validateCMLList(
                         nestedItem.leadingCMLComments, True, scopeGroupStack,
-                        validGroups)
+                        validGroups, allGroupId)
                 if nestedItem.kind == IF_FRAGMENT:
                     warnings += CMLVersion.validateCMLList(
                         nestedItem.parts[0].leadingCMLComments, True,
-                        scopeGroupStack, validGroups)
+                        scopeGroupStack, validGroups, allGroupId)
 
                 warnings += CMLVersion.validateCMLComments(nestedItem,
                                                            validGroups,
-                                                           False)
+                                                           allGroupId, False)
 
         for group in scopeGroupStack:
             warnings.append((group[1], -1, 'CML ' + CMLgb.CODE + ' comment '
@@ -567,11 +573,14 @@ class CMLVersion:
         return warnings
 
     @staticmethod
-    def handleScopeGroup(cmlComment, groupStack, warnings, validGroups):
+    def handleScopeGroup(cmlComment, groupStack, warnings,
+                         validGroups, allGroupId):
         """Processes the cml grouping comments"""
         line = cmlComment.ref.parts[0].beginLine
         if cmlComment.CODE == CMLgb.CODE:
             groupStack.append((cmlComment.id, line))
+            if cmlComment.id:
+                allGroupId.add(cmlComment.id)
             return
         if cmlComment.CODE == CMLge.CODE:
             if not groupStack:
@@ -591,7 +600,7 @@ class CMLVersion:
 
     @staticmethod
     def validateCMLList(comments, pickGroups, groupStack,
-                        validGroups, itemName=None):
+                        validGroups, allGroupId, itemName=None):
         """Validates the CML comments in the provided list (internal use)"""
         warnings = []
         if comments:
@@ -607,7 +616,8 @@ class CMLVersion:
                             CMLVersion.handleScopeGroup(replace,
                                                         groupStack,
                                                         warnings,
-                                                        validGroups)
+                                                        validGroups,
+                                                        allGroupId)
                         else:
                             line = replace.ref.parts[0].beginLine
                             pos = replace.ref.parts[0].beginPos

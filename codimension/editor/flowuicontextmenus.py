@@ -24,7 +24,7 @@ from ui.qt import QMenu, QApplication
 from flowui.items import CellElement, IfCell
 from flowui.scopeitems import ScopeCellElement
 from flowui.groupitems import OpenedGroupBegin, CollapsedGroup, EmptyGroup
-from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt
+from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt, CMLgb, CMLge
 from utils.pixmapcache import getIcon
 from utils.diskvaluesrelay import addCollapsedGroup, removeCollapsedGroup
 from utils.settings import Settings
@@ -411,7 +411,33 @@ class CFSceneContextMenuMixin:
 
     def onGroup(self):
         """Groups items into a single one"""
-        print("Group")
+        dlg = ReplaceTextDialog('Group title', 'Group title:', self.parent())
+
+        if dlg.exec_():
+            groupTitle = dlg.text()
+            selected = self.__extendSelectionForGrouping()
+            selected = self.sortSelected(selected)
+            editor = selected[0].getEditor()
+
+            firstLine, lastLine, pos = self.__getLineRange(selected)
+
+            groupid = self.parent().generateNewGroupId()
+            beginComment = CMLgb.generate(groupid, groupTitle,
+                                          None, None, None, pos)
+            endComment = CMLge.generate(groupid, pos)
+
+            with editor:
+                editor.insertLines(endComment, lastLine + 1)
+                editor.insertLines(beginComment, firstLine)
+
+            # Redraw the group collapsed
+            fileName = editor._parent.getFileName()
+            if not fileName:
+                fileName = editor._parent.getShortName()
+            addCollapsedGroup(fileName, groupid)
+
+            QApplication.processEvents()
+            self.parent().redrawNow()
 
     def onCopy(self):
         """Copying..."""
@@ -757,6 +783,25 @@ class CFSceneContextMenuMixin:
                             return True
         return False
 
+    def __getLineRange(self, selected):
+        first = selected[0]
+        last = selected[-1]
+
+        if first.kind == CellElement.OPENED_GROUP_BEGIN:
+            firstLine = first.groupBeginCMLRef.ref.parts[0].beginLine
+            pos = first.groupBeginCMLRef.ref.parts[0].beginPos
+        else:
+            firstLine = first.getLineRange()[0]
+            pos = first.ref.beginPos
+
+        if last.scopedItem():
+            lastLine = last.ref.endLine
+        elif last.kind == CellElement.OPENED_GROUP_BEGIN:
+            lastLine = last.groupEndCMLRef.ref.parts[-1].endLine
+        else:
+            lastLine = last.getLineRange()[1]
+        return firstLine, lastLine, pos
+
     def __getSelectedScopeRegions(self, selected):
         """Provides the regions of the selected scope items"""
         coveredRegions = []
@@ -778,7 +823,6 @@ class CFSceneContextMenuMixin:
             if item.kind == CellElement.IF:
                 ifBegin = item.ref.begin
                 ifEnd = item.ref.end
-                print("Selected if range: " + str(ifBegin) + '-' + str(ifEnd))
                 for item in self.items():
                     if item.isProxyItem():
                         continue
@@ -793,10 +837,8 @@ class CFSceneContextMenuMixin:
                     if self.isInRegion(itemRange[0], itemRange[1], regions):
                         continue
                     if itemRange[0] > ifBegin and itemRange[0] < ifEnd:
-                        print("Not fully selected if 1")
                         return False
                     if itemRange[1] > ifBegin and itemRange[1] < ifEnd:
-                        print("Not fully selected if 2")
                         return False
                 regions.append([ifBegin, ifEnd])
         return True
