@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # encoding: utf-8
-# cml 1 cc background=#ffffff
+# cml 1 cc bg=#ffffff
 # File top comment
 
-# cml 1 cc foreground=#ffffff background=#000000
+# cml 1 cc fg=#ffffff bg=#000000
 """
 File docstring
 """
@@ -46,10 +46,10 @@ d = 154
 e = 154  # side
 f = 154
 
-# cml 1 cc foreground=#000000
+# cml 1 cc fg=#000000
 alone = 2
 
-# cml 1 cc foreground=#000000
+# cml 1 cc fg=#000000
 # Leading
 a = 10      # Side
             # Side
@@ -72,11 +72,11 @@ from sys import path        # Side
                             # Side last
 
 
-# cml 1 cc background=#000000 foreground=#eaeaea border=#ffffff
+# cml 1 cc bg=#000000 fg=#eaeaea border=#ffffff
 import sys, \
        os.path
 
-# cml 1 cc background=#eaeaea foreground=#000000
+# cml 1 cc bg=#eaeaea fg=#000000
 # Leading
 from sys import path        # Side
                             # Side last
@@ -91,7 +91,7 @@ from sys import path        # Side
 def f( x ):     # Side
                 # Last side
 
-    # cml 1 cc foreground=#ff0000
+    # cml 1 cc fg=#ff0000
     """ f doc
         f doc line 2
     """
@@ -129,11 +129,11 @@ def fReplaced( x ):
 #
 
 
-# cml 1 cc background=#dddddd foreground=#ffffff
+# cml 1 cc bg=#dddddd fg=#ffffff
 # Leading
 class C:    # Side
             # Last side
-    # cml 1 cc background=#555555 foreground=#ffffff
+    # cml 1 cc bg=#555555 fg=#ffffff
     """
     Class C doc
     Class C doc line 2
@@ -150,7 +150,7 @@ class C1( B1,
 class C3( B1,       # Side 1
           B2,       # Side 2
           B3 ):
-    # cml 1 cc background=#ffffff
+    # cml 1 cc bg=#ffffff
     " C3 doc "
     pass
 
@@ -158,7 +158,7 @@ class C3( B1,       # Side 1
 class C4( C5 ):
     def member1( self ):
         pass
-    # cml 1 cc background=#777777 
+    # cml 1 cc bg=#777777 
     # Leading 1
     # Leading 2
     def member2( self,      # Side 1
@@ -342,7 +342,7 @@ for x in y:
     break
 
 for x in y:
-    # cml 1 cc background=0,230,0 foreground=255,255,255
+    # cml 1 cc bg=0,230,0 fg=255,255,255
     # Leading 1
     # Leading 2
     break   # Side 1
@@ -351,9 +351,9 @@ for x in y:
 while True:
     continue
 
-# cml 1 cc background=#dddddd foreground=#343399
+# cml 1 cc bg=#dddddd fg=#343399
 while True:
-    # cml 1 cc background=0,230,0 foreground=255,255,255
+    # cml 1 cc bg=0,230,0 fg=255,255,255
     # Leading 1
     # Leading 2
     continue    # Side 1
@@ -378,7 +378,7 @@ def f13():
            "Shakespeare"
 
 def f14():
-    # cml 1 cc background="230,0,0" foreground="255,255,255" border=#000000
+    # cml 1 cc bg="230,0,0" fg="255,255,255" border=#000000
     # Leading
     return 154  # Side 1
                 # Side 2
@@ -389,7 +389,7 @@ def f15():
     return ( 154,               # Side 1
              "Shakespeare" )    # Side 2
 
-# cml 1 cc background=#454545 foreground=#ffffff border=#ff0000
+# cml 1 cc bg=#454545 fg=#ffffff border=#ff0000
 def f16():
     return """
            ...
@@ -406,7 +406,7 @@ assert x != 154 and \
        y != 154 and \
        z != 154
 
-# cml 1 cc background=0,0,210 foreground=255,255,255
+# cml 1 cc bg=0,0,210 fg=255,255,255
 # Leading
 assert x != 154, ( "..."        # Side 1
                    "..." )      # side 2
@@ -429,7 +429,7 @@ raise Exception( 1 +
                  2 +
                  3 )
 
-# cml 1 cc background=0,230,0 foreground=0,0,230
+# cml 1 cc bg=0,230,0 fg=0,0,230
 # Leading
 raise Exception( 1 +    # Side 1
                  3 )    # Side 2
@@ -462,8 +462,8 @@ exit( 0 +
       0 +
       0 )
 
-# cml 1 cc background="25, 200, 200"
-# cml+     foreground=#ffffff
+# cml 1 cc bg="25, 200, 200"
+# cml+     fg=#ffffff
 # Leading
 exit( 0 +   # Side 1
       0 )   # Side 2
@@ -497,7 +497,7 @@ with \
             f:
     pass
 
-# cml 1 cc background=#dddddd foreground=#343399 border=#ffffff
+# cml 1 cc bg=#dddddd fg=#343399 border=#ffffff
 # leading
 with open( "my.txt" +           # Side 1
            "your.txt" ) as f:   # Side 2
@@ -543,7 +543,7 @@ if True:    # Side 1
     pass
 # Leading 3
 # cml 1 sw
-# cml 1 cc background=#345678 foreground=#ffffff border=#ffffff
+# cml 1 cc bg=#345678 fg=#ffffff border=#ffffff
 elif False: # Side 3
     pass
 # Leading 4
@@ -555,7 +555,7 @@ else:       # Side 4
         pass
 
 
-# cml 1 cc background=#ee00ee foreground=#ffffff
+# cml 1 cc bg=#ee00ee fg=#ffffff
 # cml 1 rt text="Salary is too high"
 if a > 456 and \
    b < 76 or \
