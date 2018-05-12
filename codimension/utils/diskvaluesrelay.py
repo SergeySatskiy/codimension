@@ -228,7 +228,7 @@ def getRecentFiles():
     """Provides the recent files list"""
     project = GlobalData().project
     if project.isLoaded():
-        return project.recentFile
+        return project.recentFiles
     return Settings().recentFiles
 
 
