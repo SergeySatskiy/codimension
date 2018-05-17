@@ -273,6 +273,61 @@ class Connector(QGraphicsPathItem):
 
 
 
+class RubberBandItem(QGraphicsRectItem):
+
+    """Custom rubber band for selection"""
+
+    def __init__(self):
+        QGraphicsRectItem.__init__(self)
+        self.__x = None
+        self.__y = None
+        self.__width = None
+        self.__height = None
+
+    def setGeometry(self, rect):
+        # This is a mistery. I do not understand why I need to divide by 2.0
+        # however this works. I tried various combinations of initialization,
+        # setting the position and mapping. Nothing works but ../2.0. Sick!
+        self.__x = rect.x() / 2.0
+        self.__y = rect.y() / 2.0
+        self.__width = rect.width()
+        self.__height = rect.height()
+
+        self.setPos(self.__x, self.__y)
+        self.setRect(self.__x, self.__y, self.__width, self.__height)
+
+        self.update()
+
+    def paint(self, painter, option, widget):
+        """Paints the rubber band"""
+        #s = self.ref.canvas.settings
+
+        pen = QPen(Qt.black)
+        #pen.setWidth(s.badgeLineWidth)
+        painter.setPen(pen)
+        #brush = QBrush(self.__bgColor)
+        #painter.setBrush(brush)
+        painter.drawRect(self.__x, self.__y,
+                         self.__width, self.__height)
+
+    def isProxyItem(self):
+        """True if it is a proxy item"""
+        return True
+
+    def getProxiedItem(self):
+        """Provides the real item for a proxy one"""
+        return None
+
+    def isComment(self):
+        """True if it is a comment"""
+        return False
+
+    def scopedItem(self):
+        """True if it is a scoped item"""
+        return False
+
+
+
 class Text(QGraphicsSimpleTextItem):
 
     """Implementation of a text item"""

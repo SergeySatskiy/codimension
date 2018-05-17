@@ -22,7 +22,8 @@
 from sys import maxsize
 from flowui.scopeitems import ScopeCellElement
 from flowui.items import CellElement
-from ui.qt import Qt, QTransform
+from flowui.auxitems import RubberBandItem
+from ui.qt import Qt, QTransform, QPoint, QRect, QSize, QCursor
 
 
 class CFSceneMouseMixin:
@@ -30,7 +31,8 @@ class CFSceneMouseMixin:
     """Encapsulates mouse clicks handling and related functionality"""
 
     def __init__(self):
-        pass
+        self.origin = None
+        self.rubberBand = None
 
     @staticmethod
     def __getLogicalItem(item):
@@ -56,6 +58,19 @@ class CFSceneMouseMixin:
         #   ScopeCellElement.BOTTOM
         # are to be ignored
         return None
+
+    def __createRubberBand(self, event):
+        self.rubberBand = RubberBandItem()
+        self.addItem(self.rubberBand)
+        self.origin = event.scenePos().toPoint()
+        self.rubberBand.setGeometry(QRect(self.origin, QSize()))
+        self.rubberBand.show()
+
+    def __destroyRubberBand(self):
+        if self.rubberBand is not None:
+            self.rubberBand.hide()
+            self.rubberBand = None
+        self.origin = None
 
     def mousePressEvent(self, event):
         """The default mouse behavior of the QT library is sometimes
@@ -89,6 +104,8 @@ class CFSceneMouseMixin:
             return
 
         # Here: this is LMB
+        self.__createRubberBand(event)
+
         if logicalItem is None:
             self.clearSelection()
             event.accept()
@@ -127,8 +144,15 @@ class CFSceneMouseMixin:
 
         event.accept()
 
+    def mouseMoveEvent(self, event):
+        if self.origin is not None:
+            if self.rubberBand:
+                rect = QRect(self.origin, event.scenePos().toPoint())
+                self.rubberBand.setGeometry(rect.normalized())
+
     def mouseReleaseEvent(self, event):
         """Handles the mouse release event"""
+        self.__destroyRubberBand()
         event.accept()
 
     def addToSelection(self, item):
