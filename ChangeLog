@@ -1,3 +1,9 @@
+2018 May 17 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Version 4.2.2
+* Bug fix: IDE does not start after installation
+* Preliminary rubber band UI on the graphics pane
+
 2018 May 11 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Version 4.2.1
