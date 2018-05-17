@@ -94,7 +94,9 @@ def getPackageData():
     """Provides the data files"""
     extensions = ['.png', '.svg', '.svgz', '.json', '.css']
     package_data = [('codimension.pixmaps',
-                     'codimension/pixmaps/')]
+                     'codimension/pixmaps/'),
+                    ('codimension.skins',
+                     'codimension/skins/')]
 
     # If a skin needs to be added, then the following item should be also
     # appended:
