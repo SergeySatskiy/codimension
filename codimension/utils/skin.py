@@ -472,17 +472,19 @@ def getThemesList(localSkinsDir):
     # to the user local dir
     srcDir = os.path.dirname(os.path.realpath(sys.argv[0]))
     skinsDir = srcDir + os.path.sep + "skins" + os.path.sep
-    for item in os.listdir(skinsDir):
-        dName = skinsDir + item + os.path.sep
-        if os.path.isdir(dName):
-            # Seems to be a skin dir
-            if isSkinDir(dName):
-                # Check if this name alrady added
-                for theme in result:
-                    if theme[0] == item:
-                        break
-                else:
-                    # Get the theme display name
-                    name = getSkinName(dName)
-                    result.append([item, name])
+
+    if os.path.exists(skinsDir):
+        for item in os.listdir(skinsDir):
+            dName = skinsDir + item + os.path.sep
+            if os.path.isdir(dName):
+                # Seems to be a skin dir
+                if isSkinDir(dName):
+                    # Check if this name alrady added
+                    for theme in result:
+                        if theme[0] == item:
+                            break
+                    else:
+                        # Get the theme display name
+                        name = getSkinName(dName)
+                        result.append([item, name])
     return result

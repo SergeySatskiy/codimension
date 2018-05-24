@@ -301,35 +301,36 @@ def copySkin():
     skinFiles = ['app.css', 'skin.json', 'cflow.json']
     platformSuffix = '.' + sys.platform.lower()
 
-    for item in os.listdir(systemWideSkinsDir):
-        candidate = systemWideSkinsDir + item
-        if os.path.isdir(candidate):
-            userCandidate = userSkinsDir + item
-            if not os.path.exists(userCandidate):
-                try:
-                    os.makedirs(userCandidate, exist_ok=True)
-                    filesToCopy = []
-                    for fName in skinFiles:
-                        generalFile = candidate + os.path.sep + fName
-                        platformSpecificFile = generalFile + platformSuffix
-                        userFile = userCandidate + os.path.sep + fName
-                        if os.path.exists(platformSpecificFile):
-                            filesToCopy.append([platformSpecificFile,
-                                                userFile])
-                        elif os.path.exists(generalFile):
-                            filesToCopy.append([generalFile, userFile])
-                        else:
-                            raise Exception('The skin file ' + fName +
-                                            ' is not found in the '
-                                            'installation package')
-                    for srcDst in filesToCopy:
-                        shutil.copyfile(srcDst[0], srcDst[1])
-                except Exception as exc:
-                    logging.error("Could not copy system wide skin from %s to "
-                                  " the user skin to %s. "
-                                  "Continue without copying skin.",
-                                  candidate, userCandidate)
-                    logging.error(str(exc))
+    if os.path.exists(systemWideSkinsDir):
+        for item in os.listdir(systemWideSkinsDir):
+            candidate = systemWideSkinsDir + item
+            if os.path.isdir(candidate):
+                userCandidate = userSkinsDir + item
+                if not os.path.exists(userCandidate):
+                    try:
+                        os.makedirs(userCandidate, exist_ok=True)
+                        filesToCopy = []
+                        for fName in skinFiles:
+                            generalFile = candidate + os.path.sep + fName
+                            platformSpecificFile = generalFile + platformSuffix
+                            userFile = userCandidate + os.path.sep + fName
+                            if os.path.exists(platformSpecificFile):
+                                filesToCopy.append([platformSpecificFile,
+                                                    userFile])
+                            elif os.path.exists(generalFile):
+                                filesToCopy.append([generalFile, userFile])
+                            else:
+                                raise Exception('The skin file ' + fName +
+                                                ' is not found in the '
+                                                'installation package')
+                        for srcDst in filesToCopy:
+                            shutil.copyfile(srcDst[0], srcDst[1])
+                    except Exception as exc:
+                        logging.error("Could not copy system wide skin from "
+                                      "%s to  the user skin to %s. "
+                                      "Continue without copying skin.",
+                                      candidate, userCandidate)
+                        logging.error(str(exc))
 
     # Deal with the default settings
     defaultSkinDir = userSkinsDir + 'default'
