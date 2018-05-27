@@ -23,7 +23,7 @@ from sys import maxsize
 from flowui.scopeitems import ScopeCellElement
 from flowui.items import CellElement
 from flowui.auxitems import RubberBandItem
-from ui.qt import Qt, QTransform, QPoint, QRect, QSize, QCursor
+from ui.qt import Qt, QTransform, QPoint, QRect, QSize, QCursor, QGraphicsScene
 
 
 class CFSceneMouseMixin:
@@ -149,6 +149,7 @@ class CFSceneMouseMixin:
             if self.rubberBand:
                 rect = QRect(self.origin, event.scenePos().toPoint())
                 self.rubberBand.setGeometry(rect.normalized())
+        QGraphicsScene.mouseMoveEvent(self, event)
 
     def mouseReleaseEvent(self, event):
         """Handles the mouse release event"""
