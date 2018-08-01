@@ -107,26 +107,28 @@ _DEFAULT_APP_CSS = """
 QStatusBar::item
 { border: 0px solid black }
 QToolTip
-{ font-size: 11px;
+{ color: black;
+  font-size: 11px;
   border: 1px solid gray;
-  border-radius: 3px;
-  background: QLinearGradient(x1: 0, y1: 0,
-                              x2: 0, y2: 1,
-                              stop: 0 #eef, stop: 1 #ccf);
+  background-color: #fff;
+  padding: 2px;
 }
 QTreeView
 { alternate-background-color: #eef0f1;
-  background-color: #ffffe6; }
+  background-color: #fff; }
 QLineEdit
-{ background-color: #ffffe6; }
+{ background-color: #fff; }
 QComboBox
-{ background-color: #ffffe6; color: black; }
+{ background-color: #fff;
+  color: black; }
 QComboBox QAbstractItemView
 { outline: 0px; }
 QTextEdit
-{ background-color: #ffffe6; }
+{ background-color: #fff; }
+QPlainTextEdit
+{ background-color: #fff; }
 QListView
-{ background-color: #ffffe6; }"""
+{ background-color: #fff; }"""
 
 
 _DEFAULT_CFLOW_SETTINGS = {
