@@ -153,7 +153,17 @@ class CFSceneMouseMixin:
 
     def mouseReleaseEvent(self, event):
         """Handles the mouse release event"""
-        self.__destroyRubberBand()
+        button = event.button()
+        if button == Qt.LeftButton:
+            if self.rubberBand:
+                selectionRect = self.rubberBand.rect()
+                if abs(selectionRect.left() - selectionRect.right()) > 5 and \
+                   abs(selectionRect.top() - selectionRect.bottom()) > 5:
+                    # Detect intersections
+                    self.clearSelection()
+                    containingItems = self.collidingItems(self.rubberBand,
+                                                          Qt.ContainsItemBoundingRect)
+            self.__destroyRubberBand()
         event.accept()
 
     def addToSelection(self, item):
