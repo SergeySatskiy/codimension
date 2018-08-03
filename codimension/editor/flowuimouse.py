@@ -161,8 +161,14 @@ class CFSceneMouseMixin:
                    abs(selectionRect.top() - selectionRect.bottom()) > 5:
                     # Detect intersections
                     self.clearSelection()
-                    containingItems = self.collidingItems(self.rubberBand,
-                                                          Qt.ContainsItemBoundingRect)
+                    for item in self.items():
+                        if item.isProxyItem():
+                            continue
+                        print("Analyzing item: " + str(item))
+                        if item.collidesWithItem(self.rubberBand):
+                            print("Collides!")
+                        else:
+                            print("Does not collide")
             self.__destroyRubberBand()
         event.accept()
 
