@@ -218,7 +218,11 @@ _DEFAULT_CFLOW_SETTINGS = {
     'groupFGColor': QColor(0, 0, 0, 255),
     'groupBorderColor': QColor(0, 0, 0, 255),
     'groupControlBGColor': QColor(197, 217, 249),
-    'groupControlBorderColor': QColor(140, 179, 242)}
+    'groupControlBorderColor': QColor(140, 179, 242),
+
+    # Rubber band selection
+    'rubberBandBorderColor': QColor(63, 81, 181, 255),
+    'rubberBandFGColor': QColor(182, 182, 182, 64)}
 
 
 

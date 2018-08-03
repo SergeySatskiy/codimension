@@ -277,8 +277,9 @@ class RubberBandItem(QGraphicsRectItem):
 
     """Custom rubber band for selection"""
 
-    def __init__(self):
+    def __init__(self, settings):
         QGraphicsRectItem.__init__(self)
+        self.__settings = settings
         self.__x = None
         self.__y = None
         self.__width = None
@@ -300,13 +301,10 @@ class RubberBandItem(QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Paints the rubber band"""
-        #s = self.ref.canvas.settings
-
-        pen = QPen(Qt.black)
-        #pen.setWidth(s.badgeLineWidth)
+        pen = QPen(self.__settings.rubberBandBorderColor)
         painter.setPen(pen)
-        #brush = QBrush(self.__bgColor)
-        #painter.setBrush(brush)
+        brush = QBrush(self.__settings.rubberBandFGColor)
+        painter.setBrush(brush)
         painter.drawRect(self.__x, self.__y,
                          self.__width, self.__height)
 

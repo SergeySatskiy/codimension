@@ -60,7 +60,7 @@ class CFSceneMouseMixin:
         return None
 
     def __createRubberBand(self, event):
-        self.rubberBand = RubberBandItem()
+        self.rubberBand = RubberBandItem(self.parent().cflowSettings)
         self.addItem(self.rubberBand)
         self.origin = event.scenePos().toPoint()
         self.rubberBand.setGeometry(QRect(self.origin, QSize()))
@@ -164,11 +164,20 @@ class CFSceneMouseMixin:
                     for item in self.items():
                         if item.isProxyItem():
                             continue
-                        print("Analyzing item: " + str(item))
-                        if item.collidesWithItem(self.rubberBand):
-                            print("Collides!")
-                        else:
-                            print("Does not collide")
+                        if item.scopedItem():
+                            if item.subKind not in [ScopeCellElement.DECLARATION,
+                                                    ScopeCellElement.SIDE_COMMENT,
+                                                    ScopeCellElement.DOCSTRING]:
+                                continue
+
+                            if item.subKind == ScopeCellElement.DECLARATION:
+                                item = item.getTopLeftItem()
+
+                        # The call must be done on item. (not on rubberBand.)
+                        if item.collidesWithItem(self.rubberBand,
+                                                 Qt.ContainsItemBoundingRect):
+                            self.addToSelection(item)
+
             self.__destroyRubberBand()
         event.accept()
 
