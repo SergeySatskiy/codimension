@@ -204,7 +204,7 @@ class CFSceneMouseMixin:
                     continue
 
             itemBegin, itemEnd = self.__getItemVisualBeginEnd(item)
-            if toSelectBegin >= itemBegin and toSelectEnd <= itemEnd:
+            if toSelectBegin > itemBegin and toSelectEnd < itemEnd:
                 return True
         return False
 
