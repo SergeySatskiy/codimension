@@ -26,12 +26,27 @@ from flowui.auxitems import RubberBandItem
 from ui.qt import Qt, QTransform, QPoint, QRect, QSize, QCursor, QGraphicsScene
 
 
+# The default mouse behavior of the QT library is sometimes inconsistent.
+# For example, selecting of the items is done on mousePressEvent however
+# adding items is done on mouseReleaseEvent.
+# One more problem is that the QT library does not support hierarchical
+# relationships between the items. I.e. if an outer item is selected then
+# it makes no sense to let nested items addable.
+# The last problem is that there are proxy items (like badges) which are not
+# supported out of the box obviously.
+# So the whole mouse[Press,Release]Event members are overridden.
+# The selection always works on mouse release event. Mouse press will do
+# nothing.
+
+
+RUBBER_BAND_MIN_SIZE = 5
+
 class CFSceneMouseMixin:
 
     """Encapsulates mouse clicks handling and related functionality"""
 
     def __init__(self):
-        self.origin = None
+        self.lmbOrigin = None
         self.rubberBand = None
 
     @staticmethod
@@ -60,37 +75,32 @@ class CFSceneMouseMixin:
         return None
 
     def __createRubberBand(self, event):
+        """Creates the rubber band rectangle and shows it"""
+        self.lmbOrigin = event.scenePos().toPoint()
         self.rubberBand = RubberBandItem(self.parent().cflowSettings)
         self.addItem(self.rubberBand)
-        self.origin = event.scenePos().toPoint()
-        self.rubberBand.setGeometry(QRect(self.origin, QSize()))
-        self.rubberBand.show()
+        self.rubberBand.setGeometry(QRect(self.lmbOrigin, QSize()))
+        self.rubberBand.hide()
 
     def __destroyRubberBand(self):
+        """Destroys the rubber band selection rectangle"""
         if self.rubberBand is not None:
             self.rubberBand.hide()
             self.rubberBand = None
-        self.origin = None
+        self.lmbOrigin = None
 
     def mousePressEvent(self, event):
-        """The default mouse behavior of the QT library is sometimes
-           inconsistent. For example, selecting of the items is done on
-           mousePressEvent however adding items is done on mouseReleaseEvent.
-           The second thing is that the QT library does not support
-           hierarchical relationships between the items.
-           The third thing is the selection proxy which is not supported either.
-           So the whole mouse[Press,Release]Event members are overridden
-        """
-        item = self.itemAt(event.scenePos(), QTransform())
-        logicalItem = self.__getLogicalItem(item)
-
+        """Handles mouse press event"""
         button = event.button()
         if button not in [Qt.LeftButton, Qt.RightButton]:
             self.clearSelection()
             event.accept()
             return
 
+
         if button == Qt.RightButton:
+            item = self.itemAt(event.scenePos(), QTransform())
+            logicalItem = self.__getLogicalItem(item)
             if logicalItem is None:
                 # Not a selectable item or out of the items
                 self.clearSelection()
@@ -100,85 +110,90 @@ class CFSceneMouseMixin:
 
             # Bring up a context menu
             self.onContextMenu(event)
-            event.accept()
-            return
+        else:
+            # Here: this is LMB
+            self.__createRubberBand(event)
 
-        # Here: this is LMB
-        self.__createRubberBand(event)
+        event.accept()
+        return
 
-        if logicalItem is None:
-            self.clearSelection()
-            event.accept()
-            return
-
-        modifiers = event.modifiers()
-        if modifiers == Qt.NoModifier:
-            self.clearSelection()
-            logicalItem.setSelected(True)
-            event.accept()
-            return
-
-        if modifiers == Qt.ControlModifier:
-            if logicalItem.isSelected():
-                logicalItem.setSelected(False)
-                event.accept()
-                return
-            # Item is not selected and should be added or ignored
-            self.addToSelection(logicalItem)
-            event.accept()
-            return
-
-        # The alt modifier works for the whole app window on
-        # Ubuntu, so it cannot really be used...
-        if modifiers == Qt.ShiftModifier:
-            self.clearSelection()
-
-            # Here: add comments
-            if self.isOpenGroupItem(item):
-                self.addToSelection(item)
-            else:
-                for item in self.findItemsForRef(logicalItem.ref):
-                    self.addToSelection(item)
-            event.accept()
-            return
 
         event.accept()
 
     def mouseMoveEvent(self, event):
-        if self.origin is not None:
-            if self.rubberBand:
-                rect = QRect(self.origin, event.scenePos().toPoint())
-                self.rubberBand.setGeometry(rect.normalized())
+        """Handles mouse movement"""
+        if self.lmbOrigin and self.rubberBand:
+            # Draw the rubber band selection rectangle
+            rect = QRect(self.lmbOrigin, event.scenePos().toPoint())
+            self.rubberBand.setGeometry(rect.normalized())
+            if not self.rubberBand.isVisible():
+                if abs(rect.left() - rect.right()) >= RUBBER_BAND_MIN_SIZE or \
+                   abs(rect.top() - rect.bottom()) >= RUBBER_BAND_MIN_SIZE:
+                    self.rubberBand.show()
         QGraphicsScene.mouseMoveEvent(self, event)
 
     def mouseReleaseEvent(self, event):
         """Handles the mouse release event"""
         button = event.button()
-        if button == Qt.LeftButton:
-            if self.rubberBand:
-                selectionRect = self.rubberBand.rect()
-                if abs(selectionRect.left() - selectionRect.right()) > 5 and \
-                   abs(selectionRect.top() - selectionRect.bottom()) > 5:
-                    # Detect intersections
+
+        if button not in [Qt.LeftButton, Qt.RightButton]:
+            event.accept()
+            return
+
+        if button == Qt.RightButton:
+            event.accept()
+            return
+
+        # Here: left mouse button
+        if self.rubberBand and self.rubberBand.isVisible():
+            # Detect intersections
+            self.clearSelection()
+            for item in self.items():
+                if item.isProxyItem():
+                    continue
+                if item.scopedItem():
+                    if item.subKind not in [ScopeCellElement.DECLARATION,
+                                            ScopeCellElement.SIDE_COMMENT,
+                                            ScopeCellElement.DOCSTRING]:
+                        continue
+
+                    if item.subKind == ScopeCellElement.DECLARATION:
+                        item = item.getTopLeftItem()
+
+                # The call must be done on item. (not on rubberBand.)
+                if item.collidesWithItem(self.rubberBand,
+                                         Qt.ContainsItemBoundingRect):
+                    self.addToSelection(item)
+        else:
+            item = self.itemAt(event.scenePos(), QTransform())
+            logicalItem = self.__getLogicalItem(item)
+
+            if logicalItem is None:
+                self.clearSelection()
+            else:
+                modifiers = event.modifiers()
+                if modifiers == Qt.NoModifier:
                     self.clearSelection()
-                    for item in self.items():
-                        if item.isProxyItem():
-                            continue
-                        if item.scopedItem():
-                            if item.subKind not in [ScopeCellElement.DECLARATION,
-                                                    ScopeCellElement.SIDE_COMMENT,
-                                                    ScopeCellElement.DOCSTRING]:
-                                continue
+                    logicalItem.setSelected(True)
+                elif modifiers == Qt.ControlModifier:
+                    if logicalItem.isSelected():
+                        logicalItem.setSelected(False)
+                    else:
+                        # Item is not selected and should be added or ignored
+                        self.addToSelection(logicalItem)
+                # The alt modifier works for the whole app window on
+                # Ubuntu, so it cannot really be used...
+                elif modifiers == Qt.ShiftModifier:
+                    self.clearSelection()
 
-                            if item.subKind == ScopeCellElement.DECLARATION:
-                                item = item.getTopLeftItem()
-
-                        # The call must be done on item. (not on rubberBand.)
-                        if item.collidesWithItem(self.rubberBand,
-                                                 Qt.ContainsItemBoundingRect):
+                    # Here: add comments
+                    if self.isOpenGroupItem(item):
+                        self.addToSelection(item)
+                    else:
+                        for item in self.findItemsForRef(logicalItem.ref):
                             self.addToSelection(item)
 
-            self.__destroyRubberBand()
+        self.__destroyRubberBand()
         event.accept()
 
     def addToSelection(self, item):
