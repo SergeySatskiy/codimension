@@ -1,7 +1,8 @@
-2018 Aug 01 Sergey Satskiy <sergey.satskiy@gmail.com>
+2018 Aug 13 Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Version 4.2.*
+* Version 4.2.4
 * Fix: default application CSS adjustments
+* Rubber band selection on the graphics pane
 
 2018 May 25 Sergey Satskiy <sergey.satskiy@gmail.com>
 
