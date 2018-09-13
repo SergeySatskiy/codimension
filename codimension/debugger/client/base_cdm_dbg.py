@@ -106,6 +106,8 @@ class DebugBase(object):
         # Use it like this:
         # if hasattr(sys, 'breakpoint): sys.breakpoint()
         sys.breakpoint = self.set_trace
+        if sys.version_info[:2] >= (3, 7):
+            sys.breakpointhook = self.set_trace
 
     def __eventPollTimer(self):
         """Sets a flag every 0.5 sec to check for new messages"""
