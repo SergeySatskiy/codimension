@@ -413,7 +413,7 @@ class DebugBase(object):
                 return frame.f_code.co_filename
 
             absFilename = os.path.abspath(fn)
-            if absFilename.endswith(('.pyc', '.pyo')):
+            if absFilename.endswith(('.pyc', '.pyo', '.pyd')):
                 fixedName = absFilename[:-1]
                 if not os.path.exists(fixedName):
                     fixedName = absFilename
