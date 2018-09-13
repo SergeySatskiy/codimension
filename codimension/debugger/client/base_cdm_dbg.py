@@ -573,7 +573,8 @@ class DebugBase(object):
         """Reimplemented to report an exception to the debug server"""
         exctype, excval, exctb = excinfo
 
-        if exctype in [GeneratorExit, StopIteration, SystemExit]:
+        if ((exctype in [GeneratorExit, StopIteration] and unhandled == False)
+            or exctype == SystemExit):
             # ignore these
             return
 
