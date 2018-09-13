@@ -44,6 +44,10 @@ class AsyncFile(object):
         self.mode = mode
         self.name = name
         self.nWriteErrors = 0
+        self.encoding = 'utf-8'
+        self.errors = None
+        self.newlines = None
+        self.line_buffering = False
 
         self.wpending = []
 
