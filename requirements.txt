@@ -2,6 +2,7 @@ cdmpyparser
 cdmcfparser
 cdmgcplugin
 pyflakes==2.0.0
+radon=2.2.0
 PyQt5~=5.7
 python-magic==0.4.13
 qutepart

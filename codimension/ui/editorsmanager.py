@@ -1371,7 +1371,7 @@ class EditorsManager(QTabWidget):
                 editor.clearSyntax()
                 if xmlSyntaxFile:
                     editor.detectSyntax(xmlSyntaxFile)
-                editor.clearPyflakesMessages()
+                editor.clearAnalysisMessages()
                 self.sigFileTypeChanged.emit(fileName, widget.getUUID(),
                                              newType if newType else '')
             self._updateIconAndTooltip(index, newType)

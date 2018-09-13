@@ -319,7 +319,10 @@ class CodimensionMainWindow(QMainWindow):
                                   'File outline', 'fileoutline', 0)
 
         # Create the pyflakes viewer
-        self.__pyflakesViewer = PyflakesViewer(self.em, self.sbPyflakes, self)
+        self.__pyflakesViewer = PyflakesViewer(self.em,
+                                               self.sbPyflakes,
+                                               self.sbCC,
+                                               self)
 
         self.debuggerContext = DebuggerContext(self.__debugger)
         self._rightSideBar.addTab(

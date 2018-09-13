@@ -22,6 +22,7 @@
 import re
 from _ast import PyCF_ONLY_AST
 from pyflakes.checker import Checker
+from radon.complexity import cc_visit_ast, sorted_results
 
 
 # Returns a dictionary:
@@ -69,4 +70,6 @@ def getBufferErrors(sourceCode):
                 results[lineno].append(warning.message % warning.message_args)
             else:
                 results[lineno] = [warning.message % warning.message_args]
-    return results
+
+    # Radon: CC complexity as the second value
+    return results, sorted_results(cc_visit_ast(tree))

@@ -42,6 +42,7 @@ class MainWindowStatusBarMixin:
         self.sbWritable = None
         self.sbEncoding = None
         self.sbPyflakes = None
+        self.sbCC = None
         self.sbVCSStatus = None
         self.sbDebugState = None
         self.__createStatusBar()
@@ -90,6 +91,9 @@ class MainWindowStatusBarMixin:
         # class for a pixmap label. But I am lazy.
         self.sbPyflakes = FitPathLabel(self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbPyflakes)
+
+        self.sbCC = FitPathLabel(self.__statusBar)
+        self.__statusBar.addPermanentWidget(self.sbCC)
 
         self.sbFile = FitPathLabel(self.__statusBar)
         self.sbFile.setMaximumWidth(512)

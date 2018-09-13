@@ -23,8 +23,19 @@ from html import escape
 from utils.pixmapcache import getIcon, getPixmap
 from utils.fileutils import isPythonMime, isPythonFile
 from analysis.ierrors import getBufferErrors
+from radon.complexity import cc_rank
 from .qt import QTimer, QObject, Qt, QMenu
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
+
+
+COMPLEXITY_PIXMAPS = {
+    'A': 'complexity-a.png',
+    'B': 'complexity-b.png',
+    'C': 'complexity-c.png',
+    'D': 'complexity-d.png',
+    'E': 'complexity-e.png',
+    'F': 'complexity-f.png'}
+
 
 
 class PyflakesAttributes:
@@ -33,6 +44,7 @@ class PyflakesAttributes:
 
     def __init__(self):
         self.messages = []      # Complains
+        self.ccMessages = []
         self.changed = False
 
     def hasComplains(self):
@@ -46,12 +58,13 @@ class PyflakesViewer(QObject):
 
     """The pyflakes viewer"""
 
-    def __init__(self, editorsManager, uiLabel, parent=None):
+    def __init__(self, editorsManager, uiLabel, ccLabel, parent=None):
         QObject.__init__(self, parent)
 
         self.__editorsManager = editorsManager
         self.__uiLabel = uiLabel
-        self.setFlakesNotAvailable(self.__uiLabel)
+        self.__ccLabel = ccLabel
+        self.setAnalysisNotAvailable(self.__uiLabel, self.__ccLabel)
 
         self.__editorsManager.currentChanged.connect(self.__onTabChanged)
         self.__editorsManager.sigTabClosed.connect(self.__onTabClosed)
@@ -71,6 +84,11 @@ class PyflakesViewer(QObject):
             self.__showPyflakesContextMenu)
         self.__uiLabel.doubleClicked.connect(self.__jumpToFirstMessage)
 
+        # Context menu for the CC icon
+        self.__ccLabel.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.__ccLabel.customContextMenuRequested.connect(
+            self.__showCCContextMenu)
+
     def __onTabChanged(self, index):
         """Triggered when another tab becomes active"""
         # If the timer is still active that means the tab was switched before
@@ -87,19 +105,19 @@ class PyflakesViewer(QObject):
             widget = self.__editorsManager.getWidgetByIndex(index)
         if widget is None:
             self.__currentUUID = None
-            self.setFlakesNotAvailable(self.__uiLabel)
+            self.setAnalysisNotAvailable(self.__uiLabel, self.__ccLabel)
             return
 
         if widget.getType() not in [MainWindowTabWidgetBase.PlainTextEditor,
                                     MainWindowTabWidgetBase.VCSAnnotateViewer]:
             self.__currentUUID = None
-            self.setFlakesNotAvailable(self.__uiLabel)
+            self.setAnalysisNotAvailable(self.__uiLabel, self.__ccLabel)
             return
 
         # This is text editor, detect the file type
         if not isPythonMime(widget.getMime()):
             self.__currentUUID = None
-            self.setFlakesNotAvailable(self.__uiLabel)
+            self.setAnalysisNotAvailable(self.__uiLabel, self.__ccLabel)
             return
 
         # This is a python file, check if we already have the parsed info in
@@ -109,7 +127,9 @@ class PyflakesViewer(QObject):
         if uuid in self.__flakesResults:
             # We have it, change the icon and the tooltip correspondingly
             results = self.__flakesResults[uuid].messages
-            self.setFlakesResults(self.__uiLabel, results, None)
+            ccResults = self.__flakesResults[uuid].ccMessages
+            self.setAnalysisResults(self.__uiLabel, results,
+                                    self.__ccLabel, ccResults, None)
             return
 
         # It is first time we are here, create a new
@@ -117,14 +137,16 @@ class PyflakesViewer(QObject):
         editor.textChanged.connect(self.__onBufferChanged)
         editor.cursorPositionChanged.connect(self.__cursorPositionChanged)
 
-        results = getBufferErrors(editor.text)
+        results, ccResults = getBufferErrors(editor.text)
         attributes = PyflakesAttributes()
         attributes.messages = results
+        attributes.ccMessages = ccResults
         attributes.changed = False
         self.__flakesResults[uuid] = attributes
         self.__currentUUID = uuid
 
-        self.setFlakesResults(self.__uiLabel, results, editor)
+        self.setAnalysisResults(self.__uiLabel, results,
+                                self.__ccLabel, ccResults, editor)
 
     def __cursorPositionChanged(self):
         """Triggered when a cursor position is changed"""
@@ -149,7 +171,7 @@ class PyflakesViewer(QObject):
         if self.__currentUUID in self.__flakesResults:
             if not self.__flakesResults[self.__currentUUID].changed:
                 self.__flakesResults[self.__currentUUID].changed = True
-                self.setFlakesWaiting(self.__uiLabel)
+                self.setAnalysisWaiting(self.__uiLabel, self.__ccLabel)
         self.__updateTimer.start(1500)
 
     def __updateView(self):
@@ -165,12 +187,14 @@ class PyflakesViewer(QObject):
             return
 
         editor = widget.getEditor()
-        results = getBufferErrors(editor.text)
+        results, ccResults = getBufferErrors(editor.text)
 
         self.__flakesResults[self.__currentUUID].messages = results
+        self.__flakesResults[self.__currentUUID].ccMessages = ccResults
         self.__flakesResults[self.__currentUUID].changed = False
 
-        self.setFlakesResults(self.__uiLabel, results, editor)
+        self.setAnalysisResults(self.__uiLabel, results,
+                                self.__ccLabel, ccResults, editor)
 
     def __onTabClosed(self, uuid):
         """Triggered when a tab is closed"""
@@ -184,7 +208,7 @@ class PyflakesViewer(QObject):
                 # It's not a python file anymore
                 self.__currentUUID = None
                 del self.__flakesResults[uuid]
-                self.setFlakesNotAvailable(self.__uiLabel)
+                self.setAnalysisNotAvailable(self.__uiLabel, self.__ccLabel)
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when the current buffer file type is changed, e.g. .cgi"""
@@ -200,7 +224,7 @@ class PyflakesViewer(QObject):
                     self.__currentUUID = None
 
                 del self.__flakesResults[uuid]
-                self.setFlakesNotAvailable(self.__uiLabel)
+                self.setAnalysisNotAvailable(self.__uiLabel, self.__ccLabel)
 
     def __showPyflakesContextMenu(self, pos):
         """Triggered when the icon context menu is requested"""
@@ -234,6 +258,32 @@ class PyflakesViewer(QObject):
         contextMenu.triggered.connect(self.__onContextMenu)
         contextMenu.popup(self.__uiLabel.mapToGlobal(pos))
 
+    def __showCCContextMenu(self, pos):
+        """Triggered when the cc icon context menu is requested"""
+        if self.__currentUUID is None:
+            return
+        if self.__currentUUID not in self.__flakesResults:
+            return
+
+        count = 0
+        contextMenu = QMenu(self.__ccLabel)
+        for item in self.__flakesResults[self.__currentUUID].ccMessages:
+            complexity = cc_rank(item.complexity)
+
+            if complexity != 'A':
+                count += 1
+                title = complexity + '(' + str(item.complexity) + ') ' + \
+                        item.fullname
+                if item.letter in ('F', 'M'):
+                    title += '()'
+                act = contextMenu.addAction(getIcon('ccmarker.png'), title)
+                act.setData(item.lineno)
+        if count > 0:
+            contextMenu.triggered.connect(self.__onContextMenu)
+            contextMenu.popup(self.__ccLabel.mapToGlobal(pos))
+        else:
+            del contextMenu
+
     def __onContextMenu(self, act):
         """Triggered when a context menu item is selected"""
         if self.__currentUUID is None:
@@ -263,14 +313,15 @@ class PyflakesViewer(QObject):
                     break
 
     @staticmethod
-    def setFlakesResults(label, results, editor):
+    def setAnalysisResults(label, results, ccLabel, ccResults, editor):
         """Displays the appropriate icon:
 
         - pyflakes has no complains
         - pyflakes found errors
         """
         if editor is not None:
-            editor.clearPyflakesMessages()
+            editor.clearAnalysisMessages()
+            editor.setAnalysisMessages(results, ccResults)
 
         if results:
             # There are complains
@@ -288,22 +339,51 @@ class PyflakesViewer(QObject):
                                      ": " + escape(item)
             label.setToolTip(complains.replace(' ', '&nbsp;'))
             label.setPixmap(getPixmap('flakeserrors.png'))
-            if editor is not None:
-                editor.setPyflakesMessages(results)
         else:
             # There are no complains
-            label.setToolTip("File checked: no pyflakes complains")
+            label.setToolTip('Buffer checked: no pyflakes complains')
             label.setPixmap(getPixmap('flakesok.png'))
 
-    @staticmethod
-    def setFlakesWaiting(label):
-        """Displays the waiting for a time slice to start checking icon"""
-        label.setToolTip("File is modified: "
-                         "pyflakes is waiting for time slice")
-        label.setPixmap(getPixmap('flakesmodified.png'))
+        if ccResults:
+            complains = 'Buffer cyclomatic complexity:<br/>'
+            worstComplexity = 'A'
+            for item in ccResults:
+                complexity = cc_rank(item.complexity)
+                worstComplexity = max(complexity, worstComplexity)
+
+                if complexity != 'A':
+                    complains += '<br/>' + complexity + \
+                                 '(' + str(item.complexity) + ') ' + \
+                                 escape(item.fullname)
+                    if item.letter in ('F', 'M'):
+                        complains += '()'
+
+            if worstComplexity == 'A':
+                ccLabel.setToolTip('Buffer cyclomatic complexity: no complains')
+            else:
+                ccLabel.setToolTip(complains.replace(' ', '&nbsp;'))
+            ccLabel.setPixmap(getPixmap(COMPLEXITY_PIXMAPS[worstComplexity]).
+                                scaled(16, 16, Qt.KeepAspectRatio))
+        else:
+            ccLabel.setToolTip('No complexity information available')
+            ccLabel.setPixmap(getPixmap('ccmarker.png'))
 
     @staticmethod
-    def setFlakesNotAvailable(label):
+    def setAnalysisWaiting(label, ccLabel):
+        """Displays the waiting for a time slice to start checking icon"""
+        label.setToolTip('File is modified: '
+                         'pyflakes is waiting for time slice')
+        label.setPixmap(getPixmap('flakesmodified.png'))
+
+        ccLabel.setToolTip('File is modified: '
+                           'radon is waiting for time slice')
+        ccLabel.setPixmap(getPixmap('flakesmodified.png'))
+
+    @staticmethod
+    def setAnalysisNotAvailable(label, ccLabel):
         """Displays the appropriate icon that pyflakes is not available"""
-        label.setToolTip("Not a python file: pyflakes is sleeping")
+        label.setToolTip('Not a python file: pyflakes is sleeping')
         label.setPixmap(getPixmap('flakessleep.png'))
+
+        ccLabel.setToolTip('Not a python file: radon is sleeping')
+        ccLabel.setPixmap(getPixmap('flakessleep.png'))

@@ -823,13 +823,14 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         """Hides the completer if visible"""
         self.__completer.hide()
 
-    def clearPyflakesMessages(self):
-        """Clears all the pyflakes markers"""
-        self.getMargin('cdm_flakes_margin').clearPyflakesMessages()
+    def clearAnalysisMessages(self):
+        """Clears all the analysis markers"""
+        self.getMargin('cdm_flakes_margin').clearAnalysisMessages()
 
-    def setPyflakesMessages(self, messages):
-        """Shows up a pyflakes messages"""
-        self.getMargin('cdm_flakes_margin').setPyflakesMessages(messages)
+    def setAnalysisMessages(self, messages, ccMessages):
+        """Shows up analysis messages"""
+        self.getMargin('cdm_flakes_margin').setAnalysisMessages(messages,
+                                                                ccMessages)
 
     def highlightInCFlow(self):
         """Triggered when highlight in the control flow is requested"""

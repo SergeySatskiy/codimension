@@ -2,6 +2,10 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Version X.X.X
 * Bump jedi version to 0.12.1
+* Buffer cyclomatic complexity on-the-fly: status bar menu and margin marks
+* Better analysis margin pixmap scaling
+* Print button for the text editor toolbar added
+* Minor improvements
 
 2018 Aug 13 Sergey Satskiy <sergey.satskiy@gmail.com>
 

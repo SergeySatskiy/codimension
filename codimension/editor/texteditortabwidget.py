@@ -118,16 +118,18 @@ class TextEditorTabWidget(QWidget):
     def __createLayout(self):
         """Creates the toolbar and layout"""
         # Buttons
-        printButton = QAction(getIcon('printer.png'), 'Print', self)
+        printButton = QAction(getIcon('printer.png'), 'Print (Ctrl+P)', self)
         printButton.triggered.connect(self.__onPrint)
-        printButton.setEnabled(False)
-        printButton.setVisible(False)
 
         printPreviewButton = QAction(getIcon('printpreview.png'),
                                      'Print preview', self)
         printPreviewButton.triggered.connect(self.__onPrintPreview)
         printPreviewButton.setEnabled(False)
         printPreviewButton.setVisible(False)
+
+        printSpacer = QWidget()
+        printSpacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        printSpacer.setFixedHeight(8)
 
         # Imports diagram and its menu
         importsMenu = QMenu(self)
@@ -237,6 +239,7 @@ class TextEditorTabWidget(QWidget):
 
         toolbar.addAction(printPreviewButton)
         toolbar.addAction(printButton)
+        toolbar.addWidget(printSpacer)
         toolbar.addWidget(self.importsDiagramButton)
         toolbar.addWidget(self.runScriptButton)
         toolbar.addWidget(self.profileScriptButton)
@@ -317,7 +320,7 @@ class TextEditorTabWidget(QWidget):
 
     def __onPrint(self):
         """Triggered when the print button is pressed"""
-        pass
+        self.__editor._onShortcutPrint()
 
     def __onPrintPreview(self):
         """triggered when the print preview button is pressed"""
