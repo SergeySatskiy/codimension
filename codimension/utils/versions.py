@@ -169,4 +169,10 @@ def getComponentInfo():
                        "MIT License",
                        "https://opensource.org/licenses/MIT",
                        path))
+    version, path = getPackageVersionAndLocation('radon')
+    components.append(("radon", version,
+                       "https://radon.readthedocs.org/", None,
+                       "MIT License",
+                       "https://opensource.org/licenses/MIT",
+                       path))
     return components
