@@ -43,8 +43,8 @@ def getBufferErrors(sourceCode):
     except SyntaxError as value:
         # If there's an encoding problem with the file, the text is None.
         if value.text is None:
-            return {}
-        return {value.lineno: [value.args[0]]}
+            return {}, []
+        return {value.lineno: [value.args[0]]}, []
     except (ValueError, TypeError) as value:
         # ValueError may happened in case of invalid \x escape character
         # E.g. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=674797
@@ -52,8 +52,8 @@ def getBufferErrors(sourceCode):
         # E.g. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=674796
         msg = str(value)
         if msg == "":
-            return {-1: ["Could not compile buffer: unknown error"]}
-        return {-1: ["Could not compile buffer: " + msg]}
+            return {-1: ["Could not compile buffer: unknown error"]}, []
+        return {-1: ["Could not compile buffer: " + msg]}, []
 
     # Okay, it's syntactically valid.  Now check it.
     check = Checker(tree, "<string>")

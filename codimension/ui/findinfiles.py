@@ -75,7 +75,7 @@ class ItemToSearchIn:
         self.tooltip = ""           # For python files only -> docstring
         self.matches = []
 
-    def addMatch(self, name, lineNumber):
+    def addMatch(self, name, lineNumber, customMessage=None):
         """Used to add a match which was found outside of find in files"""
         match = Match(lineNumber, 0, 0)
 
@@ -90,28 +90,37 @@ class ItemToSearchIn:
                     raise Exception('Inconsistency. Buffer disappeared.')
             else:
                 content = getFileContent(self.fileName).splitlines()
-            self.__fillInMatch(match, content, name, lineNumber)
+            self.__fillInMatch(match, content, name, lineNumber, customMessage)
         except Exception as exc:
             logging.error('Error adding match: ' + str(exc))
         self.matches.append(match)
 
-    def __fillInMatch(self, match, content, name, lineNumber):
+    def __fillInMatch(self, match, content, name, lineNumber, customMessage=None):
         """Fills in the match fields from the content"""
         # Form the regexp corresponding to a single word search
-        regexpText = re.escape(name)
-        regexpText = "\\b%s\\b" % regexpText
-        flags = re.UNICODE
-        searchRegexp = re.compile(regexpText, flags)
-
         line = content[lineNumber - 1]
-        match.text = line.strip()
+        if customMessage:
+            match.text = customMessage
+        else:
+            match.text = line.strip()
 
-        contains = searchRegexp.search(line)
-        match.start = contains.start()
-        match.finish = contains.end()
+        if name:
+            regexpText = re.escape(name)
+            regexpText = "\\b%s\\b" % regexpText
+            flags = re.UNICODE
+            searchRegexp = re.compile(regexpText, flags)
+
+            contains = searchRegexp.search(line)
+            match.start = contains.start()
+            match.finish = contains.end()
+        else:
+            match.start = 0
+            match.finish = len(line)
+
         match.tooltip = self.__buildTooltip(content, lineNumber - 1,
                                             len(content),
                                             match.start, match.finish)
+
         self.__extractDocstring(content)
 
     def search(self, expression):

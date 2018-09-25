@@ -175,4 +175,10 @@ def getComponentInfo():
                        "MIT License",
                        "https://opensource.org/licenses/MIT",
                        path))
+    version, path = getPackageVersionAndLocation('vulture')
+    components.append(("vulture", version,
+                       "https://github.com/jendrikseipp/vulture", None,
+                       "MIT License",
+                       "https://opensource.org/licenses/MIT",
+                       path))
     return components

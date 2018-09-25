@@ -5,6 +5,9 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Buffer cyclomatic complexity on-the-fly: status bar menu and margin marks
 * Better analysis margin pixmap scaling
 * Print button for the text editor toolbar added
+* Integrate vulture to find dead code
+* Remove obsolete unreliable unused functions/classes/global variable
+  search implementation based on jedi
 * Minor improvements
 
 2018 Aug 13 Sergey Satskiy <sergey.satskiy@gmail.com>

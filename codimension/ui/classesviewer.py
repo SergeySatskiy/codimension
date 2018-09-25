@@ -90,11 +90,6 @@ class ClassesViewer(QWidget):
             getIcon('copymenu.png'), 'Copy path to clipboard', self)
         self.copyPathButton.triggered.connect(self.clViewer.copyToClipboard)
 
-        self.findNotUsedButton = QAction(
-            getIcon('notused.png'), 'Unused class analysis', self)
-        self.findNotUsedButton.triggered.connect(self.__findNotUsed)
-        self.findNotUsedButton.setEnabled(False)
-
         self.toolbar = QToolBar(self)
         self.toolbar.setMovable(False)
         self.toolbar.setAllowedAreas(Qt.TopToolBarArea)
@@ -113,7 +108,6 @@ class ClassesViewer(QWidget):
         self.filterEdit.lineEdit().setToolTip(
             "Space separated regular expressions")
         self.toolbar.addWidget(self.filterEdit)
-        self.toolbar.addAction(self.findNotUsedButton)
         self.filterEdit.editTextChanged.connect(self.__filterChanged)
         self.filterEdit.itemAdded.connect(self.__filterItemAdded)
         self.filterEdit.enterClicked.connect(self.__enterInFilter)
@@ -179,9 +173,6 @@ class ClassesViewer(QWidget):
                     self.__filterChanged)
                 self.filterEdit.addItems(project.findClassHistory)
                 self.filterEdit.editTextChanged.connect(self.__filterChanged)
-                self.findNotUsedButton.setEnabled(self.getItemCount() > 0)
-            else:
-                self.findNotUsedButton.setEnabled(False)
             self.filterEdit.clearEditText()
 
     def __handleShowContextMenu(self, coord):
@@ -212,10 +203,6 @@ class ClassesViewer(QWidget):
             GlobalData().mainWindow.findWhereUsed(self.__contextItem.getPath(),
                                                   self.__contextItem.sourceObj)
 
-    def __findNotUsed(self):
-        """Runs the unused class analysis"""
-        GlobalData().mainWindow.onNotUsedClasses()
-
     def __updateButtons(self):
         """Updates the toolbar buttons depending on what is selected"""
         self.definitionButton.setEnabled(False)
@@ -238,10 +225,7 @@ class ClassesViewer(QWidget):
     def onFileUpdated(self, fileName, uuid):
         """Triggered when the file is updated"""
         self.clViewer.onFileUpdated(fileName)
-        self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
-                                          self.getItemCount() > 0)
 
     def modelFilesChanged(self):
         """Triggered when the source model has files added or deleted"""
-        self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
-                                          self.getItemCount() > 0)
+        pass

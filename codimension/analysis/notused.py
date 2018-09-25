@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2012-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2012-2018  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,16 @@
 #
 
 
-"""not used globals, functions, classes analysis"""
+"""not used code analysis using vulture"""
 
 
-import os, os.path, logging
+import os, os.path, logging, tempfile
+from subprocess import Popen, PIPE
 from ui.qt import (QCursor, Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout,
                    QLabel, QProgressBar, QApplication)
 from autocomplete.completelists import getOccurrences
 from utils.globals import GlobalData
+from utils.config import DEFAULT_ENCODING
 from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
 
 
@@ -33,31 +35,30 @@ class NotUsedAnalysisProgress(QDialog):
 
     """Progress of the not used analysis"""
 
-    Functions = 0
-    Classes = 1
-    Globals = 2
-
-    def __init__(self, what, sourceModel, parent=None):
+    def __init__(self, path, parent=None):
         QDialog.__init__(self, parent)
 
-        if what not in [self.Functions, self.Classes, self.Globals]:
-            raise Exception("Unsupported unused analysis type: " + str(what))
+        path = os.path.abspath(path)
+        if not os.path.exists(path):
+            raise Exception('Dead code analysis path must exist. '
+                            'The provide path "' + path + '" does not.')
+
+        self.__path = path
 
         self.__cancelRequest = False
         self.__inProgress = False
 
-        self.__what = what              # what is in source model
-        self.__srcModel = sourceModel   # source model of globals or
-                                        # functions or classes
-
-        # Avoid pylint complains
-        self.__progressBar = None
         self.__infoLabel = None
         self.__foundLabel = None
         self.__found = 0        # Number of found
 
         self.__createLayout()
-        self.setWindowTitle(self.__formTitle())
+        if os.path.isdir(path):
+            self.setWindowTitle('Dead code analysis for all project files')
+        else:
+            self.setWindowTitle('Dead code analysis for ' +
+                                os.path.basename(path))
+        self.__updateFoundLabel()
         QTimer.singleShot(0, self.__process)
 
     def keyPressEvent(self, event):
@@ -66,33 +67,6 @@ class NotUsedAnalysisProgress(QDialog):
             self.__onClose()
         else:
             QDialog.keyPressEvent(self, event)
-
-    def __formTitle(self):
-        """Forms the progress dialog title"""
-        title = "Unused "
-        if self.__what == self.Functions:
-            title += 'function'
-        elif self.__what == self.Classes:
-            title += 'class'
-        else:
-            title += 'globlal variable'
-        return title + " analysis"
-
-    def __formInfoLabel(self, name):
-        """Forms the info label"""
-        if self.__what == self.Functions:
-            return 'Function: ' + name
-        if self.__what == self.Classes:
-            return 'Class: ' + name
-        return 'Globlal variable: ' + name
-
-    def __whatAsString(self):
-        """Provides 'what' as string"""
-        if self.__what == self.Functions:
-            return 'function'
-        if self.__what == self.Classes:
-            return 'class'
-        return 'global variable'
 
     def __updateFoundLabel(self):
         """Updates the found label"""
@@ -118,12 +92,6 @@ class NotUsedAnalysisProgress(QDialog):
         self.__infoLabel = QLabel(self)
         verticalLayout.addWidget(self.__infoLabel)
 
-        # Progress bar
-        self.__progressBar = QProgressBar(self)
-        self.__progressBar.setValue(0)
-        self.__progressBar.setOrientation(Qt.Horizontal)
-        verticalLayout.addWidget(self.__progressBar)
-
         # Found label
         self.__foundLabel = QLabel(self)
         verticalLayout.addWidget(self.__foundLabel)
@@ -142,76 +110,87 @@ class NotUsedAnalysisProgress(QDialog):
         if not self.__inProgress:
             self.close()
 
+    def __run(self):
+        errTmp = tempfile.mkstemp()
+        errStream = os.fdopen(errTmp[0])
+        process = Popen(['vulture', self.__path],
+                        stdin=PIPE,
+                        stdout=PIPE, stderr=errStream)
+        process.stdin.close()
+        processStdout = process.stdout.read()
+        process.stdout.close()
+        errStream.seek(0)
+        err = errStream.read()
+        errStream.close()
+        process.wait()
+        try:
+            os.unlink(errTmp[1])
+        except:
+            pass
+        return processStdout.decode(DEFAULT_ENCODING), err.strip()
+
     def __process(self):
         """Analysis process"""
         self.__inProgress = True
-
         mainWindow = GlobalData().mainWindow
-        editorsManager = mainWindow.editorsManagerWidget.editorsManager
-        # True - only project files
-        modified = editorsManager.getModifiedList(True)
-        if modified:
-            modNames = [modItem[0] for modItem in modified]
-            label = "File"
-            if len(modified) >= 2:
-                label += "s"
-            label += ": "
-            logging.warning("The analisys is performed for the content "
-                            "of saved files. The unsaved modifications will "
-                            "not be taken into account. " + label +
-                            ", ".join(modNames))
 
-        self.__updateFoundLabel()
-        self.__progressBar.setRange(0,
-                                    len(self.__srcModel.rootItem.childItems))
-        QApplication.processEvents()
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
-        count = 0
+        # return code gives really nothing. So the error in running the utility
+        # is detected by the stderr content.
+        # Also, there could be a mix of messages for a project. Some files
+        # could have syntax errors - there will be messages on stderr. The
+        # other files are fine so there will be messages on stdout
+        stdout, stderr = self.__run()
         candidates = []
-        for treeItem in self.__srcModel.rootItem.childItems:
-            if self.__cancelRequest:
-                break
+        for line in stdout.splitlines():
+            line = line.strip()
+            if line:
+                # Line is like file.py:2: unused variable 'a' (60% confidence)
+                try:
+                    startIndex = line.find(':')
+                    if startIndex < 0:
+                        continue
+                    endIndex = line.find(':', startIndex + 1)
+                    if endIndex < 0:
+                        continue
+                    fileName = line[:startIndex]
+                    startIndex = line.find(':')
+                    if startIndex < 0:
+                        continue
+                    endIndex = line.find(':', startIndex + 1)
+                    if endIndex < 0:
+                        continue
+                    fileName = os.path.abspath(line[:startIndex])
+                    lineno = int(line[startIndex + 1:endIndex])
+                    message = line[endIndex + 1:].strip()
+                except:
+                    continue
 
-            name = str(treeItem.data(0)).split('(')[0]
-            path = os.path.realpath(treeItem.getPath())
-            lineNumber = int(treeItem.data(2))
-            pos = treeItem.sourceObj.pos
-
-            count += 1
-            self.__progressBar.setValue(count)
-            self.__infoLabel.setText(self.__formInfoLabel(name))
-            QApplication.processEvents()
-
-            # Analyze the name
-            found = False
-            definitions = getOccurrences(None, path, lineNumber, pos)
-
-            if len(definitions) == 1:
-                found = True
-                index = getSearchItemIndex(candidates, path)
+                index = getSearchItemIndex(candidates, fileName)
                 if index < 0:
-                    widget = mainWindow.getWidgetForFileName(path)
+                    widget = mainWindow.getWidgetForFileName(fileName)
                     if widget is None:
-                        uuid = ""
+                        uuid = ''
                     else:
                         uuid = widget.getUUID()
-                    newItem = ItemToSearchIn(path, uuid)
+                    newItem = ItemToSearchIn(fileName, uuid)
                     candidates.append(newItem)
                     index = len(candidates) - 1
-                candidates[index].addMatch(name, lineNumber)
+                candidates[index].addMatch('', lineno, message)
 
-            if found:
                 self.__found += 1
                 self.__updateFoundLabel()
-            QApplication.processEvents()
+                QApplication.processEvents()
 
         if self.__found == 0:
-            # The analysis could be interrupted
-            if not self.__cancelRequest:
-                logging.info("No unused candidates found")
+            if stderr:
+                logging.error('Error running vulture for ' + self.__path +
+                              ':\n' + stderr)
+            else:
+                logging.info('No unused candidates found')
         else:
-            mainWindow.displayFindInFiles("", candidates)
+            mainWindow.displayFindInFiles('', candidates)
 
         QApplication.restoreOverrideCursor()
         self.__infoLabel.setText('Done')

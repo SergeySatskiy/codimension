@@ -97,7 +97,6 @@ class CFSceneMouseMixin:
             event.accept()
             return
 
-
         if button == Qt.RightButton:
             item = self.itemAt(event.scenePos(), QTransform())
             logicalItem = self.__getLogicalItem(item)
@@ -116,9 +115,6 @@ class CFSceneMouseMixin:
 
         event.accept()
         return
-
-
-        event.accept()
 
     def mouseMoveEvent(self, event):
         """Handles mouse movement"""

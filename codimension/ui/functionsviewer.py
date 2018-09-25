@@ -91,11 +91,6 @@ class FunctionsViewer(QWidget):
             getIcon('copymenu.png'), 'Copy path to clipboard', self)
         self.copyPathButton.triggered.connect(self.funcViewer.copyToClipboard)
 
-        self.findNotUsedButton = QAction(
-            getIcon('notused.png'), 'Unused function analysis', self)
-        self.findNotUsedButton.triggered.connect(self.__findNotUsed)
-        self.findNotUsedButton.setEnabled(False)
-
         self.toolbar = QToolBar(self)
         self.toolbar.setMovable(False)
         self.toolbar.setAllowedAreas(Qt.TopToolBarArea)
@@ -114,7 +109,6 @@ class FunctionsViewer(QWidget):
         self.filterEdit.lineEdit().setToolTip(
             "Space separated regular expressions")
         self.toolbar.addWidget(self.filterEdit)
-        self.toolbar.addAction(self.findNotUsedButton)
         self.filterEdit.editTextChanged.connect(self.__filterChanged)
         self.filterEdit.itemAdded.connect(self.__filterItemAdded)
         self.filterEdit.enterClicked.connect(self.__enterInFilter)
@@ -182,9 +176,6 @@ class FunctionsViewer(QWidget):
                     self.__filterChanged)
                 self.filterEdit.addItems(project.findFunctionHistory)
                 self.filterEdit.editTextChanged.connect(self.__filterChanged)
-                self.findNotUsedButton.setEnabled(self.getItemCount() > 0)
-            else:
-                self.findNotUsedButton.setEnabled(False)
             self.filterEdit.clearEditText()
 
     def __handleShowContextMenu(self, coord):
@@ -214,11 +205,6 @@ class FunctionsViewer(QWidget):
                 self.__contextItem.getPath(),
                 self.__contextItem.sourceObj)
 
-    @staticmethod
-    def __findNotUsed():
-        """Runs the unused function analysis"""
-        GlobalData().mainWindow.onNotUsedFunctions()
-
     def __updateButtons(self):
         """Updates the toolbar buttons depending on what is selected"""
         self.definitionButton.setEnabled(False)
@@ -242,10 +228,7 @@ class FunctionsViewer(QWidget):
         """Triggered when the file is updated"""
         del uuid    # unused argument
         self.funcViewer.onFileUpdated(fileName)
-        self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
-                                          self.getItemCount() > 0)
 
     def modelFilesChanged(self):
         """Triggered when the source model has files added or deleted"""
-        self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
-                                          self.getItemCount() > 0)
+        pass

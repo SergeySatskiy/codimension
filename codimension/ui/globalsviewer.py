@@ -87,11 +87,6 @@ class GlobalsViewer(QWidget):
         self.copyPathButton.triggered.connect(
             self.globalsViewer.copyToClipboard)
 
-        self.findNotUsedButton = QAction(
-            getIcon('notused.png'), 'Unused global variable analysis', self)
-        self.findNotUsedButton.triggered.connect(self.__findNotUsed)
-        self.findNotUsedButton.setEnabled(False)
-
         self.toolbar = QToolBar(self)
         self.toolbar.setMovable(False)
         self.toolbar.setAllowedAreas(Qt.TopToolBarArea)
@@ -110,7 +105,6 @@ class GlobalsViewer(QWidget):
         self.filterEdit.lineEdit().setToolTip(
             "Space separated regular expressions")
         self.toolbar.addWidget(self.filterEdit)
-        self.toolbar.addAction(self.findNotUsedButton)
         self.filterEdit.editTextChanged.connect(self.__filterChanged)
         self.filterEdit.itemAdded.connect(self.__filterItemAdded)
         self.filterEdit.enterClicked.connect(self.__enterInFilter)
@@ -177,9 +171,6 @@ class GlobalsViewer(QWidget):
                 self.filterEdit.editTextChanged.disconnect(self.__filterChanged)
                 self.filterEdit.addItems(project.findGlobalHistory)
                 self.filterEdit.editTextChanged.connect(self.__filterChanged)
-                self.findNotUsedButton.setEnabled(self.getItemCount() > 0)
-            else:
-                self.findNotUsedButton.setEnabled(False)
             self.filterEdit.clearEditText()
 
     def __handleShowContextMenu(self, coord):
@@ -212,11 +203,6 @@ class GlobalsViewer(QWidget):
                 self.__contextItem.getPath(),
                 self.__contextItem.sourceObj)
 
-    @staticmethod
-    def __findNotUsed():
-        """Runs the unused global variable analysis"""
-        GlobalData().mainWindow.onNotUsedGlobals()
-
     def __updateButtons(self):
         """Updates the toolbar buttons depending on what is selected"""
         self.definitionButton.setEnabled(False)
@@ -240,10 +226,7 @@ class GlobalsViewer(QWidget):
         """Triggered when the file is updated"""
         del uuid    # unused argument
         self.globalsViewer.onFileUpdated(fileName)
-        self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
-                                          self.getItemCount() > 0)
 
     def modelFilesChanged(self):
         """Triggered when the source model has files added or deleted"""
-        self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
-                                          self.getItemCount() > 0)
+        pass

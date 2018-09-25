@@ -199,7 +199,7 @@ class MainWindowMenuMixin:
         self._findNameMenuAct = searchMenu.addAction(
             getIcon('findname.png'), 'Find &name in project',
             self.findNameClicked, 'Alt+Shift+S')
-        self._fileProjectFileAct = searchMenu.addAction(
+        self._findProjectFileAct = searchMenu.addAction(
             getIcon('findfile.png'), 'Find &project file',
             self.findFileClicked, 'Alt+Shift+O')
         searchMenu.addSeparator()
@@ -338,15 +338,13 @@ class MainWindowMenuMixin:
         """Build the tools menu"""
         toolsMenu = QMenu("T&ools", self)
         toolsMenu.aboutToShow.connect(self.__toolsAboutToShow)
-        self.__unusedClassesAct = toolsMenu.addAction(
-            getIcon('notused.png'), 'Unused class analysis',
-            self.onNotUsedClasses)
-        self.__unusedFunctionsAct = toolsMenu.addAction(
-            getIcon('notused.png'), 'Unused function analysis',
-            self.onNotUsedFunctions)
-        self.__unusedGlobalsAct = toolsMenu.addAction(
-            getIcon('notused.png'), 'Unused global variable analysis',
-            self.onNotUsedGlobals)
+
+        self._deadCodeMenuAct = toolsMenu.addAction(
+            getIcon('deadcode.png'), 'Find project &dead code',
+            self.projectDeadCodeClicked, 'Alt+Shift+D')
+        self._tabDeadCodeAct = toolsMenu.addAction(
+            getIcon('deadcode.png'), 'Find tab dead code',
+            self.tabDeadCodeClicked, '')
         toolsMenu.addSeparator()
         self.disasmMenu = QMenu('Disassembly', self)
         self.disasmMenu.setIcon(getIcon('disassembly.png'))
@@ -841,19 +839,10 @@ class MainWindowMenuMixin:
 
     def __toolsAboutToShow(self):
         """Triggered when tools menu is about to show"""
-        if GlobalData().project.isLoaded():
-            self.__unusedClassesAct.setEnabled(
-                self.classesViewer.getItemCount() > 0)
-            self.__unusedFunctionsAct.setEnabled(
-                self.functionsViewer.getItemCount() > 0)
-            self.__unusedGlobalsAct.setEnabled(
-                self.globalsViewer.getItemCount() > 0)
-        else:
-            self.__unusedClassesAct.setEnabled(False)
-            self.__unusedFunctionsAct.setEnabled(False)
-            self.__unusedGlobalsAct.setEnabled(False)
-
-        self.disasmMenu.setEnabled(self._isPythonBuffer())
+        isPythonBuffer = self._isPythonBuffer()
+        self._deadCodeMenuAct.setEnabled(isPythonBuffer)
+        self._tabDeadCodeAct.setEnabled(isPythonBuffer)
+        self.disasmMenu.setEnabled(isPythonBuffer)
 
     def __viewAboutToShow(self):
         """Triggered when view menu is about to show"""

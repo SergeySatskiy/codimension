@@ -207,8 +207,15 @@ class TextEditorTabWidget(QWidget):
         self.disasmScriptButton.clicked.connect(self.__editor._onDisasm0)
         self.disasmScriptButton.setEnabled(False)
 
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # Dead code
+        self.deadCodeScriptButton = QAction(getIcon('deadcode.png'),
+                                            'Find dead code', self)
+        self.deadCodeScriptButton.triggered.connect(self.__onDeadCode)
+        self.deadCodeScriptButton.setEnabled(False)
+
+        undoSpacer = QWidget()
+        undoSpacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        undoSpacer.setFixedHeight(8)
 
         self.__undoButton = QAction(getIcon('undo.png'), 'Undo (Ctrl+Z)', self)
         self.__undoButton.setShortcut('Ctrl+Z')
@@ -219,6 +226,9 @@ class TextEditorTabWidget(QWidget):
         self.__redoButton.setShortcut('Ctrl+Y')
         self.__redoButton.triggered.connect(self.__editor.onRedo)
         self.__redoButton.setEnabled(False)
+
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.removeTrailingSpacesButton = QAction(
             getIcon('trailingws.png'), 'Remove trailing spaces', self)
@@ -245,6 +255,8 @@ class TextEditorTabWidget(QWidget):
         toolbar.addWidget(self.profileScriptButton)
         toolbar.addWidget(self.debugScriptButton)
         toolbar.addWidget(self.disasmScriptButton)
+        toolbar.addAction(self.deadCodeScriptButton)
+        toolbar.addWidget(undoSpacer)
         toolbar.addAction(self.__undoButton)
         toolbar.addAction(self.__redoButton)
         toolbar.addWidget(spacer)
@@ -323,8 +335,12 @@ class TextEditorTabWidget(QWidget):
         self.__editor._onShortcutPrint()
 
     def __onPrintPreview(self):
-        """triggered when the print preview button is pressed"""
+        """Triggered when the print preview button is pressed"""
         pass
+
+    def __onDeadCode(self):
+        """Triggered when vulture analysis is requested"""
+        GlobalData().mainWindow.tabDeadCodeClicked()
 
     def __redoAvailable(self, available):
         """Reports redo ops available"""
@@ -354,6 +370,7 @@ class TextEditorTabWidget(QWidget):
             self.runScriptButton.setEnabled(enable)
             self.profileScriptButton.setEnabled(enable)
             self.debugScriptButton.setEnabled(enable)
+            self.deadCodeScriptButton.setEnabled(enable)
             self.sigTabRunChanged.emit(enable)
 
     def isTabRunEnabled(self):

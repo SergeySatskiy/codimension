@@ -46,9 +46,9 @@ from debugger.bpwp import DebuggerBreakWatchPoints
 from debugger.bputils import clearValidBreakpointLinesCache
 from debugger.client.protocol_cdm_dbg import UNHANDLED_EXCEPTION
 from autocomplete.completelists import getOccurrences
-from analysis.notused import NotUsedAnalysisProgress
 from analysis.disasm import (getFileDisassembled, getCompiledfileDisassembled,
                              getBufferDisassembled)
+from analysis.notused import NotUsedAnalysisProgress
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
 from profiling.profwidget import ProfileResultsWidget
@@ -493,11 +493,6 @@ class CodimensionMainWindow(QMainWindow):
             self)
         applicationDiagramButton.setEnabled(False)
         applicationDiagramButton.setVisible(False)
-        neverUsedButton = QAction(
-            getIcon('neverused.png'),
-            'Analysis for never used variables, functions, classes', self)
-        neverUsedButton.setEnabled(False)
-        neverUsedButton.setVisible(False)
 
         self.__findInFilesButton = QAction(
             getIcon('findindir.png'), 'Find in files (Ctrl+Shift+F)', self)
@@ -509,6 +504,10 @@ class CodimensionMainWindow(QMainWindow):
         self.__findFileButton = QAction(
             getIcon('findfile.png'), 'Find project file (Alt+Shift+O)', self)
         self.__findFileButton.triggered.connect(self.findFileClicked)
+        self.__deadCodeButton = QAction(
+            getIcon('deadcode.png'), 'Find project dead code (Alt+Shift+D)',
+            self)
+        self.__deadCodeButton.triggered.connect(self.projectDeadCodeClicked)
 
         # Debugger buttons
         self.__dbgStop = QAction(
@@ -574,11 +573,11 @@ class CodimensionMainWindow(QMainWindow):
         self.__toolbar.addWidget(self.profileProjectButton)
         self.__toolbar.addAction(applicationDiagramButton)
         self.__toolbar.addSeparator()
-        self.__toolbar.addAction(neverUsedButton)
-        self.__toolbar.addSeparator()
         self.__toolbar.addAction(self.__findInFilesButton)
         self.__toolbar.addAction(self.__findNameButton)
         self.__toolbar.addAction(self.__findFileButton)
+        self.__toolbar.addSeparator()
+        self.__toolbar.addAction(self.__deadCodeButton)
 
         # Debugger part begin
         dbgSpacer = QWidget()
@@ -660,7 +659,8 @@ class CodimensionMainWindow(QMainWindow):
             self._projectPropsAct.setEnabled(projectLoaded)
             self._prjTemplateMenu.setEnabled(projectLoaded)
             self._findNameMenuAct.setEnabled(projectLoaded)
-            self._fileProjectFileAct.setEnabled(projectLoaded)
+            self._deadCodeMenuAct.setEnabled(projectLoaded)
+            self._findProjectFileAct.setEnabled(projectLoaded)
             self._prjImportDgmAct.setEnabled(projectLoaded)
             self._prjImportsDgmDlgAct.setEnabled(projectLoaded)
 
@@ -693,6 +693,7 @@ class CodimensionMainWindow(QMainWindow):
                                              GlobalData().graphvizAvailable)
         self.__findNameButton.setEnabled(projectLoaded)
         self.__findFileButton.setEnabled(projectLoaded)
+        self.__deadCodeButton.setEnabled(projectLoaded)
 
     def updateRunDebugButtons(self):
         """Updates the run/debug buttons statuses"""
@@ -994,6 +995,25 @@ class CodimensionMainWindow(QMainWindow):
         """Find file dialog should come up"""
         try:
             FindFileDialog(self).exec_()
+        except Exception as exc:
+            logging.error(str(exc))
+
+    def projectDeadCodeClicked(self):
+        """Dead code analysis: vulture"""
+        project = GlobalData().project
+        if project.isLoaded():
+            try:
+                dlg = NotUsedAnalysisProgress(project.getProjectDir(), self)
+                dlg.exec_()
+            except Exception as exc:
+                logging.error(str(exc))
+
+    def tabDeadCodeClicked(self):
+        """Tab dead code analysis"""
+        try:
+            currentWidget = self.em.currentWidget()
+            dlg = NotUsedAnalysisProgress(currentWidget.getFileName(), self)
+            dlg.exec_()
         except Exception as exc:
             logging.error(str(exc))
 
@@ -1981,27 +2001,6 @@ class CodimensionMainWindow(QMainWindow):
         else:
             self.__loadProject(path)
 
-    def onNotUsedFunctions(self):
-        """Triggered when not used functions analysis requested"""
-        dlg = NotUsedAnalysisProgress(
-            NotUsedAnalysisProgress.Functions,
-            self.functionsViewer.funcViewer.model().sourceModel(), self)
-        dlg.exec_()
-
-    def onNotUsedGlobals(self):
-        """Triggered when not used global vars analysis requested"""
-        dlg = NotUsedAnalysisProgress(
-            NotUsedAnalysisProgress.Globals,
-            self.globalsViewer.globalsViewer.model().sourceModel(), self)
-        dlg.exec_()
-
-    def onNotUsedClasses(self):
-        """Triggered when not used classes analysis requested"""
-        dlg = NotUsedAnalysisProgress(
-            NotUsedAnalysisProgress.Classes,
-            self.classesViewer.clViewer.model().sourceModel(), self)
-        dlg.exec_()
-
     def onDisasm0(self):
         """Disassemble without optimization"""
         self.em.currentWidget().getEditor()._onDisasm0()
@@ -2098,6 +2097,9 @@ class CodimensionMainWindow(QMainWindow):
 
         self._tabProfileAct.setEnabled(enabled)
         self._tabProfileDlgAct.setEnabled(enabled)
+
+        # The dead code has the same dependency as debugging
+        self._tabDeadCodeAct.setEnabled(enabled)
 
     def __initPluginSupport(self):
         """Initializes the main window plugin support"""
