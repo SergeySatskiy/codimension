@@ -8,6 +8,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Integrate vulture to find dead code
 * Remove obsolete unreliable unused functions/classes/global variable
   search implementation based on jedi
+* Bug fix: crash on debug dump settings from the main menu
 * Minor improvements
 
 2018 Aug 13 Sergey Satskiy <sergey.satskiy@gmail.com>

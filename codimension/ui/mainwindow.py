@@ -2243,13 +2243,13 @@ class CodimensionMainWindow(QMainWindow):
 
     def _onDumpProjectDebugSettings(self):
         """Dumps project script settings is requested"""
-        if self.__dumpProjectDbgSettingsAvailable():
+        if self._dumpProjectDbgSettingsAvailable():
             project = GlobalData().project
             self.__dumpDebugSettings(project.getProjectScript(), False)
 
     def _onDumpProjectFullDebugSettings(self):
         """Dumps project script complete settings is requested"""
-        if self.__dumpProjectDbgSettingsAvailable():
+        if self._dumpProjectDbgSettingsAvailable():
             project = GlobalData().project
             self.__dumpDebugSettings(project.getProjectScript(), True)
 
@@ -2266,12 +2266,14 @@ class CodimensionMainWindow(QMainWindow):
         return False
 
     @staticmethod
-    def __dumpProjectDbgSettingsAvailable():
+    def _dumpProjectDbgSettingsAvailable():
         """True if dumping dbg session settings for the project is available"""
         project = GlobalData().project
         if not project.isLoaded():
             return False
         fileName = project.getProjectScript()
+        if fileName is None:
+            return False
         if os.path.exists(fileName) and os.path.isabs(fileName):
             return True
         return False

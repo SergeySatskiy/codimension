@@ -937,7 +937,7 @@ class MainWindowMenuMixin:
         self.__debugDumpScriptSettingsAct.setEnabled(scriptAvailable)
         self.__debugDumpScriptSettingsEnvAct.setEnabled(scriptAvailable)
 
-        projectAvailable = self.__dumpProjectDbgSettingsAvailable()
+        projectAvailable = self._dumpProjectDbgSettingsAvailable()
         self.__debugDumpProjectSettingsAct.setEnabled(projectAvailable)
         self.__debugDumpPrjSettingsEnvAct.setEnabled(projectAvailable)
 
