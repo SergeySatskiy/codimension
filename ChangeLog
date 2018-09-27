@@ -1,6 +1,6 @@
-XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+2018 Sep 26 Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Version X.X.X
+* Version 4.3.0
 * Bump jedi version to 0.12.1
 * Buffer cyclomatic complexity on-the-fly: status bar menu and margin marks
 * Better analysis margin pixmap scaling
@@ -9,6 +9,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Remove obsolete unreliable unused functions/classes/global variable
   search implementation based on jedi
 * Bug fix: crash on debug dump settings from the main menu
+* New dependencies (radon - complexity, vulture - dead code analysis)
 * Minor improvements
 
 2018 Aug 13 Sergey Satskiy <sergey.satskiy@gmail.com>
