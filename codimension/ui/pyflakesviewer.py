@@ -362,8 +362,7 @@ class PyflakesViewer(QObject):
                 ccLabel.setToolTip('Buffer cyclomatic complexity: no complains')
             else:
                 ccLabel.setToolTip(complains.replace(' ', '&nbsp;'))
-            ccLabel.setPixmap(getPixmap(COMPLEXITY_PIXMAPS[worstComplexity]).
-                                scaled(16, 16, Qt.KeepAspectRatio))
+            ccLabel.setPixmap(getPixmap(COMPLEXITY_PIXMAPS[worstComplexity]))
         else:
             ccLabel.setToolTip('No complexity information available')
             ccLabel.setPixmap(getPixmap('ccmarker.png'))
