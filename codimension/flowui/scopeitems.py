@@ -163,24 +163,6 @@ class ScopeCellElement(CellElement):
             raise Exception("Unrecognized scope element: " +
                             str(self.subKind))
 
-    def __afterTry(self):
-        """Tests if the item is after try"""
-        row = self.canvas.addr[1] - 1
-        column = self.canvas.addr[0]
-        cells = self.canvas.canvas.cells
-        while row >= 0:
-            try:
-                if cells[row][column].kind == CellElement.CONNECTOR:
-                    row -= 1
-                    continue
-                if cells[row][column].kind == CellElement.VCANVAS:
-                    return cells[row][column].cells[0][0].kind == \
-                        CellElement.TRY_SCOPE
-                break
-            except:
-                return False
-        return False
-
     def __followLoop(self):
         """Used to detect if an 'else' scope is for a loop"""
         row = self.canvas.addr[1]
@@ -202,7 +184,7 @@ class ScopeCellElement(CellElement):
                          CellElement.FINALLY_SCOPE, CellElement.TRY_SCOPE]:
             return True
         if self.kind == CellElement.ELSE_SCOPE:
-            return self.__afterTry()
+            return self.statement == ElseScopeCell.TRY_STATEMENT
 
     def _draw(self, scene, baseX, baseY):
         """Draws a scope"""
@@ -1319,12 +1301,17 @@ class ElseScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     """Represents an else scope element"""
 
+    FOR_STATEMENT = 0
+    WHILE_STATEMENT = 1
+    TRY_STATEMENT = 2
+
     def __init__(self, ref, canvas, x, y, kind):
         ScopeCellElement.__init__(self, ref, canvas, x, y)
         QGraphicsRectItem.__init__(self)
         self.kind = CellElement.ELSE_SCOPE
         self.subKind = kind
         self.after = self
+        self.statement = None
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)

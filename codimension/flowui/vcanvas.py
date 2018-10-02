@@ -170,15 +170,16 @@ class VirtualCanvas:
                 if cell.kind == CellElement.DECOR_SCOPE:
                     return '@' + cell.ref.name.getContent()
                 if cell.kind == CellElement.ELSE_SCOPE:
-                    parentCanvas = cell.canvas.canvas
-                    row = cell.canvas.addr[1]
-                    column = cell.canvas.addr[0] - 1
-                    cellToTheLeft = parentCanvas.cells[row][column]
-                    if cellToTheLeft.kind == CellElement.VCANVAS:
-                        scopeToTheLeftName = cellToTheLeft.getScopeName()
-                        if scopeToTheLeftName in ['for', 'while']:
-                            return scopeToTheLeftName + '-else'
-                    return 'try-else'
+                    if cell.statement == ElseScopeCell.TRY_STATEMENT:
+                        return 'try-else'
+                    if cell.statement == ElseScopeCell.FOR_STATEMENT:
+                        return 'for-else'
+                    if cell.statement == ElseScopeCell.WHILE_STATEMENT:
+                        return 'while-else'
+                    # The 'statement' is set only for the TOP_LEFT item of the
+                    # ELSE_SCOPE so it must be found here because we start from
+                    # the top left corner
+                    return '???'
         return None
 
     def __str__(self):
@@ -630,6 +631,10 @@ class VirtualCanvas:
                     self.__allocateScope(item.elsePart, CellElement.ELSE_SCOPE,
                                          vacantRow, column + 1)
                     self.cells[vacantRow][column + 1].setLeaderRef(item)
+                    if item.kind == FOR_FRAGMENT:
+                        self.cells[vacantRow][column + 1].setElseStatement(ElseScopeCell.FOR_STATEMENT)
+                    else:
+                        self.cells[vacantRow][column + 1].setElseStatement(ElseScopeCell.WHILE_STATEMENT)
                 vacantRow += 1
                 continue
 
@@ -698,6 +703,7 @@ class VirtualCanvas:
                     self.__allocateScope(item.elsePart, CellElement.ELSE_SCOPE,
                                          vacantRow, column)
                     self.cells[vacantRow][column].setLeaderRef(item)
+                    self.cells[vacantRow][column].setElseStatement(ElseScopeCell.TRY_STATEMENT)
                 # The finally part is located below
                 if item.finallyPart:
                     vacantRow += 1
@@ -992,6 +998,13 @@ class VirtualCanvas:
                 self.cells[0][0].leaderRef = ref
                 return
         raise Exception("Logic error: cannot set the leader reference")
+
+    def setElseStatement(self, statement):
+        if self.cells[0][0].kind == CellElement.ELSE_SCOPE:
+            if self.cells[0][0].subKind == ScopeCellElement.TOP_LEFT:
+                self.cells[0][0].statement = statement
+                return
+        raise Exception("Logic error: cannot set the else statement")
 
     def layoutModule(self, cflow):
         """Lays out a module"""
