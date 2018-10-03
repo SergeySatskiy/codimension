@@ -107,7 +107,7 @@ def cssLikeColor(color):
     asStr = color.name()
     alpha = color.alpha()
     if alpha != 255:
-        hexAlpha = hex(bgalpha)[2:]
+        hexAlpha = hex(alpha)[2:]
         if len(hexAlpha) == 1:
             asStr += 2 * hexAlpha
         else:
