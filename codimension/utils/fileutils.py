@@ -497,6 +497,14 @@ def __getMagicMime(fName):
         return None, False
 
 
+def getMagicMimeFromBuffer(txt):
+    """Guesses the buffer text mime type"""
+    try:
+        return __magic.from_buffer(txt)
+    except:
+        return None
+
+
 # Cache is initialized with:
 # - an unknown file type properties: ''
 # - a directory: '/'
@@ -646,6 +654,13 @@ def isPythonMime(mime):
     if mime is None:
         return False
     return 'python' in mime
+
+
+def isMarkdownMime(mime):
+    """True if it is a markdown mime"""
+    if mime:
+        return 'markdown' in mime
+    return False
 
 
 def isPythonCompiledFile(fName):

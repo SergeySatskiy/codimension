@@ -37,6 +37,7 @@ from utils.importutils import getImportsList, resolveImports
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
 from .flowuiwidget import FlowUIWidget
+from .mdwidget import MDWidget
 from .navbar import NavigationBar
 from .texteditor import TextEditor
 
@@ -290,9 +291,20 @@ class TextEditorTabWidget(QWidget):
         widget.setLayout(hLayout)
 
         self.__splitter = QSplitter(Qt.Horizontal, self)
+
         self.__flowUI = FlowUIWidget(self.__editor, self)
+        self.__mdView = MDWidget(self.__editor, self)
+
+        renderLayout = QVBoxLayout()
+        renderLayout.setContentsMargins(0, 0, 0, 0)
+        renderLayout.setSpacing(0)
+        renderLayout.addWidget(self.__flowUI)
+        renderLayout.addWidget(self.__mdView)
+        renderWidget = QWidget()
+        renderWidget.setLayout(renderLayout)
+
         self.__splitter.addWidget(widget)
-        self.__splitter.addWidget(self.__flowUI)
+        self.__splitter.addWidget(renderWidget)
 
         containerLayout = QHBoxLayout()
         containerLayout.setContentsMargins(0, 0, 0, 0)
@@ -576,6 +588,10 @@ class TextEditorTabWidget(QWidget):
             self.__flowUI.setFocus()
             return True
         return False
+
+    def getMDView(self):
+        """Provides a reference to the MD rendered view"""
+        return self.__mdView
 
     # Mandatory interface part is below
 

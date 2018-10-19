@@ -34,7 +34,8 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import (getFileProperties, isImageViewable,
                              isPythonMime, isPythonFile,
-                             getXmlSyntaxFileByMime, isFileSearchable)
+                             getXmlSyntaxFileByMime, isFileSearchable,
+                             isMarkdownMime)
 from utils.diskvaluesrelay import (getFilePosition, updateFilePosition,
                                    addRecentFile, getCollapsedGroups,
                                    setCollapsedGroups)
@@ -665,15 +666,18 @@ class EditorsManager(QTabWidget):
             editor = widget.getEditor()
             line, pos = editor.cursorPosition
 
-            cflowHPos = -1
-            cflowVPos = -1
+            scrollHPos = -1
+            scrollVPos = -1
             if isPythonMime(widget.getMime()):
                 cfEditor = widget.getCFEditor()
-                cflowHPos, cflowVPos = cfEditor.getScrollbarPositions()
+                scrollHPos, scrollVPos = cfEditor.getScrollbarPositions()
+            elif isMarkdownMime(widget.getMime()):
+                mdView = widget.getMDView()
+                scrollHPos, scrollVPos = mdView.getScrollbarPositions()
 
             updateFilePosition(
                 widget.getFileName(), line, pos, editor.firstVisibleLine(),
-                cflowHPos, cflowVPos)
+                scrollHPos, scrollVPos)
 
     def restoreFilePosition(self, index):
         """Restores the file position"""
