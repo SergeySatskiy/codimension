@@ -64,8 +64,6 @@ def __getXmlSyntaxFile(fName):
         return 'json.xml'
     if fName.endswith('.ts'):
         return 'xml.xml'
-    if fName.endswith('.qm'):
-        return 'xml.xml'
     if 'makefile' in fName.lower():
         return "makefile.xml"
 
@@ -125,6 +123,11 @@ def isFileSearchable(fName, checkForBrokenLink=True):
     mime, _, syntaxFile = getFileProperties(fName, checkForBrokenLink,
                                             skipCache=False)
     if syntaxFile is not None:
+        # The files like libQt5Widgets.so.5 are mistakenly detected
+        # as a man doc files (mandoc.xml)
+        if mime:
+            if mime.endswith('x-sharedlib'):
+                return False
         return True
     if mime is None:
         return False
@@ -600,6 +603,21 @@ def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
     if fileExtension == 'o' and syntaxFile == 'lpc.xml':
         # lpc.xml is bound to .o extension i.e. exactly object files!
         if 'object' in mime:
+            syntaxFile = None
+    if fileExtension == 'a' and syntaxFile == 'ada.xml':
+        tryMime, _ = __getMagicMime(fName)
+        if 'x-archive' in tryMime:
+            mime = tryMime
+            syntaxFile = None
+    if fileExtension == 'ttf' and syntaxFile == 'template-toolkit.xml':
+        tryMime, _ = __getMagicMime(fName)
+        if 'font' in tryMime:
+            mime = tryMime
+            syntaxFile = None
+    if fileExtension == 'dat' and syntaxFile == 'hunspell-dat.xml':
+        tryMime, _ = __getMagicMime(fName)
+        if 'octet-stream' in tryMime:
+            mime = tryMime
             syntaxFile = None
 
     cacheValue = [mime, __getIcon(syntaxFile, mime, fBaseName), syntaxFile]
