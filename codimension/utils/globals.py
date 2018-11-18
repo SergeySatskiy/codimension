@@ -56,7 +56,6 @@ class GlobalDataWrapper:
 
     def __init__(self):
         self.application = None
-        self.splash = None
         self.mainWindow = None
         self.skin = None
         self.screenWidth = 0
