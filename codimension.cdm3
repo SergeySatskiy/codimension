@@ -1,15 +1,16 @@
 {
-    "version": "4.0.1",
     "scriptname": "",
-    "description": "",
-    "encoding": "utf-8",
-    "copyright": "Copyright (c) Sergey V. Satskiy, 2017",
+    "mddocfile": "README.md",
     "creationdate": "02/01/17",
+    "author": "Sergey V. Satskiy",
+    "license": "GPL v3",
+    "copyright": "Copyright (c) Sergey V. Satskiy, 2017",
+    "version": "4.0.1",
     "email": "sergey.satskiy@gmail.com",
+    "description": "",
+    "uuid": "ac348efe-e8cf-11e6-9d27-3417ebe867d4",
     "importdirs": [
         "codimension"
     ],
-    "author": "Sergey V. Satskiy",
-    "uuid": "ac348efe-e8cf-11e6-9d27-3417ebe867d4",
-    "license": "GPL v3"
+    "encoding": "utf-8"
 }

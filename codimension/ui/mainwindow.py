@@ -1931,6 +1931,7 @@ class CodimensionMainWindow(QMainWindow):
         GlobalData().project.createNew(
             dialog.absProjectFileName,
             {'scriptname': dialog.scriptEdit.text().strip(),
+             'mddocfile': dialog.mdDocEdit.text().strip(),
              'creationdate': dialog.creationDateEdit.text().strip(),
              'author': dialog.authorEdit.text().strip(),
              'license': dialog.licenseEdit.text().strip(),

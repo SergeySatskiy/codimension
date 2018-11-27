@@ -95,12 +95,17 @@ class ProjectPropertiesDialog(QDialog):
             if not os.path.isabs(scriptName) and scriptName != "":
                 scriptName = os.path.normpath(os.path.dirname(project) +
                                               os.path.sep + scriptName)
+            mdDocName = props['mddocfile']
+            if not os.path.isabs(mdDocName) and mdDocName != '':
+                mdDocName = os.path.normpath(os.path.dirname(project) +
+                                             os.path.sep + mdDocName)
 
             self.nameEdit.setText(os.path.basename(project))
             self.nameEdit.setToolTip("")
             self.dirEdit.setText(os.path.dirname(project))
             self.dirEdit.setToolTip("")
             self.scriptEdit.setText(scriptName)
+            self.mdDocEdit.setText(mdDocName)
             self.versionEdit.setText(props['version'])
             self.authorEdit.setText(props['author'])
             self.emailEdit.setText(props['email'])
@@ -127,6 +132,7 @@ class ProjectPropertiesDialog(QDialog):
             self.dirEdit.setText(project.getProjectDir())
             self.dirEdit.setToolTip("")
             self.scriptEdit.setText(project.getProjectScript())
+            self.mdDocEdit.setText(project.getStartupMarkdownFile())
             self.versionEdit.setText(project.props['version'])
             self.authorEdit.setText(project.props['author'])
             self.emailEdit.setText(project.props['email'])
@@ -194,10 +200,20 @@ class ProjectPropertiesDialog(QDialog):
         gridLayout.addWidget(self.scriptButton, 2, 2, 1, 1)
         self.fileCompleter = FileCompleter(self.scriptEdit)
 
+        # Project markdown doc file
+        mddocLabel = QLabel('Markdown doc file:', self)
+        gridLayout.addWidget(mddocLabel, 3, 0, 1, 1)
+        self.mdDocEdit = QLineEdit(self)
+        self.mdDocEdit.setToolTip('Project documentation start file')
+        gridLayout.addWidget(self.mdDocEdit, 3, 1, 1, 1)
+        self.mdDocButton = QPushButton("...", self)
+        gridLayout.addWidget(self.mdDocButton, 3, 2, 1, 1)
+        self.mdFileCompleter = FileCompleter(self.mdDocEdit)
+
         # Import dirs
         importLabel = QLabel("Import directories:", self)
         importLabel.setAlignment(Qt.AlignTop)
-        gridLayout.addWidget(importLabel, 3, 0, 1, 1)
+        gridLayout.addWidget(importLabel, 4, 0, 1, 1)
         self.importDirList = QListWidget(self)
         self.importDirList.setAlternatingRowColors(True)
         self.importDirList.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -205,7 +221,7 @@ class ProjectPropertiesDialog(QDialog):
         self.importDirList.setItemDelegate(NoOutlineHeightDelegate(4))
         self.importDirList.setToolTip("Directories where to look for "
                                       "project specific imports")
-        gridLayout.addWidget(self.importDirList, 3, 1, 1, 1)
+        gridLayout.addWidget(self.importDirList, 4, 1, 1, 1)
 
         self.addImportDirButton = QPushButton(self)
         self.addImportDirButton.setText("Add dir")
@@ -216,68 +232,68 @@ class ProjectPropertiesDialog(QDialog):
         vLayout.addWidget(self.addImportDirButton)
         vLayout.addWidget(self.delImportDirButton)
         vLayout.addStretch(0)
-        gridLayout.addLayout(vLayout, 3, 2, 1, 1)
+        gridLayout.addLayout(vLayout, 4, 2, 1, 1)
 
         # Version
         versionLabel = QLabel("Version:", self)
-        gridLayout.addWidget(versionLabel, 4, 0, 1, 1)
+        gridLayout.addWidget(versionLabel, 5, 0, 1, 1)
         self.versionEdit = QLineEdit(self)
-        gridLayout.addWidget(self.versionEdit, 4, 1, 1, 1)
+        gridLayout.addWidget(self.versionEdit, 5, 1, 1, 1)
 
         # Author
         authorLabel = QLabel("Author:", self)
-        gridLayout.addWidget(authorLabel, 5, 0, 1, 1)
+        gridLayout.addWidget(authorLabel, 6, 0, 1, 1)
         self.authorEdit = QLineEdit(self)
-        gridLayout.addWidget(self.authorEdit, 5, 1, 1, 1)
+        gridLayout.addWidget(self.authorEdit, 6, 1, 1, 1)
 
         # E-mail
         emailLabel = QLabel("E-mail:", self)
-        gridLayout.addWidget(emailLabel, 6, 0, 1, 1)
+        gridLayout.addWidget(emailLabel, 7, 0, 1, 1)
         self.emailEdit = QLineEdit(self)
-        gridLayout.addWidget(self.emailEdit, 6, 1, 1, 1)
+        gridLayout.addWidget(self.emailEdit, 7, 1, 1, 1)
 
         # License
         licenseLabel = QLabel("License:", self)
-        gridLayout.addWidget(licenseLabel, 7, 0, 1, 1)
+        gridLayout.addWidget(licenseLabel, 8, 0, 1, 1)
         self.licenseEdit = QLineEdit(self)
-        gridLayout.addWidget(self.licenseEdit, 7, 1, 1, 1)
+        gridLayout.addWidget(self.licenseEdit, 8, 1, 1, 1)
 
         # Copyright
         copyrightLabel = QLabel("Copyright:", self)
-        gridLayout.addWidget(copyrightLabel, 8, 0, 1, 1)
+        gridLayout.addWidget(copyrightLabel, 9, 0, 1, 1)
         self.copyrightEdit = QLineEdit(self)
-        gridLayout.addWidget(self.copyrightEdit, 8, 1, 1, 1)
+        gridLayout.addWidget(self.copyrightEdit, 9, 1, 1, 1)
 
         # Description
         descriptionLabel = QLabel("Description:", self)
         descriptionLabel.setAlignment(Qt.AlignTop)
-        gridLayout.addWidget(descriptionLabel, 9, 0, 1, 1)
+        gridLayout.addWidget(descriptionLabel, 10, 0, 1, 1)
         self.descriptionEdit = QTextEdit(self)
         self.descriptionEdit.setTabChangesFocus(True)
         self.descriptionEdit.setAcceptRichText(False)
-        gridLayout.addWidget(self.descriptionEdit, 9, 1, 1, 1)
+        gridLayout.addWidget(self.descriptionEdit, 10, 1, 1, 1)
 
         # Default encoding
         encodingLabel = QLabel('Default encoding:', self)
-        gridLayout.addWidget(encodingLabel, 10, 0, 1, 1)
+        gridLayout.addWidget(encodingLabel, 11, 0, 1, 1)
         self.encodingCombo = QComboBox(self)
         self.encodingCombo.addItem('')
         self.encodingCombo.addItems(sorted(SUPPORTED_CODECS))
         self.encodingCombo.setEditable(True)
-        gridLayout.addWidget(self.encodingCombo, 10, 1, 1, 1)
+        gridLayout.addWidget(self.encodingCombo, 11, 1, 1, 1)
 
         # Creation date
         creationDateLabel = QLabel("Creation date:", self)
-        gridLayout.addWidget(creationDateLabel, 11, 0, 1, 1)
+        gridLayout.addWidget(creationDateLabel, 12, 0, 1, 1)
         self.creationDateEdit = FramedLabelWithDoubleClick()
         self.creationDateEdit.setToolTip("Double click to copy")
-        gridLayout.addWidget(self.creationDateEdit, 11, 1, 1, 1)
+        gridLayout.addWidget(self.creationDateEdit, 12, 1, 1, 1)
 
         # Project UUID
         uuidLabel = QLabel("UUID:", self)
-        gridLayout.addWidget(uuidLabel, 12, 0, 1, 1)
+        gridLayout.addWidget(uuidLabel, 13, 0, 1, 1)
         self.uuidEdit = FramedLabelWithDoubleClick("", self.__copyProjectPath)
-        gridLayout.addWidget(self.uuidEdit, 12, 1, 1, 1)
+        gridLayout.addWidget(self.uuidEdit, 13, 1, 1, 1)
 
         verticalLayout.addLayout(gridLayout)
 
@@ -301,6 +317,7 @@ class ProjectPropertiesDialog(QDialog):
         buttonBox.rejected.connect(self.reject)
         self.dirButton.clicked.connect(self.onDirButton)
         self.scriptButton.clicked.connect(self.onScriptButton)
+        self.mdDocButton.clicked.connect(self.onMdDocButton)
         self.importDirList.currentRowChanged.connect(self.onImportDirRowChanged)
         self.addImportDirButton.clicked.connect(self.onAddImportDir)
         self.delImportDirButton.clicked.connect(self.onDelImportDir)
@@ -310,7 +327,9 @@ class ProjectPropertiesDialog(QDialog):
         self.setTabOrder(self.dirEdit, self.dirButton)
         self.setTabOrder(self.dirButton, self.scriptEdit)
         self.setTabOrder(self.scriptEdit, self.scriptButton)
-        self.setTabOrder(self.scriptButton, self.importDirList)
+        self.setTabOrder(self.scriptButton, self.mdDocEdit)
+        self.setTabOrder(self.mdDocEdit, self.mdDocButton)
+        self.setTabOrder(self.mdDocButton, self.importDirList)
         self.setTabOrder(self.importDirList, self.addImportDirButton)
         self.setTabOrder(self.addImportDirButton, self.delImportDirButton)
         self.setTabOrder(self.delImportDirButton, self.versionEdit)
@@ -351,6 +370,19 @@ class ProjectPropertiesDialog(QDialog):
             scriptName = scriptName[0]
         if scriptName:
             self.scriptEdit.setText(os.path.normpath(scriptName))
+
+    def onMdDocButton(self):
+        """Displays an md file selection dialog"""
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        mdFileName = QFileDialog.getOpenFileName(
+            self, 'Select project doc startup MD file', self.dirEdit.text(),
+            'Markdown Files (*.md);;All Files (*)',
+            options=options)
+        if isinstance(mdFileName, tuple):
+            mdFileName = mdFileName[0]
+        if mdFileName:
+            self.mdDocEdit.setText(os.path.normpath(mdFileName))
 
     def onImportDirRowChanged(self, row):
         """Triggered when a current row in the import dirs is changed"""
@@ -522,6 +554,8 @@ class ProjectPropertiesDialog(QDialog):
         self.dirButton.setDisabled(True)
         self.scriptEdit.setDisabled(True)
         self.scriptButton.setDisabled(True)
+        self.mdDocEdit.setDisabled(True)
+        self.mdDocButton.setDisabled(True)
         self.importDirList.setDisabled(True)
         self.addImportDirButton.setDisabled(True)
         self.delImportDirButton.setDisabled(True)

@@ -550,8 +550,15 @@ class RecentProjectsViewer(QWidget):
                 if not relativePath.startswith('..'):
                     scriptName = relativePath
 
+                mdDocFile = dlg.mdDocEdit.text().strip()
+                relativePath = os.path.relpath(mdDocFile,
+                                               project.getProjectDir())
+                if not relativePath.startswith('..'):
+                    mdDocFile = relativePath
+
                 project.updateProperties(
                     {'scriptname': scriptName,
+                     'mddocfile': mdDocFile,
                      'creationdate': dlg.creationDateEdit.text().strip(),
                      'author': dlg.authorEdit.text().strip(),
                      'license': dlg.licenseEdit.text().strip(),

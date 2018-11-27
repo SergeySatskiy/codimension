@@ -28,7 +28,7 @@ import json
 import shutil
 import os
 from os.path import (realpath, islink, isdir, sep, exists, dirname, isabs,
-                     join, relpath)
+                     join, relpath, isfile)
 from ui.qt import QObject, pyqtSignal
 from .settings import Settings, SETTINGS_DIR
 from .watcher import Watcher
@@ -44,6 +44,7 @@ from .flowgroups import FlowUICollapsedGroups
 
 # Saved in .cdm3 file
 _DEFAULT_PROJECT_PROPS = {'scriptname': '',    # Script to run the project
+                          'mddocfile': '',
                           'creationdate': '',
                           'author': '',
                           'license': '',
@@ -53,7 +54,8 @@ _DEFAULT_PROJECT_PROPS = {'scriptname': '',    # Script to run the project
                           'description': '',
                           'uuid': '',
                           'importdirs': [],
-                          'encoding': ''}
+                          'encoding': '',
+                          'mddocfile': ''}
 
 
 class CodimensionProject(QObject,
@@ -249,6 +251,11 @@ class CodimensionProject(QObject,
         self.fileName = path
         self.props = props
 
+        # Make sure the old projects have the new fields as well
+        for key, value in _DEFAULT_PROJECT_PROPS.items():
+            if key not in self.props:
+                self.props[key] = value
+
         if self.props['uuid'] == '':
             logging.warning('Project file does not have UUID. '
                             'Re-generate it...')
@@ -425,6 +432,47 @@ class CodimensionProject(QObject,
         if self.isLoaded():
             return join(dirname(self.fileName), path)
         return path
+
+    def getStartupMarkdownFile(self):
+        """Provides the startup documentation markdown file if so"""
+        if not self.isLoaded():
+            return None
+        # Could be in project properties
+        if not self.props['mddocfile']:
+            return None
+        if isabs(self.props['mddocfile']):
+            return self.props['mddocfile']
+        return realpath(self.getProjectDir() + self.props['mddocfile'])
+
+    def findStartupMarkdownFile(self):
+        """Finds the startup MD doc file"""
+        if not self.isLoaded():
+            return None, None
+        fName = self.getStartupMarkdownFile()
+        if fName:
+            if not isabs(fName):
+                fName = self.getAbsolutePath(fName)
+            if not exists(fName):
+                return None, 'Configured markdown doc file ' + \
+                       self.getStartupMarkdownFile() + ' is not found'
+            return fName, None
+
+        # check the file system
+        projectDir = self.getProjectDir()
+        for item in os.listdir(projectDir):
+            if isfile(projectDir + item):
+                lowerName = item.lower()
+                if lowerName.endswith('.md') and lowerName.startswith('readme'):
+                    return projectDir + item, None
+        return None, None
+
+    def suggestStartupMarkdownFile(self):
+        """Suggests the default project doc file name"""
+        if not self.isLoaded():
+            raise Exception('Invalid logic. A markdown project doc file name '
+                            'is requested without a loaded project')
+        return self.getProjectDir() + 'README.md'
+
 
 
 def getProjectProperties(projectFile):

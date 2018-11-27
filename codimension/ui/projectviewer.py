@@ -522,8 +522,16 @@ class ProjectViewer(QWidget):
                 if not relativePath.startswith('..'):
                     scriptName = relativePath
 
+            mdDocFile = dialog.mdDocEdit.text().strip()
+            if mdDocFile != '':
+                relativePath = os.path.relpath(mdDocFile,
+                                               project.getProjectDir())
+                if not relativePath.startswith('..'):
+                    mdDocFile = relativePath
+
             project.updateProperties(
                 {'scriptname': scriptName,
+                 'mddocfile': mdDocFile,
                  'creationdate': dialog.creationDateEdit.text().strip(),
                  'author': dialog.authorEdit.text().strip(),
                  'license': dialog.licenseEdit.text().strip(),
