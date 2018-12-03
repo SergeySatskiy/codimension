@@ -22,7 +22,7 @@
 
 import logging
 import os.path
-from ui.qt import (Qt, QSize, QTimer, QToolBar, QWidget, QHBoxLayout, QUrl,
+from ui.qt import (Qt, QSize, QTimer, QToolBar, QWidget, QHBoxLayout,
                    QLabel, QVBoxLayout, QSizePolicy, QFrame, QDesktopServices)
 from ui.texttabwidget import TextViewer
 from utils.fileutils import isMarkdownMime
@@ -266,7 +266,8 @@ class MDWidget(QWidget):
         if not self.__connected:
             self.__connectEditorSignals()
 
-        renderedText, errors, warnings = renderMarkdown(self.__editor.text)
+        renderedText, errors, warnings = renderMarkdown(self.__editor.text,
+                                                        self.getFileName())
         if errors:
             self.__topBar.updateInfoIcon(self.__topBar.STATE_BROKEN_UTD)
             self.__topBar.setErrors(errors)
@@ -284,8 +285,9 @@ class MDWidget(QWidget):
         else:
             self.__topBar.clearWarnings()
 
-        hsbValue, vsbValue = self.getScrollbarPositions()
+        # hsbValue, vsbValue = self.getScrollbarPositions()
         self.mdView.setHtml(renderedText)
+        _, _, _, hsbValue, vsbValue = getFilePosition(self.getFileName())
         self.setScrollbarPositions(hsbValue, vsbValue)
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
