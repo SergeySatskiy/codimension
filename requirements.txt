@@ -10,5 +10,5 @@ yapsy==1.11.223
 jedi>=0.12.1
 vulture==0.29
 gprof2dot
-mistune
+mistune==0.8.4
 pygments
