@@ -181,4 +181,10 @@ def getComponentInfo():
                        "MIT License",
                        "https://opensource.org/licenses/MIT",
                        path))
+    version, path = getPackageVersionAndLocation('mistune')
+    components.append(("mistune", version,
+                       "https://github.com/lepture/mistune", None,
+                       "BSD 3-Clause License",
+                       "https://opensource.org/licenses/BSD-3-Clause",
+                       path))
     return components
