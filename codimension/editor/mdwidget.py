@@ -285,9 +285,8 @@ class MDWidget(QWidget):
         else:
             self.__topBar.clearWarnings()
 
-        # hsbValue, vsbValue = self.getScrollbarPositions()
+        hsbValue, vsbValue = self.getScrollbarPositions()
         self.mdView.setHtml(renderedText)
-        _, _, _, hsbValue, vsbValue = getFilePosition(self.getFileName())
         self.setScrollbarPositions(hsbValue, vsbValue)
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
