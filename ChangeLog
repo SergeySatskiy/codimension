@@ -3,6 +3,8 @@
 * Version x.x.x
 * Bumping up the magic library version to 0.4.15
 * Introducing basic markdown rendering support
+* Bug fix: proper file position is saved when an individual tab is closed
+* Improved file type detection for some file types
 
 2018 Oct 02 Sergey Satskiy <sergey.satskiy@gmail.com>
 
