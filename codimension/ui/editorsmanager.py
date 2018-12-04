@@ -608,6 +608,9 @@ class EditorsManager(QTabWidget):
             # Check the breakpoints validity
             self.widget(index).getEditor().validateBreakpoints()
 
+        if not wasDiscard and not enforced:
+            self.updateFilePosition(index)
+
         if widgetType in [MainWindowTabWidgetBase.PlainTextEditor,
                           MainWindowTabWidgetBase.VCSAnnotateViewer]:
             # Terminate the syntax highlight if needed
@@ -616,8 +619,6 @@ class EditorsManager(QTabWidget):
             editor.terminate()
 
         closingUUID = self.widget(index).getUUID()
-        if not wasDiscard and not enforced:
-            self.updateFilePosition(index)
 
         # Check if it is necessary to add a file to the recent history
         if widgetType in [MainWindowTabWidgetBase.PlainTextEditor,
@@ -676,7 +677,7 @@ class EditorsManager(QTabWidget):
                 scrollHPos, scrollVPos = mdView.getScrollbarPositions()
 
             updateFilePosition(
-                widget.getFileName(), line, pos, editor.firstVisibleLine(),
+                fileName, line, pos, editor.firstVisibleLine(),
                 scrollHPos, scrollVPos)
 
     def restoreFilePosition(self, index):
