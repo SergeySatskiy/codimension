@@ -184,10 +184,7 @@ class CDMBreakpointMargin(QWidget):
         """Triggered on the changed file type"""
         del fileName    # unused argument
         if uuid == self.myUUID:
-            if isPythonMime(newFileType):
-                self.setVisible(True)
-            else:
-                self.setVisible(False)
+            MarginBase.setVisible(self, isPythonMime(newFileType))
 
     def restoreBreakpoints(self):
         """Restores the breakpoints"""

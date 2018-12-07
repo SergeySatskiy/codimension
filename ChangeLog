@@ -5,6 +5,7 @@
 * Introducing basic markdown rendering support
 * Bug fix: proper file position is saved when an individual tab is closed
 * Improved file type detection for some file types
+* Bug fix: incorrect inital margin size when a new tab button is clicked
 
 2018 Oct 02 Sergey Satskiy <sergey.satskiy@gmail.com>
 

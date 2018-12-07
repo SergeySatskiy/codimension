@@ -176,10 +176,7 @@ class CDMFlakesMargin(QWidget):
     def __onFileTypeChanged(self, _, uuid, newFileType):
         """Triggered on the changed file type"""
         if uuid == self.myUUID:
-            if isPythonMime(newFileType):
-                self.setVisible(True)
-            else:
-                self.setVisible(False)
+            MarginBase.setVisible(self, isPythonMime(newFileType))
 
     def __onBlockCountChanged(self):
         """Triggered when the block count changed"""
