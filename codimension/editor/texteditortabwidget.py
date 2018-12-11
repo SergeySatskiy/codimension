@@ -300,11 +300,11 @@ class TextEditorTabWidget(QWidget):
         renderLayout.setSpacing(0)
         renderLayout.addWidget(self.__flowUI)
         renderLayout.addWidget(self.__mdView)
-        renderWidget = QWidget()
-        renderWidget.setLayout(renderLayout)
+        self.__renderWidget = QWidget()
+        self.__renderWidget.setLayout(renderLayout)
 
         self.__splitter.addWidget(widget)
-        self.__splitter.addWidget(renderWidget)
+        self.__splitter.addWidget(self.__renderWidget)
 
         containerLayout = QHBoxLayout()
         containerLayout.setContentsMargins(0, 0, 0, 0)
@@ -364,7 +364,10 @@ class TextEditorTabWidget(QWidget):
 
     def __languageChanged(self, _):
         """Language changed"""
-        self.disasmScriptButton.setEnabled(self.__editor.isPythonBuffer())
+        isPython = self.__editor.isPythonBuffer()
+        isMarkdown = self.__editor.isMarkdownBuffer()
+        self.disasmScriptButton.setEnabled(isPython)
+        self.__renderWidget.setVisible(isPython or isMarkdown)
 
     # Arguments: modified
     def modificationChanged(self, _=None):

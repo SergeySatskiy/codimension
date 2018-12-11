@@ -33,7 +33,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.encoding import (readEncodedFile, detectEolString,
                             detectWriteEncoding, writeEncodedFile)
-from utils.fileutils import getFileProperties, isPythonMime
+from utils.fileutils import getFileProperties, isPythonMime, isMarkdownMime
 from utils.diskvaluesrelay import setFileEncoding, getFileEncoding
 from autocomplete.bufferutils import getContext
 from autocomplete.completelists import (getCompletionList,
@@ -878,6 +878,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def isPythonBuffer(self):
         """True if it is a python buffer"""
         return isPythonMime(self.mime)
+
+    def isMarkdownBuffer(self):
+        """True if it is a markdown buffer"""
+        return isMarkdownMime(self.mime)
 
     def setLinenoMarginBackgroundColor(self, color):
         """Sets the margins background"""
