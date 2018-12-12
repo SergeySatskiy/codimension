@@ -387,7 +387,8 @@ def __initSyntaxToIcon():
         'git-rebase.xml': getIcon('filemisc.png'),
         'gitolite.xml': getIcon('filemisc.png'),
         'meson.xml': getIcon('filemisc.png'),
-        'xorg.xml': getIcon('filemisc.png')}
+        'xorg.xml': getIcon('filemisc.png'),
+        'markdown.xml': getIcon('filemarkdown.png')}
 
 
 # Some specific cases for various binaries to be mapped to a certain icon

@@ -508,6 +508,9 @@ class CodimensionMainWindow(QMainWindow):
             getIcon('deadcode.png'), 'Find project dead code (Alt+Shift+D)',
             self)
         self.__deadCodeButton.triggered.connect(self.projectDeadCodeClicked)
+        self.__projectDocButton = QAction(
+            getIcon('markdown.png'), 'Project documentation', self)
+        self.__projectDocButton.triggered.connect(self.projectDocClicked)
 
         # Debugger buttons
         self.__dbgStop = QAction(
@@ -578,6 +581,8 @@ class CodimensionMainWindow(QMainWindow):
         self.__toolbar.addAction(self.__findFileButton)
         self.__toolbar.addSeparator()
         self.__toolbar.addAction(self.__deadCodeButton)
+        self.__toolbar.addSeparator()
+        self.__toolbar.addAction(self.__projectDocButton)
 
         # Debugger part begin
         dbgSpacer = QWidget()
@@ -694,6 +699,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__findNameButton.setEnabled(projectLoaded)
         self.__findFileButton.setEnabled(projectLoaded)
         self.__deadCodeButton.setEnabled(projectLoaded)
+        self.__projectDocButton.setEnabled(projectLoaded)
 
     def updateRunDebugButtons(self):
         """Updates the run/debug buttons statuses"""
@@ -1007,6 +1013,10 @@ class CodimensionMainWindow(QMainWindow):
                 dlg.exec_()
             except Exception as exc:
                 logging.error(str(exc))
+
+    def projectDocClicked(self):
+        """Project documentation create/view/edit"""
+        pass
 
     def tabDeadCodeClicked(self):
         """Tab dead code analysis"""
