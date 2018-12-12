@@ -840,7 +840,9 @@ class MainWindowMenuMixin:
     def __toolsAboutToShow(self):
         """Triggered when tools menu is about to show"""
         isPythonBuffer = self._isPythonBuffer()
-        self._deadCodeMenuAct.setEnabled(isPythonBuffer)
+        projectLoaded = GlobalData().project.isLoaded()
+
+        self._deadCodeMenuAct.setEnabled(projectLoaded)
         self._tabDeadCodeAct.setEnabled(isPythonBuffer)
         self.disasmMenu.setEnabled(isPythonBuffer)
 
