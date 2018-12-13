@@ -1747,8 +1747,7 @@ class EditorsManager(QTabWidget):
             vcsManager.drawStatus(mainWindow.sbVCSStatus, currentVCSStatus)
 
         validWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
-                        MainWindowTabWidgetBase.PictureViewer,
-                        MainWindowTabWidgetBase.PythonGraphicsEditor]
+                        MainWindowTabWidgetBase.PictureViewer]
         if currentWidget.getType() in validWidgets:
             fileName = currentWidget.getFileName()
             if fileName.startswith(os.path.sep):
@@ -2317,8 +2316,7 @@ class EditorsManager(QTabWidget):
         for index in range(self.count()):
             widget = self.widget(index)
             allowedWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
-                              MainWindowTabWidgetBase.PictureViewer,
-                              MainWindowTabWidgetBase.PythonGraphicsEditor]
+                              MainWindowTabWidgetBase.PictureViewer]
             if widget.getType() in allowedWidgets:
                 if widget.getFileName() == path:
                     widget.setVCSStatus(status)
@@ -2333,8 +2331,7 @@ class EditorsManager(QTabWidget):
         for index in range(self.count()):
             widget = self.widget(index)
             allowedWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
-                              MainWindowTabWidgetBase.PictureViewer,
-                              MainWindowTabWidgetBase.PythonGraphicsEditor]
+                              MainWindowTabWidgetBase.PictureViewer]
             if widget.getType() in allowedWidgets:
                 fileName = widget.getFileName()
                 if os.path.isabs(fileName):

@@ -312,6 +312,8 @@ class TextEditorTabWidget(QWidget):
         containerLayout.addWidget(self.__splitter)
         self.setLayout(containerLayout)
 
+        self.__renderWidget.setVisible(False)
+
         self.__splitter.setSizes(Settings()['flowSplitterSizes'])
         self.__splitter.splitterMoved.connect(self.flowSplitterMoved)
         Settings().sigFlowSplitterChanged.connect(self.otherFlowSplitterMoved)
