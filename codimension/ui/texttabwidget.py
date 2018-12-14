@@ -20,7 +20,7 @@
 """Text viewer tab widget"""
 
 import os.path
-from .qt import (QTextBrowser, QHBoxLayout, QWidget, Qt, pyqtSignal)
+from .qt import QTextBrowser, QHBoxLayout, QWidget, Qt, pyqtSignal
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
