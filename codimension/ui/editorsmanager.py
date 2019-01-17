@@ -51,6 +51,7 @@ from .helpwidget import QuickHelpWidget
 from .pixmapwidget import PixmapTabWidget
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .tabshistory import TabsHistory
+from .mdviewer import MarkdownTabWidget
 
 
 class ClickableTabBar(QTabBar):
@@ -930,6 +931,39 @@ class EditorsManager(QTabWidget):
             icon = getIcon('filepythonbroken.png')
             self.setTabIcon(widgetIndex, icon)
             self.history.updateIconForTab(widget.getUUID(), icon)
+
+    def openMarkdownFullView(self, fileName, readOnly=True):
+        """Shows the given markdown file in a full view"""
+        try:
+            # Check if the file is already opened
+            for index in range(self.count()):
+                if self.widget(index).getFileName() == fileName:
+                    self.activateTab(index)
+                    return True
+            # Not found - create a new one
+            newWidget = MarkdownTabWidget(readOnly, self)
+            newWidget.sigEscapePressed.connect(self.__onESC)
+
+            if self.widget(0) == self.__welcomeWidget:
+                # It is the only welcome widget on the screen
+                self.removeTab(0)
+                self.setTabsClosable(True)
+
+            self.insertTab(0, newWidget, newWidget.getShortName())
+            self.activateTab(0)
+            self.__updateControls()
+            self.updateStatusBar()
+            newWidget.setFocus()
+            newWidget.setFileName(fileName)
+            self.saveTabsStatus()
+            if not self.__restoringTabs:
+                if not readOnly:
+                    addRecentFile(fileName)
+            self.setWidgetDebugMode(newWidget)
+        except Exception as exc:
+            logging.error(str(exc))
+            return False
+        return True
 
     def openPixmapFile(self, fileName):
         """Shows the required picture"""
@@ -1846,13 +1880,17 @@ class EditorsManager(QTabWidget):
 
         for index in range(self.count()):
             item = self.widget(index)
-            if item.getType() == MainWindowTabWidgetBase.HTMLViewer and \
+            itemType = item.getType()
+            if itemType == MainWindowTabWidgetBase.HTMLViewer and \
                item.getShortName() == helpShortName:
                 status.append({'active': item == curWidget,
-                               'path': 'help'})
+                               'path': 'help',
+                               'mdFullView': False,
+                               'mdFullViewReadOnly': mdFullViewReadOnly})
                 continue
-            if item.getType() in [MainWindowTabWidgetBase.PlainTextEditor,
-                                  MainWindowTabWidgetBase.PictureViewer]:
+            if itemType in [MainWindowTabWidgetBase.PlainTextEditor,
+                            MainWindowTabWidgetBase.PictureViewer,
+                            MainWindowTabWidgetBase.MDViewer]:
                 fileName = item.getFileName()
                 if not fileName:
                     continue    # New, not saved yet file
@@ -1865,8 +1903,17 @@ class EditorsManager(QTabWidget):
                     pathToSave = relativePath
                 else:
                     pathToSave = fileName
+                if itemType == MainWindowTabWidgetBase.MDViewer:
+                    mdFullView = True
+                    mdFullViewReadOnly = item.isReadOnly()
+                else:
+                    mdFullView = False
+                    mdFullViewReadOnly = False
+
                 status.append({'active': item == curWidget,
-                               'path': pathToSave})
+                               'path': pathToSave,
+                               'mdFullView': mdFullView,
+                               'mdFullViewReadOnly': mdFullViewReadOnly})
         return status
 
     def restoreTabs(self, status):
@@ -1905,6 +1952,12 @@ class EditorsManager(QTabWidget):
                 logging.warning('Cannot restore last session tab. '
                                 'File is not found (' +
                                 fileName + ')')
+                continue
+
+            mdFullView = record.get('mdFullView', False)
+            if mdFullView:
+                mdFullViewReadOnly = record.get('mdFullViewReadOnly', False)
+                self.openMarkdownFullView(fileName, mdFullViewReadOnly)
                 continue
 
             # Detect file type, it could be a picture

@@ -1733,6 +1733,18 @@ class CodimensionMainWindow(QMainWindow):
         """Triggered when Ctrl+F1 is clicked"""
         self.em.currentWidget().getEditor().onTagHelp()
 
+    def _onEmbeddedHelp(self):
+        """Triggered when ebedded Codimension help is requested"""
+        # File name to get the embedded help
+        exeDir = os.path.dirname(os.path.realpath(sys.argv[0]))
+        docPath = os.path.dirname(exeDir) + os.path.sep + 'doc' + os.path.sep
+        startMD = docPath + 'index.md'
+        if not os.path.exists(startMD):
+            logging.error('Embedded documentation is not found. Expected here: ' +
+                          startMD)
+        else:
+            self.em.openMarkdownFullView(startMD, True)
+
     @staticmethod
     def _onHomePage():
         """Triggered when opening the home page is requested"""
