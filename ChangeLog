@@ -9,6 +9,7 @@
 * Bumping up the jedi library version to 0.13.1
 * Bumping up the radon library version to 2.4.0
 * Fixing the flake8 version to 3.6.0
+* Support embedded IDE documentation in Markdown
 
 2018 Oct 02 Sergey Satskiy <sergey.satskiy@gmail.com>
 

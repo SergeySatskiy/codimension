@@ -7,8 +7,8 @@ It rather covers some practical topics. Please follow the links in the list belo
 
 General Topics
 --------------
-- [Technology](file:./technology.md)
-- [CML - Codimension Markup Language](file:./cml.md)
+- [Technology](file:./technology/technology.md)
+- [CML - Codimension Markup Language](file:./cml/cml.md)
 
 
 Graphics Pane
@@ -19,6 +19,7 @@ Graphics Pane
 
 Code Analysis
 -------------
+- [Dead code](file:./deadcode.md)
 - [Complexity](file:./complexity.md)
 - [Profiling](file:./profiling.md)
 - [PyFlakes](file:./pyflakes.md)
@@ -28,7 +29,7 @@ Code Analysis
 
 Miscellaneous
 -------------
-- [Plugins](file:./plugins.md)
+- [Plugins](file:./plugins/plugins.md)
 - [Markdown support (documenting your projects)](file:./mdsupport.md)
 - [Project explained](file:./project.md)
 - [Editor settings](file:./editorsettings.md)
