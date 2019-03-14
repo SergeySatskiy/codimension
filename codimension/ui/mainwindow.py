@@ -1016,7 +1016,19 @@ class CodimensionMainWindow(QMainWindow):
 
     def projectDocClicked(self):
         """Project documentation create/view/edit"""
-        pass
+        project = GlobalData().project
+        if project.isLoaded():
+            fName, error = project.findStartupMarkdownFile()
+            if error:
+                logging.error(error)
+                return
+            if fName:
+                self.em.openMarkdownFullView(fName, readOnly=False)
+                return
+
+            # Not found, suggest the file
+            fName = project.suggestStartupMarkdownFile()
+            print('suggested name: ' + fName)
 
     def tabDeadCodeClicked(self):
         """Tab dead code analysis"""
@@ -1113,14 +1125,14 @@ class CodimensionMainWindow(QMainWindow):
         if not self.debugMode:
             if self.__checkDebugProjectPrerequisites():
                 fileName = GlobalData().project.getProjectScript()
-                self._runManager.profile(fileName, False)
+                self._runManager.debug(fileName, False)
 
     def onDebugProjectDlg(self):
         """Brings up the dialog with debug script settings"""
         if not self.debugMode:
             if self.__checkDebugProjectPrerequisites():
                 fileName = GlobalData().project.getProjectScript()
-                self._runManager.profile(fileName, True)
+                self._runManager.debug(fileName, True)
 
     def __checkDebugProjectPrerequisites(self):
         """Returns True if should continue"""
