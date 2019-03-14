@@ -10,6 +10,11 @@
 * Bumping up the radon library version to 2.4.0
 * Fixing the flake8 version to 3.6.0
 * Support embedded IDE documentation in Markdown
+* Bug fix: running project profile instead of debug
+* Bug fix: incorrect project file encoding detection if a file did not have an
+  explicit encoding
+* Bug fix: gprof2dot interface has been updated in a non-backward compatible
+  manner
 
 2018 Oct 02 Sergey Satskiy <sergey.satskiy@gmail.com>
 
