@@ -107,12 +107,12 @@ class MarkdownTabWidget(QWidget, MainWindowTabWidgetBase):
             self.__switchToEditButton = QAction(getIcon('switchtoedit.png'),
                                                 'Switch to Editing', self)
             self.__switchToEditButton.triggered.connect(self.__onSwitchToEdit)
-            self.__switchToEditButton.setEnabled(False)
+            self.__switchToEditButton.setEnabled(True)
 
             self.__reloadButton = QAction(getIcon('mdreload.png'),
                                           'Reload content', self)
             self.__reloadButton.triggered.connect(self.__onReload)
-            self.__reloadButton.setEnabled(False)
+            self.__reloadButton.setEnabled(True)
 
         # Toolbar
         toolbar = QToolBar(self)
@@ -187,6 +187,11 @@ class MarkdownTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __onSwitchToEdit(self):
         """Switch to editing mode"""
+        fName = self.getFileName()
+        if fName:
+            mainWindow = GlobalData().mainWindow
+            mainWindow.em.onCloseTab()
+            mainWindow.em.openFile(fName, -1)
 
     def __onReload(self):
         """Reloads the file content"""
