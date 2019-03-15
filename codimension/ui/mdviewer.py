@@ -19,7 +19,7 @@
 
 """Markdown viewer tab widget"""
 
-from .qt import (QWidget, Qt, pyqtSignal)
+from .qt import (QWidget, Qt, pyqtSignal, QAction, QToolBar)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 class MarkdownTabWidget(QWidget, MainWindowTabWidgetBase):

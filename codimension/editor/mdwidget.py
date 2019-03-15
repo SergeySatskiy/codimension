@@ -23,10 +23,11 @@
 import logging
 import os.path
 from ui.qt import (Qt, QSize, QTimer, QToolBar, QWidget, QHBoxLayout,
-                   QLabel, QVBoxLayout, QSizePolicy, QFrame, QDesktopServices)
+                   QLabel, QVBoxLayout, QSizePolicy, QFrame, QDesktopServices,
+                   QAction, QPrintDialog, QDialog)
 from ui.texttabwidget import TextViewer
 from utils.fileutils import isMarkdownMime
-from utils.pixmapcache import getPixmap
+from utils.pixmapcache import getPixmap, getIcon
 from utils.globals import GlobalData
 from utils.diskvaluesrelay import getFilePosition
 from utils.md import renderMarkdown
@@ -248,6 +249,10 @@ class MDWidget(QWidget):
         self.__toolbar.setContentsMargins(0, 0, 0, 0)
 
         # Some control buttons could be added later
+        printButton = QAction(getIcon('printer.png'), 'Print', self)
+        printButton.triggered.connect(self.__onPrint)
+
+        self.__toolbar.addAction(printButton)
 
         return self.__toolbar
 
@@ -370,3 +375,10 @@ class MDWidget(QWidget):
 
     def getFileName(self):
         return self.__parentWidget.getFileName()
+
+    def __onPrint(self):
+        """Triggered when the print button is pressed"""
+        dialog = QPrintDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            printer = dialog.printer()
+            self.mdView.print_(printer)
