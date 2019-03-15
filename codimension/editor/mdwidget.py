@@ -288,8 +288,8 @@ class MDWidget(QWidget):
         # Some control buttons could be added later
         printButton = QAction(getIcon('printer.png'), 'Print', self)
         printButton.triggered.connect(self.__onPrint)
-
         self.__toolbar.addAction(printButton)
+
         return self.__toolbar
 
     def __createTopBar(self):
@@ -413,3 +413,10 @@ class MDWidget(QWidget):
 
     def getFileName(self):
         return self.__parentWidget.getFileName()
+
+    def __onPrint(self):
+        """Triggered when the print button is pressed"""
+        dialog = QPrintDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            printer = dialog.printer()
+            self.mdView.print_(printer)

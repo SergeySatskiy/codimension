@@ -55,4 +55,4 @@ from PyQt5.QtWidgets import (QApplication, QToolBar, QMenuBar, QLabel,
 from PyQt5.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 from PyQt5.QtSvg import QSvgGenerator, QGraphicsSvgItem
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtPrintSupport import QPrintDialog
