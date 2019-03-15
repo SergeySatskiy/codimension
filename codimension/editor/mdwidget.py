@@ -22,9 +22,10 @@
 
 import logging
 import os.path
+import re
 from ui.qt import (Qt, QSize, QTimer, QToolBar, QWidget, QHBoxLayout,
                    QLabel, QVBoxLayout, QSizePolicy, QFrame, QDesktopServices,
-                   QAction, QPrintDialog, QDialog)
+                   pyqtSignal, QPrintDialog, QDialog, QAction)
 from ui.texttabwidget import TextViewer
 from utils.fileutils import isMarkdownMime
 from utils.pixmapcache import getPixmap, getIcon
@@ -47,14 +48,16 @@ class MDViewer(TextViewer):
         self.setViewportMargins(10, 10, 10, 10)
         self.setOpenExternalLinks(True)
         self.setOpenLinks(False)
-        self.anchorClicked.connect(self.__onAnchorClicked)
+        self.anchorClicked.connect(self._onAnchorClicked)
 
-    def __onAnchorClicked(self, link):
-        """Handles a URL click"""
+        self.__lineNoExpr = re.compile(r':\d+$')
+
+    def _resolveLink(self, link):
+        """Resolves the link to a file and optional line number"""
         scheme = link.scheme().lower()
         if scheme in ['http', 'https']:
             QDesktopServices.openUrl(link)
-            return
+            return None, None
 
         if scheme == '':
             fileName = link.path()
@@ -63,38 +66,70 @@ class MDViewer(TextViewer):
                 fileName = link.path()
             else:
                 logging.error('Invalid link: ' + link.errorString())
-                return
+                return None, None
         else:
             logging.error("Unsupported url scheme '" + link.scheme() +
                           "'. Supported schemes are 'http', 'https', 'file' "
                           "and an empty scheme for files")
-            return
+            return None, None
 
         if not fileName:
             logging.error('Could not get a file name. Check the link format. '
                           'Valid examples: file:./relative/fname or '
                           'file:relative/fname or file:/absolute/fname or '
                           'file:///absolute/fname')
-            return
+            return None, None
+
+        lineNo = -1
+        match = self.__lineNoExpr.search(fileName)
+        if match is not None:
+            linePart = match.group()
+            lineNo = int(linePart[1:])
+            fileName = fileName[0:-1 * linePart.length()].strip()
+            if lineNo < 0:
+                lineNo = -1
 
         if not os.path.isabs(fileName):
             currentFileName = self.__parentWidget.getFileName()
             if not currentFileName:
                 logging.error("Relative path '" + fileName +
                               "' can be resolved only after the file is saved")
-                return
+                return None, None
             currentDirName = os.path.dirname(currentFileName)
             fileName = os.path.normpath(currentDirName + os.path.sep + fileName)
 
         if not os.path.exists(fileName):
             logging.error('File not found: ' + fileName)
-            return
+            return None, None
         if not os.path.isfile(fileName):
             logging.error('Not a file: ' + fileName)
-            return
+            return None, None
 
-        GlobalData().mainWindow.openFile(fileName, -1)
+        return fileName, lineNo
 
+    def _onAnchorClicked(self, link):
+        """Handles a URL click"""
+        fileName, lineNo = self._resolveLink(link)
+        if fileName:
+            GlobalData().mainWindow.openFile(fileName, lineNo)
+
+    def getScrollbarPositions(self):
+        """Provides the scrollbar positions"""
+        hScrollBar = self.horizontalScrollBar()
+        hsbValue = hScrollBar.value() if hScrollBar else 0
+
+        vScrollBar = self.verticalScrollBar()
+        vsbValue = vScrollBar.value() if vScrollBar else 0
+        return hsbValue, vsbValue
+
+    def setScrollbarPositions(self, hPos, vPos):
+        """Sets the scrollbar positions for the view"""
+        hsb = self.horizontalScrollBar()
+        if hsb:
+            hsb.setValue(hPos)
+        vsb = self.verticalScrollBar()
+        if vsb:
+            vsb.setValue(vPos)
 
 
 class MDTopBar(QFrame):
@@ -200,6 +235,8 @@ class MDWidget(QWidget):
 
     """The MD rendered content widget which goes along with the text editor"""
 
+    sigEscapePressed = pyqtSignal()
+
     def __init__(self, editor, parent):
         QWidget.__init__(self, parent)
 
@@ -235,7 +272,7 @@ class MDWidget(QWidget):
 
         # Connect to the change file type signal
         self.__mainWindow = GlobalData().mainWindow
-        editorsManager = self.__mainWindow.editorsManagerWidget.editorsManager
+        editorsManager = self.__mainWindow.em
         editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
 
     def __createToolbar(self):
@@ -251,7 +288,6 @@ class MDWidget(QWidget):
         # Some control buttons could be added later
         printButton = QAction(getIcon('printer.png'), 'Print', self)
         printButton.triggered.connect(self.__onPrint)
-
         self.__toolbar.addAction(printButton)
 
         return self.__toolbar
@@ -264,7 +300,19 @@ class MDWidget(QWidget):
     def __createMDView(self):
         """Creates the graphics view"""
         self.mdView = MDViewer(self)
+        self.mdView.sigEscapePressed.connect(self.__onEsc)
         return self.mdView
+
+    def __onPrint(self):
+        """Print the markdown page"""
+        dialog = QPrintDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            printer = dialog.printer()
+            self.mdView.print_(printer)
+
+    def __onEsc(self):
+        """Triggered when Esc is pressed"""
+        self.sigEscapePressed.emit()
 
     def process(self):
         """Parses the content and displays the results"""
@@ -357,21 +405,11 @@ class MDWidget(QWidget):
 
     def getScrollbarPositions(self):
         """Provides the scrollbar positions"""
-        hScrollBar = self.mdView.horizontalScrollBar()
-        hsbValue = hScrollBar.value() if hScrollBar else 0
-
-        vScrollBar = self.mdView.verticalScrollBar()
-        vsbValue = vScrollBar.value() if vScrollBar else 0
-        return hsbValue, vsbValue
+        return self.mdView.getScrollbarPositions()
 
     def setScrollbarPositions(self, hPos, vPos):
         """Sets the scrollbar positions for the view"""
-        hsb = self.mdView.horizontalScrollBar()
-        if hsb:
-            hsb.setValue(hPos)
-        vsb = self.mdView.verticalScrollBar()
-        if vsb:
-            vsb.setValue(vPos)
+        self.mdView.setScrollbarPositions(hPos, vPos)
 
     def getFileName(self):
         return self.__parentWidget.getFileName()

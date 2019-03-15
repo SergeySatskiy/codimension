@@ -366,7 +366,7 @@ class ProfileGraphViewer(QWidget):
         with io.StringIO() as buf:
             gprofParser = gprof2dot.PstatsParser(self.__dataFile)
             profileData = gprofParser.parse()
-            profileData.prune(nodeLimit / 100.0, edgeLimit / 100.0, False)
+            profileData.prune(nodeLimit / 100.0, edgeLimit / 100.0, False, False)
 
             dot = gprof2dot.DotWriter(buf)
             dot.strip = False

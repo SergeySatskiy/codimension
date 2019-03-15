@@ -8,7 +8,7 @@ PyQt5~=5.7
 python-magic==0.4.15
 qutepart
 yapsy==1.11.223
-jedi>=0.13.1
+jedi>=0.13.2
 vulture==0.29
 gprof2dot
 mistune==0.8.4
