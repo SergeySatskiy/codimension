@@ -1,6 +1,6 @@
-2018 xxx xx Sergey Satskiy <sergey.satskiy@gmail.com>
+2019 Mar 21 Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Version x.x.x
+* Version 4.4.0
 * Bumping up the magic library version to 0.4.15
 * Introducing basic markdown rendering support
 * Bug fix: proper file position is saved when an individual tab is closed

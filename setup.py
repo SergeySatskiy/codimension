@@ -98,7 +98,13 @@ def getPackageData():
                     ('codimension.skins',
                      'codimension/skins/'),
                     ('doc',
-                     'doc/')]
+                     'doc/'),
+                    ('doc.cml',
+                     'doc/cml'),
+                    ('doc.plugins',
+                     'doc/plugins'),
+                    ('doc.technology',
+                     'doc/technology')]
 
     # If a skin needs to be added, then the following item should be also
     # appended:
@@ -137,7 +143,7 @@ def getPackages():
             'codimension.plugins.vcssupport',
             'codimension.pixmaps',
             'codimension.skins',
-            'doc']
+            'doc', 'doc.cml', 'doc.plugins', 'doc.technology']
     # If a myskin skin is to be added as well, then one more package should
     # be mentioned: ..., 'codimension.skins.myskin']
 
