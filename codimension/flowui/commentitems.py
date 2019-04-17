@@ -23,6 +23,7 @@ from sys import maxsize
 from cgi import escape
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
                    QGraphicsItem, QStyleOptionGraphicsItem, QStyle)
+from utils.globals import GlobalData
 from .auxitems import Connector
 from .items import CellElement
 from .routines import distance, getCommentBoxPath
@@ -204,6 +205,8 @@ class IndependentCommentCell(CommenCellBase, QGraphicsPathItem):
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
         if self._editor:
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
             self._editor.gotoLine(self.ref.beginLine,
                                   self.ref.beginPos)
             self._editor.setFocus()
@@ -397,6 +400,8 @@ class LeadingCommentCell(CommenCellBase, QGraphicsPathItem):
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
         if self._editor:
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
             self._editor.gotoLine(self.ref.leadingComment.beginLine,
                                   self.ref.leadingComment.beginPos)
             self._editor.setFocus()
@@ -612,6 +617,8 @@ class SideCommentCell(CommenCellBase, QGraphicsPathItem):
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
         if self._editor:
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
             self._editor.gotoLine(self.ref.sideComment.beginLine,
                                   self.ref.sideComment.beginPos)
             self._editor.setFocus()
@@ -791,6 +798,8 @@ class AboveCommentCell(CommenCellBase, QGraphicsPathItem):
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
         if self._editor:
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
             self._editor.gotoLine(self.ref.leadingComment.beginLine,
                                   self.ref.leadingComment.beginPos)
             self._editor.setFocus()

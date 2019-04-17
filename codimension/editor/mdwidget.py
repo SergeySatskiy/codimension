@@ -327,7 +327,7 @@ class MDWidget(QWidget):
             return
         if renderedText is None:
             self.__topBar.updateInfoIcon(self.__topBar.STATE_BROKEN_UTD)
-            self.__topBar.setErrors(['Unknown morkdown rendering error'])
+            self.__topBar.setErrors(['Unknown markdown rendering error'])
             return
 
         # That will clear the error tooltip as well
@@ -414,9 +414,3 @@ class MDWidget(QWidget):
     def getFileName(self):
         return self.__parentWidget.getFileName()
 
-    def __onPrint(self):
-        """Triggered when the print button is pressed"""
-        dialog = QPrintDialog(self)
-        if dialog.exec_() == QDialog.Accepted:
-            printer = dialog.printer()
-            self.mdView.print_(printer)

@@ -24,7 +24,7 @@ import os.path
 import logging
 from ui.qt import (Qt, QFileInfo, QSize, pyqtSignal, QToolBar, QHBoxLayout,
                    QWidget, QAction, QMenu, QSizePolicy, QToolButton, QDialog,
-                   QVBoxLayout, QSplitter)
+                   QVBoxLayout, QSplitter, QMainWindow)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.importlist import ImportListWidget
 from ui.outsidechanges import OutsideChangeWidget
@@ -295,13 +295,13 @@ class TextEditorTabWidget(QWidget):
         self.__flowUI = FlowUIWidget(self.__editor, self)
         self.__mdView = MDWidget(self.__editor, self)
 
-        renderLayout = QVBoxLayout()
-        renderLayout.setContentsMargins(0, 0, 0, 0)
-        renderLayout.setSpacing(0)
-        renderLayout.addWidget(self.__flowUI)
-        renderLayout.addWidget(self.__mdView)
+        self.__renderLayout = QVBoxLayout()
+        self.__renderLayout.setContentsMargins(0, 0, 0, 0)
+        self.__renderLayout.setSpacing(0)
+        self.__renderLayout.addWidget(self.__flowUI)
+        self.__renderLayout.addWidget(self.__mdView)
         self.__renderWidget = QWidget()
-        self.__renderWidget.setLayout(renderLayout)
+        self.__renderWidget.setLayout(self.__renderLayout)
 
         self.__splitter.addWidget(widget)
         self.__splitter.addWidget(self.__renderWidget)
@@ -364,12 +364,13 @@ class TextEditorTabWidget(QWidget):
         """Reports undo ops available"""
         self.__undoButton.setEnabled(available)
 
-    def __languageChanged(self, _):
+    def __languageChanged(self, _=None):
         """Language changed"""
         isPython = self.__editor.isPythonBuffer()
         isMarkdown = self.__editor.isMarkdownBuffer()
         self.disasmScriptButton.setEnabled(isPython)
-        self.__renderWidget.setVisible(isPython or isMarkdown)
+        self.__renderWidget.setVisible(not Settings()['floatingRenderer'] and
+                                       (isPython or isMarkdown))
 
     # Arguments: modified
     def modificationChanged(self, _=None):
@@ -736,3 +737,17 @@ class TextEditorTabWidget(QWidget):
     def setVCSStatus(self, newStatus):
         """Sets the new VCS status"""
         self.__vcsStatus = newStatus
+
+    # Floating renderer support
+    def popRenderingWidgets(self):
+        """Pops the rendering widgets"""
+        self.__renderLayout.removeWidget(self.__flowUI)
+        self.__renderLayout.removeWidget(self.__mdView)
+        self.__renderWidget.setVisible(False)
+        return [self.__flowUI, self.__mdView]
+
+    def pushRenderingWidgets(self, widgets):
+        """Returns back the rendering widgets"""
+        for widget in widgets:
+            self.__renderLayout.addWidget(widget)
+        self.__languageChanged()    # Sets the widget visibility

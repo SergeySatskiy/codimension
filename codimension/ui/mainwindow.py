@@ -79,6 +79,7 @@ from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .mainstatusbar import MainWindowStatusBarMixin
 from .mainmenu import MainWindowMenuMixin
 from .mainredirectedio import MainWindowRedirectedIOMixin
+from .floatingrendererwindow import DetachedRendererWindow
 
 
 class EditorsManagerWidget(QWidget):
@@ -216,7 +217,12 @@ class CodimensionMainWindow(QMainWindow):
         self._runManager.sigProcessFinished.connect(
             self.__debugger.onProcessFinished)
 
-        Settings().sigTextZoomChanged.connect(self.onTextZoomChanged)
+        settings.sigTextZoomChanged.connect(self.onTextZoomChanged)
+
+        # Flow UI/markdown renderer
+        self.__detachedRenderer = DetachedRendererWindow(settings, self.em)
+        if settings['floatingRenderer']:
+            self.__detachedRenderer.show()
 
     def restoreWindowPosition(self):
         """Makes sure that the window frame delta is proper"""
@@ -564,6 +570,14 @@ class CodimensionMainWindow(QMainWindow):
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        self.floatingRendererButton = QToolButton(self)
+        self.floatingRendererButton.setIcon(getIcon('floatingrenderer.png'))
+        self.floatingRendererButton.setToolTip('Floating/embedded renderer')
+        self.floatingRendererButton.setFocusPolicy(Qt.NoFocus)
+        self.floatingRendererButton.setCheckable(True)
+        self.floatingRendererButton.setChecked(self.settings['floatingRenderer'])
+        self.floatingRendererButton.clicked.connect(self._onFloatingRenderer)
+
         self.__toolbar = QToolBar()
         self.__toolbar.setMovable(False)
         self.__toolbar.setAllowedAreas(Qt.TopToolBarArea)
@@ -600,6 +614,9 @@ class CodimensionMainWindow(QMainWindow):
         self.__dbgDumpSettingsAct = self.__toolbar.addWidget(
             self.__dbgDumpSettingsButton)
 
+        self.__toolbar.addWidget(spacer)
+        self.__toolbar.addWidget(self.floatingRendererButton)
+
         # Heck! The only QAction can be hidden
         self.__dbgDumpSettingsAct.setVisible(False)
         # Debugger part end
@@ -616,7 +633,7 @@ class CodimensionMainWindow(QMainWindow):
         # Ugly but I don't see any better way.
         # It is impossible to catch the case when the main window is maximized.
         # Especially when networked XServer is used (like xming)
-        # So, make a wild guess instead and do not save the status is
+        # So, make a wild guess instead and do not save the status if
         # maximized.
         availGeom = GlobalData().application.desktop().availableGeometry()
         if self.width() + abs(self.settings['xdelta']) > availGeom.width() or \
@@ -879,6 +896,8 @@ class CodimensionMainWindow(QMainWindow):
             # call of GC resolves the problem.
             while gc.collect():
                 pass
+
+            self.__detachedRenderer.close()
 
     def dismissVCSPlugin(self, plugin):
         """Dismisses the given VCS plugin"""
@@ -2347,3 +2366,21 @@ class CodimensionMainWindow(QMainWindow):
             QApplication.restoreOverrideCursor()
             if os.path.exists(outfile):
                 os.unlink(outfile)
+
+    def _onFloatingRenderer(self, action=None):
+        """Triggered when the renderer type button is triggered"""
+        del action  # unused argument
+        self.settings['floatingRenderer'] = not self.settings['floatingRenderer']
+
+        if self.floatingRendererButton.isChecked():
+            # Need to make the renderer floating
+            self.__detachedRenderer.show()
+        else:
+            # Need to get back to the embedded renderer
+            self.__detachedRenderer.hide()
+
+    def setFocusToFloatingRenderer(self):
+        """Raises the window up if it is shown and passes focus"""
+        if not self.__detachedRenderer.isHidden():
+            self.__detachedRenderer.raise_()
+            self.__detachedRenderer.activateWindow()

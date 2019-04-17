@@ -178,6 +178,9 @@ class FlowUIWidget(QWidget):
 
         self.setSmartZoomLevel(Settings()['smartZoom'])
 
+    def getParentWidget(self):
+        return self.__parentWidget
+
     def view(self):
         """Provides a reference to the current view"""
         return self.smartViews.currentWidget()
@@ -473,6 +476,7 @@ class FlowUIWidget(QWidget):
         """
         item, _ = self.scene().getNearestItem(absPos, line, pos)
         if item:
+            GlobalData().mainWindow.setFocusToFloatingRenderer()
             self.scene().clearSelection()
             item.setSelected(True)
             self.view().scrollTo(item)

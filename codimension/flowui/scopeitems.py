@@ -23,6 +23,7 @@ from sys import maxsize
 import os.path
 from cgi import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
+from utils.globals import GlobalData
 from .auxitems import BadgeItem, Connector
 from .items import CellElement
 from .routines import distance, getNoCellCommentBoxPath, getHiddenCommentPath
@@ -513,16 +514,22 @@ class ScopeCellElement(CellElement):
                 return
 
         if self.subKind == self.SIDE_COMMENT:
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
             self._editor.gotoLine(self.ref.sideComment.beginLine,
                                   self.ref.sideComment.beginPos)
             self._editor.setFocus()
             return
         if self.subKind == self.DOCSTRING:
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
             self._editor.gotoLine(self.ref.docstring.body.beginLine,
                                   self.ref.docstring.body.beginPos)
             self._editor.setFocus()
             return
         if self.subKind == self.DECLARATION:
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
             if self.kind == CellElement.FILE_SCOPE:
                 self._editor.gotoLine(1, 1)   # Good enough for the
                                               # vast majority of the cases

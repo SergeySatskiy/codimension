@@ -91,6 +91,7 @@ class EditorsManager(QTabWidget):
     sigFileUpdated = pyqtSignal(str, str)
     sigBufferSavedAs = pyqtSignal(str, str)
     sigFileTypeChanged = pyqtSignal(str, str, str)
+    sigTextEditorTabAdded = pyqtSignal(int)
 
     def __init__(self, parent, debugger):
         QTabWidget.__init__(self, parent)
@@ -520,6 +521,7 @@ class EditorsManager(QTabWidget):
         self.sigFileTypeChanged.emit(newWidget.getShortName(),
                                      newWidget.getUUID(),
                                      editor.mime if editor.mime else '')
+        self.sigTextEditorTabAdded.emit(0)
 
     def __updateControls(self):
         """Updates the navigation buttons status"""
@@ -1158,6 +1160,7 @@ class EditorsManager(QTabWidget):
                 editor.gotoLine(lineNo, pos)
             else:
                 self.restoreFilePosition(None)
+            self.sigTextEditorTabAdded.emit(0)
 
         except Exception as exc:
             logging.error(str(exc))

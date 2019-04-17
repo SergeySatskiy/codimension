@@ -113,6 +113,10 @@ _DEFAULT_SETTINGS = {
     'ypos': 50,
     'width': 750,
     'height': 550,
+    'rendererxpos': 425,
+    'rendererypos': 75,
+    'rendererwidth': 375,
+    'rendererheight': 550,
     'screenwidth': 0,
     'screenheight': 0,
     'xdelta': 0,
@@ -156,6 +160,7 @@ _DEFAULT_SETTINGS = {
     'rightBarMinimized': False,
     'projectLoaded': False,
     'clearDebugIO': False,
+    'floatingRenderer': False,
     'hSplitterSizes': [200, 450, 575],
     'vSplitterSizes': [400, 150],
     'flowSplitterSizes': [225, 225],
@@ -386,6 +391,15 @@ class SettingsWrapper(QObject,
         """Provides the default window size and location"""
         return _DEFAULT_SETTINGS['xpos'], _DEFAULT_SETTINGS['ypos'], \
                _DEFAULT_SETTINGS['width'], _DEFAULT_SETTINGS['height']
+
+    @staticmethod
+    def getDefaultRendererWindowGeometry():
+        """Provides the default renderer window size and location"""
+        # A bit shifted down and half of the width of the main window
+        return _DEFAULT_SETTINGS['rendererxpos'], \
+               _DEFAULT_SETTINGS['rendererypos'], \
+               _DEFAULT_SETTINGS['rendererwidth'], \
+               _DEFAULT_SETTINGS['rendererheight']
 
     def getProfilerSettings(self):
         """Provides the profiler IDE-wide settings"""

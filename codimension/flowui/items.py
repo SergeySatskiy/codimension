@@ -27,6 +27,7 @@ from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
                    QStyleOptionGraphicsItem, QStyle, QApplication,
                    QMimeData, QByteArray)
 from utils.config import DEFAULT_ENCODING
+from utils.globals import GlobalData
 from .auxitems import SVGItem, Connector, Text
 from .cml import CMLVersion, CMLsw, CMLcc, CMLrt
 from .routines import getBorderColor, getCommentBoxPath, distance
@@ -185,6 +186,9 @@ class CellElement:
 
         lineRange = self.getLineRange()
         absPosRange = self.getAbsPosRange()
+
+        GlobalData().mainWindow.raise_()
+        GlobalData().mainWindow.activateWindow()
         self._editor.gotoLine(lineRange[0], absPosRange[0])
         self._editor.setFocus()
 
@@ -1964,6 +1968,8 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
         """Jump to the appropriate line in the text editor"""
         if self._editor:
             firstExcept = self.ref.exceptParts[0]
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
             self._editor.gotoLine(firstExcept.body.beginLine,
                                   firstExcept.body.beginPos)
             self._editor.setFocus()
