@@ -6,7 +6,7 @@ It rather covers some practical topics. Please follow the links in the list belo
 
 ## General Topics
 
-- [Technology](file:./technology/technology.md)
+- [Technology](technology/technology.md)
 - [CML - Codimension Markup Language](file:./cml/cml.md)
 
 
@@ -29,7 +29,7 @@ It rather covers some practical topics. Please follow the links in the list belo
 ## Miscellaneous
 
 - [Plugins](file:./plugins/plugins.md)
-- [Markdown support (documenting your projects)](file:./mdsupport.md)
+- [Markdown support (documenting your projects)](md/mdsupport.md)
 - [Project explained](file:./project.md)
 - [Editor settings](file:./editorsettings.md)
 - [Color schemes](file:./colorschemes.md)
