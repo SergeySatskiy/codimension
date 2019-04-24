@@ -760,6 +760,20 @@ def saveToFile(fileName, content, allowException=True, enc=DEFAULT_ENCODING):
     return False
 
 
+def saveBinaryToFile(fileName, content, allowException=True):
+    """Overwrites the file content"""
+    try:
+        with open(fileName, 'wb') as diskfile:
+            diskfile.write(content)
+        return True
+    except Exception as exc:
+        if allowException:
+            raise
+        logging.error('Error writing to file ' + fileName + ': ' +
+                      str(exc))
+    return False
+
+
 def makeTempFile(prefix='cdm_', suffix=None):
     """Creates a temporary file"""
     fileHandle, fileName = tempfile.mkstemp(suffix, prefix)

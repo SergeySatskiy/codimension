@@ -25,11 +25,13 @@ import os.path
 import re
 from ui.qt import (Qt, QSize, QTimer, QToolBar, QWidget, QHBoxLayout,
                    QLabel, QVBoxLayout, QSizePolicy, QFrame, QDesktopServices,
-                   pyqtSignal, QPrintDialog, QDialog, QAction)
+                   pyqtSignal, QPrintDialog, QDialog, QAction, QPixmap,
+                   QTextDocument)
 from ui.texttabwidget import TextViewer
 from utils.fileutils import isMarkdownMime
 from utils.pixmapcache import getPixmap, getIcon
 from utils.globals import GlobalData
+from utils.settings import Settings
 from utils.diskvaluesrelay import getFilePosition
 from utils.md import renderMarkdown
 
@@ -51,6 +53,9 @@ class MDViewer(TextViewer):
         self.anchorClicked.connect(self._onAnchorClicked)
 
         self.__lineNoExpr = re.compile(r':\d+$')
+
+        Settings().webResourceCache.sigResourceSaved.connect(
+            self.onResourceSaved)
 
     def _resolveLink(self, link):
         """Resolves the link to a file and optional line number"""
@@ -130,6 +135,44 @@ class MDViewer(TextViewer):
         vsb = self.verticalScrollBar()
         if vsb:
             vsb.setValue(vPos)
+
+    def loadResource(self, resourceType, resourceURL):
+        """Overloaded; by default the remote pixmaps are not loaded"""
+        if resourceType == QTextDocument.ImageResource:
+            url = resourceURL.toString()
+            currentFileName = self.__parentWidget.getFileName()
+            if currentFileName:
+                currentDir = os.path.dirname(currentFileName) + os.path.sep
+                if url.startswith(currentDir):
+                    url = url.replace(currentDir, '', 1)
+            lowerUrl = url.lower()
+            if lowerUrl.startswith('http:/') or lowerUrl.startswith('https:/'):
+                if not lowerUrl.startswith('http://') and \
+                   not lowerUrl.startswith('https://'):
+                    url = url.replace(':/', '://', 1)
+                fName = Settings().webResourceCache.getResource(
+                    url, self.__parentWidget.getUUID())
+                if fName is not None:
+                    try:
+                        return QPixmap(fName)
+                    except Exception as exc:
+                        logging.error('Cannot use the image from ' + fName +
+                                      ': ' + str(exc))
+                return None
+        return TextViewer.loadResource(self, resourceType, resourceURL)
+
+    def onResourceSaved(self, url, uuid, fName):
+        """Triggered when a pixmap is received asynchronously"""
+        if uuid == self.__parentWidget.getUUID():
+            # Note: it is a hack! If the image is received after the document
+            # is showed first time then its layout is wrong - not enough space
+            # for the image and only a portion of the picture is shown.
+            # The document re-layouting is required but there is no way to do
+            # it directly. So there is this not-changing-anything call
+            # which leads to re-layouting (update() does not help)
+            # See here:
+            # https://www.qtcentre.org/threads/6744-QTextEdit-and-delayed-image-loading
+            self.setLineWrapColumnOrWidth(0)
 
 
 class MDTopBar(QFrame):
@@ -344,7 +387,7 @@ class MDWidget(QWidget):
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when a buffer content type has changed"""
-        if self.__parentWidget.getUUID() != uuid:
+        if self.getUUID() != uuid:
             return
 
         if not isMarkdownMime(newFileType):
@@ -413,4 +456,7 @@ class MDWidget(QWidget):
 
     def getFileName(self):
         return self.__parentWidget.getFileName()
+
+    def getUUID(self):
+        return self.__parentWidget.getUUID()
 

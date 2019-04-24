@@ -31,7 +31,7 @@ from PyQt5.QtGui import (QCursor, QFontMetrics, QDesktopServices, QFont, QIcon,
                          QPalette, QColor, QBrush, QKeySequence, QIntValidator,
                          QPainter, QTextCursor, QImage, QPixmap, QPen,
                          QDoubleValidator, QImageReader, QPainterPath,
-                         QTransform, QTextOption)
+                         QTransform, QTextOption, QTextDocument)
 from PyQt5.QtWidgets import (QApplication, QToolBar, QMenuBar, QLabel,
                              QTabWidget, QActionGroup, QHBoxLayout, QWidget,
                              QAction, QMenu, QSizePolicy, QToolButton, QDialog,

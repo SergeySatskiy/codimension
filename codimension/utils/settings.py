@@ -34,6 +34,7 @@ from .fsenv import FileSystemEnvironment
 from .filepositions import FilePositions
 from .userencodings import FileEncodings
 from .flowgroups import FlowUICollapsedGroups
+from .webresourcecache import WebResourceCache
 
 
 SETTINGS_DIR = os.path.join(os.path.realpath(QDir.homePath()),
@@ -284,6 +285,9 @@ class SettingsWrapper(QObject,
         FilePositions.setup(self, SETTINGS_DIR)
         FileEncodings.setup(self, SETTINGS_DIR)
         FlowUICollapsedGroups.setup(self, SETTINGS_DIR)
+
+        self.webResourceCache = WebResourceCache(SETTINGS_DIR + os.path.sep +
+                                                 'webresourcecache')
 
         # Save the config file name
         self.__fullFileName = SETTINGS_DIR + "settings.json"
