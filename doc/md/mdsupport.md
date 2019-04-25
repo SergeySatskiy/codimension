@@ -201,3 +201,23 @@ Codimension extends the link format and uses the following approach:
 When clicked the corresponding file will be opened the same way as it would be
 a click in the file list.
 
+
+### Images
+
+Pixmaps are supported as
+- local absolute path
+- local relative path
+- web resource
+
+Here are examples:
+
+```markdown
+![Local absolute path pixmap](/home/username/codimension/codimension/pixmaps/add.png)
+![Local relative path pixmap](./add.png)
+![Local relative path pixmap](add.png)
+![Pixmap from the internet](http://codimension.org/assets/cdm/images/shouldInstall.png)
+```
+
+In case of the web resources there is a cache of the downloaded items. The cache
+is per IDE and is located at `~/.codimension3/webresourcecache/`. The cache is
+autocleaned at the IDE startup - the files older than 24 hours are deleted.
