@@ -23,7 +23,7 @@ while the code is typed. The screenshot below shows the main area divided into t
 The left one is a traditional text editor while the right one is a generated diagram.
 The diagram is updated when the IDE detects a pause in typing the code.
 
-![Screenshot](http://codimension.org/assets/cdm/images/habr/overview.png "Screenshot")
+![Screenshot](http://codimension.org/assets/cdm/images/habr/overviewSmall.png "Screenshot")
 
 
 The IDE implements many of the typical features to support the development process.

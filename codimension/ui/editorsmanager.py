@@ -29,7 +29,7 @@ import logging
 import os
 import os.path
 from utils.pixmapcache import getIcon
-from utils.misc import getNewFileTemplate
+from utils.misc import getNewFileTemplate, getDefaultProjectDoc
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import (getFileProperties, isImageViewable,
@@ -498,6 +498,50 @@ class EditorsManager(QTabWidget):
         else:
             editor.text = initialContent
 
+        editor.eol = detectEolString(editor.text)
+        editor.encoding = None
+
+        if xmlSyntaxFile:
+            editor.detectSyntax(xmlSyntaxFile)
+
+        editor.document().setModified(False)
+
+        self.insertTab(0, newWidget, newWidget.getShortName())
+        self.activateTab(0)
+
+        self.__updateControls()
+        self.__connectEditorWidget(newWidget)
+        self.updateStatusBar()
+        self.__cursorPositionChanged()
+        editor.setFocus()
+        editor.updateSettings()
+        newWidget.updateStatus()
+        self.setWidgetDebugMode(newWidget)
+
+        self.sigFileTypeChanged.emit(newWidget.getShortName(),
+                                     newWidget.getUUID(),
+                                     editor.mime if editor.mime else '')
+        self.sigTextEditorTabAdded.emit(0)
+
+    def onDefaultProjectDoc(self, fName):
+        """"Default project doc"""
+        if self.widget(0) == self.__welcomeWidget:
+            # It is the only welcome widget on the screen
+            self.removeTab(0)
+            self.setTabsClosable(True)
+
+        newWidget = TextEditorTabWidget(self, self.__debugger)
+        newWidget.sigReloadRequest.connect(self.onReload)
+        newWidget.reloadAllNonModifiedRequest.connect(
+            self.onReloadAllNonModified)
+        newWidget.sigTabRunChanged.connect(self.onTabRunChanged)
+        editor = newWidget.getEditor()
+        newWidget.setShortName(os.path.basename(fName))
+
+        editor.mime, _, xmlSyntaxFile = \
+                getFileProperties(newWidget.getShortName())
+
+        editor.text = getDefaultProjectDoc(fName)
         editor.eol = detectEolString(editor.text)
         editor.encoding = None
 

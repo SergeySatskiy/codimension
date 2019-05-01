@@ -1047,7 +1047,7 @@ class CodimensionMainWindow(QMainWindow):
 
             # Not found, suggest the file
             fName = project.suggestStartupMarkdownFile()
-            print('suggested name: ' + fName)
+            self.em.onDefaultProjectDoc(fName)
 
     def tabDeadCodeClicked(self):
         """Tab dead code analysis"""

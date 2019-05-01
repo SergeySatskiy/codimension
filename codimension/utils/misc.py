@@ -196,6 +196,24 @@ def getDefaultTemplate():
 #"""
 
 
+def getDefaultProjectDoc(fName):
+    """Provides a body (i.e. help) of the default project doc"""
+    return """The project documentation is not found.
+
+Codimension includes support of the markdown format for documentation purposes
+and there are a few options to create and specify the project documentation
+start point:
+
+- create an .md file anywhere on the file system and specify the path to it in
+  the project properties
+- simply create the README.md in the project root directory (%s)
+
+Please discard these instructions, provide the required content and save as
+needed. If you do so, next time the project doc button is clicked, the project
+doc markdown file will be displayed.
+""".replace('%s', fName)
+
+
 # Dynamic mixin at runtime:
 # http://stackoverflow.com/questions/8544983/
 #        dynamically-mixin-a-base-class-to-an-instance-in-python
