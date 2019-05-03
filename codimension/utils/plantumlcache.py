@@ -17,10 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Resource cache for the markdown renderer"""
+"""Rendered plantuml diagram cache"""
 
-# By default the text browser does not download the internet resource so
-# this facility needs to be implemented separately
 
 import os.path
 import logging
@@ -30,29 +28,30 @@ import urllib.request
 from .fileutils import loadJSON, saveJSON, saveBinaryToFile
 from ui.qt import QThread, pyqtSignal, QObject
 
-TIMEOUT = 5   # timeout in seconds to do a request
 CACHE_FILE_NAME = 'cachemap.json'
 
 
-class ResourceRetriever(QThread):
+class PlantUMLRenderer(QThread):
 
-    """Retrieves the item from the web"""
+    """Runs plantuml"""
 
-    sigRetrieveOK = pyqtSignal(str, str, str)       # url, uuid, file
-    sigRetrieveError = pyqtSignal(str, str)         # url, file
+    sigFinishedOK = pyqtSignal(str, str, str)       # md5, uuid, file
+    sigFinishedError = pyqtSignal(str, str)         # md5, file
 
     def __init__(self, parent=None):
         QThread.__init__(self, parent)
 
-    def get(self, url, fName, uuid):
-        self.__url = url
+    def get(self, source, fName, uuid):
+        self.__source = source
         self.__uuid = uuid
         self.__fName = fName
         self.start()
 
     def run(self):
         try:
-            req = urllib.request.urlopen(self.__url, timeout=TIMEOUT)
+            # Run plantUML
+
+
             saveBinaryToFile(self.__fName, req.read())
             self.sigRetrieveOK.emit(self.__url, self.__uuid, self.__fName)
         except Exception as exc:
@@ -61,16 +60,16 @@ class ResourceRetriever(QThread):
 
 
 
-class WebResourceCache(QObject):
+class PlantUMLCache(QObject):
 
-    """The web resources cache"""
+    """The plantUML render cache"""
 
-    sigResourceSaved = pyqtSignal(str, str, str)    # url, uuid, file
+    sigRenderReady = pyqtSignal(str, str, str)    # md5, uuid, file
 
     def __init__(self, cacheDir):
         QObject.__init__(self)
 
-        self.__urlToFileName = {}
+        self.__md5ToFileName = {}
         self.__threads = {}
         self.__cacheDir = os.path.normpath(cacheDir) + os.path.sep
 
@@ -80,25 +79,25 @@ class WebResourceCache(QObject):
                     self.__loadCache()
                     self.__saveCache()
                 else:
-                    logging.error('The web resource cache directory (' +
+                    logging.error('The plantUML render cache directory (' +
                                   self.__cacheDir + ') does not '
                                   'have write permissions. There will be no '
-                                  'web resource downloading')
+                                  'plantUML rendering')
                     self.__cacheDir = None
             else:
-                logging.error('The web resource cache directory path (' +
+                logging.error('The plantUML render cache directory path (' +
                               self.__cacheDir + ') exists and '
-                              'is not a directory. There will be no web '
-                              'resource downloading')
+                              'is not a directory. There will be no pluntUML '
+                              'rendering')
                 self.__cacheDir = None
         else:
             # Try to create the dir
             try:
                 os.mkdir(self.__cacheDir)
             except Exception as exc:
-                logging.error('Error creating the web resource cache directory '
+                logging.error('Error creating pluntUML render cache directory '
                               + self.__cacheDir + ': ' + str(exc) +
-                              ' There will be no web resource downloading')
+                              ' There will be no plantUML rendering')
                 self.__cacheDir = None
 
     def __loadCache(self):
@@ -119,38 +118,38 @@ class WebResourceCache(QObject):
                     try:
                         os.unlink(self.__cacheDir + item)
                     except Exception as exc:
-                        logging.error('Error removing obsolete web '
-                                      'resource file (' +
+                        logging.error('Error removing obsolete plantUML '
+                                      'render file (' +
                                       self.__cacheDir + item + '): ' + str(exc))
 
         if os.path.exists(self.__cacheDir + CACHE_FILE_NAME):
             prevCache = loadJSON(self.__cacheDir + CACHE_FILE_NAME,
-                                 'web resources cache map', None)
+                                 'plantUML render cache map', None)
             for item in prevCache.items():
                 if os.path.exists(item[1]):
-                    self.__urlToFileName[item[0]] = item[1]
+                    self.__md5ToFileName[item[0]] = item[1]
 
     def __saveCache(self):
         """Saves the cache to the disk"""
         if self.__cacheDir is None:
             return
         dictToSave = {}
-        for item in self.__urlToFileName.items():
+        for item in self.__md5ToFileName.items():
             if item[1] is not None:
                 dictToSave[item[0]] = item[1]
         saveJSON(self.__cacheDir + CACHE_FILE_NAME, dictToSave,
-                 'web resources cache map')
+                 'plantUML render cache map')
 
-    def onResourceSaved(self, url, uuid, fName):
+    def onRenderOK(self, url, uuid, fName):
         """Resource downloaded and saved"""
-        self.__urlToFileName[url] = fName
+        self.__md5ToFileName[url] = fName
         self.__onThreadFinish(fName)
         self.__saveCache()
-        self.sigResourceSaved.emit(url, uuid, fName)
+        self.sigRenderReady.emit(url, uuid, fName)
 
-    def onResourceError(self, url, fName):
+    def onRenderError(self, url, fName):
         """Error downloading the resource"""
-        self.__urlToFileName[url] = None
+        self.__md5ToFileName[url] = None
         self.__onThreadFinish(fName)
 
     def __onThreadFinish(self, fName):
@@ -163,32 +162,47 @@ class WebResourceCache(QObject):
 
     def __connectThread(self, thread):
         """Connects the thread signals"""
-        thread.sigRetrieveOK.connect(self.onResourceSaved)
-        thread.sigRetrieveError.connect(self.onResourceError)
+        thread.sigFinishedOK.connect(self.onRenderOK)
+        thread.sigFinishedError.connect(self.onRenderError)
 
     def __disconnectThread(self, thread):
         """Connects the thread signals"""
         try:
-            thread.sigRetrieveOK.disconnect(self.onResourceSaved)
-            thread.sigRetrieveError.disconnect(self.onResourceError)
+            thread.sigFinishedOK.disconnect(self.onRenderOK)
+            thread.sigFinishedError.disconnect(self.onRenderError)
         except:
             pass
 
-    def getResource(self, url, uuid):
-        """Provides the resource"""
+    def __normalizeSource(source):
+        """Normalizes the diagram source"""
+        # For the time being it merely strips the source. Empty lines cannot be
+        # voluntary removed because they may be meaningfull in e.g. multi line
+        # captions. The same story is about leading and trailing spaces in
+        # the source lines
+        return source.strip()
+
+    def getResource(self, source, uuid):
+        """Provides the rendered file name
+
+        If None => no rendering will be done
+        Otherwise the ready-to-use file or where the pic is expected
+        """
         if self.__cacheDir is None:
             return None
 
-        if url in self.__urlToFileName:
-            return self.__urlToFileName[url]
+        normSource = self.__normalizeSource(source)
+        md5 = hashlib.md5(normSource.encode('utf-8')).hexdigest()
+        if md5 in self.__md5ToFileName:
+            return self.__md5ToFileName[md5]
 
-        fName = self.__cacheDir + hashlib.md5(url.encode('utf-8')).hexdigest()
+        basename = md5 + '.png'
+        fName = self.__cacheDir + basename
         if fName in self.__threads:
             # Reject double request
-            return None
+            return fName
 
         thread = ResourceRetriever()
         self.__threads[fName] = thread
         self.__connectThread(thread)
-        thread.get(url, fName, uuid)
-        return None
+        thread.get(normSource, fName, uuid)
+        return fName

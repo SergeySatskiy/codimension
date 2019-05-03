@@ -85,6 +85,34 @@ def getGraphvizVersion():
     return "could not determine", path
 
 
+def getJavaVersion():
+    """Provides java version"""
+    from .globals import GlobalData
+    if not GlobalData().javaAvailable:
+        return "Not installed", None
+
+    path = find_executable("java")
+    if not path:
+        return "Not installed", None
+
+    try:
+        status, output = getstatusoutput(path + ' -version')
+        if status != 0:
+            return "Not installed", None
+
+        for line in output.splitlines():
+            # E.g. openjdk version "1.8.0_212"
+            line = line.strip()
+            if 'version' in line:
+                ver = line.split('version', 1)[1].strip()
+                if ver.startswith('"') and ver.endswith('"'):
+                    ver = ver[1:-1]
+                return ver, path
+    except:
+        return "Not installed", None
+    return "could not determine", path
+
+
 def getComponentInfo():
     """Provides major codimension components information"""
     components = []
@@ -187,4 +215,6 @@ def getComponentInfo():
                        "BSD 3-Clause License",
                        "https://opensource.org/licenses/BSD-3-Clause",
                        path))
+    version, path = getJavaVersion()
+    components.append(("java", version, None, None, None, None, path))
     return components

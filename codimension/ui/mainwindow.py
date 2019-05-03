@@ -401,10 +401,15 @@ class CodimensionMainWindow(QMainWindow):
         """Prints third party tools availability"""
         globalData = GlobalData()
         if globalData.graphvizAvailable:
-            logging.debug("The 'graphviz' utility is available")
+            logging.debug("The 'dot' utility is available")
         else:
-            logging.warning("The 'graphviz' utility is not found. "
+            logging.warning("The 'dot' utility is not found. "
                             "Some functionality will not be available.")
+        if globalData.javaAvailable:
+            logging.debug('java is available')
+        else:
+            logging.warning('java is not found. '
+                            'Some functionality will not be available.')
 
     def vSplitterMoved(self, pos, index):
         """Vertical splitter moved handler"""

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2017  Sergey Satskiy sergey.satskiy@gmail.com
+# Copyright (C) 2010-2019  Sergey Satskiy sergey.satskiy@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ class AboutDialog(QDialog):
             str(GlobalData().version) + "<br>"
             "CML version " +
             str(CMLVersion.VERSION) +
-            "</b><p>Copyright (c) Sergey Satskiy 2010-2017</p>")
+            "</b><p>Copyright (c) Sergey Satskiy 2010-2019</p>")
         versionLabel.setSizePolicy(QSizePolicy.Expanding,
                                    QSizePolicy.Expanding)
         versionLabel.setFixedHeight(versionLabel.minimumSizeHint().height())
@@ -109,38 +109,43 @@ Codimension home page</a>.<br> Happy coding with Codimension!
     def __createVersioning(self):
         """Creates the versioning section"""
         components = getComponentInfo()
-        text = "<p>The major Codimension components are listed below:</p><ul>"
+        text = '<p>The major Codimension components are listed below:</p><ul>'
         for (prettyName, version, homeURL,
              patched, license, licenseLink, localPath) in components:
-            text += "<li><a href='" + homeURL + "'>" + prettyName + "</a><br/>" \
-                    "Version: "
+            if homeURL is not None:
+                text += "<li><a href='" + homeURL + "'>" + prettyName + "</a><br/>" \
+                        "Version: "
+            else:
+                text += '<li>' + prettyName + '<br/>Version: '
+
             needRest = False
             if version is None:
                 text += 'not installed'
             elif version == '':
-                text += "n/a"
-            elif version.lower() == "not installed":
-                text += version.lower()
+                text += 'n/a'
+            elif version.lower() == 'not installed':
+                text += 'not installed'
             else:
                 text += str(version)
                 needRest = True
 
             if needRest:
                 if patched:
-                    text += " (patched for codimension)"
+                    text += ' (patched for codimension)'
 
-                text += "<br/>"
-                text += "License: "
-                if licenseLink.startswith("http"):
-                    text += "<a href='" + licenseLink + "'>" + license + "</a>"
-                else:
-                    text += license + " (" + licenseLink + ")"
+                if licenseLink is not None and license is not None:
+                    text += '<br/>'
+                    text += 'License: '
+                    if licenseLink.startswith('http'):
+                        text += "<a href='" + licenseLink + "'>" + license + "</a>"
+                    else:
+                        text += license + ' (' + licenseLink + ')'
 
                 if localPath:
-                    text += "<br/>Local path: " + localPath
+                    text += '<br/>Local path: ' + localPath
 
-            text += "<br/></li>"
-        text += "</ul>"
+            text += '<br/></li>'
+        text += '</ul>'
         browser = QTextBrowser()
         browser.setHtml(text)
         browser.setOpenExternalLinks(True)

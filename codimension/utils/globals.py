@@ -19,9 +19,9 @@
 
 """Global data singleton"""
 
-import sys
 import os
 from os.path import sep, realpath, isdir, exists, isfile
+from distutils.spawn import find_executable
 from plugins.manager.pluginmanager import CDMPluginManager
 from .project import CodimensionProject
 from .briefmodinfocache import BriefModuleInfoCache
@@ -68,6 +68,7 @@ class GlobalDataWrapper:
         self.briefModinfoCache = BriefModuleInfoCache()
 
         self.graphvizAvailable = self.__checkGraphviz()
+        self.javaAvailable = self.__checkJava()
 
     def getProfileOutputPath(self, procuuid):
         """Provides the path to the profile output file"""
@@ -135,10 +136,13 @@ class GlobalDataWrapper:
 
     @staticmethod
     def __checkGraphviz():
-        """Checks if the graphviz available"""
-        if sys.platform.lower().startswith('win'):
-            return os.system('which dot > /NUL 2>&1') == 0
-        return os.system('which dot > /dev/null 2>&1') == 0
+        """Checks if graphviz is available"""
+        return find_executable('dot') != None
+
+    @staticmethod
+    def __checkJava():
+        """Checks if java is available"""
+        return find_executable('java') != None
 
 
 globalsSingleton = GlobalDataWrapper()
