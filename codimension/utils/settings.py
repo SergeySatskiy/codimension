@@ -35,6 +35,7 @@ from .filepositions import FilePositions
 from .userencodings import FileEncodings
 from .flowgroups import FlowUICollapsedGroups
 from .webresourcecache import WebResourceCache
+from .plantumlcache import PlantUMLCache
 
 
 SETTINGS_DIR = os.path.join(os.path.realpath(QDir.homePath()),
@@ -288,6 +289,8 @@ class SettingsWrapper(QObject,
 
         self.webResourceCache = WebResourceCache(SETTINGS_DIR + os.path.sep +
                                                  'webresourcecache')
+        self.plantUMLCache = PlantUMLCache(SETTINGS_DIR + os.path.sep +
+                                           'plantumlcache')
 
         # Save the config file name
         self.__fullFileName = SETTINGS_DIR + "settings.json"

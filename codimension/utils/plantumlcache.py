@@ -20,15 +20,27 @@
 """Rendered plantuml diagram cache"""
 
 
+import sys
+import subprocess
 import os.path
 import logging
 import datetime
 import hashlib
-import urllib.request
-from .fileutils import loadJSON, saveJSON, saveBinaryToFile
+from .fileutils import loadJSON, saveJSON, saveToFile
 from ui.qt import QThread, pyqtSignal, QObject
 
 CACHE_FILE_NAME = 'cachemap.json'
+
+
+def getPlantUMLJarPath():
+    """Provides the full path to the plantUML jar file"""
+    exeDir = os.path.dirname(os.path.realpath(sys.argv[0]))
+    plantUMLPath = os.path.dirname(exeDir) + os.path.sep + 'plantuml' + os.path.sep
+    jar = plantUMLPath + 'plantuml.jar'
+    if os.path.exists(jar):
+        return jar
+    return None
+JAR_PATH = getPlantUMLJarPath()
 
 
 class PlantUMLRenderer(QThread):
@@ -41,22 +53,38 @@ class PlantUMLRenderer(QThread):
     def __init__(self, parent=None):
         QThread.__init__(self, parent)
 
-    def get(self, source, fName, uuid):
+    def get(self, source, md5, fName, uuid):
         self.__source = source
+        self.__md5 = md5
         self.__uuid = uuid
         self.__fName = fName
         self.start()
 
+    def safeUnlink(self, fName):
+        try:
+            os.unlink(fName)
+        except:
+            pass
+
     def run(self):
+        srcFile = self.__fName[:-3] + 'txt'
         try:
             # Run plantUML
+            saveToFile(srcFile, self.__source)
+            retCode = subprocess.call(['java', '-jar', JAR_PATH,
+                                       '-charset', 'utf-8', '-nometadata', srcFile],
+                                      stdout=subprocess.DEVNULL,
+                                      stderr=subprocess.DEVNULL)
+            self.safeUnlink(srcFile)
 
-
-            saveBinaryToFile(self.__fName, req.read())
-            self.sigRetrieveOK.emit(self.__url, self.__uuid, self.__fName)
+            if retCode == 0:
+                self.sigFinishedOK.emit(self.__md5, self.__uuid, self.__fName)
+            else:
+                self.sigFinishedError.emit(self.__md5, self.__fName)
         except Exception as exc:
-            logging.error('Cannot retrieve ' + self.__url + ': ' + str(exc))
-            self.sigRetrieveError.emit(self.__url, self.__fName)
+            logging.error('Cannot render a plantUML diagram: ' + str(exc))
+            self.safeUnlink(srcFile)
+            self.sigFinishedError.emit(self.__md5, self.__fName)
 
 
 
@@ -64,7 +92,7 @@ class PlantUMLCache(QObject):
 
     """The plantUML render cache"""
 
-    sigRenderReady = pyqtSignal(str, str, str)    # md5, uuid, file
+    sigRenderReady = pyqtSignal(str, str)    # uuid, file
 
     def __init__(self, cacheDir):
         QObject.__init__(self)
@@ -140,16 +168,16 @@ class PlantUMLCache(QObject):
         saveJSON(self.__cacheDir + CACHE_FILE_NAME, dictToSave,
                  'plantUML render cache map')
 
-    def onRenderOK(self, url, uuid, fName):
-        """Resource downloaded and saved"""
-        self.__md5ToFileName[url] = fName
+    def onRenderOK(self, md5, uuid, fName):
+        """Render saved successfully"""
+        self.__md5ToFileName[md5] = fName
         self.__onThreadFinish(fName)
         self.__saveCache()
-        self.sigRenderReady.emit(url, uuid, fName)
+        self.sigRenderReady.emit(uuid, fName)
 
-    def onRenderError(self, url, fName):
-        """Error downloading the resource"""
-        self.__md5ToFileName[url] = None
+    def onRenderError(self, md5, fName):
+        """Error rendering"""
+        self.__md5ToFileName[md5] = None
         self.__onThreadFinish(fName)
 
     def __onThreadFinish(self, fName):
@@ -173,6 +201,7 @@ class PlantUMLCache(QObject):
         except:
             pass
 
+    @staticmethod
     def __normalizeSource(source):
         """Normalizes the diagram source"""
         # For the time being it merely strips the source. Empty lines cannot be
@@ -187,7 +216,7 @@ class PlantUMLCache(QObject):
         If None => no rendering will be done
         Otherwise the ready-to-use file or where the pic is expected
         """
-        if self.__cacheDir is None:
+        if self.__cacheDir is None or JAR_PATH is None:
             return None
 
         normSource = self.__normalizeSource(source)
@@ -201,8 +230,8 @@ class PlantUMLCache(QObject):
             # Reject double request
             return fName
 
-        thread = ResourceRetriever()
+        thread = PlantUMLRenderer()
         self.__threads[fName] = thread
         self.__connectThread(thread)
-        thread.get(normSource, fName, uuid)
+        thread.get(normSource, md5, fName, uuid)
         return fName

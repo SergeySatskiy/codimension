@@ -25,6 +25,7 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name, get_lexer_for_mimetype
 from pygments.formatters import HtmlFormatter
 from utils.fileutils import getMagicMimeFromBuffer
+from .settings import Settings
 
 
 # Notes:
@@ -78,8 +79,14 @@ def get_lexer(text, lang):
     return None
 
 
-def block_code(text, lang, inlinestyles=False, linenos=False):
+def block_code(uuid, text, lang, inlinestyles=False, linenos=False):
     """Renders a code block"""
+    if lang == 'plantuml':
+        fName = Settings().plantUMLCache.getResource(text, uuid)
+        if fName is None:
+            return '<br/><img src="cdm-image:na50.png"><br/>\n'
+        return '<br/><img src="plantuml:' + fName + '"><br/>\n'
+
     lexer = get_lexer(text, lang)
     if lexer:
         try:
@@ -99,8 +106,9 @@ class CDMMarkdownRenderer(mistune.Renderer):
 
     """Codimension custom markdown renderer"""
 
-    def __init__(self, fileName):
+    def __init__(self, uuid, fileName):
         mistune.Renderer.__init__(self, inlinestyles=True, linenos=False)
+        self.__uuid = uuid
         self.__fileName = fileName
 
     def block_code(self, text, lang):
@@ -108,7 +116,7 @@ class CDMMarkdownRenderer(mistune.Renderer):
         # renderer has an options
         inlinestyles = self.options.get('inlinestyles', False)
         linenos = self.options.get('linenos', False)
-        return block_code(text, lang, inlinestyles, linenos)
+        return block_code(self.__uuid, text, lang, inlinestyles, linenos)
 
     def block_quote(self, text):
         """Custom block quote renderer"""
@@ -143,13 +151,13 @@ class CDMMarkdownRenderer(mistune.Renderer):
 
 
 
-def renderMarkdown(text, fileName):
+def renderMarkdown(uuid, text, fileName):
     """Renders the given text"""
     warnings = []
     errors = []
     renderedText = None
     try:
-        renderer = CDMMarkdownRenderer(fileName)
+        renderer = CDMMarkdownRenderer(uuid, fileName)
         markdown = mistune.Markdown(renderer=renderer)
         renderedText = markdown(text)
     except Exception as exc:

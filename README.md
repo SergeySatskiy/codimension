@@ -41,13 +41,22 @@ The IDE is pip installable:
 pip install codimension
 ```
 
-Some features (like building a dependency diagram) require a system wide availabele
-packages. Their installation depends on a system. E.g. on Ubuntu you would need
+The feature of building some diagrams e.g. a dependency diagram requires a graphviz
+package. The installation depends on a system. E.g. on Ubuntu you would need
 to do the following:
 
 ```shell
 sudo apt-get install graphviz
 ```
+
+To have plantUML diagram support java needs to be installed. The installation depends
+on a system. E.g. on Ubuntu you would need to do the following:
+
+
+```shell
+sudo apt-get install default-jre
+```
+
 
 ## Troubleshooting
 

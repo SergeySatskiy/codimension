@@ -56,6 +56,8 @@ class MDViewer(TextViewer):
 
         Settings().webResourceCache.sigResourceSaved.connect(
             self.onResourceSaved)
+        Settings().plantUMLCache.sigRenderReady.connect(
+            self.onPlantUMLRender)
 
     def _resolveLink(self, link):
         """Resolves the link to a file and optional line number"""
@@ -146,6 +148,23 @@ class MDViewer(TextViewer):
                 if url.startswith(currentDir):
                     url = url.replace(currentDir, '', 1)
             lowerUrl = url.lower()
+
+            if url.startswith('plantuml:'):
+                fName = url[9:]
+                if os.path.exists(fName):
+                    return QPixmap(fName)
+                # I cannot return my picture. If I do that then the resource
+                # will not be reloaded when the generated diagram is ready
+                return None
+
+            if url.startswith('cdm-image:'):
+                try:
+                    return getPixmap(url[10:])
+                except Exception as exc:
+                    logging.error('Unknown Codimension cache image: ' +
+                                  url[10:])
+                return None
+
             if lowerUrl.startswith('http:/') or lowerUrl.startswith('https:/'):
                 if not lowerUrl.startswith('http://') and \
                    not lowerUrl.startswith('https://'):
@@ -160,6 +179,10 @@ class MDViewer(TextViewer):
                                       ': ' + str(exc))
                 return None
         return TextViewer.loadResource(self, resourceType, resourceURL)
+
+    def onPlantUMLRender(self, uuid, fName):
+        """Triggered when a diagram rendering is done"""
+        self.onResourceSaved(None, uuid, fName)
 
     def onResourceSaved(self, url, uuid, fName):
         """Triggered when a pixmap is received asynchronously"""
@@ -362,7 +385,8 @@ class MDWidget(QWidget):
         if not self.__connected:
             self.__connectEditorSignals()
 
-        renderedText, errors, warnings = renderMarkdown(self.__editor.text,
+        renderedText, errors, warnings = renderMarkdown(self.getUUID(),
+                                                        self.__editor.text,
                                                         self.getFileName())
         if errors:
             self.__topBar.updateInfoIcon(self.__topBar.STATE_BROKEN_UTD)

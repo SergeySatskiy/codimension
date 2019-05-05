@@ -231,7 +231,8 @@ class MarkdownTabWidget(QWidget, MainWindowTabWidgetBase):
             logging.error(str(exc))
             return
 
-        renderedText, errors, warnings = renderMarkdown(content, path)
+        renderedText, errors, warnings = renderMarkdown(self.getUUID(),
+                                                        content, path)
         if errors:
             for error in errors:
                 logging.error(error)
