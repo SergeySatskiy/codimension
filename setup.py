@@ -91,7 +91,7 @@ def getDataFiles():
 
 def getPackageData():
     """Provides the data files"""
-    extensions = ['.png', '.svg', '.svgz', '.json', '.css', '.md']
+    extensions = ['.png', '.svg', '.svgz', '.json', '.css', '.md', '.jar']
     package_data = [('codimension.pixmaps',
                      'codimension/pixmaps/'),
                     ('codimension.skins',
@@ -105,7 +105,9 @@ def getPackageData():
                     ('doc.plugins',
                      'doc/plugins'),
                     ('doc.technology',
-                     'doc/technology')]
+                     'doc/technology'),
+                    ('plantuml',
+                     'plantuml/')]
 
     # If a skin needs to be added, then the following item should be also
     # appended:
@@ -144,7 +146,8 @@ def getPackages():
             'codimension.plugins.vcssupport',
             'codimension.pixmaps',
             'codimension.skins',
-            'doc', 'doc.cml', 'doc.plugins', 'doc.technology', 'doc.md']
+            'doc', 'doc.cml', 'doc.plugins', 'doc.technology', 'doc.md',
+            'plantuml']
     # If a myskin skin is to be added as well, then one more package should
     # be mentioned: ..., 'codimension.skins.myskin']
 
