@@ -1,0 +1,15 @@
+PlantUML is a tool available at http://plantuml.com/
+
+The tool is distributed under one of the following licenses:
+- GPL license
+- LGPL license
+- Apache license
+- Eclipse Public license
+- MIT license
+
+Please see the details on the tool web site.
+
+-------------------------------------------
+
+Codimension uses PlantUML to generate the diagrams found in markdown code
+blocks as well as in python code comments and docstrings

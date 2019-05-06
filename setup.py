@@ -91,7 +91,8 @@ def getDataFiles():
 
 def getPackageData():
     """Provides the data files"""
-    extensions = ['.png', '.svg', '.svgz', '.json', '.css', '.md', '.jar']
+    extensions = ['.png', '.svg', '.svgz', '.json', '.css', '.md', '.jar',
+                  'README', 'COPYING']
     package_data = [('codimension.pixmaps',
                      'codimension/pixmaps/'),
                     ('codimension.skins',

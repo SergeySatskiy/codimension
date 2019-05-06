@@ -24,6 +24,7 @@ from distutils.spawn import find_executable
 from subprocess import getstatusoutput
 import pkg_resources
 import logging
+from .plantumlcache import JAR_PATH
 
 
 def getPackageVersionAndLocation(name):
@@ -110,6 +111,26 @@ def getJavaVersion():
                 return ver, path
     except:
         return "Not installed", None
+    return "could not determine", path
+
+
+def getPlantUMLVersion():
+    """Provides the plantUML version"""
+    if JAR_PATH is None:
+        return "n/a", None
+
+    try:
+        status, output = getstatusoutput('java -jar ' + JAR_PATH + ' -version')
+        if status != 0:
+            return "n/a", None
+
+        for line in output.splitlines():
+            # PlantUML version 1.2019.05 (Sat Apr 20 11:45:36 GMT-05:00 2019)
+            line = line.strip()
+            if line.startswith('PlantUML version'):
+                return line.split('version', 1)[1].strip(), JAR_PATH
+    except:
+        return "n/a", None
     return "could not determine", path
 
 
@@ -217,4 +238,10 @@ def getComponentInfo():
                        path))
     version, path = getJavaVersion()
     components.append(("java", version, None, None, None, None, path))
+    version, path = getPlantUMLVersion()
+    components.append(('PlantUML', version,
+                       'http://plantuml.com/', None,
+                       'MIT License',
+                       'https://opensource.org/licenses/MIT',
+                       path))
     return components

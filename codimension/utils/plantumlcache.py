@@ -26,6 +26,7 @@ import os.path
 import logging
 import datetime
 import hashlib
+from distutils.spawn import find_executable
 from .fileutils import loadJSON, saveJSON, saveToFile
 from ui.qt import QThread, pyqtSignal, QObject
 
@@ -34,11 +35,13 @@ CACHE_FILE_NAME = 'cachemap.json'
 
 def getPlantUMLJarPath():
     """Provides the full path to the plantUML jar file"""
+    if  find_executable('java') == None:
+        return None
     exeDir = os.path.dirname(os.path.realpath(sys.argv[0]))
     plantUMLPath = os.path.dirname(exeDir) + os.path.sep + 'plantuml' + os.path.sep
-    jar = plantUMLPath + 'plantuml.jar'
-    if os.path.exists(jar):
-        return jar
+    for item in os.listdir(plantUMLPath):
+        if item.startswith('plantuml.') and item.endswith('.jar'):
+            return plantUMLPath + item
     return None
 JAR_PATH = getPlantUMLJarPath()
 
