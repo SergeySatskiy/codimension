@@ -46,6 +46,60 @@ def getPlantUMLJarPath():
 JAR_PATH = getPlantUMLJarPath()
 
 
+def __removeEmptyForward(items, startIndex, length):
+    toRemove = []
+    for index in range(startIndex, length):
+        if not items[index].strip():
+            toRemove.append(index)
+    for index in range(len(toRemove)):
+        items.pop(toRemove[-(index + 1)])
+    return items
+
+def normalizePlantumlSource(source):
+    """Normalizes the diagram source"""
+    lines = source.strip().splitlines()
+    length = lines.length()
+    if length == 1:
+        if lines[0].startswith('@start'):
+            # end is missed
+            return '\n'.join([lines[0], '@end' + lines[0][6:]])
+        if lines[0].startswith('@end'):
+            # start is missed
+            return'\n'.join(['@start' + lines[0][4:], lines[0]])
+        # missed both
+        return '\n'.join(['@startuml', lenes[0], '@enduml'])
+
+    # More than one line
+    startFound = lines[0].startswith('@start')
+    endFound = lines[-1].strip().endswith('@end')
+
+    if startFound and endFound:
+        # both found
+        # remove empty lines before and after
+        __removeEmptyForward(lines, 1, length)
+        __removeEmptyBackward(lines, len(lines) - 2)
+        lines[0] = lines[0].strip()
+        lines[-1] = lines[-1].strip()
+    elif startFound:
+        # start is here, end is missed
+        __removeEmptyForward(lines, 1, length)
+        lines[0] = lines[0].strip()
+        lines.append('@end' + lines[0][6:]])
+    elif endFound:
+        # start is missed, end is here
+        __removeEmptyBackward(lines, length - 1)
+        lines[-1] = lines[-1].strip()
+        lines.insert(0, '@start' + lines[-1][4:])
+    else:
+        # both missed
+        __removeEmptyForward(lines, 0, length)
+        __removeEmptyBackward(lines, len(lines) - 1)
+        lines.insert(0, '@startuml')
+        lines.append('@enduml')
+
+    return '\n'.join(lines)
+
+
 class PlantUMLRenderer(QThread):
 
     """Runs plantuml"""
@@ -204,15 +258,6 @@ class PlantUMLCache(QObject):
         except:
             pass
 
-    @staticmethod
-    def __normalizeSource(source):
-        """Normalizes the diagram source"""
-        # For the time being it merely strips the source. Empty lines cannot be
-        # voluntary removed because they may be meaningfull in e.g. multi line
-        # captions. The same story is about leading and trailing spaces in
-        # the source lines
-        return source.strip()
-
     def getResource(self, source, uuid):
         """Provides the rendered file name
 
@@ -222,7 +267,7 @@ class PlantUMLCache(QObject):
         if self.__cacheDir is None or JAR_PATH is None:
             return None
 
-        normSource = self.__normalizeSource(source)
+        normSource = normalizePlantumlSource(source)
         md5 = hashlib.md5(normSource.encode('utf-8')).hexdigest()
         if md5 in self.__md5ToFileName:
             return self.__md5ToFileName[md5]

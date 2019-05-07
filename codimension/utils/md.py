@@ -79,9 +79,24 @@ def get_lexer(text, lang):
     return None
 
 
+# The start/end tags could be:
+# @startuml / @enduml
+# @startgantt / @endgantt
+# @startsalt / @endsalt
+# @startmindmap / @endmindmap
+# @startwbs / @endwbs
+# @startditaa / @endditaa
+# @startjcckit / @endjcckit
+def is_plant_uml(text, lang):
+    """True if it is a plant uml diagram"""
+    if lang.lower() == 'plantuml':
+        return True
+    return text.lstrip().startswith('@start')
+
+
 def block_code(uuid, text, lang, inlinestyles=False, linenos=False):
     """Renders a code block"""
-    if lang == 'plantuml':
+    if is_plant_uml(text, lang):
         fName = Settings().plantUMLCache.getResource(text, uuid)
         if fName is None:
             return '<br/><img src="cdm-image:na50.png"><br/>\n'
