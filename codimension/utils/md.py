@@ -89,8 +89,8 @@ def get_lexer(text, lang):
 # @startjcckit / @endjcckit
 def is_plant_uml(text, lang):
     """True if it is a plant uml diagram"""
-    if lang.lower() == 'plantuml':
-        return True
+    if lang:
+        return lang.lower() == 'plantuml'
     return text.lstrip().startswith('@start')
 
 

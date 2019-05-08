@@ -55,10 +55,18 @@ def __removeEmptyForward(items, startIndex, length):
         items.pop(toRemove[-(index + 1)])
     return items
 
+
+def __removeEmptyBackward(items, endIndex):
+    while not items[endIndex].strip():
+        items.pop(endIndex)
+        endIndex -= 1
+    return items
+
+
 def normalizePlantumlSource(source):
     """Normalizes the diagram source"""
     lines = source.strip().splitlines()
-    length = lines.length()
+    length = len(lines)
     if length == 1:
         if lines[0].startswith('@start'):
             # end is missed
@@ -67,11 +75,11 @@ def normalizePlantumlSource(source):
             # start is missed
             return'\n'.join(['@start' + lines[0][4:], lines[0]])
         # missed both
-        return '\n'.join(['@startuml', lenes[0], '@enduml'])
+        return '\n'.join(['@startuml', lines[0], '@enduml'])
 
     # More than one line
     startFound = lines[0].startswith('@start')
-    endFound = lines[-1].strip().endswith('@end')
+    endFound = lines[-1].lstrip().startswith('@end')
 
     if startFound and endFound:
         # both found
@@ -84,10 +92,10 @@ def normalizePlantumlSource(source):
         # start is here, end is missed
         __removeEmptyForward(lines, 1, length)
         lines[0] = lines[0].strip()
-        lines.append('@end' + lines[0][6:]])
+        lines.append('@end' + lines[0][6:])
     elif endFound:
         # start is missed, end is here
-        __removeEmptyBackward(lines, length - 1)
+        __removeEmptyBackward(lines, length - 2)
         lines[-1] = lines[-1].strip()
         lines.insert(0, '@start' + lines[-1][4:])
     else:
@@ -268,6 +276,7 @@ class PlantUMLCache(QObject):
             return None
 
         normSource = normalizePlantumlSource(source)
+        print('Normalized: ' + normSource)
         md5 = hashlib.md5(normSource.encode('utf-8')).hexdigest()
         if md5 in self.__md5ToFileName:
             return self.__md5ToFileName[md5]
