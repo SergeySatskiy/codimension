@@ -63,6 +63,15 @@ def unescapeCMLTextValue(src):
     return dst
 
 
+def appendTextItem(name, value):
+    """Provides a line to append"""
+    if value:
+        if ' ' in value or '"' in value:
+            return ' ' + name + '="' + escapeCMLTextValue(value) + '"'
+        return ' ' + name + '=' + escapeCMLTextValue(value)
+    return ''
+
+
 class CMLCommentBase:
 
     """Base class for all the CML comments"""
@@ -110,6 +119,7 @@ class CMLCommentBase:
             line -= 1
 
         editor.cursorPosition = oldLine, oldPos
+
 
 
 class CMLsw(CMLCommentBase):
@@ -201,6 +211,58 @@ class CMLcc(CMLCommentBase):
             res += " border=" + cssLikeColor(border)
         return res
 
+class CMLdoc(CMLCommentBase):
+
+    """Covers the 'documentation link' comment"""
+
+    CODE = "doc"
+
+    def __init__(self, ref):
+        CMLCommentBase.__init__(self, ref)
+        self.link = None    # file path, abs or relative
+        self.id = None      # id of this comment to let a link from the doc
+        self.title = None   # text to display
+        self.validate()
+
+    def validate(self):
+        """Validates the CMD doc comment"""
+        self.validateRecordType(CMLdoc.CODE)
+        CMLVersion.validate(self.ref)
+
+        self.link = self.ref.properties.get('link', None)
+        self.id = self.ref.properties.get('id', None)
+        self.title = self.ref.properties.get('title', 'doc')
+
+        if self.link is None:
+            raise Exception("The '" + CMLdoc.CODE +
+                            "' CML comment does not supply a link")
+
+    @staticmethod
+    def description():
+        """Provides the CML comment description"""
+        return "The '" + CMLdoc.CODE + \
+               "' comment is used to provide a link to a documentation.\n" \
+               "Supported properties:\n" \
+               "- 'link': link to the appropriate documentation\n" \
+               "- 'id': this ID could be used to provide a link to this comment\n" \
+               "- 'title': what to display on graphics\n\n" \
+               "Example:\n" \
+               "# cml 1 " + CMLdoc.CODE + " link=file:doc/mydoc.md title=\"See more\""
+
+    @staticmethod
+    def generate(link, id, title, pos=1):
+        """Generates a complete line to be inserted"""
+        return " " * (pos - 1) + "# cml 1 " + CMLdoc.CODE + \
+               appendTextItem('link', link) + \
+               appendTextItem('id', id) + \
+               appendTextItem('title', title)
+
+    def getTitle(self):
+        """Provides unescaped text"""
+        if self.title is None:
+            return 'doc'
+        return unescapeCMLTextValue(self.title)
+
 
 class CMLrt(CMLCommentBase):
 
@@ -218,8 +280,7 @@ class CMLrt(CMLCommentBase):
         self.validateRecordType(CMLrt.CODE)
         CMLVersion.validate(self.ref)
 
-        if "text" in self.ref.properties:
-            self.text = self.ref.properties["text"]
+        self.text = self.ref.properties.get("text", None)
 
         if self.text is None:
             raise Exception("The '" + CMLrt.CODE +
@@ -239,10 +300,8 @@ class CMLrt(CMLCommentBase):
     @staticmethod
     def generate(txt, pos=1):
         """Generates a complete line to be inserted"""
-        res = " " * (pos - 1) + "# cml 1 " + CMLrt.CODE
-        if txt is not None:
-            res += " text=\"" + escapeCMLTextValue(txt) + "\""
-        return res
+        return " " * (pos - 1) + "# cml 1 " + CMLrt.CODE + \
+               appendTextItem('text', txt)
 
     def getText(self):
         """Provides unescaped text"""
@@ -271,8 +330,7 @@ class CMLgb(CMLCommentBase):
         self.validateRecordType(CMLgb.CODE)
         CMLVersion.validate(self.ref)
 
-        if 'title' in self.ref.properties:
-            self.title = self.ref.properties['title']
+        self.title = self.ref.properties.get('title', None)
         if 'id' in self.ref.properties:
             self.id = self.ref.properties['id'].strip()
         if "bg" in self.ref.properties:
@@ -282,10 +340,7 @@ class CMLgb(CMLCommentBase):
         if "border" in self.ref.properties:
             self.border = buildColor(self.ref.properties["border"])
 
-        if self.id is None:
-            raise Exception("The '" + CMLgb.CODE +
-                            "' CML comment does not supply id")
-        if self.id.strip() == '':
+        if not self.id:
             raise Exception("The '" + CMLgb.CODE +
                             "' CML comment does not supply id")
 
@@ -307,16 +362,9 @@ class CMLgb(CMLCommentBase):
     @staticmethod
     def generate(groupid, title, background, foreground, border, pos=1):
         """Generates a complete line to be inserted"""
-        res = ' ' * (pos - 1) + '# cml 1 ' + CMLgb.CODE
-        if ' ' in groupid:
-            res += ' id="' + groupid + '"'
-        else:
-            res += ' id=' + groupid
-        if title:
-            if ' ' in title or '"' in title:
-                res += ' title="' + escapeCMLTextValue(title) + '"'
-            else:
-                res += ' title=' + escapeCMLTextValue(title)
+        res = ' ' * (pos - 1) + '# cml 1 ' + CMLgb.CODE + \
+              appendTextItem('id', groupid) + \
+              appendTextItem('title', title)
         if background is not None:
             res += ' bg=' + cssLikeColor(background)
         if foreground is not None:
@@ -388,10 +436,7 @@ class CMLge(CMLCommentBase):
         if 'id' in self.ref.properties:
             self.id = self.ref.properties['id'].strip()
 
-        if self.id is None:
-            raise Exception("The '" + CMLge.CODE +
-                            "' CML comment does not supply id")
-        if self.id.strip() == '':
+        if not self.id:
             raise Exception("The '" + CMLge.CODE +
                             "' CML comment does not supply id")
 
@@ -428,7 +473,8 @@ class CMLVersion:
                      CMLcc.CODE: CMLcc,
                      CMLrt.CODE: CMLrt,
                      CMLgb.CODE: CMLgb,
-                     CMLge.CODE: CMLge}
+                     CMLge.CODE: CMLge,
+                     CMLdoc.CODE: CMLdoc}
 
     def __init__(self):
         pass

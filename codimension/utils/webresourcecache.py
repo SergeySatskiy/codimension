@@ -22,13 +22,17 @@
 # By default the text browser does not download the internet resource so
 # this facility needs to be implemented separately
 
+# cml 1 gb id=0 title="stdlib imports"
 import os.path
 import logging
 import datetime
 import hashlib
 import urllib.request
+# cml 1 ge id=0
+# cml 1 gb id=1 title="project imports"
 from .fileutils import loadJSON, saveJSON, saveBinaryToFile
 from ui.qt import QThread, pyqtSignal, QObject
+# cml 1 ge id=1
 
 TIMEOUT = 5   # timeout in seconds to do a request
 CACHE_FILE_NAME = 'cachemap.json'

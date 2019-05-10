@@ -140,3 +140,35 @@ Example:
 ```
 
 
+
+### doc
+
+The 'doc' comment is used for links to some sort of documentation.
+This comment may appear as:
+- independent comment
+- leading comment
+- trailing comment
+
+It is not recognized in side comments
+
+
+Supported properties:
+
+| Property | Description                                          |
+| :------: | ---------------------------------------------------- |
+| link     | link to the documentation, mandatory |
+| id       | id to reference this point in the code from the documentation, optional |
+| title    | text to be shown on graphics, optional (if not provided then 'doc' will be shown) |
+
+The link supports the following formats:
+- http://... an external browser will be invoked
+- https://... an external browser will be invoked
+- [file:]absolute path
+- [file:]relative path. The relative is tried to the current file and then to the project root
+
+Example:
+```python
+# cml 1 rt text="Reset the dictionary"
+```
+
+
