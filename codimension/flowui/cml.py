@@ -211,6 +211,7 @@ class CMLcc(CMLCommentBase):
             res += " border=" + cssLikeColor(border)
         return res
 
+
 class CMLdoc(CMLCommentBase):
 
     """Covers the 'documentation link' comment"""

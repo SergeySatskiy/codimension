@@ -37,7 +37,7 @@ from cdmcfparser import (CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                          IMPORT_FRAGMENT, COMMENT_FRAGMENT,
                          WHILE_FRAGMENT, FOR_FRAGMENT, IF_FRAGMENT,
                          WITH_FRAGMENT, TRY_FRAGMENT, CML_COMMENT_FRAGMENT)
-from .cml import CMLVersion, CMLsw, CMLgb, CMLge
+from .cml import CMLVersion, CMLsw, CMLgb, CMLge, CMLdoc
 from .items import (CellElement, VacantCell, CodeBlockCell, BreakCell,
                     ContinueCell, ReturnCell, RaiseCell, AssertCell,
                     SysexitCell, ImportCell,  ConnectorCell, IfCell,
@@ -47,7 +47,8 @@ from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
                          TryScopeCell, WithScopeCell, DecoratorScopeCell,
                          ElseScopeCell, ExceptScopeCell, FinallyScopeCell)
 from .commentitems import (AboveCommentCell, LeadingCommentCell,
-                           SideCommentCell, IndependentCommentCell)
+                           SideCommentCell, IndependentCommentCell,
+                           IndependentDocCell)
 from .groupitems import (EmptyGroup, OpenedGroupBegin, OpenedGroupEnd,
                          CollapsedGroup, HGroupSpacerCell)
 
@@ -508,6 +509,21 @@ class VirtualCanvas:
 
             if item.kind == CML_COMMENT_FRAGMENT:
                 # CML comments are not shown on the diagram
+                if self.settings.noComment:
+                    continue
+
+                if hasattr(item, 'ref'):
+                    # High level CML comment, low level are out of interest
+                    if item.CODE == CMLdoc.CODE:
+                        self.__allocateCell(vacantRow, column + 1)
+                        self.cells[vacantRow][column] = \
+                            ConnectorCell(CONN_N_S, self, column, vacantRow)
+                        self.cells[vacantRow][column + 1] = \
+                            IndependentDocCell(item, self, column + 1,
+                                               vacantRow)
+                        vacantRow += 1
+                        continue
+
                 continue
 
             if item.kind in [FUNCTION_FRAGMENT, CLASS_FRAGMENT]:

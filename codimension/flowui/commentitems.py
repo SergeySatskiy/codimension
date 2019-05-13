@@ -832,3 +832,174 @@ class AboveCommentCell(CommenCellBase, QGraphicsPathItem):
     def copyToClipboard(self):
         """Copies the item to a clipboard"""
         self._copyToClipboard(self.ref.leadingComment.parts)
+
+
+
+class IndependentDocCell(CommenCellBase, QGraphicsPathItem):
+
+    """Represents a single independent CML doc comment"""
+
+    def __init__(self, ref, canvas, x, y):
+        CommenCellBase.__init__(self, ref, canvas, x, y)
+        QGraphicsPathItem.__init__(self)
+        self.kind = CellElement.INDEPENDENT_DOC
+        self.leadingForElse = False
+        self.sideForElse = False
+
+        # To make double click delivered
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def __getText(self):
+        """Provides text"""
+        if self._text is None:
+            self._text = self.ref.getTitle()
+            if self.canvas.settings.hidecomments:
+                self.setToolTip('<pre>' + escape(self._text) + '</pre>')
+                self._text = self.canvas.settings.hiddenCommentText
+        return self._text
+
+    def render(self):
+        """Renders the cell"""
+        settings = self.canvas.settings
+        self._textRect = self.getBoundingRect(self.__getText())
+
+        self.minHeight = self._textRect.height() + \
+                         2 * (settings.vCellPadding + self._vTextPadding)
+        self.minWidth = self._textRect.width() + \
+                        2 * (settings.hCellPadding + self._hTextPadding)
+        if not settings.hidecomments:
+            self.minWidth = max(self.minWidth, settings.minWidth)
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def adjustWidth(self):
+        """Used during rendering to adjust the width of the cell.
+
+        The comment now can take some space on the left and the left hand
+        side cell has to be rendered already.
+        The width of this cell will take whatever is needed considering
+        the comment shift to the left.
+        """
+        settings = self.canvas.settings
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        spareWidth = \
+            cellToTheLeft.width - settings.mainLine - settings.hCellPadding
+        boxWidth = self._textRect.width() + \
+                   2 * (settings.hCellPadding + self._hTextPadding)
+        if not settings.hidecomments:
+            boxWidth = max(boxWidth, settings.minWidth)
+        if spareWidth >= boxWidth:
+            self.minWidth = 0
+        else:
+            self.minWidth = boxWidth - spareWidth
+        self.width = self.minWidth
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        self.baseX = baseX
+        self.baseY = baseY
+        self.__setupPath()
+        scene.addItem(self.connector)
+        scene.addItem(self)
+
+    def __setupPath(self):
+        """Sets the path for painting"""
+        settings = self.canvas.settings
+
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        self._leftEdge = \
+            cellToTheLeft.baseX + settings.mainLine + settings.hCellPadding
+        boxWidth = self._textRect.width() + \
+                   2 * (settings.hCellPadding + self._hTextPadding)
+        if not settings.hidecomments:
+            boxWidth = max(boxWidth, settings.minWidth)
+        path = getCommentBoxPath(settings, self._leftEdge, self.baseY,
+                                 boxWidth, self.minHeight)
+        self.setPath(path)
+
+        # May be later the connector will look different for two cases below
+        if self.leadingForElse:
+            self.connector = Connector(
+                settings, self._leftEdge + settings.hCellPadding,
+                self.baseY + self.minHeight / 2,
+                cellToTheLeft.baseX + settings.mainLine,
+                self.baseY + self.minHeight / 2)
+        else:
+            self.connector = Connector(
+                settings, self._leftEdge + settings.hCellPadding,
+                self.baseY + self.minHeight / 2,
+                cellToTheLeft.baseX + settings.mainLine,
+                self.baseY + self.minHeight / 2)
+        self.connector.penColor = settings.commentLineColor
+        self.connector.penWidth = settings.commentLineWidth
+
+    def paint(self, painter, option, widget):
+        """Draws the independent comment"""
+        settings = self.canvas.settings
+
+        if self.isSelected():
+            selectPen = QPen(settings.selectColor)
+            selectPen.setWidth(settings.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(selectPen)
+        else:
+            pen = QPen(settings.commentLineColor)
+            pen.setWidth(settings.commentLineWidth)
+            pen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(pen)
+
+        # Hide the dotted outline
+        itemOption = QStyleOptionGraphicsItem(option)
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
+        QGraphicsPathItem.paint(self, painter, itemOption, widget)
+
+        # Draw the text in the rectangle
+        pen = QPen(settings.commentFGColor)
+        painter.setFont(settings.monoFont)
+        painter.setPen(pen)
+        painter.drawText(
+            self._leftEdge + settings.hCellPadding + self._hTextPadding,
+            self.baseY + settings.vCellPadding + self._vTextPadding,
+            self._textRect.width(), self._textRect.height(),
+            Qt.AlignLeft, self.__getText())
+
+    def mouseDoubleClickEvent(self, event):
+        """Jump to the appropriate line in the text editor"""
+        if self._editor:
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
+            self._editor.gotoLine(self.ref.ref.parts[0].beginLine,
+                                  self.ref.ref.parts[0].beginPos)
+            self._editor.setFocus()
+
+    def getLineRange(self):
+        """Provides the line range"""
+        return [self.ref.ref.parts[0].beginLine,
+                self.ref.ref.parts[-1].endLine]
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.ref.ref.parts[0].begin, self.ref.ref.parts[-1].end]
+
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        lineRange = self.getLineRange()
+        return "Independent CML doc comment at lines " + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
+
+    def getDistance(self, absPos):
+        """Provides a distance between the absPos and the item"""
+        return distance(absPos, self.ref.ref.parts[0].begin,
+                        self.ref.ref.parts[-1].end)
+
+    def getLineDistance(self, line):
+        """Provides a distance between the line and the item"""
+        return distance(line, self.ref.ref.parts[0].beginLine,
+                        self.ref.ref.parts[-1].endLine)
+
+    def copyToClipboard(self):
+        """Copies the item to a clipboard"""
+        self._copyToClipboard(self.ref.ref.parts)
+
