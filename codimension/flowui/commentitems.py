@@ -22,11 +22,11 @@
 from sys import maxsize
 from cgi import escape
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
-                   QGraphicsItem, QStyleOptionGraphicsItem, QStyle)
+                   QGraphicsItem, QStyleOptionGraphicsItem, QStyle, QFont)
 from utils.globals import GlobalData
 from .auxitems import Connector
 from .items import CellElement
-from .routines import distance, getCommentBoxPath
+from .routines import distance, getCommentBoxPath, getDocBoxPath
 
 
 
@@ -914,8 +914,8 @@ class IndependentDocCell(CommenCellBase, QGraphicsPathItem):
                    2 * (settings.hCellPadding + self._hTextPadding)
         if not settings.hidecomments:
             boxWidth = max(boxWidth, settings.minWidth)
-        path = getCommentBoxPath(settings, self._leftEdge, self.baseY,
-                                 boxWidth, self.minHeight)
+        path = getDocBoxPath(settings, self._leftEdge, self.baseY,
+                             boxWidth, self.minHeight)
         self.setPath(path)
 
         # May be later the connector will look different for two cases below
@@ -957,7 +957,10 @@ class IndependentDocCell(CommenCellBase, QGraphicsPathItem):
 
         # Draw the text in the rectangle
         pen = QPen(settings.commentFGColor)
-        painter.setFont(settings.monoFont)
+        font = QFont(settings.monoFont)
+        font.setItalic(True)
+        font.setUnderline(True)
+        painter.setFont(font)
         painter.setPen(pen)
         painter.drawText(
             self._leftEdge + settings.hCellPadding + self._hTextPadding,

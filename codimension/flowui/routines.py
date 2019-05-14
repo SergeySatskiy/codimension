@@ -55,7 +55,7 @@ def distance(val, begin, end):
 
 def getCommentBoxPath(settings, baseX, baseY, width, height,
                       enforceHidden=False):
-    """Provides the comomment box path"""
+    """Provides the comment box path"""
     if settings.hidecomments or enforceHidden:
         return getHiddenCommentPath(baseX + settings.hCellPadding,
                                     baseY + settings.vCellPadding,
@@ -91,3 +91,33 @@ def getHiddenCommentPath(x, y, width, height):
     path.moveTo(x, y)
     path.addRoundedRect(x, y, width, height, 3, 3)
     return path
+
+
+def getDocBoxPath(settings, baseX, baseY, width, height):
+    """Provides the doc box path"""
+    if settings.hidecomments:
+        return getHiddenDocPath(baseX + settings.hCellPadding,
+                                baseY + settings.vCellPadding,
+                                width - 2 * settings.hCellPadding,
+                                height - 2 * settings.vCellPadding)
+    return getDocPath(baseX + settings.hCellPadding,
+                      baseY + settings.vCellPadding,
+                      width - 2 * settings.hCellPadding,
+                      height - 2 * settings.vCellPadding)
+
+
+def getDocPath(x, y, width, height):
+    """Provides the path for exactly specified rectangle"""
+    corner = 0
+    path = QPainterPath()
+    path.moveTo(x + corner, y)
+    path.lineTo(x, y)
+    path.lineTo(x, y + height)
+    path.lineTo(x + corner, y + height)
+    return path
+
+
+def getHiddenDocPath(x, y, width, height):
+    """Provides the path for the hidden doc link"""
+    return getDocPath(x, y, width, height)
+

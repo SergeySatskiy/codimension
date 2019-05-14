@@ -261,7 +261,7 @@ class CMLdoc(CMLCommentBase):
     def getTitle(self):
         """Provides unescaped text"""
         if self.title is None:
-            return 'doc'
+            return unescapeCMLTextValue(self.link)
         return unescapeCMLTextValue(self.title)
 
 
