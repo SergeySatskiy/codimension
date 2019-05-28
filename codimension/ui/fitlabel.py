@@ -84,8 +84,10 @@ class FitPathLabel(QLabel):
                                     self.contentsRect().width() - sparePixels,
                                     self.length)
             QLabel.setText(self, compacted)
+            self.setToolTip(self.__path)
         else:
             QLabel.setText(self, self.__path)
+            self.setToolTip('')
         QLabel.paintEvent(self, event)
 
     def length(self, txt):
