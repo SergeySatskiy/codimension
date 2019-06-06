@@ -51,6 +51,7 @@ from .diskvaluesrelay import getRunParameters, addRunParams
 
 IDE_DEBUG = False
 HANDSHAKE_TIMEOUT = 15
+CONNECTION_TIMEOUT = 3000
 
 STATE_PROLOGUE = 0
 STATE_RUNNING = 1
@@ -73,7 +74,7 @@ class RemoteProcessWrapper(QObject):
     sigClientInput = pyqtSignal(str, str, int)
     sigIncomingMessage = pyqtSignal(str, str, object)
 
-    def __init__(self, path, serverPort, redirected, kind):
+    def __init__(self, runManager, path, serverPort, redirected, kind):
         QObject.__init__(self)
         self.procuuid = str(uuid.uuid1())
         self.path = path
@@ -82,6 +83,7 @@ class RemoteProcessWrapper(QObject):
         self.state = None
         self.startTime = None
         self.finishTime = None
+        self.runManager = runManager
 
         self.__serverPort = serverPort
         self.__clientSocket = None
@@ -100,6 +102,16 @@ class RemoteProcessWrapper(QObject):
         self.__proc = Popen(cmd, shell=True,
                             cwd=getWorkingDir(self.path, params),
                             env=environment)
+        if self.kind == DEBUG:
+            time.sleep(0.1)
+            procPoll = self.__proc.poll()
+            if procPoll is not None:
+                msg = ' '.join(['Error starting debug session.',
+                                'Process has finished with return code:',
+                                str(procPoll)])
+                if params['customTerminal']:
+                    msg += '. Incorrect custom terminal string?'
+                raise Exception(msg)
 
     def setSocket(self, clientSocket):
         """Called when an incoming connection has come"""
@@ -111,6 +123,16 @@ class RemoteProcessWrapper(QObject):
 
         # Send runnee the 'start' message
         self.__sendStart()
+
+    def hasConnected(self):
+        """True if the runnee has connected to the IDE"""
+        return self.__clientSocket is not None
+
+    def cancelPendingDebugSession(self):
+        """Cancels the debug session which has not started yet due to possibly
+           a bad custom terminal script. I.e. the debuggee has not come back
+           to the IDE to a TCP server"""
+        self.runManager.cancelPendingDebugSession(self.procuuid)
 
     def stop(self):
         """Kills the process"""
@@ -312,6 +334,10 @@ class RunManager(QObject):
         self.__tcpServer.newConnection.connect(self.__newConnection)
         self.__tcpServer.listen(QHostAddress.LocalHost)
 
+        self.__newConnectionTimer = QTimer(self)
+        self.__newConnectionTimer.setSingleShot(True)
+        self.__newConnectionTimer.timeout.connect(self.__onNoConnectionTimer)
+
         self.__waitTimer = QTimer(self)
         self.__waitTimer.setSingleShot(True)
         self.__waitTimer.timeout.connect(self.__onWaitTimer)
@@ -320,8 +346,29 @@ class RunManager(QObject):
         self.__prologueTimer.setSingleShot(True)
         self.__prologueTimer.timeout.connect(self.__onPrologueTimer)
 
+    def __onNoConnectionTimer(self):
+        """Triggered when the debug client has not connected"""
+        procuuid = self.__newConnectionTimer.objectName()
+        self.__onProcessFinished(procuuid, FAILED_TO_START)
+        logging.error('Failed to start the script: no incoming connection')
+
+    def cancelPendingDebugSession(self, procuuid):
+        """Triggered when:
+           - the user requested debugging
+           - the user requested cancelling but the debuggee has not established
+             a connection yet. That could be due to an incorrect custom terminal
+        """
+        if self.__newConnectionTimer.isActive():
+            self.__newConnectionTimer.stop()
+        self.__onProcessFinished(procuuid, FAILED_TO_START)
+
     def __newConnection(self):
         """Handles new incoming connections"""
+        try:
+            self.__newConnectionTimer.stop()
+        except:
+            pass
+
         clientSocket = self.__tcpServer.nextPendingConnection()
         clientSocket.setSocketOption(QAbstractSocket.KeepAliveOption, 1)
         clientSocket.setSocketOption(QAbstractSocket.LowDelayOption, 1)
@@ -421,7 +468,7 @@ class RunManager(QObject):
         remoteProc = RemoteProcess()
         remoteProc.kind = kind
         remoteProc.procWrapper = RemoteProcessWrapper(
-            path, self.__tcpServer.serverPort(), redirected, kind)
+            self, path, self.__tcpServer.serverPort(), redirected, kind)
         remoteProc.procWrapper.state = STATE_PROLOGUE
         if redirected or kind == DEBUG:
             self.__prologueProcesses.append((remoteProc.procWrapper.procuuid,
@@ -501,6 +548,9 @@ class RunManager(QObject):
         try:
             remoteProc.procWrapper.start()
             if not remoteProc.procWrapper.redirected:
+                self.__newConnectionTimer.setObjectName(remoteProc.procWrapper.procuuid)
+                self.__newConnectionTimer.start(CONNECTION_TIMEOUT)
+
                 remoteProc.procWrapper.startTime = datetime.now()
                 if not self.__waitTimer.isActive():
                     self.__waitTimer.start(1000)
@@ -549,6 +599,13 @@ class RunManager(QObject):
         """Returns a process index in the list"""
         for index, item in enumerate(self.__processes):
             if item.procWrapper.procuuid == procuuid:
+                return index
+        return None
+
+    def __getPrologueProcessIndex(self, procuuid):
+        """Returns the prologue process index in the list"""
+        for index, item in enumerate(self.__prologueProcesses):
+            if item[0] == procuuid:
                 return index
         return None
 
@@ -601,6 +658,10 @@ class RunManager(QObject):
                 self.__sendProfileResultsSignal(item.procWrapper)
 
             del self.__processes[index]
+
+        prologueProcessIndex = self.__getPrologueProcessIndex(procuuid)
+        if prologueProcessIndex is not None:
+            del self.__prologueProcesses[prologueProcessIndex]
 
         self.sigProcessFinished.emit(procuuid, retCode)
 

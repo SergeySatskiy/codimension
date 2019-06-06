@@ -527,11 +527,18 @@ class CodimensionDebugger(QObject):
     def stopDebugging(self, exitCode=None):
         """Stops the debugging session"""
         if self.__procWrapper:
-            if exitCode is None:
-                self.__sendJSONCommand(METHOD_STEP_QUIT, None)
+            if not self.__procWrapper.hasConnected():
+                # The counterpart has not connected back to the IDE
+                # So there is no need to send a cancel message.
+                # Instead, just clean all the initialized data structures
+                # in the run manager and switch to the editing mode
+                self.__procWrapper.cancelPendingDebugSession()
             else:
-                self.__sendJSONCommand(METHOD_STEP_QUIT,
-                                       {'exitCode': exitCode})
+                if exitCode is None:
+                    self.__sendJSONCommand(METHOD_STEP_QUIT, None)
+                else:
+                    self.__sendJSONCommand(METHOD_STEP_QUIT,
+                                           {'exitCode': exitCode})
 
     def stopCalltrace(self):
         """Sends a message to stop call tracing"""
