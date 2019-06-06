@@ -2,6 +2,7 @@
 
 * Version X.X.X
 * PlantUML diagram support for markdown
+* Self protection against invalid custom terminal command line
 
 2019 Apr 25 Sergey Satskiy <sergey.satskiy@gmail.com>
 
