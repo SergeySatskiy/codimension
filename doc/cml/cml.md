@@ -168,7 +168,7 @@ The link supports the following formats:
 
 Example:
 ```python
-# cml 1 rt text="Reset the dictionary"
+# cml 1 doc link="http://codimension.org"
 ```
 
 

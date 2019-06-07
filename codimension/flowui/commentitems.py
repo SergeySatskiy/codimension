@@ -22,7 +22,8 @@
 from sys import maxsize
 from cgi import escape
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
-                   QGraphicsItem, QStyleOptionGraphicsItem, QStyle, QFont)
+                   QGraphicsItem, QStyleOptionGraphicsItem, QStyle, QFont,
+                   QGraphicsRectItem)
 from utils.globals import GlobalData
 from .auxitems import Connector
 from .items import CellElement
@@ -835,13 +836,13 @@ class AboveCommentCell(CommenCellBase, QGraphicsPathItem):
 
 
 
-class IndependentDocCell(CommenCellBase, QGraphicsPathItem):
+class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
 
     """Represents a single independent CML doc comment"""
 
     def __init__(self, ref, canvas, x, y):
         CommenCellBase.__init__(self, ref, canvas, x, y)
-        QGraphicsPathItem.__init__(self)
+        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.INDEPENDENT_DOC
         self.leadingForElse = False
         self.sideForElse = False
@@ -899,8 +900,16 @@ class IndependentDocCell(CommenCellBase, QGraphicsPathItem):
         """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
+
         self.__setupPath()
         scene.addItem(self.connector)
+
+        settings = self.canvas.settings
+        penWidth = settings.selectPenWidth - 1
+        self.setRect(baseX + settings.hCellPadding - penWidth,
+                     baseY + settings.vCellPadding - penWidth,
+                     self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
+                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
         scene.addItem(self)
 
     def __setupPath(self):
@@ -914,9 +923,9 @@ class IndependentDocCell(CommenCellBase, QGraphicsPathItem):
                    2 * (settings.hCellPadding + self._hTextPadding)
         if not settings.hidecomments:
             boxWidth = max(boxWidth, settings.minWidth)
-        path = getDocBoxPath(settings, self._leftEdge, self.baseY,
-                             boxWidth, self.minHeight)
-        self.setPath(path)
+#        path = getDocBoxPath(settings, self._leftEdge, self.baseY,
+#                             boxWidth, self.minHeight)
+#        self.setPath(path)
 
         # May be later the connector will look different for two cases below
         if self.leadingForElse:
@@ -938,6 +947,9 @@ class IndependentDocCell(CommenCellBase, QGraphicsPathItem):
         """Draws the independent comment"""
         settings = self.canvas.settings
 
+        rectWidth = self.minWidth - 2 * settings.hCellPadding
+        rectHeight = self.minHeight - 2 * settings.vCellPadding
+
         if self.isSelected():
             selectPen = QPen(settings.selectColor)
             selectPen.setWidth(settings.selectPenWidth)
@@ -950,10 +962,18 @@ class IndependentDocCell(CommenCellBase, QGraphicsPathItem):
             self.setPen(pen)
 
         # Hide the dotted outline
-        itemOption = QStyleOptionGraphicsItem(option)
-        if itemOption.state & QStyle.State_Selected != 0:
-            itemOption.state = itemOption.state & ~QStyle.State_Selected
-        QGraphicsPathItem.paint(self, painter, itemOption, widget)
+#        itemOption = QStyleOptionGraphicsItem(option)
+#        if itemOption.state & QStyle.State_Selected != 0:
+#            itemOption.state = itemOption.state & ~QStyle.State_Selected
+#        QGraphicsPathItem.paint(self, painter, itemOption, widget)
+
+#        painter.drawRoundedRect(self._leftEdge, self.baseY,
+#                                self._textRect.width(), self._textRect.height(), 3, 3)
+        brush = QBrush(settings.commentBGColor)
+        painter.setBrush(brush)
+        painter.drawRoundedRect(self.baseX + settings.hCellPadding,
+                                self.baseY + settings.vCellPadding,
+                                rectWidth, rectHeight, 3, 3)
 
         # Draw the text in the rectangle
         pen = QPen(settings.commentFGColor)

@@ -114,6 +114,11 @@ def getDocPath(x, y, width, height):
     path.lineTo(x, y)
     path.lineTo(x, y + height)
     path.lineTo(x + corner, y + height)
+
+    path.moveTo(x + width - corner, y)
+    path.lineTo(x + width, y)
+    path.lineTo(x + width, y + height)
+    path.lineTo(x + width - corner, y + height)
     return path
 
 
