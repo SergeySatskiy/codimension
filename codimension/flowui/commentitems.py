@@ -21,11 +21,12 @@
 
 from sys import maxsize
 from cgi import escape
+from math import ceil
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
                    QGraphicsItem, QStyleOptionGraphicsItem, QStyle, QFont,
                    QGraphicsRectItem)
 from utils.globals import GlobalData
-from .auxitems import Connector
+from .auxitems import Connector, SVGItem
 from .items import CellElement
 from .routines import distance, getCommentBoxPath, getDocBoxPath
 
@@ -847,6 +848,14 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
         self.leadingForElse = False
         self.sideForElse = False
 
+        self.__iconWidth = 16
+        self.__iconWidth = min(self.__iconWidth,
+                               ceil(self.__iconWidth *
+                                    self.canvas.settings.coefficient))
+        self.iconItem = SVGItem("doclink.svg", self)
+        self.iconItem.setWidth(self.__iconWidth)
+        self.iconItem.setToolTip('Jump to the documentation')
+
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
@@ -856,7 +865,8 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
             self._text = self.ref.getTitle()
             if self.canvas.settings.hidecomments:
                 self.setToolTip('<pre>' + escape(self._text) + '</pre>')
-                self._text = self.canvas.settings.hiddenCommentText
+#                self._text = self.canvas.settings.hiddenCommentText
+                self._text = ''
         return self._text
 
     def render(self):
@@ -867,9 +877,11 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
         self.minHeight = self._textRect.height() + \
                          2 * (settings.vCellPadding + self._vTextPadding)
         self.minWidth = self._textRect.width() + \
-                        2 * (settings.hCellPadding + self._hTextPadding)
-        if not settings.hidecomments:
-            self.minWidth = max(self.minWidth, settings.minWidth)
+                        2 * (settings.hCellPadding + self._hTextPadding) + \
+                        self.__iconWidth + self._hTextPadding
+
+#        if not settings.hidecomments:
+#            self.minWidth = max(self.minWidth, settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -911,6 +923,11 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
                      self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
                      self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
         scene.addItem(self)
+
+        self.iconItem.setPos(
+            baseX + settings.hCellPadding + settings.hTextPadding,
+            baseY + self.minHeight / 2 - self.iconItem.height() / 2)
+        scene.addItem(self.iconItem)
 
     def __setupPath(self):
         """Sets the path for painting"""
@@ -954,18 +971,17 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
             selectPen = QPen(settings.selectColor)
             selectPen.setWidth(settings.selectPenWidth)
             selectPen.setJoinStyle(Qt.RoundJoin)
-            self.setPen(selectPen)
+            painter.setPen(selectPen)
         else:
             pen = QPen(settings.commentLineColor)
             pen.setWidth(settings.commentLineWidth)
             pen.setJoinStyle(Qt.RoundJoin)
-            self.setPen(pen)
+            painter.setPen(pen)
 
         # Hide the dotted outline
 #        itemOption = QStyleOptionGraphicsItem(option)
 #        if itemOption.state & QStyle.State_Selected != 0:
 #            itemOption.state = itemOption.state & ~QStyle.State_Selected
-#        QGraphicsPathItem.paint(self, painter, itemOption, widget)
 
 #        painter.drawRoundedRect(self._leftEdge, self.baseY,
 #                                self._textRect.width(), self._textRect.height(), 3, 3)
@@ -976,14 +992,14 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
                                 rectWidth, rectHeight, 3, 3)
 
         # Draw the text in the rectangle
-        pen = QPen(settings.commentFGColor)
         font = QFont(settings.monoFont)
         font.setItalic(True)
-        font.setUnderline(True)
+        # font.setUnderline(True)
         painter.setFont(font)
+        pen = QPen(settings.commentFGColor)
         painter.setPen(pen)
         painter.drawText(
-            self._leftEdge + settings.hCellPadding + self._hTextPadding,
+            self._leftEdge + settings.hCellPadding + self._hTextPadding + self.iconItem.width() + self._hTextPadding,
             self.baseY + settings.vCellPadding + self._vTextPadding,
             self._textRect.width(), self._textRect.height(),
             Qt.AlignLeft, self.__getText())
