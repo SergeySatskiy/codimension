@@ -222,7 +222,15 @@ _DEFAULT_CFLOW_SETTINGS = {
 
     # Rubber band selection
     'rubberBandBorderColor': QColor(63, 81, 181, 255),
-    'rubberBandFGColor': QColor(182, 182, 182, 64)}
+    'rubberBandFGColor': QColor(182, 182, 182, 64),
+
+    # Doc links
+    'hDocLinkPadding': 3,   # in pixels (left and right)
+    'vDocLinkPadding': 3,   # in pixels (top and bottom)
+    'docLinkBGColor': QColor(163, 172, 186, 255),
+    'docLinkFGColor': QColor(0, 0, 0, 255),
+    'docLinkLineColor': QColor(0, 0, 0, 255),
+    'docLinkLineWidth': 1}
 
 
 

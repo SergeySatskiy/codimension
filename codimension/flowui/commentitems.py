@@ -848,13 +848,10 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
         self.leadingForElse = False
         self.sideForElse = False
 
-        self.__iconWidth = 16
-        self.__iconWidth = min(self.__iconWidth,
-                               ceil(self.__iconWidth *
-                                    self.canvas.settings.coefficient))
         self.iconItem = SVGItem("doclink.svg", self)
-        self.iconItem.setWidth(self.__iconWidth)
         self.iconItem.setToolTip('Jump to the documentation')
+
+        self.iconItem.setCursor(QCursor(Qt.PointingHandCursor))
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -865,23 +862,29 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
             self._text = self.ref.getTitle()
             if self.canvas.settings.hidecomments:
                 self.setToolTip('<pre>' + escape(self._text) + '</pre>')
-#                self._text = self.canvas.settings.hiddenCommentText
                 self._text = ''
         return self._text
 
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self._textRect = self.getBoundingRect(self.__getText())
+        self.__getText()
 
-        self.minHeight = self._textRect.height() + \
-                         2 * (settings.vCellPadding + self._vTextPadding)
-        self.minWidth = self._textRect.width() + \
-                        2 * (settings.hCellPadding + self._hTextPadding) + \
-                        self.__iconWidth + self._hTextPadding
+        if self._text:
+            self._textRect = self.getBoundingRect(self._text)
+            self.iconItem.setHeight(self._textRect.height())
+            self.minWidth = self._textRect.width() + settings.hDocLinkPadding
+            self.minHeight = self._textRect.height()
+        else:
+            rect = self.getBoundingRect('W')
+            self.iconItem.setHeight(rect.height())
+            self.minWidth = 0
+            self.minHeight = self.iconItem.height()
 
-#        if not settings.hidecomments:
-#            self.minWidth = max(self.minWidth, settings.minWidth)
+        self.minHeight += 2 * (settings.vCellPadding + settings.vDocLinkPadding)
+        self.minWidth += 2 * (settings.hCellPadding + settings.hDocLinkPadding) + \
+                         self.iconItem.width()
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -898,10 +901,7 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         spareWidth = \
             cellToTheLeft.width - settings.mainLine - settings.hCellPadding
-        boxWidth = self._textRect.width() + \
-                   2 * (settings.hCellPadding + self._hTextPadding)
-        if not settings.hidecomments:
-            boxWidth = max(boxWidth, settings.minWidth)
+        boxWidth = self.minWidth - 2 * settings.hCellPadding
         if spareWidth >= boxWidth:
             self.minWidth = 0
         else:
@@ -913,7 +913,7 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
         self.baseX = baseX
         self.baseY = baseY
 
-        self.__setupPath()
+        self.__setupConnector()
         scene.addItem(self.connector)
 
         settings = self.canvas.settings
@@ -925,24 +925,17 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
         scene.addItem(self)
 
         self.iconItem.setPos(
-            baseX + settings.hCellPadding + settings.hTextPadding,
+            baseX + settings.hCellPadding + settings.hDocLinkPadding,
             baseY + self.minHeight / 2 - self.iconItem.height() / 2)
         scene.addItem(self.iconItem)
 
-    def __setupPath(self):
+    def __setupConnector(self):
         """Sets the path for painting"""
         settings = self.canvas.settings
 
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         self._leftEdge = \
             cellToTheLeft.baseX + settings.mainLine + settings.hCellPadding
-        boxWidth = self._textRect.width() + \
-                   2 * (settings.hCellPadding + self._hTextPadding)
-        if not settings.hidecomments:
-            boxWidth = max(boxWidth, settings.minWidth)
-#        path = getDocBoxPath(settings, self._leftEdge, self.baseY,
-#                             boxWidth, self.minHeight)
-#        self.setPath(path)
 
         # May be later the connector will look different for two cases below
         if self.leadingForElse:
@@ -957,8 +950,8 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
                 self.baseY + self.minHeight / 2,
                 cellToTheLeft.baseX + settings.mainLine,
                 self.baseY + self.minHeight / 2)
-        self.connector.penColor = settings.commentLineColor
-        self.connector.penWidth = settings.commentLineWidth
+        self.connector.penColor = settings.docLinkLineColor
+        self.connector.penWidth = settings.docLinkLineWidth
 
     def paint(self, painter, option, widget):
         """Draws the independent comment"""
@@ -973,36 +966,31 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
             selectPen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(selectPen)
         else:
-            pen = QPen(settings.commentLineColor)
-            pen.setWidth(settings.commentLineWidth)
+            pen = QPen(settings.docLinkLineColor)
+            pen.setWidth(settings.docLinkLineWidth)
             pen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(pen)
 
-        # Hide the dotted outline
-#        itemOption = QStyleOptionGraphicsItem(option)
-#        if itemOption.state & QStyle.State_Selected != 0:
-#            itemOption.state = itemOption.state & ~QStyle.State_Selected
-
-#        painter.drawRoundedRect(self._leftEdge, self.baseY,
-#                                self._textRect.width(), self._textRect.height(), 3, 3)
-        brush = QBrush(settings.commentBGColor)
+        brush = QBrush(settings.docLinkBGColor)
         painter.setBrush(brush)
         painter.drawRoundedRect(self.baseX + settings.hCellPadding,
                                 self.baseY + settings.vCellPadding,
                                 rectWidth, rectHeight, 3, 3)
 
-        # Draw the text in the rectangle
-        font = QFont(settings.monoFont)
-        font.setItalic(True)
-        # font.setUnderline(True)
-        painter.setFont(font)
-        pen = QPen(settings.commentFGColor)
-        painter.setPen(pen)
-        painter.drawText(
-            self._leftEdge + settings.hCellPadding + self._hTextPadding + self.iconItem.width() + self._hTextPadding,
-            self.baseY + settings.vCellPadding + self._vTextPadding,
-            self._textRect.width(), self._textRect.height(),
-            Qt.AlignLeft, self.__getText())
+        if self._text:
+            # Draw the text in the rectangle
+            font = QFont(settings.monoFont)
+            font.setItalic(True)
+            painter.setFont(font)
+            pen = QPen(settings.docLinkFGColor)
+            painter.setPen(pen)
+            painter.drawText(
+                self._leftEdge + settings.hCellPadding +
+                    settings.hDocLinkPadding + self.iconItem.width() +
+                    settings.hDocLinkPadding,
+                self.baseY + settings.vCellPadding + settings.vDocLinkPadding,
+                self._textRect.width(), self._textRect.height(),
+                Qt.AlignLeft, self._text)
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
