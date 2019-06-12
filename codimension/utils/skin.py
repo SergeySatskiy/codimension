@@ -386,8 +386,10 @@ class Skin:
         try:
             origLength = len(self.__values)
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
-                self.__values.update(json.load(diskfile, object_hook=fromJSON))
-            if origLength != len(self.__values):
+                diskContent = json.load(diskfile, object_hook=fromJSON)
+                diskLength = len(diskContent)
+                self.__values.update(diskContent)
+            if origLength != diskLength:
                 self.flush()
         except Exception as exc:
             logging.error('Cannot read skin settings from ' + fName +
@@ -404,9 +406,10 @@ class Skin:
         try:
             origLength = len(self.__cfValues)
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
-                self.__cfValues.update(json.load(diskfile,
-                                                 object_hook=fromJSON))
-            if origLength != len(self.__cfValues):
+                diskContent = json.load(diskfile, object_hook=fromJSON)
+                diskLength = len(diskContent)
+                self.__cfValues.update(diskContent)
+            if origLength != diskLength:
                 self.flushCFlow()
         except Exception as exc:
             logging.error('Cannot read control flow settings from ' + fName +
