@@ -22,7 +22,6 @@
 
 import logging
 import os.path
-import re
 from ui.qt import (Qt, QSize, QTimer, QToolBar, QWidget, QHBoxLayout,
                    QLabel, QVBoxLayout, QSizePolicy, QFrame, QDesktopServices,
                    pyqtSignal, QPrintDialog, QDialog, QAction, QPixmap,
@@ -34,6 +33,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.diskvaluesrelay import getFilePosition
 from utils.md import renderMarkdown
+from utils.misc import resolveLinkPath
 
 
 IDLE_TIMEOUT = 1500
@@ -51,8 +51,6 @@ class MDViewer(TextViewer):
         self.setOpenExternalLinks(True)
         self.setOpenLinks(False)
         self.anchorClicked.connect(self._onAnchorClicked)
-
-        self.__lineNoExpr = re.compile(r':\d+$')
 
         Settings().webResourceCache.sigResourceSaved.connect(
             self.onResourceSaved)
@@ -87,32 +85,7 @@ class MDViewer(TextViewer):
                           'file:///absolute/fname')
             return None, None
 
-        lineNo = -1
-        match = self.__lineNoExpr.search(fileName)
-        if match is not None:
-            linePart = match.group()
-            lineNo = int(linePart[1:])
-            fileName = fileName[0:-1 * linePart.length()].strip()
-            if lineNo < 0:
-                lineNo = -1
-
-        if not os.path.isabs(fileName):
-            currentFileName = self.__parentWidget.getFileName()
-            if not currentFileName:
-                logging.error("Relative path '" + fileName +
-                              "' can be resolved only after the file is saved")
-                return None, None
-            currentDirName = os.path.dirname(currentFileName)
-            fileName = os.path.normpath(currentDirName + os.path.sep + fileName)
-
-        if not os.path.exists(fileName):
-            logging.error('File not found: ' + fileName)
-            return None, None
-        if not os.path.isfile(fileName):
-            logging.error('Not a file: ' + fileName)
-            return None, None
-
-        return fileName, lineNo
+        return resolveLinkPath(fileName, self.__parentWidget.getFileName())
 
     def _onAnchorClicked(self, link):
         """Handles a URL click"""

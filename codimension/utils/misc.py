@@ -24,9 +24,10 @@ import re
 import getpass
 import locale
 import datetime
+import logging
 from .globals import GlobalData
 from .settings import SETTINGS_DIR
-from .fileutils import getFileContent
+from .fileutils import getFileContent, isFileOpenable
 
 
 # File name of the template for any new file.
@@ -221,3 +222,78 @@ def extendInstance(obj, cls):
     base_cls = obj.__class__
     base_cls_name = obj.__class__.__name__
     obj.__class__ = type(base_cls_name, (base_cls, cls), {})
+
+
+LINE_NO_REGEXP = re.compile(r':\d+$')
+
+def resolveLinkPath(link, fromFile):
+    """Resolves the link to the another file"""
+    effectiveLink = link
+    if effectiveLink.startswith('file:'):
+        effectiveLink = link[5:]
+    effectiveLink = os.path.normpath(effectiveLink)
+
+    lineNo = -1
+    match = LINE_NO_REGEXP.search(effectiveLink)
+    if match is not None:
+        linePart = match.group()
+        lineNo = int(linePart[1:])
+        effectiveLink = effectiveLink[0:-1 * linePart.length()].strip()
+        if lineNo < 0:
+            lineNo = -1
+
+    effFileName = None
+    if not os.path.isabs(effectiveLink):
+        tryPaths = []
+        if fromFile:
+            # Try relative to the 'fromFile' first
+            dirName = os.path.dirname(fromFile)
+            effFileName = os.path.normpath(dirName + os.path.sep + effectiveLink)
+            tryPaths.append(effFileName)
+            if not os.path.exists(effFileName):
+                effFileName = None
+
+        if not effFileName:
+            # Try relative to the project file second
+            project = GlobalData().project
+            if project.isLoaded():
+                # Project is loaded - use from the project dir
+                projectDir = os.path.dirname(project.fileName)
+                effFileName = os.path.normpath(projectDir + os.path.sep + effectiveLink)
+                if effFileName not in tryPaths:
+                    tryPaths.append(effFileName)
+                if not os.path.exists(effFileName):
+                    effFileName = None
+
+        if not effFileName:
+            if tryPaths:
+                logging.error("Relative path '" + effectiveLink +
+                              "' is not resolved. Resolve tries: " +
+                              ", ".join(tryPaths))
+            else:
+                logging.error("Relative path '" + effectiveLink +
+                              "' can be resolved after the file is saved or "
+                              "if the project is loaded and the link is "
+                              "given as relative to the project root")
+            return None, None
+    else:
+        # Absolute path is given
+        if os.path.exists(effectiveLink):
+            effFileName = effectiveLink
+        else:
+            logging.error("The absolute link path '" + effectiveLink +
+                          "' does not point to an existing file")
+            return None, None
+
+    if not os.path.isfile(effFileName):
+        logging.error("The resolved link path '" + effFileName +
+                      "' does not point to a file")
+        return None, None
+
+    if not isFileOpenable(effFileName):
+        logging.error("The resolved link path '" + effFileName +
+                      "' does not point to a file which Codimension can open")
+        return None, None
+
+    return effFileName, lineNo
+

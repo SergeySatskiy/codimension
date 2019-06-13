@@ -24,8 +24,9 @@ from cgi import escape
 from math import ceil
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
                    QGraphicsItem, QStyleOptionGraphicsItem, QStyle, QFont,
-                   QGraphicsRectItem)
+                   QGraphicsRectItem, QCursor, QDesktopServices, QUrl)
 from utils.globals import GlobalData
+from utils.misc import resolveLinkPath
 from .auxitems import Connector, SVGItem
 from .items import CellElement
 from .routines import distance, getCommentBoxPath, getDocBoxPath
@@ -1000,6 +1001,23 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
             self._editor.gotoLine(self.ref.ref.parts[0].beginLine,
                                   self.ref.ref.parts[0].beginPos)
             self._editor.setFocus()
+
+    def mouseClickLinkIcon(self):
+        """Follows the link"""
+        # http://... an external browser will be invoked
+        # https://... an external browser will be invoked
+        # [file:]absolute path
+        # [file:]relative path. The relative is tried to the current file
+        #                       and then to the project root
+        if self.ref.link.startswith('http://') or \
+           self.ref.link.startswith('https://'):
+            QDesktopServices.openUrl(QUrl(self.ref.link))
+            return
+
+        fileName, lineNo = resolveLinkPath(self.ref.link,
+                                           self._editor.getFileName())
+        if fileName:
+            GlobalData().mainWindow.openFile(fileName, lineNo)
 
     def getLineRange(self):
         """Provides the line range"""

@@ -908,3 +908,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.hideCompleter()
         if hasattr(self._parent, 'resizeBars'):
             self._parent.resizeBars()
+
+    def getFileName(self):
+        """Provides the currently edited file name"""
+        return self._parent.getFileName()

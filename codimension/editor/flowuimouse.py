@@ -169,8 +169,12 @@ class CFSceneMouseMixin:
             else:
                 modifiers = event.modifiers()
                 if modifiers == Qt.NoModifier:
-                    self.clearSelection()
-                    logicalItem.setSelected(True)
+                    if logicalItem.kind in [CellElement.INDEPENDENT_DOC] and \
+                       item.isProxyItem():
+                        logicalItem.mouseClickLinkIcon()
+                    else:
+                        self.clearSelection()
+                        logicalItem.setSelected(True)
                 elif modifiers == Qt.ControlModifier:
                     if logicalItem.isSelected():
                         logicalItem.setSelected(False)
