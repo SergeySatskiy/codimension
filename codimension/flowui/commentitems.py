@@ -33,7 +33,7 @@ from .routines import distance, getCommentBoxPath, getDocBoxPath
 
 
 
-class CommenCellBase(CellElement):
+class CommentCellBase(CellElement):
 
     """Base class for comment items"""
 
@@ -70,14 +70,22 @@ class CommenCellBase(CellElement):
             currentLine = part.beginLine
         self._putMimeToClipboard('\n'.join(content))
 
+    def onDoubleClick(self, line, pos):
+        """Jumps to the text editor"""
+        if self._editor:
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
+            self._editor.gotoLine(line, pos)
+            self._editor.setFocus()
 
 
-class IndependentCommentCell(CommenCellBase, QGraphicsPathItem):
+
+class IndependentCommentCell(CommentCellBase, QGraphicsPathItem):
 
     """Represents a single independent comment"""
 
     def __init__(self, ref, canvas, x, y):
-        CommenCellBase.__init__(self, ref, canvas, x, y)
+        CommentCellBase.__init__(self, ref, canvas, x, y)
         QGraphicsPathItem.__init__(self)
         self.kind = CellElement.INDEPENDENT_COMMENT
         self.leadingForElse = False
@@ -207,12 +215,7 @@ class IndependentCommentCell(CommenCellBase, QGraphicsPathItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        if self._editor:
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
-            self._editor.gotoLine(self.ref.beginLine,
-                                  self.ref.beginPos)
-            self._editor.setFocus()
+        self.onDoubleClick(self.ref.beginLine, self.ref.beginPos)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -242,12 +245,12 @@ class IndependentCommentCell(CommenCellBase, QGraphicsPathItem):
 
 
 
-class LeadingCommentCell(CommenCellBase, QGraphicsPathItem):
+class LeadingCommentCell(CommentCellBase, QGraphicsPathItem):
 
     """Represents a single leading comment"""
 
     def __init__(self, ref, canvas, x, y):
-        CommenCellBase.__init__(self, ref, canvas, x, y)
+        CommentCellBase.__init__(self, ref, canvas, x, y)
         QGraphicsPathItem.__init__(self)
         self.kind = CellElement.LEADING_COMMENT
 
@@ -402,12 +405,8 @@ class LeadingCommentCell(CommenCellBase, QGraphicsPathItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        if self._editor:
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
-            self._editor.gotoLine(self.ref.leadingComment.beginLine,
-                                  self.ref.leadingComment.beginPos)
-            self._editor.setFocus()
+        self.onDoubleClick(self.ref.leadingComment.beginLine,
+                           self.ref.leadingComment.beginPos)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -439,14 +438,14 @@ class LeadingCommentCell(CommenCellBase, QGraphicsPathItem):
 
 
 
-class SideCommentCell(CommenCellBase, QGraphicsPathItem):
+class SideCommentCell(CommentCellBase, QGraphicsPathItem):
 
     """Represents a single side comment"""
 
     IF_SIDE_SHIFT = 6
 
     def __init__(self, ref, canvas, x, y):
-        CommenCellBase.__init__(self, ref, canvas, x, y)
+        CommentCellBase.__init__(self, ref, canvas, x, y)
         QGraphicsPathItem.__init__(self)
         self.kind = CellElement.SIDE_COMMENT
         self.__isIfSide = False
@@ -619,12 +618,8 @@ class SideCommentCell(CommenCellBase, QGraphicsPathItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        if self._editor:
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
-            self._editor.gotoLine(self.ref.sideComment.beginLine,
-                                  self.ref.sideComment.beginPos)
-            self._editor.setFocus()
+        self.onDoubleClick(self.ref.sideComment.beginLine,
+                           self.ref.sideComment.beginPos)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -667,7 +662,7 @@ class SideCommentCell(CommenCellBase, QGraphicsPathItem):
 
 
 
-class AboveCommentCell(CommenCellBase, QGraphicsPathItem):
+class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
 
     """Represents a single leading comment which is above certain blocks.
 
@@ -676,7 +671,7 @@ class AboveCommentCell(CommenCellBase, QGraphicsPathItem):
     """
 
     def __init__(self, ref, canvas, x, y):
-        CommenCellBase.__init__(self, ref, canvas, x, y)
+        CommentCellBase.__init__(self, ref, canvas, x, y)
         QGraphicsPathItem.__init__(self)
         self.kind = CellElement.ABOVE_COMMENT
         self.needConnector = False
@@ -800,13 +795,8 @@ class AboveCommentCell(CommenCellBase, QGraphicsPathItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        if self._editor:
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
-            self._editor.gotoLine(self.ref.leadingComment.beginLine,
-                                  self.ref.leadingComment.beginPos)
-            self._editor.setFocus()
-        return
+        self.onDoubleClick(self.ref.leadingComment.beginLine,
+                           self.ref.leadingComment.beginPos)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -838,12 +828,12 @@ class AboveCommentCell(CommenCellBase, QGraphicsPathItem):
 
 
 
-class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
+class IndependentDocCell(CommentCellBase, QGraphicsRectItem):
 
     """Represents a single independent CML doc comment"""
 
     def __init__(self, ref, canvas, x, y):
-        CommenCellBase.__init__(self, ref, canvas, x, y)
+        CommentCellBase.__init__(self, ref, canvas, x, y)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.INDEPENDENT_DOC
         self.leadingForElse = False
@@ -995,12 +985,8 @@ class IndependentDocCell(CommenCellBase, QGraphicsRectItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        if self._editor:
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
-            self._editor.gotoLine(self.ref.ref.parts[0].beginLine,
-                                  self.ref.ref.parts[0].beginPos)
-            self._editor.setFocus()
+        self.onDoubleClick(self.ref.ref.parts[0].beginLine,
+                           self.ref.ref.parts[0].beginPos)
 
     def mouseClickLinkIcon(self):
         """Follows the link"""
