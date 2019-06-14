@@ -227,7 +227,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     # Doc links
     'hDocLinkPadding': 3,   # in pixels (left and right)
     'vDocLinkPadding': 3,   # in pixels (top and bottom)
-    'docLinkBGColor': QColor(163, 172, 186, 255),
+    'docLinkBGColor': QColor(219, 230, 246, 255),
     'docLinkFGColor': QColor(0, 0, 0, 255),
     'docLinkLineColor': QColor(0, 0, 0, 255),
     'docLinkLineWidth': 1}
