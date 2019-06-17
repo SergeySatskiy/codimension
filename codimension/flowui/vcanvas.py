@@ -47,10 +47,10 @@ from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
                          TryScopeCell, WithScopeCell, DecoratorScopeCell,
                          ElseScopeCell, ExceptScopeCell, FinallyScopeCell)
 from .commentitems import (AboveCommentCell, LeadingCommentCell,
-                           SideCommentCell, IndependentCommentCell,
-                           IndependentDocCell)
+                           SideCommentCell, IndependentCommentCell)
 from .groupitems import (EmptyGroup, OpenedGroupBegin, OpenedGroupEnd,
                          CollapsedGroup, HGroupSpacerCell)
+from .docitems import IndependentDocCell
 
 
 CONN_N_S = [(ConnectorCell.NORTH, ConnectorCell.SOUTH)]
