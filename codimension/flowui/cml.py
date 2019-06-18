@@ -120,6 +120,16 @@ class CMLCommentBase:
 
         editor.cursorPosition = oldLine, oldPos
 
+    def getLineRange(self):
+        """Provides the line range"""
+        # The CML comments may appear in a suite and range may be asked from
+        # them to decide if the grouping is available
+        return [self.ref.parts[0].beginLine,
+                self.ref.parts[-1].endLine]
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.ref.parts[0].begin, self.ref.parts[-1].end]
 
 
 class CMLsw(CMLCommentBase):

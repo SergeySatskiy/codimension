@@ -1106,14 +1106,18 @@ class TryScopeCell(ScopeCellElement, QGraphicsRectItem):
     def getLineRange(self):
         """Provides the line range"""
         if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.beginLine, self.ref.suite[-1].endLine]
+            beginLine = self.ref.body.beginLine
+            _, endLine = self.ref.suite[-1].getLineRange()
+            return [beginLine, endLine]
         if self.subKind == self.SIDE_COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.begin, self.ref.suite[-1].end]
+            begin = self.ref.body.begin
+            _, end = self.ref.suite[-1].getAbsPosRange()
+            return [begin, end]
         if self.subKind == self.SIDE_COMMENT:
             return [self.ref.sideComment.begin,
                     self.ref.sideComment.end]

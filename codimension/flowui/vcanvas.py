@@ -50,7 +50,7 @@ from .commentitems import (AboveCommentCell, LeadingCommentCell,
                            SideCommentCell, IndependentCommentCell)
 from .groupitems import (EmptyGroup, OpenedGroupBegin, OpenedGroupEnd,
                          CollapsedGroup, HGroupSpacerCell)
-from .docitems import IndependentDocCell
+from .docitems import IndependentDocCell, LeadingDocCell
 
 
 CONN_N_S = [(ConnectorCell.NORTH, ConnectorCell.SOUTH)]
@@ -280,13 +280,28 @@ class VirtualCanvas:
 
     def __allocateLeadingComment(self, item, row, column):
         """Allocates a leading comment if so"""
-        if item.leadingComment and not self.settings.noComment:
-            self.__allocateCell(row, column + 1)
-            self.cells[row][column] = ConnectorCell(CONN_N_S, self,
-                                                    column, row)
-            self.cells[row][column + 1] = LeadingCommentCell(item, self,
+        if not self.settings.noComment:
+            leadingDoc = None
+            for leadingCML in item.leadingCMLComments:
+                if hasattr(leadingCML, 'CODE'):
+                    if leadingCML.CODE == CMLdoc.CODE:
+                        leadingDoc = leadingCML
+                        break
+            if leadingDoc:
+                self.__allocateCell(row, column + 1)
+                self.cells[row][column] = ConnectorCell(CONN_N_S, self,
+                                                        column, row)
+                self.cells[row][column + 1] = LeadingDocCell(leadingDoc, self,
                                                              column + 1, row)
-            return row + 1
+                row += 1
+
+            if item.leadingComment:
+                self.__allocateCell(row, column + 1)
+                self.cells[row][column] = ConnectorCell(CONN_N_S, self,
+                                                        column, row)
+                self.cells[row][column + 1] = LeadingCommentCell(item, self,
+                                                                 column + 1, row)
+                row += 1
         return row
 
     def __needLoopCommentRow(self, item):
@@ -1347,7 +1362,9 @@ class VirtualCanvas:
                     row[column].render()
                     if row[column].kind in [CellElement.INDEPENDENT_COMMENT,
                                             CellElement.SIDE_COMMENT,
-                                            CellElement.LEADING_COMMENT]:
+                                            CellElement.LEADING_COMMENT,
+                                            CellElement.INDEPENDENT_DOC,
+                                            CellElement.LEADING_DOC]:
                         row[column].adjustWidth()
                     if not row[column].tailComment:
                         maxColumnWidth = max(row[column].width, maxColumnWidth)
@@ -1417,7 +1434,9 @@ class VirtualCanvas:
                     maxHeight = max(maxHeight, height)
                     if cell.kind in [CellElement.INDEPENDENT_COMMENT,
                                      CellElement.SIDE_COMMENT,
-                                     CellElement.LEADING_COMMENT]:
+                                     CellElement.LEADING_COMMENT,
+                                     CellElement.INDEPENDENT_DOC,
+                                     CellElement.LEADING_DOC]:
                         cell.adjustWidth()
                 totalWidth = 0
                 for cell in row:

@@ -60,30 +60,41 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
                 self._text = ''
         return self._text
 
+    def mouseDoubleClickEvent(self, event):
+        """Jump to the appropriate line in the text editor"""
+        self.onDoubleClick(self.ref.ref.parts[0].beginLine,
+                           self.ref.ref.parts[0].beginPos)
 
-class IndependentDocCell(DocCellBase):
+    def mouseClickLinkIcon(self):
+        """Follows the link"""
+        # http://... an external browser will be invoked
+        # https://... an external browser will be invoked
+        # [file:]absolute path
+        # [file:]relative path. The relative is tried to the current file
+        #                       and then to the project root
+        if self.ref.link.startswith('http://') or \
+           self.ref.link.startswith('https://'):
+            QDesktopServices.openUrl(QUrl(self.ref.link))
+            return
 
-    """Represents a single independent CML doc comment"""
-
-    def __init__(self, ref, canvas, x, y):
-        DocCellBase.__init__(self, ref, canvas, x, y)
-        self.kind = CellElement.INDEPENDENT_DOC
-        self.leadingForElse = False
-        self.sideForElse = False
+        fileName, lineNo = resolveLinkPath(self.ref.link,
+                                           self._editor.getFileName())
+        if fileName:
+            GlobalData().mainWindow.openFile(fileName, lineNo)
 
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
         self._getText()
 
+        oneLineRect = self.getBoundingRect('W')
+        self.iconItem.setHeight(oneLineRect.height())
         if self._text:
             self._textRect = self.getBoundingRect(self._text)
-            self.iconItem.setHeight(self._textRect.height())
             self.minWidth = self._textRect.width() + settings.hDocLinkPadding
             self.minHeight = self._textRect.height()
         else:
             rect = self.getBoundingRect('W')
-            self.iconItem.setHeight(rect.height())
             self.minWidth = 0
             self.minHeight = self.iconItem.height()
 
@@ -103,11 +114,14 @@ class IndependentDocCell(DocCellBase):
         The width of this cell will take whatever is needed considering
         the comment shift to the left.
         """
-        settings = self.canvas.settings
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
-        spareWidth = \
-            cellToTheLeft.width - settings.mainLine - settings.hCellPadding
-        boxWidth = self.minWidth - 2 * settings.hCellPadding
+        if cellToTheLeft.kind != CellElement.CONNECTOR:
+            # Not implemented yet
+            return
+
+        settings = self.canvas.settings
+        spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
+        boxWidth = self.minWidth
         if spareWidth >= boxWidth:
             self.minWidth = 0
         else:
@@ -119,7 +133,7 @@ class IndependentDocCell(DocCellBase):
         self.baseX = baseX
         self.baseY = baseY
 
-        self.__setupConnector()
+        self._setupConnector()
         scene.addItem(self.connector)
 
         settings = self.canvas.settings
@@ -134,30 +148,6 @@ class IndependentDocCell(DocCellBase):
             baseX + settings.hCellPadding + settings.hDocLinkPadding,
             baseY + self.minHeight / 2 - self.iconItem.height() / 2)
         scene.addItem(self.iconItem)
-
-    def __setupConnector(self):
-        """Sets the path for painting"""
-        settings = self.canvas.settings
-
-        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
-        self._leftEdge = \
-            cellToTheLeft.baseX + settings.mainLine + settings.hCellPadding
-
-        # May be later the connector will look different for two cases below
-        if self.leadingForElse:
-            self.connector = Connector(
-                settings, self._leftEdge + settings.hCellPadding,
-                self.baseY + self.minHeight / 2,
-                cellToTheLeft.baseX + settings.mainLine,
-                self.baseY + self.minHeight / 2)
-        else:
-            self.connector = Connector(
-                settings, self._leftEdge + settings.hCellPadding,
-                self.baseY + self.minHeight / 2,
-                cellToTheLeft.baseX + settings.mainLine,
-                self.baseY + self.minHeight / 2)
-        self.connector.penColor = settings.docLinkLineColor
-        self.connector.penWidth = settings.docLinkLineWidth
 
     def paint(self, painter, option, widget):
         """Draws the independent comment"""
@@ -198,42 +188,13 @@ class IndependentDocCell(DocCellBase):
                 self._textRect.width(), self._textRect.height(),
                 Qt.AlignLeft, self._text)
 
-    def mouseDoubleClickEvent(self, event):
-        """Jump to the appropriate line in the text editor"""
-        self.onDoubleClick(self.ref.ref.parts[0].beginLine,
-                           self.ref.ref.parts[0].beginPos)
-
-    def mouseClickLinkIcon(self):
-        """Follows the link"""
-        # http://... an external browser will be invoked
-        # https://... an external browser will be invoked
-        # [file:]absolute path
-        # [file:]relative path. The relative is tried to the current file
-        #                       and then to the project root
-        if self.ref.link.startswith('http://') or \
-           self.ref.link.startswith('https://'):
-            QDesktopServices.openUrl(QUrl(self.ref.link))
-            return
-
-        fileName, lineNo = resolveLinkPath(self.ref.link,
-                                           self._editor.getFileName())
-        if fileName:
-            GlobalData().mainWindow.openFile(fileName, lineNo)
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return self.ref.getAbsPosRange()
 
     def getLineRange(self):
         """Provides the line range"""
-        return [self.ref.ref.parts[0].beginLine,
-                self.ref.ref.parts[-1].endLine]
-
-    def getAbsPosRange(self):
-        """Provides the absolute position range"""
-        return [self.ref.ref.parts[0].begin, self.ref.ref.parts[-1].end]
-
-    def getSelectTooltip(self):
-        """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Independent CML doc comment at lines " + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
+        return self.ref.getLineRange()
 
     def getDistance(self, absPos):
         """Provides a distance between the absPos and the item"""
@@ -250,6 +211,49 @@ class IndependentDocCell(DocCellBase):
         self._copyToClipboard(self.ref.ref.parts)
 
 
+
+class IndependentDocCell(DocCellBase):
+
+    """Represents a single independent CML doc comment"""
+
+    def __init__(self, ref, canvas, x, y):
+        DocCellBase.__init__(self, ref, canvas, x, y)
+        self.kind = CellElement.INDEPENDENT_DOC
+        self.leadingForElse = False
+        self.sideForElse = False
+
+    def _setupConnector(self):
+        """Sets the path for painting"""
+        settings = self.canvas.settings
+
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        self._leftEdge = \
+            cellToTheLeft.baseX + settings.mainLine + settings.hCellPadding
+
+        # May be later the connector will look different for two cases below
+        if self.leadingForElse:
+            self.connector = Connector(
+                settings, self._leftEdge + settings.hCellPadding,
+                self.baseY + self.minHeight / 2,
+                cellToTheLeft.baseX + settings.mainLine,
+                self.baseY + self.minHeight / 2)
+        else:
+            self.connector = Connector(
+                settings, self._leftEdge + settings.hCellPadding,
+                self.baseY + self.minHeight / 2,
+                cellToTheLeft.baseX + settings.mainLine,
+                self.baseY + self.minHeight / 2)
+        self.connector.penColor = settings.docLinkLineColor
+        self.connector.penWidth = settings.docLinkLineWidth
+
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        lineRange = self.getLineRange()
+        return "Independent CML doc comment at lines " + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
+
+
+
 class LeadingDocCell(DocCellBase):
 
     """Represents a single leading CML doc comment"""
@@ -258,4 +262,41 @@ class LeadingDocCell(DocCellBase):
         DocCellBase.__init__(self, ref, canvas, x, y)
         self.kind = CellElement.LEADING_DOC
 
+    def _setupConnector(self):
+        """Sets the path for painting"""
+        settings = self.canvas.settings
+
+        # Bottom adjustment
+        yShift = self.height - self.minHeight
+        baseY = self.baseY + yShift
+
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        if cellToTheLeft.kind != CellElement.CONNECTOR:
+            # not implemented yet
+            self._leftEdge = self.baseX
+        else:
+            self._leftEdge = \
+                cellToTheLeft.baseX + \
+                settings.mainLine + settings.hCellPadding
+
+        shift = self.hShift * 2 * settings.openGroupHSpacer
+        self._leftEdge += shift
+
+        self.connector = Connector(settings, 0, 0, 0, 0)
+        connectorPath = QPainterPath()
+        connectorPath.moveTo(self._leftEdge + settings.hCellPadding,
+                             baseY + self.minHeight / 2)
+        connectorPath.lineTo(self._leftEdge,
+                             baseY + self.minHeight / 2)
+        connectorPath.lineTo(self._leftEdge - settings.hCellPadding,
+                             baseY + self.minHeight + settings.vCellPadding)
+        self.connector.setPath(connectorPath)
+        self.connector.penColor = settings.docLinkLineColor
+        self.connector.penWidth = settings.docLinkLineWidth
+
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        lineRange = self.getLineRange()
+        return "Leading CML doc comment at lines " + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
 
