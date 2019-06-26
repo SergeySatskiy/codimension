@@ -300,3 +300,45 @@ class LeadingDocCell(DocCellBase):
         return "Leading CML doc comment at lines " + \
                str(lineRange[0]) + "-" + str(lineRange[1])
 
+
+class AboveDocCell(DocCellBase):
+
+    """Represents a single leading doc link which is above certain blocks.
+
+    Blocks are: try/except or for/else or while/else
+    i.e. those which are scopes located in a single row
+    """
+
+    def __init__(self, ref, canvas, x, y):
+        DocCellBase.__init__(self, ref, canvas, x, y)
+        self.kind = CellElement.ABOVE_DOC
+
+    def _setupConnector(self):
+        """Sets the path for painting"""
+        settings = self.canvas.settings
+
+        # Bottom adjustment
+        yShift = self.height - self.minHeight
+        baseY = self.baseY + yShift
+
+        self._leftEdge = \
+            self.baseX + settings.mainLine + settings.hCellPadding
+
+        self.commentConnector = Connector(settings, 0, 0, 0, 0)
+        connectorPath = QPainterPath()
+        connectorPath.moveTo(self._leftEdge + settings.hCellPadding,
+                             baseY + self.minHeight / 2)
+        connectorPath.lineTo(self._leftEdge,
+                             baseY + self.minHeight / 2)
+        connectorPath.lineTo(self._leftEdge - settings.hCellPadding,
+                             baseY + self.minHeight + settings.vCellPadding)
+        self.commentConnector.setPath(connectorPath)
+        self.commentConnector.penColor = settings.docLinkLineColor
+        self.commentConnector.penWidth = settings.docLinkLineWidth
+
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        lineRange = self.getLineRange()
+        return "Leading CML doc comment at lines " + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
+

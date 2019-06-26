@@ -170,7 +170,8 @@ class CFSceneMouseMixin:
                 modifiers = event.modifiers()
                 if modifiers == Qt.NoModifier:
                     if logicalItem.kind in [CellElement.INDEPENDENT_DOC,
-                                            CellElement.LEADING_DOC] and \
+                                            CellElement.LEADING_DOC,
+                                            CellElement.ABOVE_DOC] and \
                        item.isProxyItem():
                         logicalItem.mouseClickLinkIcon()
                     else:
@@ -297,7 +298,8 @@ class CFSceneMouseMixin:
                          CellElement.COLLAPSED_GROUP,
                          CellElement.EXCEPT_MINIMIZED,
                          CellElement.INDEPENDENT_DOC,
-                         CellElement.LEADING_DOC]:
+                         CellElement.LEADING_DOC,
+                         CellElement.ABOVE_DOC]:
             begin, end = item.getAbsPosRange()
             return begin, end
 

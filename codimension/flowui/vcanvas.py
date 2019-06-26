@@ -50,7 +50,7 @@ from .commentitems import (AboveCommentCell, LeadingCommentCell,
                            SideCommentCell, IndependentCommentCell)
 from .groupitems import (EmptyGroup, OpenedGroupBegin, OpenedGroupEnd,
                          CollapsedGroup, HGroupSpacerCell)
-from .docitems import IndependentDocCell, LeadingDocCell
+from .docitems import IndependentDocCell, LeadingDocCell, AboveDocCell
 from .routines import getDocComment
 
 
@@ -588,17 +588,6 @@ class VirtualCanvas:
                     # Nothing has been inserted, i.e. may need a spacer after
                     # the end of an opened group
                     vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
-
-#                if scopeItem.leadingComment and not self.settings.noComment:
-#                    self.__allocateCell(vacantRow, column + 1)
-#                    self.cells[vacantRow][column] = \
-#                        ConnectorCell(CONN_N_S, self, column, vacantRow)
-#                    self.cells[vacantRow][column + 1] = \
-#                        LeadingCommentCell(scopeItem, self, column + 1,
-#                                           vacantRow)
-#                    vacantRow += 1
-#                else:
-#                    vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
 
                 # Update the scope canvas parent and address
                 scopeCanvas.parent = self
@@ -1357,7 +1346,8 @@ class VirtualCanvas:
                                             CellElement.SIDE_COMMENT,
                                             CellElement.LEADING_COMMENT,
                                             CellElement.INDEPENDENT_DOC,
-                                            CellElement.LEADING_DOC]:
+                                            CellElement.LEADING_DOC,
+                                            CellElement.ABOVE_DOC]:
                         row[column].adjustWidth()
                     if not row[column].tailComment:
                         maxColumnWidth = max(row[column].width, maxColumnWidth)
@@ -1429,7 +1419,8 @@ class VirtualCanvas:
                                      CellElement.SIDE_COMMENT,
                                      CellElement.LEADING_COMMENT,
                                      CellElement.INDEPENDENT_DOC,
-                                     CellElement.LEADING_DOC]:
+                                     CellElement.LEADING_DOC,
+                                     CellElement.ABOVE_DOC]:
                         cell.adjustWidth()
                 totalWidth = 0
                 for cell in row:

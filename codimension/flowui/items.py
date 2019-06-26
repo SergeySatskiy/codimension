@@ -75,6 +75,7 @@ class CellElement:
     EXCEPT_MINIMIZED = 213
     INDEPENDENT_DOC = 214
     LEADING_DOC = 215
+    ABOVE_DOC = 216
 
     CONNECTOR = 300
 
