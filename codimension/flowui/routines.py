@@ -20,6 +20,7 @@
 """Various routines used in other places"""
 
 from ui.qt import QPainterPath, QColor
+from .cml import CMLdoc
 
 
 def getBorderColor(color):
@@ -125,4 +126,18 @@ def getDocPath(x, y, width, height):
 def getHiddenDocPath(x, y, width, height):
     """Provides the path for the hidden doc link"""
     return getDocPath(x, y, width, height)
+
+
+def getCMLComment(cmlComments, code):
+    """CML comment or None"""
+    for cmlComment in cmlComments:
+        if hasattr(cmlComment, 'CODE'):
+            if cmlComment.CODE == code:
+                return cmlComment
+    return None
+
+
+def getDocComment(cmlComments):
+    """CML doc comment reference or None"""
+    return getCMLComment(cmlComments, CMLdoc.CODE)
 

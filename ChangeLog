@@ -3,6 +3,7 @@
 * Version X.X.X
 * PlantUML diagram support for markdown
 * Self protection against invalid custom terminal command line
+* Bumping up the cdmcfparser version to 2.2.1
 
 2019 Apr 25 Sergey Satskiy <sergey.satskiy@gmail.com>
 

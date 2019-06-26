@@ -169,7 +169,8 @@ class CFSceneMouseMixin:
             else:
                 modifiers = event.modifiers()
                 if modifiers == Qt.NoModifier:
-                    if logicalItem.kind in [CellElement.INDEPENDENT_DOC] and \
+                    if logicalItem.kind in [CellElement.INDEPENDENT_DOC,
+                                            CellElement.LEADING_DOC] and \
                        item.isProxyItem():
                         logicalItem.mouseClickLinkIcon()
                     else:
@@ -190,8 +191,8 @@ class CFSceneMouseMixin:
                     if self.isOpenGroupItem(item):
                         self.addToSelection(item)
                     else:
-                        for item in self.findItemsForRef(logicalItem.ref):
-                            self.addToSelection(item)
+                        for itemForRef in self.findItemsForRef(logicalItem.ref):
+                            self.addToSelection(itemForRef)
 
         self.__destroyRubberBand()
         event.accept()
@@ -295,7 +296,8 @@ class CFSceneMouseMixin:
         if item.kind in [CellElement.OPENED_GROUP_BEGIN,
                          CellElement.COLLAPSED_GROUP,
                          CellElement.EXCEPT_MINIMIZED,
-                         CellElement.INDEPENDENT_DOC]:
+                         CellElement.INDEPENDENT_DOC,
+                         CellElement.LEADING_DOC]:
             begin, end = item.getAbsPosRange()
             return begin, end
 

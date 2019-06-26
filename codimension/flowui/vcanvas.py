@@ -51,6 +51,7 @@ from .commentitems import (AboveCommentCell, LeadingCommentCell,
 from .groupitems import (EmptyGroup, OpenedGroupBegin, OpenedGroupEnd,
                          CollapsedGroup, HGroupSpacerCell)
 from .docitems import IndependentDocCell, LeadingDocCell
+from .routines import getDocComment
 
 
 CONN_N_S = [(ConnectorCell.NORTH, ConnectorCell.SOUTH)]
@@ -281,12 +282,7 @@ class VirtualCanvas:
     def __allocateLeadingComment(self, item, row, column):
         """Allocates a leading comment if so"""
         if not self.settings.noComment:
-            leadingDoc = None
-            for leadingCML in item.leadingCMLComments:
-                if hasattr(leadingCML, 'CODE'):
-                    if leadingCML.CODE == CMLdoc.CODE:
-                        leadingDoc = leadingCML
-                        break
+            leadingDoc = getDocComment(item.leadingCMLComments)
             if leadingDoc:
                 self.__allocateCell(row, column + 1)
                 self.cells[row][column] = ConnectorCell(CONN_N_S, self,
@@ -586,16 +582,23 @@ class VirtualCanvas:
                         scopeCanvas = decScope
                         scopeItem = dec
 
-                if scopeItem.leadingComment and not self.settings.noComment:
-                    self.__allocateCell(vacantRow, column + 1)
-                    self.cells[vacantRow][column] = \
-                        ConnectorCell(CONN_N_S, self, column, vacantRow)
-                    self.cells[vacantRow][column + 1] = \
-                        LeadingCommentCell(scopeItem, self, column + 1,
-                                           vacantRow)
-                    vacantRow += 1
-                else:
+                tempVacantRow = vacantRow
+                vacantRow = self.__allocateLeadingComment(item, vacantRow, column)
+                if tempVacantRow == vacantRow:
+                    # Nothing has been inserted, i.e. may need a spacer after
+                    # the end of an opened group
                     vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
+
+#                if scopeItem.leadingComment and not self.settings.noComment:
+#                    self.__allocateCell(vacantRow, column + 1)
+#                    self.cells[vacantRow][column] = \
+#                        ConnectorCell(CONN_N_S, self, column, vacantRow)
+#                    self.cells[vacantRow][column + 1] = \
+#                        LeadingCommentCell(scopeItem, self, column + 1,
+#                                           vacantRow)
+#                    vacantRow += 1
+#                else:
+#                    vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
 
                 # Update the scope canvas parent and address
                 scopeCanvas.parent = self
@@ -608,14 +611,11 @@ class VirtualCanvas:
                 if self.settings.noWith:
                     continue
 
-                if item.leadingComment and not self.settings.noComment:
-                    self.__allocateCell(vacantRow, column + 1)
-                    self.cells[vacantRow][column] = \
-                        ConnectorCell(CONN_N_S, self, column, vacantRow)
-                    self.cells[vacantRow][column + 1] = \
-                        LeadingCommentCell(item, self, column + 1, vacantRow)
-                    vacantRow += 1
-                else:
+                tempVacantRow = vacantRow
+                vacantRow = self.__allocateLeadingComment(item, vacantRow, column)
+                if tempVacantRow == vacantRow:
+                    # Nothing has been inserted, i.e. may need a spacer after
+                    # the end of an opened group
                     vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
 
                 self.__allocateScope(item, CellElement.WITH_SCOPE,
@@ -1047,14 +1047,7 @@ class VirtualCanvas:
                               VSpacerCell(None, self, 1, vacantRow))
         vacantRow += 1
 
-        if cflow.leadingComment and not self.settings.noComment:
-            self.__allocateCell(vacantRow, 2, False)
-            self.cells[vacantRow][1] = ConnectorCell(CONN_N_S,
-                                                     self, 1, vacantRow)
-            self.cells[vacantRow][2] = LeadingCommentCell(cflow,
-                                                          self, 2, vacantRow)
-            vacantRow += 1
-
+        vacantRow = self.__allocateLeadingComment(cflow, vacantRow, 1)
         self.__allocateScope(cflow, CellElement.FILE_SCOPE, vacantRow, 0)
 
         # Second stage: shifts to accomadate open groups
