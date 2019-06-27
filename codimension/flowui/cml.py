@@ -554,7 +554,7 @@ class CMLVersion:
             if item.elsePart:
                 warnings += CMLVersion.validateCMLList(
                     item.elsePart.leadingCMLComments, False, None, None, None,
-                    'loop else')
+                    'loop else parts')
                 warnings += CMLVersion.validateCMLComments(item.elsePart,
                                                            validGroups,
                                                            allGroupId, False)
@@ -562,35 +562,47 @@ class CMLVersion:
             if item.elsePart:
                 warnings += CMLVersion.validateCMLList(
                     item.elsePart.leadingCMLComments, False, None, None, None,
-                    'try else part')
+                    'try else parts')
                 warnings += CMLVersion.validateCMLComments(item.elsePart,
                                                            validGroups,
                                                            allGroupId, False)
             if item.finallyPart:
                 warnings += CMLVersion.validateCMLList(
                     item.finallyPart.leadingCMLComments, False, None, None, None,
-                    'try finally part')
+                    'try finally parts')
                 warnings += CMLVersion.validateCMLComments(item.finallyPart,
                                                            validGroups,
                                                            allGroupId, False)
             for part in item.exceptParts:
                 warnings += CMLVersion.validateCMLList(part.leadingCMLComments,
                                                        False, None, None, None,
-                                                       'try except part')
+                                                       'try except parts')
                 warnings += CMLVersion.validateCMLComments(part, validGroups,
                                                            allGroupId, False)
-
-        if item.kind in [CONTROL_FLOW_FRAGMENT,
-                         CLASS_FRAGMENT, FUNCTION_FRAGMENT]:
+        elif item.kind in [CONTROL_FLOW_FRAGMENT,
+                           CLASS_FRAGMENT, FUNCTION_FRAGMENT]:
             if item.docstring:
                 warnings += CMLVersion.validateCMLList(
-                    item.docstring.leadingCMLComments, False, None, None, None)
+                    item.docstring.leadingCMLComments, False, None, None, None,
+                    'docstrings')
                 warnings += CMLVersion.validateCMLList(
-                    item.docstring.sideCMLComments, False, None, None, None)
+                    item.docstring.sideCMLComments, False, None, None, None,
+                    'docstrings')
+
+            if item.kind in [CLASS_FRAGMENT, FUNCTION_FRAGMENT]:
+                if item.decorators:
+                    for decorator in item.decorators:
+                        warnings += CMLVersion.validateCMLList(
+                            decorator.leadingCMLComments, False, None, None, None,
+                            'decorators')
+                        warnings += CMLVersion.validateCMLList(
+                            decorator.sideCMLComments, False, None, None, None,
+                            'decorators')
 
         if hasattr(item, "sideCMLComments"):
             warnings += CMLVersion.validateCMLList(item.sideCMLComments,
-                                                   False, None, None, None)
+                                                   False, None, None, None,
+                                                   'side comments')
 
         if hasattr(item, "suite"):
             for index, nestedItem in enumerate(item.suite):
