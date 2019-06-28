@@ -115,6 +115,8 @@ class CFlowSettings:
             self.__getNormalized('collapsedOutlineWidth')
         self.openGroupVSpacer = self.__getNormalized('openGroupVSpacer')
         self.openGroupHSpacer = self.__getNormalized('openGroupHSpacer')
+        self.hDocLinkPadding = self.__getNormalized('hDocLinkPadding')
+        self.vDocLinkPadding = self.__getNormalized('vDocLinkPadding')
 
 
 def getCflowSettings(paintDevice):

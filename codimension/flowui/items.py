@@ -114,6 +114,8 @@ class CellElement:
         self.itemID = canvas.settings.itemID
         canvas.settings.itemID += 1
 
+        self.__iconHeight = None
+
     def __str__(self):
         return kindToString(self.kind) + \
                "[" + str(self.width) + ":" + str(self.height) + "]"
@@ -135,6 +137,13 @@ class CellElement:
         """Provides the bounding rectangle for a monospaced font"""
         return self.canvas.settings.monoFontMetrics.boundingRect(
             0, 0, maxsize, maxsize, 0, text)
+
+    def getIconHeight(self):
+        """Provides the unified icon height"""
+        if self.__iconHeight is None:
+            self.__iconHeight = \
+                self.canvas.settings.monoFontMetrics.tightBoundingRect('W').height() + 2
+        return self.__iconHeight
 
     def getTooltip(self):
         """Provides the tooltip"""

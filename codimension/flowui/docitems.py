@@ -87,14 +87,12 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
         settings = self.canvas.settings
         self._getText()
 
-        oneLineRect = self.getBoundingRect('W')
-        self.iconItem.setHeight(oneLineRect.height())
+        self.iconItem.setHeight(self.getIconHeight())
         if self._text:
             self._textRect = self.getBoundingRect(self._text)
             self.minWidth = self._textRect.width() + settings.hDocLinkPadding
             self.minHeight = self._textRect.height()
         else:
-            rect = self.getBoundingRect('W')
             self.minWidth = 0
             self.minHeight = self.iconItem.height()
 
