@@ -555,35 +555,34 @@ class VirtualCanvas:
                                                  self.__validGroups,
                                                  self.__collapsedGroups, self)
                         decScopeRows = len(decScope.cells)
-                        if scopeItem.leadingComment and not self.settings.noComment:
-                            # Need two or three rows; one for the comment
-                            #                + one for the scope
-                            #                + may be a doc comment
-                            leadingDoc = getDocComment(scopeItem.leadingCMLComments)
-                            rows = 2
-                            if leadingDoc is not None:
-                                rows += 1
-                            decScope.layout(dec, CellElement.DECOR_SCOPE, rows)
 
+                        needRows = 1
+                        leadingDoc = getDocComment(scopeItem.leadingCMLComments)
+                        if not self.settings.noComment:
                             if leadingDoc is not None:
-                                rowAddr = decScopeRows - rows - 1
+                                needRows += 1
+                            if scopeItem.leadingComment:
+                                needRows += 1
+
+                        decScope.layout(dec, CellElement.DECOR_SCOPE, needRows)
+                        if needRows > 1:
+                            # Need one or two comments
+                            if leadingDoc is not None:
+                                decScope.__allocateCell(3, 2)
+                                decScope.cells[3][1] = \
+                                    ConnectorCell(CONN_N_S, decScope, 1, 3)
+                                decScope.cells[3][2] = \
+                                    LeadingDocCell(leadingDoc, decScope, 2, 3)
+
+                            if scopeItem.leadingComment:
+                                rowAddr = needRows + 1
                                 decScope.__allocateCell(rowAddr, 2)
                                 decScope.cells[rowAddr][1] = \
-                                    ConnectorCell(CONN_N_S, decScope, 1, rowAddr)
+                                    ConnectorCell(CONN_N_S,
+                                                  decScope, 1, rowAddr)
                                 decScope.cells[rowAddr][2] = \
-                                    LeadingDocCell(leadingDoc, decScope, 2, rowAddr)
-
-                            rowAddr = decScopeRows - rows
-                            decScope.__allocateCell(rowAddr, 2)
-                            decScope.cells[rowAddr][1] = \
-                                ConnectorCell(CONN_N_S,
-                                              decScope, 1, rowAddr)
-                            decScope.cells[rowAddr][2] = \
-                                LeadingCommentCell(scopeItem, decScope, 2,
-                                                   rowAddr)
-                        else:
-                            # Need one row for the scope
-                            decScope.layout(scopeItem, CellElement.DECOR_SCOPE, 1)
+                                    LeadingCommentCell(scopeItem, decScope, 2,
+                                                       rowAddr)
 
                         decScope.__allocateCell(decScopeRows - 2, 1)
 
