@@ -287,7 +287,8 @@ class VirtualCanvas:
                 self.__allocateCell(row, column + 1)
                 self.cells[row][column] = ConnectorCell(CONN_N_S, self,
                                                         column, row)
-                self.cells[row][column + 1] = LeadingDocCell(leadingDoc, self,
+                self.cells[row][column + 1] = LeadingDocCell(item, leadingDoc,
+                                                             self,
                                                              column + 1, row)
                 row += 1
 
@@ -572,7 +573,8 @@ class VirtualCanvas:
                                 decScope.cells[3][1] = \
                                     ConnectorCell(CONN_N_S, decScope, 1, 3)
                                 decScope.cells[3][2] = \
-                                    LeadingDocCell(leadingDoc, decScope, 2, 3)
+                                    LeadingDocCell(scopeItem, leadingDoc,
+                                                   decScope, 2, 3)
 
                             if scopeItem.leadingComment:
                                 rowAddr = needRows + 1

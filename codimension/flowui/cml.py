@@ -242,11 +242,11 @@ class CMLdoc(CMLCommentBase):
 
         self.link = self.ref.properties.get('link', None)
         self.id = self.ref.properties.get('id', None)
-        self.title = self.ref.properties.get('title', 'doc')
+        self.title = self.ref.properties.get('title', '')
 
-        if self.link is None:
+        if self.link is None and self.id is None:
             raise Exception("The '" + CMLdoc.CODE +
-                            "' CML comment does not supply a link")
+                            "' CML comment supplies neither a link nor an id")
 
     @staticmethod
     def description():
@@ -270,8 +270,6 @@ class CMLdoc(CMLCommentBase):
 
     def getTitle(self):
         """Provides unescaped text"""
-        if self.title is None:
-            return unescapeCMLTextValue(self.link)
         return unescapeCMLTextValue(self.title)
 
 

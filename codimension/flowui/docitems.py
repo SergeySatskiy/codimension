@@ -38,9 +38,10 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
 
     """Base class for all doc cells"""
 
-    def __init__(self, ref, canvas, x, y):
-        CommentCellBase.__init__(self, ref, canvas, x, y)
+    def __init__(self, itemRef, cmlRef, canvas, x, y):
+        CommentCellBase.__init__(self, itemRef, canvas, x, y)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
+        self.cmlRef = cmlRef
 
         # They all have the same icon
         self.iconItem = SVGItem('doclink.svg', self)
@@ -54,7 +55,7 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
     def _getText(self):
         """Provides text"""
         if self._text is None:
-            self._text = self.ref.getTitle()
+            self._text = self.cmlRef.getTitle()
             if self.canvas.settings.hidecomments:
                 self.setToolTip('<pre>' + escape(self._text) + '</pre>')
                 self._text = ''
@@ -62,8 +63,8 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        self.onDoubleClick(self.ref.ref.parts[0].beginLine,
-                           self.ref.ref.parts[0].beginPos)
+        self.onDoubleClick(self.cmlRef.ref.parts[0].beginLine,
+                           self.cmlRef.ref.parts[0].beginPos)
 
     def mouseClickLinkIcon(self):
         """Follows the link"""
@@ -72,12 +73,12 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
         # [file:]absolute path
         # [file:]relative path. The relative is tried to the current file
         #                       and then to the project root
-        if self.ref.link.startswith('http://') or \
-           self.ref.link.startswith('https://'):
-            QDesktopServices.openUrl(QUrl(self.ref.link))
+        if self.cmlRef.link.startswith('http://') or \
+           self.cmlRef.link.startswith('https://'):
+            QDesktopServices.openUrl(QUrl(self.cmlRef.link))
             return
 
-        fileName, lineNo = resolveLinkPath(self.ref.link,
+        fileName, lineNo = resolveLinkPath(self.cmlRef.link,
                                            self._editor.getFileName())
         if fileName:
             GlobalData().mainWindow.openFile(fileName, lineNo)
@@ -188,25 +189,25 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        return self.ref.getAbsPosRange()
+        return self.cmlRef.getAbsPosRange()
 
     def getLineRange(self):
         """Provides the line range"""
-        return self.ref.getLineRange()
+        return self.cmlRef.getLineRange()
 
     def getDistance(self, absPos):
         """Provides a distance between the absPos and the item"""
-        return distance(absPos, self.ref.ref.parts[0].begin,
-                        self.ref.ref.parts[-1].end)
+        return distance(absPos, self.cmlRef.ref.parts[0].begin,
+                        self.cmlRef.ref.parts[-1].end)
 
     def getLineDistance(self, line):
         """Provides a distance between the line and the item"""
-        return distance(line, self.ref.ref.parts[0].beginLine,
-                        self.ref.ref.parts[-1].endLine)
+        return distance(line, self.cmlRef.ref.parts[0].beginLine,
+                        self.cmlRef.ref.parts[-1].endLine)
 
     def copyToClipboard(self):
         """Copies the item to a clipboard"""
-        self._copyToClipboard(self.ref.ref.parts)
+        self._copyToClipboard(self.cmlRef.ref.parts)
 
 
 
@@ -215,7 +216,7 @@ class IndependentDocCell(DocCellBase):
     """Represents a single independent CML doc comment"""
 
     def __init__(self, ref, canvas, x, y):
-        DocCellBase.__init__(self, ref, canvas, x, y)
+        DocCellBase.__init__(self, ref, ref, canvas, x, y)
         self.kind = CellElement.INDEPENDENT_DOC
         self.leadingForElse = False
         self.sideForElse = False
@@ -256,8 +257,8 @@ class LeadingDocCell(DocCellBase):
 
     """Represents a single leading CML doc comment"""
 
-    def __init__(self, ref, canvas, x, y):
-        DocCellBase.__init__(self, ref, canvas, x, y)
+    def __init__(self, itemRef, cmlRef, canvas, x, y):
+        DocCellBase.__init__(self, itemRef, cmlRef, canvas, x, y)
         self.kind = CellElement.LEADING_DOC
 
     def _setupConnector(self):
@@ -307,8 +308,8 @@ class AboveDocCell(DocCellBase):
     i.e. those which are scopes located in a single row
     """
 
-    def __init__(self, ref, canvas, x, y):
-        DocCellBase.__init__(self, ref, canvas, x, y)
+    def __init__(self, itemRef, cmlRef, canvas, x, y):
+        DocCellBase.__init__(self, itemRef, cmlRef, canvas, x, y)
         self.kind = CellElement.ABOVE_DOC
 
     def _setupConnector(self):
