@@ -44,9 +44,19 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
         self.cmlRef = cmlRef
 
         # They all have the same icon
-        self.iconItem = SVGItem('doclink.svg', self)
-        self.iconItem.setToolTip('Jump to the documentation')
-        self.iconItem.setCursor(QCursor(Qt.PointingHandCursor))
+        if cmlRef.link is not None and cmlRef.anchor is not None:
+            self.iconItem = SVGItem('docanchor.svg', self)
+            self.iconItem.setToolTip('Jump to the documentation')
+            self.iconItem.setCursor(QCursor(Qt.PointingHandCursor))
+        else:
+            if cmlRef.link is not None:
+                self.iconItem = SVGItem('doclink.svg', self)
+                self.iconItem.setToolTip('Jump to the documentation')
+                self.iconItem.setCursor(QCursor(Qt.PointingHandCursor))
+            else:
+                self.iconItem = SVGItem('anchor.svg', self)
+                self.iconItem.setToolTip('Documentation anchor')
+
 
         # They all are double clickable
         # This makes double click delivered
@@ -68,6 +78,9 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
 
     def mouseClickLinkIcon(self):
         """Follows the link"""
+        if self.cmlRef.link is None:
+            return
+
         # http://... an external browser will be invoked
         # https://... an external browser will be invoked
         # [file:]absolute path

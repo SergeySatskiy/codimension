@@ -173,7 +173,11 @@ class CFSceneMouseMixin:
                                             CellElement.LEADING_DOC,
                                             CellElement.ABOVE_DOC] and \
                        item.isProxyItem():
-                        logicalItem.mouseClickLinkIcon()
+                        if logicalItem.cmlRef.link is None:
+                            self.clearSelection()
+                            logicalItem.setSelected(True)
+                        else:
+                            logicalItem.mouseClickLinkIcon()
                     else:
                         self.clearSelection()
                         logicalItem.setSelected(True)

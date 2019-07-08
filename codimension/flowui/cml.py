@@ -231,7 +231,7 @@ class CMLdoc(CMLCommentBase):
     def __init__(self, ref):
         CMLCommentBase.__init__(self, ref)
         self.link = None    # file path, abs or relative
-        self.id = None      # id of this comment to let a link from the doc
+        self.anchor = None  # id of this comment to let a link from the doc
         self.title = None   # text to display
         self.validate()
 
@@ -241,12 +241,12 @@ class CMLdoc(CMLCommentBase):
         CMLVersion.validate(self.ref)
 
         self.link = self.ref.properties.get('link', None)
-        self.id = self.ref.properties.get('id', None)
+        self.anchor = self.ref.properties.get('anchor', None)
         self.title = self.ref.properties.get('title', '')
 
-        if self.link is None and self.id is None:
+        if self.link is None and self.anchor is None:
             raise Exception("The '" + CMLdoc.CODE +
-                            "' CML comment supplies neither a link nor an id")
+                            "' CML comment supplies neither a link nor an anchor")
 
     @staticmethod
     def description():
@@ -255,7 +255,7 @@ class CMLdoc(CMLCommentBase):
                "' comment is used to provide a link to a documentation.\n" \
                "Supported properties:\n" \
                "- 'link': link to the appropriate documentation\n" \
-               "- 'id': this ID could be used to provide a link to this comment\n" \
+               "- 'anchor': this ID could be used to provide a link to this comment\n" \
                "- 'title': what to display on graphics\n\n" \
                "Example:\n" \
                "# cml 1 " + CMLdoc.CODE + " link=file:doc/mydoc.md title=\"See more\""
