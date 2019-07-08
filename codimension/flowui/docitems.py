@@ -311,6 +311,20 @@ class AboveDocCell(DocCellBase):
     def __init__(self, itemRef, cmlRef, canvas, x, y):
         DocCellBase.__init__(self, itemRef, cmlRef, canvas, x, y)
         self.kind = CellElement.ABOVE_DOC
+        self.needConnector = False
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        if self.needConnector:
+            settings = self.canvas.settings
+            self.connector = Connector(
+                settings, baseX + settings.mainLine, baseY,
+                baseX + settings.mainLine, baseY + self.height)
+            scene.addItem(self.connector)
+
+        DocCellBase.draw(self, scene,
+                         baseX + self.canvas.settings.mainLine +
+                         self.canvas.settings.hCellPadding, baseY)
 
     def _setupConnector(self):
         """Sets the path for painting"""
@@ -320,10 +334,11 @@ class AboveDocCell(DocCellBase):
         yShift = self.height - self.minHeight
         baseY = self.baseY + yShift
 
-        self._leftEdge = \
-            self.baseX + settings.mainLine + settings.hCellPadding
+        # Dirty hack: see the overriden draw() member: the baseX has already
+        # been adjusted with mainLine and hCellPadding
+        self._leftEdge = self.baseX
 
-        self.commentConnector = Connector(settings, 0, 0, 0, 0)
+        self.connector = Connector(settings, 0, 0, 0, 0)
         connectorPath = QPainterPath()
         connectorPath.moveTo(self._leftEdge + settings.hCellPadding,
                              baseY + self.minHeight / 2)
@@ -331,9 +346,9 @@ class AboveDocCell(DocCellBase):
                              baseY + self.minHeight / 2)
         connectorPath.lineTo(self._leftEdge - settings.hCellPadding,
                              baseY + self.minHeight + settings.vCellPadding)
-        self.commentConnector.setPath(connectorPath)
-        self.commentConnector.penColor = settings.docLinkLineColor
-        self.commentConnector.penWidth = settings.docLinkLineWidth
+        self.connector.setPath(connectorPath)
+        self.connector.penColor = settings.docLinkLineColor
+        self.connector.penWidth = settings.docLinkLineWidth
 
     def getSelectTooltip(self):
         """Provides the tooltip"""

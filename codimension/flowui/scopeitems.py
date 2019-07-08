@@ -54,6 +54,7 @@ class ScopeCellElement(CellElement):
         self._badgeItem = None
         self.__navBarUpdate = None
         self._connector = None
+        self._topHalfConnector = None
         self.scene = None
         self.__sideCommentPath = None
 
@@ -187,6 +188,18 @@ class ScopeCellElement(CellElement):
         if self.kind == CellElement.ELSE_SCOPE:
             return self.statement == ElseScopeCell.TRY_STATEMENT
 
+    def __needTopHalfConnector(self):
+        """True if a half of a connector is needed"""
+        if self.kind == CellElement.ELSE_SCOPE:
+            try:
+                parentCanvas = self.canvas.canvas
+                cellToTheTop = parentCanvas.cells[
+                        self.canvas.addr[1] - 1][self.canvas.addr[0]]
+                return cellToTheTop.needConnector
+            except:
+                pass
+        return False
+
     def _draw(self, scene, baseX, baseY):
         """Draws a scope"""
         self.scene = scene
@@ -198,6 +211,11 @@ class ScopeCellElement(CellElement):
                                             baseX + s.mainLine,
                                             baseY + self.canvas.height)
                 scene.addItem(self._connector)
+            if self.__needTopHalfConnector() and self._topHalfConnector is None:
+                self._topHalfConnector = Connector(s, baseX + s.mainLine, baseY,
+                                                   baseX + s.mainLine,
+                                                   baseY + self.canvas.height / 2)
+                scene.addItem(self._topHalfConnector)
 
             # Draw the scope rounded rectangle when we see the top left corner
             penWidth = s.selectPenWidth - 1

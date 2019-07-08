@@ -302,15 +302,32 @@ class VirtualCanvas:
         return row
 
     def __needLoopCommentRow(self, item):
-        """Tells if a row for comments need to be reserved"""
+        """Tells how many rows need to be resrved for comments/docs for the loops"""
         if self.settings.noComment:
-            return False
+            return 0, []
+
+        comments = []
+
+        doc = getDocComment(item.leadingCMLComments)
+        comments.append([doc, item.leadingComment])
+        rows = 0
         if item.leadingComment:
-            return True
+            rows += 1
+        if doc:
+            rows += 1
+
+        elseRows = 0
         if item.elsePart:
+            elseDoc = getDocComment(item.elsePart.leadingCMLComments)
+            comments.append([elseDoc, item.elsePart.leadingComment])
+
             if item.elsePart.leadingComment:
-                return True
-        return False
+                elseRows += 1
+            if elseDoc:
+                elseRows += 1
+        else:
+            comments.append([None, None])
+        return rows, elseRows, comments
 
     def __needTryCommentRow(self, item):
         """Tells if a row for comments need to be reserved"""
@@ -639,25 +656,47 @@ class VirtualCanvas:
                     continue
 
                 loopRegionBegin = vacantRow
-                if self.__needLoopCommentRow(item):
-                    if item.leadingComment and not self.settings.noComment:
-                        comment = AboveCommentCell(item, self, column,
-                                                   vacantRow)
+                mainRows, elseRows, aboveItems = self.__needLoopCommentRow(item)
+                maxRows = max(mainRows, elseRows)
+                if maxRows > 0:
+                    # Main part
+                    cRow = vacantRow + (maxRows - mainRows)
+
+                    tempVacant = vacantRow
+                    while mainRows < maxRows:
+                        self.__allocateCell(tempVacant, column)
+                        self.cells[tempVacant][column] = \
+                            ConnectorCell(CONN_N_S, self, column, tempVacant)
+                        tempVacant += 1
+                        mainRows += 1
+
+                    if aboveItems[0][0]:
+                        docComment = AboveDocCell(item, aboveItems[0][0], self, column, cRow)
+                        docComment.needConnector = True
+                        self.__allocateAndSet(cRow, column, docComment)
+                        cRow += 1
+                    if item.leadingComment:
+                        comment = AboveCommentCell(item, self, column, cRow)
                         comment.needConnector = True
-                        self.__allocateAndSet(vacantRow, column, comment)
-                    else:
-                        self.__allocateCell(vacantRow, column)
-                        self.cells[vacantRow][column] = \
-                            ConnectorCell(CONN_N_S, self, column, vacantRow)
-                    if item.elsePart:
-                        if item.elsePart.leadingComment and not self.settings.noComment:
-                            self.__allocateAndSet(
-                                vacantRow, column + 1,
-                                AboveCommentCell(item.elsePart, self,
-                                                 column + 1, vacantRow))
+                        self.__allocateAndSet(cRow, column, comment)
+
+
+                    if elseRows > 0:
+                        cRow = vacantRow + (maxRows - elseRows)
+
+                        if aboveItems[1][0]:
+                            docComment = AboveDocCell(item.elsePart, aboveItems[1][0], self, column + 1, cRow)
+                            self.__allocateAndSet(cRow, column + 1, docComment)
+                            cRow += 1
+                        if aboveItems[1][1]:
+                            comment = AboveCommentCell(item.elsePart, self, column + 1, cRow)
+                            comment.needConnector = aboveItems[1][0] is not None
+                            self.__allocateAndSet(cRow, column + 1, comment)
+
                         self.dependentRegions.append((loopRegionBegin,
-                                                      vacantRow + 1))
-                    vacantRow += 1
+                                                      vacantRow + maxRows))
+
+                    vacantRow += maxRows
                 else:
                     vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
 

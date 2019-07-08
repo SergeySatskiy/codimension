@@ -142,7 +142,7 @@ class CellElement:
         """Provides the unified icon height"""
         if self.__iconHeight is None:
             self.__iconHeight = \
-                self.canvas.settings.monoFontMetrics.tightBoundingRect('W').height() + 2
+                self.canvas.settings.monoFontMetrics.tightBoundingRect('W').height() + 3
         return self.__iconHeight
 
     def getTooltip(self):
