@@ -149,16 +149,18 @@ This comment may appear as:
 - leading comment
 - trailing comment
 
-It is not recognized in side comments
+It is not recognized in side comments.
 
 
 Supported properties:
 
 | Property | Description                                          |
 | :------: | ---------------------------------------------------- |
-| link     | link to the documentation, mandatory |
-| id       | id to reference this point in the code from the documentation, optional |
+| link     | link to the documentation, optional |
+| anchor   | anchor id to reference this point in the code from the documentation, optional |
 | title    | text to be shown on graphics, optional (if not provided then 'doc' will be shown) |
+
+At least one: a link or an anchor must be provided.
 
 The link supports the following formats:
 - http://... an external browser will be invoked
