@@ -24,7 +24,8 @@ from ui.qt import QMenu, QApplication
 from flowui.items import CellElement, IfCell
 from flowui.scopeitems import ScopeCellElement
 from flowui.groupitems import OpenedGroupBegin, CollapsedGroup, EmptyGroup
-from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt, CMLgb, CMLge
+from flowui.docitems import IndependentDocCell, LeadingDocCell, AboveDocCell
+from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt, CMLgb, CMLge, CMLdoc
 from utils.pixmapcache import getIcon
 from utils.diskvaluesrelay import addCollapsedGroup, removeCollapsedGroup
 from utils.settings import Settings
@@ -118,10 +119,22 @@ class CFSceneContextMenuMixin:
             getIcon("ungroup.png"), "Ungroup",
             self.onGroupUngroup)
 
+        docContextMenu = QMenu()
+        docContextMenu.addAction(
+            getIcon("replacetitle.png"), "Edit documentation link/anchor...",
+            self.onEditDoc)
+        docContextMenu.addAction(
+            getIcon("trash.png"), "Remove documentation link/anchor",
+            self.onRemoveDoc)
+
         self.individualMenus[IfCell] = ifContextMenu
         self.individualMenus[OpenedGroupBegin] = openGroupContextMenu
         self.individualMenus[CollapsedGroup] = closeGroupContextMenu
         self.individualMenus[EmptyGroup] = emptyGroupContextMenu
+
+        self.individualMenus[IndependentDocCell] = docContextMenu
+        self.individualMenus[LeadingDocCell] = docContextMenu
+        self.individualMenus[AboveDocCell] = docContextMenu
         # Individual items specific menu: end
 
         # Menu for a group of selected items
@@ -482,22 +495,20 @@ class CFSceneContextMenuMixin:
 
     def onRemoveReplacementText(self):
         """Removing replacement text"""
-        if not self.__actionPrerequisites():
-            return
+        if self.__actionPrerequisites():
+            # Memorize the current selection
+            selection = self.serializeSelection()
 
-        # Memorize the current selection
-        selection = self.serializeSelection()
-
-        editor = self.selectedItems()[0].getEditor()
-        with editor:
-            for item in self.sortSelectedReverse():
-                cmlComment = CMLVersion.find(item.ref.leadingCMLComments,
-                                             CMLrt)
-                if cmlComment is not None:
-                    cmlComment.removeFromText(editor)
-        QApplication.processEvents()
-        self.parent().redrawNow()
-        self.restoreSelectionByID(selection)
+            editor = self.selectedItems()[0].getEditor()
+            with editor:
+                for item in self.sortSelectedReverse():
+                    cmlComment = CMLVersion.find(item.ref.leadingCMLComments,
+                                                 CMLrt)
+                    if cmlComment is not None:
+                        cmlComment.removeFromText(editor)
+            QApplication.processEvents()
+            self.parent().redrawNow()
+            self.restoreSelectionByID(selection)
 
     def areSelectedOfTypes(self, matchList):
         """Checks if the selected items belong to the match"""
@@ -520,6 +531,22 @@ class CFSceneContextMenuMixin:
                     return False
             return True
         return False
+
+    def onEditDoc(self):
+        """Editing the CML doc comment"""
+
+    def onRemoveDoc(self):
+        """Removing the CML doc comment"""
+        if self.__actionPrerequisites():
+            editor = self.selectedItems()[0].getEditor()
+            with editor:
+                for item in self.sortSelectedReverse():
+                    cmlComment = CMLVersion.find(item.ref.leadingCMLComments,
+                                                 CMLdoc)
+                    if cmlComment is not None:
+                        cmlComment.removeFromText(editor)
+            QApplication.processEvents()
+            self.parent().redrawNow()
 
     def isInSelected(self, matchList):
         """Checks if any if the match list items is in the selection"""
