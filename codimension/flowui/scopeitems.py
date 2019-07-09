@@ -190,7 +190,7 @@ class ScopeCellElement(CellElement):
 
     def __needTopHalfConnector(self):
         """True if a half of a connector is needed"""
-        if self.kind == CellElement.ELSE_SCOPE:
+        if self.kind in [CellElement.ELSE_SCOPE, CellElement.EXCEPT_SCOPE]:
             try:
                 parentCanvas = self.canvas.canvas
                 cellToTheTop = parentCanvas.cells[
