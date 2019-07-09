@@ -332,14 +332,31 @@ class VirtualCanvas:
     def __needTryCommentRow(self, item):
         """Tells if a row for comments need to be reserved"""
         if self.settings.noComment:
-            return False
+            return 0, []
+
+        comments = []
+
+        doc = getDocComment(item.leadingCMLComments)
+        rows = 0
         if item.leadingComment:
-            return True
+            rows += 1
+        if doc:
+            rows += 1
+        comments.append([rows, doc, item.leadingComment])
+
         if not self.settings.hideexcepts:
             for exceptPart in item.exceptParts:
+                excDoc = getDocComment(exceptPart.leadingCMLComments)
+
+                excRows = 0
                 if exceptPart.leadingComment:
-                    return True
-        return False
+                    excRows += 1
+                if excDoc:
+                    excRows += 1
+                comments.append([excRows, excDoc, exceptPart.leadingComment])
+
+                rows = max(rows, excRows)
+        return rows, comments
 
     def __checkLeadingCMLComments(self, leadingCMLComments):
         """Provides a list of group begins and ends as they are in the leading comments"""
@@ -731,44 +748,71 @@ class VirtualCanvas:
                     continue
 
                 tryRegionBegin = vacantRow
-                if self.__needTryCommentRow(item):
-                    commentRow = vacantRow
-                    vacantRow += 1
-                    if item.leadingComment and not self.settings.noComment:
-                        comment = AboveCommentCell(item, self, column,
-                                                   commentRow)
+
+                maxRows, aboveItems = self.__needTryCommentRow(item)
+                if maxRows > 0:
+                    # Main part
+                    mainRows = aboveItems[0][0]
+                    cRow = vacantRow + (maxRows - mainRows)
+
+                    tempVacant = vacantRow
+                    while mainRows < maxRows:
+                        self.__allocateCell(tempVacant, column)
+                        self.cells[tempVacant][column] = \
+                            ConnectorCell(CONN_N_S, self, column, tempVacant)
+                        tempVacant += 1
+                        mainRows += 1
+
+                    if aboveItems[0][1]:
+                        docComment = AboveDocCell(item, aboveItems[0][1], self, column, cRow)
+                        docComment.needConnector = True
+                        self.__allocateAndSet(cRow, column, docComment)
+                        cRow += 1
+                    if item.leadingComment:
+                        comment = AboveCommentCell(item, self, column, cRow)
                         comment.needConnector = True
-                        self.__allocateAndSet(commentRow, column, comment)
-                    else:
-                        self.__allocateAndSet(commentRow, column,
-                                              ConnectorCell(CONN_N_S, self,
-                                                            column,
-                                                            commentRow))
+                        self.__allocateAndSet(cRow, column, comment)
+
                     if item.exceptParts and not self.settings.hideexcepts:
                         self.dependentRegions.append((tryRegionBegin,
-                                                      vacantRow))
+                                                      vacantRow + maxRows))
+
 
                 self.__allocateScope(item, CellElement.TRY_SCOPE,
-                                     vacantRow, column)
+                                     vacantRow + maxRows, column)
+
                 if self.settings.hideexcepts:
                     if item.exceptParts:
                         miniExcept = MinimizedExceptCell(item, self,
-                                                         column + 1, vacantRow)
-                        self.__allocateAndSet(vacantRow, column + 1,
+                                                         column + 1, vacantRow + maxRows)
+                        self.__allocateAndSet(vacantRow + maxRows, column + 1,
                                               miniExcept)
                 else:
                     nextColumn = column + 1
+                    exceptIndex = 1
                     for exceptPart in item.exceptParts:
-                        if exceptPart.leadingComment and not self.settings.noComment:
-                            self.__allocateAndSet(
-                                commentRow, nextColumn,
-                                AboveCommentCell(exceptPart, self,
-                                                 nextColumn, commentRow))
+                        excRows = aboveItems[exceptIndex][0]
+                        cRow = vacantRow + (maxRows - excRows)
+
+                        if aboveItems[exceptIndex][1]:
+                            docComment = AboveDocCell(exceptPart, aboveItems[exceptIndex][1],
+                                                      self, nextColumn, cRow)
+                            self.__allocateAndSet(cRow, nextColumn, docComment)
+                            cRow += 1
+                        if aboveItems[exceptIndex][2]:
+                            comment = AboveCommentCell(exceptPart, self, nextColumn, cRow)
+                            comment.needConnector = aboveItems[exceptIndex][1] is not None
+                            self.__allocateAndSet(cRow, nextColumn, comment)
+
                         self.__allocateScope(exceptPart,
                                              CellElement.EXCEPT_SCOPE,
-                                             vacantRow, nextColumn)
-                        self.cells[vacantRow][nextColumn].setLeaderRef(item)
+                                             vacantRow + maxRows, nextColumn)
+
+                        exceptIndex += 1
                         nextColumn += 1
+
+                vacantRow += maxRows
+
                 # The else part goes below
                 if item.elsePart:
                     vacantRow += 1
