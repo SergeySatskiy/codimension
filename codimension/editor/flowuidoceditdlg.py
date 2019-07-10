@@ -18,12 +18,12 @@
 #
 
 from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
-                   QTextEdit)
+                   QPushButton, QGridLayout, QLineEdit)
 
 
 """Dialog to enter a new text for a graphics item"""
 
-class ReplaceTextDialog(QDialog):
+class DocLinkAnchorDialog(QDialog):
 
     """Replace text input dialog"""
 
@@ -39,9 +39,9 @@ class ReplaceTextDialog(QDialog):
 
         verticalLayout = QVBoxLayout(self)
         gridLayout = QGridLayout()
- 
+
         # Link
-        linkLabel = QLable('Link', self)
+        linkLabel = QLabel('Link', self)
         gridLayout.addWidget(linkLabel, 0, 0, 1, 1)
         self.linkEdit = QLineEdit(self)
         self.linkEdit.setToolTip(
@@ -53,13 +53,21 @@ class ReplaceTextDialog(QDialog):
             'Select an existing or non existing file')
         gridLayout.addWidget(self.fileButton, 0, 2, 1, 1)
 
+        # Anchor
+        anchorLabel = QLabel('Anchor', self)
+        gridLayout.addWidget(anchorLabel, 1, 0, 1, 1)
+        self.anchorEdit = QLineEdit(self)
+        self.anchorEdit.setToolTip(
+            'Anchor is used to refer from the other files to rfer to it')
+        gridLayout.addWidget(self.anchorEdit, 1, 1, 1, 1)
 
-
-
-        layout.addWidget(QLabel(labelText))
-        self.__newCaption = QTextEdit()
-        self.__newCaption.setAcceptRichText(False)
-        layout.addWidget(self.__newCaption)
+        # Title
+        titleLabel = QLabel('Title', self)
+        gridLayout.addWidget(titleLabel, 2, 0, 1, 1)
+        self.titleEdit = QLineEdit(self)
+        self.titleEdit.setToolTip(
+            'If provided then will be displayed in the rectangle')
+        gridLayout.addWidget(self.titleEdit, 2, 1, 1, 1)
 
         # Buttons at the bottom
         buttonBox = QDialogButtonBox(self)
@@ -69,14 +77,8 @@ class ReplaceTextDialog(QDialog):
         self.__OKButton.setDefault(True)
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.close)
-        layout.addWidget(buttonBox)
 
-        self.__newCaption.setFocus()
+        verticalLayout.addLayout(gridLayout)
+        verticalLayout.addWidget(buttonBox)
 
-    def setText(self, txt):
-        """Sets the text to be edited"""
-        self.__newCaption.setPlainText(txt)
-
-    def text(self):
-        """Provides the new text"""
-        return self.__newCaption.toPlainText()
+        self.linkEdit.setFocus()

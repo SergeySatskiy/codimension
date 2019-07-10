@@ -31,6 +31,7 @@ from utils.diskvaluesrelay import addCollapsedGroup, removeCollapsedGroup
 from utils.settings import Settings
 from .flowuireplacetextdlg import ReplaceTextDialog
 from .customcolordlg import CustomColorsDialog
+from .flowuidoceditdlg import DocLinkAnchorDialog
 
 
 class CFSceneContextMenuMixin:
@@ -534,6 +535,11 @@ class CFSceneContextMenuMixin:
 
     def onEditDoc(self):
         """Editing the CML doc comment"""
+        if self.__actionPrerequisites():
+            dlg = DocLinkAnchorDialog('Edit', self.selectedItems()[0],
+                                      self.parent())
+            if dlg.exec_():
+                pass
 
     def onRemoveDoc(self):
         """Removing the CML doc comment"""
