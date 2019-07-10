@@ -272,3 +272,22 @@ def getLabelStyle(owner):
              'background-color: ' + colorAsString(bgColor, True),
              'border: 1px solid ' + colorAsString(borderColor, True)]
     return '; '.join(props)
+
+
+DEFAULT_BG_COLOR = None
+def setLineEditBackground(widget, color=None):
+    """Sets the widget background to the given color"""
+    palette = widget.palette()
+
+    global DEFAULT_BG_COLOR
+    if DEFAULT_BG_COLOR is None:
+        DEFAULT_BG_COLOR = palette.color(widget.backgroundRole())
+
+    if color != None:
+        color.setAlpha(100)
+    else:
+        color = DEFAULT_BG_COLOR
+
+    palette.setColor(widget.backgroundRole(), color)
+    widget.setPalette(palette)
+

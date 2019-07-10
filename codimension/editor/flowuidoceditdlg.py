@@ -18,7 +18,9 @@
 #
 
 from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
-                   QPushButton, QGridLayout, QLineEdit)
+                   QPushButton, QGridLayout, QLineEdit, QTextEdit, QCheckBox)
+from utils.colorfont import setLineEditBackground
+from utils.globals import GlobalData
 
 
 """Dialog to enter a new text for a graphics item"""
@@ -30,44 +32,53 @@ class DocLinkAnchorDialog(QDialog):
     def __init__(self, windowTitle, cmlDocComment, parent=None):
         QDialog.__init__(self, parent)
         self.setWindowTitle(windowTitle + ' documentation link and/or anchor')
+
+        self.__invalidInputColor = GlobalData().skin['invalidInputPaper']
+
         self.__createLayout()
+
+        if cmlDocComment is not None:
+            self.__populate(cmlDocComment)
 
     def __createLayout(self):
         """Creates the dialog layout"""
-        self.resize(600, 250)
+        self.resize(450, 150)
         self.setSizeGripEnabled(True)
 
         verticalLayout = QVBoxLayout(self)
         gridLayout = QGridLayout()
 
         # Link
-        linkLabel = QLabel('Link', self)
-        gridLayout.addWidget(linkLabel, 0, 0, 1, 1)
+        gridLayout.addWidget(QLabel('Link', self), 0, 0, 1, 1)
         self.linkEdit = QLineEdit(self)
+        self.linkEdit.setClearButtonEnabled(True)
         self.linkEdit.setToolTip(
-            'Type a link to a file or to an external web resource')
+            'A link to a file or to an external web resource')
         gridLayout.addWidget(self.linkEdit, 0, 1, 1, 1)
+        self.linkEdit.textChanged.connect(self.__validate)
         self.fileButton = QPushButton(self)
         self.fileButton.setText('...')
         self.fileButton.setToolTip(
             'Select an existing or non existing file')
         gridLayout.addWidget(self.fileButton, 0, 2, 1, 1)
+        self.createCheckBox = QCheckBox('Create file if does not exist', self)
+        gridLayout.addWidget(self.createCheckBox, 1, 1, 1, 1)
+        self.createCheckBox.setEnabled(False)
 
         # Anchor
-        anchorLabel = QLabel('Anchor', self)
-        gridLayout.addWidget(anchorLabel, 1, 0, 1, 1)
+        gridLayout.addWidget(QLabel('Anchor', self), 2, 0, 1, 1)
         self.anchorEdit = QLineEdit(self)
-        self.anchorEdit.setToolTip(
-            'Anchor is used to refer from the other files to rfer to it')
-        gridLayout.addWidget(self.anchorEdit, 1, 1, 1, 1)
+        self.anchorEdit.setClearButtonEnabled(True)
+        gridLayout.addWidget(self.anchorEdit, 2, 1, 1, 1)
+        self.anchorEdit.textChanged.connect(self.__validate)
 
         # Title
-        titleLabel = QLabel('Title', self)
-        gridLayout.addWidget(titleLabel, 2, 0, 1, 1)
-        self.titleEdit = QLineEdit(self)
+        gridLayout.addWidget(QLabel('Title', self), 3, 0, 1, 1)
+        self.titleEdit = QTextEdit()
+        self.titleEdit.setAcceptRichText(False)
         self.titleEdit.setToolTip(
             'If provided then will be displayed in the rectangle')
-        gridLayout.addWidget(self.titleEdit, 2, 1, 1, 1)
+        gridLayout.addWidget(self.titleEdit, 3, 1, 1, 1)
 
         # Buttons at the bottom
         buttonBox = QDialogButtonBox(self)
@@ -82,3 +93,49 @@ class DocLinkAnchorDialog(QDialog):
         verticalLayout.addWidget(buttonBox)
 
         self.linkEdit.setFocus()
+
+    def setTitle(self, txt):
+        """Sets the title text to be edited"""
+        self.titleEdit.setPlainText(txt)
+
+    def title(self):
+        """Provides the new title text"""
+        return self.titleEdit.toPlainText()
+
+    def __populate(self, cmlDocComment):
+        """Populates the fields from the comment"""
+        if cmlDocComment.link:
+            self.linkEdit.setText(cmlDocComment.link)
+        if cmlDocComment.anchor:
+            self.anchorEdit.setText(cmlDocComment.anchor)
+        if cmlDocComment.title:
+            self.setTitle(cmlDocComment.getTitle())
+
+    def __validateLink(self):
+        """Validates the link field content"""
+        return True
+
+    def __validateAnchor(self):
+        """Validates the anchor field"""
+        txt = self.anchorEdit.text().strip()
+        if ' ' in txt or '\t' in txt:
+            self.anchorEdit.setToolTip('Anchor may not contain neither spaces nor tabs')
+            setLineEditBackground(self.anchorEdit, self.__invalidInputColor)
+            return False
+        self.anchorEdit.setToolTip(
+            'Anchor is used to refer to it from the other files')
+        setLineEditBackground(self.anchorEdit)
+        return True
+
+    def __validate(self, _=None):
+        """Validates the input fields and sets the OK button enable"""
+        self.__OKButton.setToolTip('')
+        valid = self.__validateAnchor() and self.__validateLink()
+        if valid:
+            if not self.linkEdit.text().strip() and not self.anchorEdit.text().strip():
+                valid = False
+                self.__OKButton.setToolTip('At least one of the items: link or anchor must be provided')
+
+        self.__OKButton.setEnabled(valid)
+        return valid
+

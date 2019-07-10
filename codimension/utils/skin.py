@@ -100,7 +100,9 @@ _DEFAULT_SKIN_SETTINGS = {
     'ioconsoleMarginStdoutColor': QColor(0, 0, 0, 255),
     'ioconsoleMarginStdinColor': QColor(51, 102, 255, 255),
     'ioconsoleMarginStderrColor': QColor(204, 51, 0, 255),
-    'ioconsoleMarginIDEMsgColor': QColor(128, 128, 128, 255)}
+    'ioconsoleMarginIDEMsgColor': QColor(128, 128, 128, 255),
+
+    'invalidInputPaper': QColor(255, 193, 204, 100)}
 
 
 _DEFAULT_APP_CSS = """
