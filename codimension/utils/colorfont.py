@@ -38,6 +38,14 @@ def checkColorRange(value):
         raise Exception("Invalid color value")
 
 
+def toHex(value):
+    """Converts the value to a double digit hex string"""
+    asStr = hex(value)[2:]
+    if len(asStr) == 1:
+        return '0' + asStr
+    return asStr
+
+
 def buildColor(color):
     """Six options are supported:
 
@@ -107,11 +115,7 @@ def cssLikeColor(color):
     asStr = color.name()
     alpha = color.alpha()
     if alpha != 255:
-        hexAlpha = hex(alpha)[2:]
-        if len(hexAlpha) == 1:
-            asStr += 2 * hexAlpha
-        else:
-            asStr += hexAlpha
+        asStr += toHex(alpha)
 
     # Shorten it if possible
     if len(asStr) == 7:
@@ -128,15 +132,36 @@ def cssLikeColor(color):
     return asStr
 
 
+def transparentColor(fgColor, bgColor, alpha):
+    """Converts the color value considering the background and alpha"""
+    if alpha == 255:
+        return fgColor
+
+    dAlpha = float(alpha)/255.0
+    dFirst = float(fgColor) * dAlpha
+    dSecond = float(bgColor) * (1.0 - dAlpha)
+    return min(255, round(dFirst + dSecond))
+
+
+def qtCssColor(color, bgColor=None):
+    """Converts the given color to the QT compatible one (transparency is not supported"""
+    alpha = color.alpha()
+    if alpha == 255:
+        return color.name()
+
+    if bgColor is None:
+        rTransp = transparentColor(color.red(), 255, alpha)
+        gTransp = transparentColor(color.green(), 255, alpha)
+        bTransp = transparentColor(color.blue(), 255, alpha)
+    else:
+        rTransp = transparentColor(color.red(), bgColor.red(), alpha)
+        gTransp = transparentColor(color.green(), bgColor.green(), alpha)
+        bTransp = transparentColor(color.blue(), bgColor.blue(), alpha)
+    return ''.join(('#', toHex(rTransp), toHex(gTransp), toHex(bTransp)))
+
+
 def colorAsString(color, hexadecimal=False):
     """Converts the given color to a string"""
-    def toHex(value):
-        """Converts the value to a double digit hex string"""
-        asStr = hex(value)[2:]
-        if len(asStr) == 1:
-            return '0' + asStr
-        return asStr
-
     if hexadecimal:
         return '#' + ''.join([toHex(color.red()),
                               toHex(color.green()),
@@ -249,11 +274,9 @@ def getZoomedMarginFont():
     return font
 
 
-def getLabelStyle(owner):
+def getLabelStyle(modelLabel):
     """Creates a label stylesheet for the given owner widget"""
-    modelLabel = QLabel(owner)
     bgColor = modelLabel.palette().color(modelLabel.backgroundRole())
-    del modelLabel
 
     red = bgColor.red()
     green = bgColor.green()
@@ -267,27 +290,15 @@ def getLabelStyle(owner):
                      min(green + delta, 255),
                      min(blue + delta, 255))
 
-    props = ['border-radius: 3px',
+    props = ('border-radius: 3px',
              'padding: 4px',
              'background-color: ' + colorAsString(bgColor, True),
-             'border: 1px solid ' + colorAsString(borderColor, True)]
+             'border: 1px solid ' + colorAsString(borderColor, True))
     return '; '.join(props)
 
 
-DEFAULT_BG_COLOR = None
-def setLineEditBackground(widget, color=None):
+def setLineEditBackground(widget, color, bgColor=None):
     """Sets the widget background to the given color"""
-    palette = widget.palette()
-
-    global DEFAULT_BG_COLOR
-    if DEFAULT_BG_COLOR is None:
-        DEFAULT_BG_COLOR = palette.color(widget.backgroundRole())
-
-    if color != None:
-        color.setAlpha(100)
-    else:
-        color = DEFAULT_BG_COLOR
-
-    palette.setColor(widget.backgroundRole(), color)
-    widget.setPalette(palette)
+    widget.setStyleSheet('QLineEdit {background-color: ' +
+                         qtCssColor(color, bgColor) + '}')
 

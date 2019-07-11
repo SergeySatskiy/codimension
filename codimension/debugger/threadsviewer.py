@@ -96,13 +96,13 @@ class ThreadsViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
+        self.__threadsLabel = QLabel("Threads", self)
+
         self.headerFrame = QFrame()
         self.headerFrame.setObjectName('threadheader')
         self.headerFrame.setStyleSheet('QFrame#threadheader {' +
-                                       getLabelStyle(self) + '}')
+                                       getLabelStyle(self.__threadsLabel) + '}')
         self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        self.__threadsLabel = QLabel("Threads")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
 

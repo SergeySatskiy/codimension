@@ -49,18 +49,18 @@ class ControlFlowNavigationBar(QFrame):
         self.__layout = QHBoxLayout(self)
         self.__layout.setContentsMargins(0, 0, 0, 0)
 
-        labelStylesheet = 'QLabel {' + getLabelStyle(self) + '}'
-
         # Create info icon
-        self.__infoIcon = QLabel()
+        self.__infoIcon = QLabel(self)
         self.__infoIcon.setPixmap(getPixmap('cfunknown.png'))
         self.__layout.addWidget(self.__infoIcon)
 
-        self.__warningsIcon = QLabel()
+        self.__warningsIcon = QLabel(self)
         self.__warningsIcon.setPixmap(getPixmap('cfwarning.png'))
         self.__layout.addWidget(self.__warningsIcon)
 
         self.clearWarnings()
+
+        labelStylesheet = 'QLabel {' + getLabelStyle(self.__infoIcon) + '}'
 
         # Create the path label
         self.__pathLabel = QLabel(self)

@@ -272,10 +272,10 @@ class ProfileTableViewer(QWidget):
               str(totalCalls) + " function calls (" + \
               str(totalPrimitiveCalls) + " primitive calls) in " + \
               FLOAT_FORMAT % totalTime + " CPU seconds"
-        summary = QLabel(txt)
+        summary = QLabel(txt, self)
         summary.setToolTip(txt)
         summary.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
-        summary.setStyleSheet('QLabel {' + getLabelStyle(self) + '}')
+        summary.setStyleSheet('QLabel {' + getLabelStyle(summary) + '}')
 
         vLayout = QVBoxLayout()
         vLayout.setContentsMargins(0, 0, 0, 0)

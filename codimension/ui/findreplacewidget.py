@@ -28,7 +28,7 @@ from utils.diskvaluesrelay import getFindHistory, setFindHistory
 from utils.colorfont import setLineEditBackground
 from .qt import (QToolButton, QLabel, QSizePolicy, QComboBox,
                  QGridLayout, QWidget, QCheckBox, QKeySequence, Qt, QSize,
-                 QEvent, pyqtSignal, QPalette)
+                 QEvent, pyqtSignal)
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -102,9 +102,10 @@ class FindReplaceWidget(QWidget):
 
         GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
 
-        # BG_IDLE entry is not needed because it is a default background
-        # which is handled in the common function
+        lineEdit = self.findtextCombo.lineEdit()
         self.__stateColors = {
+            self.BG_IDLE:
+                lineEdit.palette().color(lineEdit.backgroundRole()),
             self.BG_NOMATCH:
                 GlobalData().skin['findNoMatchPaper'],
             self.BG_MATCH:
@@ -114,11 +115,9 @@ class FindReplaceWidget(QWidget):
 
     def __setBackgroundColor(self, state):
         """Sets the search combo background color to reflect the state"""
-        if state == self.BG_IDLE:
-            setLineEditBackground(self.findtextCombo.lineEdit())
-        else:
-            setLineEditBackground(self.findtextCombo.lineEdit(),
-                                  self.__stateColors[state])
+        setLineEditBackground(self.findtextCombo.lineEdit(),
+                              self.__stateColors[state],
+                              self.__stateColors[self.BG_IDLE])
 
     def __createLayout(self):
         """Creates the layout of the widget"""

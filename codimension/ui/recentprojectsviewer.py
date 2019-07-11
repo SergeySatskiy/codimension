@@ -262,14 +262,13 @@ class RecentProjectsViewer(QWidget):
 
     def __createRecentFilesLayout(self):
         """Creates the upper part - recent files"""
+        recentFilesLabel = QLabel("Recent files", self)
+
         headerFrame = QFrame()
         headerFrame.setObjectName('fheader')
         headerFrame.setStyleSheet('QFrame#fheader {' +
-                                  getLabelStyle(self) + '}')
+                                  getLabelStyle(recentFilesLabel) + '}')
         headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        recentFilesLabel = QLabel()
-        recentFilesLabel.setText("Recent files")
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins(3, 0, 0, 0)
@@ -336,14 +335,13 @@ class RecentProjectsViewer(QWidget):
 
     def __createRecentProjectsLayout(self):
         """Creates the bottom layout"""
+        recentProjectsLabel = QLabel("Recent projects", self)
+
         self.headerFrame = QFrame()
         self.headerFrame.setObjectName('pheader')
         self.headerFrame.setStyleSheet('QFrame#pheader {' +
-                                       getLabelStyle(self) + '}')
+                                       getLabelStyle(recentProjectsLabel) + '}')
         self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        recentProjectsLabel = QLabel()
-        recentProjectsLabel.setText("Recent projects")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
 

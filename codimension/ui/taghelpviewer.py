@@ -92,10 +92,10 @@ class TagHelpViewer(QWidget):
         toolbar.addWidget(spacer)
         toolbar.addAction(self.__clearButton)
 
-        self.__header = QLabel("Signature: none")
+        self.__header = QLabel("Signature: none", self)
         self.__header.setObjectName('signature')
         self.__header.setStyleSheet('QFrame#signature {' +
-                                    getLabelStyle(self) + '}')
+                                    getLabelStyle(self.__header) + '}')
         self.__header.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
         self.__header.setFixedHeight(HEADER_HEIGHT)
         verticalLayout = QVBoxLayout()

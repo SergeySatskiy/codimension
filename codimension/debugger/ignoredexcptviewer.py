@@ -61,13 +61,13 @@ class IgnoredExceptionsViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
+        self.__excptLabel = QLabel("Ignored exception types", self)
+
         self.headerFrame = QFrame()
         self.headerFrame.setObjectName('ignexcpt')
         self.headerFrame.setStyleSheet('QFrame#ignexcpt {' +
-                                       getLabelStyle(self) + '}')
+                                       getLabelStyle(self.__excptLabel) + '}')
         self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        self.__excptLabel = QLabel("Ignored exception types")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
 

@@ -59,13 +59,13 @@ class VariablesViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
+        self.__headerLabel = QLabel("Variables", self)
+
         headerFrame = QFrame()
         headerFrame.setObjectName('varsheader')
         headerFrame.setStyleSheet('QFrame#varsheader {' +
-                                  getLabelStyle(self) + '}')
+                                  getLabelStyle(self.__headerLabel) + '}')
         headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        self.__headerLabel = QLabel("Variables")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
 

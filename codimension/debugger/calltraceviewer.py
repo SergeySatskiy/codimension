@@ -153,13 +153,13 @@ class CallTraceViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
+        self.__calltraceLabel = QLabel("Call Trace", self)
+
         self.headerFrame = QFrame()
         self.headerFrame.setObjectName('calltraceheader')
         self.headerFrame.setStyleSheet('QFrame#calltraceheader {' +
-                                       getLabelStyle(self) + '}')
+                                       getLabelStyle(self.__calltraceLabel) + '}')
         self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        self.__calltraceLabel = QLabel("Call Trace")
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins(0, 0, 0, 0)

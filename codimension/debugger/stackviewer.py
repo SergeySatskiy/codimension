@@ -108,13 +108,13 @@ class StackViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
+        self.__stackLabel = QLabel("Stack", self)
+
         self.headerFrame = QFrame()
         self.headerFrame.setObjectName('stackheader')
         self.headerFrame.setStyleSheet('QFrame#stackheader {' +
-                                       getLabelStyle(self) + '}')
+                                       getLabelStyle(self.__stackLabel) + '}')
         self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        self.__stackLabel = QLabel("Stack")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
 

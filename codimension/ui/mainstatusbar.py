@@ -52,8 +52,6 @@ class MainWindowStatusBarMixin:
         self.__statusBar = self.statusBar()
         self.__statusBar.setSizeGripEnabled(True)
 
-        labelStylesheet = 'QLabel {' + getLabelStyle(self) + '}'
-
         self.sbVCSStatus = FitPathLabel(self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbVCSStatus)
         self.sbVCSStatus.setVisible(False)
@@ -62,6 +60,8 @@ class MainWindowStatusBarMixin:
             self._showVCSLabelContextMenu)
 
         self.sbDebugState = QLabel("Debugger: unknown", self.__statusBar)
+        labelStylesheet = 'QLabel {' + getLabelStyle(self.sbDebugState) + '}'
+
         self.sbDebugState.setStyleSheet(labelStylesheet)
         self.sbDebugState.setAutoFillBackground(True)
         dbgPalette = self.sbDebugState.palette()

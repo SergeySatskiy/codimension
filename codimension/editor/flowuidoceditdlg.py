@@ -18,7 +18,8 @@
 #
 
 from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
-                   QPushButton, QGridLayout, QLineEdit, QTextEdit, QCheckBox)
+                   QPushButton, QGridLayout, QLineEdit, QTextEdit, QCheckBox,
+                   QPalette, QApplication)
 from utils.colorfont import setLineEditBackground
 from utils.globals import GlobalData
 
@@ -33,9 +34,10 @@ class DocLinkAnchorDialog(QDialog):
         QDialog.__init__(self, parent)
         self.setWindowTitle(windowTitle + ' documentation link and/or anchor')
 
-        self.__invalidInputColor = GlobalData().skin['invalidInputPaper']
-
         self.__createLayout()
+        self.__invalidInputColor = GlobalData().skin['invalidInputPaper']
+        self.__validInputColor = self.linkEdit.palette().color(
+            self.linkEdit.backgroundRole())
 
         if cmlDocComment is not None:
             self.__populate(cmlDocComment)
@@ -119,12 +121,15 @@ class DocLinkAnchorDialog(QDialog):
         """Validates the anchor field"""
         txt = self.anchorEdit.text().strip()
         if ' ' in txt or '\t' in txt:
-            self.anchorEdit.setToolTip('Anchor may not contain neither spaces nor tabs')
-            setLineEditBackground(self.anchorEdit, self.__invalidInputColor)
+            self.anchorEdit.setToolTip(
+                'Anchor may not contain neither spaces nor tabs')
+            setLineEditBackground(self.anchorEdit, self.__invalidInputColor,
+                                  self.__validInputColor)
             return False
         self.anchorEdit.setToolTip(
             'Anchor is used to refer to it from the other files')
-        setLineEditBackground(self.anchorEdit)
+        setLineEditBackground(self.anchorEdit, self.__validInputColor,
+                              self.__validInputColor)
         return True
 
     def __validate(self, _=None):
@@ -134,7 +139,8 @@ class DocLinkAnchorDialog(QDialog):
         if valid:
             if not self.linkEdit.text().strip() and not self.anchorEdit.text().strip():
                 valid = False
-                self.__OKButton.setToolTip('At least one of the items: link or anchor must be provided')
+                self.__OKButton.setToolTip(
+                    'At least one of the items: link or anchor must be provided')
 
         self.__OKButton.setEnabled(valid)
         return valid

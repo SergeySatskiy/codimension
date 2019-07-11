@@ -189,13 +189,13 @@ class ClientExceptionsViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
+        self.__excptLabel = QLabel("Exceptions", self)
+
         self.headerFrame = QFrame()
         self.headerFrame.setObjectName('excpt')
         self.headerFrame.setStyleSheet('QFrame#excpt {' +
-                                       getLabelStyle(self) + '}')
+                                       getLabelStyle(self.__excptLabel) + '}')
         self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        self.__excptLabel = QLabel("Exceptions")
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins(0, 0, 0, 0)

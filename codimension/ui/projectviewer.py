@@ -121,15 +121,14 @@ class ProjectViewer(QWidget):
         """Creates the upper part of the project viewer"""
         self.projectTreeView = ProjectBrowser(self.__mainWindow)
 
+        self.projectLabel = QLabel("Project: none", self)
+
         # Header part: label + i-button
         headerFrame = QFrame()
         headerFrame.setObjectName('prjheader')
         headerFrame.setStyleSheet('QFrame#prjheader {' +
-                                  getLabelStyle(self) + '}')
+                                  getLabelStyle(self.projectLabel) + '}')
         headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        self.projectLabel = QLabel()
-        self.projectLabel.setText("Project: none")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
         fixedSpacer = QSpacerItem(3, 3)
@@ -300,14 +299,13 @@ class ProjectViewer(QWidget):
     def __createFilesystemPartLayout(self):
         """Creates the lower part of the project viewer"""
         # Header part: label + show/hide button
+        projectLabel = QLabel("File system", self)
+
         self.headerFrame = QFrame()
         self.headerFrame.setObjectName('fsheader')
         self.headerFrame.setStyleSheet('QFrame#fsheader {' +
-                                       getLabelStyle(self) + '}')
+                                       getLabelStyle(projectLabel) + '}')
         self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        projectLabel = QLabel()
-        projectLabel.setText("File system")
 
         expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
 
