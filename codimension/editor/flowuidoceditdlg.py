@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os.path
 from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
-                   QPushButton, QGridLayout, QLineEdit, QTextEdit, QCheckBox,
-                   QPalette, QApplication)
+                   QPushButton, QGridLayout, QLineEdit, QTextEdit, QCheckBox
+                   )
 from utils.colorfont import setLineEditBackground
 from utils.globals import GlobalData
 
@@ -64,8 +65,8 @@ class DocLinkAnchorDialog(QDialog):
             'Select an existing or non existing file')
         gridLayout.addWidget(self.fileButton, 0, 2, 1, 1)
         self.createCheckBox = QCheckBox('Create file if does not exist', self)
+        self.createCheckBox.setChecked(True)
         gridLayout.addWidget(self.createCheckBox, 1, 1, 1, 1)
-        self.createCheckBox.setEnabled(False)
 
         # Anchor
         gridLayout.addWidget(QLabel('Anchor', self), 2, 0, 1, 1)
@@ -113,23 +114,56 @@ class DocLinkAnchorDialog(QDialog):
         if cmlDocComment.title:
             self.setTitle(cmlDocComment.getTitle())
 
+    def __setLinkValid(self):
+        """Sets the link edit valid"""
+        self.linkEdit.setToolTip(
+            'A link to a file or to an external web resource')
+        setLineEditBackground(self.linkEdit, self.__validInputColor,
+                              self.__validInputColor)
+
+    def __setLinkInvalid(self, msg):
+        """Sets the link edit invalid"""
+        self.linkEdit.setToolTip(msg)
+        setLineEditBackground(self.linkEdit, self.__invalidInputColor,
+                              self.__invalidInputColor)
+
     def __validateLink(self):
         """Validates the link field content"""
+        txt = self.linkEdit.text().strip()
+        if txt == '' or txt.startswith('http://') or txt.startswith('https://'):
+            self.__setLinkValid()
+            self.createCheckBox.setEnabled(False)
+            return True
+
+        # Not a link; it is supposed to be a file or a creatable file
+        if os.path.isabs(txt):
+            if os.path.exists(txt):
+                if os.path.isfile(txt):
+                    if 
+
         return True
+
+    def __setAnchorValid(self):
+        """Sets the anchor edit valid"""
+        self.anchorEdit.setToolTip(
+            'Anchor may not contain neither spaces nor tabs')
+        setLineEditBackground(self.anchorEdit, self.__invalidInputColor,
+                              self.__validInputColor)
+
+    def __setAnchorInvalid(self):
+        """Sets the anchor edit invalid"""
+        self.anchorEdit.setToolTip(
+            'Anchor is used to refer to it from the other files')
+        setLineEditBackground(self.anchorEdit, self.__validInputColor,
+                              self.__validInputColor)
 
     def __validateAnchor(self):
         """Validates the anchor field"""
         txt = self.anchorEdit.text().strip()
         if ' ' in txt or '\t' in txt:
-            self.anchorEdit.setToolTip(
-                'Anchor may not contain neither spaces nor tabs')
-            setLineEditBackground(self.anchorEdit, self.__invalidInputColor,
-                                  self.__validInputColor)
+            self.__setAnchorValid()
             return False
-        self.anchorEdit.setToolTip(
-            'Anchor is used to refer to it from the other files')
-        setLineEditBackground(self.anchorEdit, self.__validInputColor,
-                              self.__validInputColor)
+        self.__setAnchorInvalid()
         return True
 
     def __validate(self, _=None):

@@ -26,7 +26,6 @@ from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
                    QGraphicsItem, QStyleOptionGraphicsItem, QStyle, QFont,
                    QGraphicsRectItem, QCursor, QDesktopServices, QUrl)
 from utils.globals import GlobalData
-from utils.misc import resolveLinkPath
 from .auxitems import Connector, SVGItem
 from .items import CellElement
 from .routines import distance, getCommentBoxPath, getDocBoxPath

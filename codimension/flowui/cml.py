@@ -247,6 +247,11 @@ class CMLdoc(CMLCommentBase):
         if self.link is None and self.anchor is None:
             raise Exception("The '" + CMLdoc.CODE +
                             "' CML comment supplies neither a link nor an anchor")
+        if self.anchor:
+            if ' ' in self.anchor or '\t' in self.anchor:
+                raise Exception("The '" + CMLdoc.CODE +
+                                "' CML comment anchor attribute "
+                                "must contain neither spaces nor tabs")
 
     @staticmethod
     def description():

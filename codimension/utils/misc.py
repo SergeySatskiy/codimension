@@ -226,7 +226,7 @@ def extendInstance(obj, cls):
 
 LINE_NO_REGEXP = re.compile(r':\d+$')
 
-def resolveLinkPath(link, fromFile):
+def resolveLinkPath(link, fromFile, needLogging=True):
     """Resolves the link to the another file"""
     effectiveLink = link
     if effectiveLink.startswith('file:'):
@@ -266,33 +266,37 @@ def resolveLinkPath(link, fromFile):
                     effFileName = None
 
         if not effFileName:
-            if tryPaths:
-                logging.error("Relative path '" + effectiveLink +
-                              "' is not resolved. Resolve tries: " +
-                              ", ".join(tryPaths))
-            else:
-                logging.error("Relative path '" + effectiveLink +
-                              "' can be resolved after the file is saved or "
-                              "if the project is loaded and the link is "
-                              "given as relative to the project root")
+            if needLogging:
+                if tryPaths:
+                    logging.error("Relative path '" + effectiveLink +
+                                  "' is not resolved. Resolve tries: " +
+                                  ", ".join(tryPaths))
+                else:
+                    logging.error("Relative path '" + effectiveLink +
+                                  "' can be resolved after the file is saved or "
+                                  "if the project is loaded and the link is "
+                                  "given as relative to the project root")
             return None, None
     else:
         # Absolute path is given
         if os.path.exists(effectiveLink):
             effFileName = effectiveLink
         else:
-            logging.error("The absolute link path '" + effectiveLink +
-                          "' does not point to an existing file")
+            if needLogging:
+                logging.error("The absolute link path '" + effectiveLink +
+                              "' does not point to an existing file")
             return None, None
 
     if not os.path.isfile(effFileName):
-        logging.error("The resolved link path '" + effFileName +
-                      "' does not point to a file")
+        if needLogging:
+            logging.error("The resolved link path '" + effFileName +
+                          "' does not point to a file")
         return None, None
 
     if not isFileOpenable(effFileName):
-        logging.error("The resolved link path '" + effFileName +
-                      "' does not point to a file which Codimension can open")
+        if needLogging:
+            logging.error("The resolved link path '" + effFileName +
+                          "' does not point to a file which Codimension can open")
         return None, None
 
     return effFileName, lineNo
