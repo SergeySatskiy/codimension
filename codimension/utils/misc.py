@@ -243,15 +243,47 @@ def splitLinkPath(link):
     return link, anchor
 
 
+def resolveFile(link, fromFile):
+    """Tries to reslve file
+
+    Returns: file name, list of tried paths
+    """
+    if os.path.isabs(link):
+        if os.path.exists(link):
+            return link, [link]
+        return None, [link]
+
+    tryPaths = []
+    if fromFile:
+        # Try relative to the 'fromFile' first
+        dirName = os.path.dirname(fromFile)
+        fName = os.path.normpath(dirName + os.path.sep + link)
+        if os.path.exists(fName):
+            return fName, [fName]
+        tryPaths.append(fName)
+
+        # Try relative to the project file second
+        project = GlobalData().project
+        if project.isLoaded():
+            # Project is loaded - use from the project dir
+            projectDir = os.path.dirname(project.fileName)
+            fName = os.path.normpath(projectDir + os.path.sep + link)
+            if os.path.exists(fName):
+                return fName, [fName]
+            tryPaths.append(fName)
+
+    return None, tryPaths
 
 
-
-
-
-
-def resolveLinkPath(link, fromFile, needLogging=True):
+def resolveLinkPath(link, fromFile, shouldExist=True):
     """Resolves the link to the another file"""
     effectiveLink, anchor = splitLinkPath(link)
+    fName, tryPaths = resolveFile(effectiveLink, fromFile)
+
+    # fName is not None => file exists on FS
+
+
+
 
     effFileName = None
     if not os.path.isabs(effectiveLink):
