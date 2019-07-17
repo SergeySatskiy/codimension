@@ -224,23 +224,34 @@ def extendInstance(obj, cls):
     obj.__class__ = type(base_cls_name, (base_cls, cls), {})
 
 
-LINE_NO_REGEXP = re.compile(r':\d+$')
+ANCHOR_REGEXP = re.compile(r':[_a-zA-Z0-9]+$')
+
+# Supported format:
+# [file:]<absolute or relative path>[:anchor identifier]
+def splitLinkPath(link):
+    """Splits the link path into the path and the anchor"""
+    if link.startswith('file:'):
+        link = link[5:]
+    link = os.path.normpath(link)
+
+    anchor = None
+    match = ANCHOR_REGEXP.search(link)
+    if match is not None:
+        anchorPart = match.group()
+        anchor = anchorPart[1:]
+        link = link[0:-1 * anchorPart.length()].strip()
+    return link, anchor
+
+
+
+
+
+
+
 
 def resolveLinkPath(link, fromFile, needLogging=True):
     """Resolves the link to the another file"""
-    effectiveLink = link
-    if effectiveLink.startswith('file:'):
-        effectiveLink = link[5:]
-    effectiveLink = os.path.normpath(effectiveLink)
-
-    lineNo = -1
-    match = LINE_NO_REGEXP.search(effectiveLink)
-    if match is not None:
-        linePart = match.group()
-        lineNo = int(linePart[1:])
-        effectiveLink = effectiveLink[0:-1 * linePart.length()].strip()
-        if lineNo < 0:
-            lineNo = -1
+    effectiveLink, anchor = splitLinkPath(link)
 
     effFileName = None
     if not os.path.isabs(effectiveLink):
@@ -299,5 +310,5 @@ def resolveLinkPath(link, fromFile, needLogging=True):
                           "' does not point to a file which Codimension can open")
         return None, None
 
-    return effFileName, lineNo
+    return effFileName, anchor
 
