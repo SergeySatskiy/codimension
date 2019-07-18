@@ -22,7 +22,7 @@
 
 import os
 from os.path import (islink, exists, split, join, sep, basename, realpath,
-                     normpath, isabs, dirname)
+                     normpath, isabs, dirname, isdir)
 import logging
 import json
 import magic
@@ -798,8 +798,30 @@ def resolveLink(path):
             path = normpath(resolved)
     return path, False
 
+
 def isCreatable(path):
     """Checks if the path is creatable"""
-    return True
+    if not isabs(path):
+        raise Exception('The isCreatable() function supports absolute paths only')
+    if exists(path):
+        raise Exception('The isCreatable() function is only for not existing items')
 
+    parts = path[1:].split(sep)
+    for count in range(len(parts) - 1, 0, -1):
+        # count is the number of path items to be used for a check
+        candidatePath = sep + sep.join(parts[0:count])
+        if exists(candidatePath):
+            if isdir(candidatePath):
+                if os.access(candidatePath, os.W_OK):
+                    return True, None
+                return False, 'No write permissions in ' + candidatePath
+            else:
+                return False, 'The path part ' + candidatePath + \
+                              ' points to a non directory item'
+
+    # Check the root directory
+    if os.access('/', os.W_OK):
+        return True, None
+
+    return False, 'No write permissions to the root directory'
 

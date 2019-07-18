@@ -536,8 +536,12 @@ class CFSceneContextMenuMixin:
     def onEditDoc(self):
         """Editing the CML doc comment"""
         if self.__actionPrerequisites():
+            editor = self.selectedItems()[0].getEditor()
+            fileName = editor._parent.getFileName()
+            if not fileName:
+                fileName = editor._parent.getShortName()
             dlg = DocLinkAnchorDialog('Edit', self.selectedItems()[0].cmlRef,
-                                      self.parent())
+                                      fileName, self.parent())
             if dlg.exec_():
                 pass
 

@@ -19,10 +19,11 @@
 
 import os.path
 from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
-                   QPushButton, QGridLayout, QLineEdit, QTextEdit, QCheckBox
-                   )
+                   QPushButton, QGridLayout, QLineEdit, QTextEdit, QCheckBox,
+                   QFileDialog)
 from utils.colorfont import setLineEditBackground
 from utils.globals import GlobalData
+from utils.misc import preResolveLinkPath
 
 
 """Dialog to enter a new text for a graphics item"""
@@ -31,8 +32,11 @@ class DocLinkAnchorDialog(QDialog):
 
     """Replace text input dialog"""
 
-    def __init__(self, windowTitle, cmlDocComment, parent=None):
+    def __init__(self, windowTitle, cmlDocComment, fileName, parent):
         QDialog.__init__(self, parent)
+
+        # Name of a file from which the doc link is created/edited
+        self.__fileName = fileName
         self.setWindowTitle(windowTitle + ' documentation link and/or anchor')
 
         self.__createLayout()
@@ -64,9 +68,11 @@ class DocLinkAnchorDialog(QDialog):
         self.fileButton.setToolTip(
             'Select an existing or non existing file')
         gridLayout.addWidget(self.fileButton, 0, 2, 1, 1)
-        self.createCheckBox = QCheckBox('Create file if does not exist', self)
+        self.fileButton.clicked.connect(self.__onSelectPath)
+        self.createCheckBox = QCheckBox('Create a markdown file if does not exist', self)
         self.createCheckBox.setChecked(True)
         gridLayout.addWidget(self.createCheckBox, 1, 1, 1, 1)
+        self.createCheckBox.stateChanged.connect(self.__validate)
 
         # Anchor
         gridLayout.addWidget(QLabel('Anchor', self), 2, 0, 1, 1)
@@ -114,6 +120,23 @@ class DocLinkAnchorDialog(QDialog):
         if cmlDocComment.title:
             self.setTitle(cmlDocComment.getTitle())
 
+    def __onSelectPath(self):
+        """Select file or directory"""
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        selectedPath = QFileDialog.getOpenFileName(
+            self, 'Select documentation file', self.linkEdit.text(),
+            options=options)
+        if isinstance(selectedPath, tuple):
+            selectedPath = selectedPath[0]
+        if selectedPath:
+            self.linkEdit.setText(os.path.normpath(selectedPath))
+
+
+
+
+
+
     def __setLinkValid(self):
         """Sets the link edit valid"""
         self.linkEdit.setToolTip(
@@ -135,13 +158,26 @@ class DocLinkAnchorDialog(QDialog):
             self.createCheckBox.setEnabled(False)
             return True
 
-        # Not a link; it is supposed to be a file or a creatable file
-        if os.path.isabs(txt):
-            if os.path.exists(txt):
-                if os.path.isfile(txt):
-                    if 
+        if txt.endswith(os.path.sep):
+            self.__setLinkInvalid('A link must be a file, not a directory')
+            return False
 
-        return True
+        # Not a link; it is supposed to be a file or a creatable file
+        self.createCheckBox.setEnabled(True)
+        fromFile = None
+        if self.__fileName:
+            if os.path.isabs(self.__fileName):
+                fromFile = self.__fileName
+        fName, anchor, errMsg = preResolveLinkPath(txt, fromFile,
+                                                   self.createCheckBox.isChecked())
+        del anchor
+
+        if fName:
+            self.__setLinkValid()
+            return True
+
+        self.__setLinkInvalid(errMsg)
+        return False
 
     def __setAnchorValid(self):
         """Sets the anchor edit valid"""

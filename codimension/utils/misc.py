@@ -289,27 +289,33 @@ def checkExistingLinkTarget(fName):
     return None
 
 
-def resolveLinkPath(link, fromFile, shouldExist=True):
+# Used when the user clicks on a link
+def resolveLinkPath(link, fromFile):
     """Resolves the link to the another file"""
     effectiveLink, anchor = splitLinkPath(link)
     fName, tryPaths = resolveFile(effectiveLink, fromFile)
 
     # fName is not None => file exists on FS
-    if shouldExist:
-        # Used when the user clicked on the link
-        if not fName:
-            logging.error("The link '" + effectiveLink + "' does not point to "
-                          "an existing file. Resolve tries: " +
-                          ', '.join(tryPaths))
-            return None, None
+    if not fName:
+        logging.error("The link '" + effectiveLink + "' does not point to "
+                      "an existing file. Resolve tries: " +
+                      ', '.join(tryPaths))
+        return None, None
 
-        errMsg = checkExistingLinkTarget(fName)
-        if errMsg:
-            logging.error(errMsg)
-            return None, None
+    errMsg = checkExistingLinkTarget(fName)
+    if errMsg:
+        logging.error(errMsg)
+        return None, None
 
-        # All is good: it is a file, it is openable
-        return fName, anchor
+    # All is good: it is a file, it is openable
+    return fName, anchor
+
+
+# Used in a dialog to suggest validity of the further operation
+def preResolveLinkPath(link, fromFile, canBeCreated):
+    """Tries to resolve the link and repors an error if any"""
+    effectiveLink, anchor = splitLinkPath(link)
+    fName, tryPaths = resolveFile(effectiveLink, fromFile)
 
     # Here: the file must not exist
     # If it exists then it should be a file and openable
@@ -325,13 +331,20 @@ def resolveLinkPath(link, fromFile, shouldExist=True):
                "The link '" + effectiveLink + \
                "' is invalid. Use an absolute path or save the file first."
 
-    for path in tryPaths:
-        if isCreatable(path):
-            # Can be created here
-            return path, anchor, None
+    if canBeCreated:
+        for path in tryPaths:
+            canCreate, _ = isCreatable(path)
+            if canCreate:
+                # Can be created here
+                return path, anchor, None
 
-    return None, None, \
+        return None, None, \
            "The link '" + effectiveLink + \
            "' points to non existing file which cannot be created due to " \
-           "lack of permissions. Tried paths: " + ", ".join(tryPaths)
+           "lack of permissions or invalid path. Tried paths: " + \
+           ", ".join(tryPaths)
+
+    return None, None, \
+        "The link '" + effectiveLink + \
+        "' does not point to an existing file"
 
