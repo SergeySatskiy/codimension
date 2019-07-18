@@ -27,7 +27,7 @@ import datetime
 import logging
 from .globals import GlobalData
 from .settings import SETTINGS_DIR
-from .fileutils import getFileContent, isFileOpenable
+from .fileutils import getFileContent, isFileOpenable, isCreatable
 
 
 # File name of the template for any new file.
@@ -262,17 +262,31 @@ def resolveFile(link, fromFile):
             return fName, [fName]
         tryPaths.append(fName)
 
-        # Try relative to the project file second
-        project = GlobalData().project
-        if project.isLoaded():
-            # Project is loaded - use from the project dir
-            projectDir = os.path.dirname(project.fileName)
-            fName = os.path.normpath(projectDir + os.path.sep + link)
-            if os.path.exists(fName):
-                return fName, [fName]
-            tryPaths.append(fName)
+    # Try relative to the project file second
+    project = GlobalData().project
+    if project.isLoaded():
+        # Project is loaded - use from the project dir
+        projectDir = os.path.dirname(project.fileName)
+        fName = os.path.normpath(projectDir + os.path.sep + link)
+        if os.path.exists(fName):
+            return fName, [fName]
+        tryPaths.append(fName)
 
     return None, tryPaths
+
+
+def checkExistingLinkTarget(fName):
+    """Returns an error message or None if everything is fine"""
+    if not os.path.isfile(fName):
+        return ' '.join(("The resolved link path",
+                         "'" + fName + "'",
+                         "does not point to a file"))
+
+    if not isFileOpenable(fName):
+        return ' '.join(("The resolved link path",
+                         "'" + fName + "'",
+                         "does not point to a file which Codimension can open"))
+    return None
 
 
 def resolveLinkPath(link, fromFile, shouldExist=True):
@@ -281,66 +295,43 @@ def resolveLinkPath(link, fromFile, shouldExist=True):
     fName, tryPaths = resolveFile(effectiveLink, fromFile)
 
     # fName is not None => file exists on FS
-
-
-
-
-    effFileName = None
-    if not os.path.isabs(effectiveLink):
-        tryPaths = []
-        if fromFile:
-            # Try relative to the 'fromFile' first
-            dirName = os.path.dirname(fromFile)
-            effFileName = os.path.normpath(dirName + os.path.sep + effectiveLink)
-            tryPaths.append(effFileName)
-            if not os.path.exists(effFileName):
-                effFileName = None
-
-        if not effFileName:
-            # Try relative to the project file second
-            project = GlobalData().project
-            if project.isLoaded():
-                # Project is loaded - use from the project dir
-                projectDir = os.path.dirname(project.fileName)
-                effFileName = os.path.normpath(projectDir + os.path.sep + effectiveLink)
-                if effFileName not in tryPaths:
-                    tryPaths.append(effFileName)
-                if not os.path.exists(effFileName):
-                    effFileName = None
-
-        if not effFileName:
-            if needLogging:
-                if tryPaths:
-                    logging.error("Relative path '" + effectiveLink +
-                                  "' is not resolved. Resolve tries: " +
-                                  ", ".join(tryPaths))
-                else:
-                    logging.error("Relative path '" + effectiveLink +
-                                  "' can be resolved after the file is saved or "
-                                  "if the project is loaded and the link is "
-                                  "given as relative to the project root")
-            return None, None
-    else:
-        # Absolute path is given
-        if os.path.exists(effectiveLink):
-            effFileName = effectiveLink
-        else:
-            if needLogging:
-                logging.error("The absolute link path '" + effectiveLink +
-                              "' does not point to an existing file")
+    if shouldExist:
+        # Used when the user clicked on the link
+        if not fName:
+            logging.error("The link '" + effectiveLink + "' does not point to "
+                          "an existing file. Resolve tries: " +
+                          ', '.join(tryPaths))
             return None, None
 
-    if not os.path.isfile(effFileName):
-        if needLogging:
-            logging.error("The resolved link path '" + effFileName +
-                          "' does not point to a file")
-        return None, None
+        errMsg = checkExistingLinkTarget(fName)
+        if errMsg:
+            logging.error(errMsg)
+            return None, None
 
-    if not isFileOpenable(effFileName):
-        if needLogging:
-            logging.error("The resolved link path '" + effFileName +
-                          "' does not point to a file which Codimension can open")
-        return None, None
+        # All is good: it is a file, it is openable
+        return fName, anchor
 
-    return effFileName, anchor
+    # Here: the file must not exist
+    # If it exists then it should be a file and openable
+    # If it does not then it should be creatable
+    if fName:
+        errMsg = checkExistingLinkTarget(fName)
+        if errMsg:
+            return None, None, errMsg
+        return fName, anchor, None
+
+    if not tryPaths:
+        return None, None, \
+               "The link '" + effectiveLink + \
+               "' is invalid. Use an absolute path or save the file first."
+
+    for path in tryPaths:
+        if isCreatable(path):
+            # Can be created here
+            return path, anchor, None
+
+    return None, None, \
+           "The link '" + effectiveLink + \
+           "' points to non existing file which cannot be created due to " \
+           "lack of permissions. Tried paths: " + ", ".join(tryPaths)
 

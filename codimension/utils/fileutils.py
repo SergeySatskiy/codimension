@@ -797,3 +797,9 @@ def resolveLink(path):
         else:
             path = normpath(resolved)
     return path, False
+
+def isCreatable(path):
+    """Checks if the path is creatable"""
+    return True
+
+
