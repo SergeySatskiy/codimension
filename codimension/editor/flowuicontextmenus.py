@@ -20,6 +20,7 @@
 """Sets up and handles the flow UI context menus"""
 
 
+import os.path
 from ui.qt import QMenu, QApplication
 from flowui.items import CellElement, IfCell
 from flowui.scopeitems import ScopeCellElement
@@ -29,6 +30,7 @@ from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt, CMLgb, CMLge, CMLdoc
 from utils.pixmapcache import getIcon
 from utils.diskvaluesrelay import addCollapsedGroup, removeCollapsedGroup
 from utils.settings import Settings
+from utils.misc import preResolveLinkPath
 from .flowuireplacetextdlg import ReplaceTextDialog
 from .customcolordlg import CustomColorsDialog
 from .flowuidoceditdlg import DocLinkAnchorDialog
@@ -533,6 +535,15 @@ class CFSceneContextMenuMixin:
             return True
         return False
 
+    def __createDocFile(self, link, fromFile):
+        """Creates the doc file if needed"""
+        fName, anchor, _ = preResolveLinkPath(link, fromFile, True)
+        if os.path.exists(fName):
+            return None
+
+        
+
+
     def onEditDoc(self):
         """Editing the CML doc comment"""
         if self.__actionPrerequisites():
@@ -548,7 +559,10 @@ class CFSceneContextMenuMixin:
                 title = dlg.title()
                 needToCreate = dgl.needToCreate()
 
-                
+                # First create a file if asked
+                if needToCreate:
+                    fName = self.__createDocFile(link, fromFile)
+
 
 
     def onRemoveDoc(self):

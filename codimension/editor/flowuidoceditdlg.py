@@ -179,7 +179,7 @@ class DocLinkAnchorDialog(QDialog):
             return True
 
         self.__setLinkInvalid(errMsg)
-        return True
+        return not self.createCheckBox.isChecked()
 
     def __setAnchorValid(self):
         """Sets the anchor edit valid"""
