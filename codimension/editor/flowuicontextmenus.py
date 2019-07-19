@@ -543,7 +543,13 @@ class CFSceneContextMenuMixin:
             dlg = DocLinkAnchorDialog('Edit', self.selectedItems()[0].cmlRef,
                                       fileName, self.parent())
             if dlg.exec_():
-                pass
+                link = dlg.linkEdit.text().strip()
+                anchor = dlg.anchorEdit.text().strip()
+                title = dlg.title()
+                needToCreate = dgl.needToCreate()
+
+                
+
 
     def onRemoveDoc(self):
         """Removing the CML doc comment"""

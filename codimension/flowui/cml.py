@@ -266,11 +266,11 @@ class CMLdoc(CMLCommentBase):
                "# cml 1 " + CMLdoc.CODE + " link=file:doc/mydoc.md title=\"See more\""
 
     @staticmethod
-    def generate(link, id, title, pos=1):
+    def generate(link, anchor, title, pos=1):
         """Generates a complete line to be inserted"""
         return " " * (pos - 1) + "# cml 1 " + CMLdoc.CODE + \
                appendTextItem('link', link) + \
-               appendTextItem('id', id) + \
+               appendTextItem('anchor', anchor) + \
                appendTextItem('title', title)
 
     def getTitle(self):

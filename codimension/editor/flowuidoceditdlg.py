@@ -70,7 +70,7 @@ class DocLinkAnchorDialog(QDialog):
         gridLayout.addWidget(self.fileButton, 0, 2, 1, 1)
         self.fileButton.clicked.connect(self.__onSelectPath)
         self.createCheckBox = QCheckBox('Create a markdown file if does not exist', self)
-        self.createCheckBox.setChecked(True)
+        self.createCheckBox.setChecked(False)
         gridLayout.addWidget(self.createCheckBox, 1, 1, 1, 1)
         self.createCheckBox.stateChanged.connect(self.__validate)
 
@@ -82,8 +82,11 @@ class DocLinkAnchorDialog(QDialog):
         self.anchorEdit.textChanged.connect(self.__validate)
 
         # Title
-        gridLayout.addWidget(QLabel('Title', self), 3, 0, 1, 1)
+        titleLabel = QLabel('Title', self)
+        titleLabel.setAlignment(Qt.AlignTop)
+        gridLayout.addWidget(titleLabel, 3, 0, 1, 1)
         self.titleEdit = QTextEdit()
+        self.titleEdit.setTabChangesFocus(True)
         self.titleEdit.setAcceptRichText(False)
         self.titleEdit.setToolTip(
             'If provided then will be displayed in the rectangle')
@@ -111,6 +114,9 @@ class DocLinkAnchorDialog(QDialog):
         """Provides the new title text"""
         return self.titleEdit.toPlainText()
 
+    def needToCreate(self):
+        return self.createCheckBox.isEnabled() and self.createCheckBox.isChecked()
+
     def __populate(self, cmlDocComment):
         """Populates the fields from the comment"""
         if cmlDocComment.link:
@@ -131,11 +137,6 @@ class DocLinkAnchorDialog(QDialog):
             selectedPath = selectedPath[0]
         if selectedPath:
             self.linkEdit.setText(os.path.normpath(selectedPath))
-
-
-
-
-
 
     def __setLinkValid(self):
         """Sets the link edit valid"""
@@ -163,6 +164,7 @@ class DocLinkAnchorDialog(QDialog):
             return False
 
         # Not a link; it is supposed to be a file or a creatable file
+        # However the invalid values will also be acceptable
         self.createCheckBox.setEnabled(True)
         fromFile = None
         if self.__fileName:
@@ -177,7 +179,7 @@ class DocLinkAnchorDialog(QDialog):
             return True
 
         self.__setLinkInvalid(errMsg)
-        return False
+        return True
 
     def __setAnchorValid(self):
         """Sets the anchor edit valid"""
