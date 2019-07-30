@@ -4,6 +4,8 @@
 * PlantUML diagram support for markdown
 * Self protection against invalid custom terminal command line
 * Bumping up the cdmcfparser version to 2.2.1
+* Bumping up the cdmpyparser version to 3.1.1
+* Bumping up the jedi library version to 0.14.1
 
 2019 Apr 25 Sergey Satskiy <sergey.satskiy@gmail.com>
 
