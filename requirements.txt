@@ -1,5 +1,5 @@
-cdmpyparser==3.1.0
-cdmcfparser==2.2.1
+cdmpyparser==3.1.1
+cdmcfparser==2.2.2
 cdmgcplugin==1.0.3
 pyflakes==2.1.1
 flake8==3.7.7
