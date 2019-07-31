@@ -135,9 +135,9 @@ class CFSceneContextMenuMixin:
         self.individualMenus[CollapsedGroup] = closeGroupContextMenu
         self.individualMenus[EmptyGroup] = emptyGroupContextMenu
 
-        self.individualMenus[IndependentDocCell] = docContextMenu
-        self.individualMenus[LeadingDocCell] = docContextMenu
-        self.individualMenus[AboveDocCell] = docContextMenu
+        # self.individualMenus[IndependentDocCell] = docContextMenu
+        # self.individualMenus[LeadingDocCell] = docContextMenu
+        # self.individualMenus[AboveDocCell] = docContextMenu
         # Individual items specific menu: end
 
         # Menu for a group of selected items
