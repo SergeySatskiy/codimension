@@ -68,6 +68,21 @@ class CFSceneContextMenuMixin:
         self.__groupAction = self.commonMenu.addAction(
             getIcon("cfgroup.png"), "Group...",
             self.onGroup)
+
+        self.__docAddEditSubmenu = QMenu('Documentation')
+        self.__docAddEditSubmenu.setIcon(getIcon('markdown.png'))
+        self.__editDocAction = self.__docAddEditSubmenu.addAction(
+            getIcon('replacetitle.png'), 'Add/edit doc link/anchor...',
+            self.onEditDoc)
+        self.__autoDocActon = self.__docAddEditSubmenu.addAction(
+            getIcon('createdoc.png'), 'Create doc file, add link and open for editing',
+            self.onAutoAddDoc)
+        self.__docAddEditSubmenu.addSeparator()
+        self.__removeDocAction = self.__docAddEditSubmenu.addAction(
+            getIcon('trash.png'), 'Remove doc link/anchor',
+            self.onRemoveDoc)
+
+        self.__docAction = self.commonMenu.addMenu(self.__docAddEditSubmenu)
         self.commonMenu.addSeparator()
         self.__removeCCAction = self.commonMenu.addAction(
             getIcon('trash.png'), 'Remove custom colors',
@@ -75,6 +90,10 @@ class CFSceneContextMenuMixin:
         self.__removeRTAction = self.commonMenu.addAction(
             getIcon('trash.png'), 'Remove replacement text',
             self.onRemoveReplacementText)
+        self.__removeDocAction = self.commonMenu.addAction(
+            getIcon('trash.png'), 'Remove documentation link/anchor',
+            self.onRemoveDoc)
+
         #self.commonMenu.addSeparator()
         #self.__cutAction = self.commonMenu.addAction(
         #    getIcon("cutmenu.png"), "Cut (specific for graphics pane)",
@@ -126,18 +145,15 @@ class CFSceneContextMenuMixin:
         docContextMenu.addAction(
             getIcon("replacetitle.png"), "Edit documentation link/anchor...",
             self.onEditDoc)
-        docContextMenu.addAction(
-            getIcon("trash.png"), "Remove documentation link/anchor",
-            self.onRemoveDoc)
 
         self.individualMenus[IfCell] = ifContextMenu
         self.individualMenus[OpenedGroupBegin] = openGroupContextMenu
         self.individualMenus[CollapsedGroup] = closeGroupContextMenu
         self.individualMenus[EmptyGroup] = emptyGroupContextMenu
 
-        # self.individualMenus[IndependentDocCell] = docContextMenu
-        # self.individualMenus[LeadingDocCell] = docContextMenu
-        # self.individualMenus[AboveDocCell] = docContextMenu
+        self.individualMenus[IndependentDocCell] = docContextMenu
+        self.individualMenus[LeadingDocCell] = docContextMenu
+        self.individualMenus[AboveDocCell] = docContextMenu
         # Individual items specific menu: end
 
         # Menu for a group of selected items
@@ -207,7 +223,10 @@ class CFSceneContextMenuMixin:
             self.countItemsWithCML(CMLcc) + totalCCGroups == count)
         self.__removeRTAction.setEnabled(
             self.countItemsWithCML(CMLrt) == count)
+        self.__removeDocAction.setEnabled(
+            self.countItemsWithCML(CMLdoc) == count)
         self.__groupAction.setEnabled(self.__canBeGrouped())
+        self.__docAddEditSubmenu.setEnabled(count == 1)
         #self.__cutAction.setEnabled(count == 1)
         #self.__copyAction.setEnabled(count == 1)
 
@@ -564,6 +583,10 @@ class CFSceneContextMenuMixin:
                     fName = self.__createDocFile(link, fromFile)
 
 
+
+    def onAutoAddDoc(self):
+        """Create a doc file, add a link and open for editing"""
+        pass
 
     def onRemoveDoc(self):
         """Removing the CML doc comment"""
