@@ -304,7 +304,7 @@ class VirtualCanvas:
     def __needLoopCommentRow(self, item):
         """Tells how many rows need to be resrved for comments/docs for the loops"""
         if self.settings.noComment:
-            return 0, []
+            return 0, 0, []
 
         comments = []
 
@@ -791,18 +791,19 @@ class VirtualCanvas:
                     nextColumn = column + 1
                     exceptIndex = 1
                     for exceptPart in item.exceptParts:
-                        excRows = aboveItems[exceptIndex][0]
-                        cRow = vacantRow + (maxRows - excRows)
+                        if maxRows > 0:
+                            excRows = aboveItems[exceptIndex][0]
+                            cRow = vacantRow + (maxRows - excRows)
 
-                        if aboveItems[exceptIndex][1]:
-                            docComment = AboveDocCell(exceptPart, aboveItems[exceptIndex][1],
-                                                      self, nextColumn, cRow)
-                            self.__allocateAndSet(cRow, nextColumn, docComment)
-                            cRow += 1
-                        if aboveItems[exceptIndex][2]:
-                            comment = AboveCommentCell(exceptPart, self, nextColumn, cRow)
-                            comment.needConnector = aboveItems[exceptIndex][1] is not None
-                            self.__allocateAndSet(cRow, nextColumn, comment)
+                            if aboveItems[exceptIndex][1]:
+                                docComment = AboveDocCell(exceptPart, aboveItems[exceptIndex][1],
+                                                          self, nextColumn, cRow)
+                                self.__allocateAndSet(cRow, nextColumn, docComment)
+                                cRow += 1
+                            if aboveItems[exceptIndex][2]:
+                                comment = AboveCommentCell(exceptPart, self, nextColumn, cRow)
+                                comment.needConnector = aboveItems[exceptIndex][1] is not None
+                                self.__allocateAndSet(cRow, nextColumn, comment)
 
                         self.__allocateScope(exceptPart,
                                              CellElement.EXCEPT_SCOPE,
