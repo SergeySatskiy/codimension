@@ -59,40 +59,14 @@ class CFSceneContextMenuMixin:
 
         # Common menu for all the individually selected items
         self.commonMenu = QMenu()
-        self.__ccAction = self.commonMenu.addAction(
-            getIcon("customcolors.png"), "Custom colors...",
-            self.onCustomColors)
-        self.__rtAction = self.commonMenu.addAction(
-            getIcon("replacetitle.png"), "Replace text...",
-            self.onReplaceText)
+        self.__ccSubmenuAction = self.commonMenu.addMenu(
+            self.__initCustomColorsContextMenu())
+        self.__rtSubmenuAction = self.commonMenu.addMenu(
+            self.__initReplaceTextContextMenu())
+        self.__docSubmenuAction = self.commonMenu.addMenu(
+            self.__initDocContextMenu())
         self.__groupAction = self.commonMenu.addAction(
-            getIcon("cfgroup.png"), "Group...",
-            self.onGroup)
-
-        self.__docAddEditSubmenu = QMenu('Documentation')
-        self.__docAddEditSubmenu.setIcon(getIcon('markdown.png'))
-        self.__editDocAction = self.__docAddEditSubmenu.addAction(
-            getIcon('replacetitle.png'), 'Add/edit doc link/anchor...',
-            self.onEditDoc)
-        self.__autoDocActon = self.__docAddEditSubmenu.addAction(
-            getIcon('createdoc.png'), 'Create doc file, add link and open for editing',
-            self.onAutoAddDoc)
-        self.__docAddEditSubmenu.addSeparator()
-        self.__removeDocAction = self.__docAddEditSubmenu.addAction(
-            getIcon('trash.png'), 'Remove doc link/anchor',
-            self.onRemoveDoc)
-
-        self.__docAction = self.commonMenu.addMenu(self.__docAddEditSubmenu)
-        self.commonMenu.addSeparator()
-        self.__removeCCAction = self.commonMenu.addAction(
-            getIcon('trash.png'), 'Remove custom colors',
-            self.onRemoveCustomColors)
-        self.__removeRTAction = self.commonMenu.addAction(
-            getIcon('trash.png'), 'Remove replacement text',
-            self.onRemoveReplacementText)
-        self.__removeDocAction = self.commonMenu.addAction(
-            getIcon('trash.png'), 'Remove documentation link/anchor',
-            self.onRemoveDoc)
+            getIcon("cfgroup.png"), "Group...", self.onGroup)
 
         #self.commonMenu.addSeparator()
         #self.__cutAction = self.commonMenu.addAction(
@@ -111,53 +85,81 @@ class CFSceneContextMenuMixin:
             getIcon("switchbranches.png"), "Switch branch layout",
             self.onSwitchIfBranch)
 
-        openGroupContextMenu = QMenu()
-        openGroupContextMenu.addAction(
-            getIcon("collapse.png"), "Collapse",
-            self.onGroupCollapse)
-        openGroupContextMenu.addAction(
-            getIcon("replacetitle.png"), "Edit title...",
-            self.onGroupEditTitle)
-        openGroupContextMenu.addAction(
-            getIcon("ungroup.png"), "Ungroup",
-            self.onGroupUngroup)
-
-        closeGroupContextMenu = QMenu()
-        closeGroupContextMenu.addAction(
-            getIcon("expand.png"), "Expand",
-            self.onGroupExpand)
-        closeGroupContextMenu.addAction(
-            getIcon("replacetitle.png"), "Edit title...",
-            self.onGroupEditTitle)
-        closeGroupContextMenu.addAction(
-            getIcon("ungroup.png"), "Ungroup",
-            self.onGroupUngroup)
-
-        emptyGroupContextMenu = QMenu()
-        emptyGroupContextMenu.addAction(
-            getIcon("replacetitle.png"), "Edit title...",
-            self.onGroupEditTitle)
-        emptyGroupContextMenu.addAction(
-            getIcon("ungroup.png"), "Ungroup",
-            self.onGroupUngroup)
-
-        docContextMenu = QMenu()
-        docContextMenu.addAction(
-            getIcon("replacetitle.png"), "Edit documentation link/anchor...",
-            self.onEditDoc)
-
         self.individualMenus[IfCell] = ifContextMenu
-        self.individualMenus[OpenedGroupBegin] = openGroupContextMenu
-        self.individualMenus[CollapsedGroup] = closeGroupContextMenu
-        self.individualMenus[EmptyGroup] = emptyGroupContextMenu
+        self.individualMenus[OpenedGroupBegin] = self.__initOpenGroupContextMenu()
+        self.individualMenus[CollapsedGroup] = self.__initCloseGroupContextMenu()
+        self.individualMenus[EmptyGroup] = self.__initEmptyGroupContextMenu()
 
-        self.individualMenus[IndependentDocCell] = docContextMenu
-        self.individualMenus[LeadingDocCell] = docContextMenu
-        self.individualMenus[AboveDocCell] = docContextMenu
         # Individual items specific menu: end
 
         # Menu for a group of selected items
         self.groupMenu = QMenu()
+
+    def __initOpenGroupContextMenu(self):
+        """Creates the open group context menu"""
+        ogMenu = QMenu()
+        ogMenu.addAction(getIcon("collapse.png"), "Collapse", self.onGroupCollapse)
+        ogMenu.addAction(getIcon("replacetitle.png"), "Edit title...", self.onGroupEditTitle)
+        ogMenu.addAction(getIcon("ungroup.png"), "Ungroup", self.onGroupUngroup)
+        return ogMenu
+
+    def __initCloseGroupContextMenu(self):
+        """Creates the closed group context menu"""
+        cgMenu = QMenu()
+        cgMenu.addAction(getIcon("expand.png"), "Expand", self.onGroupExpand)
+        cgMenu.addAction(getIcon("replacetitle.png"), "Edit title...", self.onGroupEditTitle)
+        cgMenu.addAction(getIcon("ungroup.png"), "Ungroup", self.onGroupUngroup)
+        return cgMenu
+
+    def __initEmptyGroupContextMenu(self):
+        """Creates the empty group context menu"""
+        egMenu = QMenu()
+        egMenu.addAction(getIcon("replacetitle.png"), "Edit title...", self.onGroupEditTitle)
+        egMenu.addAction(getIcon("ungroup.png"), "Ungroup", self.onGroupUngroup)
+        return egMenu
+
+    def __initCustomColorsContextMenu(self):
+        """Create the custom colors submenu"""
+        self.__customColorsSubmenu = QMenu('Custom colors')
+        self.__customColorsSubmenu.setIcon(getIcon('customcolorsmenu.png'))
+        self.__ccAction = self.__customColorsSubmenu.addAction(
+            getIcon("customcolors.png"), "Custom colors...",
+            self.onCustomColors)
+        self.__customColorsSubmenu.addSeparator()
+        self.__removeCCAction = self.__customColorsSubmenu.addAction(
+            getIcon('trash.png'), 'Remove custom colors',
+            self.onRemoveCustomColors)
+        return self.__customColorsSubmenu
+
+    def __initReplaceTextContextMenu(self):
+        """Create the Replace text submenu"""
+        self.__replaceTextSubmenu = QMenu('Replace text')
+        self.__replaceTextSubmenu.setIcon(getIcon('replacetextmenu.png'))
+        self.__rtAction = self.__replaceTextSubmenu.addAction(
+            getIcon("replacetitle.png"), "Replace text...",
+            self.onReplaceText)
+        self.__replaceTextSubmenu.addSeparator()
+        self.__removeRTAction = self.__replaceTextSubmenu.addAction(
+            getIcon('trash.png'), 'Remove replacement text',
+            self.onRemoveReplacementText)
+        return self.__replaceTextSubmenu
+
+    def __initDocContextMenu(self):
+        """Create the Documentation submenu"""
+        self.__docSubmenu = QMenu('Documentation')
+        self.__docSubmenu.setIcon(getIcon('markdown.png'))
+        self.__editDocAction = self.__docSubmenu.addAction(
+            getIcon('replacetitle.png'), 'Add/edit doc link/anchor...',
+            self.onEditDoc)
+        self.__autoDocActon = self.__docSubmenu.addAction(
+            getIcon('createdoc.png'),
+            'Create doc file, add link and open for editing',
+            self.onAutoAddDoc)
+        self.__docSubmenu.addSeparator()
+        self.__removeDocAction = self.__docSubmenu.addAction(
+            getIcon('trash.png'), 'Remove doc link/anchor',
+            self.onRemoveDoc)
+        return self.__docSubmenu
 
     def onContextMenu(self, event):
         """Triggered when a context menu should be shown"""
@@ -226,7 +228,7 @@ class CFSceneContextMenuMixin:
         self.__removeDocAction.setEnabled(
             self.countItemsWithCML(CMLdoc) == count)
         self.__groupAction.setEnabled(self.__canBeGrouped())
-        self.__docAddEditSubmenu.setEnabled(count == 1)
+        self.__docSubmenu.setEnabled(count == 1)
         #self.__cutAction.setEnabled(count == 1)
         #self.__copyAction.setEnabled(count == 1)
 
