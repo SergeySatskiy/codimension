@@ -65,6 +65,7 @@ class CFSceneContextMenuMixin:
             self.__initReplaceTextContextMenu())
         self.__docSubmenuAction = self.commonMenu.addMenu(
             self.__initDocContextMenu())
+        self.__docSubmenuAction.setVisible(False)
         self.__groupAction = self.commonMenu.addAction(
             getIcon("cfgroup.png"), "Group...", self.onGroup)
 
