@@ -126,6 +126,9 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
         The width of this cell will take whatever is needed considering
         the comment shift to the left.
         """
+        if self.kind == CellElement.ABOVE_DOC:
+            return
+
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         if cellToTheLeft.kind != CellElement.CONNECTOR:
             # Not implemented yet
