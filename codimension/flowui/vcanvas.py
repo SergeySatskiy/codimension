@@ -808,6 +808,7 @@ class VirtualCanvas:
                         self.__allocateScope(exceptPart,
                                              CellElement.EXCEPT_SCOPE,
                                              vacantRow + maxRows, nextColumn)
+                        self.cells[vacantRow + maxRows][nextColumn].setLeaderRef(item)
 
                         exceptIndex += 1
                         nextColumn += 1

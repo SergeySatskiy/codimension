@@ -975,6 +975,10 @@ class CFSceneContextMenuMixin:
                                  CellElement.EMPTY_GROUP,
                                  CellElement.COLLAPSED_GROUP]:
                     branchId = item.groupBeginCMLRef.ref.getParentIfID()
+                elif item.kind in [CellElement.INDEPENDENT_DOC,
+                                   CellElement.LEADING_DOC,
+                                   CellElement.ABOVE_DOC]:
+                    branchId = item.cmlRef.ref.getParentIfID()
                 else:
                     branchId = item.ref.getParentIfID()
                 if branchId is not None:
