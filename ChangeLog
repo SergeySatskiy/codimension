@@ -1,3 +1,9 @@
+2019 xxx xx Sergey Satskiy <sergey.satskiy@tuta.io>
+
+* Version x.x.x
+* Bug fix: allow grouping for the try-except blocks
+* Bug fix: exception when selecting doc links
+
 2019 Aug 05 Sergey Satskiy <sergey.satskiy@tuta.io>
 
 * Version 4.5.2

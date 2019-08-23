@@ -65,7 +65,6 @@ class CFSceneContextMenuMixin:
             self.__initReplaceTextContextMenu())
         self.__docSubmenuAction = self.commonMenu.addMenu(
             self.__initDocContextMenu())
-        self.__docSubmenuAction.setVisible(False)
         self.__groupAction = self.commonMenu.addAction(
             getIcon("cfgroup.png"), "Group...", self.onGroup)
 
@@ -208,28 +207,58 @@ class CFSceneContextMenuMixin:
 
     def __disableMenuItems(self):
         """Disables the common menu items as needed"""
-        hasComment = self.isCommentInSelection()
+        totalComments = self.countComments()
+        hasComment = totalComments > 0
         hasDocstring = self.isDocstringInSelection()
         hasMinimizedExcepts = self.isInSelected([(CellElement.EXCEPT_MINIMIZED,
                                                   None)])
+        # Doc links are considered comments as well
+        totalDocLinks = self.countInSelected([(CellElement.INDEPENDENT_DOC, None),
+                                              (CellElement.LEADING_DOC, None),
+                                              (CellElement.ABOVE_DOC, None)])
+        totalNonDocComments = totalComments - totalDocLinks
+
         totalGroups = sum(self.countGroups())
         count = len(self.selectedItems())
+        totalCCGroups = sum(self.countGroupsWithCustomColors())
 
-        self.__ccAction.setEnabled(not hasComment and not hasMinimizedExcepts)
+        self.__ccAction.setEnabled(not hasComment and
+                                   not hasMinimizedExcepts and
+                                   totalDocLinks == 0)
+        self.__removeCCAction.setEnabled(
+            self.countItemsWithCML(CMLcc) + totalCCGroups == count)
+        self.__customColorsSubmenu.setEnabled(self.__ccAction.isEnabled() or
+                                              self.__removeCCAction.isEnabled())
+
         self.__rtAction.setEnabled(not hasComment and
                                    not hasDocstring and
                                    not hasMinimizedExcepts and
+                                   totalDocLinks == 0 and
                                    totalGroups == 0)
-
-        totalCCGroups = sum(self.countGroupsWithCustomColors())
-        self.__removeCCAction.setEnabled(
-            self.countItemsWithCML(CMLcc) + totalCCGroups == count)
         self.__removeRTAction.setEnabled(
             self.countItemsWithCML(CMLrt) == count)
-        self.__removeDocAction.setEnabled(
-            self.countItemsWithCML(CMLdoc) == count)
+        self.__replaceTextSubmenu.setEnabled(self.__rtAction.isEnabled() or
+                                             self.__removeRTAction.isEnabled())
+
         self.__groupAction.setEnabled(self.__canBeGrouped())
-        self.__docSubmenu.setEnabled(count == 1)
+
+        itemsWithDocCML = self.countItemsWithCML(CMLdoc)
+        self.__removeDocAction.setEnabled(totalDocLinks + itemsWithDocCML == count)
+        if count != 1 or totalNonDocComments != 0 or hasDocstring or totalGroups != 0:
+            self.__editDocAction.setEnabled(False)
+            self.__autoDocActon.setEnabled(False)
+        else:
+            self.__editDocAction.setEnabled(True)
+            fileName = None
+            editor = self.selectedItems()[0].getEditor()
+            if editor:
+                fileName = editor._parent.getFileName()
+            self.__autoDocActon.setEnabled(
+                    fileName and totalDocLinks + itemsWithDocCML == 0)
+        self.__docSubmenu.setEnabled(self.__removeDocAction.isEnabled() or
+                                     self.__editDocAction.isEnabled() or
+                                     self.__autoDocActon.isEnabled())
+
         #self.__cutAction.setEnabled(count == 1)
         #self.__copyAction.setEnabled(count == 1)
 
@@ -559,31 +588,54 @@ class CFSceneContextMenuMixin:
 
     def __createDocFile(self, link, fromFile):
         """Creates the doc file if needed"""
-        fName, anchor, _ = preResolveLinkPath(link, fromFile, True)
-        if os.path.exists(fName):
+        fName, _, errMsg = preResolveLinkPath(link, fromFile, True)
+        if errMsg:
+            logging.error(errMsg)
             return None
 
-        
+        if os.path.exists(fName):
+            return fName
 
+        try:
+            os.makedirs(os.path.dirname(fName), exist_ok=True)
+            with open(fName, 'w') as f:
+                pass
+        except Exception as exc:
+            logging.error()
+            return None
+
+        return fName
 
     def onEditDoc(self):
         """Editing the CML doc comment"""
         if self.__actionPrerequisites():
-            editor = self.selectedItems()[0].getEditor()
+            selectedItem = self.selectedItems()[0]  # Excatly one is selected
+            editor = selectedItem.getEditor()
             fileName = editor._parent.getFileName()
             if not fileName:
                 fileName = editor._parent.getShortName()
-            dlg = DocLinkAnchorDialog('Edit', self.selectedItems()[0].cmlRef,
-                                      fileName, self.parent())
+
+            # It could be a CML doc or an item which has a CML doc
+            if selectedItem.isComment():
+                cmlRef = selectedItem.cmlRef
+            else:
+                # If not found then it means the doc link needs to be created
+                cmlRef = self.__findCMLinItem(selectedItem, CMLdoc)
+
+            dlg = DocLinkAnchorDialog('Add' if cmlRef is None else 'Edit',
+                                      cmlRef, fileName, self.parent())
             if dlg.exec_():
                 link = dlg.linkEdit.text().strip()
                 anchor = dlg.anchorEdit.text().strip()
                 title = dlg.title()
-                needToCreate = dgl.needToCreate()
+                needToCreate = dlg.needToCreate()
 
                 # First create a file if asked
                 if needToCreate:
-                    fName = self.__createDocFile(link, fromFile)
+                    docFileName = self.__createDocFile(link, fileName)
+                    if not docFileName:
+                        return
+
 
 
 
@@ -604,10 +656,11 @@ class CFSceneContextMenuMixin:
             QApplication.processEvents()
             self.parent().redrawNow()
 
-    def isInSelected(self, matchList):
-        """Checks if any if the match list items is in the selection"""
+    def countInSelected(self, matchList):
+        """Counts the number of matching items in selection"""
         # match is a list of pairs [kind, subKind]
         #   None would mean 'match any'
+        count = 0
         for selectedItem in self.selectedItems():
             for kind, subKind in matchList:
                 match = True
@@ -618,8 +671,12 @@ class CFSceneContextMenuMixin:
                     if subKind != selectedItem.subKind:
                         match = False
                 if match:
-                    return True
-        return False
+                    count += 1
+        return count
+
+    def isInSelected(self, matchList):
+        """Checks if any if the match list items is in the selection"""
+        return self.countInSelected(matchList) > 0
 
     def isDocstringInSelection(self):
         """True if a docstring item in the selection"""
@@ -628,37 +685,47 @@ class CFSceneContextMenuMixin:
                 return True
         return False
 
-    def isCommentInSelection(self):
-        """True if a comment item in the selection"""
+    def countComments(self):
+        """Count comments in selection"""
+        count = 0
         for item in self.selectedItems():
             if item.isComment():
-                return True
-        return False
+                count += 1
+        return count
+
+    def isCommentInSelection(self):
+        """True if a comment item in the selection"""
+        return self.countComments() > 0
 
     def countItemsWithCML(self, cmlType):
         """Counts items with have a certain type of a CML comment"""
         count = 0
         for item in self.selectedItems():
-            if item.isComment():
-                continue
-            if item.isDocstring():
-                # Side comments for docstrings? Nonesense! So they are ignored
-                # even if they are collected
-                if CMLVersion.find(item.ref.docstring.leadingCMLComments,
-                                   cmlType) is not None:
-                    count += 1
-                continue
-
-            if hasattr(item.ref, 'leadingCMLComments'):
-                if CMLVersion.find(item.ref.leadingCMLComments,
-                                   cmlType) is not None:
-                    count += 1
-                    continue
-            if hasattr(item.ref, 'sideCMLComments'):
-                if CMLVersion.find(item.ref.sideCMLComments,
-                                   cmlType) is not None:
-                    count += 1
+            if self.__findCMLinItem(item, cmlType) is not None:
+                count += 1
         return count
+
+    def __findCMLinItem(self, item, cmlType):
+        """Finds a related CML item"""
+        if item.isComment():
+            # Doc links are comments so they are skipped here
+            return None
+        if item.isDocstring():
+            # Side comments for docstrings? Nonesense! So they are ignored
+            # even if they are collected
+            cml = CMLVersion.find(item.ref.docstring.leadingCMLComments, cmlType)
+            if cml is not None:
+                return cml
+
+        if hasattr(item.ref, 'leadingCMLComments'):
+            cml = CMLVersion.find(item.ref.leadingCMLComments, cmlType)
+            if cml is not None:
+                return cml
+        if hasattr(item.ref, 'sideCMLComments'):
+            cml = CMLVersion.find(item.ref.sideCMLComments, cmlType)
+            if cml is not None:
+                return cml
+        return None
 
     def countGroups(self):
         """Counts empty, close and open groups"""

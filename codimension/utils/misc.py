@@ -268,9 +268,10 @@ def resolveFile(link, fromFile):
         # Project is loaded - use from the project dir
         projectDir = os.path.dirname(project.fileName)
         fName = os.path.normpath(projectDir + os.path.sep + link)
-        if os.path.exists(fName):
-            return fName, [fName]
-        tryPaths.append(fName)
+        if fName not in tryPaths:
+            if os.path.exists(fName):
+                return fName, [fName]
+            tryPaths.append(fName)
 
     return None, tryPaths
 
