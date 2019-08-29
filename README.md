@@ -2,7 +2,7 @@
 
 Essential links:
 
-- [Presentation of the technology and the tool](http://codimension.org/documentation/technologypresentation/)
+- [Presentation of the technology and the tool](http://codimension.org/documentation/visualization-technology/python-code-visualization.html)
 - [Project home page](http://codimension.org/)
 - [Packages and installation](http://codimension.org/download/linuxdownload.html)
 - [Running Codimension from a git clone](http://codimension.org/download/runfromgit.html)
