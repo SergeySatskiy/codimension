@@ -1112,7 +1112,6 @@ class EditorsManager(QTabWidget):
             mime, _, _ = getFileProperties(fileName)
 
             newWidget = VCSAnnotateViewerTabWidget(self)
-            newWidget.setFileType(mime)
             newWidget.sigEscapePressed.connect(self.__onESC)
 
             newWidget.setAnnotatedContent(shortName, text, lineRevisions,
@@ -1148,25 +1147,28 @@ class EditorsManager(QTabWidget):
         """Opens the required file"""
         if not fileName:
             return
-        if not isFileSearchable(fileName):
-            return
-        try:
-            fileName = os.path.realpath(fileName)
-            # Check if the file is already opened
-            for index in range(self.count()):
-                if self.widget(index).getFileName() == fileName:
-                    # Found
-                    if self.currentIndex() == index:
-                        self.history.updateForCurrentIndex()
-                    if lineNo > 0:
-                        editor = self.widget(index).getEditor()
-                        editor.gotoLine(lineNo, pos)
-                    self.activateTab(index)
-                    if self.currentIndex() == index:
-                        self.history.addCurrent()
-                    return True
 
-            # Not found - create a new one
+        fileName = os.path.realpath(fileName)
+
+        # Check if the file is already opened
+        for index in range(self.count()):
+            if self.widget(index).getFileName() == fileName:
+                # Found
+                if self.currentIndex() == index:
+                    self.history.updateForCurrentIndex()
+                if lineNo > 0:
+                    editor = self.widget(index).getEditor()
+                    editor.gotoLine(lineNo, pos)
+                self.activateTab(index)
+                if self.currentIndex() == index:
+                    self.history.addCurrent()
+                return True
+
+        if not isFileSearchable(fileName):
+            mime, _, _ = getFileProperties(fileName)
+            if mime != 'inode/x-empty':
+                return
+        try:
             newWidget = TextEditorTabWidget(self, self.__debugger)
             newWidget.sigReloadRequest.connect(self.onReload)
             newWidget.reloadAllNonModifiedRequest.connect(
@@ -1289,14 +1291,20 @@ class EditorsManager(QTabWidget):
                 # Error saving
                 return False
 
+            editor.document().setModified(False)
+
             # The disk access has happened anyway so it does not make sense
             # to save on one disk operation for detecting a file type.
             # It could be changed due to a symlink or due to a newly populated
             # content like in .cgi files
-            newFileMime, _, _ = getFileProperties(fileName, True, True)
-            if oldFileMime != newFileMime:
-                widget.setFileType(newFileMime)
-                widget.getEditor().bindLexer(fileName, newFileMime)
+            newFileMime, _, xmlSyntaxFile = getFileProperties(fileName, True, True)
+            if oldFileMime != newFileMime or newFileMime is None:
+                editor.mime = newFileMime
+                editor.clearSyntax()
+                # It is safe and the syntax may change to None too
+                editor.detectSyntax(xmlSyntaxFile)
+                editor.clearAnalysisMessages()
+
                 widget.updateStatus()
                 self.updateStatusBar()
                 self.__mainWindow.updateRunDebugButtons()
@@ -1304,7 +1312,6 @@ class EditorsManager(QTabWidget):
                     fileName, widget.getUUID(),
                     newFileMime if newFileMime else '')
 
-            editor.document().setModified(False)
             self._updateIconAndTooltip(index)
             if GlobalData().project.fileName == fileName:
                 GlobalData().project.onProjectFileUpdated()
@@ -1455,8 +1462,8 @@ class EditorsManager(QTabWidget):
             if newType != oldType or newType is None:
                 editor.mime = newType
                 editor.clearSyntax()
-                if xmlSyntaxFile:
-                    editor.detectSyntax(xmlSyntaxFile)
+                # It is safe and the syntax may change to None too
+                editor.detectSyntax(xmlSyntaxFile)
                 editor.clearAnalysisMessages()
                 self.sigFileTypeChanged.emit(fileName, widget.getUUID(),
                                              newType if newType else '')

@@ -712,6 +712,20 @@ class RecentProjectsViewer(QWidget):
                 item.updateTooltip()
                 break
 
+    def onFileTypeChanged(self, fileName, uuid, newMime):
+        """Triggered when the file type is changed"""
+        del uuid        # unused argument
+        del newMime     # unused argument
+        realPath = os.path.realpath(fileName)
+        count = self.recentFilesView.topLevelItemCount()
+        for index in range(0, count):
+            item = self.recentFilesView.topLevelItem(index)
+
+            itemRealPath = os.path.realpath(item.getFilename())
+            if realPath == itemRealPath:
+                item.updateIconAndTooltip()
+                break
+
     def __onShowHide(self):
         """Triggered when show/hide button is clicked"""
         if self.projectsView.isVisible():

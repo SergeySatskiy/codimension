@@ -1094,6 +1094,11 @@ class ProjectViewer(QWidget):
         self.filesystemView.onFileUpdated(fileName, uuid)
         self.__updateFSToolbarButtons()
 
+    def onFileTypeChanged(self, fileName, uuid, newMime):
+        """Triggered when the file type is changed"""
+        self.projectTreeView.onFileTypeChanged(fileName, uuid, newMime)
+        self.filesystemView.onFileTypeChanged(fileName, uuid, newMime)
+
     def __onShowHide(self, startup=False):
         """Triggered when show/hide button is clicked"""
         if startup or self.filesystemView.isVisible():
