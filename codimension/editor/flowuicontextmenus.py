@@ -601,9 +601,9 @@ class CFSceneContextMenuMixin:
             with open(fName, 'w') as f:
                 pass
         except Exception as exc:
-            logging.error()
+            logging.error('Error creating the documentation file ' +
+                          fName + ': ' + str(exc))
             return None
-
         return fName
 
     def onEditDoc(self):
@@ -636,8 +636,23 @@ class CFSceneContextMenuMixin:
                     if not docFileName:
                         return
 
+                selection = self.serializeSelection()
+                with editor:
+                    # Now insert a new cml comment or update existing
+                    if cmlRef:
+                        # It is editing, the comment exists
+                        lineNo = cmlRef.ref.beginLine
+                        cmlRef.removeFromText(editor)
+                    else:
+                        # It is a new doc link
+                        lineNo = selectedItem.getFirstLine()
 
+                    line = CMLdocgenerate(link, anchor, title)
+                    editor.insertLines(line, lineNo)
 
+                QApplication.processEvents()
+                self.parent().redrawNow()
+                self.restoreSelectionByID(selection)
 
     def onAutoAddDoc(self):
         """Create a doc file, add a link and open for editing"""
