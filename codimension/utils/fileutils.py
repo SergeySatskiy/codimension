@@ -151,9 +151,6 @@ def isImageFile(fName):
 def isFileOpenable(fName):
     """True if codimension can open the file"""
     mime, _, syntaxFile = getFileProperties(fName, True, False)
-    if mime == 'text/plain':
-        print(fName)
-        print(syntaxFile)
     if syntaxFile is not None:
         return True
     return isImageViewable(mime)
@@ -417,7 +414,10 @@ def __initMimeToIcon():
 
 def __getIcon(xmlSyntaxFile, mime, fBaseName):
     """Provides an icon for a file"""
-    fileExtension = fBaseName.split('.')[-1].lower()
+    if '.' in fBaseName:
+        fileExtension = fBaseName.split('.')[-1].lower()
+    else:
+        fileExtension = ''
 
     if xmlSyntaxFile is not None:
         # There are a few special cases:
@@ -577,7 +577,10 @@ def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
         # File may not exist
         fBaseName = basename(fName)
 
-    fileExtension = fBaseName.split('.')[-1].lower()
+    if '.' in fBaseName:
+        fileExtension = fBaseName.split('.')[-1].lower()
+    else:
+        fileExtension = ''
 
     syntaxFile = __getXmlSyntaxFile(fBaseName)
     if syntaxFile is None:

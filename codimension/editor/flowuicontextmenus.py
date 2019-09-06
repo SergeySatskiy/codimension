@@ -30,6 +30,7 @@ from flowui.cml import CMLVersion, CMLsw, CMLcc, CMLrt, CMLgb, CMLge, CMLdoc
 from utils.pixmapcache import getIcon
 from utils.diskvaluesrelay import addCollapsedGroup, removeCollapsedGroup
 from utils.settings import Settings
+from utils.globals import GlobalData
 from utils.misc import preResolveLinkPath
 from .flowuireplacetextdlg import ReplaceTextDialog
 from .customcolordlg import CustomColorsDialog
@@ -608,68 +609,123 @@ class CFSceneContextMenuMixin:
 
     def onEditDoc(self):
         """Editing the CML doc comment"""
-        if self.__actionPrerequisites():
-            selectedItem = self.selectedItems()[0]  # Excatly one is selected
-            editor = selectedItem.getEditor()
-            fileName = editor._parent.getFileName()
-            if not fileName:
-                fileName = editor._parent.getShortName()
+        if not self.__actionPrerequisites():
+            return
 
-            # It could be a CML doc or an item which has a CML doc
-            if selectedItem.isComment():
-                cmlRef = selectedItem.cmlRef
-            else:
-                # If not found then it means the doc link needs to be created
-                cmlRef = self.__findCMLinItem(selectedItem, CMLdoc)
+        selectedItem = self.selectedItems()[0]  # Exactly one is selected
+        editor = selectedItem.getEditor()
+        fileName = editor._parent.getFileName()
+        if not fileName:
+            fileName = editor._parent.getShortName()
 
-            dlg = DocLinkAnchorDialog('Add' if cmlRef is None else 'Edit',
-                                      cmlRef, fileName, self.parent())
-            if dlg.exec_():
-                link = dlg.linkEdit.text().strip()
-                anchor = dlg.anchorEdit.text().strip()
-                title = dlg.title()
-                needToCreate = dlg.needToCreate()
+        # It could be a CML doc or an item which has a CML doc
+        if selectedItem.isComment():
+            cmlRef = selectedItem.cmlRef
+        else:
+            # If not found then it means the doc link needs to be created
+            cmlRef = self.__findCMLinItem(selectedItem, CMLdoc)
 
-                # First create a file if asked
-                if needToCreate:
-                    docFileName = self.__createDocFile(link, fileName)
-                    if not docFileName:
-                        return
+        dlg = DocLinkAnchorDialog('Add' if cmlRef is None else 'Edit',
+                                  cmlRef, fileName, self.parent())
+        if dlg.exec_():
+            link = dlg.linkEdit.text().strip()
+            anchor = dlg.anchorEdit.text().strip()
+            title = dlg.title()
+            needToCreate = dlg.needToCreate()
 
-                selection = self.serializeSelection()
-                with editor:
-                    # Now insert a new cml comment or update existing
-                    if cmlRef:
-                        # It is editing, the comment exists
-                        lineNo = cmlRef.ref.beginLine
-                        cmlRef.removeFromText(editor)
-                    else:
-                        # It is a new doc link
-                        lineNo = selectedItem.getFirstLine()
+            # First create a file if asked
+            if needToCreate:
+                docFileName = self.__createDocFile(link, fileName)
+                if not docFileName:
+                    return
 
-                    line = CMLdocgenerate(link, anchor, title)
-                    editor.insertLines(line, lineNo)
+            selection = self.serializeSelection()
+            with editor:
+                # Now insert a new cml comment or update existing
+                if cmlRef:
+                    # It is editing, the comment exists
+                    lineNo = cmlRef.ref.beginLine
+                    cmlRef.removeFromText(editor)
+                else:
+                    # It is a new doc link
+                    lineNo = selectedItem.getFirstLine()
 
-                QApplication.processEvents()
-                self.parent().redrawNow()
-                self.restoreSelectionByID(selection)
+                line = CMLdoc.generate(link, anchor, title)
+                editor.insertLines(line, lineNo)
+
+            QApplication.processEvents()
+            self.parent().redrawNow()
+            self.restoreSelectionByID(selection)
+
+    @staticmethod
+    def __getAutoDocFileName(fileName):
+        """Forms the auto doc file name"""
+        # Markdown is used as a default documentation format
+        fBaseName = os.path.basename(fileName)
+        if '.' in fBaseName:
+            fileExtension = fBaseName.split('.')[-1]
+            fBaseName = fBaseName[:-len(fileExtension)] + 'md'
+        else:
+            fBaseName += '.md'
+
+        project = GlobalData().project
+        if project.isProjectFile(fileName):
+            projectDir = project.getProjectDir()
+            relativePath = fileName[len(projectDir):]
+            projectName = project.getProjectName()
+            if relativePath.startswith(projectName):
+                relativePath = relativePath.replace(projectName, '', 1)
+            return os.path.normpath(
+                os.path.sep.join([projectDir + 'doc',
+                                  os.path.dirname(relativePath),
+                                  fBaseName]))
+        return os.path.normpath(
+            os.path.sep.join([os.path.dirname(fileName),
+                              'doc',
+                               fBaseName]))
 
     def onAutoAddDoc(self):
         """Create a doc file, add a link and open for editing"""
-        pass
+        if not self.__actionPrerequisites():
+            return
+
+        selectedItem = self.selectedItems()[0]  # Exactly one is selected
+        editor = selectedItem.getEditor()
+        fileName = editor._parent.getFileName()
+        if not fileName:
+            logging.error('Save file before invoking auto doc')
+            return
+
+        docFileName = self.__getAutoDocFileName(fileName)
+        if not os.path.exists(docFileName):
+            # Create file and populate with the default content
+            try:
+                os.makedirs(os.path.dirname(docFileName), exist_ok=True)
+                with open(docFileName, 'w') as f:
+                    pass
+            except Exception as exc:
+                logging.error('Error creating the documentation file ' +
+                              docFileName + ': ' + str(exc))
+                return
+
+        # Insert a doc link
+        # Open it
+
 
     def onRemoveDoc(self):
         """Removing the CML doc comment"""
-        if self.__actionPrerequisites():
-            editor = self.selectedItems()[0].getEditor()
-            with editor:
-                for item in self.sortSelectedReverse():
-                    cmlComment = CMLVersion.find(item.ref.leadingCMLComments,
-                                                 CMLdoc)
-                    if cmlComment is not None:
-                        cmlComment.removeFromText(editor)
-            QApplication.processEvents()
-            self.parent().redrawNow()
+        if not self.__actionPrerequisites():
+            return
+
+        editor = self.selectedItems()[0].getEditor()
+        with editor:
+            for item in self.sortSelectedReverse():
+                cmlComment = CMLVersion.find(item.ref.leadingCMLComments,
+                                             CMLdoc)
+                if cmlComment is not None:
+                    cmlComment.removeFromText(editor)
+        QApplication.processEvents()
+        self.parent().redrawNow()
 
     def countInSelected(self, matchList):
         """Counts the number of matching items in selection"""
