@@ -575,6 +575,14 @@ def writeEncodedFile(fName, content, encoding):
                 encContent = BOM_UTF32 + content.encode(enc)
         else:
             encContent = content.encode(normEnc)
+
+            # Workaround for empty files: if there is no visible content and
+            # the file is saved then the editor reports precisely \n which is
+            # saved on disk and then detected as octet-stream. If there are
+            # more than one \n then the file is detected as plain text.
+            # The octet stream files are not openable in Codimension
+            if encContent == b'\n':
+                encContent = b''
     except (UnicodeError, LookupError) as exc:
         raise Exception('Error encoding the buffer content with ' + encoding +
                         ': ' + str(exc))

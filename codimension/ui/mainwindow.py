@@ -290,10 +290,12 @@ class CodimensionMainWindow(QMainWindow):
         self._leftSideBar.addTab(self.projectViewer, getIcon(''),
                                  'Project', 'project', 0)
         self.em.sigFileUpdated.connect(self.projectViewer.onFileUpdated)
+        self.em.sigFileTypeChanged.connect(self.projectViewer.onFileTypeChanged)
         self.recentProjectsViewer = RecentProjectsViewer(self)
         self._leftSideBar.addTab(self.recentProjectsViewer, getIcon(''),
                                  'Recent', 'recent', 1)
         self.em.sigFileUpdated.connect(self.recentProjectsViewer.onFileUpdated)
+        self.em.sigFileTypeChanged.connect(self.recentProjectsViewer.onFileTypeChanged)
         self.em.sigBufferSavedAs.connect(
             self.recentProjectsViewer.onFileUpdated)
         self.projectViewer.sigFileUpdated.connect(
@@ -855,7 +857,7 @@ class CodimensionMainWindow(QMainWindow):
         if isImageViewable(mime):
             self.openPixmapFile(path)
             return
-        if not isFileSearchable(path):
+        if mime != 'inode/x-empty' and not isFileSearchable(path):
             logging.error("Cannot open non-text file for editing")
             return
 

@@ -485,10 +485,9 @@ class ProjectViewer(QWidget):
         if what != CodimensionProject.CompleteProject:
             return
 
-        if GlobalData().project.isLoaded():
-            self.projectLabel.setText(
-                'Project: ' + os.path.basename(
-                    GlobalData().project.fileName)[:-5])
+        project = GlobalData().project
+        if project.isLoaded():
+            self.projectLabel.setText('Project: ' + project.getProjectName())
             self.propertiesButton.setEnabled(True)
             self.unloadButton.setEnabled(True)
         else:
@@ -1093,6 +1092,11 @@ class ProjectViewer(QWidget):
         self.__updatePrjToolbarButtons()
         self.filesystemView.onFileUpdated(fileName, uuid)
         self.__updateFSToolbarButtons()
+
+    def onFileTypeChanged(self, fileName, uuid, newMime):
+        """Triggered when the file type is changed"""
+        self.projectTreeView.onFileTypeChanged(fileName, uuid, newMime)
+        self.filesystemView.onFileTypeChanged(fileName, uuid, newMime)
 
     def __onShowHide(self, startup=False):
         """Triggered when show/hide button is clicked"""

@@ -201,7 +201,7 @@ def getDefaultProjectDoc(fName):
     """Provides a body (i.e. help) of the default project doc"""
     return """The project documentation is not found.
 
-Codimension includes support of the markdown format for documentation purposes
+Codimension supports the markdown format for documentation purposes
 and there are a few options to create and specify the project documentation
 start point:
 
@@ -213,6 +213,28 @@ Please discard these instructions, provide the required content and save as
 needed. If you do so, next time the project doc button is clicked, the project
 doc markdown file will be displayed.
 """.replace('%s', fName)
+
+
+def getDefaultFileDoc(fName, anchor):
+    """Provides a body (i.e. help) of the default auto doc"""
+    return """Codimension supports markdown for the documentation purposes.
+
+A doc link to this file has been inserted into your python file. When it
+is clicked on the graphics pane this file will be displayed.
+
+The source code doc link also has a generated anchor (${anchor}) so the
+documentation can refer specifically to that doc link. To do so use the
+following format:
+
+```
+[See in the source code](file:${fName}:${anchor})
+```
+
+When clicked, the source code file will be opened and scrolled to the doc link.
+
+Please discard these instructions, provide the required content and save as
+needed.
+""".replace('${fName}', fName).replace('${anchor}', anchor)
 
 
 # Dynamic mixin at runtime:

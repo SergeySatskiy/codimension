@@ -191,15 +191,18 @@ Codimension extends the link format and uses the following approach:
 
 | Link format |
 | ----------- |
-| file:./relative/fname[:lineno] |
-| file:relative/fname[:lineno] |
-| file:/absolute/fname[:lineno] |
-| file:///absolute/fname[:lineno] |
-| relative/fname[:lineno] |
-| /absolute/fname[:lineno] |
+| file:./relative/fname[:position] |
+| file:relative/fname[:position] |
+| file:/absolute/fname[:position] |
+| file:///absolute/fname[:position] |
+| relative/fname[:position] |
+| /absolute/fname[:position] |
 
-When clicked the corresponding file will be opened the same way as it would be
-a click in the file list.
+The optional position parameter is an anchor identifier from the CML doc
+comment or a line number. When clicked the corresponding file will be opened
+and Codimension will first try to treat the position as a CML doc anchor and if
+not found then as a line number. If any is found then the opened file will be
+scrolled appropriately.
 
 
 ### Images

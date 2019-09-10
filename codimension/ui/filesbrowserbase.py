@@ -486,6 +486,15 @@ class FilesBrowser(QTreeView):
             for treeItem in self.model().sourceModel().rootItem.childItems:
                 self.__walkTreeAndUpdate(treeItem, path, mime, icon, None)
 
+    def onFileTypeChanged(self, fileName, uuid, newMime):
+        """Triggered when the file type is changed"""
+        del uuid        # unused argument
+        del newMime     # unused argument
+        mime, icon, _ = getFileProperties(fileName)
+        path = os.path.realpath(fileName)
+        for treeItem in self.model().sourceModel().rootItem.childItems:
+            self.__walkTreeAndUpdate(treeItem, path, mime, icon, None)
+
     def _signalItemUpdated(self, treeItem):
         """Emits a signal that an item is updated"""
         srcModel = self.model().sourceModel()
@@ -517,7 +526,7 @@ class FilesBrowser(QTreeView):
 
         if treeItem.itemType == FileItemType:
             if path == os.path.realpath(treeItem.getPath()):
-                if isPythonMime(mime):
+                if isPythonMime(mime) and info:
                     # Update icon
                     treeItem.setIcon(icon)
                     if info.docstring is None:
@@ -536,7 +545,7 @@ class FilesBrowser(QTreeView):
                     self._signalItemUpdated(treeItem)
                 elif path.endswith(".cgi"):
                     # It can only happened when python CGI is not a python any
-                    # more. So display it a a general file.
+                    # more. So display it as a general file.
                     # The case when a cgi became a python file is covered in
                     # the first branch of this if statement.
                     treeItem.setIcon(icon)
@@ -546,6 +555,10 @@ class FilesBrowser(QTreeView):
                     # Remove child items if so
                     while treeItem.childItems:
                         self.__removeTreeItem(treeItem.childItems[0])
+                else:
+                    treeItem.setIcon(icon)
+                    treeItem.toolTip = ""
+                    self._signalItemUpdated(treeItem)
 
     def updateFileItem(self, treeItem, info):
         """Updates the file item recursively"""

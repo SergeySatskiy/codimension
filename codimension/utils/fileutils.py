@@ -414,7 +414,10 @@ def __initMimeToIcon():
 
 def __getIcon(xmlSyntaxFile, mime, fBaseName):
     """Provides an icon for a file"""
-    fileExtension = fBaseName.split('.')[-1].lower()
+    if '.' in fBaseName:
+        fileExtension = fBaseName.split('.')[-1].lower()
+    else:
+        fileExtension = ''
 
     if xmlSyntaxFile is not None:
         # There are a few special cases:
@@ -537,6 +540,7 @@ def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
     - fName ends with os.path.sep => directory
     - fName is empy or None => unknown file type
     """
+    global __filePropertiesCache
     if __filePropertiesCache is None:
         __initFilePropertiesCache()
 
@@ -559,6 +563,11 @@ def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
                 __filePropertiesCache[fName] = value
         return value
 
+    if skipCache:
+        # Remove from cache so that the old value does not stuck there is case
+        # if e.g. the file became empty
+        __filePropertiesCache.pop(fName, None)
+
     # The function should work both for existing and non-existing files
     try:
         # If a file exists then it could be a symbolic link to
@@ -568,7 +577,10 @@ def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
         # File may not exist
         fBaseName = basename(fName)
 
-    fileExtension = fBaseName.split('.')[-1].lower()
+    if '.' in fBaseName:
+        fileExtension = fBaseName.split('.')[-1].lower()
+    else:
+        fileExtension = ''
 
     syntaxFile = __getXmlSyntaxFile(fBaseName)
     if syntaxFile is None:
@@ -580,6 +592,12 @@ def getFileProperties(fName, checkForBrokenLink=True, skipCache=False):
             mime = 'text/plain'
         else:
             mime, denied = __getMagicMime(fName)
+            if mime == 'inode/x-empty':
+                # Special case for the empty files; treat them as text files
+                # till they are changed, i.e. do not memorize them in cache.
+                # The magic library detects them as binary (without extensions)
+                return [mime, getIcon('filemisc.png'),
+                        getXmlSyntaxFileByMime('text/plain')]
             if mime is not None:
                 syntaxFile = getXmlSyntaxFileByMime(mime)
 

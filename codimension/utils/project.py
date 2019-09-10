@@ -28,7 +28,7 @@ import json
 import shutil
 import os
 from os.path import (realpath, islink, isdir, sep, exists, dirname, isabs,
-                     join, relpath, isfile)
+                     join, relpath, isfile, basename)
 from ui.qt import QObject, pyqtSignal
 from .settings import Settings, SETTINGS_DIR
 from .watcher import Watcher
@@ -401,6 +401,16 @@ class CodimensionProject(QObject,
         if not self.isLoaded():
             return None
         return dirname(realpath(self.fileName)) + sep
+
+    def getProjectName(self):
+        """Provides the project name or None"""
+        if not self.isLoaded():
+            return None
+
+        fBaseName = basename(self.fileName)
+        if '.' in fBaseName:
+            return fBaseName.split('.')[0].strip()
+        return fBaseName
 
     def getProjectScript(self):
         """Provides the project script file name"""
