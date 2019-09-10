@@ -21,6 +21,7 @@
 
 
 import os.path
+import uuid
 from ui.qt import QMenu, QApplication
 from flowui.items import CellElement, IfCell
 from flowui.scopeitems import ScopeCellElement
@@ -31,7 +32,7 @@ from utils.pixmapcache import getIcon
 from utils.diskvaluesrelay import addCollapsedGroup, removeCollapsedGroup
 from utils.settings import Settings
 from utils.globals import GlobalData
-from utils.misc import preResolveLinkPath
+from utils.misc import preResolveLinkPath, getDefaultFileDoc
 from .flowuireplacetextdlg import ReplaceTextDialog
 from .customcolordlg import CustomColorsDialog
 from .flowuidoceditdlg import DocLinkAnchorDialog
@@ -696,6 +697,9 @@ class CFSceneContextMenuMixin:
             logging.error('Save file before invoking auto doc')
             return
 
+        needContent = False
+        newAnchor = str(uuid.uuid4().fields[-1])
+
         docFileName = self.__getAutoDocFileName(fileName)
         if not os.path.exists(docFileName):
             # Create file and populate with the default content
@@ -707,10 +711,31 @@ class CFSceneContextMenuMixin:
                 logging.error('Error creating the documentation file ' +
                               docFileName + ': ' + str(exc))
                 return
+            needContent = True
+
+        project = GlobalData().project
+        if project.isProjectFile(docFileName):
+            link = project.getRelativePath(docFileName)
+        else:
+            link = relpath(docFileName, fileName)
 
         # Insert a doc link
-        # Open it
+        with editor:
+            lineNo = selectedItem.getFirstLine()
+            line = CMLdoc.generate(link, newAnchor, 'See documentation')
+            editor.insertLines(line, lineNo)
 
+            QApplication.processEvents()
+            self.parent().redrawNow()
+
+
+        # Open the file
+        if GlobalData().mainWindow.openFile(docFileName, -1):
+            if needContent:
+                widget = GlobalData().mainWindow.em.getWidgetForFileName(docFileName)
+                editor = widget.getEditor()
+                editor.text = getDefaultFileDoc(fileName, newAnchor)
+                editor.document().setModified(False)
 
     def onRemoveDoc(self):
         """Removing the CML doc comment"""
