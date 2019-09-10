@@ -859,6 +859,9 @@ class CodimensionMainWindow(QMainWindow):
             logging.error("Cannot open non-text file for editing")
             return
 
+        if path.lower().endswith('readme'):
+            print(path)
+            print(mime)
         self.openFile(path, lineNo)
 
     def closeEvent(self, event):
