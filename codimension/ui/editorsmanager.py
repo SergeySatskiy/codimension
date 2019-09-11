@@ -1146,7 +1146,9 @@ class EditorsManager(QTabWidget):
     def openFile(self, fileName, lineNo, pos=0):
         """Opens the required file"""
         if not fileName:
-            return
+            return False
+        if lineNo is None:
+            lineNo = -1
 
         fileName = os.path.realpath(fileName)
 
@@ -1167,7 +1169,7 @@ class EditorsManager(QTabWidget):
         if not isFileSearchable(fileName):
             mime, _, _ = getFileProperties(fileName)
             if mime != 'inode/x-empty':
-                return
+                return False
         try:
             newWidget = TextEditorTabWidget(self, self.__debugger)
             newWidget.sigReloadRequest.connect(self.onReload)

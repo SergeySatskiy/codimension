@@ -806,7 +806,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def openFile(self, path, lineNo, pos=0):
         """User double clicked on a file or an item in a file"""
-        self.em.openFile(path, lineNo, pos)
+        return self.em.openFile(path, lineNo, pos)
 
     def gotoInBuffer(self, uuid, lineNo):
         """Usually needs when an item is clicked in the file outline browser"""

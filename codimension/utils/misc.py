@@ -261,7 +261,7 @@ def splitLinkPath(link):
     if match is not None:
         anchorPart = match.group()
         anchor = anchorPart[1:]
-        link = link[0:-1 * anchorPart.length()].strip()
+        link = link[0:-1 * len(anchorPart)].strip()
     return link, anchor
 
 

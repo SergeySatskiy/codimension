@@ -717,7 +717,7 @@ class CFSceneContextMenuMixin:
         if project.isProjectFile(docFileName):
             link = project.getRelativePath(docFileName)
         else:
-            link = relpath(docFileName, fileName)
+            link = os.path.relpath(docFileName, fileName)
 
         # Insert a doc link
         with editor:
@@ -727,7 +727,6 @@ class CFSceneContextMenuMixin:
 
             QApplication.processEvents()
             self.parent().redrawNow()
-
 
         # Open the file
         if GlobalData().mainWindow.openFile(docFileName, -1):
