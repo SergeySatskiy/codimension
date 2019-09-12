@@ -225,6 +225,10 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
         """Copies the item to a clipboard"""
         self._copyToClipboard(self.cmlRef.ref.parts)
 
+    def isCMLDoc(self):
+        """True if it is a CML doc item"""
+        return True
+
 
 
 class IndependentDocCell(DocCellBase):

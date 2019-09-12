@@ -698,7 +698,7 @@ class CFSceneContextMenuMixin:
             return
 
         needContent = False
-        newAnchor = str(uuid.uuid4().fields[-1])
+        newAnchor = 'doc' + str(uuid.uuid4().fields[-1])[-6:]
 
         docFileName = self.__getAutoDocFileName(fileName)
         if not os.path.exists(docFileName):

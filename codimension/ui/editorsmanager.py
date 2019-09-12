@@ -1143,12 +1143,47 @@ class EditorsManager(QTabWidget):
         self.history.addCurrent()
         self.currentWidget().setFocus()
 
+    def _gotoLine(self, lineOrAnchor, pos, widget):
+        """A 'smart' way to jump"""
+        # There are a few options for lineOrAnchor:
+        # - None
+        # - negative int
+        # - positive int
+        # - string
+        if lineOrAnchor is None:
+            return None
+
+        if type(lineOrAnchor) == int:
+            if lineOrAnchor > 0:
+                widget.getEditor().gotoLine(lineOrAnchor, pos)
+                return True
+            return None
+
+        # It is a string which could be both, CML doc anchor or line
+        # First try it as a CML doc anchor
+        editor = widget.getEditor()
+        if isPythonMime(editor.mime):
+            cfEditor = widget.getCFEditor()
+            item = cfEditor.getDocItemByAnchor(lineOrAnchor)
+            if item:
+                cfEditor.view().scrollTo(item)
+                editor.gotoLine(item.cmlRef.beginLine, item.cmlRef.beginPos)
+                return True
+
+        # Not found anchor or it is not python
+        try:
+            lineNo = int(lineOrAnchor)
+            if lineNo > 0:
+                editor.gotoLine(lineNo)
+                return True
+        except:
+            pass
+        return None
+
     def openFile(self, fileName, lineNo, pos=0):
         """Opens the required file"""
         if not fileName:
             return False
-        if lineNo is None:
-            lineNo = -1
 
         fileName = os.path.realpath(fileName)
 
@@ -1158,9 +1193,7 @@ class EditorsManager(QTabWidget):
                 # Found
                 if self.currentIndex() == index:
                     self.history.updateForCurrentIndex()
-                if lineNo > 0:
-                    editor = self.widget(index).getEditor()
-                    editor.gotoLine(lineNo, pos)
+                self._gotoLine(lineNo, pos, self.widget(index))
                 self.activateTab(index)
                 if self.currentIndex() == index:
                     self.history.addCurrent()
@@ -1203,10 +1236,7 @@ class EditorsManager(QTabWidget):
             self.sigFileTypeChanged.emit(fileName, newWidget.getUUID(),
                                          editor.mime if editor.mime else '')
             QApplication.processEvents()
-            if lineNo > 0:
-                # Jump to the asked line
-                editor.gotoLine(lineNo, pos)
-            else:
+            if self._gotoLine(lineNo, pos, newWidget) is None:
                 self.restoreFilePosition(None)
             self.sigTextEditorTabAdded.emit(0)
 

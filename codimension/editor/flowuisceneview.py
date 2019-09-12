@@ -91,6 +91,15 @@ class CFGraphicsScene(QGraphicsScene,
                     if item.getSelectTooltip() in tooltips:
                         item.setSelected(True)
 
+    def getDocItemByAnchor(self, anchor):
+        """Provides the graphics item for the given anchor if so"""
+        for item in self.items():
+            if item.isCMLDoc():
+                if item.cmlRef.anchor == anchor:
+                    return item
+        return None
+
+
 
 class CFGraphicsView(QGraphicsView):
 

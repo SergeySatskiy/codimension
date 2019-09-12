@@ -220,6 +220,10 @@ class CellElement:
         """True if it is a comment"""
         return False
 
+    def isCMLDoc(self):
+        """True if it is a CML doc item"""
+        return False
+
     def isDocstring(self):
         """True if it is a docstring"""
         return False

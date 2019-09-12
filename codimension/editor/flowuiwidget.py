@@ -780,3 +780,8 @@ class FlowUIWidget(QWidget):
                 setCollapsedGroups(fileName, collapsedGroups)
         else:
             setCollapsedGroups(fileName, [])
+
+    def getDocItemByAnchor(self, anchor):
+        """Provides the graphics item for the given anchor if so"""
+        return self.scene().getDocItemByAnchor(anchor)
+
