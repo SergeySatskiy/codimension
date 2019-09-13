@@ -1167,7 +1167,8 @@ class EditorsManager(QTabWidget):
             item = cfEditor.getDocItemByAnchor(lineOrAnchor)
             if item:
                 cfEditor.view().scrollTo(item)
-                editor.gotoLine(item.cmlRef.beginLine, item.cmlRef.beginPos)
+                editor.gotoLine(item.cmlRef.ref.beginLine,
+                                item.cmlRef.ref.beginPos)
                 return True
 
         # Not found anchor or it is not python
