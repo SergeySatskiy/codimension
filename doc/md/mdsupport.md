@@ -105,6 +105,41 @@ will be rendered as:
 | Inline \`keyword` is highlighted | Inline `keyword` is highlighted |
 
 
+### UML diagram support
+
+Codimension uses PlantUML ([http://plantuml.com](http://plantuml.com)) to
+render all PlantUML supported diagrams in the documentation. To do so specify
+the `plantuml` language in a code block:
+
+    ```plantuml
+    @startuml
+    Class01 <|-- Class02
+    @enduml
+    ```
+
+It will be rendered as:
+
+```plantuml
+@startuml
+Class01 <|-- Class02
+@enduml
+```
+
+
+Here is a list of what start/end tags could be:
+- @startuml / @enduml
+- @startgantt / @endgantt
+- @startsalt / @endsalt
+- @startmindmap / @endmindmap
+- @startwbs / @endwbs
+- @startditaa / @endditaa
+- @startjcckit / @endjcckit
+
+PlantUML may extend the list in the future, so please look at their web site for
+the complete language specs.
+
+
+
 ### Block quote
 
 The notation like
@@ -191,18 +226,20 @@ Codimension extends the link format and uses the following approach:
 
 | Link format |
 | ----------- |
-| file:./relative/fname[:position] |
-| file:relative/fname[:position] |
-| file:/absolute/fname[:position] |
-| file:///absolute/fname[:position] |
-| relative/fname[:position] |
-| /absolute/fname[:position] |
+| file:./relative/fname[:anchorOrLine] |
+| file:relative/fname[:anchorOrLine] |
+| file:/absolute/fname[:anchorOrLine] |
+| file:///absolute/fname[:anchorOrLine] |
+| relative/fname[:anchorOrLine] |
+| /absolute/fname[:anchorOrLine] |
 
-The optional position parameter is an anchor identifier from the CML doc
+The optional anchorOrLine parameter is an anchor identifier from the CML doc
 comment or a line number. When clicked the corresponding file will be opened
 and Codimension will first try to treat the position as a CML doc anchor and if
 not found then as a line number. If any is found then the opened file will be
 scrolled appropriately.
+
+An anchor should follow this rule: [_a-zA-Z0-9]+
 
 
 ### Images

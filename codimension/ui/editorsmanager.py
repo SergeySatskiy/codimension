@@ -1181,7 +1181,7 @@ class EditorsManager(QTabWidget):
             pass
         return None
 
-    def openFile(self, fileName, lineNo, pos=0):
+    def openFile(self, fileName, lineOrAnchor, pos=0):
         """Opens the required file"""
         if not fileName:
             return False
@@ -1194,7 +1194,7 @@ class EditorsManager(QTabWidget):
                 # Found
                 if self.currentIndex() == index:
                     self.history.updateForCurrentIndex()
-                self._gotoLine(lineNo, pos, self.widget(index))
+                self._gotoLine(lineOrAnchor, pos, self.widget(index))
                 self.activateTab(index)
                 if self.currentIndex() == index:
                     self.history.addCurrent()
@@ -1237,7 +1237,7 @@ class EditorsManager(QTabWidget):
             self.sigFileTypeChanged.emit(fileName, newWidget.getUUID(),
                                          editor.mime if editor.mime else '')
             QApplication.processEvents()
-            if self._gotoLine(lineNo, pos, newWidget) is None:
+            if self._gotoLine(lineOrAnchor, pos, newWidget) is None:
                 self.restoreFilePosition(None)
             self.sigTextEditorTabAdded.emit(0)
 

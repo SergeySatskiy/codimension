@@ -223,12 +223,12 @@ class CFSceneContextMenuMixin:
         totalGroups = sum(self.countGroups())
         count = len(self.selectedItems())
         totalCCGroups = sum(self.countGroupsWithCustomColors())
+        totalCCDocs = self.countDocWithCustomColors()
 
-        self.__ccAction.setEnabled(not hasComment and
-                                   not hasMinimizedExcepts and
-                                   totalDocLinks == 0)
+        self.__ccAction.setEnabled(totalNonDocComments == 0 and
+                                   not hasMinimizedExcepts)
         self.__removeCCAction.setEnabled(
-            self.countItemsWithCML(CMLcc) + totalCCGroups == count)
+            self.countItemsWithCML(CMLcc) + totalCCGroups + totalCCDocs == count)
         self.__customColorsSubmenu.setEnabled(self.__ccAction.isEnabled() or
                                               self.__removeCCAction.isEnabled())
 
@@ -322,6 +322,11 @@ class CFSceneContextMenuMixin:
             editor = self.selectedItems()[0].getEditor()
             with editor:
                 for item in self.sortSelectedReverse():
+                    if item.isCMLDoc():
+                        # The doc always exists so just add/change the colors
+                        item.cmlRef.updateCustomColors(editor, bgcolor,
+                                                       fgcolor, bordercolor)
+                        continue
                     if item.kind in [CellElement.OPENED_GROUP_BEGIN,
                                      CellElement.COLLAPSED_GROUP,
                                      CellElement.EMPTY_GROUP]:
@@ -532,6 +537,9 @@ class CFSceneContextMenuMixin:
         editor = self.selectedItems()[0].getEditor()
         with editor:
             for item in self.sortSelectedReverse():
+                if item.isCMLDoc():
+                    item.cmlRef.removeCustomColors(editor)
+                    continue
                 if item.kind in [CellElement.OPENED_GROUP_BEGIN,
                                  CellElement.COLLAPSED_GROUP,
                                  CellElement.EMPTY_GROUP]:
@@ -646,12 +654,21 @@ class CFSceneContextMenuMixin:
                 if cmlRef:
                     # It is editing, the comment exists
                     lineNo = cmlRef.ref.beginLine
+                    pos = cmlRef.ref.beginPos
                     cmlRef.removeFromText(editor)
+                    bgColor = cmlRef.bgColor
+                    fgColor = cmlRef.fgColor
+                    border = cmlRef.border
                 else:
                     # It is a new doc link
                     lineNo = selectedItem.getFirstLine()
+                    pos = selectedItem.ref.body.beginPos
+                    bgColor = None
+                    fgColor = None
+                    border = None
 
-                line = CMLdoc.generate(link, anchor, title)
+                line = CMLdoc.generate(link, anchor, title,
+                                       bgColor, fgColor, border, pos)
                 editor.insertLines(line, lineNo)
 
             QApplication.processEvents()
@@ -722,7 +739,9 @@ class CFSceneContextMenuMixin:
         # Insert a doc link
         with editor:
             lineNo = selectedItem.getFirstLine()
-            line = CMLdoc.generate(link, newAnchor, 'See documentation')
+            line = CMLdoc.generate(link, newAnchor, 'See documentation',
+                                   None, None, None,
+                                   selectedItem.ref.body.beginPos)
             editor.insertLines(line, lineNo)
 
             QApplication.processEvents()
@@ -855,6 +874,16 @@ class CFSceneContextMenuMixin:
                     else:
                         openCount += 1
         return emptyCount, closeCount, openCount
+
+    def countDocWithCustomColors(self):
+        count = 0
+        for item in self.selectedItems():
+            if item.isCMLDoc():
+                if item.cmlRef.bgColor is not None or \
+                   item.cmlRef.fgColor is not None or \
+                   item.cmlRef.border is not None:
+                    count += 1
+        return count
 
     def sortSelectedReverse(self):
         """Sorts the selected items in reverse order"""

@@ -90,8 +90,8 @@ def get_lexer(text, lang):
 def is_plant_uml(text, lang):
     """True if it is a plant uml diagram"""
     if lang:
-        return lang.lower() == 'plantuml'
-    return text.lstrip().startswith('@start')
+        return lang.lower() in ['plantuml', 'uml']
+    return text.lstrip().lower().startswith('@start')
 
 
 def block_code(uuid, text, lang, inlinestyles=False, linenos=False):

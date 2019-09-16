@@ -276,7 +276,6 @@ class PlantUMLCache(QObject):
             return None
 
         normSource = normalizePlantumlSource(source)
-        print('Normalized: ' + normSource)
         md5 = hashlib.md5(normSource.encode('utf-8')).hexdigest()
         if md5 in self.__md5ToFileName:
             return self.__md5ToFileName[md5]

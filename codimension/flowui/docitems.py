@@ -186,7 +186,7 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
         painter.setBrush(brush)
         painter.drawRoundedRect(self.baseX + settings.hCellPadding,
                                 self.baseY + settings.vCellPadding,
-                                rectWidth, rectHeight, 3, 3)
+                                rectWidth, rectHeight, 0, 0)
 
         if self._text:
             # Draw the text in the rectangle
