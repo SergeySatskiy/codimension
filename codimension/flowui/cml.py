@@ -72,6 +72,38 @@ def appendTextItem(name, value):
     return ''
 
 
+class CMLColorBase:
+
+    """Covers the common colors for CML comments"""
+
+    def __init__(self):
+        self.bgColor = None         # background color
+        self.fgColor = None         # foreground color
+        self.border = None          # border color
+
+    def populateColors(self):
+        """Populate colors"""
+        if "bg" in self.ref.properties:
+            self.bgColor = buildColor(self.ref.properties["bg"])
+        if "fg" in self.ref.properties:
+            self.fgColor = buildColor(self.ref.properties["fg"])
+        if "border" in self.ref.properties:
+            self.border = buildColor(self.ref.properties["border"])
+
+    @staticmethod
+    def generateColors(background, foreground, border):
+        """Generates the colors part"""
+        parts = []
+        if background is not None:
+            parts.append('bg=' + cssLikeColor(background))
+        if foreground is not None:
+            parts.append('fg=' + cssLikeColor(foreground))
+        if border is not None:
+            parts.append('border=' + cssLikeColor(border))
+        return ' '.join(parts)
+
+
+
 class CMLCommentBase:
 
     """Base class for all the CML comments"""
@@ -164,7 +196,7 @@ class CMLsw(CMLCommentBase):
         return " " * (pos - 1) + "# cml 1 sw"
 
 
-class CMLcc(CMLCommentBase):
+class CMLcc(CMLCommentBase, CMLColorBase):
 
     """Covers 'Custom Colors' spec for most of the items"""
 
@@ -172,9 +204,7 @@ class CMLcc(CMLCommentBase):
 
     def __init__(self, ref):
         CMLCommentBase.__init__(self, ref)
-        self.bgColor = None      # background color
-        self.fgColor = None      # foreground color
-        self.border = None
+        CMLColorBase.__init__(self)
         self.validate()
 
     def validate(self):
@@ -182,20 +212,11 @@ class CMLcc(CMLCommentBase):
         self.validateRecordType(CMLcc.CODE)
         CMLVersion.validate(self.ref)
 
-        if "bg" in self.ref.properties:
-            self.bgColor = buildColor(self.ref.properties["bg"])
-        if "fg" in self.ref.properties:
-            self.fgColor = buildColor(self.ref.properties["fg"])
-        if "border" in self.ref.properties:
-            self.border = buildColor(self.ref.properties["border"])
-
-        if self.bgColor is None:
-            if self.fgColor is None:
-                if self.border is None:
-                    raise Exception("The '" + CMLcc.CODE +
-                                    "' CML comment does not supply neither "
-                                    "background nor foreground color nor "
-                                    "border color")
+        self.populateColors()
+        if self.bgColor is None and self.fgColor is None and self.border is None:
+            raise Exception("The '" + CMLcc.CODE + "' CML comment does not "
+                            "supply neither background nor foreground color "
+                            "nor border color")
 
     @staticmethod
     def description():
@@ -212,17 +233,11 @@ class CMLcc(CMLCommentBase):
     @staticmethod
     def generate(background, foreground, border, pos=1):
         """Generates a complete line to be inserted"""
-        res = " " * (pos - 1) + "# cml 1 cc"
-        if background is not None:
-            res += " bg=" + cssLikeColor(background)
-        if foreground is not None:
-            res += " fg=" + cssLikeColor(foreground)
-        if border is not None:
-            res += " border=" + cssLikeColor(border)
-        return res
+        return  ' ' * (pos - 1) + '# cml 1 cc ' + \
+                CMLColorBase.generateColors(background, foreground, border)
 
 
-class CMLdoc(CMLCommentBase):
+class CMLdoc(CMLCommentBase, CMLColorBase):
 
     """Covers the 'documentation link' comment"""
 
@@ -230,6 +245,7 @@ class CMLdoc(CMLCommentBase):
 
     def __init__(self, ref):
         CMLCommentBase.__init__(self, ref)
+        CMLColorBase.__init__(self)
         self.link = None    # file path, abs or relative
         self.anchor = None  # id of this comment to let a link from the doc
         self.title = None   # text to display
@@ -239,6 +255,8 @@ class CMLdoc(CMLCommentBase):
         """Validates the CMD doc comment"""
         self.validateRecordType(CMLdoc.CODE)
         CMLVersion.validate(self.ref)
+
+        self.populateColors()
 
         self.link = self.ref.properties.get('link', None)
         self.anchor = self.ref.properties.get('anchor', None)
@@ -261,12 +279,13 @@ class CMLdoc(CMLCommentBase):
                "Supported properties:\n" \
                "- 'link': link to the appropriate documentation\n" \
                "- 'anchor': this ID could be used to provide a link to this comment\n" \
-               "- 'title': what to display on graphics\n\n" \
+               "- 'title': what to display on graphics\n" \
+               "- color properties as described in the common section\n\n" \
                "Example:\n" \
                "# cml 1 " + CMLdoc.CODE + " link=file:doc/mydoc.md title=\"See more\""
 
     @staticmethod
-    def generate(link, anchor, title, pos=1):
+    def generate(link, anchor, title, background, foreground, border, pos=1):
         """Generates a complete line to be inserted"""
         return " " * (pos - 1) + "# cml 1 " + CMLdoc.CODE + \
                appendTextItem('link', link) + \
@@ -276,6 +295,20 @@ class CMLdoc(CMLCommentBase):
     def getTitle(self):
         """Provides unescaped text"""
         return unescapeCMLTextValue(self.title)
+
+    def updateCustomColors(self, editor, bgcolor, fgcolor, bordercolor):
+        """Updates the custom colors"""
+        firstCommentLine = self.ref.parts[0].beginLine
+        pos = self.ref.parts[0].beginPos
+        newCommentLine = CMLdoc.generate(self.link, self.anchor, self.title,
+                                         bgcolor, fgcolor, bordercolor, pos)
+        self.removeFromText(editor)
+        editor.insertLines(newCommentLine, firstCommentLine)
+
+    def removeCustomColors(self, editor):
+        """Removes the custom colors"""
+        self.updateCustomColors(editor, None, None, None)
+
 
 
 class CMLrt(CMLCommentBase):
@@ -324,7 +357,7 @@ class CMLrt(CMLCommentBase):
         return unescapeCMLTextValue(self.text)
 
 
-class CMLgb(CMLCommentBase):
+class CMLgb(CMLCommentBase, CMLColorBase):
 
     """Covers the 'group begin' comment"""
 
@@ -332,11 +365,9 @@ class CMLgb(CMLCommentBase):
 
     def __init__(self, ref):
         CMLCommentBase.__init__(self, ref)
+        CMLColorBase.__init__(self)
         self.id = None
         self.title = None
-        self.bgColor = None     # background color: optional
-        self.fgColor = None     # foreground color: optional
-        self.border = None      # border color: optional
         self.validate()
 
     def validate(self):
@@ -344,15 +375,11 @@ class CMLgb(CMLCommentBase):
         self.validateRecordType(CMLgb.CODE)
         CMLVersion.validate(self.ref)
 
+        self.populateColors()
+
         self.title = self.ref.properties.get('title', None)
         if 'id' in self.ref.properties:
             self.id = self.ref.properties['id'].strip()
-        if "bg" in self.ref.properties:
-            self.bgColor = buildColor(self.ref.properties["bg"])
-        if "fg" in self.ref.properties:
-            self.fgColor = buildColor(self.ref.properties["fg"])
-        if "border" in self.ref.properties:
-            self.border = buildColor(self.ref.properties["border"])
 
         if not self.id:
             raise Exception("The '" + CMLgb.CODE +
@@ -379,12 +406,9 @@ class CMLgb(CMLCommentBase):
         res = ' ' * (pos - 1) + '# cml 1 ' + CMLgb.CODE + \
               appendTextItem('id', groupid) + \
               appendTextItem('title', title)
-        if background is not None:
-            res += ' bg=' + cssLikeColor(background)
-        if foreground is not None:
-            res += ' fg=' + cssLikeColor(foreground)
-        if border is not None:
-            res += ' border=' + cssLikeColor(border)
+        colorPart = CMLColorBase.generateColors(background, foreground, border)
+        if colorPart:
+            res += ' ' + colorPart
         return res
 
     def getTitle(self):

@@ -157,16 +157,22 @@ Supported properties:
 | Property | Description                                          |
 | :------: | ---------------------------------------------------- |
 | link     | link to the documentation, optional |
-| anchor   | anchor id to reference this point in the code from the documentation, optional |
+| anchor   | anchor id to reference this point in the code from the documentation or another doc comment, optional |
 | title    | text to be shown on graphics, optional (if not provided then 'doc' will be shown) |
+| bg       | background color for the item, optional                 |
+| fg       | foreground color for the item, optional                 |
+| border   | border color for the item, optional                     |
 
 At least one: a link or an anchor must be provided.
 
 The link supports the following formats:
 - http://... an external browser will be invoked
 - https://... an external browser will be invoked
-- [file:]absolute path
-- [file:]relative path. The relative is tried to the current file and then to the project root
+- [file:]absolute path[:anchorOrLine]
+- [file:]relative path[:anchorOrLine]. The relative is tried to the current file and then to the project root
+
+An anchor should follow this rule: [_a-zA-Z0-9]+
+
 
 Example:
 ```python
