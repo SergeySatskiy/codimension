@@ -29,7 +29,7 @@ from utils.globals import GlobalData
 from utils.misc import resolveLinkPath
 from .auxitems import Connector, SVGItem
 from .items import CellElement
-from .routines import distance, getCommentBoxPath, getDocBoxPath
+from .routines import distance, getBorderColor
 from .commentitems import CommentCellBase
 
 
@@ -95,6 +95,20 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
                                            self._editor.getFileName())
         if fileName:
             GlobalData().mainWindow.openFile(fileName, lineNo)
+
+    def getDocColors(self, defaultBG, defaultFG, defaultBorder=None):
+        """Provides the item colors"""
+        bg = defaultBG
+        fg = defaultFG
+        if self.cmlRef.bgColor:
+            bg = self.cmlRef.bgColor
+        if self.cmlRef.fgColor:
+            fg = self.cmlRef.fgColor
+        if self.cmlRef.border:
+            return bg, fg, self.cmlRef.border
+        if defaultBorder is None:
+            return bg, fg, getBorderColor(bg)
+        return bg, fg, defaultBorder
 
     def render(self):
         """Renders the cell"""
