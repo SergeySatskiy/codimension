@@ -85,7 +85,11 @@ class CFSceneMouseMixin:
     def __destroyRubberBand(self):
         """Destroys the rubber band selection rectangle"""
         if self.rubberBand is not None:
-            self.rubberBand.hide()
+            try:
+                # Sometimes there is a race of the rubber band destruction
+                self.rubberBand.hide()
+            except:
+                pass
             self.rubberBand = None
         self.lmbOrigin = None
 
@@ -122,11 +126,21 @@ class CFSceneMouseMixin:
             # Draw the rubber band selection rectangle
             rect = QRect(self.lmbOrigin, event.scenePos().toPoint())
             self.rubberBand.setGeometry(rect.normalized())
-            if not self.rubberBand.isVisible():
+            if not self.__isRubberBandVisible():
                 if abs(rect.left() - rect.right()) >= RUBBER_BAND_MIN_SIZE or \
                    abs(rect.top() - rect.bottom()) >= RUBBER_BAND_MIN_SIZE:
                     self.rubberBand.show()
         QGraphicsScene.mouseMoveEvent(self, event)
+
+    def __isRubberBandVisible(self):
+        """Tells if the rubber band is on the screen"""
+        try:
+            # Sometimes there is a race somewhere so that the wrapped C++
+            # object is already destroyed, so make the test in a try block
+            return self.rubberBand and self.rubberBand.isVisible()
+        except:
+            self.__destroyRubberBand()
+            return False
 
     def mouseReleaseEvent(self, event):
         """Handles the mouse release event"""
@@ -141,7 +155,7 @@ class CFSceneMouseMixin:
             return
 
         # Here: left mouse button
-        if self.rubberBand and self.rubberBand.isVisible():
+        if self.__isRubberBandVisible():
             # Detect intersections
             self.clearSelection()
             for item in self.items():

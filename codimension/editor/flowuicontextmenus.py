@@ -321,20 +321,25 @@ class CFSceneContextMenuMixin:
 
             editor = self.selectedItems()[0].getEditor()
             with editor:
-                for item in self.sortSelectedReverse():
+                # Add colors is done via delete/insert for the Doc and group
+                # items. So it is safer to do first because the cc comment may be
+                # in a set of selected which is inserted before the doc cml and
+                # thus breaks the line numbering
+                for item in self.selectedItems():
                     if item.isCMLDoc():
                         # The doc always exists so just add/change the colors
                         item.cmlRef.updateCustomColors(editor, bgcolor,
                                                        fgcolor, bordercolor)
                         continue
-                    if item.kind in [CellElement.OPENED_GROUP_BEGIN,
-                                     CellElement.COLLAPSED_GROUP,
-                                     CellElement.EMPTY_GROUP]:
+                    if item.isGroupItem():
                         # The group always exists so just add/change the colors
                         item.groupBeginCMLRef.updateCustomColors(editor,
                                                                  bgcolor,
                                                                  fgcolor,
                                                                  bordercolor)
+
+                for item in self.sortSelectedReverse():
+                    if item.isCMLDoc() or item.isGroupItem():
                         continue
                     if item.isDocstring():
                         cmlComment = CMLVersion.find(
@@ -536,14 +541,22 @@ class CFSceneContextMenuMixin:
 
         editor = self.selectedItems()[0].getEditor()
         with editor:
-            for item in self.sortSelectedReverse():
+            # Remove colors is done via delete/insert for the Doc and group
+            # items. So it is safer to do first because the cc comment may be
+            # in a set of selected which is inserted before the doc cml and
+            # thus breaks the line numbering
+            for item in self.selectedItems():
+                # The doc always exists
                 if item.isCMLDoc():
                     item.cmlRef.removeCustomColors(editor)
                     continue
-                if item.kind in [CellElement.OPENED_GROUP_BEGIN,
-                                 CellElement.COLLAPSED_GROUP,
-                                 CellElement.EMPTY_GROUP]:
+                # The group always exists
+                if item.isGroupItem():
                     item.groupBeginCMLRef.removeCustomColors(editor)
+
+            # Now handle the rest of items
+            for item in self.sortSelectedReverse():
+                if item.isCMLDoc() or item.isGroupItem():
                     continue
                 if item.isDocstring():
                     cmlComment = CMLVersion.find(

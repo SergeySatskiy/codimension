@@ -287,10 +287,14 @@ class CMLdoc(CMLCommentBase, CMLColorBase):
     @staticmethod
     def generate(link, anchor, title, background, foreground, border, pos=1):
         """Generates a complete line to be inserted"""
-        return " " * (pos - 1) + "# cml 1 " + CMLdoc.CODE + \
-               appendTextItem('link', link) + \
-               appendTextItem('anchor', anchor) + \
-               appendTextItem('title', title)
+        res = ' ' * (pos - 1) + '# cml 1 ' + CMLdoc.CODE + \
+              appendTextItem('link', link) + \
+              appendTextItem('anchor', anchor) + \
+              appendTextItem('title', title)
+        colorPart = CMLColorBase.generateColors(background, foreground, border)
+        if colorPart:
+            return res + ' ' + colorPart
+        return res
 
     def getTitle(self):
         """Provides unescaped text"""
@@ -408,7 +412,7 @@ class CMLgb(CMLCommentBase, CMLColorBase):
               appendTextItem('title', title)
         colorPart = CMLColorBase.generateColors(background, foreground, border)
         if colorPart:
-            res += ' ' + colorPart
+            return res + ' ' + colorPart
         return res
 
     def getTitle(self):

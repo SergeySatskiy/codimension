@@ -96,19 +96,21 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
         if fileName:
             GlobalData().mainWindow.openFile(fileName, lineNo)
 
-    def getDocColors(self, defaultBG, defaultFG, defaultBorder=None):
+    def getColors(self):
         """Provides the item colors"""
-        bg = defaultBG
-        fg = defaultFG
+        bg = self.canvas.settings.docLinkBGColor
+        fg = self.canvas.settings.docLinkFGColor
         if self.cmlRef.bgColor:
             bg = self.cmlRef.bgColor
         if self.cmlRef.fgColor:
             fg = self.cmlRef.fgColor
         if self.cmlRef.border:
             return bg, fg, self.cmlRef.border
-        if defaultBorder is None:
+
+        border = self.canvas.settings.docLinkLineColor
+        if border is None:
             return bg, fg, getBorderColor(bg)
-        return bg, fg, defaultBorder
+        return bg, fg, border
 
     def render(self):
         """Renders the cell"""
@@ -178,6 +180,8 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
             baseY + self.minHeight / 2 - self.iconItem.height() / 2)
         scene.addItem(self.iconItem)
 
+        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
+
     def paint(self, painter, option, widget):
         """Draws the independent comment"""
         settings = self.canvas.settings
@@ -191,12 +195,12 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
             selectPen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(selectPen)
         else:
-            pen = QPen(settings.docLinkLineColor)
+            pen = QPen(self.__borderColor)
             pen.setWidth(settings.docLinkLineWidth)
             pen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(pen)
 
-        brush = QBrush(settings.docLinkBGColor)
+        brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
         painter.drawRoundedRect(self.baseX + settings.hCellPadding,
                                 self.baseY + settings.vCellPadding,
@@ -207,7 +211,7 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
             font = QFont(settings.monoFont)
             font.setItalic(True)
             painter.setFont(font)
-            pen = QPen(settings.docLinkFGColor)
+            pen = QPen(self.__fgColor)
             painter.setPen(pen)
             painter.drawText(
                 self._leftEdge + settings.hCellPadding +

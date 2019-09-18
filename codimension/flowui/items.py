@@ -224,6 +224,11 @@ class CellElement:
         """True if it is a CML doc item"""
         return False
 
+    def isGroupItem(self):
+        """True if it is some kind of a group item"""
+        return self.kind in [self.OPENED_GROUP_BEGIN, self.OPENED_GROUP_END,
+                             self.COLLAPSED_GROUP, self.EMPTY_GROUP]
+
     def isDocstring(self):
         """True if it is a docstring"""
         return False
