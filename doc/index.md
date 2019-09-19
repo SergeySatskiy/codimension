@@ -7,12 +7,12 @@ It rather covers some practical topics. Please follow the links in the list belo
 ## General Topics
 
 - [Technology](technology/technology.md)
-- [CML - Codimension Markup Language](file:./cml/cml.md)
+- [CML - Codimension Markup Language](cml/cml.md)
 
 
 ## Graphics Pane
 
-- [Smart zoom](file:./smartzoom.md)
+- [Smart zoom and other display options](smartzoom/smartzoom.md)
 - [Grouping](file:./grouping.md)
 
 
@@ -28,7 +28,7 @@ It rather covers some practical topics. Please follow the links in the list belo
 
 ## Miscellaneous
 
-- [Plugins](file:./plugins/plugins.md)
+- [Plugins](plugins/plugins.md)
 - [Markdown support (documenting your projects)](md/mdsupport.md)
 - [Project explained](file:./project.md)
 - [Editor settings](file:./editorsettings.md)
