@@ -3,6 +3,8 @@
 * Version x.x.x
 * Bug fix: allow grouping for the try-except blocks
 * Bug fix: exception when selecting doc links
+* CML doc support
+* Embedded documentation significant update
 
 2019 Aug 05 Sergey Satskiy <sergey.satskiy@tuta.io>
 

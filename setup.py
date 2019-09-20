@@ -109,6 +109,8 @@ def getPackageData():
                      'doc/technology'),
                     ('doc.smartzoom',
                      'doc/smartzoom'),
+                    ('doc.grouping',
+                     'doc/grouping'),
                     ('plantuml',
                      'plantuml/')]
 
@@ -150,7 +152,7 @@ def getPackages():
             'codimension.pixmaps',
             'codimension.skins',
             'doc', 'doc.cml', 'doc.plugins', 'doc.technology', 'doc.md',
-            'doc.smartzoom',
+            'doc.smartzoom', 'doc.grouping',
             'plantuml']
     # If a myskin skin is to be added as well, then one more package should
     # be mentioned: ..., 'codimension.skins.myskin']

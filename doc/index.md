@@ -13,7 +13,7 @@ It rather covers some practical topics. Please follow the links in the list belo
 ## Graphics Pane
 
 - [Smart zoom and other display options](smartzoom/smartzoom.md)
-- [Grouping](file:./grouping.md)
+- [Grouping](grouping/grouping.md)
 
 
 ## Code Analysis
