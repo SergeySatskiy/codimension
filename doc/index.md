@@ -18,7 +18,7 @@ It rather covers some practical topics. Please follow the links in the list belo
 
 ## Code Analysis
 
-- [Dead code](file:./deadcode.md)
+- [Dead code](deadcode/deadcode.md)
 - [Complexity](file:./complexity.md)
 - [Profiling](file:./profiling.md)
 - [PyFlakes](file:./pyflakes.md)
