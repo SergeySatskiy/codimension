@@ -19,11 +19,11 @@ It rather covers some practical topics. Please follow the links in the list belo
 ## Code Analysis
 
 - [Dead code](deadcode/deadcode.md)
-- [Complexity](file:./complexity.md)
-- [Profiling](file:./profiling.md)
+- [Complexity](complexity/complexity.md)
 - [PyFlakes](file:./pyflakes.md)
 - [Dependencies](file:./dependencies.md)
 - [Disassembling](file:./disassembling.md)
+- Profiling (the documentation is coming soon)
 
 
 ## Miscellaneous
