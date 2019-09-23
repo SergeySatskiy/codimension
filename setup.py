@@ -115,6 +115,8 @@ def getPackageData():
                      'doc/deadcode'),
                     ('doc.complexity',
                      'doc/complexity'),
+                    ('doc.pyflakes',
+                     'doc/pyflakes'),
                     ('plantuml',
                      'plantuml/')]
 
@@ -157,7 +159,7 @@ def getPackages():
             'codimension.skins',
             'doc', 'doc.cml', 'doc.plugins', 'doc.technology', 'doc.md',
             'doc.smartzoom', 'doc.grouping', 'doc.deadcode',
-            'doc.complexity',
+            'doc.complexity', 'doc.pyflakes',
             'plantuml']
     # If a myskin skin is to be added as well, then one more package should
     # be mentioned: ..., 'codimension.skins.myskin']

@@ -64,7 +64,7 @@ class WelcomeWidget(TextTabWidget):
        align="left" bgcolor="#d5d1cf" border="0" style="width: 100%">
 <tr>
   <td>
-    <p align="left">Click <b>F1</b> for Keyboard Shortcut Reference or
+    <p align="left">Press <b>F1</b> for Keyboard Shortcut Reference or
     <p align="left">
        visit
        <a href="http://codimension.org">
