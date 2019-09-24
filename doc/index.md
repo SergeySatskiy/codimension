@@ -22,7 +22,7 @@ It rather covers some practical topics. Please follow the links in the list belo
 - [Complexity](complexity/complexity.md)
 - [PyFlakes](pyflakes/pyflakes.md)
 - [Dependencies](file:./dependencies.md)
-- [Disassembling](file:./disassembling.md)
+- [Disassembling](disassembling/disassembling.md)
 - Profiling (the documentation is coming soon)
 
 
