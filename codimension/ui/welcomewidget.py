@@ -44,10 +44,10 @@ class WelcomeWidget(TextTabWidget):
             " <font size=-2>(GPL v3)</font>"
 
         self.setHTML("""
-<body bgcolor="#d5d1cf">
+<body bgcolor="#EFF0F2">
 <p>
 <table cellspacing="0" cellpadding="8" width="100%"
-       align="left" bgcolor="#d5d1cf" border="0" style="width: 100%">
+       align="left" bgcolor="#EFF0F2" border="0" style="width: 100%">
 <tr>
   <td width="1%" valign="middle">
       <a href="http://codimension.org">
@@ -60,8 +60,9 @@ class WelcomeWidget(TextTabWidget):
   </td>
 </tr>
 </table>
+<br><br>
 <table cellspacing="0" cellpadding="8" width="100%"
-       align="left" bgcolor="#d5d1cf" border="0" style="width: 100%">
+       align="left" bgcolor="#EFF0F2" border="0" style="width: 100%">
 <tr>
   <td>
     <p align="left">Press <b>F1</b> any time for the Keyboard Shortcut
