@@ -27,7 +27,7 @@ from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from .viewhistory import ViewEntry, ViewHistory
 from editor.mdwidget import MDViewer
 from utils.globals import GlobalData
-from utils.fileutils import getFileContent
+from utils.fileutils import getFileContent, getFileProperties, isMarkdownMime
 from utils.md import renderMarkdown
 from utils.pixmapcache import getIcon
 
@@ -57,11 +57,15 @@ class MDFullViewer(MDViewer):
                 logging.warning('No step forward available')
             return
 
-        fileName, lineNo = self._resolveLink(link)
+        fileName, anchorOrLine = self._resolveLink(link)
         if fileName:
-            self.__parentWidget.updateCurrentHistoryPosition()
-            self.__parentWidget.setFileName(fileName)
-
+            mime, _, _ = getFileProperties(fileName)
+            if isMarkdownMime(mime):
+                self.__parentWidget.updateCurrentHistoryPosition()
+                self.__parentWidget.setFileName(fileName)
+            else:
+                # It is a resolved link to some kind of non-markdown file
+                GlobalData().mainWindow.openFile(fileName, anchorOrLine)
 
 
 class MarkdownTabWidget(QWidget, MainWindowTabWidgetBase):
