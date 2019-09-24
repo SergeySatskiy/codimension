@@ -23,7 +23,7 @@
 import logging
 import os.path
 from ui.qt import (Qt, QSize, QTimer, QToolBar, QWidget, QHBoxLayout,
-                   QLabel, QVBoxLayout, QSizePolicy, QFrame, QDesktopServices,
+                   QLabel, QVBoxLayout, QSizePolicy, QFrame,
                    pyqtSignal, QPrintDialog, QDialog, QAction, QPixmap,
                    QTextDocument)
 from ui.texttabwidget import TextViewer
@@ -46,52 +46,12 @@ class MDViewer(TextViewer):
     def __init__(self, parent):
         TextViewer.__init__(self, parent)
 
-        self.__parentWidget = parent
         self.setViewportMargins(10, 10, 10, 10)
-        self.setOpenExternalLinks(True)
-        self.setOpenLinks(False)
-        self.anchorClicked.connect(self._onAnchorClicked)
 
         Settings().webResourceCache.sigResourceSaved.connect(
             self.onResourceSaved)
         Settings().plantUMLCache.sigRenderReady.connect(
             self.onPlantUMLRender)
-
-    def _resolveLink(self, link):
-        """Resolves the link to a file and optional line number"""
-        scheme = link.scheme().lower()
-        if scheme in ['http', 'https']:
-            QDesktopServices.openUrl(link)
-            return None, None
-
-        if scheme == '':
-            fileName = link.path()
-        elif scheme == 'file':
-            if link.isValid():
-                fileName = link.path()
-            else:
-                logging.error('Invalid link: ' + link.errorString())
-                return None, None
-        else:
-            logging.error("Unsupported url scheme '" + link.scheme() +
-                          "'. Supported schemes are 'http', 'https', 'file' "
-                          "and an empty scheme for files")
-            return None, None
-
-        if not fileName:
-            logging.error('Could not get a file name. Check the link format. '
-                          'Valid examples: file:./relative/fname or '
-                          'file:relative/fname or file:/absolute/fname or '
-                          'file:///absolute/fname')
-            return None, None
-
-        return resolveLinkPath(fileName, self.__parentWidget.getFileName())
-
-    def _onAnchorClicked(self, link):
-        """Handles a URL click"""
-        fileName, lineNo = self._resolveLink(link)
-        if fileName:
-            GlobalData().mainWindow.openFile(fileName, lineNo)
 
     def getScrollbarPositions(self):
         """Provides the scrollbar positions"""
@@ -115,7 +75,7 @@ class MDViewer(TextViewer):
         """Overloaded; by default the remote pixmaps are not loaded"""
         if resourceType == QTextDocument.ImageResource:
             url = resourceURL.toString()
-            currentFileName = self.__parentWidget.getFileName()
+            currentFileName = self._parentWidget.getFileName()
             if currentFileName:
                 currentDir = os.path.dirname(currentFileName) + os.path.sep
                 if url.startswith(currentDir):
@@ -143,7 +103,7 @@ class MDViewer(TextViewer):
                    not lowerUrl.startswith('https://'):
                     url = url.replace(':/', '://', 1)
                 fName = Settings().webResourceCache.getResource(
-                    url, self.__parentWidget.getUUID())
+                    url, self._parentWidget.getUUID())
                 if fName is not None:
                     try:
                         return QPixmap(fName)
@@ -159,7 +119,7 @@ class MDViewer(TextViewer):
 
     def onResourceSaved(self, url, uuid, fName):
         """Triggered when a pixmap is received asynchronously"""
-        if uuid == self.__parentWidget.getUUID():
+        if uuid == self._parentWidget.getUUID():
             # Note: it is a hack! If the image is received after the document
             # is showed first time then its layout is wrong - not enough space
             # for the image and only a portion of the picture is shown.

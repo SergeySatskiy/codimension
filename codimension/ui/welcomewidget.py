@@ -64,9 +64,18 @@ class WelcomeWidget(TextTabWidget):
        align="left" bgcolor="#d5d1cf" border="0" style="width: 100%">
 <tr>
   <td>
-    <p align="left">Press <b>F1</b> for Keyboard Shortcut Reference or
+    <p align="left">Press <b>F1</b> any time for the Keyboard Shortcut
+       Reference or follow this <a href="action://F1">link</a>.</p>
+    <p align="left">The IDE also features the embedded documentation available
+       via the main menu <i>Help -> Embedded help</i> or via following this
+       <a href="action://embedded-help">link</a>.</p>
+
+    <br>
+    <hr>
+    <br>
+
     <p align="left">
-       visit
+       Visit the project home page
        <a href="http://codimension.org">
           http://codimension.org</a>
           for more information.

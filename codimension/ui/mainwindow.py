@@ -1781,8 +1781,8 @@ class CodimensionMainWindow(QMainWindow):
         docPath = os.path.dirname(exeDir) + os.path.sep + 'doc' + os.path.sep
         startMD = docPath + 'index.md'
         if not os.path.exists(startMD):
-            logging.error('Embedded documentation is not found. Expected here: ' +
-                          startMD)
+            logging.error('Embedded documentation is not found. '
+                          ' Expected here: ' + startMD)
         else:
             self.em.openMarkdownFullView(startMD, True)
 
