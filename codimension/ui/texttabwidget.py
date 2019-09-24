@@ -43,7 +43,7 @@ class TextViewer(QTextBrowser):
 
         self.__copyAvailable = False
         self.copyAvailable.connect(self.__onCopyAvailable)
-        self.anchorClicked.connect(self.__onAnchorClicked)
+        self.anchorClicked.connect(self._onAnchorClicked)
 
     def __onCopyAvailable(self, available):
         """Triggered when copying is available"""
@@ -93,7 +93,7 @@ class TextViewer(QTextBrowser):
 
         return resolveLinkPath(fileName, self._parentWidget.getFileName())
 
-    def __onAnchorClicked(self, link):
+    def _onAnchorClicked(self, link):
         """Handles a URL click"""
         fileName, anchorOrLine = self._resolveLink(link)
         if fileName:
