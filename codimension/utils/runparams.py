@@ -49,12 +49,12 @@ class RunParameters:
         """Returns True if all the values are default"""
         return self.__params == DEFAULT_RUN_PARAMETERS
 
-    def toJSON(self):
+    def runParamsToJSON(self):
         """Converts the instance to a serializable structure"""
         return {'__class__': 'RunParameters',
                 '__values__': self.__params}
 
-    def fromJSON(self, jsonObj):
+    def runParamsFromJSON(self, jsonObj):
         """Populates the values from the json object"""
         self.__params = jsonObj['__values__']
 
@@ -85,18 +85,18 @@ DEFAULT_RUN_PARAMETERS = {
 # JSON serialization/deserialization support
 # implementation idea is taken from here:
 # http://www.diveintopython3.net/serializing.html
-def toJSON(pythonObj):
+def runParamsToJSON(pythonObj):
     """Custom serialization"""
     if isinstance(pythonObj, RunParameters):
-        return pythonObj.toJSON()
+        return pythonObj.runParamsToJSON()
     raise TypeError(repr(pythonObj) + ' is not JSON serializable')
 
 
-def fromJSON(jsonObj):
+def runParamsFromJSON(jsonObj):
     """Custom deserialization"""
     if '__class__' in jsonObj:
         if jsonObj['__class__'] == 'RunParameters':
             params = RunParameters()
-            params.fromJSON(jsonObj)
+            params.runParamsFromJSON(jsonObj)
             return params
     return jsonObj

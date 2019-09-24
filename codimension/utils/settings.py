@@ -54,13 +54,13 @@ class ProfilerSettings:
         self.nodeLimit = 1.0
         self.edgeLimit = 1.0
 
-    def toJSON(self):
+    def profSettingsToJSON(self):
         """Converts the instance to a serializable structure"""
         return {'__class__': 'ProfilerSettings',
                 '__values__': {'nodeLimit': self.nodeLimit,
                                'edgeLimit': self.edgeLimit}}
 
-    def fromJSON(self, jsonObj):
+    def profSettingsFromJSON(self, jsonObj):
         """Populates the values from the json object"""
         self.nodeLimit = jsonObj['__values__']['nodeLimit']
         self.edgeLimit = jsonObj['__values__']['edgeLimit']
@@ -81,7 +81,7 @@ class DebuggerSettings:
         self.autofork = False
         self.followChild = False
 
-    def toJSON(self):
+    def debugSettingsToJSON(self):
         """Converts the instance to a serializable structure"""
         return {'__class__': 'DebuggerSettings',
                 '__values__': {'reportExceptions': self.reportExceptions,
@@ -90,7 +90,7 @@ class DebuggerSettings:
                                'autofork': self.autofork,
                                'followChild': self.followChild}}
 
-    def fromJSON(self, jsonObj):
+    def debugSettingsFromJSON(self, jsonObj):
         """Populates the values from the json object"""
         self.reportExceptions = jsonObj['__values__']['reportExceptions']
         self.traceInterpreter = jsonObj['__values__']['traceInterpreter']
@@ -219,11 +219,11 @@ def settingsFromJSON(jsonObj):
     if '__class__' in jsonObj:
         if jsonObj['__class__'] == 'ProfilerSettings':
             pSettings = ProfilerSettings()
-            pSettings.fromJSON(jsonObj)
+            pSettings.profSettingsFromJSON(jsonObj)
             return pSettings
         if jsonObj['__class__'] == 'DebuggerSettings':
             dSettings = DebuggerSettings()
-            dSettings.fromJSON(jsonObj)
+            dSettings.debugSettingsFromJSON(jsonObj)
             return dSettings
     return jsonObj
 
@@ -231,9 +231,9 @@ def settingsFromJSON(jsonObj):
 def settingsToJSON(pythonObj):
     """Custom serialization"""
     if isinstance(pythonObj, ProfilerSettings):
-        return pythonObj.toJSON()
+        return pythonObj.profSettingsToJSON()
     if isinstance(pythonObj, DebuggerSettings):
-        return pythonObj.toJSON()
+        return pythonObj.debugSettingsToJSON()
     raise TypeError(repr(pythonObj) + ' is not JSON serializable')
 
 

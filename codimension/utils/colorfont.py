@@ -225,7 +225,7 @@ def getProportionalFontList():
     return getFontList(QFontComboBox.ProportionalFonts)
 
 
-def toJSON(pythonObj):
+def colorFontToJSON(pythonObj):
     """Custom serialization"""
     if isinstance(pythonObj, QColor):
         return {'__class__': 'QColor',
@@ -236,7 +236,7 @@ def toJSON(pythonObj):
     raise TypeError(repr(pythonObj) + ' is not JSON serializable')
 
 
-def fromJSON(jsonObj):
+def colorFontFromJSON(jsonObj):
     """Custom deserialization"""
     if '__class__' in jsonObj:
         if jsonObj['__class__'] == 'QColor':

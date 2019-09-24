@@ -26,7 +26,7 @@ import os.path
 import json
 from copy import deepcopy
 from ui.qt import QColor, QFont
-from .colorfont import buildFont, toJSON, fromJSON
+from .colorfont import buildFont, colorFontToJSON, colorFontFromJSON
 from .fileutils import saveToFile, getFileContent
 from .config import DEFAULT_ENCODING
 
@@ -307,7 +307,7 @@ class Skin:
             try:
                 with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
                     json.dump(self.__values, diskfile, indent=4,
-                              default=toJSON)
+                              default=colorFontToJSON)
             except Exception as exc:
                 logging.error('Error saving skin settings (to ' +
                               fName + '): ' + str(exc))
@@ -319,7 +319,7 @@ class Skin:
             try:
                 with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
                     json.dump(self.__cfValues, diskfile, indent=4,
-                              default=toJSON)
+                              default=colorFontToJSON)
             except Exception as exc:
                 logging.error('Error saving control flow settings (to ' +
                               fName + '): ' + str(exc))
@@ -388,7 +388,7 @@ class Skin:
         try:
             origLength = len(self.__values)
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
-                diskContent = json.load(diskfile, object_hook=fromJSON)
+                diskContent = json.load(diskfile, object_hook=colorFontFromJSON)
                 diskLength = len(diskContent)
                 self.__values.update(diskContent)
             if origLength != diskLength:
@@ -408,7 +408,7 @@ class Skin:
         try:
             origLength = len(self.__cfValues)
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
-                diskContent = json.load(diskfile, object_hook=fromJSON)
+                diskContent = json.load(diskfile, object_hook=colorFontFromJSON)
                 diskLength = len(diskContent)
                 self.__cfValues.update(diskContent)
             if origLength != diskLength:
@@ -471,7 +471,7 @@ def getThemesList(localSkinsDir):
             fName = dName + 'skin.json'
             with open(fName, 'r',
                       encoding=DEFAULT_ENCODING) as diskfile:
-                values = json.load(diskfile, object_hook=fromJSON)
+                values = json.load(diskfile, object_hook=colorFontFromJSON)
                 return values['name']
         except:
             return None

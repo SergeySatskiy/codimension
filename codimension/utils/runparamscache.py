@@ -23,7 +23,7 @@ import json
 import logging
 import os.path
 from copy import deepcopy
-from .runparams import RunParameters, toJSON, fromJSON
+from .runparams import RunParameters, runParamsToJSON, runParamsFromJSON
 from .config import DEFAULT_ENCODING
 
 
@@ -66,7 +66,8 @@ class RunParametersCache:
             try:
                 with open(self.__rpFileName, 'r',
                           encoding=DEFAULT_ENCODING) as diskfile:
-                    self.__cache = json.load(diskfile, object_hook=fromJSON)
+                    self.__cache = json.load(diskfile,
+                                             object_hook=runParamsFromJSON)
             except Exception as exc:
                 logging.error('Error loading run paramaters cache (from ' +
                               self.__rpFileName + '): ' + str(exc))
@@ -78,7 +79,7 @@ class RunParametersCache:
             try:
                 with open(self.__rpFileName, 'w',
                           encoding=DEFAULT_ENCODING) as diskfile:
-                    json.dump(self.__cache, diskfile, default=toJSON)
+                    json.dump(self.__cache, diskfile, default=runParamsToJSON)
             except Exception as exc:
                 logging.error('Error saving run paramaters cache (to ' +
                               self.__rpFileName + '): ' + str(exc))

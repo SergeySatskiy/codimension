@@ -52,7 +52,7 @@ from utils.config import CONFIG_DIR
 from utils.config import DEFAULT_ENCODING
 from utils.settings import Settings, SETTINGS_DIR
 from utils.globals import GlobalData
-from utils.colorfont import toJSON
+from utils.colorfont import colorFontToJSON
 
 
 try:
@@ -352,7 +352,7 @@ class CodimensionUILauncher:
                 logging.error('Error creating a default skin directory: %s',
                               defaultSkinDir)
                 logging.error(str(exc))
-    
+
         if defaultSkinDirOK:
             defaultCSS = defaultSkinDir + os.path.sep + 'app.css'
             if not os.path.exists(defaultCSS):
@@ -368,7 +368,7 @@ class CodimensionUILauncher:
                     with open(defaultCommonSkin, 'w',
                               encoding=DEFAULT_ENCODING) as diskfile:
                         json.dump(_DEFAULT_SKIN_SETTINGS, diskfile, indent=4,
-                                  default=toJSON)
+                                  default=colorFontToJSON)
                 except Exception as exc:
                     logging.error('Error creating default skin skin.json '
                                   'file at %s', defaultCommonSkin)
@@ -379,7 +379,7 @@ class CodimensionUILauncher:
                     with open(defaultCFlowSkin, 'w',
                               encoding=DEFAULT_ENCODING) as diskfile:
                         json.dump(_DEFAULT_CFLOW_SETTINGS, diskfile, indent=4,
-                                  default=toJSON)
+                                  default=colorFontToJSON)
                 except Exception as exc:
                     logging.error('Error creating default skin cflow.json '
                                   'file at %s', defaultCFlowSkin)
