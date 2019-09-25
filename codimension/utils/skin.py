@@ -26,7 +26,8 @@ import os.path
 import json
 from copy import deepcopy
 from ui.qt import QColor, QFont
-from .colorfont import buildFont, colorFontToJSON, colorFontFromJSON
+from .colorfont import (buildFont, buildColor,
+                        colorFontToJSON, colorFontFromJSON)
 from .fileutils import saveToFile, getFileContent
 from .config import DEFAULT_ENCODING
 
@@ -388,10 +389,12 @@ class Skin:
         try:
             origLength = len(self.__values)
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
-                diskContent = json.load(diskfile, object_hook=colorFontFromJSON)
+                diskContent = json.load(diskfile,
+                                        object_hook=colorFontFromJSON)
+                diskContent, oldFormat = self.__postProcessValues(diskContent)
                 diskLength = len(diskContent)
                 self.__values.update(diskContent)
-            if origLength != diskLength:
+            if origLength != diskLength or oldFormat:
                 self.flush()
         except Exception as exc:
             logging.error('Cannot read skin settings from ' + fName +
@@ -408,10 +411,12 @@ class Skin:
         try:
             origLength = len(self.__cfValues)
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
-                diskContent = json.load(diskfile, object_hook=colorFontFromJSON)
+                diskContent = json.load(diskfile,
+                                        object_hook=colorFontFromJSON)
+                diskContent, oldFormat = self.__postProcessValues(diskContent)
                 diskLength = len(diskContent)
                 self.__cfValues.update(diskContent)
-            if origLength != diskLength:
+            if origLength != diskLength or oldFormat:
                 self.flushCFlow()
         except Exception as exc:
             logging.error('Cannot read control flow settings from ' + fName +
@@ -434,6 +439,28 @@ class Skin:
         badgePointSize = self.__cfValues['badgeFont'].pointSize()
         monoPointSize = self.__cfValues['cfMonoFont'].pointSize()
         return (min(badgePointSize, monoPointSize) - 1) * -1
+
+    @staticmethod
+    def __postProcessValues(values):
+        """Builds fonts and colors as needed"""
+        # Detection is primitive: the name of the dictionary item
+        oldFormat = False
+        for name, value in values.items():
+            lowerName = name.lower()
+            if 'font' in lowerName:
+                if isinstance(value, QFont):
+                    # already built
+                    oldFormat = True
+                    continue
+                values[name] = buildFont(value)
+                continue
+            if 'color' in lowerName or 'paper' in lowerName:
+                if isinstance(value, QColor):
+                    # already built
+                    oldFormat
+                    continue
+                values[name] = buildColor(value)
+        return values, oldFormat
 
     def setTextMonoFontFamily(self, fontFamily):
         """Sets the new mono font family"""
@@ -471,7 +498,10 @@ def getThemesList(localSkinsDir):
             fName = dName + 'skin.json'
             with open(fName, 'r',
                       encoding=DEFAULT_ENCODING) as diskfile:
-                values = json.load(diskfile, object_hook=colorFontFromJSON)
+                # Note: the load() method lacks the
+                # object_hook=colorFontFromJSON parameter because the only
+                # the skin name is read and no font/color conversion needed
+                values = json.load(diskfile)
                 return values['name']
         except:
             return None
@@ -507,3 +537,4 @@ def getThemesList(localSkinsDir):
                         name = getSkinName(dName)
                         result.append([item, name])
     return result
+

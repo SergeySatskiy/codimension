@@ -228,11 +228,9 @@ def getProportionalFontList():
 def colorFontToJSON(pythonObj):
     """Custom serialization"""
     if isinstance(pythonObj, QColor):
-        return {'__class__': 'QColor',
-                '__value__': colorAsString(pythonObj)}
+        return colorAsString(pythonObj)
     if isinstance(pythonObj, QFont):
-        return {'__class__': 'QFont',
-                '__value__': fontAsString(pythonObj)}
+        return fontAsString(pythonObj)
     raise TypeError(repr(pythonObj) + ' is not JSON serializable')
 
 

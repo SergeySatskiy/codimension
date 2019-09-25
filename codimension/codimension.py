@@ -185,7 +185,7 @@ class CodimensionUILauncher:
         # prevents codimension working properly so this hack below disables the
         # global menu bar for codimension and makes it working properly.
         os.environ['QT_X11_NO_NATIVE_MENUBAR'] = '1'
-    
+
         # Create QT application
         codimensionApp = CodimensionApplication(sys.argv, settings['style'])
         globalData.application = codimensionApp
