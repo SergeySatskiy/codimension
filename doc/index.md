@@ -32,4 +32,4 @@ It rather covers some practical topics. Please follow the links in the list belo
 - [Markdown support (documenting your projects)](md/mdsupport.md)
 - [Project explained](file:./project.md)
 - [Editor settings](file:./editorsettings.md)
-- [Color schemes](file:./colorschemes.md)
+- [Color schemes](colorschemes/colorschemes.md)

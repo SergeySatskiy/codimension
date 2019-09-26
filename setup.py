@@ -119,6 +119,8 @@ def getPackageData():
                      'doc/pyflakes'),
                     ('doc.disassembling',
                      'doc/disassembling'),
+                    ('doc.colorschemes',
+                     'doc/colorschemes'),
                     ('plantuml',
                      'plantuml/')]
 
@@ -162,6 +164,7 @@ def getPackages():
             'doc', 'doc.cml', 'doc.plugins', 'doc.technology', 'doc.md',
             'doc.smartzoom', 'doc.grouping', 'doc.deadcode',
             'doc.complexity', 'doc.pyflakes', 'doc.disassembling',
+            'doc.colorschemes',
             'plantuml']
     # If a myskin skin is to be added as well, then one more package should
     # be mentioned: ..., 'codimension.skins.myskin']
