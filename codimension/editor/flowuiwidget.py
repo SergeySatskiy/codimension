@@ -713,16 +713,11 @@ class FlowUIWidget(QWidget):
 
     def onSmartZoomLevelUp(self):
         """Triggered when an upper smart zoom level was requested"""
-        maxSmartZoom = Settings().MAX_SMART_ZOOM
-        currentLevel = Settings()['smartZoom']
-        if currentLevel < maxSmartZoom:
-            Settings()['smartZoom'] = currentLevel + 1
+        Settings().onSmartZoomIn()
 
     def onSmartZoomLevelDown(self):
         """Triggered when an lower smart zoom level was requested"""
-        currentLevel = Settings()['smartZoom']
-        if currentLevel > 0:
-            Settings()['smartZoom'] = currentLevel - 1
+        Settings().onSmartZoomOut()
 
     def setSmartZoomLevel(self, smartZoomLevel):
         """Sets the new smart zoom level"""

@@ -471,12 +471,6 @@ class SettingsWrapper(QObject,
         self.__values[key] = value
         if key == 'flowSplitterSizes':
             self.sigFlowSplitterChanged.emit()
-        elif key == 'flowZoom':
-            self.sigFlowZoomChanged.emit()
-        elif key == 'zoom':
-            self.sigTextZoomChanged.emit()
-        elif key == 'smartZoom':
-            self.sigSmartZoomChanged.emit()
         elif key == 'hidedocstrings':
             self.sigHideDocstringsChanged.emit()
         elif key == 'hidecomments':

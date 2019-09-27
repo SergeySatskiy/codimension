@@ -53,6 +53,7 @@ _DEFAULT_SKIN_SETTINGS = {
     # 'revisionMarginPaper': QColor(228, 228, 228, 255),
     # 'revisionMarginColor': QColor(0, 128, 0, 255),
     # 'revisionAlterPaper': QColor(238, 240, 241, 255),
+
     'lineNumFont': buildFont('Courier,12,-1,5,50,0,0,0,0,0') if isMac else
                    buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
     'searchMarkColor': QColor(0, 255, 0, 255),
