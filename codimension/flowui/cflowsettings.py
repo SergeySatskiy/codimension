@@ -30,7 +30,6 @@ from ui.qt import QFontMetrics
 from utils.globals import GlobalData
 from utils.colorfont import getZoomedCFMonoFont, getZoomedCFBadgeFont
 from utils.settings import Settings
-from utils.skin import _DEFAULT_CFLOW_SETTINGS
 
 
 class CFlowSettings:
@@ -39,12 +38,12 @@ class CFlowSettings:
 
     def __init__(self, paintDevice, params):
         self.__paintDevice = paintDevice
+        self.__params = params
 
         # Used to generate each item unique sequential ID
         self.itemID = 0
 
-        self.__noZoomFontMetrics = QFontMetrics(
-            _DEFAULT_CFLOW_SETTINGS['cfMonoFont'])
+        self.__noZoomFontMetrics = QFontMetrics(self.__params['cfMonoFont'])
         self.coefficient = 1.0
 
         for key, value in params.items():
@@ -80,7 +79,7 @@ class CFlowSettings:
 
     def __getNormalized(self, value):
         """Normalize a defalt value to the current zoom"""
-        return ceil(float(_DEFAULT_CFLOW_SETTINGS[value]) * self.coefficient)
+        return ceil(float(self.__params[value]) * self.coefficient)
 
     def onFlowZoomChanged(self):
         """Triggered when a flow zoom is changed"""
