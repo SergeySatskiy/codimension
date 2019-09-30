@@ -120,6 +120,8 @@ Here is a description of the settings stored in cflow.json
 | vCellPadding              | The vertical cell padding (between primitives) |
 | hTextPadding              | The primitive's text horizontal text padding |
 | vTextPadding              | The primitive's text vertical text padding |
+| vHiddenTextPadding        | The scope side hidden comment primitive vertical text padding |
+| hHiddenTextPadding        | The scope side hidden comment primitive horizontal text padding |
 | hHeaderPadding            | The scope primitive header horizontal padding |
 | vHeaderPadding            | The scope primitive header vertical padding |
 | vSpacer                   | The height of the vertical spacer |
