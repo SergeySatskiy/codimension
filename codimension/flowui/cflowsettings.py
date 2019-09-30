@@ -43,7 +43,8 @@ class CFlowSettings:
         # Used to generate each item unique sequential ID
         self.itemID = 0
 
-        self.__noZoomFontMetrics = QFontMetrics(self.__params['cfMonoFont'])
+        self.__noZoomFontMetrics = QFontMetrics(self.__params['cfMonoFont'],
+                                                self.__paintDevice)
         self.coefficient = 1.0
 
         for key, value in params.items():
