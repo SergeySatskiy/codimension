@@ -477,8 +477,8 @@ class Skin:
         self.flushCFlow()
 
 
-def getThemesList(localSkinsDir):
-    """Builds a list of themes - system wide and the user local"""
+def getSkinsList(localSkinsDir):
+    """Builds a list of skins - system wide and the user local"""
     def isSkinDir(dName):
         """True if all the required files are there"""
         for fName in ['app.css', 'skin.json', 'cflow.json']:
@@ -506,7 +506,7 @@ def getThemesList(localSkinsDir):
         if os.path.isdir(dName):
             # Seems to be a skin dir
             if isSkinDir(dName):
-                # Get the theme display name
+                # Get the skin display name
                 name = getSkinName(dName)
                 if name:
                     result.append([item, name])
@@ -523,11 +523,11 @@ def getThemesList(localSkinsDir):
                 # Seems to be a skin dir
                 if isSkinDir(dName):
                     # Check if this name alrady added
-                    for theme in result:
-                        if theme[0] == item:
+                    for skin in result:
+                        if skin[0] == item:
                             break
                     else:
-                        # Get the theme display name
+                        # Get the skin display name
                         name = getSkinName(dName)
                         result.append([item, name])
     return result

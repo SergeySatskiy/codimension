@@ -31,5 +31,5 @@ It rather covers some practical topics. Please follow the links in the list belo
 - [Plugins](plugins/plugins.md)
 - [Markdown support (documenting your projects)](md/mdsupport.md)
 - [Project explained](file:./project.md)
-- [Editor settings](file:./editorsettings.md)
+- [IDE customization](editorsettings/editorsettings.md): mostly editor settings
 - [Color schemes](colorschemes/colorschemes.md)

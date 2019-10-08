@@ -23,7 +23,7 @@
 import os.path
 from utils.pixmapcache import getIcon
 from utils.config import CONFIG_DIR
-from utils.skin import getThemesList
+from utils.skin import getSkinsList
 from utils.colorfont import (getMonospaceFontList, getScalableFontList,
                              getProportionalFontList)
 from utils.globals import GlobalData
@@ -477,10 +477,6 @@ class MainWindowMenuMixin:
             ('Wrap long lines', 'lineWrap', self._lineWrapChanged),
             ('Show brace matching', 'showBraceMatch',
              self._showBraceMatchChanged),
-            ('Auto indent', 'autoIndent', self._autoIndentChanged),
-            ('Backspace unindent', 'backspaceUnindent',
-             self._backspaceUnindentChanged),
-            ('TAB indents', 'tabIndents', self._tabIndentsChanged),
             ('Show indentation guides', 'indentationGuides',
              self._indentationGuidesChanged),
             ('Highlight current line', 'currentLineVisible',
@@ -564,18 +560,18 @@ class MainWindowMenuMixin:
         openTabsMenu.triggered.connect(self._openTabsMenuTriggered)
 
         optionsMenu.addSeparator()
-        themesMenu = optionsMenu.addMenu("Themes")
-        self.__themesGroup = QActionGroup(self)
-        availableThemes = self.__buildThemesList()
-        self.__themes = []
-        for theme in availableThemes:
-            themeAct = themesMenu.addAction(theme[1])
-            themeAct.setData(theme[0])
-            themeAct.setCheckable(True)
-            themeAct.setActionGroup(self.__themesGroup)
-            self.__themes.append((theme[0], themeAct))
-        themesMenu.triggered.connect(self._onTheme)
-        themesMenu.aboutToShow.connect(self.__themeAboutToShow)
+        skinsMenu = optionsMenu.addMenu("Skins")
+        self.__skinsGroup = QActionGroup(self)
+        availableSkins = self.__buildSkinsList()
+        self.__skins = []
+        for skin in availableSkins:
+            skinAct = skinsMenu.addAction(skin[1])
+            skinAct.setData(skin[0])
+            skinAct.setCheckable(True)
+            skinAct.setActionGroup(self.__skinsGroup)
+            self.__skins.append((skin[0], skinAct))
+        skinsMenu.triggered.connect(self._onSkin)
+        skinsMenu.aboutToShow.connect(self.__skinAboutToShow)
 
         styleMenu = optionsMenu.addMenu("Styles")
         self.__styleGroup = QActionGroup(self)
@@ -976,19 +972,19 @@ class MainWindowMenuMixin:
         for item in self.__badgeFonts:
             item[1].setChecked(item[0].lower() == currentFont)
 
-    def __themeAboutToShow(self):
-        """Themes menu is about to show"""
-        currentTheme = self.settings['skin'].lower()
-        for item in self.__themes:
-            item[1].setChecked(item[0].lower() == currentTheme)
+    def __skinAboutToShow(self):
+        """Skins menu is about to show"""
+        currentSkin = self.settings['skin'].lower()
+        for item in self.__skins:
+            item[1].setChecked(item[0].lower() == currentSkin)
 
     @staticmethod
-    def __buildThemesList():
-        """Builds a list of themes - system wide and the user local"""
+    def __buildSkinsList():
+        """Builds a list of skins"""
         localSkinsDir = os.path.normpath(str(QDir.homePath())) + \
                         os.path.sep + CONFIG_DIR + os.path.sep + "skins" + \
                         os.path.sep
-        return getThemesList(localSkinsDir)
+        return getSkinsList(localSkinsDir)
 
     def _recomposePluginMenu(self):
         """Recomposes the plugin menu"""

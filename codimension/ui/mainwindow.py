@@ -1220,22 +1220,6 @@ class CodimensionMainWindow(QMainWindow):
         self.settings['showBraceMatch'] = not self.settings['showBraceMatch']
         self.em.updateEditorsSettings()
 
-    def _autoIndentChanged(self):
-        """Editor setting changed"""
-        self.settings['autoIndent'] = not self.settings['autoIndent']
-        self.em.updateEditorsSettings()
-
-    def _backspaceUnindentChanged(self):
-        """Editor setting changed"""
-        self.settings['backspaceUnindent'] = \
-            not self.settings['backspaceUnindent']
-        self.em.updateEditorsSettings()
-
-    def _tabIndentsChanged(self):
-        """Editor setting changed"""
-        self.settings['tabIndents'] = not self.settings['tabIndents']
-        self.em.updateEditorsSettings()
-
     def _indentationGuidesChanged(self):
         """Editor setting changed"""
         self.settings['indentationGuides'] = \
@@ -1343,10 +1327,10 @@ class CodimensionMainWindow(QMainWindow):
             self.__alphasort.setChecked(False)
             self.__tabsort.setChecked(True)
 
-    def _onTheme(self, skinSubdir):
-        """Triggers when a theme is selected"""
+    def _onSkin(self, skinSubdir):
+        """Triggers when a skin is selected"""
         if self.settings['skin'] != skinSubdir.data():
-            logging.info("Please restart codimension to apply the new theme")
+            logging.info("Please restart codimension to apply the new skin")
             self.settings['skin'] = skinSubdir.data()
 
     def _onStyle(self, styleName):

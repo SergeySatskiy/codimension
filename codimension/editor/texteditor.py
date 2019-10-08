@@ -73,7 +73,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         skin = GlobalData().skin
         self.setPaper(skin['nolexerPaper'])
         self.setColor(skin['nolexerColor'])
-        self.currentLineColor = skin['currentLinePaper']
 
         self.onTextZoomChanged()
         self.__initMargins(debugger)
@@ -223,6 +222,12 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.drawAnyWhitespace = settings['showSpaces']
         self.drawIncorrectIndentation = settings['showSpaces']
 
+        if settings['currentLineVisible']:
+            skin = GlobalData().skin
+            self.currentLineColor = skin['currentLinePaper']
+        else:
+            self.currentLineColor = None
+
         if settings['lineWrap']:
             self.setWordWrapMode(QTextOption.WrapAnywhere)
         else:
@@ -232,6 +237,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             navBar = self._parent.getNavigationBar()
             if navBar:
                 navBar.updateSettings()
+
+        # Workaround: after changing the current line highlight visibility the
+        # editor does not update it immediately
+        self._updateExtraSelections()
 
     def __initMargins(self, debugger):
         """Initializes the editor margins"""
