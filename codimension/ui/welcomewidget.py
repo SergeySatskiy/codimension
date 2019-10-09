@@ -23,6 +23,7 @@
 import os.path
 import sys
 from utils.globals import GlobalData
+from utils.project import CodimensionProject
 from .texttabwidget import TextTabWidget
 
 
@@ -31,19 +32,43 @@ class WelcomeWidget(TextTabWidget):
     """Welcome screen"""
 
     httpAddress = "http://codimension.org"
-    homePage = httpAddress
-    downloadPage = httpAddress + "/download/"
 
     def __init__(self, parent=None):
-
         TextTabWidget.__init__(self, parent)
+        self.setHTML(self.__getContent())
+        self.setFileName("")
+        self.setShortName("Welcome")
+        GlobalData().project.sigProjectChanged.connect(self.__onProjectChanged)
+
+    def __onProjectChanged(self, what):
+        if what == CodimensionProject.CompleteProject:
+            self.setHTML(self.__getContent())
+
+    def __getContent(self):
+        project = GlobalData().project
+        projectMDFile = project.getStartupMarkdownFile()
+
+        projectPart = ""
+        if projectMDFile:
+            if os.path.exists(projectMDFile):
+                relativeMDFile = project.getRelativePath(projectMDFile)
+                projectPart = """<p align="left">The currently lodaded project
+<b>""" + GlobalData().project.getProjectName() + """</b> provides documentation.
+<br>Open it by clicking
+<a href="action://project-cocumentation">""" + relativeMDFile + """</a>
+or clicking any time the main toolbar button with the markdown icon.</p>
+
+<br>
+<hr>
+<br>"""
+
         pixmapPath = os.path.dirname(os.path.realpath(sys.argv[0])) + \
             os.path.sep + 'pixmaps' + os.path.sep
         logoPath = pixmapPath + 'logo-48x48.png'
         welcome = "  Codimension version " + str(GlobalData().version) + \
             " <font size=-2>(GPL v3)</font>"
 
-        self.setHTML("""
+        return """
 <body bgcolor="#EFF0F2">
 <p>
 <table cellspacing="0" cellpadding="8" width="100%"
@@ -64,7 +89,7 @@ class WelcomeWidget(TextTabWidget):
 <table cellspacing="0" cellpadding="8" width="100%"
        align="left" bgcolor="#EFF0F2" border="0" style="width: 100%">
 <tr>
-  <td>
+  <td>""" + projectPart + """
     <p align="left">Press <b>F1</b> any time for the Keyboard Shortcut
        Reference or follow this <a href="action://F1">link</a>.</p>
     <p align="left">The IDE also features the embedded documentation available
@@ -84,7 +109,5 @@ class WelcomeWidget(TextTabWidget):
   </td>
 </tr>
 </table></p>
-</body>""")
+</body>"""
 
-        self.setFileName("")
-        self.setShortName("Welcome")

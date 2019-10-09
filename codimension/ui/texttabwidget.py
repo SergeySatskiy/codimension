@@ -74,6 +74,8 @@ class TextViewer(QTextBrowser):
                     GlobalData().mainWindow._onEmbeddedHelp()
                 elif action.lower() == 'f1':
                     GlobalData().mainWindow.em.onHelp()
+                elif action.lower() == 'project-cocumentation':
+                    GlobalData().mainWindow.projectDocClicked()
                 else:
                     # must be a keyboard shortcut
                     logging.error("Unsupported action '" + link.host() + "'")
