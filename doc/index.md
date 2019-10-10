@@ -21,7 +21,7 @@ It rather covers some practical topics. Please follow the links in the list belo
 - [Dead code](deadcode/deadcode.md)
 - [Complexity](complexity/complexity.md)
 - [PyFlakes](pyflakes/pyflakes.md)
-- [Dependencies](file:./dependencies.md)
+- [Dependencies](dependencies/dependencies.md)
 - [Disassembling](disassembling/disassembling.md)
 - Profiling (the documentation is coming soon)
 
