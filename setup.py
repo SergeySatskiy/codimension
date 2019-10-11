@@ -125,6 +125,8 @@ def getPackageData():
                      'doc/editorsettings'),
                     ('doc.dependencies',
                      'doc/dependencies'),
+                    ('doc.project',
+                     'doc/project'),
                     ('plantuml',
                      'plantuml/')]
 
@@ -169,7 +171,7 @@ def getPackages():
             'doc.smartzoom', 'doc.grouping', 'doc.deadcode',
             'doc.complexity', 'doc.pyflakes', 'doc.disassembling',
             'doc.colorschemes', 'doc.editorsettings',
-            'doc.dependencies',
+            'doc.dependencies', 'doc.project',
             'plantuml']
     # If a myskin skin is to be added as well, then one more package should
     # be mentioned: ..., 'codimension.skins.myskin']
