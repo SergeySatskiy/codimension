@@ -246,7 +246,7 @@ def extendInstance(obj, cls):
     obj.__class__ = type(base_cls_name, (base_cls, cls), {})
 
 
-ANCHOR_REGEXP = re.compile(r'#[_a-zA-Z0-9]+$')
+ANCHOR_REGEXP = re.compile(r'\#[_a-zA-Z0-9]+$')
 
 # Supported format:
 # [file:]<absolute or relative path>[#anchor identifier]

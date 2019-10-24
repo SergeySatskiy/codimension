@@ -91,10 +91,10 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
             QDesktopServices.openUrl(QUrl(self.cmlRef.link))
             return
 
-        fileName, lineNo = resolveLinkPath(self.cmlRef.link,
-                                           self._editor.getFileName())
+        fileName, anchorOrLine = resolveLinkPath(self.cmlRef.link,
+                                                 self._editor.getFileName())
         if fileName:
-            GlobalData().mainWindow.openFile(fileName, lineNo)
+            GlobalData().mainWindow.openFile(fileName, anchorOrLine)
 
     def getColors(self):
         """Provides the item colors"""

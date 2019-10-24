@@ -93,7 +93,12 @@ class TextViewer(QTextBrowser):
                           'file:///absolute/fname')
             return None, None
 
-        return resolveLinkPath(fileName, self._parentWidget.getFileName())
+        fileName, anchorOrLine = resolveLinkPath(fileName,
+                                                 self._parentWidget.getFileName())
+        if anchorOrLine is None:
+            if link.hasFragment():
+                return fileName, link.fragment()
+        return fileName, anchorOrLine
 
     def _onAnchorClicked(self, link):
         """Handles a URL click"""

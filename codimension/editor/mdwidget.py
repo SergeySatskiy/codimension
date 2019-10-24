@@ -33,7 +33,6 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.diskvaluesrelay import getFilePosition
 from utils.md import renderMarkdown
-from utils.misc import resolveLinkPath
 
 
 IDLE_TIMEOUT = 1500
