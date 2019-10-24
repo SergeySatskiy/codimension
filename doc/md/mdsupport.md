@@ -226,12 +226,12 @@ Codimension extends the link format and uses the following approach:
 
 | Link format |
 | ----------- |
-| file:./relative/fname[:anchorOrLine] |
-| file:relative/fname[:anchorOrLine] |
-| file:/absolute/fname[:anchorOrLine] |
-| file:///absolute/fname[:anchorOrLine] |
-| relative/fname[:anchorOrLine] |
-| /absolute/fname[:anchorOrLine] |
+| file:./relative/fname[#anchorOrLine] |
+| file:relative/fname[#anchorOrLine] |
+| file:/absolute/fname[#anchorOrLine] |
+| file:///absolute/fname[#anchorOrLine] |
+| relative/fname[#anchorOrLine] |
+| /absolute/fname[#anchorOrLine] |
 
 The optional anchorOrLine parameter is an anchor identifier from the CML doc
 comment or a line number. When clicked the corresponding file will be opened

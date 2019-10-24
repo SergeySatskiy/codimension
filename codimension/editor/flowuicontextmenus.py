@@ -745,14 +745,20 @@ class CFSceneContextMenuMixin:
 
         project = GlobalData().project
         if project.isProjectFile(docFileName):
-            link = project.getRelativePath(docFileName)
+            linkFromFile = project.getRelativePath(docFileName)
+            if project.isProjectFile(fileName):
+                linkFromDoc = project.getRelativePath(fileName)
+            else:
+                linkFromDoc = os.path.relpath(fileName, docFileName)
         else:
-            link = os.path.relpath(docFileName, fileName)
+            linkFromFile = os.path.relpath(docFileName, fileName)
+            linkFromDoc = os.path.relpath(fileName, docFileName)
+
 
         # Insert a doc link
         with editor:
             lineNo = selectedItem.getFirstLine()
-            line = CMLdoc.generate(link, newAnchor, 'See documentation',
+            line = CMLdoc.generate(linkFromFile, newAnchor, 'See documentation',
                                    None, None, None,
                                    selectedItem.ref.body.beginPos)
             editor.insertLines(line, lineNo)
@@ -765,7 +771,7 @@ class CFSceneContextMenuMixin:
             if needContent:
                 widget = GlobalData().mainWindow.em.getWidgetForFileName(docFileName)
                 editor = widget.getEditor()
-                editor.text = getDefaultFileDoc(fileName, newAnchor)
+                editor.text = getDefaultFileDoc(linkFromDoc, newAnchor)
                 editor.document().setModified(False)
 
     def onRemoveDoc(self):

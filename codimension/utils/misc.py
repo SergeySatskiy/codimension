@@ -227,7 +227,7 @@ documentation can refer specifically to that doc link. To do so use the
 following format:
 
 ```
-[See in the source code](file:${fName}:${anchor})
+[See in the source code](file:${fName}#${anchor})
 ```
 
 When clicked, the source code file will be opened and scrolled to the doc link.
@@ -246,10 +246,10 @@ def extendInstance(obj, cls):
     obj.__class__ = type(base_cls_name, (base_cls, cls), {})
 
 
-ANCHOR_REGEXP = re.compile(r':[_a-zA-Z0-9]+$')
+ANCHOR_REGEXP = re.compile(r'#[_a-zA-Z0-9]+$')
 
 # Supported format:
-# [file:]<absolute or relative path>[:anchor identifier]
+# [file:]<absolute or relative path>[#anchor identifier]
 def splitLinkPath(link):
     """Splits the link path into the path and the anchor"""
     if link.startswith('file:'):
