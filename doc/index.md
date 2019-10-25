@@ -1,4 +1,4 @@
-# Embedded Codimension Documentation
+# Codimension Documentation
 
 This documentation does not cover everything.
 It rather covers some practical topics. Please follow the links in the list below to select a particular area.

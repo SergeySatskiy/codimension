@@ -653,7 +653,7 @@ class MainWindowMenuMixin:
         helpMenu.aboutToHide.connect(self.__helpAboutToHide)
         self.__embeddedHelpAct = helpMenu.addAction(
             getIcon('embhelpmenu.png'),
-            '&Embedded help', self._onEmbeddedHelp)
+            '&Documentation', self._onEmbeddedHelp)
         self.__shortcutsAct = helpMenu.addAction(
             getIcon('shortcutsmenu.png'),
             '&Major shortcuts', self.em.onHelp, 'F1')

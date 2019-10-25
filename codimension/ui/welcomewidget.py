@@ -92,8 +92,8 @@ or clicking any time the main toolbar button with the markdown icon.</p>
   <td>""" + projectPart + """
     <p align="left">Press <b>F1</b> any time for the Keyboard Shortcut
        Reference or follow this <a href="action://F1">link</a>.</p>
-    <p align="left">The IDE also features the embedded documentation available
-       via the main menu <i>Help -> Embedded help</i> or via following this
+    <p align="left">The IDE also features the documentation available
+       via the main menu <i>Help -> Documentation</i> or via following this
        <a href="action://embedded-help">link</a>.</p>
 
     <br>

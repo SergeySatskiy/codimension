@@ -1,6 +1,6 @@
 # Markdown Support
 
-Codimension uses markdown for its own embedded documentation. It also offers
+Codimension uses markdown for its own documentation. It also offers
 features to use markdown for documenting user projects. To cover these items
 the following has been implemented:
 
