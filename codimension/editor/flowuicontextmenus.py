@@ -22,6 +22,7 @@
 
 import os.path
 import uuid
+import logging
 from ui.qt import QMenu, QApplication
 from flowui.items import CellElement, IfCell
 from flowui.scopeitems import ScopeCellElement
@@ -256,7 +257,7 @@ class CFSceneContextMenuMixin:
             if editor:
                 fileName = editor._parent.getFileName()
             self.__autoDocActon.setEnabled(
-                    fileName and totalDocLinks + itemsWithDocCML == 0)
+                fileName is not None and totalDocLinks + itemsWithDocCML == 0)
         self.__docSubmenu.setEnabled(self.__removeDocAction.isEnabled() or
                                      self.__editDocAction.isEnabled() or
                                      self.__autoDocActon.isEnabled())
