@@ -750,10 +750,13 @@ class CFSceneContextMenuMixin:
             if project.isProjectFile(fileName):
                 linkFromDoc = project.getRelativePath(fileName)
             else:
-                linkFromDoc = os.path.relpath(fileName, docFileName)
+                linkFromDoc = os.path.relpath(fileName,
+                                              os.path.dirname(docFileName))
         else:
-            linkFromFile = os.path.relpath(docFileName, fileName)
-            linkFromDoc = os.path.relpath(fileName, docFileName)
+            linkFromFile = os.path.relpath(docFileName,
+                                           os.path.dirname(fileName))
+            linkFromDoc = os.path.relpath(fileName,
+                                          os.path.dirname(docFileName))
 
 
         # Insert a doc link
