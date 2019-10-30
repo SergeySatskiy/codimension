@@ -947,6 +947,9 @@ class VirtualCanvas:
         self.__allocateAndSet(vacantRow, 0,
                               IfCell(yBranch, self, 0, vacantRow))
 
+        # Exclude the leading comments and docs from the dependent region
+        dependentRegionBegin = vacantRow
+
         topConnector = ConnectorCell(CONN_W_S, self, 1, vacantRow)
         topConnector.subKind = ConnectorCell.TOP_IF
         self.__allocateAndSet(vacantRow, 1, topConnector)
@@ -1108,7 +1111,7 @@ class VirtualCanvas:
                                     ConnectorCell.CENTER)],
                                   self, 0, vacantRow))
 
-        self.dependentRegions.append((0, vacantRow))
+        self.dependentRegions.append((dependentRegionBegin, vacantRow))
 
     def setLeaderRef(self, ref):
         """Sets the leader ref for ELSE, EXCEPT and FINALLY scopes"""
