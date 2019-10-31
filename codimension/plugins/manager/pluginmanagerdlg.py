@@ -379,10 +379,15 @@ class PluginsDialog(QDialog):
                 settingsButton.setToolTip("Click to configure")
                 settingsButton.setEnabled(True)
             self.__pluginManager.sendPluginActivated(item.plugin)
+        except Exception as exc:
+            item.setCheckState(STATE_COL, Qt.Unchecked)
+            self.__errorsText.setText(
+                "Error activating the plugin, exception is generated:\n" +
+                str(exc))
         except:
             item.setCheckState(STATE_COL, Qt.Unchecked)
             self.__errorsText.setText(
-                "Error activating the plugin - exception is generated")
+                "Error activating the plugin, unknown exception")
 
         self.__inItemChange = False
 

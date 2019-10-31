@@ -90,6 +90,7 @@ class IDEAccess():
         # the 'activate' method is called
         self.settings = None
         self.globalData = None
+        self.__sideBars = None
         self.__sidePanels = None
         self.__parent = parent
 
@@ -203,7 +204,7 @@ class IDEAccess():
               html viewer, text editor etc. All of them derive from
               MainWindowTabWidgetBase (see details in
               src/ui/mainwindowtabwidgetbase.py)
-              The getCurrentEditorWidget().getType() call provides the
+              The currentEditorWidget.getType() call provides the
               current widget type.
               The known widget types are described in
               src/ui/mainwindowtabwidgetbase.py
@@ -226,9 +227,8 @@ class IDEAccess():
         A side panel is identified by its string identifier.
 
         Supported panel names are (case sensitive):
-        project, recent, classes, functions, globals, log, pylint,
-        pymetrics, search, contextHelp, diff, debuger,
-        exceptions, breakpoints.
+        project, recent, classes, functions, globals, log,
+        search, debuger, exceptions, breakpoints.
 
         Each side panel contains one or more views with thier toolbars. To
         get access to them a plugin class can use e.g. the following code:
@@ -239,6 +239,23 @@ class IDEAccess():
         if self.__sidePanels is None:
             self.__initializeSidePanels()
         return self.__sidePanels
+
+    @property
+    def sideBars(self):
+        """Reference to a side bar widget map.
+
+        I.e. a plugin class can use e.g. the following code:
+        self.sideBars["bottom"].addTab(...)
+        A bar is identified by the location. Supported locations:
+        left, right, bottom, top
+        A location can be None if there is no such a bar
+        """
+        if self.__sideBars is None:
+            self.__sideBars = {'left': self.mainWindow._leftSideBar,
+                               'right': self.mainWindow._rightSideBar,
+                               'bottom': self.mainWindow._bottomSideBar,
+                               'top': None}
+        return self.__sideBars
 
     def __initializeSidePanels(self):
         """Initializes the side panels map"""
@@ -292,43 +309,12 @@ class IDEAccess():
             logPanel.widget.toolbar)
         self.__sidePanels["log"] = logPanel
 
-        # Pylint
-        lintPanel = SidePanel(self.mainWindow.pylintViewer)
-        lintPanel.views["pylint"] = ViewAndToolbar(
-            lintPanel.widget.bodyWidget,
-            lintPanel.widget.toolbar)
-        self.__sidePanels["pylint"] = lintPanel
-
-        # Pymetrics
-        metricsPanel = SidePanel(self.mainWindow.pymetricsViewer)
-        metricsPanel.views["total"] = ViewAndToolbar(
-            metricsPanel.widget.getTotalResultsWidget(),
-            metricsPanel.widget.toolbar)
-        metricsPanel.views["mccabe"] = ViewAndToolbar(
-            metricsPanel.widget.getMcCabeResultsWidget(),
-            metricsPanel.widget.toolbar)
-        self.__sidePanels["pymetrics"] = metricsPanel
-
         # Search
         searchPanel = SidePanel(self.mainWindow.findInFilesViewer)
         searchPanel.views["search"] = ViewAndToolbar(
             searchPanel.widget.getResultsTree(),
             searchPanel.widget.toolbar)
         self.__sidePanels["search"] = searchPanel
-
-        # Context help
-        ctxHelpPanel = SidePanel(self.mainWindow.tagHelpViewer)
-        ctxHelpPanel.views["contextHelp"] = ViewAndToolbar(
-            ctxHelpPanel.widget.widget,
-            ctxHelpPanel.widget.toolbar)
-        self.__sidePanels["contextHelp"] = ctxHelpPanel
-
-        # Diff
-        diffPanel = SidePanel(self.mainWindow.diffViewer)
-        diffPanel.views["diff"] = ViewAndToolbar(
-            diffPanel.widget.viewer,
-            diffPanel.widget.toolbar)
-        self.__sidePanels["diff"] = diffPanel
 
         # Debugger
         dbgPanel = SidePanel(self.mainWindow.debuggerContext)
