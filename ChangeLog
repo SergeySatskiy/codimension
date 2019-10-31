@@ -1,6 +1,6 @@
-2019 xxx xx Sergey Satskiy <sergey.satskiy@tuta.io>
+2019 Oct 30 Sergey Satskiy <sergey.satskiy@tuta.io>
 
-* Version x.x.x
+* Version 4.6.0
 * Bug fix: allow grouping for the try-except blocks
 * Bug fix: exception when selecting doc links
 * CML doc support
