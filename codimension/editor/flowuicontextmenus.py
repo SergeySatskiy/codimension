@@ -761,7 +761,14 @@ class CFSceneContextMenuMixin:
 
         # Insert a doc link
         with editor:
-            lineNo = selectedItem.getFirstLine()
+            if self.__isModuleSelected():
+                lineNo = 1
+                if selectedItem.ref.encodingLine:
+                    lineNo += 1
+                if selectedItem.ref.bangLine:
+                    lineNo += 1
+            else:
+                lineNo = selectedItem.getFirstLine()
             line = CMLdoc.generate(linkFromFile, newAnchor, 'See documentation',
                                    None, None, None,
                                    selectedItem.ref.body.beginPos)
