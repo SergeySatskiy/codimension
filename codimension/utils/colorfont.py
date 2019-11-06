@@ -19,7 +19,7 @@
 
 """QT color and font general utils"""
 
-from ui.qt import QColor, QFont, QFontComboBox, QLabel
+from ui.qt import QColor, QFont, QFontComboBox
 from .globals import GlobalData
 from .settings import Settings
 
