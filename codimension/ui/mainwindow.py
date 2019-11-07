@@ -1007,7 +1007,10 @@ class CodimensionMainWindow(QMainWindow):
     def displayFindInFiles(self, searchRegexp, searchResults):
         """Displays the results on a tab"""
         self.findInFilesViewer.showReport(searchRegexp, searchResults)
+        self.activateBottomTab('search')
 
+    def activateBottomTab(self, tabName):
+        """Makes sure the bottom bar is visible and activates the required tab"""
         if self._bottomSideBar.height() == 0:
             # It was hidden completely, so need to move the slider
             splitterSizes = self.settings['vSplitterSizes']
@@ -1016,7 +1019,7 @@ class CodimensionMainWindow(QMainWindow):
             self.__verticalSplitter.setSizes(splitterSizes)
 
         self._bottomSideBar.show()
-        self._bottomSideBar.setCurrentTab('search')
+        self._bottomSideBar.setCurrentTab(tabName)
         self._bottomSideBar.raise_()
 
     def findNameClicked(self):
