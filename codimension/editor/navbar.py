@@ -149,7 +149,7 @@ class NavigationBar(QFrame):
 
     def __createLayout(self):
         """Creates the layout"""
-        self.setFixedHeight(24)
+        self.setFixedHeight(26)
         self.__layout = QHBoxLayout(self)
         self.__layout.setContentsMargins(0, 0, 0, 0)
 

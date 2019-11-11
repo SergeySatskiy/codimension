@@ -20,6 +20,7 @@
 """Control flow UI navigation bar"""
 
 from ui.qt import Qt, QWidget, QHBoxLayout, QLabel, QFrame, QSizePolicy
+from ui.fitlabel import FitLabel
 from utils.pixmapcache import getPixmap
 from utils.colorfont import getLabelStyle
 
@@ -45,7 +46,6 @@ class ControlFlowNavigationBar(QFrame):
 
     def __createLayout(self):
         """Creates the layout"""
-        self.setFixedHeight(24)
         self.__layout = QHBoxLayout(self)
         self.__layout.setContentsMargins(0, 0, 0, 0)
 
@@ -63,7 +63,7 @@ class ControlFlowNavigationBar(QFrame):
         labelStylesheet = 'QLabel {' + getLabelStyle(self.__infoIcon) + '}'
 
         # Create the path label
-        self.__pathLabel = QLabel(self)
+        self.__pathLabel = FitLabel(self)
         self.__pathLabel.setStyleSheet(labelStylesheet)
         self.__pathLabel.setTextFormat(Qt.PlainText)
         self.__pathLabel.setAlignment(Qt.AlignLeft)
@@ -71,6 +71,7 @@ class ControlFlowNavigationBar(QFrame):
         self.__pathLabel.setTextInteractionFlags(Qt.NoTextInteraction)
         self.__pathLabel.setSizePolicy(QSizePolicy.Expanding,
                                        QSizePolicy.Fixed)
+        self.__pathLabel.setMinimumWidth(40)
         self.__layout.addWidget(self.__pathLabel)
 
         self.__spacer = QWidget()
