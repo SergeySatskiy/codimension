@@ -118,26 +118,39 @@ class TextEditorTabWidget(QWidget):
 
     def __createLayout(self):
         """Creates the toolbar and layout"""
+        # The toolbar
+        self.toolbar = QToolBar(self)
+        self.toolbar.setOrientation(Qt.Vertical)
+        self.toolbar.setMovable(False)
+        self.toolbar.setAllowedAreas(Qt.RightToolBarArea)
+        self.toolbar.setIconSize(QSize(16, 16))
+        self.toolbar.setFixedWidth(30)
+        self.toolbar.setContentsMargins(0, 0, 0, 0)
+
         # Buttons
-        printButton = QAction(getIcon('printer.png'), 'Print (Ctrl+P)', self)
+        printButton = QAction(getIcon('printer.png'), 'Print (Ctrl+P)',
+                              self.toolbar)
         printButton.triggered.connect(self.__onPrint)
+        printButton.setObjectName('printButton')
 
         printPreviewButton = QAction(getIcon('printpreview.png'),
-                                     'Print preview', self)
+                                     'Print preview', self.toolbar)
         printPreviewButton.triggered.connect(self.__onPrintPreview)
         printPreviewButton.setEnabled(False)
         printPreviewButton.setVisible(False)
+        printPreviewButton.setObjectName('printPreviewButton')
 
-        printSpacer = QWidget()
+        printSpacer = QWidget(self.toolbar)
         printSpacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         printSpacer.setFixedHeight(8)
+        printSpacer.setObjectName('printSpacer')
 
         # Imports diagram and its menu
         importsMenu = QMenu(self)
         importsDlgAct = importsMenu.addAction(
             getIcon('detailsdlg.png'), 'Fine tuned imports diagram')
         importsDlgAct.triggered.connect(self.onImportDgmTuned)
-        self.importsDiagramButton = QToolButton(self)
+        self.importsDiagramButton = QToolButton(self.toolbar)
         self.importsDiagramButton.setIcon(getIcon('importsdiagram.png'))
         self.importsDiagramButton.setToolTip('Generate imports diagram')
         self.importsDiagramButton.setPopupMode(QToolButton.DelayedPopup)
@@ -145,13 +158,14 @@ class TextEditorTabWidget(QWidget):
         self.importsDiagramButton.setFocusPolicy(Qt.NoFocus)
         self.importsDiagramButton.clicked.connect(self.onImportDgm)
         self.importsDiagramButton.setEnabled(False)
+        self.importsDiagramButton.setObjectName('importsDiagramButton')
 
         # Run script and its menu
         runScriptMenu = QMenu(self)
         runScriptDlgAct = runScriptMenu.addAction(
             getIcon('detailsdlg.png'), 'Set run/debug parameters')
         runScriptDlgAct.triggered.connect(self.onRunScriptDlg)
-        self.runScriptButton = QToolButton(self)
+        self.runScriptButton = QToolButton(self.toolbar)
         self.runScriptButton.setIcon(getIcon('run.png'))
         self.runScriptButton.setToolTip('Run script')
         self.runScriptButton.setPopupMode(QToolButton.DelayedPopup)
@@ -159,13 +173,14 @@ class TextEditorTabWidget(QWidget):
         self.runScriptButton.setFocusPolicy(Qt.NoFocus)
         self.runScriptButton.clicked.connect(self.onRunScript)
         self.runScriptButton.setEnabled(False)
+        self.runScriptButton.setObjectName('runScriptButton')
 
         # Profile script and its menu
         profileScriptMenu = QMenu(self)
         profileScriptDlgAct = profileScriptMenu.addAction(
             getIcon('detailsdlg.png'), 'Set profile parameters')
         profileScriptDlgAct.triggered.connect(self.onProfileScriptDlg)
-        self.profileScriptButton = QToolButton(self)
+        self.profileScriptButton = QToolButton(self.toolbar)
         self.profileScriptButton.setIcon(getIcon('profile.png'))
         self.profileScriptButton.setToolTip('Profile script')
         self.profileScriptButton.setPopupMode(QToolButton.DelayedPopup)
@@ -173,13 +188,14 @@ class TextEditorTabWidget(QWidget):
         self.profileScriptButton.setFocusPolicy(Qt.NoFocus)
         self.profileScriptButton.clicked.connect(self.onProfileScript)
         self.profileScriptButton.setEnabled(False)
+        self.profileScriptButton.setObjectName('profileScriptButton')
 
         # Debug script and its menu
         debugScriptMenu = QMenu(self)
         debugScriptDlgAct = debugScriptMenu.addAction(
             getIcon('detailsdlg.png'), 'Set run/debug parameters')
         debugScriptDlgAct.triggered.connect(self.onDebugScriptDlg)
-        self.debugScriptButton = QToolButton(self)
+        self.debugScriptButton = QToolButton(self.toolbar)
         self.debugScriptButton.setIcon(getIcon('debugger.png'))
         self.debugScriptButton.setToolTip('Debug script')
         self.debugScriptButton.setPopupMode(QToolButton.DelayedPopup)
@@ -187,6 +203,7 @@ class TextEditorTabWidget(QWidget):
         self.debugScriptButton.setFocusPolicy(Qt.NoFocus)
         self.debugScriptButton.clicked.connect(self.onDebugScript)
         self.debugScriptButton.setEnabled(False)
+        self.debugScriptButton.setObjectName('debugScriptButton')
 
         # Disassembling
         disasmScriptMenu = QMenu(self)
@@ -199,7 +216,7 @@ class TextEditorTabWidget(QWidget):
         disasmScriptMenu.addAction(
             getIcon(''), 'Disassembly (optimization level 2)',
             self.__editor._onDisasm2)
-        self.disasmScriptButton = QToolButton(self)
+        self.disasmScriptButton = QToolButton(self.toolbar)
         self.disasmScriptButton.setIcon(getIcon('disassembly.png'))
         self.disasmScriptButton.setToolTip('Disassembly script')
         self.disasmScriptButton.setPopupMode(QToolButton.DelayedPopup)
@@ -207,62 +224,65 @@ class TextEditorTabWidget(QWidget):
         self.disasmScriptButton.setFocusPolicy(Qt.NoFocus)
         self.disasmScriptButton.clicked.connect(self.__editor._onDisasm0)
         self.disasmScriptButton.setEnabled(False)
+        self.disasmScriptButton.setObjectName('disasmScriptButton')
 
         # Dead code
         self.deadCodeScriptButton = QAction(getIcon('deadcode.png'),
-                                            'Find dead code', self)
+                                            'Find dead code', self.toolbar)
         self.deadCodeScriptButton.triggered.connect(self.__onDeadCode)
         self.deadCodeScriptButton.setEnabled(False)
+        self.deadCodeScriptButton.setObjectName('deadCodeScriptButton')
 
-        undoSpacer = QWidget()
+        undoSpacer = QWidget(self.toolbar)
         undoSpacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         undoSpacer.setFixedHeight(8)
+        undoSpacer.setObjectName('undoSpacer')
 
-        self.__undoButton = QAction(getIcon('undo.png'), 'Undo (Ctrl+Z)', self)
+        self.__undoButton = QAction(getIcon('undo.png'), 'Undo (Ctrl+Z)',
+                                    self.toolbar)
         self.__undoButton.setShortcut('Ctrl+Z')
         self.__undoButton.triggered.connect(self.__editor.onUndo)
         self.__undoButton.setEnabled(False)
+        self.__undoButton.setObjectName('undoButton')
 
-        self.__redoButton = QAction(getIcon('redo.png'), 'Redo (Ctrl+Y)', self)
+        self.__redoButton = QAction(getIcon('redo.png'), 'Redo (Ctrl+Y)',
+                                    self.toolbar)
         self.__redoButton.setShortcut('Ctrl+Y')
         self.__redoButton.triggered.connect(self.__editor.onRedo)
         self.__redoButton.setEnabled(False)
+        self.__redoButton.setObjectName('redoButton')
 
-        spacer = QWidget()
+        spacer = QWidget(self.toolbar)
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        spacer.setObjectName('spacer')
 
         self.removeTrailingSpacesButton = QAction(
-            getIcon('trailingws.png'), 'Remove trailing spaces', self)
+            getIcon('trailingws.png'), 'Remove trailing spaces', self.toolbar)
         self.removeTrailingSpacesButton.triggered.connect(
             self.onRemoveTrailingWS)
+        self.removeTrailingSpacesButton.setObjectName(
+            'removeTrailingSpacesButton')
         self.expandTabsButton = QAction(
-            getIcon('expandtabs.png'), 'Expand tabs (4 spaces)', self)
+            getIcon('expandtabs.png'), 'Expand tabs (4 spaces)', self.toolbar)
         self.expandTabsButton.triggered.connect(self.onExpandTabs)
+        self.expandTabsButton.setObjectName('expandTabsButton')
 
-        # The toolbar
-        toolbar = QToolBar(self)
-        toolbar.setOrientation(Qt.Vertical)
-        toolbar.setMovable(False)
-        toolbar.setAllowedAreas(Qt.RightToolBarArea)
-        toolbar.setIconSize(QSize(16, 16))
-        toolbar.setFixedWidth(30)
-        toolbar.setContentsMargins(0, 0, 0, 0)
-
-        toolbar.addAction(printPreviewButton)
-        toolbar.addAction(printButton)
-        toolbar.addWidget(printSpacer)
-        toolbar.addWidget(self.importsDiagramButton)
-        toolbar.addWidget(self.runScriptButton)
-        toolbar.addWidget(self.profileScriptButton)
-        toolbar.addWidget(self.debugScriptButton)
-        toolbar.addWidget(self.disasmScriptButton)
-        toolbar.addAction(self.deadCodeScriptButton)
-        toolbar.addWidget(undoSpacer)
-        toolbar.addAction(self.__undoButton)
-        toolbar.addAction(self.__redoButton)
-        toolbar.addWidget(spacer)
-        toolbar.addAction(self.removeTrailingSpacesButton)
-        toolbar.addAction(self.expandTabsButton)
+        # Add items to the toolbar
+        self.toolbar.addAction(printPreviewButton)
+        self.toolbar.addAction(printButton)
+        self.toolbar.addWidget(printSpacer)
+        self.toolbar.addWidget(self.importsDiagramButton)
+        self.toolbar.addWidget(self.runScriptButton)
+        self.toolbar.addWidget(self.profileScriptButton)
+        self.toolbar.addWidget(self.debugScriptButton)
+        self.toolbar.addWidget(self.disasmScriptButton)
+        self.toolbar.addAction(self.deadCodeScriptButton)
+        self.toolbar.addWidget(undoSpacer)
+        self.toolbar.addAction(self.__undoButton)
+        self.toolbar.addAction(self.__redoButton)
+        self.toolbar.addWidget(spacer)
+        self.toolbar.addAction(self.removeTrailingSpacesButton)
+        self.toolbar.addAction(self.expandTabsButton)
 
         self.importsBar = ImportListWidget(self.__editor)
         self.importsBar.hide()
@@ -286,7 +306,7 @@ class TextEditorTabWidget(QWidget):
         vLayout.addWidget(self.__editor)
 
         hLayout.addLayout(vLayout)
-        hLayout.addWidget(toolbar)
+        hLayout.addWidget(self.toolbar)
         widget = QWidget()
         widget.setLayout(hLayout)
 
