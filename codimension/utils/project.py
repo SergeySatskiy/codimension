@@ -105,6 +105,8 @@ class CodimensionProject(QObject,
 
     def shouldExclude(self, name):
         """Tests if a file must be excluded"""
+        if name == '.pylintrc':
+            return False
         for excl in self.__excludeFilter:
             if excl.match(name):
                 return True
