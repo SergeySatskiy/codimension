@@ -149,9 +149,11 @@ class CDMPluginManager(PluginManager, QObject):
                     ideVer = GlobalData().version
                     if not plugin.getObject().isIDEVersionCompatible(ideVer):
                         # The plugin is incompatible. Disable it
-                        logging.warning("Plugin of an incompatible version "
-                                        "is found at: " + plugin.getPath() +
-                                        ". The plugin is disabled.")
+                        logging.warning("The IDE version does not meet the " +
+                                        plugin.getName() + " plugin "
+                                        "requirements. The plugin is disabled."
+                                        " (plugin path: " + plugin.getPath() +
+                                        ")")
                         plugin.conflictType = \
                             CDMPluginManager.INCOMPATIBLE_IDE_VERSION_CONFLICT
                         plugin.conflictMessage = "The IDE version does not " \
@@ -177,7 +179,7 @@ class CDMPluginManager(PluginManager, QObject):
             for category in collectedPlugins:
                 for plugin in collectedPlugins[category]:
                     if plugin.getPath() == path:
-                        collectedPlugins.remove(plugin)
+                        collectedPlugins[category].remove(plugin)
                         break
 
     def __applyDisabledPlugins(self, collectedPlugins):

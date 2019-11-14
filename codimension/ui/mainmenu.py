@@ -54,11 +54,12 @@ class MainWindowMenuMixin:
                        self.__buildToolsMenu, self.__buildDiagramsMenu,
                        self.__buildViewMenu, self.__buildOptionsMenu,
                        self.__buildPluginsMenu, self.__buildHelpMenu]:
-            menuBar.addMenu(member())
+            menuBar.addMenu(member(menuBar))
 
-    def __buildProjectMenu(self):
+    def __buildProjectMenu(self, menuBar):
         """Builds a project menu"""
-        prjMenu = QMenu("&Project", self)
+        prjMenu = QMenu("&Project", menuBar)
+        prjMenu.setObjectName('project')
         prjMenu.aboutToShow.connect(self.__prjAboutToShow)
         prjMenu.aboutToHide.connect(self.__prjAboutToHide)
         self.__newProjectAct = prjMenu.addAction(
@@ -97,9 +98,10 @@ class MainWindowMenuMixin:
             QApplication.closeAllWindows, "Ctrl+Q")
         return prjMenu
 
-    def __buildTabMenu(self):
+    def __buildTabMenu(self, menuBar):
         """Build the tab menu"""
-        tabMenu = QMenu("&Tab", self)
+        tabMenu = QMenu("&Tab", menuBar)
+        tabMenu.setObjectName('tab')
         tabMenu.aboutToShow.connect(self.__tabAboutToShow)
         tabMenu.aboutToHide.connect(self.__tabAboutToHide)
         self.__newTabAct = tabMenu.addAction(
@@ -153,9 +155,10 @@ class MainWindowMenuMixin:
         tabMenu.addMenu(self.__recentFilesMenu)
         return tabMenu
 
-    def __buildEditMenu(self):
+    def __buildEditMenu(self, menuBar):
         """Builds edit menu"""
-        editMenu = QMenu("&Edit", self)
+        editMenu = QMenu("&Edit", menuBar)
+        editMenu.setObjectName('edit')
         editMenu.aboutToShow.connect(self.__editAboutToShow)
         editMenu.aboutToHide.connect(self.__editAboutToHide)
         self.__undoAct = editMenu.addAction(
@@ -187,9 +190,10 @@ class MainWindowMenuMixin:
             self._onRemoveTrailingSpaces)
         return editMenu
 
-    def __buildSearchMenu(self):
+    def __buildSearchMenu(self, menuBar):
         """Build the search menu"""
-        searchMenu = QMenu("&Search", self)
+        searchMenu = QMenu("&Search", menuBar)
+        searchMenu.setObjectName('search')
         searchMenu.aboutToShow.connect(self.__searchAboutToShow)
         searchMenu.aboutToHide.connect(self.__searchAboutToHide)
         self.__searchInFilesAct = searchMenu.addAction(
@@ -219,9 +223,10 @@ class MainWindowMenuMixin:
             getIcon('gotoline.png'), '&Go to line...', self._onGoToLine)
         return searchMenu
 
-    def __buildRunMenu(self):
+    def __buildRunMenu(self, menuBar):
         """Build the run menu"""
-        runMenu = QMenu("&Run", self)
+        runMenu = QMenu("&Run", menuBar)
+        runMenu.setObjectName('run')
         runMenu.aboutToShow.connect(self.__runAboutToShow)
         self.__prjRunAct = runMenu.addAction(
             getIcon('run.png'), 'Run &project main script',
@@ -247,9 +252,10 @@ class MainWindowMenuMixin:
             self.onProfileTabDlg)
         return runMenu
 
-    def __buildDebugMenu(self):
+    def __buildDebugMenu(self, menuBar):
         """Build the debug menu"""
-        dbgMenu = QMenu("Debu&g", self)
+        dbgMenu = QMenu("Debu&g", menuBar)
+        dbgMenu.setObjectName('debug')
         dbgMenu.aboutToShow.connect(self.__debugAboutToShow)
         self._prjDebugAct = dbgMenu.addAction(
             getIcon('debugger.png'), 'Debug &project main script',
@@ -334,9 +340,10 @@ class MainWindowMenuMixin:
             self.__onDumpDbgSettingsAboutToShow)
         return dbgMenu
 
-    def __buildToolsMenu(self):
+    def __buildToolsMenu(self, menuBar):
         """Build the tools menu"""
-        toolsMenu = QMenu("T&ools", self)
+        toolsMenu = QMenu("T&ools", menuBar)
+        toolsMenu.setObjectName('tools')
         toolsMenu.aboutToShow.connect(self.__toolsAboutToShow)
 
         self._deadCodeMenuAct = toolsMenu.addAction(
@@ -360,9 +367,10 @@ class MainWindowMenuMixin:
         toolsMenu.addMenu(self.disasmMenu)
         return toolsMenu
 
-    def __buildDiagramsMenu(self):
+    def __buildDiagramsMenu(self, menuBar):
         """Builds the diagram menu"""
-        diagramsMenu = QMenu("&Diagrams", self)
+        diagramsMenu = QMenu("&Diagrams", menuBar)
+        diagramsMenu.setObjectName('diagrams')
         diagramsMenu.aboutToShow.connect(self.__diagramsAboutToShow)
         self._prjImportDgmAct = diagramsMenu.addAction(
             getIcon('importsdiagram.png'), '&Project imports diagram',
@@ -378,9 +386,10 @@ class MainWindowMenuMixin:
             self._onTabImportDgmTuned)
         return diagramsMenu
 
-    def __buildViewMenu(self):
+    def __buildViewMenu(self, menuBar):
         """Build the view menu"""
-        viewMenu = QMenu("&View", self)
+        viewMenu = QMenu("&View", menuBar)
+        viewMenu.setObjectName('view')
         viewMenu.aboutToShow.connect(self.__viewAboutToShow)
         viewMenu.aboutToHide.connect(self.__viewAboutToHide)
         self.__shrinkBarsAct = viewMenu.addAction(
@@ -451,9 +460,10 @@ class MainWindowMenuMixin:
             getIcon('zoomreset.png'), 'Zoom r&eset', self.em.zoomReset)
         return viewMenu
 
-    def __buildOptionsMenu(self):
+    def __buildOptionsMenu(self, menuBar):
         """Build the options menu"""
-        optionsMenu = QMenu("Optio&ns", self)
+        optionsMenu = QMenu("Optio&ns", menuBar)
+        optionsMenu.setObjectName('options')
         optionsMenu.aboutToShow.connect(self.__optionsAboutToShow)
 
         self.__ideTemplateMenu = QMenu("IDE-wide &template", self)
@@ -640,15 +650,17 @@ class MainWindowMenuMixin:
 
         return optionsMenu
 
-    def __buildPluginsMenu(self):
+    def __buildPluginsMenu(self, menuBar):
         """Build the plugins menu"""
-        self.__pluginsMenu = QMenu("P&lugins", self)
+        self.__pluginsMenu = QMenu("P&lugins", menuBar)
+        self.__pluginsMenu.setObjectName('plugins')
         self._recomposePluginMenu()
         return self.__pluginsMenu
 
-    def __buildHelpMenu(self):
+    def __buildHelpMenu(self, menuBar):
         """Build the help menu"""
-        helpMenu = QMenu("&Help", self)
+        helpMenu = QMenu("&Help", menuBar)
+        helpMenu.setObjectName('help')
         helpMenu.aboutToShow.connect(self.__helpAboutToShow)
         helpMenu.aboutToHide.connect(self.__helpAboutToHide)
         self.__embeddedHelpAct = helpMenu.addAction(
