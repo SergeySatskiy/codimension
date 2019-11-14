@@ -1,3 +1,9 @@
+2019 XXX XX Sergey Satskiy <sergey.satskiy@tuta.io>
+
+* Version 4.6.1
+* Adding pylint plugin
+* Plugin manager bug fixes and minor improvements
+
 2019 Oct 30 Sergey Satskiy <sergey.satskiy@tuta.io>
 
 * Version 4.6.0

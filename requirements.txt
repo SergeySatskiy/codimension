@@ -1,6 +1,7 @@
 cdmpyparser==3.1.1
 cdmcfparser==2.2.2
 cdmgcplugin==1.0.3
+cdmpylintplugin==1.0.0
 pyflakes==2.1.1
 flake8==3.7.7
 radon==3.0.1
