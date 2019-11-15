@@ -38,9 +38,10 @@ class AsyncFile(object):
 
     MAXTRIES = 10
 
-    def __init__(self, sock, mode, name):
+    def __init__(self, sock, procuuid, mode, name):
         self.closed = False
         self.sock = sock
+        self.procuuid = procuuid
         self.mode = mode
         self.name = name
         self.nWriteErrors = 0
@@ -94,7 +95,7 @@ class AsyncFile(object):
         """Provides the file number"""
         try:
             return self.sock.socketDescriptor()
-        except Exception as exc:
+        except Exception:
             return -1
 
     def readable(self):
@@ -192,8 +193,8 @@ class AsyncFile(object):
     def write(self, s):
         """Writes a string to the file"""
         self.__checkMode('w')
-        cmd = prepareJsonMessage(
-            METHOD_CLIENT_OUTPUT, {"text": s})
+        cmd = prepareJSONMessage(
+            METHOD_CLIENT_OUTPUT, self.procuuid, {"text": s})
         self.wpending.append(cmd)
         self.flush()
 

@@ -291,7 +291,7 @@ class DebugBase(object):
         frame.f_trace = self.trace_dispatch
         while frame.f_back is not None:
             # stop at erics debugger frame or a threading bootstrap
-            if (frame.f_back.f_code == stopOnHandleLine):
+            if frame.f_back.f_code == stopOnHandleLine:
                 frame.f_trace = self.trace_dispatch
                 break
 

@@ -21,14 +21,17 @@
 """not used code analysis using vulture"""
 
 
-import os, os.path, logging, tempfile
+import os
+import os.path
+import logging
+import tempfile
 from subprocess import Popen, PIPE
 from ui.qt import (QCursor, Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout,
-                   QLabel, QProgressBar, QApplication)
-from autocomplete.completelists import getOccurrences
+                   QLabel, QApplication)
+from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
 from utils.globals import GlobalData
 from utils.config import DEFAULT_ENCODING
-from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
+
 
 
 class NotUsedAnalysisProgress(QDialog):
@@ -111,6 +114,7 @@ class NotUsedAnalysisProgress(QDialog):
             self.close()
 
     def __run(self):
+        """Runs vulture"""
         errTmp = tempfile.mkstemp()
         errStream = os.fdopen(errTmp[0])
         process = Popen(['vulture', self.__path],

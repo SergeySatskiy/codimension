@@ -67,6 +67,7 @@ def getCodeDisassembly(code):
 
 
 def recursiveDisassembly(codeObject, name=None):
+    """Disassemble recursively"""
     what = 'module' if name is None else name
     res = '\n\nDisassembly of ' + what + ':\n' + getCodeDisassembly(codeObject)
     for item in codeObject.co_consts:
@@ -149,7 +150,7 @@ def getBufferDisassembled(content, encoding, path, optimization):
         saveToFile(tempSrcFile, content, allowException=True, enc=encoding)
         py_compile.compile(tempSrcFile, tempPycFile, path,
                            doraise=True, optimize=optimization)
-    except Exception as exc:
+    except Exception:
         safeUnlink(tempSrcFile)
         safeUnlink(tempPycFile)
         raise

@@ -20,9 +20,9 @@
 """Interactive errors report using pyflakes"""
 
 import re
-from _ast import PyCF_ONLY_AST
 from pyflakes.checker import Checker
 from radon.complexity import cc_visit_ast, sorted_results
+from _ast import PyCF_ONLY_AST
 
 
 # Returns a dictionary:

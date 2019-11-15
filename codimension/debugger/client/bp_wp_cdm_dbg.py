@@ -109,31 +109,31 @@ class Breakpoint:
             if b.ignore > 0:
                 b.ignore -= 1
                 return (None, False)
-            else:
-                # breakpoint and marker that's ok
-                # to delete if temporary
-                return (b, True)
-        else:
-            # Conditional bp.
-            # Ignore count applies only to those bpt hits where the
-            # condition evaluates to true.
-            try:
-                val = eval(b.cond, frame.f_globals, frame.f_locals)
-                if val:
-                    if b.ignore > 0:
-                        b.ignore -= 1
-                        # continue
-                    else:
-                        return (b, True)
-                # else:
-                #   continue
-            except Exception:
-                # if eval fails, most conservative
-                # thing is to stop on breakpoint
-                # regardless of ignore count.
-                # Don't delete temporary,
-                # as another hint to user.
-                return (b, False)
+
+            # breakpoint and marker that's ok
+            # to delete if temporary
+            return (b, True)
+
+        # Conditional bp.
+        # Ignore count applies only to those bpt hits where the
+        # condition evaluates to true.
+        try:
+            val = eval(b.cond, frame.f_globals, frame.f_locals)
+            if val:
+                if b.ignore > 0:
+                    b.ignore -= 1
+                    # continue
+                else:
+                    return (b, True)
+            # else:
+            #   continue
+        except Exception:
+            # if eval fails, most conservative
+            # thing is to stop on breakpoint
+            # regardless of ignore count.
+            # Don't delete temporary,
+            # as another hint to user.
+            return (b, False)
         return (None, False)
 
 
@@ -200,6 +200,7 @@ class Watch:
         for b in Watch.WATCHES:
             if b.cond == cond:
                 return b
+        return None
 
     @staticmethod
     def effectiveWatch(frame):
@@ -212,10 +213,9 @@ class Watch:
                 if b.created:
                     if frame in b.values:
                         continue
-                    else:
-                        b.values[frame] = [1, val, b.ignore]
-                        return (b, True)
-                elif b.changed:
+                    b.values[frame] = [1, val, b.ignore]
+                    return (b, True)
+                if b.changed:
                     try:
                         if b.values[frame][1] != val:
                             b.values[frame][1] = val
@@ -227,14 +227,12 @@ class Watch:
                     if b.values[frame][2] > 0:
                         b.values[frame][2] -= 1
                         continue
-                    else:
-                        return (b, True)
-                elif val:
+                    return (b, True)
+                if val:
                     if b.ignore > 0:
                         b.ignore -= 1
                         continue
-                    else:
-                        return (b, True)
+                    return (b, True)
             except Exception:
                 continue
         return (None, False)

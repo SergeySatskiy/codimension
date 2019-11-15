@@ -322,7 +322,8 @@ class BreakPointViewer(QWidget):
         self.headerFrame = QFrame()
         self.headerFrame.setObjectName('bpheader')
         self.headerFrame.setStyleSheet('QFrame#bpheader {' +
-                                       getLabelStyle(self.__breakpointLabel) + '}')
+                                       getLabelStyle(self.__breakpointLabel) +
+                                       '}')
         self.headerFrame.setFixedHeight(HEADER_HEIGHT)
 
         headerLayout = QHBoxLayout()
