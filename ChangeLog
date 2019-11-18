@@ -3,6 +3,8 @@
 * Version 4.6.1
 * Adding pylint plugin
 * Plugin manager bug fixes and minor improvements
+* Graphics pane icon scaling in a uniform way
+* Slight changes for the graphics primitives with icons
 
 2019 Oct 30 Sergey Satskiy <sergey.satskiy@tuta.io>
 

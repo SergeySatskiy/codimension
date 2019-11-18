@@ -796,12 +796,11 @@ class ReturnCell(CellElement, QGraphicsRectItem):
         QGraphicsRectItem.__init__(self)
         self.kind = CellElement.RETURN
         self.__textRect = None
-        self.__arrowWidth = 16
         self.connector = None
 
-        self.__arrowWidth = min(self.__arrowWidth,
-                                ceil(self.__arrowWidth *
-                                     self.canvas.settings.coefficient))
+        # The icon is supposed to be square
+        self.__arrowWidth = self.getIconHeight()
+
         self.arrowItem = SVGItem("return.svgz", self)
         self.arrowItem.setWidth(self.__arrowWidth)
         self.arrowItem.setToolTip("return")
@@ -902,12 +901,12 @@ class ReturnCell(CellElement, QGraphicsRectItem):
             self.minWidth - 2 * settings.hCellPadding,
             self.minHeight - 2 * settings.vCellPadding,
             settings.returnRectRadius, settings.returnRectRadius)
-        painter.drawRoundedRect(
-            self.baseX + settings.hCellPadding,
-            self.baseY + settings.vCellPadding,
-            self.__arrowWidth + 2 * settings.hTextPadding,
-            self.minHeight - 2 * settings.vCellPadding,
-            settings.returnRectRadius, settings.returnRectRadius)
+        lineXBase = self.baseX + settings.hCellPadding
+        lineXPos = lineXBase + self.__arrowWidth + 2 * settings.hTextPadding
+        lineYBase = self.baseY + settings.vCellPadding
+        painter.drawLine(
+            lineXPos, lineYBase,
+            lineXPos, lineYBase + self.minHeight - 2 * settings.vCellPadding)
 
         # Draw the text in the rectangle
         pen = QPen(self.__fgColor)
@@ -965,11 +964,9 @@ class RaiseCell(CellElement, QGraphicsRectItem):
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.RAISE
         self.__textRect = None
-        self.__arrowWidth = 16
 
-        self.__arrowWidth = min(self.__arrowWidth,
-                                ceil(self.__arrowWidth *
-                                     self.canvas.settings.coefficient))
+        # The icon is supposed to be square
+        self.__arrowWidth = self.getIconHeight()
 
         self.arrowItem = SVGItem("raise.svg", self)
         self.arrowItem.setWidth(self.__arrowWidth)
@@ -1053,12 +1050,12 @@ class RaiseCell(CellElement, QGraphicsRectItem):
                                 self.minHeight - 2 * settings.vCellPadding,
                                 settings.returnRectRadius,
                                 settings.returnRectRadius)
-        painter.drawRoundedRect(self.baseX + settings.hCellPadding,
-                                self.baseY + settings.vCellPadding,
-                                self.__arrowWidth + 2 * settings.hTextPadding,
-                                self.minHeight - 2 * settings.vCellPadding,
-                                settings.returnRectRadius,
-                                settings.returnRectRadius)
+        lineXBase = self.baseX + settings.hCellPadding
+        lineXPos = lineXBase + self.__arrowWidth + 2 * settings.hTextPadding
+        lineYBase = self.baseY + settings.vCellPadding
+        painter.drawLine(
+            lineXPos, lineYBase,
+            lineXPos, lineYBase + self.minHeight - 2 * settings.vCellPadding)
 
         # Draw the text in the rectangle
         pen = QPen(self.__fgColor)
@@ -1116,12 +1113,9 @@ class AssertCell(CellElement, QGraphicsRectItem):
         self.kind = CellElement.ASSERT
         self.__textRect = None
         self.__diamondDiagonal = None
-        self.__arrowWidth = 16
         self.connector = None
 
-        self.__arrowWidth = min(self.__arrowWidth,
-                                ceil(self.__arrowWidth *
-                                     self.canvas.settings.coefficient))
+        self.__arrowWidth = self.getIconHeight()
 
         self.arrowItem = SVGItem("assert.svg", self)
         self.arrowItem.setWidth(self.__arrowWidth)
@@ -1206,22 +1200,28 @@ class AssertCell(CellElement, QGraphicsRectItem):
         dHalf = int(self.__diamondDiagonal / 2.0)
         dx1 = self.baseX + settings.hCellPadding
         dy1 = self.baseY + int(self.minHeight / 2)
-        dx2 = dx1 + dHalf
+        dx2 = dx1 + settings.ifWidth
         dy2 = dy1 - dHalf
-        dx3 = dx1 + 2 * dHalf
-        dy3 = dy1
-        dx4 = dx2
-        dy4 = dy2 + 2 * dHalf
+        dx3 = dx1 + 2 * dHalf - settings.ifWidth
+        dy3 = dy2
+        dx4 = dx3 + settings.ifWidth
+        dy4 = dy1
+        dx5 = dx3
+        dy5 = dy2 + 2 * dHalf
+        dx6 = dx2
+        dy6 = dy5
 
         brush = QBrush(self.__bgColor)
         painter.setBrush(brush)
         painter.drawPolygon(QPointF(dx1, dy1), QPointF(dx2, dy2),
-                            QPointF(dx3, dy3), QPointF(dx4, dy4))
+                            QPointF(dx3, dy3), QPointF(dx4, dy4),
+                            QPointF(dx5, dy5), QPointF(dx6, dy6))
 
-        painter.drawRect(dx3 + 1, self.baseY + settings.vCellPadding,
+        painter.drawRect(dx4 + 1, self.baseY + settings.vCellPadding,
                          self.minWidth - 2 * settings.hCellPadding -
                          self.__diamondDiagonal,
                          self.minHeight - 2 * settings.vCellPadding)
+
 
         # Draw the text in the rectangle
         pen = QPen(self.__fgColor)
@@ -1232,10 +1232,11 @@ class AssertCell(CellElement, QGraphicsRectItem):
         textWidth = self.__textRect.width() + 2 * settings.hTextPadding
         textShift = (availWidth - textWidth) / 2
         painter.drawText(
-            dx3 + settings.hTextPadding + textShift,
+            dx4 + settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self._getText())
+
 
     def getLineRange(self):
         """Provides the line range"""
@@ -1286,12 +1287,10 @@ class SysexitCell(CellElement, QGraphicsRectItem):
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.SYSEXIT
         self.__textRect = None
-        self.__xWidth = 16
         self.connector = None
 
-        self.__xWidth = min(self.__xWidth,
-                            ceil(self.__xWidth *
-                                 self.canvas.settings.coefficient))
+        # The icon is supposed to be square
+        self.__xWidth = self.getIconHeight()
 
         self.xItem = SVGItem("sysexit.svgz", self)
         self.xItem.setWidth(self.__xWidth)
@@ -1375,12 +1374,12 @@ class SysexitCell(CellElement, QGraphicsRectItem):
                                 self.minHeight - 2 * settings.vCellPadding,
                                 settings.returnRectRadius,
                                 settings.returnRectRadius)
-        painter.drawRoundedRect(self.baseX + settings.hCellPadding,
-                                self.baseY + settings.vCellPadding,
-                                self.__xWidth + 2 * settings.hTextPadding,
-                                self.minHeight - 2 * settings.vCellPadding,
-                                settings.returnRectRadius,
-                                settings.returnRectRadius)
+        lineXBase = self.baseX + settings.hCellPadding
+        lineXPos = lineXBase + self.__xWidth + 2 * settings.hTextPadding
+        lineYBase = self.baseY + settings.vCellPadding
+        painter.drawLine(
+            lineXPos, lineYBase,
+            lineXPos, lineYBase + self.minHeight - 2 * settings.vCellPadding)
 
         # Draw the text in the rectangle
         pen = QPen(self.__fgColor)
@@ -1413,12 +1412,10 @@ class ImportCell(CellElement, QGraphicsRectItem):
         CellElement.__init__(self, ref, canvas, x, y)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.IMPORT
-        self.__arrowWidth = 16
         self.__textRect = None
 
-        self.__arrowWidth = min(self.__arrowWidth,
-                                ceil(self.__arrowWidth *
-                                     self.canvas.settings.coefficient))
+        # The icon is supposed to be square
+        self.__arrowWidth = self.getIconHeight()
 
         self.arrowItem = SVGItem("import.svgz", self)
         self.arrowItem.setWidth(self.__arrowWidth)
