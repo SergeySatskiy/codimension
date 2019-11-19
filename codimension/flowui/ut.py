@@ -18,6 +18,9 @@
 import sys
 import os
 import os.path
+
+sys.path.insert(0, os.path.dirname(__file__) + '/../')
+
 import tempfile
 import datetime
 import importlib

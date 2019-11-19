@@ -24,7 +24,6 @@ import sys
 import logging
 import gc
 from utils.globals import GlobalData
-from utils.settings import Settings
 from utils.project import CodimensionProject
 from utils.misc import (getDefaultTemplate, getIDETemplateFile,
                         getProjectTemplateFile, extendInstance)
@@ -1340,35 +1339,6 @@ class CodimensionMainWindow(QMainWindow):
         """Sets the selected style"""
         QApplication.setStyle(styleName.data())
         self.settings['style'] = styleName.data().lower()
-
-    def _onMonoFont(self, fontFamily):
-        """Sets the new mono font"""
-        newFontFamily = fontFamily.data()
-        if newFontFamily != GlobalData().skin['monoFont'].family():
-            GlobalData().skin.setTextMonoFontFamily(newFontFamily)
-            self.em.onTextZoomChanged()
-            self.onTextZoomChanged()
-
-    def _onFlowMonoFont(self, fontFamily):
-        """Sets the new flow font"""
-        newFontFamily = fontFamily.data()
-        if newFontFamily != GlobalData().skin['cfMonoFont'].family():
-            GlobalData().skin.setFlowMonoFontFamily(newFontFamily)
-            self.em.onFlowZoomChanged()
-
-    def _onMarginFont(self, fontFamily):
-        """Sets the new margin font"""
-        newFontFamily = fontFamily.data()
-        if newFontFamily != GlobalData().skin['lineNumFont'].family():
-            GlobalData().skin.setMarginFontFamily(newFontFamily)
-            self.em.onTextZoomChanged()
-
-    def _onBadgeFont(self, fontFamily):
-        """Sets the new badge font"""
-        newFontFamily = fontFamily.data()
-        if newFontFamily != GlobalData().skin['badgeFont'].family():
-            GlobalData().skin.setFlowBadgeFontFamily(newFontFamily)
-            self.em.onFlowZoomChanged()
 
     def checkOutsideFileChanges(self):
         """Checks if there are changes in the currently opened files"""

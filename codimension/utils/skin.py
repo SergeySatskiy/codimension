@@ -456,24 +456,24 @@ class Skin:
                 values[name] = buildColor(value)
         return values, oldFormat
 
-    def setTextMonoFontFamily(self, fontFamily):
+    def setTextMonoFont(self, font):
         """Sets the new mono font family"""
-        self.__values['monoFont'].setFamily(fontFamily)
+        self.__values['monoFont'] = font
         self.flush()
 
-    def setMarginFontFamily(self, fontFamily):
+    def setMarginFont(self, font):
         """Sets the new mono font family"""
-        self.__values['lineNumFont'].setFamily(fontFamily)
+        self.__values['lineNumFont'] = font
         self.flush()
 
-    def setFlowMonoFontFamily(self, fontFamily):
+    def setFlowMonoFont(self, font):
         """Sets the new flow font family"""
-        self.__cfValues['cfMonoFont'].setFamily(fontFamily)
+        self.__cfValues['cfMonoFont'] = font
         self.flushCFlow()
 
-    def setFlowBadgeFontFamily(self, fontFamily):
+    def setFlowBadgeFont(self, font):
         """Sets the new flow badge font"""
-        self.__cfValues['badgeFont'].setFamily(fontFamily)
+        self.__cfValues['badgeFont'] = font
         self.flushCFlow()
 
 
