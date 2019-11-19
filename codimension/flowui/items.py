@@ -801,7 +801,7 @@ class ReturnCell(CellElement, QGraphicsRectItem):
         # The icon is supposed to be square
         self.__arrowWidth = self.getIconHeight()
 
-        self.arrowItem = SVGItem("return.svgz", self)
+        self.arrowItem = SVGItem("return.svg", self)
         self.arrowItem.setWidth(self.__arrowWidth)
         self.arrowItem.setToolTip("return")
 
@@ -1292,7 +1292,7 @@ class SysexitCell(CellElement, QGraphicsRectItem):
         # The icon is supposed to be square
         self.__xWidth = self.getIconHeight()
 
-        self.xItem = SVGItem("sysexit.svgz", self)
+        self.xItem = SVGItem("sysexit.svg", self)
         self.xItem.setWidth(self.__xWidth)
         self.xItem.setToolTip("sys.exit()")
 
@@ -1417,7 +1417,7 @@ class ImportCell(CellElement, QGraphicsRectItem):
         # The icon is supposed to be square
         self.__arrowWidth = self.getIconHeight()
 
-        self.arrowItem = SVGItem("import.svgz", self)
+        self.arrowItem = SVGItem("import.svg", self)
         self.arrowItem.setWidth(self.__arrowWidth)
         self.arrowItem.setToolTip("import")
         self.connector = None
