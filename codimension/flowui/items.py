@@ -1112,7 +1112,6 @@ class AssertCell(CellElement, QGraphicsRectItem):
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.ASSERT
         self.__textRect = None
-        self.__diamondDiagonal = None
         self.connector = None
 
         self.__arrowWidth = self.getIconHeight()
@@ -1136,14 +1135,14 @@ class AssertCell(CellElement, QGraphicsRectItem):
 
         # for an arrow box
         singleCharRect = self.getBoundingRect('W')
-        self.__diamondDiagonal = \
-            singleCharRect.height() + 2 * settings.vTextPadding
+        self.__diamondHeight = singleCharRect.height() + 2 * settings.vTextPadding
+        self.__diamondWidth = settings.ifWidth * 2 + singleCharRect.width() + 2 * settings.hTextPadding
 
         self.minHeight = self.__textRect.height() + \
                          2 * settings.vCellPadding + 2 * settings.vTextPadding
         self.minWidth = max(
             self.__textRect.width() + 2 * settings.hCellPadding +
-            2 * settings.hTextPadding + self.__diamondDiagonal,
+            2 * settings.hTextPadding + self.__diamondWidth,
             settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
@@ -1172,7 +1171,7 @@ class AssertCell(CellElement, QGraphicsRectItem):
 
         settings = self.canvas.settings
         self.arrowItem.setPos(
-            baseX + self.__diamondDiagonal / 2 +
+            baseX + self.__diamondWidth / 2 +
             settings.hCellPadding - self.arrowItem.width() / 2,
             baseY + self.minHeight / 2 - self.arrowItem.height() / 2)
 
@@ -1197,12 +1196,12 @@ class AssertCell(CellElement, QGraphicsRectItem):
             pen = QPen(self.__borderColor)
             painter.setPen(pen)
 
-        dHalf = int(self.__diamondDiagonal / 2.0)
+        dHalf = int(self.__diamondHeight / 2.0)
         dx1 = self.baseX + settings.hCellPadding
         dy1 = self.baseY + int(self.minHeight / 2)
         dx2 = dx1 + settings.ifWidth
         dy2 = dy1 - dHalf
-        dx3 = dx1 + 2 * dHalf - settings.ifWidth
+        dx3 = dx1 + self.__diamondWidth - settings.ifWidth
         dy3 = dy2
         dx4 = dx3 + settings.ifWidth
         dy4 = dy1
@@ -1219,7 +1218,7 @@ class AssertCell(CellElement, QGraphicsRectItem):
 
         painter.drawRect(dx4 + 1, self.baseY + settings.vCellPadding,
                          self.minWidth - 2 * settings.hCellPadding -
-                         self.__diamondDiagonal,
+                         self.__diamondWidth,
                          self.minHeight - 2 * settings.vCellPadding)
 
 
@@ -1228,7 +1227,7 @@ class AssertCell(CellElement, QGraphicsRectItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
         availWidth = \
-            self.minWidth - 2 * settings.hCellPadding - self.__diamondDiagonal
+            self.minWidth - 2 * settings.hCellPadding - self.__diamondWidth
         textWidth = self.__textRect.width() + 2 * settings.hTextPadding
         textShift = (availWidth - textWidth) / 2
         painter.drawText(
