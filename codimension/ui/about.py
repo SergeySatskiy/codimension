@@ -145,6 +145,11 @@ Codimension home page</a>.<br> Happy coding with Codimension!
                     text += '<br/>Local path: ' + localPath
 
             text += '<br/></li>'
+        text += '<li>Some icons (svg and png) are made by ' \
+                '<a href="https://www.flaticon.com/authors/dave-gandy">' \
+                'Dave Gandy</a> from ' \
+                '<a href="https://www.flaticon.com/">www.flaticon.com</a>' \
+                '<br/></li>'
         text += '</ul>'
         browser = QTextBrowser()
         browser.setHtml(text)
