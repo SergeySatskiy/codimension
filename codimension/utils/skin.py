@@ -445,15 +445,14 @@ class Skin:
                 if isinstance(value, QFont):
                     # already built
                     oldFormat = True
-                    continue
-                values[name] = buildFont(value)
-                continue
-            if 'color' in lowerName or 'paper' in lowerName:
+                else:
+                    values[name] = buildFont(value)
+            elif 'color' in lowerName or 'paper' in lowerName:
                 if isinstance(value, QColor):
                     # already built
-                    oldFormat
-                    continue
-                values[name] = buildColor(value)
+                    oldFormat = True
+                else:
+                    values[name] = buildColor(value)
         return values, oldFormat
 
     def setTextMonoFont(self, font):
@@ -477,29 +476,31 @@ class Skin:
         self.flushCFlow()
 
 
+def isSkinDir(dName):
+    """True if all the required files are there"""
+    for fName in ['app.css', 'skin.json', 'cflow.json']:
+        if not os.path.exists(dName + fName):
+            return False
+    return True
+
+
+def getSkinName(dName):
+    """Provides the skin name or None"""
+    try:
+        fName = dName + 'skin.json'
+        with open(fName, 'r',
+                  encoding=DEFAULT_ENCODING) as diskfile:
+            # Note: the load() method lacks the
+            # object_hook=colorFontFromJSON parameter because the only
+            # the skin name is read and no font/color conversion needed
+            values = json.load(diskfile)
+            return values['name']
+    except:
+        return None
+
+
 def getSkinsList(localSkinsDir):
     """Builds a list of skins - system wide and the user local"""
-    def isSkinDir(dName):
-        """True if all the required files are there"""
-        for fName in ['app.css', 'skin.json', 'cflow.json']:
-            if not os.path.exists(dName + fName):
-                return False
-        return True
-
-    def getSkinName(dName):
-        """Provides the skin name or None"""
-        try:
-            fName = dName + 'skin.json'
-            with open(fName, 'r',
-                      encoding=DEFAULT_ENCODING) as diskfile:
-                # Note: the load() method lacks the
-                # object_hook=colorFontFromJSON parameter because the only
-                # the skin name is read and no font/color conversion needed
-                values = json.load(diskfile)
-                return values['name']
-        except:
-            return None
-
     result = []
     for item in os.listdir(localSkinsDir):
         dName = localSkinsDir + item + os.path.sep
