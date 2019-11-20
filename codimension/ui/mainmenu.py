@@ -571,9 +571,8 @@ class MainWindowMenuMixin:
         optionsMenu.addSeparator()
         skinsMenu = optionsMenu.addMenu("Skins")
         self.__skinsGroup = QActionGroup(self)
-        availableSkins = self.__buildSkinsList()
         self.__skins = []
-        for skin in availableSkins:
+        for skin in self.__buildSkinsList():
             skinAct = skinsMenu.addAction(skin[1])
             skinAct.setData(skin[0])
             skinAct.setCheckable(True)
