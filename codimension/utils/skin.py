@@ -21,7 +21,6 @@
 
 import sys
 import logging
-import os
 import os.path
 import json
 from copy import deepcopy
@@ -30,6 +29,7 @@ from .colorfont import (buildFont, buildColor,
                         colorFontToJSON, colorFontFromJSON)
 from .fileutils import saveToFile, getFileContent
 from .config import DEFAULT_ENCODING
+from .settings import SETTINGS_DIR
 
 
 isMac = sys.platform.lower() == 'darwin'
@@ -238,6 +238,7 @@ class Skin:
     def __init__(self):
         # That's a trick to be able to implement getattr/setattr
         self.__dirName = None
+        self.__userDirName = None
         self.__appCSS = None
         self.__values = {}
         self.__cfValues = {}
@@ -250,6 +251,9 @@ class Skin:
         # Note: python 3.5 and 3.6 deepcopy() behaves different. The 3.6
         # fails to copy QFont at all while 3.5 copies it improperly.
         # So to be 100% sure it works, here is a manual copying...
+        self.__dirName = None
+        self.__userDirName = SETTINGS_DIR + 'skins' + os.path.sep + \
+                             _DEFAULT_CFLOW_SETTINGS['name'] + os.path.sep
         self.__values = {}
         for key, value in _DEFAULT_SKIN_SETTINGS.items():
             if isinstance(value, QFont):
@@ -269,26 +273,26 @@ class Skin:
         self.minTextZoom = self.__calculateMinTextZoom()
         self.minCFlowZoom = self.__calculateMinCFlowZoom()
 
+    def getDir(self):
+        """Provides the directory where the skin is coming from"""
+        # Can be None for the default skin and for the custom user skin
+        return self.__dirName
+
+    def getUserDir(self):
+        """Provides the location of the user skin directory"""
+        # Can be the same as self.__dirName for the custom user skin
+        return self.__userDirName
+
     def __getitem__(self, key):
         if key == 'appCSS':
             return self.__appCSS
-        if key in self.__cfValues:
+        try:
             return self.__cfValues[key]
-        return self.__values[key]
+        except KeyError:
+            return self.__values[key]
 
     def __setitem__(self, key, value):
-        if key == 'name':
-            raise Exception('Cannot change the skin name. It must match '
-                            'the name of the skin directory.')
-        if key == 'appCSS':
-            self.__appCSS = value
-            self.flushCSS()
-        elif key in self.__cfValues:
-            self.__cfValues[key] = value
-            self.flushCFlow()
-        else:
-            self.__values[key] = value
-            self.flush()
+        logging.error('The generic skin parameters are immutable')
 
     @property
     def cflowSettings(self):
@@ -326,6 +330,13 @@ class Skin:
             # original css
             saveToFile(self.__dirName + 'app.css', self.__appCSS,
                        allowException=False)
+
+    def loadByName(self, skinName):
+        """Loads the skin by name.
+
+        Implemetation should be in sync with getSkinsList"""
+        
+
 
     def load(self, dirName):
         """Loads the skin description from the given directory"""
@@ -499,9 +510,26 @@ def getSkinName(dName):
         return None
 
 
-def getSkinsList(localSkinsDir):
+def getSkinsList():
     """Builds a list of skins - system wide and the user local"""
-    result = []
+    # Returns a list of skin names
+
+    srcDir = os.path.dirname(sys.argv[0])
+    installationSkinsDir = srcDir + os.path.sep + 'skins' + os.path.sep
+    userSkinsDir = SETTINGS_DIR + 'skins' + os.path.sep
+
+    # default is coming from memory and always there
+    result = ['default']
+
+    # First, walk the installation skin dirs
+    for item in os.listdir(installationSkinsDir):
+        dName = installationSkinsDir + item + os.path.sep
+        if os.path.isdir(dName):
+            if isSkinDir(dName):
+                name = getSkinName(dName)
+
+
+
     for item in os.listdir(localSkinsDir):
         dName = localSkinsDir + item + os.path.sep
         if os.path.isdir(dName):

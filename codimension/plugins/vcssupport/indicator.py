@@ -21,7 +21,7 @@
 
 import os.path
 from ui.qt import QColor, QPixmap, QFrame, QLabel, QPalette, QSize, Qt
-from utils.pixmapcache import getPixmapPath
+from utils.pixmapcache import getPixmapLocation, getPixmap
 
 
 MAX_TEXT_INDICATOR_LENGTH = 2
@@ -88,8 +88,8 @@ class VCSIndicator:
                 self.pixmap = QPixmap(pluginIndicator[1])
             elif os.path.exists(pluginIndicator[1]):
                 self.pixmap = QPixmap(pluginIndicator[1])
-            elif os.path.exists(getPixmapPath() + pluginIndicator[1]):
-                self.pixmap = QPixmap(getPixmapPath() + pluginIndicator[1])
+            elif getPixmapLocation(pluginIndicator[1]) is not None:
+                self.pixmap = getPixmap(pluginIndicator[1])
             else:
                 self.__setText(pluginIndicator[1])
         except:

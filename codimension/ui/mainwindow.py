@@ -19,10 +19,13 @@
 
 """Codimension main window"""
 
+# cml 1 gb id=0 title="System imports"
 import os.path
 import sys
 import logging
 import gc
+# cml 1 ge id=0
+# cml 1 gb id=1 title="Project imports"
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.misc import (getDefaultTemplate, getIDETemplateFile,
@@ -79,6 +82,7 @@ from .mainstatusbar import MainWindowStatusBarMixin
 from .mainmenu import MainWindowMenuMixin
 from .mainredirectedio import MainWindowRedirectedIOMixin
 from .floatingrendererwindow import DetachedRendererWindow
+# cml 1 ge id=1
 
 
 class EditorsManagerWidget(QWidget):
@@ -1329,11 +1333,11 @@ class CodimensionMainWindow(QMainWindow):
             self.__alphasort.setChecked(False)
             self.__tabsort.setChecked(True)
 
-    def _onSkin(self, skinSubdir):
+    def _onSkin(self, skinName):
         """Triggers when a skin is selected"""
-        if self.settings['skin'] != skinSubdir.data():
+        if self.settings['skin'] != skinName.data():
             logging.info("Please restart codimension to apply the new skin")
-            self.settings['skin'] = skinSubdir.data()
+            self.settings['skin'] = skinName.data()
 
     def _onStyle(self, styleName):
         """Sets the selected style"""

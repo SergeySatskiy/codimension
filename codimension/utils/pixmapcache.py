@@ -30,25 +30,63 @@ class PixmapCache():
 
     def __init__(self):
         self.__cache = {}
-        self.__dir = dirname(realpath(sys.argv[0])) + sep + 'pixmaps' + sep
+        self.__locationCache = {}
+        self.__searchDirs = None
 
-    def getPath(self, path):
+    def __initSearchDirs(self):
+        """Initializes the search directories list"""
+        # There are a few cases here:
+        # - default skin does not have a directory in the installation package
+        # - Codimension additional skins have a directory in the installation
+        #   package
+        # - User custom skins do not have directories in the installation
+        #   package
+        # All type of skins may have a directory in ~/.codimension3/skins
+
+        self.__searchDirs = []
+
+        from utils.globals import GlobalData
+        skin = GlobalData().skin
+
+        # First priority search dir is the ~/.codimension3/skins/<name>
+        skinDir = skin.getUserDir()
+        if skinDir:
+            if exists(skinDir):
+                self.__searchDirs.append(skinDir)
+
+        # Second piority is the dir where the skin came from
+        skinDir = skin.getDir()
+        if skinDir:
+            if exists(skinDir):
+                if skinDir not in self.__searchDirs:
+                    self.__searchDirs.append(skinDir)
+
+        # Third priority is the default location of the pixmaps (installation
+        # package)
+        self.__searchDirs.append(dirname(realpath(sys.argv[0])) + sep +
+                                 'pixmaps' + sep)
+
+    def __getPath(self, path):
         """Provides an absolute path"""
         if isabs(path):
-            return path
-        return self.__dir + path
+            return path if exists(path) else None
 
-    def getSearchPath(self):
-        """Provides the path where pixmaps are"""
-        return self.__dir
+        if self.__searchDirs is None:
+            self.__initSearchDirs()
+
+        for dirName in self.__searchDirs:
+            fullPath = dirName + path
+            if exists(fullPath):
+                return fullPath
+        return None
 
     def getPixmap(self, name):
         """Provides the required pixmap"""
         try:
             return self.__cache[name]
         except KeyError:
-            path = self.getPath(name)
-            if not exists(path):
+            path = self.__getPath(name)
+            if path is None:
                 pixmap = QPixmap()
                 self.__cache[name] = pixmap
                 return pixmap
@@ -64,6 +102,15 @@ class PixmapCache():
         """Provides a pixmap as an icon"""
         return QIcon(self.getPixmap(name))
 
+    def getLocation(self, name):
+        """Provides the pixmap location (svg items require a path)"""
+        try:
+            return self.__locationCache[name]
+        except KeyError:
+            # The path could be None if not found anywhere
+            path = self.__getPath(name)
+            self.__locationCache[name] = path
+            return path
 
 # Pixmap cache: should be only one
 # Access functions are below
@@ -74,12 +121,11 @@ def getIcon(name):
     """Syntactic shugar"""
     return PIXMAP_CACHE.getIcon(name)
 
-
 def getPixmap(name):
     """Syntactic shugar"""
     return PIXMAP_CACHE.getPixmap(name)
 
+def getPixmapLocation(name):
+    """Syntactic shugar"""
+    return PIXMAP_CACHE.getLocation(name)
 
-def getPixmapPath():
-    """Provides the path where pixmaps are"""
-    return PIXMAP_CACHE.getSearchPath()

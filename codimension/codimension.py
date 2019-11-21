@@ -182,7 +182,7 @@ class CodimensionUILauncher:
 
         # QT on UBUNTU has a bug - the main menu bar does not generate the
         # 'aboutToHide' signal (though 'aboutToShow' is generated properly. This
-        # prevents codimension working properly so this hack below disables the
+        # prevents codimension working properly so the hack below disables the
         # global menu bar for codimension and makes it working properly.
         os.environ['QT_X11_NO_NATIVE_MENUBAR'] = '1'
 

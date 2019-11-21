@@ -42,8 +42,8 @@ class SVGItem(QGraphicsSvgItem):
     def __getPath(self, fName):
         """Tries to resolve the given file name"""
         try:
-            from utils.pixmapcache import PIXMAP_CACHE
-            path = PIXMAP_CACHE.getSearchPath() + fName
+            from utils.pixmapcache import getPixmapLocation
+            path = getPixmapLocation(fName)
             if os.path.exists(path):
                 return path
         except:

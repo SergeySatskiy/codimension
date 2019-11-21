@@ -28,8 +28,7 @@ from utils.globals import GlobalData
 from utils.misc import getIDETemplateFile, getProjectTemplateFile
 from utils.settings import CLEAR_AND_REUSE, NO_CLEAR_AND_REUSE, NO_REUSE
 from utils.diskvaluesrelay import getRecentFiles
-from .qt import (QDir, QApplication, QMenu, QStyleFactory, QActionGroup,
-                 QFontDialog)
+from .qt import QApplication, QMenu, QStyleFactory, QActionGroup, QFontDialog
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -571,15 +570,14 @@ class MainWindowMenuMixin:
         optionsMenu.addSeparator()
         skinsMenu = optionsMenu.addMenu("Skins")
         self.__skinsGroup = QActionGroup(self)
-        self.__skins = []
-        for skin in self.__buildSkinsList():
-            skinAct = skinsMenu.addAction(skin[1])
-            skinAct.setData(skin[0])
+        currentSkin = self.settings['skin']
+        for skin in getSkinsList():
+            skinAct = skinsMenu.addAction(skin)
+            skinAct.setData(skin)
             skinAct.setCheckable(True)
             skinAct.setActionGroup(self.__skinsGroup)
-            self.__skins.append((skin[0], skinAct))
+            skinAct.setChecked(currentSkin == skin)
         skinsMenu.triggered.connect(self._onSkin)
-        skinsMenu.aboutToShow.connect(self.__skinAboutToShow)
 
         styleMenu = optionsMenu.addMenu("Styles")
         self.__styleGroup = QActionGroup(self)
@@ -914,19 +912,6 @@ class MainWindowMenuMixin:
         currentStyle = self.settings['style'].lower()
         for item in self.__styles:
             item[1].setChecked(item[0].lower() == currentStyle)
-
-    def __skinAboutToShow(self):
-        """Skins menu is about to show"""
-        currentSkin = self.settings['skin'].lower()
-        for item in self.__skins:
-            item[1].setChecked(item[0].lower() == currentSkin)
-
-    @staticmethod
-    def __buildSkinsList():
-        """Builds a list of skins"""
-        items = [os.path.normpath(str(QDir.homePath())), CONFIG_DIR, "skins"]
-        localSkinsDir = os.path.sep.join(items) + os.path.sep
-        return getSkinsList(localSkinsDir)
 
     def _recomposePluginMenu(self):
         """Recomposes the plugin menu"""
