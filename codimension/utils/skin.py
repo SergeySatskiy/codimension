@@ -32,6 +32,10 @@ from .config import DEFAULT_ENCODING
 from .settings import SETTINGS_DIR
 
 
+PACKAGE_SKIN_DIR = os.path.dirname(os.path.realpath(sys.argv[0])) + \
+                   os.path.sep + 'skins' + os.path.sep
+USER_SKIN_DIR = SETTINGS_DIR + 'skins' + os.path.sep
+
 isMac = sys.platform.lower() == 'darwin'
 
 _DEFAULT_SKIN_SETTINGS = {
@@ -241,7 +245,6 @@ class Skin:
         self.__userDirName = None
         self.__appCSS = None
         self.__values = {}
-        self.__cfValues = {}
         self.minTextZoom = None
         self.minCFlowZoom = None
         self.__reset()
@@ -254,6 +257,11 @@ class Skin:
         self.__dirName = None
         self.__userDirName = SETTINGS_DIR + 'skins' + os.path.sep + \
                              _DEFAULT_CFLOW_SETTINGS['name'] + os.path.sep
+        if not os.path.exists(self.__userDirName):
+            self.__userDirName = None
+        elif not os.path.isdir(self.__userDirName):
+            self.__userDirName = None
+
         self.__values = {}
         for key, value in _DEFAULT_SKIN_SETTINGS.items():
             if isinstance(value, QFont):
@@ -261,12 +269,11 @@ class Skin:
             else:
                 self.__values[key] = value
 
-        self.__cfValues = {}
         for key, value in _DEFAULT_CFLOW_SETTINGS.items():
             if isinstance(value, QFont):
-                self.__cfValues[key] = QFont(_DEFAULT_CFLOW_SETTINGS[key])
+                self.__values[key] = QFont(_DEFAULT_CFLOW_SETTINGS[key])
             else:
-                self.__cfValues[key] = value
+                self.__values[key] = value
 
         self.__appCSS = deepcopy(_DEFAULT_APP_CSS)
 
@@ -286,10 +293,7 @@ class Skin:
     def __getitem__(self, key):
         if key == 'appCSS':
             return self.__appCSS
-        try:
-            return self.__cfValues[key]
-        except KeyError:
-            return self.__values[key]
+        return self.__values[key]
 
     def __setitem__(self, key, value):
         logging.error('The generic skin parameters are immutable')
@@ -297,7 +301,8 @@ class Skin:
     @property
     def cflowSettings(self):
         """Provides the cflow settings dictionary"""
-        return self.__cfValues
+        # It is more than needed. The minimum is what is in the CFOW dict
+        return self.__values
 
     def flush(self):
         """Saves the values to the disk"""
@@ -334,8 +339,33 @@ class Skin:
     def loadByName(self, skinName):
         """Loads the skin by name.
 
-        Implemetation should be in sync with getSkinsList"""
-        
+        Implemetation should be in sync with getSkinsList
+        """
+        if self.__values['name'] == skinName:
+            return
+
+        if skinName == 'default':
+            self.__reset()
+            self.__applyOverrides()
+            return
+
+        # check if it is from an installation package
+        skinsAndDirs = getSkinsWithDirs()
+        if skinName not in skinsAndDirs:
+            logging.error('Skin "' + skinName + '" is not found')
+            return
+
+        skinDir = skinsAndDirs[skinName]
+
+        # load 3 files
+        # load overrides
+        # check missed values
+
+
+
+    def __applyOverrides(self):
+        """Applies the skin overrides"""
+
 
 
     def load(self, dirName):
@@ -510,54 +540,40 @@ def getSkinName(dName):
         return None
 
 
+# Dictionary { <skin name>: <directory> }
+SKIN_LIST = None
+
+
 def getSkinsList():
+    """Provides just the skin names"""
+    return getSkinsWithDirs().keys()
+
+def getSkinsWithDirs():
     """Builds a list of skins - system wide and the user local"""
-    # Returns a list of skin names
+    global SKIN_LIST
 
-    srcDir = os.path.dirname(sys.argv[0])
-    installationSkinsDir = srcDir + os.path.sep + 'skins' + os.path.sep
-    userSkinsDir = SETTINGS_DIR + 'skins' + os.path.sep
+    if SKIN_LIST is None:
+        # default is coming from memory and always there
+        SKIN_LIST = {'default': None}
 
-    # default is coming from memory and always there
-    result = ['default']
-
-    # First, walk the installation skin dirs
-    for item in os.listdir(installationSkinsDir):
-        dName = installationSkinsDir + item + os.path.sep
-        if os.path.isdir(dName):
-            if isSkinDir(dName):
-                name = getSkinName(dName)
-
-
-
-    for item in os.listdir(localSkinsDir):
-        dName = localSkinsDir + item + os.path.sep
-        if os.path.isdir(dName):
-            # Seems to be a skin dir
-            if isSkinDir(dName):
-                # Get the skin display name
-                name = getSkinName(dName)
-                if name:
-                    result.append([item, name])
-
-    # Add the installed names unless the same dirs have been already copied
-    # to the user local dir
-    srcDir = os.path.dirname(os.path.realpath(sys.argv[0]))
-    skinsDir = srcDir + os.path.sep + "skins" + os.path.sep
-
-    if os.path.exists(skinsDir):
-        for item in os.listdir(skinsDir):
-            dName = skinsDir + item + os.path.sep
+        # First, walk the installation skin dirs
+        for item in os.listdir(PACKAGE_SKIN_DIR):
+            dName = PACKAGE_SKIN_DIR + item + os.path.sep
             if os.path.isdir(dName):
-                # Seems to be a skin dir
                 if isSkinDir(dName):
-                    # Check if this name alrady added
-                    for skin in result:
-                        if skin[0] == item:
-                            break
-                    else:
-                        # Get the skin display name
-                        name = getSkinName(dName)
-                        result.append([item, name])
-    return result
+                    name = getSkinName(dName)
+                    if name and name not in SKIN_LIST:
+                        SKIN_LIST[name] = dName
+
+        for item in os.listdir(USER_SKIN_DIR):
+            if item in result:
+                # this is overriding of the IDE supplied skins
+                continue
+            dName = USER_SKIN_DIR + item + os.path.sep
+            if os.path.isdir(dName):
+                if isSkinDir(dName):
+                    name = getSkinName(dName)
+                    if name and name not in SKIN_LIST:
+                        SKIN_LIST[name] = dName
+    return SKIN_LIST
 
