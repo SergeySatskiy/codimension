@@ -19,6 +19,11 @@
 
 """Skins support"""
 
+# pylint: disable=C0305
+# pylint: disable=W0603
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import sys
 import logging
 import os.path
@@ -35,6 +40,8 @@ from .settings import SETTINGS_DIR
 PACKAGE_SKIN_DIR = os.path.dirname(os.path.realpath(sys.argv[0])) + \
                    os.path.sep + 'skins' + os.path.sep
 USER_SKIN_DIR = SETTINGS_DIR + 'skins' + os.path.sep
+OVERRIDE_FILE = 'override.json'
+SAMPLE_SKIN = 'sample'
 
 isMac = sys.platform.lower() == 'darwin'
 
@@ -245,6 +252,7 @@ class Skin:
         self.__userDirName = None
         self.__appCSS = None
         self.__values = {}
+        self.__overrides = {}
         self.minTextZoom = None
         self.minCFlowZoom = None
         self.__reset()
@@ -255,7 +263,8 @@ class Skin:
         # fails to copy QFont at all while 3.5 copies it improperly.
         # So to be 100% sure it works, here is a manual copying...
         self.__dirName = None
-        self.__userDirName = SETTINGS_DIR + 'skins' + os.path.sep + \
+        self.__overrides = {}
+        self.__userDirName = USER_SKIN_DIR + \
                              _DEFAULT_CFLOW_SETTINGS['name'] + os.path.sep
         if not os.path.exists(self.__userDirName):
             self.__userDirName = None
@@ -304,37 +313,25 @@ class Skin:
         # It is more than needed. The minimum is what is in the CFOW dict
         return self.__values
 
-    def flush(self):
+    @staticmethod
+    def flush(fName, values):
         """Saves the values to the disk"""
-        if self.__dirName:
-            fName = self.__dirName + 'skin.json'
-            try:
-                with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
-                    json.dump(self.__values, diskfile, indent=4,
-                              default=colorFontToJSON)
-            except Exception as exc:
-                logging.error('Error saving skin settings (to ' +
-                              fName + '): ' + str(exc))
+        try:
+            with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
+                json.dump(values, diskfile, indent=4, default=colorFontToJSON)
+        except Exception as exc:
+            logging.error('Error updating skin settings (to %s): %s',
+                          fName, str(exc))
 
-    def flushCFlow(self):
+    @staticmethod
+    def flushCFlow(fName, values):
         """Saves the cflow settings to the disk"""
-        if self.__dirName:
-            fName = self.__dirName + 'cflow.json'
-            try:
-                with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
-                    json.dump(self.__cfValues, diskfile, indent=4,
-                              default=colorFontToJSON)
-            except Exception as exc:
-                logging.error('Error saving control flow settings (to ' +
-                              fName + '): ' + str(exc))
-
-    def flushCSS(self):
-        """Saves the CSS to the disk"""
-        if self.__dirName:
-            # Note: comments and includes are lost here if they were in the
-            # original css
-            saveToFile(self.__dirName + 'app.css', self.__appCSS,
-                       allowException=False)
+        try:
+            with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
+                json.dump(values, diskfile, indent=4, default=colorFontToJSON)
+        except Exception as exc:
+            logging.error('Error updating control flow settings (to %s): %s',
+                          fName, str(exc))
 
     def loadByName(self, skinName):
         """Loads the skin by name.
@@ -344,7 +341,7 @@ class Skin:
         if self.__values['name'] == skinName:
             return
 
-        if skinName == 'default':
+        if skinName == _DEFAULT_SKIN_SETTINGS['name']:
             self.__reset()
             self.__applyOverrides()
             return
@@ -352,116 +349,128 @@ class Skin:
         # check if it is from an installation package
         skinsAndDirs = getSkinsWithDirs()
         if skinName not in skinsAndDirs:
-            logging.error('Skin "' + skinName + '" is not found')
+            logging.error('Skin "%s" is not found', skinName)
             return
 
         skinDir = skinsAndDirs[skinName]
 
         # load 3 files
-        # load overrides
-        # check missed values
+        newAppCSS = self.__loadAppCSS(skinDir + 'app.css')
+        newValues = self.__loadSkin(skinDir + 'skin.json')
+        newCflowValues = self.__loadCFlow(skinDir + 'cflow.json')
+        if newAppCSS is None or newValues is None or newCflowValues is None:
+            logging.error('The current skin ("%s") has not been replaced '
+                          'with skin "%s"', self.__values['name'], skinName)
+            return
 
+        # Apply new values
+        self.__appCSS = newAppCSS
+        self.__values = newValues
+        self.__values.update(newCflowValues)
 
+        # Set the skin directories
+        if skinDir.startswith(USER_SKIN_DIR):
+            # Pure user dir, unknown for the package
+            self.__dirName = None
+            self.__userDirName = skinDir
+        else:
+            self.__dirName = skinDir
+            self.__userDirName = USER_SKIN_DIR + \
+                                 self.__values['name'] + os.path.sep
+            if not os.path.exists(self.__userDirName):
+                self.__userDirName = None
+            elif not os.path.isdir(self.__userDirName):
+                self.__userDirName = None
+
+        self.__applyOverrides()
+        self.__checkMissedValues()
+
+        self.minTextZoom = self.__calculateMinTextZoom()
+        self.minCFlowZoom = self.__calculateMinCFlowZoom()
 
     def __applyOverrides(self):
         """Applies the skin overrides"""
+        if self.__userDirName is None:
+            return
+        fName = self.__userDirName + OVERRIDE_FILE
+        if not os.path.exists(fName):
+            return
+        if not os.path.isfile(fName):
+            return
 
+        try:
+            with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
+                diskContent = json.load(diskfile,
+                                        object_hook=colorFontFromJSON)
+                diskContent, _ = self.__postProcessValues(diskContent)
+            self.__overrides = diskContent
+            self.__values.update(diskContent)
+        except Exception as exc:
+            logging.error('Error applying overrides on the skin "%s" '
+                          'from %s: %s',self.__values['name'], fName, str(exc))
 
+    def __checkMissedValues(self):
+        """Checks if some values are missed in the skin"""
+        expectedValues = set(_DEFAULT_SKIN_SETTINGS.keys()) | \
+                         set(_DEFAULT_CFLOW_SETTINGS.keys())
+        presentValues = set(self.__values.keys())
+        diff = expectedValues - presentValues
+        for val in diff:
+            logging.error('The skin "%s" misses value %s. The values will be '
+                          'taken from the default settings.',
+                          self.__values['name'], val)
+            if val in _DEFAULT_SKIN_SETTINGS:
+                defaultVal = {val: _DEFAULT_SKIN_SETTINGS[val]}
+            else:
+                defaultVal = {val: _DEFAULT_CFLOW_SETTINGS[val]}
+            defaultVal, _ = self.__postProcessValues(defaultVal)
+            self.__values.update(defaultVal)
 
-    def load(self, dirName):
-        """Loads the skin description from the given directory"""
-        dName = os.path.realpath(dirName)
-        if not os.path.isdir(dName):
-            logging.error('Cannot load a skin from ' + dName + '. A directory '
-                          'name is expected.')
-            return False
-
-        self.__dirName = dName + os.path.sep
-
-        appFile = self.__dirName + 'app.css'
-        if not os.path.exists(appFile):
-            logging.error('Cannot load a skin from ' + dName +
-                          '. The application css file ' + appFile +
-                          ' is not found.')
-            return False
-
-        skinFile = self.__dirName + 'skin.json'
-        if not os.path.exists(skinFile):
-            logging.error('Cannot load a skin from ' + dName +
-                          '. The skin settings file ' + skinFile +
-                          ' is not found.')
-            return False
-
-        cflowFile = self.__dirName + 'cflow.json'
-        if not os.path.exists(cflowFile):
-            logging.error('Cannot load a skin from ' + dName +
-                          '. The control flow settings file ' + cflowFile +
-                          ' is not found.')
-            return False
-
-        # All the files are in place. Load them
-        if not self.__loadAppCSS(appFile):
-            self.flushCSS()
-        if not self.__loadSkin(skinFile):
-            self.flush()
-        if not self.__loadCFlow(cflowFile):
-            self.flushCFlow()
-        return True
-
-    def __loadAppCSS(self, fName):
+    @staticmethod
+    def __loadAppCSS(fName):
         """Loads the application CSS file"""
         try:
-            self.__appCSS = getFileContent(fName)
+            return getFileContent(fName)
         except Exception as exc:
-            logging.error('Cannot read an application CSS from ' + fName +
-                          ': ' + str(exc) +
-                          '\nThe file will be updated with a default CSS')
-            return False
-        return True
+            logging.error('Cannot read an application CSS from %s: %s',
+                          fName, str(exc))
+        return None
 
     def __loadSkin(self, fName):
         """Loads the general settings file"""
         try:
-            origLength = len(self.__values)
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
                 diskContent = json.load(diskfile,
                                         object_hook=colorFontFromJSON)
                 diskContent, oldFormat = self.__postProcessValues(diskContent)
-                diskLength = len(diskContent)
-                self.__values.update(diskContent)
-            if origLength != diskLength or oldFormat:
-                self.flush()
+            if oldFormat:
+                try:
+                    self.flush(fName, diskContent)
+                except:
+                    pass
+            return diskContent
         except Exception as exc:
-            logging.error('Cannot read skin settings from ' + fName +
-                          ': ' + str(exc) +
-                          '\nThe file will be updated with '
-                          'default skin settings')
-            return False
-
-        self.minTextZoom = self.__calculateMinTextZoom()
-        return True
+            logging.error('Cannot read skin settings from %s: %s',
+                          fName, str(exc))
+        return None
 
     def __loadCFlow(self, fName):
         """Loads control flow settings file"""
         try:
-            origLength = len(self.__cfValues)
             with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
                 diskContent = json.load(diskfile,
                                         object_hook=colorFontFromJSON)
                 diskContent, oldFormat = self.__postProcessValues(diskContent)
-                diskLength = len(diskContent)
-                self.__cfValues.update(diskContent)
-            if origLength != diskLength or oldFormat:
-                self.flushCFlow()
+            if oldFormat:
+                try:
+                    self.flushCFlow(fName, diskContent)
+                except:
+                    pass
+            return diskContent
         except Exception as exc:
-            logging.error('Cannot read control flow settings from ' + fName +
-                          ': ' + str(exc) +
-                          '\nThe file will be updated with '
-                          'default control flow settings')
-            return False
-
-        self.minCFlowZoom = self.__calculateMinCFlowZoom()
-        return True
+            logging.error('Cannot read control flow settings from %s: %s',
+                          fName, str(exc))
+        return None
 
     def __calculateMinTextZoom(self):
         """Calculates the minimum text zoom"""
@@ -471,8 +480,8 @@ class Skin:
 
     def __calculateMinCFlowZoom(self):
         """Calculates the minimum control flow zoom"""
-        badgePointSize = self.__cfValues['badgeFont'].pointSize()
-        monoPointSize = self.__cfValues['cfMonoFont'].pointSize()
+        badgePointSize = self.__values['badgeFont'].pointSize()
+        monoPointSize = self.__values['cfMonoFont'].pointSize()
         return (min(badgePointSize, monoPointSize) - 1) * -1
 
     @staticmethod
@@ -496,25 +505,68 @@ class Skin:
                     values[name] = buildColor(value)
         return values, oldFormat
 
+    def __createUserSkinDir(self):
+        """Creates the user skin dir if necessary"""
+        if not self.__userDirName:
+            self.__userDirName = USER_SKIN_DIR + self.__values['name'] + \
+                                 os.path.sep
+            if os.path.exists(self.__userDirName):
+                if not os.path.isdir(self.__userDirName):
+                    logging.error('The skin needs to have the directory %s '
+                                  'to be available but the name is taken by '
+                                  'something else. No skin overrides '
+                                  'possible.', self.__userDirName)
+                    self.__userDirName = None
+                    return False
+            # Try to create the dir
+            try:
+                os.makedirs(self.__userDirName, exist_ok=True)
+            except Exception as exc:
+                logging.error('Error creating the skin overriding '
+                              'directory %s: %s', self.__userDirName, str(exc))
+                self.__userDirName = None
+                return False
+        return True
+
+    def __flushOverrides(self):
+        """Saves the overrides to the disk"""
+        # The user directory must exist
+        fName = self.__userDirName + OVERRIDE_FILE
+        try:
+            with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
+                json.dump(self.__overrides, diskfile, indent=4,
+                          default=colorFontToJSON)
+        except Exception as exc:
+            logging.error('Error updating overridden skin settings in %s: %s',
+                          fName, str(exc))
+
     def setTextMonoFont(self, font):
         """Sets the new mono font family"""
         self.__values['monoFont'] = font
-        self.flush()
+        self.__overrides['monoFont'] = font
+        if self.__createUserSkinDir():
+            self.__flushOverrides()
 
     def setMarginFont(self, font):
         """Sets the new mono font family"""
         self.__values['lineNumFont'] = font
-        self.flush()
+        self.__overrides['lineNumFont'] = font
+        if self.__createUserSkinDir():
+            self.__flushOverrides()
 
     def setFlowMonoFont(self, font):
         """Sets the new flow font family"""
-        self.__cfValues['cfMonoFont'] = font
-        self.flushCFlow()
+        self.__values['cfMonoFont'] = font
+        self.__overrides['cfMonoFont'] = font
+        if self.__createUserSkinDir():
+            self.__flushOverrides()
 
     def setFlowBadgeFont(self, font):
         """Sets the new flow badge font"""
-        self.__cfValues['badgeFont'] = font
-        self.flushCFlow()
+        self.__values['badgeFont'] = font
+        self.__overrides['badgeFont'] = font
+        if self.__createUserSkinDir():
+            self.__flushOverrides()
 
 
 def isSkinDir(dName):
@@ -548,6 +600,7 @@ def getSkinsList():
     """Provides just the skin names"""
     return getSkinsWithDirs().keys()
 
+
 def getSkinsWithDirs():
     """Builds a list of skins - system wide and the user local"""
     global SKIN_LIST
@@ -566,7 +619,9 @@ def getSkinsWithDirs():
                         SKIN_LIST[name] = dName
 
         for item in os.listdir(USER_SKIN_DIR):
-            if item in result:
+            if item == SAMPLE_SKIN:
+                continue
+            if item in SKIN_LIST:
                 # this is overriding of the IDE supplied skins
                 continue
             dName = USER_SKIN_DIR + item + os.path.sep
@@ -577,3 +632,59 @@ def getSkinsWithDirs():
                         SKIN_LIST[name] = dName
     return SKIN_LIST
 
+
+def populateSampleSkin():
+    """Populates the sample skin in the user directory"""
+    dName = USER_SKIN_DIR + SAMPLE_SKIN + os.path.sep
+    if os.path.exists(dName):
+        if not os.path.isdir(dName):
+            logging.error('Error creating a sample skin at %s. '
+                          'The file system entry is already occupied '
+                          'by something else', dName)
+            return
+
+    # Try to create the dir
+    try:
+        os.makedirs(dName, exist_ok=True)
+    except Exception as exc:
+        logging.error('Error creating a sample skin at %s: %s',
+                      dName, str(exc))
+
+    fName = dName + 'app.css'
+    if not os.path.exists(fName):
+        try:
+            saveToFile(fName, _DEFAULT_APP_CSS)
+        except Exception as exc:
+            logging.error('Error creating a sample skin at %s. '
+                          'Cannot write app.css: %s', dName, str(exc))
+
+    fName = dName + 'skin.json'
+    if not os.path.exists(fName):
+        try:
+            values = {}
+            for key, value in _DEFAULT_SKIN_SETTINGS.items():
+                if isinstance(value, QFont):
+                    values[key] = QFont(_DEFAULT_SKIN_SETTINGS[key])
+                else:
+                    values[key] = value
+            values['name'] = SAMPLE_SKIN
+            with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
+                json.dump(values, diskfile, indent=4, default=colorFontToJSON)
+        except Exception as exc:
+            logging.error('Error creating a sample skin at %s. '
+                          'Cannot write skin.json: %s', dName, str(exc))
+
+    fName = dName + 'cflow.json'
+    if not os.path.exists(fName):
+        try:
+            values = {}
+            for key, value in _DEFAULT_CFLOW_SETTINGS.items():
+                if isinstance(value, QFont):
+                    values[key] = QFont(_DEFAULT_CFLOW_SETTINGS[key])
+                else:
+                    values[key] = value
+            with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
+                json.dump(values, diskfile, indent=4, default=colorFontToJSON)
+        except Exception as exc:
+            logging.error('Error creating a sample skin at %s. '
+                          'Cannot write cflow.json: %s', dName, str(exc))

@@ -23,15 +23,18 @@
 It performs necessery initialization and starts the Qt main loop.
 """
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+# pylint: disable=C0415
+# pylint: disable=C0413
+
 import sys
 import os
 import os.path
 import gc
 import traceback
 import logging
-import shutil
 import datetime
-import json
 from optparse import OptionParser
 
 # Workaround if link is used
@@ -42,17 +45,14 @@ srcDir = os.path.dirname(sys.argv[0])
 if srcDir not in sys.path:
     sys.path.insert(0, srcDir)
 
-from ui.qt import QTimer, QDir, QMessageBox
+from ui.qt import QTimer, QMessageBox
 from ui.application import CodimensionApplication
 from ui.splashscreen import SplashScreen
 from utils.project import CodimensionProject
-from utils.skin import (Skin, _DEFAULT_SKIN_SETTINGS, _DEFAULT_CFLOW_SETTINGS,
-                        _DEFAULT_APP_CSS)
-from utils.config import CONFIG_DIR
+from utils.skin import Skin, populateSampleSkin
 from utils.config import DEFAULT_ENCODING
 from utils.settings import Settings, SETTINGS_DIR
 from utils.globals import GlobalData
-from utils.colorfont import colorFontToJSON
 
 
 try:
@@ -170,12 +170,11 @@ class CodimensionUILauncher:
         # Loading settings - they have to be loaded before the application is
         # created. This is because the skin name is saved there.
         settings = Settings()
-        self.copySkin()
+        populateSampleSkin()
 
         # Load the skin
         globalData.skin = Skin()
-        globalData.skin.load(SETTINGS_DIR + 'skins' +
-                             os.path.sep + settings['skin'])
+        globalData.skin.loadByName(settings['skin'])
 
         self.__delayedWarnings += settings.validateZoom(
             globalData.skin.minTextZoom, globalData.skin.minCFlowZoom)
@@ -259,12 +258,14 @@ class CodimensionUILauncher:
             else:
                 self.__splash.showMessage('Loading project...')
                 if os.path.exists(settings['recentProjects'][0]):
-                    globalData.project.loadProject(settings['recentProjects'][0])
+                    globalData.project.loadProject(
+                        settings['recentProjects'][0])
                     needSignal = False
                 else:
                     self.__delayedWarnings.append(
                         'Cannot open the most recent project: ' +
-                        settings['recentProjects'][0] + '. Ignore and continue.')
+                        settings['recentProjects'][0] +
+                        '. Ignore and continue.')
         else:
             mainWindow.em.restoreTabs(settings.tabStatus)
 
@@ -273,13 +274,14 @@ class CodimensionUILauncher:
             globalData.project.sigProjectChanged.emit(
                 CodimensionProject.CompleteProject)
 
-        # The editors positions can be restored properly only when the editors have
-        # actually been drawn. Otherwise the first visible line is unknown.
-        # So, I load the project first and let object browsers initialize
-        # themselves and then manually call the main window handler to restore the
-        # editors. The last step is to connect the signal.
+        # The editors positions can be restored properly only when the editors
+        # have actually been drawn. Otherwise the first visible line is
+        # unknown. So, I load the project first and let object browsers
+        # initialize themselves and then manually call the main window handler
+        # to restore the editors. The last step is to connect the signal.
         mainWindow.onProjectChanged(CodimensionProject.CompleteProject)
-        globalData.project.sigProjectChanged.connect(mainWindow.onProjectChanged)
+        globalData.project.sigProjectChanged.connect(
+            mainWindow.onProjectChanged)
 
         self.__splash.finish(globalData.mainWindow)
         self.__splash = None
@@ -291,134 +293,6 @@ class CodimensionUILauncher:
         # Some startup time objects could be collected here. In my test runs
         # there were around 700 objects.
         gc.collect()
-
-    def copySkin(self):
-        """Copies the new system-wide skins to the user settings dir.
-
-        Also tests if the configured skin is in place. Sets the default if not.
-        """
-        # I cannot import it at the top because the fileutils want
-        # to use the pixmap cache which needs the application to be
-        # created, so the import is deferred
-        from utils.fileutils import saveToFile
-
-        systemWideSkinsDir = srcDir + os.path.sep + 'skins' + os.path.sep
-        userSkinsDir = os.path.normpath(QDir.homePath()) + \
-            os.path.sep + CONFIG_DIR + os.path.sep + 'skins' + os.path.sep
-
-        skinFiles = ['app.css', 'skin.json', 'cflow.json']
-        platformSuffix = '.' + sys.platform.lower()
-
-        if os.path.exists(systemWideSkinsDir):
-            for item in os.listdir(systemWideSkinsDir):
-                candidate = systemWideSkinsDir + item
-                if os.path.isdir(candidate):
-                    userCandidate = userSkinsDir + item
-                    if not os.path.exists(userCandidate):
-                        try:
-                            os.makedirs(userCandidate, exist_ok=True)
-                            filesToCopy = []
-                            for fName in skinFiles:
-                                generalFile = candidate + os.path.sep + fName
-                                platformSpecificFile = generalFile + platformSuffix
-                                userFile = userCandidate + os.path.sep + fName
-                                if os.path.exists(platformSpecificFile):
-                                    filesToCopy.append([platformSpecificFile,
-                                                        userFile])
-                                elif os.path.exists(generalFile):
-                                    filesToCopy.append([generalFile, userFile])
-                                else:
-                                    raise Exception('The skin file ' + fName +
-                                                    ' is not found in the '
-                                                    'installation package')
-                            for srcDst in filesToCopy:
-                                shutil.copyfile(srcDst[0], srcDst[1])
-                        except Exception as exc:
-                            logging.error('Could not copy system wide skin from '
-                                          '%s to  the user skin to %s. '
-                                          'Continue without copying skin.',
-                                          candidate, userCandidate)
-                            logging.error(str(exc))
-
-        # Deal with the default settings
-        defaultSkinDir = userSkinsDir + 'default'
-        defaultSkinDirOK = True
-        if not os.path.exists(defaultSkinDir):
-            # Create the default skin dir
-            try:
-                os.makedirs(defaultSkinDir, exist_ok=True)
-            except Exception as exc:
-                defaultSkinDirOK = False
-                logging.error('Error creating a default skin directory: %s',
-                              defaultSkinDir)
-                logging.error(str(exc))
-
-        if defaultSkinDirOK:
-            defaultCSS = defaultSkinDir + os.path.sep + 'app.css'
-            if not os.path.exists(defaultCSS):
-                try:
-                    saveToFile(defaultCSS, _DEFAULT_APP_CSS)
-                except Exception as exc:
-                    logging.error('Error creating default skin app.css file at %s',
-                                  defaultCSS)
-                    logging.error(str(exc))
-            defaultCommonSkin = defaultSkinDir + os.path.sep + 'skin.json'
-            if not os.path.exists(defaultCommonSkin):
-                try:
-                    with open(defaultCommonSkin, 'w',
-                              encoding=DEFAULT_ENCODING) as diskfile:
-                        json.dump(_DEFAULT_SKIN_SETTINGS, diskfile, indent=4,
-                                  default=colorFontToJSON)
-                except Exception as exc:
-                    logging.error('Error creating default skin skin.json '
-                                  'file at %s', defaultCommonSkin)
-                    logging.error(str(exc))
-            defaultCFlowSkin  = defaultSkinDir + os.path.sep + 'cflow.json'
-            if not os.path.exists(defaultCFlowSkin):
-                try:
-                    with open(defaultCFlowSkin, 'w',
-                              encoding=DEFAULT_ENCODING) as diskfile:
-                        json.dump(_DEFAULT_CFLOW_SETTINGS, diskfile, indent=4,
-                                  default=colorFontToJSON)
-                except Exception as exc:
-                    logging.error('Error creating default skin cflow.json '
-                                  'file at %s', defaultCFlowSkin)
-                    logging.error(str(exc))
-
-        # Check that the configured skin is in place
-        userSkinDir = userSkinsDir + Settings()['skin']
-        if os.path.exists(userSkinDir) and os.path.isdir(userSkinDir):
-            # That's just fine
-            return
-
-        # Here: the configured skin is not found in the user dir.
-        # Try to set the default.
-        if os.path.exists(defaultSkinDir):
-            if os.path.isdir(defaultSkinDir):
-                logging.warning("The configured skin '%s' has not been found. "
-                                "Fallback to the 'default' skin.",
-                                Settings()['skin'])
-                Settings()['skin'] = 'default'
-                return
-
-        # Default is not there. Try to pick any.
-        anySkinName = None
-        for item in os.listdir(userSkinsDir):
-            if os.path.isdir(userSkinsDir + item):
-                anySkinName = item
-                break
-
-        if anySkinName is None:
-            # Really bad situation. No system wide skins, no local skins.
-            logging.error('Cannot find the any Codimension skin. '
-                          'Please check Codimension installation.')
-            return
-
-        # Here: last resort - fallback to the first found skin
-        logging.warning("The configured skin '%s' has not been found. "
-                        "Fallback to the '%s' skin.",
-                        Settings()['skin'], anySkinName)
-        Settings()['skin'] = anySkinName
 
 
 def exceptionHook(excType, excValue, tracebackObj):
