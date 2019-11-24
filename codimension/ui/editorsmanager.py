@@ -1566,7 +1566,7 @@ class EditorsManager(QTabWidget):
         if "." not in fileName:
             fileName += ".png"
 
-        if not __checkPermissionsOnSave(widget, fileName):
+        if not self.__checkPermissionsOnSave(widget, fileName):
             return False
 
         # All prerequisites are checked, save it
@@ -1973,7 +1973,7 @@ class EditorsManager(QTabWidget):
                 status.append({'active': item == curWidget,
                                'path': 'help',
                                'mdFullView': False,
-                               'mdFullViewReadOnly': mdFullViewReadOnly})
+                               'mdFullViewReadOnly': False})
                 continue
             if itemType in [MainWindowTabWidgetBase.PlainTextEditor,
                             MainWindowTabWidgetBase.PictureViewer,

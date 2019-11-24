@@ -265,7 +265,7 @@ class Skin:
         self.__dirName = None
         self.__overrides = {}
         self.__userDirName = USER_SKIN_DIR + \
-                             _DEFAULT_CFLOW_SETTINGS['name'] + os.path.sep
+                             _DEFAULT_SKIN_SETTINGS['name'] + os.path.sep
         if not os.path.exists(self.__userDirName):
             self.__userDirName = None
         elif not os.path.isdir(self.__userDirName):
@@ -285,6 +285,7 @@ class Skin:
                 self.__values[key] = value
 
         self.__appCSS = deepcopy(_DEFAULT_APP_CSS)
+        self.__applyOverrides()
 
         self.minTextZoom = self.__calculateMinTextZoom()
         self.minCFlowZoom = self.__calculateMinCFlowZoom()
@@ -343,7 +344,6 @@ class Skin:
 
         if skinName == _DEFAULT_SKIN_SETTINGS['name']:
             self.__reset()
-            self.__applyOverrides()
             return
 
         # check if it is from an installation package
