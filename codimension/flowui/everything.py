@@ -568,9 +568,12 @@ elif a < 456 and \
 else:
     pass
 
+# cml 1 doc link=888 title=zdkslsdlks
 def ff(x):
     if True:
         # Something
         if x > 32:
             x = 32
+
+    # cml 1 doc anchor=some title=Yahoo
     return
