@@ -85,6 +85,8 @@ class CFSceneKeyboardMixin:
         candidateBefore = None
         candidateBeforeDistance = maxsize * -1
         for item in self.items():
+            if not isinstance(item, CellElement):
+                continue
             if item.isProxyItem():
                 continue
 
@@ -141,6 +143,8 @@ class CFSceneKeyboardMixin:
         """Selects all"""
         moduleItem = None
         for item in self.items():
+            if not isinstance(item, CellElement):
+                continue
             if item.isProxyItem():
                 continue
             if item.kind == CellElement.FILE_SCOPE:

@@ -159,6 +159,8 @@ class CFSceneMouseMixin:
             # Detect intersections
             self.clearSelection()
             for item in self.items():
+                if not isinstance(item, CellElement):
+                    continue
                 if item.isProxyItem():
                     continue
                 if item.scopedItem():
@@ -328,6 +330,8 @@ class CFSceneMouseMixin:
         """Provides graphics items for the given ref"""
         result = []
         for item in self.items():
+            if not isinstance(item, CellElement):
+                continue
             if item.scopedItem():
                 if item.subKind not in [ScopeCellElement.TOP_LEFT,
                                         ScopeCellElement.SIDE_COMMENT,
@@ -358,6 +362,8 @@ class CFSceneMouseMixin:
         distance = maxsize
 
         for item in self.items():
+            if not isinstance(item, CellElement):
+                continue
             if item.isProxyItem():
                 continue
 

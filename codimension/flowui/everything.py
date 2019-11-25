@@ -15,10 +15,12 @@ File docstring
 
 
 # cml 1 rt text="one"
+# cml 1 gb id=0 title="A group"
 alone = 1
 
 one = 1
 two = 2
+# cml 1 ge id=0
 
 # Leading
 a = 10      # Side

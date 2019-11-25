@@ -1128,6 +1128,8 @@ class CFSceneContextMenuMixin:
                 ifBegin = item.ref.begin
                 ifEnd = item.ref.end
                 for item in self.items():
+                    if not isinstance(item, CellElement):
+                        continue
                     if item.isProxyItem():
                         continue
                     if item.scopedItem():
@@ -1157,6 +1159,8 @@ class CFSceneContextMenuMixin:
     def __isSelectionContinuous(self, selected, regions, begin, end):
         """Checks if the selection is continuous"""
         for item in self.items():
+            if not isinstance(item, CellElement):
+                continue
             if item.isProxyItem():
                 continue
             if item.scopedItem():
