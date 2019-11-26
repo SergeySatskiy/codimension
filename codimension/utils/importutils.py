@@ -19,11 +19,14 @@
 
 """import utility functions"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import os
 import os.path
 import importlib
-from ui.qt import QApplication
 from cdmpyparser import getBriefModuleInfoFromMemory
+from ui.qt import QApplication
 from .globals import GlobalData
 from .fileutils import isPythonFile
 
@@ -246,7 +249,7 @@ def resolveImports(fileName, imports):
             __resolveImport(importObj, baseAndProjectPaths, result, errors)
         elif not importObj.name.startswith('.'):
             # case 2: from i2 import x2, y2
-            __resolveFromImport(importObj, baseAndProjectPaths, basePath,
+            __resolveFromImport(importObj, basePath, baseAndProjectPaths,
                                 result, errors)
         else:
             # case 3: from .i3 import x3, y3

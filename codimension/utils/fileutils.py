@@ -17,22 +17,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 """file related utils"""
+
+# pylint: disable=W0603
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 
 import os
 from os.path import (islink, exists, split, join, sep, basename, realpath,
                      normpath, isabs, dirname, isdir)
 import logging
 import json
-import magic
-import tempfile
 from errno import EACCES, ENOENT
-from ui.qt import QImageReader
+import tempfile
+import magic
 
-# Qutepart has a few maps which halp to map a file to a syntax.
+# Qutepart has a few maps which help to map a file to a syntax.
 from qutepart import Qutepart
 
+from ui.qt import QImageReader
 from .pixmapcache import getIcon
 from .config import DEFAULT_ENCODING
 
@@ -89,7 +93,7 @@ def __getMimeByXmlSyntaxFile(xmlSyntaxFile):
         if xmlSyntaxFile == 'markdown.xml':
             return 'text/x-markdown'
         # ... and mako mime
-        elif xmlSyntaxFile == 'mako.xml':
+        if xmlSyntaxFile == 'mako.xml':
             return 'text/x-mako'
         return None
     if len(candidates) == 1:
@@ -297,7 +301,6 @@ def __initSyntaxToIcon():
         'm3u.xml': getIcon('filemisc.png'),
         'm4.xml': getIcon('filemisc.png'),
         'mako.xml': getIcon('filemisc.png'),
-        'markdown.xml': getIcon('filemisc.png'),
         'mediawiki.xml': getIcon('filemisc.png'),
         'mel.xml': getIcon('filemisc.png'),
         'metafont.xml': getIcon('filemisc.png'),
@@ -733,8 +736,8 @@ def loadJSON(fileName, errorWhat, defaultValue):
         with open(fileName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
             return json.load(diskfile)
     except Exception as exc:
-        logging.error('Error loading ' + errorWhat +
-                      ' (from ' + fileName + '): ' + str(exc))
+        logging.error('Error loading %s (from %s): %s',
+                      errorWhat, fileName, str(exc))
         return defaultValue
 
 
@@ -744,8 +747,8 @@ def saveJSON(fileName, values, errorWhat):
         with open(fileName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
             json.dump(values, diskfile, indent=4)
     except Exception as exc:
-        logging.error('Error saving ' + errorWhat +
-                      ' (to ' + fileName + '): ' + str(exc))
+        logging.error('Error saving %s (to %s): %s',
+                      errorWhat, fileName, str(exc))
         return False
     return True
 
@@ -759,8 +762,7 @@ def getFileContent(fileName, allowException=True, enc=DEFAULT_ENCODING):
     except Exception as exc:
         if allowException:
             raise
-        logging.error('Error reading from file ' + fileName + ': ' +
-                      str(exc))
+        logging.error('Error reading from file %s: %s', fileName, str(exc))
         return None
 
 
@@ -773,8 +775,7 @@ def saveToFile(fileName, content, allowException=True, enc=DEFAULT_ENCODING):
     except Exception as exc:
         if allowException:
             raise
-        logging.error('Error writing to file ' + fileName + ': ' +
-                      str(exc))
+        logging.error('Error writing to file %s: %s', fileName, str(exc))
     return False
 
 
@@ -787,8 +788,7 @@ def saveBinaryToFile(fileName, content, allowException=True):
     except Exception as exc:
         if allowException:
             raise
-        logging.error('Error writing to file ' + fileName + ': ' +
-                      str(exc))
+        logging.error('Error writing to file %s: %s', fileName, str(exc))
     return False
 
 
@@ -820,9 +820,11 @@ def resolveLink(path):
 def isCreatable(path):
     """Checks if the path is creatable"""
     if not isabs(path):
-        raise Exception('The isCreatable() function supports absolute paths only')
+        raise Exception('The isCreatable() function '
+                        'supports absolute paths only')
     if exists(path):
-        raise Exception('The isCreatable() function is only for not existing items')
+        raise Exception('The isCreatable() function '
+                        'is only for not existing items')
 
     parts = path[1:].split(sep)
     for count in range(len(parts) - 1, 0, -1):
@@ -833,13 +835,12 @@ def isCreatable(path):
                 if os.access(candidatePath, os.W_OK):
                     return True, None
                 return False, 'No write permissions in ' + candidatePath
-            else:
-                return False, 'The path part ' + candidatePath + \
-                              ' points to a non directory item'
+
+            return False, 'The path part ' + candidatePath + \
+                          ' points to a non directory item'
 
     # Check the root directory
     if os.access('/', os.W_OK):
         return True, None
 
     return False, 'No write permissions to the root directory'
-

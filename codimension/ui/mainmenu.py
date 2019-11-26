@@ -22,7 +22,6 @@
 
 import os.path
 from utils.pixmapcache import getIcon
-from utils.config import CONFIG_DIR
 from utils.skin import getSkinsList
 from utils.globals import GlobalData
 from utils.misc import getIDETemplateFile, getProjectTemplateFile

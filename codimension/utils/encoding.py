@@ -19,6 +19,9 @@
 
 """Encoding related functions"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import re
 import encodings
 import logging
@@ -220,10 +223,10 @@ def detectEncodingOnClearExplicit(fName, content):
 
         return DEFAULT_ENCODING
     except Exception as exc:
-        logging.warning("Error while guessing encoding for reading " +
-                        fName + ": " + str(exc) + "\n"
-                        "The default encoding " +
-                        DEFAULT_ENCODING + " will be used.")
+        logging.warning('Error while guessing encoding for reading %s: %s',
+                        fName, str(exc))
+        logging.warning('The default encoding %s will be used',
+                        DEFAULT_ENCODING)
         return DEFAULT_ENCODING
 
 
@@ -302,16 +305,16 @@ def readEncodedFile(fName):
                 encodingSanityCheck(fName, decodedText, 'bom-utf-32')
             return decodedText, 'bom-utf-32'
     except (UnicodeError, LookupError) as exc:
-        logging.error("BOM signature bom-" + triedEncodings[0] +
-                      " found in the file but decoding failed: " + str(exc))
-        logging.error("Continue trying to decode...")
+        logging.error('BOM signature bom-%s found in the file but decoding '
+                      'failed: %s', triedEncodings[0], str(exc))
+        logging.error('Continue trying...')
 
     # Check if it was a user assigned encoding
     userAssignedEncoding = getFileEncoding(fName)
     if userAssignedEncoding:
         if not isValidEncoding(userAssignedEncoding):
-            logging.error("User assigned encoding " + userAssignedEncoding +
-                          " is invalid. Continue trying to decode...")
+            logging.error('User assigned encoding %s is invalid. '
+                          'Continue trying...', userAssignedEncoding)
         elif encodings.normalize_encoding(userAssignedEncoding) \
                 not in triedEncodings:
             normEnc = encodings.normalize_encoding(userAssignedEncoding)
@@ -323,16 +326,16 @@ def readEncodedFile(fName):
                                         userAssignedEncoding)
                 return decodedText, userAssignedEncoding
             except (UnicodeError, LookupError) as exc:
-                logging.error("Failed to decode using the user assigned "
-                              "encoding " + userAssignedEncoding +
-                              ". Continue trying...")
+                logging.error('Failed to decode using the user assigned '
+                              'encoding %s: %s', userAssignedEncoding, str(exc))
+                logging.error('Continue trying...')
 
     # Step 3: extract encoding from the file
     encFromFile = getCodingFromBytes(text)
     if encFromFile:
         if not isValidEncoding(encFromFile):
-            logging.error("Invalid encoding found in the content: " +
-                          encFromFile + ". Continue trying...")
+            logging.error('Invalid encoding found in the content: %s. '
+                          'Continue trying...', encFromFile)
         elif encodings.normalize_encoding(encFromFile) not in triedEncodings:
             normEnc = encodings.normalize_encoding(encFromFile)
             triedEncodings.append(normEnc)
@@ -343,9 +346,9 @@ def readEncodedFile(fName):
                                         encFromFile)
                 return decodedText, encFromFile
             except (UnicodeError, LookupError) as exc:
-                logging.error("Failed to decode using encoding " +
-                              encFromFile + " found in the file. "
-                              "Continue trying...")
+                logging.error('Failed to decode using encoding %s found '
+                              'in the file: %s', encFromFile, str(exc))
+                logging.error('Continue trying...')
 
     # Step 4: check the project default encoding
     project = GlobalData().project
@@ -354,8 +357,8 @@ def readEncodedFile(fName):
         normProjectEncoding = encodings.normalize_encoding(projectEncoding)
         if projectEncoding:
             if not isValidEncoding(projectEncoding):
-                logging.error("Invalid project encoding: " +
-                              projectEncoding + ". Continue trying...")
+                logging.error('Invalid project encoding: %s. '
+                              'Continue trying...', projectEncoding)
             elif normProjectEncoding not in triedEncodings:
                 triedEncodings.append(normProjectEncoding)
                 try:
@@ -365,16 +368,17 @@ def readEncodedFile(fName):
                                             projectEncoding)
                     return decodedText, projectEncoding
                 except (UnicodeError, LookupError) as exc:
-                    logging.error("Failed to decode using project encoding " +
-                                  projectEncoding + ". Continue trying...")
+                    logging.error('Failed to decode using project '
+                                  'encoding %s: %s', projectEncoding, str(exc))
+                    logging.error('Continue trying...')
 
     # Step 5: checks the IDE encoding
     ideEncoding = Settings()['encoding']
     if ideEncoding:
         normIdeEnc = encodings.normalize_encoding(ideEncoding)
         if not isValidEncoding(ideEncoding):
-            logging.error("Invalid ide encoding: " +
-                          ideEncoding + ". Continue trying...")
+            logging.error('Invalid ide encoding: %s. Continue trying...',
+                          ideEncoding)
         elif normIdeEnc not in triedEncodings:
             triedEncodings.append(normIdeEnc)
             try:
@@ -384,8 +388,9 @@ def readEncodedFile(fName):
                                         ideEncoding)
                 return decodedText, ideEncoding
             except (UnicodeError, LookupError) as exc:
-                logging.error("Failed to decode using project encoding " +
-                              ideEncoding + ". Continue trying...")
+                logging.error('Failed to decode using project encoding %s: %s',
+                              ideEncoding, str(exc))
+                logging.error('Continue trying...')
 
     # Step 6: default
     normDefEnc = encodings.normalize_encoding(DEFAULT_ENCODING)
@@ -398,11 +403,12 @@ def readEncodedFile(fName):
                                     DEFAULT_ENCODING)
             return decodedText, DEFAULT_ENCODING
         except (UnicodeError, LookupError) as exc:
-            logging.error("Failed to decode using default encoding " +
-                          DEFAULT_ENCODING + ". Continue trying...")
+            logging.error('Failed to decode using default encoding %s: %s',
+                          DEFAULT_ENCODING, str(exc))
+            logging.error('Continue trying...')
 
     # Step 7: last resort utf-8 with loosing information
-    logging.warning("Last try: utf-8 decoding ignoring the errors...")
+    logging.warning('Last try: utf-8 decoding ignoring the errors...')
     return str(text, 'utf-8', 'ignore'), 'utf-8'
 
 
@@ -421,17 +427,17 @@ def detectNewFileWriteEncoding(editor, fName):
             if encFromText:
                 if not isValidEncoding(encFromText):
                     logging.warning(
-                        "Encoding from the buffer (" + encFromText + ") is "
-                        "invalid and does not match the explicitly set "
-                        "encoding " + editor.explicitUserEncoding + ". The " +
-                        editor.explicitUserEncoding + " is used")
+                        'Encoding from the buffer (%s) is invalid and does not '
+                        'match the explicitly set encoding %s. The %s is used',
+                        encFromText, editor.explicitUserEncoding,
+                        editor.explicitUserEncoding)
                 elif not areEncodingsEqual(editor.explicitUserEncoding,
                                            encFromText):
                     logging.warning(
-                        "Encoding from the buffer (" + encFromText + ") does "
-                        "not match the explicitly set encoding " +
-                        editor.explicitUserEncoding + ". The " +
-                        editor.explicitUserEncoding + " is used")
+                        'Encoding from the buffer (%s) does not match the '
+                        'explicitly set encoding %s. The %s is used',
+                        encFromText, editor.explicitUserEncoding,
+                        editor.explicitUserEncoding)
         return editor.explicitUserEncoding
 
     # This is rather paranoic. The user could have a file with a specific
@@ -441,25 +447,23 @@ def detectNewFileWriteEncoding(editor, fName):
     if userAssignedEncoding:
         if not isValidEncoding(userAssignedEncoding):
             logging.error(
-                "User assigned encoding " + userAssignedEncoding + " is "
-                "invalid. Please assign a valid one and try again.")
+                'User assigned encoding %s is invalid. Please assign a valid '
+                'one and try again.', userAssignedEncoding)
             return None
         if isPython:
             encFromText = getCodingFromText(editor.text)
             if encFromText:
                 if not isValidEncoding(encFromText):
                     logging.warning(
-                        "Encoding from the buffer (" + encFromText +
-                        ") is invalid and does not match the explicitly "
-                        "set encoding " + userAssignedEncoding + ". The " +
-                        userAssignedEncoding + " is used")
+                        'Encoding from the buffer (%s) is invalid and does not '
+                        'match the explicitly set encoding %s. The %s is used',
+                        encFromText, userAssignedEncoding, userAssignedEncoding)
                 elif not areEncodingsEqual(userAssignedEncoding,
                                            encFromText):
                     logging.warning(
-                        "Encoding from the buffer (" + encFromText + ") "
-                        "does not match the explicitly set encoding " +
-                        userAssignedEncoding + ". The " +
-                        userAssignedEncoding + " is used")
+                        'Encoding from the buffer (%s) does not match the '
+                        'explicitly set encoding %s. The %s is used',
+                        encFromText, userAssignedEncoding, userAssignedEncoding)
         return userAssignedEncoding
 
     # Check the buffer
@@ -468,9 +472,9 @@ def detectNewFileWriteEncoding(editor, fName):
         if encFromText:
             if not isValidEncoding(encFromText):
                 logging.error(
-                    "Encoding from the buffer (" + encFromText +
-                    ") is invalid. Please fix the encoding in the source "
-                    "or explicitly set the required one and try again.")
+                    'Encoding from the buffer (%s) is invalid. Please fix the '
+                    'encoding in the source or explicitly set the required one '
+                    'and try again.', encFromText)
                 return None
             return encFromText
 
@@ -481,9 +485,9 @@ def detectNewFileWriteEncoding(editor, fName):
         if projectEncoding:
             if not isValidEncoding(projectEncoding):
                 logging.error(
-                    "The prject encoding " + projectEncoding + " is invalid. "
-                    "Please select a valid one in the project properties and "
-                    "try again.")
+                    'The project encoding %s is invalid. Please select a valid '
+                    'one in the project properties and try again.',
+                    projectEncoding)
                 return None
             return projectEncoding
 
@@ -491,8 +495,8 @@ def detectNewFileWriteEncoding(editor, fName):
     ideEncoding = Settings()['encoding']
     if ideEncoding:
         if not isValidEncoding(ideEncoding):
-            logging.error("The ide encoding " + ideEncoding + " is invalid. "
-                          "Please set a valid one and try again.")
+            logging.error('The ide encoding %s is invalid. Please set a valid '
+                          'one and try again.', ideEncoding)
             return None
         return ideEncoding
 
@@ -512,25 +516,24 @@ def detectExistingFileWriteEncoding(editor, fName):
     if userAssignedEncoding:
         if not isValidEncoding(userAssignedEncoding):
             logging.error(
-                "User assigned encoding " + userAssignedEncoding + " is "
-                "invalid. Please assign a valid one and try again.")
+                'User assigned encoding %s is invalid. Please assign a valid '
+                'one and try again.', userAssignedEncoding)
             return None
         if isPython:
             encFromText = getCodingFromText(editor.text)
             if encFromText:
                 if not isValidEncoding(encFromText):
                     logging.warning(
-                        "Encoding from the buffer (" + encFromText +
-                        ") is invalid and does not match the explicitly "
-                        "set encoding " + userAssignedEncoding + ". The " +
-                        userAssignedEncoding + " is used")
+                        'Encoding from the buffer (%s) is invalid and '
+                        'does not match the explicitly set encoding %s. '
+                        'The %s is used',
+                        encFromText, userAssignedEncoding, userAssignedEncoding)
                 elif not areEncodingsEqual(userAssignedEncoding,
                                            encFromText):
                     logging.warning(
-                        "Encoding from the buffer (" + encFromText + ") "
-                        "does not match the explicitly set encoding " +
-                        userAssignedEncoding + ". The " +
-                        userAssignedEncoding + " is used")
+                        'Encoding from the buffer (%s) does not match the '
+                        'explicitly set encoding %s. The %s is used',
+                        encFromText, userAssignedEncoding, userAssignedEncoding)
         return userAssignedEncoding
 
     # Check the buffer
@@ -539,9 +542,9 @@ def detectExistingFileWriteEncoding(editor, fName):
         if encFromText:
             if not isValidEncoding(encFromText):
                 logging.error(
-                    "Encoding from the buffer (" + encFromText +
-                    ") is invalid. Please fix the encoding in the source "
-                    "or explicitly set the required one and try again.")
+                    'Encoding from the buffer (%s) is invalid. Please fix the'
+                    'encoding in the source or explicitly set the required one '
+                    'and try again.', encFromText)
                 return None
             return encFromText
 

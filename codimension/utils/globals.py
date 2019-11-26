@@ -19,6 +19,9 @@
 
 """Global data singleton"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import os
 from os.path import sep, realpath, isdir, exists, isfile
 from distutils.spawn import find_executable
@@ -137,12 +140,12 @@ class GlobalDataWrapper:
     @staticmethod
     def __checkGraphviz():
         """Checks if graphviz is available"""
-        return find_executable('dot') != None
+        return find_executable('dot') is not None
 
     @staticmethod
     def __checkJava():
         """Checks if java is available"""
-        return find_executable('java') != None
+        return find_executable('java') is not None
 
 
 globalsSingleton = GlobalDataWrapper()

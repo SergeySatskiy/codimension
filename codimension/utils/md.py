@@ -19,6 +19,9 @@
 
 """Markdown support"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import os.path
 import mistune
 from pygments import highlight
@@ -41,8 +44,9 @@ from .settings import Settings
 
 CODE_BLOCK_STYLE = 'style="border-width:1px;border-style:solid;' \
                    'border-color:#ccc;margin-top:.5em;margin-bottom:.5em;"'
-PRE_WRAP_START = '''<table cellspacing="0" cellpadding="8" width="100%" align="left"
-       bgcolor="#f8f8f8"''' + CODE_BLOCK_STYLE + '><tr><td>'
+PRE_WRAP_START = '''<table cellspacing="0" cellpadding="8" width="100%"
+                           align="left" bgcolor="#f8f8f8"''' + \
+                 CODE_BLOCK_STYLE + '><tr><td>'
 PRE_WRAP_END = '</td></tr></table>'
 
 QUOTE_TABLE = '<table cellspacing="0" width="100%" align="left" ' \
@@ -50,7 +54,7 @@ QUOTE_TABLE = '<table cellspacing="0" width="100%" align="left" ' \
 
 
 def get_lexer(text, lang):
-    """Tries to get the lexer for the text whether the lang is provided or not"""
+    """Tries to get lexer for the text whether the lang is provided or not"""
     if lang:
         try:
             return get_lexer_by_name(lang, stripall=False)
@@ -126,12 +130,12 @@ class CDMMarkdownRenderer(mistune.Renderer):
         self.__uuid = uuid
         self.__fileName = fileName
 
-    def block_code(self, text, lang):
+    def block_code(self, code, lang=None):
         """Custom block code renderer"""
         # renderer has an options
         inlinestyles = self.options.get('inlinestyles', False)
         linenos = self.options.get('linenos', False)
-        return block_code(self.__uuid, text, lang, inlinestyles, linenos)
+        return block_code(self.__uuid, code, lang, inlinestyles, linenos)
 
     def block_quote(self, text):
         """Custom block quote renderer"""
@@ -141,17 +145,17 @@ class CDMMarkdownRenderer(mistune.Renderer):
                         '<td width="8"></td>',
                         '<td>',
                         text.rstrip('\n')
-                            .replace('</p>\n', '</p>').replace('\n', '<br/>'),
+                        .replace('</p>\n', '</p>').replace('\n', '<br/>'),
                         '</td></tr></table></p>'])
 
-    def image(self, src, title, alt_text):
+    def image(self, src, title, text):
         """Custom image handler"""
         if src and self.__fileName:
             if not os.path.isabs(src):
                 newSrcPath = ''.join([os.path.dirname(self.__fileName),
                                       os.path.sep, src])
                 src = os.path.normpath(newSrcPath)
-        return mistune.Renderer.image(self, src, title, alt_text)
+        return mistune.Renderer.image(self, src, title, text)
 
     def codespan(self, text):
         """Custom code span renderer"""
