@@ -23,13 +23,14 @@ import os.path
 import logging
 import uuid
 from math import ceil
+from timeit import default_timer as timer
 from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QPainter, QImage,
                    QToolBar, QWidget, QPrinter, QApplication, QHBoxLayout,
                    QLabel, QVBoxLayout, QSizePolicy, QFileDialog,
                    QDialog, QMenu, QToolButton, QMessageBox, QSvgGenerator,
                    QStackedWidget)
 from cdmcfparser import getControlFlowFromMemory
-from flowui.vcanvas import VirtualCanvas
+from flowui.vcanvas import VirtualCanvas, formatFlow
 from flowui.cflowsettings import getCflowSettings
 from flowui.cml import CMLVersion
 from utils.pixmapcache import getIcon
@@ -294,7 +295,9 @@ class FlowUIWidget(QWidget):
         if not self.__connected:
             self.__connectEditorSignals()
 
+        start = timer()
         cf = getControlFlowFromMemory(self.__editor.text)
+        end = timer()
         if cf.errors:
             self.__navBar.updateInfoIcon(self.__navBar.STATE_BROKEN_UTD)
             errors = []
@@ -311,6 +314,10 @@ class FlowUIWidget(QWidget):
             self.__navBar.setErrors(errors)
             return
         self.__cf = cf
+
+        if self.isDebugMode():
+            logging.info('Parsed file: %s', formatFlow(str(self.__cf)))
+            logging.info('Parse timing: %f', end - start)
 
         # Collect warnings (parser + CML warnings) and valid groups
         self.__validGroups = []
@@ -364,11 +371,20 @@ class FlowUIWidget(QWidget):
             # Top level canvas has no adress and no parent canvas
             canvas = VirtualCanvas(self.cflowSettings, None, None,
                                    self.__validGroups, collapsedGroups, None)
+            lStart = timer()
             canvas.layoutModule(self.__cf)
+            lEnd = timer()
             canvas.setEditor(self.__editor)
             width, height = canvas.render()
+            rEnd = timer()
             self.scene().setSceneRect(0, 0, width, height)
             canvas.draw(self.scene(), 0, 0)
+            dEnd = timer()
+            if self.isDebugMode():
+                logging.info('Redrawing is done. Size: %d x %d', width, height)
+                logging.info('Layout timing: %f', lEnd - lStart)
+                logging.info('Render timing: %f', rEnd - lEnd)
+                logging.info('Draw timing: %f', dEnd - rEnd)
         except Exception as exc:
             logging.error(str(exc))
             raise
@@ -780,3 +796,7 @@ class FlowUIWidget(QWidget):
         """Provides the graphics item for the given anchor if so"""
         return self.scene().getDocItemByAnchor(anchor)
 
+    @staticmethod
+    def isDebugMode():
+        """True if it is a debug mode"""
+        return GlobalData().skin['debug']
