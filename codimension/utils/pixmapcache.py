@@ -19,6 +19,10 @@
 
 """codimension pixmap cache"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+# pylint: disable=C0305
+
 from os.path import dirname, realpath, sep, isabs, exists
 import sys
 from ui.qt import QPixmap, QIcon

@@ -19,6 +19,9 @@
 
 """Rendered plantuml diagram cache"""
 
+# pylint: disable=C0305
+# pylint: disable=W0702
+# pylint: disable=W0703
 
 import sys
 import subprocess
@@ -27,18 +30,18 @@ import logging
 import datetime
 import hashlib
 from distutils.spawn import find_executable
-from .fileutils import loadJSON, saveJSON, saveToFile
 from ui.qt import QThread, pyqtSignal, QObject
+from .fileutils import loadJSON, saveJSON, saveToFile
 
 CACHE_FILE_NAME = 'cachemap.json'
 
 
 def getPlantUMLJarPath():
     """Provides the full path to the plantUML jar file"""
-    if  find_executable('java') == None:
+    if  find_executable('java') is None:
         return None
     exeDir = os.path.dirname(os.path.realpath(sys.argv[0]))
-    plantUMLPath = os.path.dirname(exeDir) + os.path.sep + 'plantuml' + os.path.sep
+    plantUMLPath = os.path.sep.join([os.path.dirname(exeDir), 'plantuml'])
     for item in os.listdir(plantUMLPath):
         if item.startswith('plantuml.') and item.endswith('.jar'):
             return plantUMLPath + item
@@ -47,6 +50,7 @@ JAR_PATH = getPlantUMLJarPath()
 
 
 def __removeEmptyForward(items, startIndex, length):
+    """Removes empty lines at the beginning"""
     toRemove = []
     for index in range(startIndex, length):
         if not items[index].strip():
@@ -57,6 +61,7 @@ def __removeEmptyForward(items, startIndex, length):
 
 
 def __removeEmptyBackward(items, endIndex):
+    """Removes empty lines at the end"""
     while not items[endIndex].strip():
         items.pop(endIndex)
         endIndex -= 1
@@ -117,27 +122,36 @@ class PlantUMLRenderer(QThread):
 
     def __init__(self, parent=None):
         QThread.__init__(self, parent)
+        self.__source = None
+        self.__md5 = None
+        self.__uuid = None
+        self.__fName = None
 
     def get(self, source, md5, fName, uuid):
+        """Initiates rendering the diagram"""
         self.__source = source
         self.__md5 = md5
         self.__uuid = uuid
         self.__fName = fName
         self.start()
 
-    def safeUnlink(self, fName):
+    @staticmethod
+    def safeUnlink(fName):
+        """Safe file removal"""
         try:
             os.unlink(fName)
         except:
             pass
 
     def run(self):
+        """Runs plantUML"""
         srcFile = self.__fName[:-3] + 'txt'
         try:
             # Run plantUML
             saveToFile(srcFile, self.__source)
             retCode = subprocess.call(['java', '-jar', JAR_PATH,
-                                       '-charset', 'utf-8', '-nometadata', srcFile],
+                                       '-charset', 'utf-8', '-nometadata',
+                                       srcFile],
                                       stdout=subprocess.DEVNULL,
                                       stderr=subprocess.DEVNULL)
             self.safeUnlink(srcFile)
@@ -147,7 +161,7 @@ class PlantUMLRenderer(QThread):
             else:
                 self.sigFinishedError.emit(self.__md5, self.__fName)
         except Exception as exc:
-            logging.error('Cannot render a plantUML diagram: ' + str(exc))
+            logging.error('Cannot render a plantUML diagram: %s', str(exc))
             self.safeUnlink(srcFile)
             self.sigFinishedError.emit(self.__md5, self.__fName)
 
@@ -172,16 +186,14 @@ class PlantUMLCache(QObject):
                     self.__loadCache()
                     self.__saveCache()
                 else:
-                    logging.error('The plantUML render cache directory (' +
-                                  self.__cacheDir + ') does not '
-                                  'have write permissions. There will be no '
-                                  'plantUML rendering')
+                    logging.error('The plantUML render cache directory (%s) '
+                                  'does not have write permissions. There will '
+                                  'be no plantUML rendering', self.__cacheDir)
                     self.__cacheDir = None
             else:
-                logging.error('The plantUML render cache directory path (' +
-                              self.__cacheDir + ') exists and '
-                              'is not a directory. There will be no pluntUML '
-                              'rendering')
+                logging.error('The plantUML render cache directory path (%s) '
+                              'exists and is not a directory. There will be no '
+                              'pluntUML rendering', self.__cacheDir)
                 self.__cacheDir = None
         else:
             # Try to create the dir
@@ -189,8 +201,8 @@ class PlantUMLCache(QObject):
                 os.mkdir(self.__cacheDir)
             except Exception as exc:
                 logging.error('Error creating pluntUML render cache directory '
-                              + self.__cacheDir + ': ' + str(exc) +
-                              ' There will be no plantUML rendering')
+                              '%s: %s', self.__cacheDir, str(exc))
+                logging.error('There will be no plantUML rendering')
                 self.__cacheDir = None
 
     def __loadCache(self):
@@ -212,8 +224,8 @@ class PlantUMLCache(QObject):
                         os.unlink(self.__cacheDir + item)
                     except Exception as exc:
                         logging.error('Error removing obsolete plantUML '
-                                      'render file (' +
-                                      self.__cacheDir + item + '): ' + str(exc))
+                                      'render file (%s): %s',
+                                      self.__cacheDir + item, str(exc))
 
         if os.path.exists(self.__cacheDir + CACHE_FILE_NAME):
             prevCache = loadJSON(self.__cacheDir + CACHE_FILE_NAME,

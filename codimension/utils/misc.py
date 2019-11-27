@@ -19,6 +19,9 @@
 
 """Miscellaneuos utility functions"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import os.path
 import re
 import getpass
@@ -241,6 +244,7 @@ needed.
 # http://stackoverflow.com/questions/8544983/
 #        dynamically-mixin-a-base-class-to-an-instance-in-python
 def extendInstance(obj, cls):
+    """dynamic mixin support"""
     base_cls = obj.__class__
     base_cls_name = obj.__class__.__name__
     obj.__class__ = type(base_cls_name, (base_cls, cls), {})
@@ -320,9 +324,8 @@ def resolveLinkPath(link, fromFile):
 
     # fName is not None => file exists on FS
     if not fName:
-        logging.error("The link '" + effectiveLink + "' does not point to "
-                      "an existing file. Resolve tries: " +
-                      ', '.join(tryPaths))
+        logging.error("The link '%s' does not point to an existing file. "
+                      "Resolve tries: %s",effectiveLink, ', '.join(tryPaths))
         return None, None
 
     errMsg = checkExistingLinkTarget(fName)
@@ -370,4 +373,3 @@ def preResolveLinkPath(link, fromFile, canBeCreated):
     return None, None, \
         "The link '" + effectiveLink + \
         "' does not point to an existing file"
-
