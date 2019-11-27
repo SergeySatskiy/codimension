@@ -6,6 +6,7 @@
 * Graphics pane icon scaling in a uniform way
 * Slight changes for the graphics primitives with icons
 * Font selection dialogs for zoom level 0 instead of the font family selection
+* Bumping up the cdmcfparser version to 2.2.3
 
 2019 Oct 30 Sergey Satskiy <sergey.satskiy@tuta.io>
 
