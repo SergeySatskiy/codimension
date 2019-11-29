@@ -94,7 +94,6 @@ class PixmapWidget(QScrollArea):
             self.formatInfo = FORMAT_STRINGS[image.format()]
         except:
             self.formatInfo = "Unknown"
-        return
 
     def setPixmap(self, pixmap):
         """Shows the provided pixmap"""
@@ -133,7 +132,6 @@ class PixmapWidget(QScrollArea):
 
     def setReadOnly(self, newValue):
         """Make it similar to a text editor"""
-        pass
 
 
 class PixmapTabWidget(QWidget, MainWindowTabWidgetBase):
@@ -252,11 +250,9 @@ class PixmapTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def __onPrint(self):
         """Triggered on the 'print' button"""
-        pass
 
     def __onPrintPreview(self):
         """Triggered on the 'print preview' button"""
-        pass
 
     def onZoomIn(self):
         """Triggered on the 'zoom in' button"""
@@ -364,10 +360,10 @@ class PixmapTabWidget(QWidget, MainWindowTabWidgetBase):
         """Tells what file name of the widget content"""
         return self.__fileName
 
-    def setFileName(self, name):
+    def setFileName(self, path):
         """Sets the file name"""
-        self.__fileName = name
-        self.__shortName = os.path.basename(name)
+        self.__fileName = path
+        self.__shortName = os.path.basename(path)
 
     def getEncoding(self):
         """Tells the content encoding"""
@@ -375,7 +371,6 @@ class PixmapTabWidget(QWidget, MainWindowTabWidgetBase):
 
     def setEncoding(self, newEncoding):
         """Sets the encoding - not applicable for picture viewer"""
-        pass
 
     def getShortName(self):
         """Tells the display name"""

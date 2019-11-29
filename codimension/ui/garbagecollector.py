@@ -55,20 +55,17 @@ class GarbageCollector(QObject):
         """Called by the QTimer periodically in the GUI thread"""
         # return self.debug_cycles() # uncomment to just debug cycles
         lvl0, lvl1, lvl2 = gc.get_count()
-        logging.debug("gc_check called: " +
-                      ", ".join([str(lvl0), str(lvl1), str(lvl2)]))
+        logging.debug("gc_check called: %d, %d, %d", lvl0, lvl1, lvl2)
         if lvl0 > self.threshold[0]:
             num = gc.collect(0)
-            logging.debug("collecting gen 0, found: " +
-                          str(num) + " unreachable")
+            logging.debug("collecting gen 0, found: %d unreachable", num)
             if lvl1 > self.threshold[1]:
                 num = gc.collect(1)
-                logging.debug("collecting gen 1, found: " +
-                              str(num) + " unreachable")
+                logging.debug("collecting gen 1, found: %d unreachable", num)
                 if lvl2 > self.threshold[2]:
                     num = gc.collect(2)
-                    logging.debug("collecting gen 2, found: " +
-                                  str(num) + " unreachable")
+                    logging.debug("collecting gen 2, found: %d unreachable",
+                                  num)
 
     def debug_cycles(self):
         """Debugging support"""

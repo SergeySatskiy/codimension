@@ -92,10 +92,11 @@ class ItemToSearchIn:
                 content = getFileContent(self.fileName).splitlines()
             self.__fillInMatch(match, content, name, lineNumber, customMessage)
         except Exception as exc:
-            logging.error('Error adding match: ' + str(exc))
+            logging.error('Error adding match: %s', str(exc))
         self.matches.append(match)
 
-    def __fillInMatch(self, match, content, name, lineNumber, customMessage=None):
+    def __fillInMatch(self, match, content, name, lineNumber,
+                      customMessage=None):
         """Fills in the match fields from the content"""
         # Form the regexp corresponding to a single word search
         line = content[lineNumber - 1]
@@ -149,8 +150,7 @@ class ItemToSearchIn:
             content = getFileContent(self.fileName).splitlines()
             self.__lookThroughLines(content, expression)
         except Exception as exc:
-            logging.error('Error searching in ' +
-                          self.fileName + ': ' + str(exc))
+            logging.error('Error searching in %s: %s', self.fileName, str(exc))
 
     def __buildTooltip(self, content, lineIndex, totalLines,
                        startPos, finishPos):
@@ -203,9 +203,9 @@ class ItemToSearchIn:
                 self.matches.append(match)
                 if len(self.matches) > 1024:
                     # Too much entries, stop here
-                    logging.warning("More than 1024 matches in " +
-                                    self.fileName +
-                                    ". Stop further search in this file.")
+                    logging.warning("More than 1024 matches in %s. Stop "
+                                    "further search in this file.",
+                                    self.fileName)
                     break
             lineIndex += 1
 
@@ -906,7 +906,7 @@ class FindInFilesDialog(QDialog):
         try:
             self.searchRegexp = re.compile(regexpText, flags)
         except Exception as exc:
-            logging.error("Invalid search expression: " + str(exc))
+            logging.error("Invalid search expression: %s", str(exc))
             self.close()
             return
 

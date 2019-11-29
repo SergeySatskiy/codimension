@@ -234,7 +234,7 @@ class FindNameModel(QAbstractItemModel):
             item = index.internalPointer()
             if index.column() < item.columnCount():
                 return item.data(index.column())
-            elif index.column() == item.columnCount() and \
+            if index.column() == item.columnCount() and \
                  index.column() < self.columnCount(self.parent(index)):
                 # This is for the case when an item under a multi-column
                 # parent doesn't have a value for all the columns

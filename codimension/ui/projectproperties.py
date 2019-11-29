@@ -415,9 +415,9 @@ class ProjectPropertiesDialog(QDialog):
         index = 0
         while index < self.importDirList.count():
             if self.importDirList.item(index).text() == dirToInsert:
-                logging.warning("The directory '" + dirName +
-                                "' is already in the list of "
-                                "imported directories and is not added.")
+                logging.warning("The directory '%s' is already in the list of "
+                                "imported directories and is not added.",
+                                dirName)
                 return
             index += 1
 

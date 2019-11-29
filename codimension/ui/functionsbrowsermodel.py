@@ -40,7 +40,8 @@ class FunctionsBrowserModel(BrowserModelBase):
     def __init__(self, parent=None):
         BrowserModelBase.__init__(self, ["Name", "File name", "Line"], parent)
         self.setTooltips(Settings()['functionsTooltips'])
-        self.globalData.project.sigProjectChanged.connect(self.__onProjectChanged)
+        self.globalData.project.sigProjectChanged.connect(
+            self.__onProjectChanged)
 
     def __populateModel(self):
         """Populates the project browser model"""

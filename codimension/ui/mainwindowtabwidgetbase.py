@@ -106,7 +106,6 @@ class MainWindowTabWidgetBase():
 
     def setReloadDialogShown(self, value=True):
         """Memorizes if the reloading dialogue has already been displayed"""
-        pass
 
     def getReloadDialogShown(self):
         """Tells if the reload dialog has already been shown"""
@@ -114,11 +113,9 @@ class MainWindowTabWidgetBase():
 
     def showOutsideChangesBar(self, allEnabled):
         """Shows the outside changes bar"""
-        pass
 
     def reload(self):
         """Reloads the widget content from the file"""
-        pass
 
     def setTooltip(self, txt):
         """Saves the tab tooltip"""
@@ -130,7 +127,6 @@ class MainWindowTabWidgetBase():
 
     def setDebugMode(self, mode, isProjectFile):
         """Switches the widget to debug mode and back"""
-        pass
 
     def getVCSStatus(self):
         """Provides the content VCS status"""

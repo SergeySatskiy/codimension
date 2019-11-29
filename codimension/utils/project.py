@@ -20,6 +20,9 @@
 
 """codimension project"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import logging
 import uuid
 import re
@@ -54,8 +57,7 @@ _DEFAULT_PROJECT_PROPS = {'scriptname': '',    # Script to run the project
                           'description': '',
                           'uuid': '',
                           'importdirs': [],
-                          'encoding': '',
-                          'mddocfile': ''}
+                          'encoding': ''}
 
 
 class CodimensionProject(QObject,
@@ -148,10 +150,10 @@ class CodimensionProject(QObject,
             try:
                 os.makedirs(userProjectDir)
             except Exception:
-                logging.error('Cannot create user project directory: ' +
-                              self.userProjectDir + '. Please check the '
-                              'available disk space, permissions and '
-                              're-create the project.')
+                logging.error('Cannot create user project directory: %s. '
+                              'Please check the available disk space, '
+                              'permissions and re-create the project.',
+                              self.userProjectDir)
                 raise
         else:
             logging.warning('The user project directory exists! '
@@ -187,7 +189,8 @@ class CodimensionProject(QObject,
 
         self.sigProjectChanged.emit(self.CompleteProject)
 
-    def __removeProjectFiles(self, userProjectDir):
+    @staticmethod
+    def __removeProjectFiles(userProjectDir):
         """Removes user project files"""
         for root, dirs, files in os.walk(userProjectDir):
             for f in files:
@@ -208,8 +211,8 @@ class CodimensionProject(QObject,
                       encoding=DEFAULT_ENCODING) as diskfile:
                 diskfile.write(self.fileName)
         except Exception as exc:
-            logging.error('Could not create the ' + self.userProjectDir +
-                          'project file: ' + str(exc))
+            logging.error('Could not create the %s project file: %s',
+                          self.userProjectDir, str(exc))
 
     def saveProject(self):
         """Writes all the settings into the file"""
@@ -230,8 +233,8 @@ class CodimensionProject(QObject,
                       encoding=DEFAULT_ENCODING) as diskfile:
                 json.dump(self.props, diskfile, indent=4)
         else:
-            logging.warning('Skipping updates in ' + self.fileName +
-                            ' due to writing permissions')
+            logging.warning('Skipping updates in %s due to writing permissions',
+                            self.fileName)
 
     def loadProject(self, projectFile):
         """Loads a project from the given file"""
@@ -497,8 +500,8 @@ def getProjectProperties(projectFile):
         with open(path, 'r', encoding=DEFAULT_ENCODING) as diskfile:
             return json.load(diskfile)
     except Exception as exc:
-        logging.error('Error reading project file ' + projectFile +
-                      ': ' + str(exc))
+        logging.error('Error reading project file %s: %s',
+                      projectFile, str(exc))
         return {}
 
 

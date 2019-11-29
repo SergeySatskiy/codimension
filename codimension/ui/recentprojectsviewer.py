@@ -660,7 +660,7 @@ class RecentProjectsViewer(QWidget):
         fName = self.__fileContextItem.getFilename()
 
         if not self.__fileContextItem.isValid():
-            logging.warning("Cannot open " + fName)
+            logging.warning("Cannot open %s", fName)
             return
 
         mime, _, _ = getFileProperties(fName)

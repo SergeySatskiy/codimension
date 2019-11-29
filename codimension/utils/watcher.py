@@ -24,6 +24,9 @@ It accepts a set of exclude filters and a set of dirs to watch.
 The watcher will ignore the directories which do not exist.
 """
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import os
 import os.path
 import re
@@ -59,10 +62,9 @@ class Watcher(QObject):
         self.__srcDirsToWatch.add(dirToWatch)
 
         self.__topLevelDirsToWatch = self.__buildTopDirsList(
-                                        self.__srcDirsToWatch)
+            self.__srcDirsToWatch)
         self.__fsTopLevelSnapshot = self.__buildTopLevelSnapshot(
-                                        self.__topLevelDirsToWatch,
-                                        self.__srcDirsToWatch)
+            self.__topLevelDirsToWatch, self.__srcDirsToWatch)
         self.__dirsToWatch = self.__buildSnapshot()
 
         # Here __dirsToWatch and __topLevelDirsToWatch have a complete
@@ -76,7 +78,6 @@ class Watcher(QObject):
         self.__dirWatcher.directoryChanged.connect(self.__onDirChanged)
 
         # self.debug()
-        return
 
     @staticmethod
     def __buildTopDirsList(srcDirs):
@@ -304,7 +305,6 @@ class Watcher(QObject):
             itemsToReport.append("+" + path + item)
             dirItems.add(item)
         self.__fsSnapshot[path] = dirItems
-        return
 
     def __processRemovedDir(self, path, dirsToBeRemoved, itemsToReport):
         """called for a disappeared dir in the project tree"""
@@ -323,7 +323,6 @@ class Watcher(QObject):
                 # a file
                 itemsToReport.append("-" + path + item)
         del self.__fsSnapshot[path]
-        return
 
     def __processRemoveTopDir(self, path, dirsToBeRemoved, itemsToReport):
         """Called for a disappeared top level dir"""
@@ -338,7 +337,6 @@ class Watcher(QObject):
             # This is a project level dir
             self.__processRemovedDir(path, dirsToBeRemoved,
                                      itemsToReport)
-        return
 
     def reset(self):
         """Resets the watcher (it does not report any changes)"""

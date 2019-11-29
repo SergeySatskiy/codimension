@@ -152,10 +152,10 @@ _DEFAULT_CFLOW_SETTINGS = {
     'badgeFont': buildFont('Courier,9,-1,5,50,0,0,0,0,0') if isMac else
                  buildFont('Monospace,9,-1,5,50,0,0,0,0,0'),
 
-    'hCellPadding': 8,      # in pixels (left and right)
+    'hCellPadding': 6,      # in pixels (left and right)
     'vCellPadding': 8,      # in pixels (top and bottom)
-    'hTextPadding': 5,      # in pixels (left and right)
-    'vTextPadding': 5,      # in pixels (top and bottom)
+    'hTextPadding': 4,      # in pixels (left and right)
+    'vTextPadding': 4,      # in pixels (top and bottom)
 
     # E.g. comments could be hidden so they need to become smaller
     'vHiddenTextPadding': 0,
@@ -165,26 +165,26 @@ _DEFAULT_CFLOW_SETTINGS = {
     'hHeaderPadding': 5,
     'vHeaderPadding': 5,
 
-    'vSpacer': 10,
+    'vSpacer': 8,
 
     # Rounded rectangles radius for the scopes
-    'rectRadius': 6,
+    'rectRadius': 4,
 
     # Rounded rectangles radius for the return-like statements
-    'returnRectRadius': 16,
+    'returnRectRadius': 12,
     'minWidth': 100,
     'ifWidth': 10,           # One if wing width
-    'commentCorner': 6,      # Top right comment corner
+    'commentCorner': 5,      # Top right comment corner
 
     'lineWidth': 1,          # used for connections and box edges
-    'lineColor': QColor(16, 16, 16, 255),
+    'lineColor': QColor(32, 32, 32, 255),
 
     # Selection
     'selectColor': QColor(63, 81, 181, 255),
     'selectPenWidth': 3,
 
     # Code blocks and other statements
-    'boxBGColor': QColor(250, 250, 250, 255),
+    'boxBGColor': QColor(248, 248, 248, 255),
     'boxFGColor': QColor(0, 0, 0, 255),
 
     # Badges
@@ -194,26 +194,26 @@ _DEFAULT_CFLOW_SETTINGS = {
     'badgeLineColor': QColor(180, 180, 180, 255),
 
     # Comments: leading, side & independent
-    'commentBGColor': QColor(255, 255, 153, 255),
+    'commentBGColor': QColor(255, 255, 235, 255),
     'commentFGColor': QColor(0, 0, 0, 255),
     'commentLineColor': QColor(102, 102, 61, 255),
     'commentLineWidth': 1,
     'mainLine': 25,
 
-    'fileScopeBGColor': QColor(255, 255, 230, 255),
-    'funcScopeBGColor': QColor(230, 230, 255, 255),
+    'fileScopeBGColor': QColor(255, 255, 255, 255),
+    'funcScopeBGColor': QColor(240, 240, 255, 255),
     'decorScopeBGColor': QColor(230, 255, 255, 255),
-    'classScopeBGColor': QColor(230, 255, 230, 255),
-    'forScopeBGColor': QColor(187, 222, 251, 255),
+    'classScopeBGColor': QColor(240, 255, 240, 255),
+    'forScopeBGColor': QColor(198, 219, 239, 255),
     'whileScopeBGColor': QColor(187, 222, 251, 255),
     'elseScopeBGColor': QColor(209, 196, 233, 255),
     'withScopeBGColor': QColor(255, 255, 255, 255),
-    'tryScopeBGColor': QColor(255, 255, 255, 255),
-    'exceptScopeBGColor': QColor(255, 255, 255, 255),
+    'tryScopeBGColor': QColor(248, 248, 248, 255),
+    'exceptScopeBGColor': QColor(248, 248, 248, 255),
     'finallyScopeBGColor': QColor(192, 192, 192, 255),
     'breakBGColor': QColor(249, 160, 160, 255),
     'continueBGColor': QColor(144, 202, 249, 255),
-    'ifBGColor': QColor(255, 229, 127, 255),
+    'ifBGColor': QColor(255, 247, 188, 255),
 
     'hiddenCommentText': 'c',
     'hiddenExceptText': 'e',
@@ -225,8 +225,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     'groupBGColor': QColor(228, 255, 186, 255),
     'groupFGColor': QColor(0, 0, 0, 255),
     'groupBorderColor': QColor(0, 0, 0, 255),
-    'groupControlBGColor': QColor(197, 217, 249),
-    'groupControlBorderColor': QColor(140, 179, 242),
+    'groupControlBGColor': QColor(197, 217, 249, 255),
+    'groupControlBorderColor': QColor(140, 179, 242, 255),
 
     # Rubber band selection
     'rubberBandBorderColor': QColor(63, 81, 181, 255),

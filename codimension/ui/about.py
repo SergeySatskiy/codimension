@@ -79,7 +79,8 @@ class AboutDialog(QDialog):
         buttonBox.rejected.connect(self.close)
         vboxLayout.addWidget(buttonBox)
 
-    def __createDescription(self):
+    @staticmethod
+    def __createDescription():
         """Creates the description browser"""
         browser = QTextBrowser()
         browser.setHtml("""
@@ -106,15 +107,16 @@ Codimension home page</a>.<br> Happy coding with Codimension!
         browser.setOpenExternalLinks(True)
         return browser
 
-    def __createVersioning(self):
+    @staticmethod
+    def __createVersioning():
         """Creates the versioning section"""
         components = getComponentInfo()
         text = '<p>The major Codimension components are listed below:</p><ul>'
         for (prettyName, version, homeURL,
-             patched, license, licenseLink, localPath) in components:
+             patched, licenseName, licenseLink, localPath) in components:
             if homeURL is not None:
-                text += "<li><a href='" + homeURL + "'>" + prettyName + "</a><br/>" \
-                        "Version: "
+                text += "<li><a href='" + homeURL + "'>" + \
+                        prettyName + "</a><br/>Version: "
             else:
                 text += '<li>' + prettyName + '<br/>Version: '
 
@@ -133,13 +135,14 @@ Codimension home page</a>.<br> Happy coding with Codimension!
                 if patched:
                     text += ' (patched for codimension)'
 
-                if licenseLink is not None and license is not None:
+                if licenseLink is not None and licenseName is not None:
                     text += '<br/>'
                     text += 'License: '
                     if licenseLink.startswith('http'):
-                        text += "<a href='" + licenseLink + "'>" + license + "</a>"
+                        text += "<a href='" + licenseLink + "'>" + \
+                                licenseName + "</a>"
                     else:
-                        text += license + ' (' + licenseLink + ')'
+                        text += licenseName + ' (' + licenseLink + ')'
 
                 if localPath:
                     text += '<br/>Local path: ' + localPath
@@ -158,17 +161,22 @@ Codimension home page</a>.<br> Happy coding with Codimension!
 
     def __createAuthors(self):
         """Creates the authors section"""
-        addr1 = "<a href='mailto:sergey.satskiy@gmail.com'>sergey.satskiy@gmail.com</a>"
+        addr1 = "<a href='mailto:sergey.satskiy@gmail.com'>" \
+                "sergey.satskiy@gmail.com</a>"
         addr2 = "<a href='mailto:isloginov@gmail.com'>isloginov@gmail.com</a>"
         addr3 = "<a href='mailto:him@revl.org'>him@revl.org</a>"
         addr4 = "<a href='mailto:david@dm9606.com'>david@dm9606.com</a>"
         addr5 = "<a href='mailto:fukanchik@gmail.com'>fukanchik@gmail.com</a>"
         text = "<p>Author: Sergey Satskiy &lt;" + addr1 + "&gt;</p>" \
-               "<p>Packaging and CI (travis): Sergey Fukanchik &lt;" + addr5 + "&gt;</p>" \
+               "<p>Packaging and CI (travis): Sergey Fukanchik &lt;" + \
+               addr5 + "&gt;</p>" \
                "<p>Packaging: Ilya Loginov &lt;" + addr2 + "&gt;</p>" \
-               "<p>Discussions, ideas, testing: David McElhany &lt;" + addr4 + "&gt;</p>" \
-               "<p>Initial packaging and logo: Dmitry Kazimirov &lt;" + addr3 + "&gt;</p>" \
-               "<p align='justify'>Special thanks: Detlev Offenbach - the author of the Eric Python IDE." \
+               "<p>Discussions, ideas, testing: David McElhany &lt;" + \
+               addr4 + "&gt;</p>" \
+               "<p>Initial packaging and logo: Dmitry Kazimirov &lt;" + \
+               addr3 + "&gt;</p>" \
+               "<p align='justify'>Special thanks: Detlev Offenbach - " \
+               "the author of the Eric Python IDE." \
                " Codimension borrows some code and some ideas from Eric 4.</p>"
         browser = QTextBrowser()
         browser.setHtml(text)

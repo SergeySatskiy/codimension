@@ -19,6 +19,9 @@
 
 """Run/profile/debug manager"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import os.path
 import logging
 import time
@@ -295,7 +298,7 @@ class RemoteProcessWrapper(QObject):
 
             except Exception as exc:
                 logging.error('Failure to get a message '
-                              'from a remote process: ' + str(exc))
+                              'from a remote process: %s', str(exc))
 
     def userInput(self, collectedString):
         """Called when the user finished input"""
@@ -391,8 +394,8 @@ class RunManager(QObject):
                           str(jsonStr))
                 if method != METHOD_PROC_ID_INFO:
                     logging.error('Unexpected message at the handshake stage. '
-                                  'Expected: ' + METHOD_PROC_ID_INFO +
-                                  '. Received: ' + str(method))
+                                  'Expected: %s. Received: %s',
+                                  METHOD_PROC_ID_INFO, str(method))
                     self.__safeSocketClose(clientSocket)
                     return None
             except (TypeError, ValueError) as exc:
@@ -413,7 +416,7 @@ class RunManager(QObject):
         try:
             clientSocket.close()
         except Exception as exc:
-            logging.error('Run manager safe socket close: ' + str(exc))
+            logging.error('Run manager safe socket close: %s', str(exc))
 
     def __pickWidget(self, procuuid, kind):
         """Picks the widget for a process"""
@@ -548,7 +551,8 @@ class RunManager(QObject):
         try:
             remoteProc.procWrapper.start()
             if not remoteProc.procWrapper.redirected:
-                self.__newConnectionTimer.setObjectName(remoteProc.procWrapper.procuuid)
+                self.__newConnectionTimer.setObjectName(
+                    remoteProc.procWrapper.procuuid)
                 self.__newConnectionTimer.start(CONNECTION_TIMEOUT)
 
                 remoteProc.procWrapper.startTime = datetime.now()

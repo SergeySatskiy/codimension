@@ -38,13 +38,13 @@ CACHE_FILE_NAME = 'cachemap.json'
 
 def getPlantUMLJarPath():
     """Provides the full path to the plantUML jar file"""
-    if  find_executable('java') is None:
+    if find_executable('java') is None:
         return None
     exeDir = os.path.dirname(os.path.realpath(sys.argv[0]))
     plantUMLPath = os.path.sep.join([os.path.dirname(exeDir), 'plantuml'])
     for item in os.listdir(plantUMLPath):
         if item.startswith('plantuml.') and item.endswith('.jar'):
-            return plantUMLPath + item
+            return plantUMLPath + os.path.sep + item
     return None
 JAR_PATH = getPlantUMLJarPath()
 

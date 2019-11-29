@@ -41,7 +41,6 @@ class Redirector(QObject):
 
     def flush(self):
         """Flushes the buffered data - to conform the interface"""
-        pass
 
     def write(self, message):
         """Writes the given data"""

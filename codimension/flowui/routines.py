@@ -29,7 +29,7 @@ def getBorderColor(color):
     green = color.green()
     blue = color.blue()
 
-    delta = 60
+    delta = 60 + 40
     if isDark(red, green, blue):
         # Need lighter color
         return QColor(min(red + delta, 255),

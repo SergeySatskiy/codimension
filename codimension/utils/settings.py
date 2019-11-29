@@ -19,6 +19,9 @@
 
 """codimension settings"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import os
 import os.path
 import datetime
@@ -358,8 +361,8 @@ class SettingsWrapper(QObject,
                 json.dump(self.__values, diskfile,
                           default=settingsToJSON, indent=4)
         except Exception as exc:
-            logging.error('Errol saving setting (to ' + self.__fullFileName +
-                          '): ' + str(exc))
+            logging.error('Error saving setting (to %s): %s',
+                          self.__fullFileName, str(exc))
 
     def addRecentProject(self, projectFile, needFlush=True):
         """Adds the recent project to the list"""

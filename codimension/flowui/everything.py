@@ -578,4 +578,9 @@ def ff(x):
             x = 32
 
     # cml 1 doc anchor=some title=Yahoo
-    return
+    return """ddd %d
+""" % 123
+
+if '''fkfkf  %d
+'''.replace(1,1) is None:
+    pass

@@ -20,10 +20,10 @@
 """Pyflakes results viewer"""
 
 from html import escape
+from radon.complexity import cc_rank
 from utils.pixmapcache import getIcon, getPixmap
 from utils.fileutils import isPythonMime, isPythonFile
 from analysis.ierrors import getBufferErrors
-from radon.complexity import cc_rank
 from .qt import QTimer, QObject, Qt, QMenu
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 

@@ -19,6 +19,9 @@
 
 """codimension run parameters cache"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 import json
 import logging
 import os.path
@@ -69,8 +72,8 @@ class RunParametersCache:
                     self.__cache = json.load(diskfile,
                                              object_hook=runParamsFromJSON)
             except Exception as exc:
-                logging.error('Error loading run paramaters cache (from ' +
-                              self.__rpFileName + '): ' + str(exc))
+                logging.error('Error loading run paramaters cache '
+                              '(from %s): %s', self.__rpFileName, str(exc))
                 self.__cache = {}
 
     def save(self):
@@ -81,8 +84,8 @@ class RunParametersCache:
                           encoding=DEFAULT_ENCODING) as diskfile:
                     json.dump(self.__cache, diskfile, default=runParamsToJSON)
             except Exception as exc:
-                logging.error('Error saving run paramaters cache (to ' +
-                              self.__rpFileName + '): ' + str(exc))
+                logging.error('Error saving run paramaters cache (to %s): %s',
+                              self.__rpFileName, str(exc))
 
     def getRunParameters(self, path):
         """Provides the required parameters object"""

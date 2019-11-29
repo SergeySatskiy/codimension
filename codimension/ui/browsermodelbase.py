@@ -730,7 +730,7 @@ class BrowserModelBase(QAbstractItemModel):
                 if not found:
                     itemsToRemove.append(funcChildItem)
                 continue
-            elif funcChildItem.itemType == FunctionsItemType:
+            if funcChildItem.itemType == FunctionsItemType:
                 hadFunctions = True
                 if not funcObj.functions:
                     itemsToRemove.append(funcChildItem)
@@ -739,7 +739,7 @@ class BrowserModelBase(QAbstractItemModel):
                     self.updateFunctionsItem(funcChildItem,
                                              funcObj.functions)
                 continue
-            elif funcChildItem.itemType == ClassesItemType:
+            if funcChildItem.itemType == ClassesItemType:
                 hadClasses = True
                 if not funcObj.classes:
                     itemsToRemove.append(funcChildItem)

@@ -19,6 +19,8 @@
 
 """project viewer implementation"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
 
 import os
 import os.path

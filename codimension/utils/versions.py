@@ -22,8 +22,8 @@
 from os.path import abspath
 from distutils.spawn import find_executable
 from subprocess import getstatusoutput
-import pkg_resources
 import logging
+import pkg_resources
 from .plantumlcache import JAR_PATH
 
 
@@ -131,7 +131,7 @@ def getPlantUMLVersion():
                 return line.split('version', 1)[1].strip(), JAR_PATH
     except:
         return "n/a", None
-    return "could not determine", path
+    return "could not determine", JAR_PATH
 
 
 def getComponentInfo():
@@ -170,7 +170,8 @@ def getComponentInfo():
     components.append(("PyQt", version,
                        "http://www.riverbankcomputing.com/software/pyqt/intro",
                        None, "GPL-2.0/GPL-3.0/Commercial/Embedded",
-                       "http://www.riverbankcomputing.com/software/pyqt/license",
+                       "http://www.riverbankcomputing.com/"
+                       "software/pyqt/license",
                        path))
     version, path = getPackageVersionAndLocation('qutepart')
     components.append(("qutepart", version,

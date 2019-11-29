@@ -19,6 +19,9 @@
 
 """Resource cache for the markdown renderer"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 # By default the text browser does not download the internet resource so
 # this facility needs to be implemented separately
 
@@ -30,8 +33,8 @@ import hashlib
 import urllib.request
 # cml 1 ge id=0
 # cml 1 gb id=1 title="project imports"
-from .fileutils import loadJSON, saveJSON, saveBinaryToFile
 from ui.qt import QThread, pyqtSignal, QObject
+from .fileutils import loadJSON, saveJSON, saveBinaryToFile
 # cml 1 ge id=1
 
 TIMEOUT = 5   # timeout in seconds to do a request
@@ -47,20 +50,25 @@ class ResourceRetriever(QThread):
 
     def __init__(self, parent=None):
         QThread.__init__(self, parent)
+        self.__url = None
+        self.__uuid = None
+        self.__fName = None
 
     def get(self, url, fName, uuid):
+        """Initiate the resource request"""
         self.__url = url
         self.__uuid = uuid
         self.__fName = fName
         self.start()
 
     def run(self):
+        """Run the retriever"""
         try:
             req = urllib.request.urlopen(self.__url, timeout=TIMEOUT)
             saveBinaryToFile(self.__fName, req.read())
             self.sigRetrieveOK.emit(self.__url, self.__uuid, self.__fName)
         except Exception as exc:
-            logging.error('Cannot retrieve ' + self.__url + ': ' + str(exc))
+            logging.error('Cannot retrieve %s: %s', self.__url, str(exc))
             self.sigRetrieveError.emit(self.__url, self.__fName)
 
 
@@ -84,16 +92,15 @@ class WebResourceCache(QObject):
                     self.__loadCache()
                     self.__saveCache()
                 else:
-                    logging.error('The web resource cache directory (' +
-                                  self.__cacheDir + ') does not '
-                                  'have write permissions. There will be no '
-                                  'web resource downloading')
+                    logging.error('The web resource cache directory (%s) '
+                                  'does not have write permissions. There '
+                                  'will be no web resource downloading',
+                                  self.__cacheDir)
                     self.__cacheDir = None
             else:
-                logging.error('The web resource cache directory path (' +
-                              self.__cacheDir + ') exists and '
-                              'is not a directory. There will be no web '
-                              'resource downloading')
+                logging.error('The web resource cache directory path (%s) '
+                              'exists and is not a directory. There will be '
+                              'no web resource downloading', self.__cacheDir)
                 self.__cacheDir = None
         else:
             # Try to create the dir
@@ -101,8 +108,9 @@ class WebResourceCache(QObject):
                 os.mkdir(self.__cacheDir)
             except Exception as exc:
                 logging.error('Error creating the web resource cache directory '
-                              + self.__cacheDir + ': ' + str(exc) +
-                              ' There will be no web resource downloading')
+                              '%s: %s '
+                              'There will be no web resource downloading',
+                              self.__cacheDir, str(exc))
                 self.__cacheDir = None
 
     def __loadCache(self):
@@ -123,9 +131,9 @@ class WebResourceCache(QObject):
                     try:
                         os.unlink(self.__cacheDir + item)
                     except Exception as exc:
-                        logging.error('Error removing obsolete web '
-                                      'resource file (' +
-                                      self.__cacheDir + item + '): ' + str(exc))
+                        logging.error('Error removing obsolete web resource '
+                                      'file (%s): %s',
+                                      self.__cacheDir + item, str(exc))
 
         if os.path.exists(self.__cacheDir + CACHE_FILE_NAME):
             prevCache = loadJSON(self.__cacheDir + CACHE_FILE_NAME,

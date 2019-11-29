@@ -21,11 +21,10 @@
 
 from sys import maxsize
 from cgi import escape
-from math import ceil
-from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath, QColor,
+from ui.qt import (Qt, QPointF, QPen, QBrush, QPainterPath,
                    QGraphicsRectItem, QGraphicsPathItem, QGraphicsItem,
                    QStyleOptionGraphicsItem, QStyle, QApplication,
-                   QMimeData, QByteArray)
+                   QMimeData)
 from utils.config import DEFAULT_ENCODING
 from utils.globals import GlobalData
 from .auxitems import SVGItem, Connector, Text

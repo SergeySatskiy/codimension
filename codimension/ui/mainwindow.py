@@ -19,6 +19,9 @@
 
 """Codimension main window"""
 
+# pylint: disable=W0702
+# pylint: disable=W0703
+
 # cml 1 gb id=0 title="System imports"
 import os.path
 import sys
@@ -298,7 +301,8 @@ class CodimensionMainWindow(QMainWindow):
         self._leftSideBar.addTab(self.recentProjectsViewer, getIcon(''),
                                  'Recent', 'recent', 1)
         self.em.sigFileUpdated.connect(self.recentProjectsViewer.onFileUpdated)
-        self.em.sigFileTypeChanged.connect(self.recentProjectsViewer.onFileTypeChanged)
+        self.em.sigFileTypeChanged.connect(
+            self.recentProjectsViewer.onFileTypeChanged)
         self.em.sigBufferSavedAs.connect(
             self.recentProjectsViewer.onFileUpdated)
         self.projectViewer.sigFileUpdated.connect(
@@ -836,12 +840,12 @@ class CodimensionMainWindow(QMainWindow):
         """Opens editor/browser suitable for the file type"""
         path = os.path.abspath(path)
         if not os.path.exists(path):
-            logging.error("Cannot open " + path + ", does not exist")
+            logging.error("Cannot open %s, does not exist", path)
             return
         if os.path.islink(path):
             path = os.path.realpath(path)
             if not os.path.exists(path):
-                logging.error("Cannot open " + path + ", does not exist")
+                logging.error("Cannot open %s, does not exist", path)
                 return
             # The type may differ...
             mime, _, _ = getFileProperties(path)
@@ -850,11 +854,11 @@ class CodimensionMainWindow(QMainWindow):
             path = os.path.realpath(path)
 
         if not os.access(path, os.R_OK):
-            logging.error("No read permissions to open " + path)
+            logging.error("No read permissions to open %s", path)
             return
 
         if not os.path.isfile(path):
-            logging.error(path + " is not a file")
+            logging.error("%s is not a file", path)
             return
 
         if isImageViewable(mime):
@@ -981,7 +985,7 @@ class CodimensionMainWindow(QMainWindow):
             f.write(getDefaultTemplate())
             f.close()
         except Exception as exc:
-            logging.error("Error creating a template file: " + str(exc))
+            logging.error("Error creating a template file: %s", str(exc))
             return
         self.openFile(fileName, -1)
 
@@ -993,8 +997,8 @@ class CodimensionMainWindow(QMainWindow):
         """Edits the timepale file"""
         if fileName is not None:
             if not os.path.exists(fileName):
-                logging.error("The template file " + fileName +
-                              " disappeared from the file system.")
+                logging.error("The template file %s disappeared from the file "
+                              "system.", fileName)
                 return
             self.openFile(fileName, -1)
 
@@ -1743,7 +1747,7 @@ class CodimensionMainWindow(QMainWindow):
         startMD = docPath + 'index.md'
         if not os.path.exists(startMD):
             logging.error('Documentation is not found. '
-                          ' Expected here: ' + startMD)
+                          ' Expected here: %s', startMD)
         else:
             self.em.openMarkdownFullView(startMD, True)
 
@@ -2022,7 +2026,7 @@ class CodimensionMainWindow(QMainWindow):
         """Triggered when a recent project is requested to be loaded"""
         path = path.data()
         if not os.path.exists(path):
-            logging.error("Could not find project file: " + path)
+            logging.error("Could not find project file: %s", path)
         else:
             self.__loadProject(path)
 
@@ -2044,7 +2048,7 @@ class CodimensionMainWindow(QMainWindow):
             code = getFileDisassembled(path, optimization)
             self.em.showDisassembly(path, code)
         except Exception as exc:
-            logging.error('Cannot disassemble ' + path + ': ' + str(exc))
+            logging.error('Cannot disassemble %s: %s', path, str(exc))
 
     def showBufferDisassembly(self, content, encoding, path, optimization):
         """Triggered when a disassembler for a buffer is requested"""
@@ -2052,8 +2056,7 @@ class CodimensionMainWindow(QMainWindow):
             code = getBufferDisassembled(content, encoding, path, optimization)
             self.em.showDisassembly(path, code)
         except Exception as exc:
-            logging.error('Cannot disassemble buffer ' + path +
-                          ': ' + str(exc))
+            logging.error('Cannot disassemble buffer %s: %s', path, str(exc))
 
     def showPycDisassembly(self, path):
         """Triggered when a disassembly for a .pyc file is requested"""
@@ -2062,7 +2065,7 @@ class CodimensionMainWindow(QMainWindow):
                 path, os.path.basename(path).replace('.pyc', '.py'), None)
             self.em.showDisassembly(path, code)
         except Exception as exc:
-            logging.error('Cannot disassemble pyc file: ' + str(exc))
+            logging.error('Cannot disassemble pyc file: %s', str(exc))
 
     def highlightInPrj(self, path):
         """Triggered when the file is to be highlighted in a project tree"""
@@ -2146,9 +2149,8 @@ class CodimensionMainWindow(QMainWindow):
             self._pluginMenus[plugin.getPath()] = pluginMenu
             self._recomposePluginMenu()
         except Exception as exc:
-            logging.error("Error populating " + pluginName +
-                          " plugin main menu: " +
-                          str(exc) + ". Ignore and continue.")
+            logging.error("Error populating %s plugin main menu: %s. Ignore "
+                          "and continue.", pluginName, str(exc))
 
     def __onPluginDeactivated(self, plugin):
         """Triggered when a plugin is deactivated"""
@@ -2159,9 +2161,8 @@ class CodimensionMainWindow(QMainWindow):
                 self._recomposePluginMenu()
         except Exception as exc:
             pluginName = plugin.getName()
-            logging.error("Error removing " + pluginName +
-                          " plugin main menu: " +
-                          str(exc) + ". Ignore and continue.")
+            logging.error("Error removing %s plugin main menu: %s. Ignore "
+                          "and continue.", pluginName, str(exc))
 
     def activateProjectTab(self):
         """Activates the project tab"""
@@ -2318,7 +2319,7 @@ class CodimensionMainWindow(QMainWindow):
         del finishTime  # unused argument
 
         if not os.path.exists(outfile):
-            logging.error('No profiling results found for ' + path)
+            logging.error('No profiling results found for %s', path)
             return
 
         try:

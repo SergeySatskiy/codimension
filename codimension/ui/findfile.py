@@ -81,7 +81,7 @@ class FileItemRoot():
     def lessThan(self, other, column, _):
         """Check, if the item is less than another"""
         try:
-            self.itemData[column] < other.itemData[column]
+            return self.itemData[column] < other.itemData[column]
         except:
             return False
 
@@ -220,7 +220,7 @@ class FindFileModel(QAbstractItemModel):
             item = index.internalPointer()
             if index.column() < item.columnCount():
                 return item.data(index.column())
-            elif index.column() == item.columnCount() and \
+            if index.column() == item.columnCount() and \
                 index.column() < self.columnCount(self.parent(index)):
                 # This is for the case when an item under a multi-column
                 # parent doesn't have a value for all the columns
