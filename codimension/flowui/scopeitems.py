@@ -58,9 +58,9 @@ class ScopeCellElement(CellElement):
         self.scene = None
         self.__sideCommentPath = None
 
-        self.__bgColor = None
-        self.__fgColor = None
-        self.__borderColor = None
+        self._bgColor = None
+        self._fgColor = None
+        self._borderColor = None
 
         # Will be initialized only for the TOP_LEFT item of the
         # ELSE_SCOPE, EXCEPT_SCOPE and FINALLY_SCOPE
@@ -323,17 +323,24 @@ class ScopeCellElement(CellElement):
 
     def getColors(self):
         """Provides the item colors"""
-        return self.__bgColor, self.__fgColor, self.__borderColor
+        return self._bgColor, self._fgColor, self._borderColor
+
+    def _areColorsInitialized(self):
+        """Tells is the colors are initialized for the item"""
+        return self._bgColor is not None and \
+               self._fgColor is not None and \
+               self._borderColor is not None
 
     def _paint(self, painter, option, widget):
         """Draws the corresponding scope element"""
         s = self.canvas.settings
+        if not self._areColorsInitialized():
+            self._bgColor, self._fgColor, self._borderColor = \
+                self.getCustomColors(s.boxBGColor, s.boxFGColor,
+                                     s.boxBorderColor)
 
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.__bgColor, self.__fgColor, self.__borderColor = \
-                self.getCustomColors(painter.brush().color(),
-                                     painter.brush().color())
-            brush = QBrush(self.__bgColor)
+            brush = QBrush(self._bgColor)
             painter.setBrush(brush)
 
             if self.isSelected():
@@ -342,7 +349,7 @@ class ScopeCellElement(CellElement):
                 selectPen.setJoinStyle(Qt.RoundJoin)
                 painter.setPen(selectPen)
             else:
-                pen = QPen(self.__borderColor)
+                pen = QPen(self._borderColor)
                 pen.setWidth(s.lineWidth)
                 painter.setPen(pen)
 
@@ -353,12 +360,10 @@ class ScopeCellElement(CellElement):
                                     s.rectRadius, s.rectRadius)
 
         elif self.subKind == ScopeCellElement.DECLARATION:
-            self.__bgColor, self.__fgColor, self.__borderColor = \
-                self.getCustomColors(painter.brush().color(), s.boxFGColor)
-            brush = QBrush(self.__bgColor)
+            brush = QBrush(self._bgColor)
             painter.setBrush(brush)
 
-            pen = QPen(self.__fgColor)
+            pen = QPen(self._fgColor)
             painter.setFont(s.monoFont)
             painter.setPen(pen)
             canvasLeft = self.baseX - s.rectRadius
@@ -372,7 +377,7 @@ class ScopeCellElement(CellElement):
                              self._headerRect.width(), textHeight,
                              Qt.AlignLeft, self._getText())
 
-            pen = QPen(self.__borderColor)
+            pen = QPen(self._borderColor)
             pen.setWidth(s.lineWidth)
             painter.setPen(pen)
 
@@ -411,7 +416,7 @@ class ScopeCellElement(CellElement):
                 self.width - s.rectRadius - s.vHeaderPadding
             painter.drawPath(self.__sideCommentPath)
 
-            pen = QPen(s.boxFGColor)
+            pen = QPen(s.commentFGColor)
             painter.setFont(s.monoFont)
             painter.setPen(pen)
             if s.hidecomments:
@@ -427,18 +432,16 @@ class ScopeCellElement(CellElement):
                                  self._sideCommentRect.height(),
                                  Qt.AlignLeft, self._getSideComment())
         elif self.subKind == ScopeCellElement.DOCSTRING:
-            self.__bgColor, self.__fgColor, self.__borderColor = \
-                self.getCustomColors(painter.brush().color(), s.boxFGColor)
             if self.ref.docstring.leadingCMLComments:
                 colorSpec = CMLVersion.find(
                     self.ref.docstring.leadingCMLComments, CMLcc)
                 if colorSpec:
                     if colorSpec.bgColor:
-                        self.__bgColor = colorSpec.bgColor
+                        self._bgColor = colorSpec.bgColor
                     if colorSpec.fgColor:
-                        self.__fgColor = colorSpec.fgColor
+                        self._fgColor = colorSpec.fgColor
 
-            brush = QBrush(self.__bgColor)
+            brush = QBrush(self._bgColor)
             painter.setBrush(brush)
 
             canvasLeft = self.baseX - s.rectRadius
@@ -461,7 +464,7 @@ class ScopeCellElement(CellElement):
                     correction = s.selectPenWidth - 1
 
                 # The background could also be custom
-                pen = QPen(self.__bgColor)
+                pen = QPen(self._bgColor)
                 pen.setWidth(s.lineWidth)
                 pen.setJoinStyle(Qt.MiterJoin)
                 painter.setPen(pen)
@@ -476,7 +479,7 @@ class ScopeCellElement(CellElement):
                                  2.0 * float(s.hCellPadding) - 2.0 * dsCorr,
                                  self.height - 2 * s.lineWidth)
 
-                pen = QPen(self.__borderColor)
+                pen = QPen(self._borderColor)
                 pen.setWidth(s.lineWidth)
                 painter.setPen(pen)
                 painter.drawLine(canvasLeft + correction,
@@ -486,7 +489,7 @@ class ScopeCellElement(CellElement):
                                  self.baseY + self.height)
 
             if not s.hidedocstrings:
-                pen = QPen(self.__fgColor)
+                pen = QPen(self._fgColor)
                 painter.setFont(s.monoFont)
                 painter.setPen(pen)
                 painter.drawText(canvasLeft + s.hHeaderPadding,
@@ -680,8 +683,18 @@ class FileScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the file scope element"""
-        brush = QBrush(self.canvas.settings.fileScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            if self.subKind == ScopeCellElement.DOCSTRING:
+                self._bgColor, self._fgColor, self._borderColor = \
+                    self.getCustomColors(s.docstringBGColor,
+                                         s.docstringFGColor,
+                                         s.fileScopeBorderColor)
+            else:
+                self._bgColor, self._fgColor, self._borderColor = \
+                    self.getCustomColors(s.fileScopeBGColor,
+                                         s.fileScopeFGColor,
+                                         s.fileScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):
@@ -772,8 +785,18 @@ class FunctionScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the function scope element"""
-        brush = QBrush(self.canvas.settings.funcScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            if self.subKind == ScopeCellElement.DOCSTRING:
+                self._bgColor, self._fgColor, self._borderColor = \
+                    self.getCustomColors(s.docstringBGColor,
+                                         s.docstringFGColor,
+                                         s.funcScopeBorderColor)
+            else:
+                self._bgColor, self._fgColor, self._borderColor = \
+                    self.getCustomColors(s.funcScopeBGColor,
+                                         s.funcScopeFGColor,
+                                         s.funcScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):
@@ -867,8 +890,18 @@ class ClassScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the class scope element"""
-        brush = QBrush(self.canvas.settings.classScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            if self.subKind == ScopeCellElement.DOCSTRING:
+                self._bgColor, self._fgColor, self._borderColor = \
+                    self.getCustomColors(s.docstringBGColor,
+                                         s.docstringFGColor,
+                                         s.classScopeBorderColor)
+            else:
+                self._bgColor, self._fgColor, self._borderColor = \
+                    self.getCustomColors(s.classScopeBGColor,
+                                         s.classScopeFGColor,
+                                         s.classScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):
@@ -959,8 +992,11 @@ class ForScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the for-loop scope element"""
-        brush = QBrush(self.canvas.settings.forScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            self._bgColor, self._fgColor, self._borderColor = \
+                self.getCustomColors(s.forScopeBGColor, s.forScopeFGColor,
+                                     s.forScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):
@@ -1045,8 +1081,11 @@ class WhileScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the while-loop scope element"""
-        brush = QBrush(self.canvas.settings.whileScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            self._bgColor, self._fgColor, self._borderColor = \
+                self.getCustomColors(s.whileScopeBGColor, s.whileScopeFGColor,
+                                     s.whileScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):
@@ -1117,8 +1156,11 @@ class TryScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the try scope element"""
-        brush = QBrush(self.canvas.settings.tryScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            self._bgColor, self._fgColor, self._borderColor = \
+                self.getCustomColors(s.tryScopeBGColor, s.tryScopeFGColor,
+                                     s.tryScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):
@@ -1206,8 +1248,11 @@ class WithScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the with scope element"""
-        brush = QBrush(self.canvas.settings.withScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            self._bgColor, self._fgColor, self._borderColor = \
+                self.getCustomColors(s.withScopeBGColor, s.withScopeFGColor,
+                                     s.withScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):
@@ -1294,8 +1339,11 @@ class DecoratorScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the decorator scope element"""
-        brush = QBrush(self.canvas.settings.decorScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            self._bgColor, self._fgColor, self._borderColor = \
+                self.getCustomColors(s.decorScopeBGColor, s.decorScopeFGColor,
+                                     s.decorScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):
@@ -1371,8 +1419,24 @@ class ElseScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the else scope element"""
-        brush = QBrush(self.canvas.settings.elseScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            if self.statement == self.FOR_STATEMENT:
+                self._bgColor, self._fgColor, self._borderColor = \
+                    self.getCustomColors(s.forElseScopeBGColor,
+                                         s.forElseScopeFGColor,
+                                         s.forElseScopeBorderColor)
+            elif self.statement == self.WHILE_STATEMENT:
+                self._bgColor, self._fgColor, self._borderColor = \
+                    self.getCustomColors(s.whileElseScopeBGColor,
+                                         s.whileElseScopeFGColor,
+                                         s.whileElseScopeBorderColor)
+            else:
+                # TRY_STATEMENT
+                self._bgColor, self._fgColor, self._borderColor = \
+                    self.getCustomColors(s.tryElseScopeBGColor,
+                                         s.tryElseScopeFGColor,
+                                         s.tryElseScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):
@@ -1458,8 +1522,12 @@ class ExceptScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the except scope element"""
-        brush = QBrush(self.canvas.settings.exceptScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            self._bgColor, self._fgColor, self._borderColor = \
+                self.getCustomColors(s.exceptScopeBGColor,
+                                     s.exceptScopeFGColor,
+                                     s.exceptScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):
@@ -1529,8 +1597,12 @@ class FinallyScopeCell(ScopeCellElement, QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the finally scope element"""
-        brush = QBrush(self.canvas.settings.finallyScopeBGColor)
-        painter.setBrush(brush)
+        if not self._areColorsInitialized():
+            s = self.canvas.settings
+            self._bgColor, self._fgColor, self._borderColor = \
+                self.getCustomColors(s.finallyScopeBGColor,
+                                     s.finallyScopeFGColor,
+                                     s.finallyScopeBorderColor)
         self._paint(painter, option, widget)
 
     def getLineRange(self):

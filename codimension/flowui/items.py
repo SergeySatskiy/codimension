@@ -248,7 +248,7 @@ class CellElement:
         lineRange = self.getLineRange()
         return distance(line, lineRange[0], lineRange[1])
 
-    def getCustomColors(self, defaultBG, defaultFG):
+    def getCustomColors(self, defaultBG, defaultFG, defaultBorder=None):
         """Provides the colors to be used for an item"""
         if self.ref.leadingCMLComments:
             colorSpec = CMLVersion.find(self.ref.leadingCMLComments, CMLcc)
@@ -262,9 +262,14 @@ class CellElement:
                 if colorSpec.border:
                     border = colorSpec.border
                 else:
-                    border = getBorderColor(bg)
+                    if defaultBorder is None:
+                        border = getBorderColor(bg)
+                    else:
+                        border = defaultBorder
                 return bg, fg, border
-        return defaultBG, defaultFG, getBorderColor(defaultBG)
+        if defaultBorder is None:
+            return defaultBG, defaultFG, getBorderColor(defaultBG)
+        return defaultBG, defaultFG, defaultBorder
 
     def getReplacementText(self):
         """Provides the CML replacement text if so"""

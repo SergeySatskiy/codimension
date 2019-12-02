@@ -176,8 +176,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     'ifWidth': 10,           # One if wing width
     'commentCorner': 5,      # Top right comment corner
 
-    'lineWidth': 1,          # used for connections and box edges
-    'lineColor': QColor(32, 32, 32, 255),
+    'lineWidth': 2,          # used for connections and box edges
+    'lineColor': QColor(132, 132, 132, 255),
 
     # Selection
     'selectColor': QColor(63, 81, 181, 255),
@@ -186,6 +186,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     # Code blocks and other statements
     'boxBGColor': QColor(248, 248, 248, 255),
     'boxFGColor': QColor(0, 0, 0, 255),
+    'boxBorderColor': QColor(192, 192, 192, 255),
 
     # Badges
     'badgeBGColor': QColor(230, 230, 230, 255),
@@ -195,22 +196,69 @@ _DEFAULT_CFLOW_SETTINGS = {
 
     # Comments: leading, side & independent
     'commentBGColor': QColor(255, 255, 235, 255),
-    'commentFGColor': QColor(0, 0, 0, 255),
-    'commentLineColor': QColor(102, 102, 61, 255),
+    'commentFGColor': QColor(90, 90, 90, 255),
+    'commentLineColor': QColor(92, 92, 92, 255),
     'commentLineWidth': 1,
     'mainLine': 25,
 
+    'docstringBGColor': QColor(255, 255, 235, 255),
+    'docstringFGColor': QColor(90, 90, 90, 255),
+
     'fileScopeBGColor': QColor(255, 255, 255, 255),
+    'fileScopeFGColor': QColor(0, 0, 0, 255),
+    'fileScopeBorderColor': QColor(192, 192, 192, 255),
+
     'funcScopeBGColor': QColor(240, 240, 255, 255),
-    'decorScopeBGColor': QColor(230, 255, 255, 255),
+    'funcScopeFGColor': QColor(0, 0, 0, 255),
+    'funcScopeBorderColor': QColor(192, 192, 192, 255),
+
     'classScopeBGColor': QColor(240, 255, 240, 255),
+    'classScopeFGColor': QColor(0, 0, 0, 255),
+    'classScopeBorderColor': QColor(192, 192, 192, 255),
+
     'forScopeBGColor': QColor(198, 219, 239, 255),
-    'whileScopeBGColor': QColor(187, 222, 251, 255),
-    'elseScopeBGColor': QColor(209, 196, 233, 255),
-    'withScopeBGColor': QColor(255, 255, 255, 255),
+    'forScopeFGColor': QColor(0, 0, 0, 255),
+    'forScopeBorderColor': QColor(192, 192, 192, 255),
+
+    'whileScopeBGColor': QColor(198, 219, 239, 255),
+    'whileScopeFGColor': QColor(0, 0, 0, 255),
+    'whileScopeBorderColor': QColor(192, 192, 192, 255),
+
     'tryScopeBGColor': QColor(248, 248, 248, 255),
-    'exceptScopeBGColor': QColor(248, 248, 248, 255),
-    'finallyScopeBGColor': QColor(192, 192, 192, 255),
+    'tryScopeFGColor': QColor(0, 0, 0, 255),
+    'tryScopeBorderColor': QColor(192, 192, 192, 255),
+
+    'decorScopeBGColor': QColor(240, 240, 240, 255),
+    'decorScopeFGColor': QColor(0, 0, 0, 255),
+    'decorScopeBorderColor': QColor(192, 192, 192, 255),
+
+    'withScopeBGColor': QColor(248, 248, 248, 255),
+    'withScopeFGColor': QColor(0, 0, 0, 255),
+    'withScopeBorderColor': QColor(192, 192, 192, 255),
+
+    'exceptScopeBGColor': QColor(240, 240, 240, 255),
+    'exceptScopeFGColor': QColor(0, 0, 0, 255),
+    'exceptScopeBorderColor': QColor(192, 192, 192, 255),
+
+    'finallyScopeBGColor': QColor(248, 248, 248, 255),
+    'finallyScopeFGColor': QColor(0, 0, 0, 255),
+    'finallyScopeBorderColor': QColor(192, 192, 192, 255),
+
+    'forElseScopeBGColor': QColor(198, 219, 239, 255),
+    'forElseScopeFGColor': QColor(0, 0, 0, 255),
+    'forElseScopeBorderColor': QColor(192, 192, 192, 255),
+
+    'whileElseScopeBGColor': QColor(198, 219, 239, 255),
+    'whileElseScopeFGColor': QColor(0, 0, 0, 255),
+    'whileElseScopeBorderColor': QColor(192, 192, 192, 255),
+
+    'tryElseScopeBGColor': QColor(248, 248, 248, 255),
+    'tryElseScopeFGColor': QColor(0, 0, 0, 255),
+    'tryElseScopeBorderColor': QColor(192, 192, 192, 255),
+
+
+
+
     'breakBGColor': QColor(249, 160, 160, 255),
     'continueBGColor': QColor(144, 202, 249, 255),
     'ifBGColor': QColor(255, 247, 188, 255),
