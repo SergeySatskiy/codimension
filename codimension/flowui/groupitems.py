@@ -20,7 +20,7 @@
 """Virtual canvas items to handle groups (opened/collapsed)"""
 
 
-from cgi import escape
+from html import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .items import CellElement
 from .auxitems import Connector, GroupCornerControl

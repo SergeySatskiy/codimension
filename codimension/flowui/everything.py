@@ -15,6 +15,7 @@ File docstring
 
 
 # cml 1 rt text="one"
+# cml 1 gb id=1 title="Outer group"
 # cml 1 gb id=0 title="A group"
 alone = 1
 
@@ -33,10 +34,15 @@ c = """
     """ + \
     "123456"    # Side
                 # Another side
+# cml 1 ge id=1
 
 '''
 ...
 '''
+
+
+# cml 1 gb id=3 title="Empty group"
+# cml 1 ge id=3
 
 
 
@@ -577,7 +583,7 @@ def ff(x):
         if x > 32:
             x = 32
 
-    # cml 1 doc anchor=some title=Yahoo
+    # cml 1 doc anchor=some title=Yahoo bg=#66ff66 border=#1010ff
     return """ddd %d
 """ % 123
 

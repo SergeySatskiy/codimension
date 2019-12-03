@@ -19,44 +19,70 @@
 
 """Color mixin for the graphics items"""
 
+# pylint: disable=C0305
+
 from .cml import CMLVersion, CMLcc
 
+# There are a few options of how the colors could be specified:
+# - the item may have a leading CML cc comment
+# - a scope item has a docstring which in turn has a leading CML cc comment
+#   a docstring color spec does not support a border color because the scope
+#   border is used for the dividing line
+# - group items have the color spec in their CML ref
+# - doc items have the color spec in their CML ref
 
 class ColorMixin:
 
     """Color mixin to support bg, fg and border color"""
 
     def __init__(self, ref, defaultBG, defaultFG, defaultBorder,
-                 isDocstring=False):
+                 isDocstring=False, colorSpec=None):
         self.bgColor = defaultBG
         self.fgColor = defaultFG
         self.borderColor = defaultBorder
-        self.__getCustomColors(ref, isDocstring)
+
+        if colorSpec is not None:
+            # the case for groups and docs
+            self.__getFromColorSpec(colorSpec)
+        elif isDocstring:
+            # special case for docstrings
+            self.__getFromDocstring(ref)
+        else:
+            # all the other items
+            self.__getCustomColors(ref)
 
     def getColors(self):
         """Provides the item colors"""
         return self.bgColor, self.fgColor, self.borderColor
 
-    def __getCustomColors(self, ref, isDocstring):
-        """Provides the colors to be used for an item"""
-        leadingCML = ref.leadingCMLComments
-        if isDocstring:
-            leadingCML = ref.docstring.leadingCMLComments
+    def __getFromColorSpec(self, colorSpec):
+        """Updates the colors from the given colorspec"""
+        if colorSpec.bgColor:
+            self.bgColor = colorSpec.bgColor
+        if colorSpec.fgColor:
+            self.fgColor = colorSpec.fgColor
+        if colorSpec.border:
+            self.borderColor = colorSpec.border
 
-        # fg and bg are supported by all the items
-        # (except comments)
+    def __getFromDocstring(self, ref):
+        """Updates the colors for the docstrings"""
+        leadingCML = ref.docstring.leadingCMLComments
         if leadingCML:
             colorSpec = CMLVersion.find(leadingCML, CMLcc)
             if colorSpec:
+
+                # NOTE: no border color support for the docstrings
+
                 if colorSpec.bgColor:
                     self.bgColor = colorSpec.bgColor
                 if colorSpec.fgColor:
                     self.fgColor = colorSpec.fgColor
 
-        # The border color is NOT supported by docstrings
-        if ref.leadingCMLComments:
-            colorSpec = CMLVersion.find(ref.leadingCMLComments, CMLcc)
+    def __getCustomColors(self, ref):
+        """Provides the colors to be used for an item"""
+        leadingCML = ref.leadingCMLComments
+        if leadingCML:
+            colorSpec = CMLVersion.find(leadingCML, CMLcc)
             if colorSpec:
-                if colorSpec.border:
-                    self.borderColor = colorSpec.border
+                self.__getFromColorSpec(colorSpec)
 

@@ -19,27 +19,28 @@
 
 """Various comment items on a virtual canvas"""
 
-from sys import maxsize
-from cgi import escape
-from math import ceil
-from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
-                   QGraphicsItem, QStyleOptionGraphicsItem, QStyle, QFont,
+from html import escape
+from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsItem, QFont,
                    QGraphicsRectItem, QCursor, QDesktopServices, QUrl)
 from utils.globals import GlobalData
 from utils.misc import resolveLinkPath
 from .auxitems import Connector, SVGItem
 from .items import CellElement
-from .routines import distance, getBorderColor
+from .routines import distance
 from .commentitems import CommentCellBase
+from .colormixin import ColorMixin
 
 
-
-class DocCellBase(CommentCellBase, QGraphicsRectItem):
+class DocCellBase(CommentCellBase, ColorMixin, QGraphicsRectItem):
 
     """Base class for all doc cells"""
 
     def __init__(self, itemRef, cmlRef, canvas, x, y):
         CommentCellBase.__init__(self, itemRef, canvas, x, y)
+        ColorMixin.__init__(self, None, canvas.settings.docLinkBGColor,
+                            canvas.settings.docLinkFGColor,
+                            canvas.settings.docLinkLineColor,
+                            colorSpec=cmlRef)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.cmlRef = cmlRef
 
@@ -96,22 +97,6 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
         if fileName:
             GlobalData().mainWindow.openFile(fileName, anchorOrLine)
 
-    def getColors(self):
-        """Provides the item colors"""
-        bg = self.canvas.settings.docLinkBGColor
-        fg = self.canvas.settings.docLinkFGColor
-        if self.cmlRef.bgColor:
-            bg = self.cmlRef.bgColor
-        if self.cmlRef.fgColor:
-            fg = self.cmlRef.fgColor
-        if self.cmlRef.border:
-            return bg, fg, self.cmlRef.border
-
-        border = self.canvas.settings.docLinkLineColor
-        if border is None:
-            return bg, fg, getBorderColor(bg)
-        return bg, fg, border
-
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -150,7 +135,6 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
             # Not implemented yet
             return
 
-        settings = self.canvas.settings
         spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
         boxWidth = self.minWidth
         if spareWidth >= boxWidth:
@@ -180,10 +164,11 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
             baseY + self.minHeight / 2 - self.iconItem.height() / 2)
         scene.addItem(self.iconItem)
 
-        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
-
     def paint(self, painter, option, widget):
         """Draws the independent comment"""
+        del option      # unused argument
+        del widget      # unused argument
+
         settings = self.canvas.settings
 
         rectWidth = self.minWidth - 2 * settings.hCellPadding
@@ -195,12 +180,12 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
             selectPen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(selectPen)
         else:
-            pen = QPen(self.__borderColor)
+            pen = QPen(self.borderColor)
             pen.setWidth(settings.docLinkLineWidth)
             pen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(pen)
 
-        brush = QBrush(self.__bgColor)
+        brush = QBrush(self.bgColor)
         painter.setBrush(brush)
         painter.drawRoundedRect(self.baseX + settings.hCellPadding,
                                 self.baseY + settings.vCellPadding,
@@ -211,7 +196,7 @@ class DocCellBase(CommentCellBase, QGraphicsRectItem):
             font = QFont(settings.monoFont)
             font.setItalic(True)
             painter.setFont(font)
-            pen = QPen(self.__fgColor)
+            pen = QPen(self.fgColor)
             painter.setPen(pen)
             painter.drawText(
                 self._leftEdge + settings.hCellPadding +

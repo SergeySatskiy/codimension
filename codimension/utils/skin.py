@@ -173,8 +173,6 @@ _DEFAULT_CFLOW_SETTINGS = {
     # Rounded rectangles radius for the return-like statements
     'returnRectRadius': 12,
     'minWidth': 100,
-    'ifWidth': 10,           # One if wing width
-    'commentCorner': 5,      # Top right comment corner
 
     'lineWidth': 2,          # used for connections and box edges
     'lineColor': QColor(132, 132, 132, 255),
@@ -184,9 +182,42 @@ _DEFAULT_CFLOW_SETTINGS = {
     'selectPenWidth': 3,
 
     # Code blocks and other statements
-    'boxBGColor': QColor(248, 248, 248, 255),
-    'boxFGColor': QColor(0, 0, 0, 255),
-    'boxBorderColor': QColor(192, 192, 192, 255),
+    'codeBlockBGColor': QColor(248, 248, 248, 255),
+    'codeBlockFGColor': QColor(0, 0, 0, 255),
+    'codeBlockBorderColor': QColor(192, 192, 192, 255),
+
+    'breakBGColor': QColor(249, 160, 160, 255),
+    'breakFGColor': QColor(0, 0, 0, 255),
+    'breakBorderColor': QColor(192, 192, 192, 255),
+
+    'continueBGColor': QColor(144, 202, 249, 255),
+    'continueFGColor': QColor(0, 0, 0, 255),
+    'continueBorderColor': QColor(192, 192, 192, 255),
+
+    'returnBGColor': QColor(248, 248, 248, 255),
+    'returnFGColor': QColor(0, 0, 0, 255),
+    'returnBorderColor': QColor(192, 192, 192, 255),
+
+    'raiseBGColor': QColor(248, 248, 248, 255),
+    'raiseFGColor': QColor(0, 0, 0, 255),
+    'raiseBorderColor': QColor(192, 192, 192, 255),
+
+    'assertBGColor': QColor(248, 248, 248, 255),
+    'assertFGColor': QColor(0, 0, 0, 255),
+    'assertBorderColor': QColor(192, 192, 192, 255),
+
+    'sysexitBGColor': QColor(248, 248, 248, 255),
+    'sysexitFGColor': QColor(0, 0, 0, 255),
+    'sysexitBorderColor': QColor(192, 192, 192, 255),
+
+    'importBGColor': QColor(248, 248, 248, 255),
+    'importFGColor': QColor(0, 0, 0, 255),
+    'importBorderColor': QColor(192, 192, 192, 255),
+
+    'ifBGColor': QColor(255, 247, 188, 255),
+    'ifFGColor': QColor(0, 0, 0, 255),
+    'ifBorderColor': QColor(192, 192, 192, 255),
+    'ifWidth': 10,           # One if wing width
 
     # Badges
     'badgeBGColor': QColor(230, 230, 230, 255),
@@ -198,9 +229,12 @@ _DEFAULT_CFLOW_SETTINGS = {
     'commentBGColor': QColor(255, 255, 235, 255),
     'commentFGColor': QColor(90, 90, 90, 255),
     'commentLineColor': QColor(92, 92, 92, 255),
+    'commentCorner': 5,      # Top right comment corner
     'commentLineWidth': 1,
+
     'mainLine': 25,
 
+    # docstring border cannot be changed; it is a property of the scope
     'docstringBGColor': QColor(255, 255, 235, 255),
     'docstringFGColor': QColor(90, 90, 90, 255),
 
@@ -259,9 +293,6 @@ _DEFAULT_CFLOW_SETTINGS = {
 
 
 
-    'breakBGColor': QColor(249, 160, 160, 255),
-    'continueBGColor': QColor(144, 202, 249, 255),
-    'ifBGColor': QColor(255, 247, 188, 255),
 
     'hiddenCommentText': 'c',
     'hiddenExceptText': 'e',
