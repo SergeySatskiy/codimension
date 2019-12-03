@@ -90,8 +90,6 @@ class CellElement:
         self.addr = [x, y]          # indexes in the current canvas
         self.canvas = canvas        # reference to the canvas
         self._editor = None
-        self.cmlLabelItem = None    # Label near the item to indicate a CML
-                                    # presence
         self._text = None
 
         self.tailComment = False

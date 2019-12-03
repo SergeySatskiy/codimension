@@ -3,7 +3,7 @@
 # cml 1 cc bg=#ffffff
 # File top comment
 
-# cml 1 cc fg=#ffffff bg=#000000
+# cml 1 cc fg=#0000ff bg=#ffffff border=#ff0000
 """
 File docstring
 """
