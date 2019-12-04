@@ -231,6 +231,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     'commentLineColor': QColor(92, 92, 92, 255),
     'commentCorner': 5,      # Top right comment corner
     'commentLineWidth': 1,
+    'vHiddenCommentPadding': 3,
+    'hHiddenCommentPadding': 3,
 
     'mainLine': 25,
 
@@ -294,14 +296,25 @@ _DEFAULT_CFLOW_SETTINGS = {
     'hiddenExceptText': 'e',
 
     # Groups
-    'collapsedOutlineWidth': 5,
     'openGroupVSpacer': 3,
     'openGroupHSpacer': 3,
-    'groupBGColor': QColor(245, 255, 255, 255),
-    'groupFGColor': QColor(0, 0, 0, 255),
-    'groupBorderColor': QColor(32, 32, 32, 255),
-    'groupControlBGColor': QColor(197, 217, 249, 255),
-    'groupControlBorderColor': QColor(140, 179, 242, 255),
+    'openGroupBGColor': QColor(245, 255, 255, 255),
+    'openGroupFGColor': QColor(0, 0, 0, 255),
+    'openGroupBorderColor': QColor(32, 32, 32, 255),
+    'openGroupControlBGColor': QColor(197, 217, 249, 255),
+    'openGroupControlBorderColor': QColor(140, 179, 242, 255),
+
+    'collapsedGroupBGColor': QColor(245, 255, 255, 255),
+    'collapsedGroupFGColor': QColor(0, 0, 0, 255),
+    'collapsedGroupBorderColor': QColor(32, 32, 32, 255),
+    'collapsedGroupXShift': 4,
+    'collapsedGroupYShift': 4,
+
+    'emptyGroupBGColor': QColor(245, 255, 255, 255),
+    'emptyGroupFGColor': QColor(0, 0, 0, 255),
+    'emptyGroupBorderColor': QColor(32, 32, 32, 255),
+    'emptyGroupXShift': 4,
+    'emptyGroupYShift': 4,
 
     # Rubber band selection
     'rubberBandBorderColor': QColor(63, 81, 181, 255),

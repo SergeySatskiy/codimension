@@ -419,12 +419,12 @@ class GroupCornerControl(QGraphicsRectItem):
         """Paints the control"""
         settings = self.ref.canvas.settings
 
-        pen = QPen(settings.groupControlBorderColor)
+        pen = QPen(settings.openGroupControlBorderColor)
         pen.setStyle(Qt.SolidLine)
         pen.setWidth(1)
         painter.setPen(pen)
 
-        brush = QBrush(settings.groupControlBGColor)
+        brush = QBrush(settings.openGroupControlBGColor)
         painter.setBrush(brush)
 
         painter.drawRoundedRect(self.x(), self.y(),
