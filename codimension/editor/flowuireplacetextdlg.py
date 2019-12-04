@@ -19,6 +19,7 @@
 
 from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                    QTextEdit)
+from utils.colorfont import getZoomedMonoFont
 
 
 """Dialog to enter a new text for a graphics item"""
@@ -39,9 +40,10 @@ class ReplaceTextDialog(QDialog):
 
         # Top level layout
         layout = QVBoxLayout(self)
- 
+
         layout.addWidget(QLabel(labelText))
         self.__newCaption = QTextEdit()
+        self.__newCaption.setFont(getZoomedMonoFont())
         self.__newCaption.setAcceptRichText(False)
         layout.addWidget(self.__newCaption)
 

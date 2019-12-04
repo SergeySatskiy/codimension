@@ -21,7 +21,7 @@ import os.path
 from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                    QPushButton, QGridLayout, QLineEdit, QTextEdit, QCheckBox,
                    QFileDialog)
-from utils.colorfont import setLineEditBackground
+from utils.colorfont import setLineEditBackground, getZoomedMonoFont
 from utils.globals import GlobalData
 from utils.misc import preResolveLinkPath
 
@@ -88,6 +88,7 @@ class DocLinkAnchorDialog(QDialog):
         self.titleEdit = QTextEdit()
         self.titleEdit.setTabChangesFocus(True)
         self.titleEdit.setAcceptRichText(False)
+        self.titleEdit.setFont(getZoomedMonoFont())
         self.titleEdit.setToolTip(
             'If provided then will be displayed in the rectangle')
         gridLayout.addWidget(self.titleEdit, 3, 1, 1, 1)
