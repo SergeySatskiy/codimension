@@ -186,13 +186,13 @@ _DEFAULT_CFLOW_SETTINGS = {
     'codeBlockFGColor': QColor(0, 0, 0, 255),
     'codeBlockBorderColor': QColor(192, 192, 192, 255),
 
-    'breakBGColor': QColor(249, 160, 160, 255),
+    'breakBGColor': QColor(250, 227, 217, 255),
     'breakFGColor': QColor(0, 0, 0, 255),
-    'breakBorderColor': QColor(192, 192, 192, 255),
+    'breakBorderColor': QColor(132, 132, 132, 255),
 
-    'continueBGColor': QColor(144, 202, 249, 255),
+    'continueBGColor': QColor(138, 198, 209, 255),
     'continueFGColor': QColor(0, 0, 0, 255),
-    'continueBorderColor': QColor(192, 192, 192, 255),
+    'continueBorderColor': QColor(132, 132, 132, 255),
 
     'returnBGColor': QColor(248, 248, 248, 255),
     'returnFGColor': QColor(0, 0, 0, 255),
@@ -290,10 +290,6 @@ _DEFAULT_CFLOW_SETTINGS = {
     'tryElseScopeFGColor': QColor(0, 0, 0, 255),
     'tryElseScopeBorderColor': QColor(192, 192, 192, 255),
 
-
-
-
-
     'hiddenCommentText': 'c',
     'hiddenExceptText': 'e',
 
@@ -301,9 +297,9 @@ _DEFAULT_CFLOW_SETTINGS = {
     'collapsedOutlineWidth': 5,
     'openGroupVSpacer': 3,
     'openGroupHSpacer': 3,
-    'groupBGColor': QColor(228, 255, 186, 255),
+    'groupBGColor': QColor(245, 255, 255, 255),
     'groupFGColor': QColor(0, 0, 0, 255),
-    'groupBorderColor': QColor(0, 0, 0, 255),
+    'groupBorderColor': QColor(32, 32, 32, 255),
     'groupControlBGColor': QColor(197, 217, 249, 255),
     'groupControlBorderColor': QColor(140, 179, 242, 255),
 
