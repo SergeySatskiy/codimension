@@ -19,6 +19,7 @@
 
 """break and continue cells"""
 
+from html import escape
 from ui.qt import QGraphicsRectItem, QPen, Qt, QGraphicsItem, QBrush
 from .items import CellElement
 from .colormixin import ColorMixin
@@ -117,13 +118,12 @@ class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
         settings = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            selectPen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
+            pen.setJoinStyle(Qt.RoundJoin)
         else:
             pen = QPen(self.borderColor)
-            painter.setPen(pen)
+        painter.setPen(pen)
 
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
@@ -134,7 +134,10 @@ class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
         pen = QPen(self.fgColor)
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
-        painter.drawText(self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
+
+        hShift = (self.w - self.__textRect.width()) / 2
+        vShift = (self.h - self.__textRect.height()) / 2
+        painter.drawText(self.x1 + hShift, self.y1 + vShift,
                          self.__textRect.width(), self.__textRect.height(),
                          Qt.AlignLeft, self._getText())
 
@@ -237,13 +240,12 @@ class ContinueCell(CellElement, ColorMixin, QGraphicsRectItem):
         settings = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            selectPen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
+            pen.setJoinStyle(Qt.RoundJoin)
         else:
             pen = QPen(self.borderColor)
-            painter.setPen(pen)
+        painter.setPen(pen)
 
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
@@ -254,7 +256,10 @@ class ContinueCell(CellElement, ColorMixin, QGraphicsRectItem):
         pen = QPen(self.fgColor)
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
-        painter.drawText(self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
+
+        hShift = (self.w - self.__textRect.width()) / 2
+        vShift = (self.h - self.__textRect.height()) / 2
+        painter.drawText(self.x1 + hShift, self.y1 + vShift,
                          self.__textRect.width(), self.__textRect.height(),
                          Qt.AlignLeft, self._getText())
 

@@ -517,7 +517,7 @@ class GroupTitlePopup(QFrame):
     def show(self, controlItem):
         """Shows the title above the group control"""
         # Use the palette from the group
-        bgColor, fgColor, _ = controlItem.ref.colors()
+        bgColor, fgColor, _ = controlItem.ref.getColors()
         palette = self.__titleLabel.palette()
         palette.setColor(QPalette.Background, bgColor)
         palette.setColor(QPalette.Foreground, fgColor)

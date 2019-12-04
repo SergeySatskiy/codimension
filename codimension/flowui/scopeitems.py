@@ -20,8 +20,7 @@
 """Various items used to represent a control flow on a virtual canvas"""
 
 from sys import maxsize
-import os.path
-from cgi import escape
+from html import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from utils.globals import GlobalData
 from .auxitems import BadgeItem, Connector

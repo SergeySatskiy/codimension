@@ -20,13 +20,11 @@
 """Various comment items on a virtual canvas"""
 
 from sys import maxsize
-from cgi import escape
-from math import ceil
+from html import escape
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
-                   QGraphicsItem, QStyleOptionGraphicsItem, QStyle, QFont,
-                   QGraphicsRectItem, QCursor, QDesktopServices, QUrl)
+                   QGraphicsItem, QStyleOptionGraphicsItem, QStyle)
 from utils.globals import GlobalData
-from .auxitems import Connector, SVGItem
+from .auxitems import Connector
 from .items import CellElement
 from .routines import distance, getCommentBoxPath
 

@@ -407,15 +407,16 @@ class VirtualCanvas:
 
         groupId = groupComment.id
         if self.__isGroupCollapsed(groupId):
-            newGroup = CollapsedGroup(item, self, column, vacantRow)
+            newGroup = CollapsedGroup(item, groupComment, self,
+                                      column, vacantRow)
         else:
-            newGroup = OpenedGroupBegin(item, self, column, vacantRow)
+            newGroup = OpenedGroupBegin(item, groupComment, self,
+                                        column, vacantRow)
             newGroup.isTerminal = self.__isTerminalCell(vacantRow - 1, column)
 
         # allocate new cell, memo the group begin ref,
         # add the group to the stack and return a new vacant row
         self.__allocateAndSet(vacantRow, column, newGroup)
-        newGroup.groupBeginCMLRef = groupComment
         self.__groupStack.append([newGroup, vacantRow, column])
         return vacantRow + 1
 
@@ -437,8 +438,9 @@ class VirtualCanvas:
         # - end of an open group
         if not currentGroup.nestedRefs:
             # Empty group: replace the beginning of the group with an empty one
-            emptyGroup = EmptyGroup(groupBegin.ref, self, groupColumn, groupRow)
-            emptyGroup.groupBeginCMLRef = groupBegin.groupBeginCMLRef
+            emptyGroup = EmptyGroup(groupBegin.ref,
+                                    groupBegin.groupBeginCMLRef, self,
+                                    groupColumn, groupRow)
             self.cells[groupRow][groupColumn] = emptyGroup
         elif currentGroup.kind == CellElement.COLLAPSED_GROUP:
             # Collapsed group: the end of the group is memorized in the common
@@ -446,9 +448,8 @@ class VirtualCanvas:
             pass
         else:
             # Opened group: insert a group end
-            groupEnd = OpenedGroupEnd(item, self, column, vacantRow)
-            groupEnd.groupBeginCMLRef = groupBegin.groupBeginCMLRef
-            groupEnd.groupEndCMLRef = groupComment
+            groupEnd = OpenedGroupEnd(item, groupBegin.groupBeginCMLRef,
+                                      self, column, vacantRow)
             groupEnd.groupBeginRow = groupRow
             groupEnd.groupBeginColumn = groupColumn
 

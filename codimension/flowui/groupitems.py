@@ -24,7 +24,7 @@ from html import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .items import CellElement
 from .auxitems import Connector, GroupCornerControl
-from .routines import getBorderColor
+from .colormixin import ColorMixin
 
 
 class HGroupSpacerCell(CellElement):
@@ -54,14 +54,18 @@ class HGroupSpacerCell(CellElement):
         self.baseY = baseY
 
 
-class GroupItemBase:
+class GroupItemBase(ColorMixin):
 
     """Common functionality for the group items"""
 
-    def __init__(self):
+    def __init__(self, canvas, groupBeginCMLRef):
+        ColorMixin.__init__(self, None, canvas.settings.groupBGColor,
+                            canvas.settings.groupFGColor,
+                            canvas.settings.groupBorderColor,
+                            colorSpec=groupBeginCMLRef)
         self.nestedRefs = []
 
-        self.groupBeginCMLRef = None
+        self.groupBeginCMLRef = groupBeginCMLRef
         self.groupEndCMLRef = None
 
         # True if the previous item is terminal, i.e no connector needed
@@ -101,27 +105,13 @@ class GroupItemBase:
         return 'Group at lines ' + \
                str(lineRange[0]) + "-" + str(lineRange[1])
 
-    def getGroupColors(self, defaultBG, defaultFG, defaultBorder=None):
-        """Provides the item colors"""
-        bg = defaultBG
-        fg = defaultFG
-        if self.groupBeginCMLRef.bgColor:
-            bg = self.groupBeginCMLRef.bgColor
-        if self.groupBeginCMLRef.fgColor:
-            fg = self.groupBeginCMLRef.fgColor
-        if self.groupBeginCMLRef.border:
-            return bg, fg, self.groupBeginCMLRef.border
-        if defaultBorder is None:
-            return bg, fg, getBorderColor(bg)
-        return bg, fg, defaultBorder
-
 
 class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
 
     """Represents an empty group"""
 
-    def __init__(self, ref, canvas, x, y):
-        GroupItemBase.__init__(self)
+    def __init__(self, ref, groupBeginCMLRef, canvas, x, y):
+        GroupItemBase.__init__(self, canvas, groupBeginCMLRef)
         CellElement.__init__(self, ref, canvas, x, y)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.EMPTY_GROUP
@@ -131,12 +121,6 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-
-    def getColors(self):
-        """Provides the item colors"""
-        return self.getGroupColors(self.canvas.settings.groupBGColor,
-                                   self.canvas.settings.groupFGColor,
-                                   self.canvas.settings.groupBorderColor)
 
     def render(self):
         """Renders the cell"""
@@ -176,8 +160,6 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
                      self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
         scene.addItem(self)
 
-        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
-
     def paint(self, painter, option, widget):
         """Draws the collapsed group"""
         del option      # unused argument
@@ -195,11 +177,11 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
             selectPen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(selectPen)
         else:
-            pen = QPen(self.__borderColor)
+            pen = QPen(self.borderColor)
             pen.setStyle(Qt.DashLine)
             pen.setWidth(1)
             painter.setPen(pen)
-        brush = QBrush(self.__bgColor)
+        brush = QBrush(self.bgColor)
         painter.setBrush(brush)
         painter.drawRect(self.baseX + settings.hCellPadding,
                          self.baseY + settings.vCellPadding,
@@ -208,7 +190,7 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
         # Inner rectangle
         rectWidth -= 2 * settings.collapsedOutlineWidth
         rectHeight -= 2 * settings.collapsedOutlineWidth
-        pen = QPen(self.__borderColor)
+        pen = QPen(self.borderColor)
         pen.setStyle(Qt.DashLine)
         pen.setWidth(1)
         painter.setPen(pen)
@@ -219,7 +201,7 @@ class EmptyGroup(GroupItemBase, CellElement, QGraphicsRectItem):
                          rectWidth, rectHeight)
 
         # Draw the text in the rectangle
-        pen = QPen(self.__fgColor)
+        pen = QPen(self.fgColor)
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
 
@@ -239,8 +221,8 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
 
     """Represents beginning af a group which can be collapsed"""
 
-    def __init__(self, ref, canvas, x, y):
-        GroupItemBase.__init__(self)
+    def __init__(self, ref, groupBeginCMLRef, canvas, x, y):
+        GroupItemBase.__init__(self, canvas, groupBeginCMLRef)
         CellElement.__init__(self, ref, canvas, x, y)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.OPENED_GROUP_BEGIN
@@ -268,12 +250,6 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
             self.highlight = newValue
             if not self.isSelected():
                 self.update()
-
-    def getColors(self):
-        """Provides the item colors"""
-        return self.getGroupColors(self.canvas.settings.groupBGColor,
-                                   self.canvas.settings.groupFGColor,
-                                   self.canvas.settings.groupBorderColor)
 
     def render(self):
         """Renders the cell"""
@@ -321,11 +297,6 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
         self.topLeftControl.moveTo(baseX, baseY)
         scene.addItem(self.topLeftControl)
 
-        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
-
-    def colors(self):
-        return self.__bgColor, self.__fgColor, self.__borderColor
-
     def paint(self, painter, option, widget):
         """Draws the collapsed group"""
         del option      # unused argument
@@ -340,14 +311,14 @@ class OpenedGroupBegin(GroupItemBase, CellElement, QGraphicsRectItem):
             selectPen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(selectPen)
         else:
-            pen = QPen(self.__borderColor)
+            pen = QPen(self.borderColor)
             if self.highlight:
                 pen.setStyle(Qt.SolidLine)
             else:
                 pen.setStyle(Qt.DotLine)
             pen.setWidth(1)
             painter.setPen(pen)
-        brush = QBrush(self.__bgColor)
+        brush = QBrush(self.bgColor)
         painter.setBrush(brush)
 
         fullWidth = self.groupWidth + 2 * settings.openGroupHSpacer
@@ -363,8 +334,8 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
 
     """Represents the end af a group which can be collapsed"""
 
-    def __init__(self, ref, canvas, x, y):
-        GroupItemBase.__init__(self)
+    def __init__(self, ref, groupBeginCMLRef, canvas, x, y):
+        GroupItemBase.__init__(self, canvas, groupBeginCMLRef)
         CellElement.__init__(self, ref, canvas, x, y)
         self.kind = CellElement.OPENED_GROUP_END
 
@@ -407,8 +378,8 @@ class CollapsedGroup(GroupItemBase, CellElement, QGraphicsRectItem):
 
     """Represents a collapsed group"""
 
-    def __init__(self, ref, canvas, x, y):
-        GroupItemBase.__init__(self)
+    def __init__(self, ref, groupBeginCMLRef, canvas, x, y):
+        GroupItemBase.__init__(self, canvas, groupBeginCMLRef)
         CellElement.__init__(self, ref, canvas, x, y)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.COLLAPSED_GROUP
@@ -417,12 +388,6 @@ class CollapsedGroup(GroupItemBase, CellElement, QGraphicsRectItem):
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-
-    def getColors(self):
-        """Provides the item colors"""
-        return self.getGroupColors(self.canvas.settings.groupBGColor,
-                                   self.canvas.settings.groupFGColor,
-                                   self.canvas.settings.groupBorderColor)
 
     def render(self):
         """Renders the cell"""
@@ -462,8 +427,6 @@ class CollapsedGroup(GroupItemBase, CellElement, QGraphicsRectItem):
                      self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
         scene.addItem(self)
 
-        self.__bgColor, self.__fgColor, self.__borderColor = self.getColors()
-
     def paint(self, painter, option, widget):
         """Draws the collapsed group"""
         del option      # unused argument
@@ -481,9 +444,9 @@ class CollapsedGroup(GroupItemBase, CellElement, QGraphicsRectItem):
             selectPen.setJoinStyle(Qt.RoundJoin)
             painter.setPen(selectPen)
         else:
-            pen = QPen(self.__borderColor)
+            pen = QPen(self.borderColor)
             painter.setPen(pen)
-        brush = QBrush(self.__bgColor)
+        brush = QBrush(self.bgColor)
         painter.setBrush(brush)
         painter.drawRect(self.baseX + settings.hCellPadding,
                          self.baseY + settings.vCellPadding,
@@ -492,7 +455,7 @@ class CollapsedGroup(GroupItemBase, CellElement, QGraphicsRectItem):
         # Inner rectangle
         rectWidth -= 2 * settings.collapsedOutlineWidth
         rectHeight -= 2 * settings.collapsedOutlineWidth
-        pen = QPen(self.__borderColor)
+        pen = QPen(self.borderColor)
         painter.setPen(pen)
         painter.drawRect(self.baseX + settings.hCellPadding +
                          settings.collapsedOutlineWidth,
@@ -501,7 +464,7 @@ class CollapsedGroup(GroupItemBase, CellElement, QGraphicsRectItem):
                          rectWidth, rectHeight)
 
         # Draw the text in the rectangle
-        pen = QPen(self.__fgColor)
+        pen = QPen(self.fgColor)
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
 
@@ -515,3 +478,4 @@ class CollapsedGroup(GroupItemBase, CellElement, QGraphicsRectItem):
             settings.collapsedOutlineWidth,
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self._getText())
+

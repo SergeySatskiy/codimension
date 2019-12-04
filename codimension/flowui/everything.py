@@ -149,10 +149,12 @@ class C:    # Side
     pass    # Last class statement side 1
             # Last class statement side 2
 
+# cml 1 gb id=2 title="Class in a group"
 class C1( B1,
           B2 ):
     " C1 doc "
     pass
+# cml 1 ge id=2
 
 # Leading
 class C3( B1,       # Side 1
@@ -583,7 +585,7 @@ def ff(x):
         if x > 32:
             x = 32
 
-    # cml 1 doc anchor=some title=Yahoo bg=#66ff66 border=#1010ff
+    # cml 1 doc anchor=some title=Yahoo bg=#6f6 border=#1010ff
     return """ddd %d
 """ % 123
 

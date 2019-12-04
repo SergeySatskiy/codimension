@@ -19,32 +19,8 @@
 
 """Various routines used in other places"""
 
-from ui.qt import QPainterPath, QColor
+from ui.qt import QPainterPath
 from .cml import CMLdoc
-
-
-def getBorderColor(color):
-    """Creates a darker version of the color"""
-    red = color.red()
-    green = color.green()
-    blue = color.blue()
-
-    delta = 60 + 40
-    if isDark(red, green, blue):
-        # Need lighter color
-        return QColor(min(red + delta, 255),
-                      min(green + delta, 255),
-                      min(blue + delta, 255), color.alpha())
-    # Need darker color
-    return QColor(max(red - delta, 0),
-                  max(green - delta, 0),
-                  max(blue - delta, 0), color.alpha())
-
-
-def isDark(red, green, blue):
-    """True if the color is dark"""
-    yiq = ((red * 299) + (green * 587) + (blue * 114)) / 1000
-    return yiq < 128
 
 
 def distance(val, begin, end):

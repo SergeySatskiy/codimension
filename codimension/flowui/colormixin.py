@@ -55,6 +55,12 @@ class ColorMixin:
         """Provides the item colors"""
         return self.bgColor, self.fgColor, self.borderColor
 
+    @staticmethod
+    def isDark(red, green, blue):
+        """True if the color is dark"""
+        yiq = ((red * 299) + (green * 587) + (blue * 114)) / 1000
+        return yiq < 128
+
     def __getFromColorSpec(self, colorSpec):
         """Updates the colors from the given colorspec"""
         if colorSpec.bgColor:
