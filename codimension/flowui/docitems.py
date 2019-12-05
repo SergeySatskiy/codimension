@@ -25,13 +25,14 @@ from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsItem, QFont,
 from utils.globals import GlobalData
 from utils.misc import resolveLinkPath
 from .auxitems import Connector, SVGItem
-from .items import CellElement
+from .cellelement import CellElement
 from .routines import distance
 from .commentitems import CommentCellBase
 from .colormixin import ColorMixin
+from .iconmixin import IconMixin
 
 
-class DocCellBase(CommentCellBase, ColorMixin, QGraphicsRectItem):
+class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
 
     """Base class for all doc cells"""
 
@@ -46,17 +47,17 @@ class DocCellBase(CommentCellBase, ColorMixin, QGraphicsRectItem):
 
         # They all have the same icon
         if cmlRef.link is not None and cmlRef.anchor is not None:
-            self.iconItem = SVGItem('docanchor.svg', self)
-            self.iconItem.setToolTip('Jump to the documentation')
+            IconMixin.__init__(self, canvas.settings, 'docanchor.svg',
+                               'Jump to the documentation')
             self.iconItem.setCursor(QCursor(Qt.PointingHandCursor))
         else:
             if cmlRef.link is not None:
-                self.iconItem = SVGItem('doclink.svg', self)
-                self.iconItem.setToolTip('Jump to the documentation')
+                IconMixin.__init__(self, canvas.settings, 'doclink.svg',
+                                   'Jump to the documentation')
                 self.iconItem.setCursor(QCursor(Qt.PointingHandCursor))
             else:
-                self.iconItem = SVGItem('anchor.svg', self)
-                self.iconItem.setToolTip('Documentation anchor')
+                IconMixin.__init__(self, canvas.settings, 'anchor.svg',
+                                   'Documentation anchor')
 
 
         # They all are double clickable
@@ -102,7 +103,6 @@ class DocCellBase(CommentCellBase, ColorMixin, QGraphicsRectItem):
         settings = self.canvas.settings
         self._getText()
 
-        self.iconItem.setHeight(self.getIconHeight())
         if self._text:
             self._textRect = self.getBoundingRect(self._text)
             self.minWidth = self._textRect.width() + settings.hDocLinkPadding
@@ -227,10 +227,6 @@ class DocCellBase(CommentCellBase, ColorMixin, QGraphicsRectItem):
     def copyToClipboard(self):
         """Copies the item to a clipboard"""
         self._copyToClipboard(self.cmlRef.ref.parts)
-
-    def isCMLDoc(self):
-        """True if it is a CML doc item"""
-        return True
 
 
 

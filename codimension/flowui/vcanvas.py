@@ -38,10 +38,12 @@ from cdmcfparser import (CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                          WHILE_FRAGMENT, FOR_FRAGMENT, IF_FRAGMENT,
                          WITH_FRAGMENT, TRY_FRAGMENT, CML_COMMENT_FRAGMENT)
 from .cml import CMLVersion, CMLsw, CMLgb, CMLge, CMLdoc
-from .items import (CellElement, VacantCell, CodeBlockCell,
+from .cellelement import CellElement
+from .items import (CodeBlockCell,
                     ReturnCell, RaiseCell, AssertCell,
-                    SysexitCell, ImportCell,  ConnectorCell, IfCell,
-                    VSpacerCell, MinimizedExceptCell)
+                    SysexitCell, ImportCell,  IfCell,
+                    MinimizedExceptCell)
+from .auxitems import ConnectorCell, VacantCell, VSpacerCell
 from .loopjumpitems import BreakCell, ContinueCell
 from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
                          ClassScopeCell, ForScopeCell, WhileScopeCell,

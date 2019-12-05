@@ -21,9 +21,11 @@
 
 
 from html import escape
-from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
-from .items import CellElement
-from .auxitems import Connector, GroupCornerControl
+from ui.qt import (Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem, QFrame,
+                   QLabel, QVBoxLayout, QPalette, QApplication)
+from utils.globals import GlobalData
+from .cellelement import CellElement
+from .auxitems import Connector
 from .colormixin import ColorMixin
 
 
@@ -478,4 +480,155 @@ class CollapsedGroup(GroupItemBase, CellElement,
             self.N_BACK_RECT * settings.collapsedGroupYShift,
             self.__textRect.width(), self.__textRect.height(),
             Qt.AlignLeft, self._getText())
+
+
+
+class GroupCornerControl(QGraphicsRectItem):
+
+    """Expanded group top left corner control"""
+
+    def __init__(self, ref):
+        QGraphicsRectItem.__init__(self)
+        self.ref = ref
+
+        settings = self.ref.canvas.settings
+        self.__width = settings.openGroupHSpacer * 2 - 1
+        self.__height = settings.openGroupVSpacer * 2 - 1
+
+        self.setAcceptHoverEvents(True)
+
+    def moveTo(self, xPos, yPos):
+        """Moves to the specified position"""
+        settings = self.ref.canvas.settings
+
+        # This is a mistery. I do not understand why I need to divide by 2.0
+        # however this works. I tried various combinations of initialization,
+        # setting the position and mapping. Nothing works but ../2.0. Sick!
+        self.setPos((float(xPos) + settings.openGroupHSpacer - 1) / 2.0,
+                    (float(yPos) + settings.openGroupVSpacer - 1) / 2.0)
+        self.setRect(self.x(), self.y(),
+                     self.__width, self.__height)
+
+    def paint(self, painter, option, widget):
+        """Paints the control"""
+        del option
+        del widget
+
+        settings = self.ref.canvas.settings
+
+        pen = QPen(settings.openGroupControlBorderColor)
+        pen.setStyle(Qt.SolidLine)
+        pen.setWidth(1)
+        painter.setPen(pen)
+
+        brush = QBrush(settings.openGroupControlBGColor)
+        painter.setBrush(brush)
+
+        painter.drawRoundedRect(self.x(), self.y(),
+                                self.__width, self.__height,
+                                1, 1)
+
+    def hoverEnterEvent(self, event):
+        """Handles the mouse in event"""
+        del event
+        self.ref.setHighlight(True)
+        if self.ref.getTitle():
+            groupTitlePopup.setTitleForGroup(self.ref)
+            groupTitlePopup.show(self)
+
+    def hoverLeaveEvent(self, event):
+        """Handles the mouse out event"""
+        del event
+        self.ref.setHighlight(False)
+        groupTitlePopup.hide()
+
+    def isProxyItem(self):
+        """True if it is a proxy item"""
+        return True
+
+    def getProxiedItem(self):
+        """Provides the real item for a proxy one"""
+        return self.ref
+
+    def isComment(self):
+        """True if it is a comment"""
+        return False
+
+    def isCMLDoc(self):
+        """True if it is a CML doc item"""
+        return False
+
+    def scopedItem(self):
+        """True if it is a scoped item"""
+        return False
+
+
+
+class GroupTitlePopup(QFrame):
+
+    """Frameless panel to show the group title"""
+
+    def __init__(self, parent):
+        QFrame.__init__(self, parent)
+
+        self.setWindowFlags(Qt.SplashScreen |
+                            Qt.WindowStaysOnTopHint |
+                            Qt.X11BypassWindowManagerHint)
+
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setLineWidth(1)
+
+        self.__titleLabel = None
+        self.__createLayout()
+
+    def __createLayout(self):
+        """Creates the widget layout"""
+        verticalLayout = QVBoxLayout(self)
+        verticalLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.__titleLabel = QLabel()
+        self.__titleLabel.setAutoFillBackground(True)
+        self.__titleLabel.setFrameShape(QFrame.StyledPanel)
+        self.__titleLabel.setStyleSheet('padding: 2px')
+        verticalLayout.addWidget(self.__titleLabel)
+
+    def setTitleForGroup(self, group):
+        """Sets the title of the group"""
+        self.__titleLabel.setFont(group.canvas.settings.monoFont)
+        self.__titleLabel.setText(group.getTitle())
+
+    def resize(self, controlItem):
+        """Moves the popup to the proper position"""
+        # calculate the positions above the group
+        # Taken from here:
+        # https://stackoverflow.com/questions/9871749/find-screen-position-of-a-qgraphicsitem
+        scene = controlItem.ref.scene()
+        view = scene.views()[0]
+        sceneP = controlItem.mapToScene(controlItem.boundingRect().topLeft())
+        viewP = view.mapFromScene(sceneP)
+        pos = view.viewport().mapToGlobal(viewP)
+
+        self.move(pos.x(), pos.y() - self.height() - 2)
+        QApplication.processEvents()
+
+    def show(self, controlItem):
+        """Shows the title above the group control"""
+        # Use the palette from the group
+        bgColor, fgColor, _ = controlItem.ref.getColors()
+        palette = self.__titleLabel.palette()
+        palette.setColor(QPalette.Background, bgColor)
+        palette.setColor(QPalette.Foreground, fgColor)
+        self.__titleLabel.setPalette(palette)
+
+        # That's a trick: resizing works correctly only if the item is shown
+        # So move it outside of the screen, show it so it is invisible and then
+        # resize and move to the proper position
+        screenHeight = GlobalData().screenHeight
+        self.move(0, screenHeight + 128)
+        QFrame.show(self)
+        QApplication.processEvents()
+        self.resize(controlItem)
+
+# One instance use for all
+groupTitlePopup = GroupTitlePopup(None)
 

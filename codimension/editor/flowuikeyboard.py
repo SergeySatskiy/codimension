@@ -21,7 +21,7 @@
 
 from sys import maxsize
 from ui.qt import Qt, QGraphicsScene
-from flowui.items import CellElement
+from flowui.cellelement import CellElement
 from flowui.scopeitems import ScopeCellElement
 from utils.settings import Settings
 

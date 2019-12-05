@@ -23,10 +23,79 @@
 from sys import maxsize
 import os.path
 from ui.qt import (QPen, QBrush, QPainterPath, Qt, QGraphicsSvgItem,
-                   QGraphicsSimpleTextItem, QGraphicsRectItem, QLabel,
-                   QGraphicsPathItem, QColor, QFrame,
-                   QVBoxLayout, QPalette, QApplication)
-from utils.globals import GlobalData
+                   QGraphicsSimpleTextItem, QGraphicsRectItem,
+                   QGraphicsPathItem)
+from .cellelement import CellElement
+
+
+class VacantCell(CellElement):
+
+    """A vacant cell which can be later used for some other element"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        self.kind = CellElement.VACANT
+
+    def render(self):
+        """Renders the cell"""
+        self.width = 0
+        self.height = 0
+        self.minWidth = 0
+        self.minHeight = 0
+        return (self.width, self.height)
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        self.baseX = baseX
+        self.baseY = baseY
+
+
+class VSpacerCell(CellElement):
+
+    """Represents a vertical spacer cell"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        self.kind = CellElement.V_SPACER
+
+    def render(self):
+        """Renders the cell"""
+        self.width = 0
+        self.height = self.canvas.settings.vSpacer
+        self.minWidth = self.width
+        self.minHeight = self.height
+        return (self.width, self.height)
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        # There is no need to draw anything. The cell just reserves some
+        # vertical space for better appearance
+        self.baseX = baseX
+        self.baseY = baseY
+
+
+class HSpacerCell(CellElement):
+
+    """Represents a horizontal spacer cell"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        self.kind = CellElement.H_SPACER
+
+    def render(self):
+        """Renders the cell"""
+        self.width = self.canvas.settings.hSpacer
+        self.height = 0
+        self.minWidth = self.width
+        self.minHeight = self.height
+        return (self.width, self.height)
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        # There is no need to draw anything. The cell just reserves some
+        # horizontal space for better appearance
+        self.baseX = baseX
+        self.baseY = baseY
 
 
 class SVGItem(QGraphicsSvgItem):
@@ -177,6 +246,9 @@ class BadgeItem(QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Paints the badge item"""
+        del option
+        del widget
+
         s = self.ref.canvas.settings
 
         if self.__needRect:
@@ -221,7 +293,6 @@ class BadgeItem(QGraphicsRectItem):
     def scopedItem(self):
         """True if it is a scoped item"""
         return False
-
 
 
 class Connector(QGraphicsPathItem):
@@ -313,6 +384,9 @@ class RubberBandItem(QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Paints the rubber band"""
+        del option
+        del widget
+
         pen = QPen(self.__settings.rubberBandBorderColor)
         painter.setPen(pen)
         brush = QBrush(self.__settings.rubberBandFGColor)
@@ -389,61 +463,170 @@ class Text(QGraphicsSimpleTextItem):
         return False
 
 
-class GroupCornerControl(QGraphicsRectItem):
+class ConnectorCell(CellElement, QGraphicsPathItem):
 
-    """Expanded group top left corner control"""
+    """Represents a single connector cell"""
 
-    def __init__(self, ref):
-        QGraphicsRectItem.__init__(self)
-        self.ref = ref
+    NORTH = 0
+    SOUTH = 1
+    WEST = 2
+    EAST = 3
+    CENTER = 4
 
-        settings = self.ref.canvas.settings
-        self.__width = settings.openGroupHSpacer * 2 - 1
-        self.__height = settings.openGroupVSpacer * 2 - 1
+    # Connector type. In case of 'if' and groups it is necessary to calculate
+    # properly how wide the connector should be. The subKind tells what kind
+    # of correction is required
+    GENERIC = 100
+    TOP_IF = 101
+    BOTTOM_IF = 102
 
-        self.setAcceptHoverEvents(True)
+    def __init__(self, connections, canvas, x, y):
+        """Connections are supposed to be a list of tuples.
 
-    def moveTo(self, xPos, yPos):
-        """Moves to the specified position"""
-        settings = self.ref.canvas.settings
+        Eample: [ (NORTH, SOUTH), (EAST, CENTER) ]
+        """
+        CellElement.__init__(self, None, canvas, x, y)
+        QGraphicsPathItem.__init__(self)
+        self.kind = CellElement.CONNECTOR
+        self.subKind = self.GENERIC
+        self.connections = connections
 
-        # This is a mistery. I do not understand why I need to divide by 2.0
-        # however this works. I tried various combinations of initialization,
-        # setting the position and mapping. Nothing works but ../2.0. Sick!
-        self.setPos((float(xPos) + settings.openGroupHSpacer - 1) / 2.0,
-                    (float(yPos) + settings.openGroupVSpacer - 1) / 2.0)
-        self.setRect(self.x(), self.y(),
-                     self.__width, self.__height)
+    def __hasVertical(self):
+        """True if has a vertical part"""
+        for conn in self.connections:
+            if self.NORTH in conn or self.SOUTH in conn:
+                return True
+        return False
+
+    def __hasHorizontal(self):
+        """True if has a horizontal part"""
+        for conn in self.connections:
+            if self.EAST in conn or self.WEST in conn:
+                return True
+        return False
+
+    def render(self):
+        """Renders the cell"""
+        settings = self.canvas.settings
+
+        if self.__hasVertical():
+            self.minWidth = settings.mainLine + settings.hCellPadding
+            self.minWidth += self.hShift * 2 * settings.openGroupHSpacer
+        else:
+            self.minWidth = 0
+
+        if self.__hasHorizontal():
+            self.minHeight = 2 * settings.vCellPadding
+        else:
+            self.minHeight = 0
+
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def __getY(self):
+        """Provides the Y coordinate"""
+        row = self.addr[1]
+        column = self.addr[0]
+        cells = self.canvas.cells
+        for index in range(column - 1, -1, -1):
+            kind = cells[row][index].kind
+            if kind in [CellElement.VACANT, CellElement.H_SPACER,
+                        CellElement.V_SPACER]:
+                continue
+            if kind in [CellElement.FILE_SCOPE, CellElement.FUNC_SCOPE,
+                        CellElement.CLASS_SCOPE, CellElement.FOR_SCOPE,
+                        CellElement.WHILE_SCOPE, CellElement.TRY_SCOPE,
+                        CellElement.WITH_SCOPE, CellElement.DECOR_SCOPE,
+                        CellElement.ELSE_SCOPE, CellElement.EXCEPT_SCOPE,
+                        CellElement.FINALLY_SCOPE]:
+                break
+            if kind != CellElement.CONNECTOR:
+                return cells[row][index].minHeight / 2
+        return self.height / 2
+
+    def __getXY(self, location):
+        """Provides the location coordinates"""
+        settings = self.canvas.settings
+        hShift = self.hShift * 2 * settings.openGroupHSpacer
+
+        baseX = self.baseX
+        if self.subKind not in [self.TOP_IF, self.BOTTOM_IF]:
+            baseX = self.baseX + hShift
+        if location == self.NORTH:
+            if self.subKind == self.BOTTOM_IF:
+                cellAbove = self.canvas.cells[self.addr[1] - 1][self.addr[0]]
+                if cellAbove.kind == CellElement.VCANVAS:
+                    baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+            return baseX + settings.mainLine, self.baseY
+        if location == self.SOUTH:
+            if self.subKind == self.TOP_IF:
+                cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
+                if cellBelow.kind == CellElement.VCANVAS:
+                    baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+            return baseX + settings.mainLine, self.baseY + self.height
+        if location == self.WEST:
+            return baseX, self.baseY + self.__getY()
+        if location == self.EAST:
+            return baseX + self.width - hShift, self.baseY + self.__getY()
+        # It is CENTER
+        if self.subKind == self.TOP_IF:
+            cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
+            if cellBelow.kind == CellElement.VCANVAS:
+                baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+        elif self.subKind == self.BOTTOM_IF:
+            cellAbove = self.canvas.cells[self.addr[1] - 1][self.addr[0]]
+            if cellAbove.kind == CellElement.VCANVAS:
+                baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+        return baseX + settings.mainLine, self.baseY + self.__getY()
+
+    def __angled(self, begin, end):
+        """Returns True if the connection is not straight"""
+        if begin in [self.NORTH, self.SOUTH] and \
+           end in [self.WEST, self.EAST]:
+            return True
+        return end in [self.NORTH, self.SOUTH] and \
+               begin in [self.WEST, self.EAST]
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        self.baseX = baseX
+        self.baseY = baseY
+
+        path = QPainterPath()
+        for connection in self.connections:
+            startX, startY = self.__getXY(connection[0])
+            endX, endY = self.__getXY(connection[1])
+            if self.__angled(connection[0], connection[1]):
+                centerX, centerY = self.__getXY(self.CENTER)
+                path.moveTo(startX, startY)
+                path.lineTo(centerX, centerY)
+                path.lineTo(endX, endY)
+            else:
+                path.moveTo(startX, startY)
+                path.lineTo(endX, endY)
+        # It does not look nice so commented out
+        #if len(self.connections) == 1:
+        #    if self.connections[0][0] == self.NORTH:
+        #        if self.connections[0][1] == self.CENTER:
+        #            # That's a half connector used when terminal items are
+        #            # suppressed.
+        #            radius = self.canvas.settings.vCellPadding / 2.0
+        #            path.addEllipse(endX - radius / 2.0,
+        #                            endY - radius / 2.0, radius, radius)
+        self.setPath(path)
+        scene.addItem(self)
 
     def paint(self, painter, option, widget):
-        """Paints the control"""
-        settings = self.ref.canvas.settings
+        """Draws the code block"""
+        settings = self.canvas.settings
 
-        pen = QPen(settings.openGroupControlBorderColor)
-        pen.setStyle(Qt.SolidLine)
-        pen.setWidth(1)
+        pen = QPen(settings.lineColor)
+        pen.setWidth(settings.lineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        self.setPen(pen)
         painter.setPen(pen)
-
-        brush = QBrush(settings.openGroupControlBGColor)
-        painter.setBrush(brush)
-
-        painter.drawRoundedRect(self.x(), self.y(),
-                                self.__width, self.__height,
-                                1, 1)
-
-    def hoverEnterEvent(self, event):
-        """Handles the mouse in event"""
-        del event
-        self.ref.setHighlight(True)
-        if self.ref.getTitle():
-            groupTitlePopup.setTitleForGroup(self.ref)
-            groupTitlePopup.show(self)
-
-    def hoverLeaveEvent(self, event):
-        """Handles the mouse out event"""
-        del event
-        self.ref.setHighlight(False)
-        groupTitlePopup.hide()
+        QGraphicsPathItem.paint(self, painter, option, widget)
 
     def isProxyItem(self):
         """True if it is a proxy item"""
@@ -451,86 +634,13 @@ class GroupCornerControl(QGraphicsRectItem):
 
     def getProxiedItem(self):
         """Provides the real item for a proxy one"""
-        return self.ref
+        return None
 
-    def isComment(self):
-        """True if it is a comment"""
-        return False
+    def mouseDoubleClickEvent(self, event):
+        """Handles the mouse double click"""
+        return  # To be on the safe side: override the default implementation
 
-    def isCMLDoc(self):
-        """True if it is a CML doc item"""
-        return False
+    def setEditor(self, editor):
+        """Sets the editor"""
+        return  # To be on the safe side: override the default implementation
 
-    def scopedItem(self):
-        """True if it is a scoped item"""
-        return False
-
-
-
-class GroupTitlePopup(QFrame):
-
-    """Frameless panel to show the group title"""
-
-    def __init__(self, parent):
-        QFrame.__init__(self, parent)
-
-        self.setWindowFlags(Qt.SplashScreen |
-                            Qt.WindowStaysOnTopHint |
-                            Qt.X11BypassWindowManagerHint)
-
-        self.setFrameShape(QFrame.StyledPanel)
-        self.setLineWidth(1)
-
-        self.__titleLabel = None
-        self.__createLayout()
-
-    def __createLayout(self):
-        """Creates the widget layout"""
-        verticalLayout = QVBoxLayout(self)
-        verticalLayout.setContentsMargins(0, 0, 0, 0)
-
-        self.__titleLabel = QLabel()
-        self.__titleLabel.setAutoFillBackground(True)
-        self.__titleLabel.setFrameShape(QFrame.StyledPanel)
-        self.__titleLabel.setStyleSheet('padding: 2px')
-        verticalLayout.addWidget(self.__titleLabel)
-
-    def setTitleForGroup(self, group):
-        """Sets the title of the group"""
-        self.__titleLabel.setFont(group.canvas.settings.monoFont)
-        self.__titleLabel.setText(group.getTitle())
-
-    def resize(self, controlItem):
-        """Moves the popup to the proper position"""
-        # calculate the positions above the group
-        # Taken from here:
-        # https://stackoverflow.com/questions/9871749/find-screen-position-of-a-qgraphicsitem
-        scene = controlItem.ref.scene()
-        view = scene.views()[0]
-        sceneP = controlItem.mapToScene(controlItem.boundingRect().topLeft())
-        viewP = view.mapFromScene(sceneP)
-        pos = view.viewport().mapToGlobal(viewP)
-
-        self.move(pos.x(), pos.y() - self.height() - 2)
-        QApplication.processEvents()
-
-    def show(self, controlItem):
-        """Shows the title above the group control"""
-        # Use the palette from the group
-        bgColor, fgColor, _ = controlItem.ref.getColors()
-        palette = self.__titleLabel.palette()
-        palette.setColor(QPalette.Background, bgColor)
-        palette.setColor(QPalette.Foreground, fgColor)
-        self.__titleLabel.setPalette(palette)
-
-        # That's a trick: resizing works correctly only if the item is shown
-        # So move it outside of the screen, show it so it is invisible and then
-        # resize and move to the proper position
-        screenHeight = GlobalData().screenHeight
-        self.move(0, screenHeight + 128)
-        QFrame.show(self)
-        QApplication.processEvents()
-        self.resize(controlItem)
-
-# One instance use for all
-groupTitlePopup = GroupTitlePopup(None)

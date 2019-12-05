@@ -24,7 +24,7 @@ from html import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from utils.globals import GlobalData
 from .auxitems import BadgeItem, Connector
-from .items import CellElement
+from .cellelement import CellElement
 from .routines import distance, getNoCellCommentBoxPath, getHiddenCommentPath
 from .cml import CMLVersion
 from .colormixin import ColorMixin
@@ -488,10 +488,6 @@ class ScopeCellElement(CellElement):
         """Debugging support"""
         return CellElement.__str__(self) + \
                "(" + scopeCellElementToString(self.subKind) + ")"
-
-    def scopedItem(self):
-        """True if it is a scoped item"""
-        return True
 
     def isComment(self):
         """True if it is a comment"""

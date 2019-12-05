@@ -21,7 +21,7 @@
 
 from html import escape
 from ui.qt import QGraphicsRectItem, QPen, Qt, QGraphicsItem, QBrush
-from .items import CellElement
+from .cellelement import CellElement
 from .colormixin import ColorMixin
 from .auxitems import Connector
 

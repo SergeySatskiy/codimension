@@ -25,7 +25,7 @@ from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
                    QGraphicsItem, QStyleOptionGraphicsItem, QStyle)
 from utils.globals import GlobalData
 from .auxitems import Connector
-from .items import CellElement
+from .cellelement import CellElement
 from .routines import distance, getCommentBoxPath
 
 

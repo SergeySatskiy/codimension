@@ -24,7 +24,8 @@ import os.path
 import uuid
 import logging
 from ui.qt import QMenu, QApplication
-from flowui.items import CellElement, IfCell
+from flowui.cellelement import CellElement
+from flowui.items import IfCell
 from flowui.scopeitems import ScopeCellElement
 from flowui.groupitems import OpenedGroupBegin, CollapsedGroup, EmptyGroup
 from flowui.docitems import IndependentDocCell, LeadingDocCell, AboveDocCell

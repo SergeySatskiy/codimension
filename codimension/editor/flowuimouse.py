@@ -21,7 +21,7 @@
 
 from sys import maxsize
 from flowui.scopeitems import ScopeCellElement
-from flowui.items import CellElement
+from flowui.cellelement import CellElement
 from flowui.auxitems import RubberBandItem
 from ui.qt import Qt, QTransform, QPoint, QRect, QSize, QCursor, QGraphicsScene
 
