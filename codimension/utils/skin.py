@@ -224,6 +224,9 @@ _DEFAULT_CFLOW_SETTINGS = {
     'badgeFGColor': QColor(0, 0, 0, 255),
     'badgeLineWidth': 1,
     'badgeLineColor': QColor(180, 180, 180, 255),
+    'badgeHSpacing': 2,
+    'badgeVSpacing': 1,
+    'badgeRadius': 2,
 
     # Comments: leading, side & independent
     'commentBGColor': QColor(255, 255, 235, 255),

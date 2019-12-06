@@ -138,7 +138,7 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         ColorMixin.__init__(self, ref, self.canvas.settings.returnBGColor,
                             self.canvas.settings.returnFGColor,
                             self.canvas.settings.returnBorderColor)
-        IconMixin.__init__(self, canvas.settings, 'return.svg', 'return')
+        IconMixin.__init__(self, canvas, 'return.svg', 'return')
         QGraphicsRectItem.__init__(self)
         self.kind = CellElement.RETURN
         self.__textRect = None
@@ -175,7 +175,7 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         self.minWidth = max(
             self.__textRect.width() + 2 * settings.hCellPadding +
             settings.hTextPadding + settings.returnRectRadius +
-            2 * settings.hTextPadding + self.iconItem.width(),
+            2 * settings.hTextPadding + self.iconItem.iconWidth(),
             settings.minWidth)
 
         self.height = self.minHeight
@@ -204,7 +204,7 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
 
         self.iconItem.setPos(
             baseX + settings.hCellPadding + settings.hTextPadding,
-            baseY + self.minHeight/2 - self.iconItem.height()/2)
+            baseY + self.minHeight/2 - self.iconItem.iconHeight()/2)
 
         scene.addItem(self.connector)
         scene.addItem(self)
@@ -233,7 +233,7 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
             self.minHeight - 2 * settings.vCellPadding,
             settings.returnRectRadius, settings.returnRectRadius)
         lineXBase = self.baseX + settings.hCellPadding
-        lineXPos = lineXBase + self.iconItem.width() + 2 * settings.hTextPadding
+        lineXPos = lineXBase + self.iconItem.iconWidth() + 2 * settings.hTextPadding
         lineYBase = self.baseY + settings.vCellPadding
         painter.drawLine(
             lineXPos, lineYBase,
@@ -245,11 +245,11 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         painter.setPen(pen)
 
         availWidth = self.minWidth - 2 * settings.hCellPadding - \
-                     self.iconItem.width() - 2 * settings.hTextPadding - \
+                     self.iconItem.iconWidth() - 2 * settings.hTextPadding - \
                      settings.hTextPadding - settings.returnRectRadius
         textShift = (availWidth - self.__textRect.width()) / 2
         painter.drawText(
-            self.baseX + settings.hCellPadding + self.iconItem.width() +
+            self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
             self.__textRect.width(), self.__textRect.height(),
@@ -295,7 +295,7 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         ColorMixin.__init__(self, ref, self.canvas.settings.raiseBGColor,
                             self.canvas.settings.raiseFGColor,
                             self.canvas.settings.raiseBorderColor)
-        IconMixin.__init__(self, canvas.settings, 'raise.svg', 'raise')
+        IconMixin.__init__(self, canvas, 'raise.svg', 'raise')
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.RAISE
         self.__textRect = None
@@ -314,7 +314,7 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         self.minWidth = max(
             self.__textRect.width() + 2 * settings.hCellPadding +
             settings.hTextPadding + settings.returnRectRadius +
-            2 * settings.hTextPadding + self.iconItem.width(),
+            2 * settings.hTextPadding + self.iconItem.iconWidth(),
             settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
@@ -342,7 +342,7 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
 
         self.iconItem.setPos(
             baseX + settings.hCellPadding + settings.hTextPadding,
-            baseY + self.minHeight/2 - self.iconItem.height()/2)
+            baseY + self.minHeight/2 - self.iconItem.iconHeight()/2)
 
         scene.addItem(self.connector)
         scene.addItem(self)
@@ -372,7 +372,7 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
                                 settings.returnRectRadius,
                                 settings.returnRectRadius)
         lineXBase = self.baseX + settings.hCellPadding
-        lineXPos = lineXBase + self.iconItem.width() + 2 * settings.hTextPadding
+        lineXPos = lineXBase + self.iconItem.iconWidth() + 2 * settings.hTextPadding
         lineYBase = self.baseY + settings.vCellPadding
         painter.drawLine(
             lineXPos, lineYBase,
@@ -383,11 +383,11 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
         availWidth = self.minWidth - 2 * settings.hCellPadding - \
-                     self.iconItem.width() - 2 * settings.hTextPadding - \
+                     self.iconItem.iconWidth() - 2 * settings.hTextPadding - \
                      settings.hTextPadding - settings.returnRectRadius
         textShift = (availWidth - self.__textRect.width()) / 2
         painter.drawText(
-            self.baseX + settings.hCellPadding + self.iconItem.width() +
+            self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
             self.__textRect.width(), self.__textRect.height(),
@@ -433,7 +433,7 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         ColorMixin.__init__(self, ref, self.canvas.settings.assertBGColor,
                             self.canvas.settings.assertFGColor,
                             self.canvas.settings.assertBorderColor)
-        IconMixin.__init__(self, canvas.settings, 'assert.svg', 'assert')
+        IconMixin.__init__(self, canvas, 'assert.svg', 'assert')
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.ASSERT
         self.__textRect = None
@@ -486,8 +486,8 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         settings = self.canvas.settings
         self.iconItem.setPos(
             baseX + self.__diamondWidth / 2 +
-            settings.hCellPadding - self.iconItem.width() / 2,
-            baseY + self.minHeight / 2 - self.iconItem.height() / 2)
+            settings.hCellPadding - self.iconItem.iconWidth() / 2,
+            baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
 
         scene.addItem(self)
         scene.addItem(self.iconItem)
@@ -597,7 +597,7 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         ColorMixin.__init__(self, ref, self.canvas.settings.sysexitBGColor,
                             self.canvas.settings.sysexitFGColor,
                             self.canvas.settings.sysexitBorderColor)
-        IconMixin.__init__(self, canvas.settings, 'sysexit.svg', 'sys.exit()')
+        IconMixin.__init__(self, canvas, 'sysexit.svg', 'sys.exit()')
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.SYSEXIT
         self.__textRect = None
@@ -617,7 +617,7 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         self.minWidth = max(
             self.__textRect.width() + 2 * settings.hCellPadding +
             settings.hTextPadding + settings.returnRectRadius +
-            2 * settings.hTextPadding + self.iconItem.width(),
+            2 * settings.hTextPadding + self.iconItem.iconWidth(),
             settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
@@ -645,7 +645,7 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
 
         self.iconItem.setPos(
             baseX + settings.hCellPadding + settings.hTextPadding,
-            baseY + self.minHeight/2 - self.iconItem.height() / 2)
+            baseY + self.minHeight/2 - self.iconItem.iconHeight() / 2)
 
         scene.addItem(self.connector)
         scene.addItem(self)
@@ -675,7 +675,7 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
                                 settings.returnRectRadius,
                                 settings.returnRectRadius)
         lineXBase = self.baseX + settings.hCellPadding
-        lineXPos = lineXBase + self.iconItem.width() + 2 * settings.hTextPadding
+        lineXPos = lineXBase + self.iconItem.iconWidth() + 2 * settings.hTextPadding
         lineYBase = self.baseY + settings.vCellPadding
         painter.drawLine(
             lineXPos, lineYBase,
@@ -686,12 +686,12 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
         availWidth = \
-            self.minWidth - 2 * settings.hCellPadding - self.iconItem.width() - \
+            self.minWidth - 2 * settings.hCellPadding - self.iconItem.iconWidth() - \
             2 * settings.hTextPadding - \
             settings.hTextPadding - settings.returnRectRadius
         textShift = (availWidth - self.__textRect.width()) / 2
         painter.drawText(
-            self.baseX + settings.hCellPadding + self.iconItem.width() +
+            self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
             self.__textRect.width(), self.__textRect.height(),
@@ -713,7 +713,7 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         ColorMixin.__init__(self, ref, self.canvas.settings.importBGColor,
                             self.canvas.settings.importFGColor,
                             self.canvas.settings.importBorderColor)
-        IconMixin.__init__(self, canvas.settings, 'import.svg', 'import')
+        IconMixin.__init__(self, canvas, 'import.svg', 'import')
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.IMPORT
         self.__textRect = None
@@ -731,7 +731,7 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
             2 * settings.vTextPadding
         self.minWidth = max(
             self.__textRect.width() + 2 * settings.hCellPadding +
-            2 * settings.hTextPadding + self.iconItem.width() +
+            2 * settings.hTextPadding + self.iconItem.iconWidth() +
             2 * settings.hTextPadding, settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
@@ -760,7 +760,7 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
 
         self.iconItem.setPos(
             baseX + settings.hCellPadding + settings.hTextPadding,
-            baseY + self.minHeight / 2 - self.iconItem.height() / 2)
+            baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
         scene.addItem(self)
         scene.addItem(self.iconItem)
 
@@ -786,10 +786,10 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
                          self.minWidth - 2 * settings.hCellPadding,
                          self.minHeight - 2 * settings.vCellPadding)
         painter.drawLine(self.baseX + settings.hCellPadding +
-                         self.iconItem.width() + 2 * settings.hTextPadding,
+                         self.iconItem.iconWidth() + 2 * settings.hTextPadding,
                          self.baseY + settings.vCellPadding,
                          self.baseX + settings.hCellPadding +
-                         self.iconItem.width() + 2 * settings.hTextPadding,
+                         self.iconItem.iconWidth() + 2 * settings.hTextPadding,
                          self.baseY + self.minHeight - settings.vCellPadding)
 
         # Draw the text in the rectangle
@@ -797,10 +797,10 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
         textRectWidth = self.minWidth - 2 * settings.hCellPadding - \
-                        4 * settings.hTextPadding - self.iconItem.width()
+                        4 * settings.hTextPadding - self.iconItem.iconWidth()
         textShift = (textRectWidth - self.__textRect.width()) / 2
         painter.drawText(
-            self.baseX + settings.hCellPadding + self.iconItem.width() +
+            self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
             self.__textRect.width(), self.__textRect.height(),

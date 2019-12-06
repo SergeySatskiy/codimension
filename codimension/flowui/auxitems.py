@@ -21,7 +21,6 @@
 
 
 from sys import maxsize
-import os.path
 from ui.qt import (QPen, QBrush, QPainterPath, Qt, QGraphicsSvgItem,
                    QGraphicsSimpleTextItem, QGraphicsRectItem,
                    QGraphicsPathItem)
@@ -98,49 +97,46 @@ class HSpacerCell(CellElement):
         self.baseY = baseY
 
 
-class SVGItem(QGraphicsSvgItem):
+class SVGItem(CellElement, QGraphicsSvgItem):
 
     """Wrapper for an SVG items on the control flow"""
 
-    def __init__(self, fName, ref):
+    def __init__(self, canvas, fName, ref):
+        CellElement.__init__(self, ref, canvas, x=None, y=None)
+        self.kind = CellElement.SVG
+
         self.__fName = fName
         QGraphicsSvgItem.__init__(self, self.__getPath(fName))
         self.__scale = 0
-        self.ref = ref
 
-    def __getPath(self, fName):
+    @staticmethod
+    def __getPath(fName):
         """Tries to resolve the given file name"""
-        try:
-            from utils.pixmapcache import getPixmapLocation
-            path = getPixmapLocation(fName)
-            if os.path.exists(path):
-                return path
-        except:
-            pass
-
-        if os.path.exists(fName):
-            return fName
+        from utils.pixmapcache import getPixmapLocation
+        path = getPixmapLocation(fName)
+        if path is not None:
+            return path
         return ''
 
-    def setHeight(self, height):
+    def setIconHeight(self, height):
         """Scales the svg item to the required height"""
         rectHeight = float(self.boundingRect().height())
         if rectHeight != 0.0:
             self.__scale = float(height) / rectHeight
             self.setScale(self.__scale)
 
-    def setWidth(self, width):
+    def setIconWidth(self, width):
         """Scales the svg item to the required width"""
         rectWidth = float(self.boundingRect().width())
         if rectWidth != 0.0:
             self.__scale = float(width) / rectWidth
             self.setScale(self.__scale)
 
-    def height(self):
+    def iconHeight(self):
         """Provides the height"""
         return self.boundingRect().height() * self.__scale
 
-    def width(self):
+    def iconWidth(self):
         """Provides the width"""
         return self.boundingRect().width() * self.__scale
 
@@ -156,18 +152,6 @@ class SVGItem(QGraphicsSvgItem):
         """Provides the real item for the proxy one"""
         return self.ref
 
-    def isComment(self):
-        """True if it is a comment"""
-        return False
-
-    def isCMLDoc(self):
-        """True if it is a CML doc item"""
-        return False
-
-    def scopedItem(self):
-        """True if it is a scoped item"""
-        return False
-
 
 class BadgeItem(QGraphicsRectItem):
 
@@ -178,19 +162,18 @@ class BadgeItem(QGraphicsRectItem):
         self.ref = ref
         self.__text = text
 
-        self.__textRect = ref.canvas.settings.badgeFontMetrics.boundingRect(
-            0, 0,  maxsize, maxsize, 0, text)
-        self.__hSpacing = 2
-        self.__vSpacing = 1
-        self.__radius = 2
+        s = ref.canvas.settings
 
-        self.__width = self.__textRect.width() + 2 * self.__hSpacing
-        self.__height = self.__textRect.height() + 2 * self.__vSpacing
+        self.__textRect = s.badgeFontMetrics.boundingRect(0, 0, maxsize,
+                                                          maxsize, 0, text)
 
-        self.__bgColor = ref.canvas.settings.badgeBGColor
-        self.__fgColor = ref.canvas.settings.badgeFGColor
-        self.__frameColor = ref.canvas.settings.badgeLineColor
-        self.__font = ref.canvas.settings.badgeFont
+        self.width = self.__textRect.width() + 2 * s.badgeHSpacing
+        self.height = self.__textRect.height() + 2 * s.badgeVSpacing
+
+        self.__bgColor = s.badgeBGColor
+        self.__fgColor = s.badgeFGColor
+        self.__frameColor = s.badgeLineColor
+        self.__font = s.badgeFont
         self.__needRect = True
 
     def setBGColor(self, bgColor):
@@ -213,14 +196,6 @@ class BadgeItem(QGraphicsRectItem):
         """Sets the font"""
         self.__font = font
 
-    def width(self):
-        """Provides the width"""
-        return self.__width
-
-    def height(self):
-        """Provides the height"""
-        return self.__height
-
     def text(self):
         """Provides the text"""
         return self.__text
@@ -232,7 +207,7 @@ class BadgeItem(QGraphicsRectItem):
         # setting the position and mapping. Nothing works but ../2.0. Sick!
         self.setPos(float(x) / 2.0, float(y) / 2.0)
         self.setRect(float(x) / 2.0, float(y) / 2.0,
-                     self.__width, self.__height)
+                     self.width, self.height)
 
     def withinHeader(self):
         """True if it is within a header"""
@@ -258,14 +233,14 @@ class BadgeItem(QGraphicsRectItem):
             brush = QBrush(self.__bgColor)
             painter.setBrush(brush)
             painter.drawRoundedRect(self.x(), self.y(),
-                                    self.__width, self.__height,
-                                    self.__radius, self.__radius)
+                                    self.width, self.height,
+                                    s.badgeRadius, s.badgeRadius)
 
         pen = QPen(self.__fgColor)
         painter.setPen(pen)
         painter.setFont(self.__font)
-        painter.drawText(self.x() + self.__hSpacing,
-                         self.y() + self.__vSpacing,
+        painter.drawText(self.x() + s.badgeHSpacing,
+                         self.y() + s.badgeVSpacing,
                          self.__textRect.width(),
                          self.__textRect.height(),
                          Qt.AlignLeft, self.__text)
@@ -274,7 +249,8 @@ class BadgeItem(QGraphicsRectItem):
         """Provides the tooltip"""
         return "Badge item '" + self.__text + "'"
 
-    def isProxyItem(self):
+    @staticmethod
+    def isProxyItem():
         """True if it is a proxy item"""
         return True
 

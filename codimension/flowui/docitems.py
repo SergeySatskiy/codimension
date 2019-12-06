@@ -24,7 +24,7 @@ from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsItem, QFont,
                    QGraphicsRectItem, QCursor, QDesktopServices, QUrl)
 from utils.globals import GlobalData
 from utils.misc import resolveLinkPath
-from .auxitems import Connector, SVGItem
+from .auxitems import Connector
 from .cellelement import CellElement
 from .routines import distance
 from .commentitems import CommentCellBase
@@ -47,16 +47,16 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
 
         # They all have the same icon
         if cmlRef.link is not None and cmlRef.anchor is not None:
-            IconMixin.__init__(self, canvas.settings, 'docanchor.svg',
+            IconMixin.__init__(self, canvas, 'docanchor.svg',
                                'Jump to the documentation')
             self.iconItem.setCursor(QCursor(Qt.PointingHandCursor))
         else:
             if cmlRef.link is not None:
-                IconMixin.__init__(self, canvas.settings, 'doclink.svg',
+                IconMixin.__init__(self, canvas, 'doclink.svg',
                                    'Jump to the documentation')
                 self.iconItem.setCursor(QCursor(Qt.PointingHandCursor))
             else:
-                IconMixin.__init__(self, canvas.settings, 'anchor.svg',
+                IconMixin.__init__(self, canvas, 'anchor.svg',
                                    'Documentation anchor')
 
 
@@ -109,11 +109,13 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
             self.minHeight = self._textRect.height()
         else:
             self.minWidth = 0
-            self.minHeight = self.iconItem.height()
+            self.minHeight = self.iconItem.iconHeight()
 
-        self.minHeight += 2 * (settings.vCellPadding + settings.vDocLinkPadding)
-        self.minWidth += 2 * (settings.hCellPadding + settings.hDocLinkPadding) + \
-                         self.iconItem.width()
+        self.minHeight += 2 * (settings.vCellPadding + \
+                          settings.vDocLinkPadding)
+        self.minWidth += 2 * (settings.hCellPadding + \
+                         settings.hDocLinkPadding) + \
+                         self.iconItem.iconWidth()
 
         self.height = self.minHeight
         self.width = self.minWidth
@@ -161,7 +163,7 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
 
         self.iconItem.setPos(
             baseX + settings.hCellPadding + settings.hDocLinkPadding,
-            baseY + self.minHeight / 2 - self.iconItem.height() / 2)
+            baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
         scene.addItem(self.iconItem)
 
     def paint(self, painter, option, widget):
@@ -200,7 +202,7 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
             painter.setPen(pen)
             painter.drawText(
                 self._leftEdge + settings.hCellPadding +
-                    settings.hDocLinkPadding + self.iconItem.width() +
+                    settings.hDocLinkPadding + self.iconItem.iconWidth() +
                     settings.hDocLinkPadding,
                 self.baseY + settings.vCellPadding + settings.vDocLinkPadding,
                 self._textRect.width(), self._textRect.height(),

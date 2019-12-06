@@ -109,11 +109,11 @@ class ScopeCellElement(CellElement):
                              2 * s.vHeaderPadding - s.rectRadius
             w = self._headerRect.width()
             if badgeItem:
-                w = max(w, badgeItem.width())
+                w = max(w, badgeItem.width)
             self.minWidth = w + s.hHeaderPadding - s.rectRadius
             if badgeItem:
                 if badgeItem.withinHeader():
-                    self.minWidth = badgeItem.width() + \
+                    self.minWidth = badgeItem.width + \
                                     s.hHeaderPadding - s.rectRadius
             if hasattr( self.ref, "sideComment" ):
                 if self.ref.sideComment:
@@ -152,7 +152,7 @@ class ScopeCellElement(CellElement):
                                                     s.rectRadius)
             else:
                 self.__docBadge = BadgeItem(self, 'doc')
-                self.minHeight = self.__docBadge.height() + \
+                self.minHeight = self.__docBadge.height + \
                     2 * (s.selectPenWidth - 1)
                 self.minWidth = 2 * (s.hHeaderPadding - s.rectRadius)
         elif self.subKind == ScopeCellElement.UNKNOWN:
@@ -233,11 +233,11 @@ class ScopeCellElement(CellElement):
                     self._badgeItem.moveTo(
                         baseX + s.hCellPadding + s.rectRadius,
                         baseY + s.vCellPadding + fullHeight / 2 -
-                        self._badgeItem.height() / 2)
+                        self._badgeItem.height / 2)
                 else:
                     self._badgeItem.moveTo(
                         baseX + s.hCellPadding + s.rectRadius,
-                        baseY + s.vCellPadding - self._badgeItem.height() / 2)
+                        baseY + s.vCellPadding - self._badgeItem.height / 2)
                 scene.addItem(self._badgeItem)
             # Draw a horizontal connector if needed
             if self._connector is None:

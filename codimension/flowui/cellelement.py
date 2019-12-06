@@ -73,6 +73,8 @@ class CellElement:
     ABOVE_DOC = 216
 
     CONNECTOR = 300
+    SVG = 301
+    BADGE = 302
 
     EMPTY_GROUP = 500
     OPENED_GROUP_BEGIN = 501
@@ -207,7 +209,10 @@ class CellElement:
 
     def isComment(self):
         """True if it is a comment"""
-        return False
+        return self.kind in (self.INDEPENDENT_COMMENT,
+                             self.LEADING_COMMENT,
+                             self.SIDE_COMMENT,
+                             self.ABOVE_COMMENT)
 
     def isCMLDoc(self):
         """True if it is a CML doc item"""
@@ -219,7 +224,8 @@ class CellElement:
         return self.kind in (self.OPENED_GROUP_BEGIN, self.OPENED_GROUP_END,
                              self.COLLAPSED_GROUP, self.EMPTY_GROUP)
 
-    def isDocstring(self):
+    @staticmethod
+    def isDocstring():
         """True if it is a docstring"""
         return False
 
@@ -298,40 +304,48 @@ class CellElement:
 
 
 __kindToString = {
-    CellElement.UNKNOWN: "UNKNOWN",
-    CellElement.VACANT: "VACANT",
-    CellElement.H_SPACER: "H_SPACER",
-    CellElement.V_SPACER: "V_SPACER",
-    CellElement.H_GROUP_SPACER: "H_GROUP_SPACER",
-    CellElement.FILE_SCOPE: "FILE_SCOPE",
-    CellElement.FUNC_SCOPE: "FUNC_SCOPE",
-    CellElement.CLASS_SCOPE: "CLASS_SCOPE",
-    CellElement.DECOR_SCOPE: "DECOR_SCOPE",
-    CellElement.FOR_SCOPE: "FOR_SCOPE",
-    CellElement.WHILE_SCOPE: "WHILE_SCOPE",
-    CellElement.ELSE_SCOPE: "ELSE_SCOPE",
-    CellElement.WITH_SCOPE: "WITH_SCOPE",
-    CellElement.TRY_SCOPE: "TRY_SCOPE",
-    CellElement.EXCEPT_SCOPE: "EXCEPT_SCOPE",
-    CellElement.FINALLY_SCOPE: "FINALLY_SCOPE",
-    CellElement.CODE_BLOCK: "CODE_BLOCK",
-    CellElement.BREAK: "BREAK",
-    CellElement.CONTINUE: "CONTINUE",
-    CellElement.RETURN: "RETURN",
-    CellElement.RAISE: "RAISE",
-    CellElement.ASSERT: "ASSERT",
-    CellElement.SYSEXIT: "SYSEXIT",
-    CellElement.IMPORT: "IMPORT",
-    CellElement.IF: "IF",
-    CellElement.LEADING_COMMENT: "LEADING_COMMENT",
-    CellElement.INDEPENDENT_COMMENT: "INDEPENDENT_COMMENT",
-    CellElement.SIDE_COMMENT: "SIDE_COMMENT",
-    CellElement.ABOVE_COMMENT: "ABOVE_COMMENT",
-    CellElement.CONNECTOR: "CONNECTOR",
-    CellElement.EMPTY_GROUP: "EMPTY_GROUP",
-    CellElement.OPENED_GROUP_BEGIN: "OPENED_GROUP_BEGIN",
-    CellElement.OPENED_GROUP_END: "OPENED_GROUP_END",
-    CellElement.COLLAPSED_GROUP: "COLLAPSED_GROUP"}
+    CellElement.UNKNOWN: 'UNKNOWN',
+    CellElement.VCANVAS: 'VCANVAS',
+    CellElement.VACANT: 'VACANT',
+    CellElement.H_SPACER: 'H_SPACER',
+    CellElement.V_SPACER: 'V_SPACER',
+    CellElement.H_GROUP_SPACER: 'H_GROUP_SPACER',
+    CellElement.NO_SCOPE: 'NO_SCOPE',
+    CellElement.FILE_SCOPE: 'FILE_SCOPE',
+    CellElement.FUNC_SCOPE: 'FUNC_SCOPE',
+    CellElement.CLASS_SCOPE: 'CLASS_SCOPE',
+    CellElement.DECOR_SCOPE: 'DECOR_SCOPE',
+    CellElement.FOR_SCOPE: 'FOR_SCOPE',
+    CellElement.WHILE_SCOPE: 'WHILE_SCOPE',
+    CellElement.ELSE_SCOPE: 'ELSE_SCOPE',
+    CellElement.WITH_SCOPE: 'WITH_SCOPE',
+    CellElement.TRY_SCOPE: 'TRY_SCOPE',
+    CellElement.EXCEPT_SCOPE: 'EXCEPT_SCOPE',
+    CellElement.FINALLY_SCOPE: 'FINALLY_SCOPE',
+    CellElement.CODE_BLOCK: 'CODE_BLOCK',
+    CellElement.BREAK: 'BREAK',
+    CellElement.CONTINUE: 'CONTINUE',
+    CellElement.RETURN: 'RETURN',
+    CellElement.RAISE: 'RAISE',
+    CellElement.ASSERT: 'ASSERT',
+    CellElement.SYSEXIT: 'SYSEXIT',
+    CellElement.IMPORT: 'IMPORT',
+    CellElement.IF: 'IF',
+    CellElement.LEADING_COMMENT: 'LEADING_COMMENT',
+    CellElement.INDEPENDENT_COMMENT: 'INDEPENDENT_COMMENT',
+    CellElement.SIDE_COMMENT: 'SIDE_COMMENT',
+    CellElement.ABOVE_COMMENT: 'ABOVE_COMMENT',
+    CellElement.EXCEPT_MINIMIZED: 'EXCEPT_MINIMIZED',
+    CellElement.CONNECTOR: 'CONNECTOR',
+    CellElement.SVG: 'SVG',
+    CellElement.BADGE: 'BADGE',
+    CellElement.INDEPENDENT_DOC: 'INDEPENDENT_DOC',
+    CellElement.LEADING_DOC: 'LEADING_DOC',
+    CellElement.ABOVE_DOC: 'ABOVE_DOC',
+    CellElement.EMPTY_GROUP: 'EMPTY_GROUP',
+    CellElement.OPENED_GROUP_BEGIN: 'OPENED_GROUP_BEGIN',
+    CellElement.OPENED_GROUP_END: 'OPENED_GROUP_END',
+    CellElement.COLLAPSED_GROUP: 'COLLAPSED_GROUP'}
 
 
 def kindToString(kind):

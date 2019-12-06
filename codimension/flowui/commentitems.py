@@ -46,10 +46,6 @@ class CommentCellBase(CellElement):
             self._vTextPadding = canvas.settings.vHiddenTextPadding
             self._hTextPadding = canvas.settings.hHiddenTextPadding
 
-    def isComment(self):
-        """True if it is a comment"""
-        return True
-
     def _copyToClipboard(self, parts):
         """Copies the item to a clipboard"""
         commonLeadingSpaces = maxsize

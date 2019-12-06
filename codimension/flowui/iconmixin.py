@@ -29,9 +29,9 @@ class IconMixin:
 
     HEIGHT = None
 
-    def __init__(self, settings, fName, tooltip=None):
-        self.iconItem = SVGItem(fName, self)
-        self.iconItem.setHeight(self.__getIconHeight(settings))
+    def __init__(self, canvas, fName, tooltip=None):
+        self.iconItem = SVGItem(canvas, fName, self)
+        self.iconItem.setIconHeight(self.__getIconHeight(canvas.settings))
         if tooltip:
             self.iconItem.setToolTip(tooltip)
 
