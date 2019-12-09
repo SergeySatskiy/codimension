@@ -144,22 +144,19 @@ class SVGItem(CellElement, QGraphicsSvgItem):
         """Provides the tooltip"""
         return "SVG item for " + self.__fName
 
-    def isProxyItem(self):
-        """True if it is a proxy item"""
-        return True
-
     def getProxiedItem(self):
         """Provides the real item for the proxy one"""
         return self.ref
 
 
-class BadgeItem(QGraphicsRectItem):
+class BadgeItem(CellElement, QGraphicsRectItem):
 
     """Serves the scope badges"""
 
     def __init__(self, ref, text):
+        CellElement.__init__(self, ref, ref.canvas, None, None)
         QGraphicsRectItem.__init__(self)
-        self.ref = ref
+        self.kind = CellElement.BADGE
         self.__text = text
 
         s = ref.canvas.settings
@@ -200,13 +197,13 @@ class BadgeItem(QGraphicsRectItem):
         """Provides the text"""
         return self.__text
 
-    def moveTo(self, x, y):
+    def moveTo(self, xPos, yPos):
         """Moves to the specified position"""
         # This is a mistery. I do not understand why I need to divide by 2.0
         # however this works. I tried various combinations of initialization,
         # setting the position and mapping. Nothing works but ../2.0. Sick!
-        self.setPos(float(x) / 2.0, float(y) / 2.0)
-        self.setRect(float(x) / 2.0, float(y) / 2.0,
+        self.setPos(float(xPos) / 2.0, float(yPos) / 2.0)
+        self.setRect(float(xPos) / 2.0, float(yPos) / 2.0,
                      self.width, self.height)
 
     def withinHeader(self):
@@ -249,35 +246,20 @@ class BadgeItem(QGraphicsRectItem):
         """Provides the tooltip"""
         return "Badge item '" + self.__text + "'"
 
-    @staticmethod
-    def isProxyItem():
-        """True if it is a proxy item"""
-        return True
-
     def getProxiedItem(self):
         """Provides the real item for a proxy one"""
         return self.ref
 
-    def isComment(self):
-        """True if it is a comment"""
-        return False
-
-    def isCMLDoc(self):
-        """True if it is a CML doc item"""
-        return False
-
-    def scopedItem(self):
-        """True if it is a scoped item"""
-        return False
 
 
-class Connector(QGraphicsPathItem):
+class Connector(CellElement, QGraphicsPathItem):
 
     """Implementation of a connector item"""
 
-    def __init__(self, settings, x1, y1, x2, y2):
+    def __init__(self, canvas, x1, y1, x2, y2):
+        CellElement.__init__(self, None, canvas, x=None, y=None)
         QGraphicsPathItem.__init__(self)
-        self.__settings = settings
+        self.kind = CellElement.DEPENDENT_CONNECTOR
 
         path = QPainterPath()
         path.moveTo(x1, y1)
@@ -290,10 +272,10 @@ class Connector(QGraphicsPathItem):
 
     def paint(self, painter, option, widget):
         """Paints the connector"""
-        color = self.__settings.lineColor
+        color = self.canvas.settings.lineColor
         if self.penColor:
             color = self.penColor
-        width = self.__settings.lineWidth
+        width = self.canvas.settings.lineWidth
         if self.penWidth:
             width = self.penWidth
 
@@ -306,29 +288,15 @@ class Connector(QGraphicsPathItem):
         self.setPen(pen)
         QGraphicsPathItem.paint(self, painter, option, widget)
 
-    def getSelectTooltip(self):
+    @staticmethod
+    def getSelectTooltip():
         """Provides the tooltip"""
         return 'Connector item'
 
-    def isProxyItem(self):
-        """True if it is a proxy item"""
-        return True
-
-    def getProxiedItem(self):
+    @staticmethod
+    def getProxiedItem():
         """Provides the real item for a proxy one"""
         return None
-
-    def isComment(self):
-        """True if it is a comment"""
-        return False
-
-    def isCMLDoc(self):
-        """True if it is a CML doc item"""
-        return False
-
-    def scopedItem(self):
-        """True if it is a scoped item"""
-        return False
 
 
 
@@ -345,6 +313,7 @@ class RubberBandItem(QGraphicsRectItem):
         self.__height = None
 
     def setGeometry(self, rect):
+        """Sets the geometry"""
         # This is a mistery. I do not understand why I need to divide by 2.0
         # however this works. I tried various combinations of initialization,
         # setting the position and mapping. Nothing works but ../2.0. Sick!
@@ -370,73 +339,46 @@ class RubberBandItem(QGraphicsRectItem):
         painter.drawRect(self.__x, self.__y,
                          self.__width, self.__height)
 
-    def isProxyItem(self):
-        """True if it is a proxy item"""
-        return True
-
-    def getProxiedItem(self):
+    @staticmethod
+    def getProxiedItem():
         """Provides the real item for a proxy one"""
         return None
 
-    def isComment(self):
-        """True if it is a comment"""
-        return False
-
-    def isCMLDoc(self):
-        """True if it is a CML doc item"""
-        return False
-
-    def scopedItem(self):
-        """True if it is a scoped item"""
-        return False
 
 
-
-class Text(QGraphicsSimpleTextItem):
+class Text(CellElement, QGraphicsSimpleTextItem):
 
     """Implementation of a text item"""
 
-    def __init__(self, settings, text):
+    def __init__(self, canvas, text):
+        CellElement.__init__(self, None, canvas, None, None)
         QGraphicsSimpleTextItem.__init__(self)
-        self.__settings = settings
+        self.kind = CellElement.TEXT
 
-        self.setFont(settings.badgeFont)
+        self.setFont(canvas.settings.badgeFont)
         self.setText(text)
 
         self.color = None
 
     def paint(self, painter, option, widget):
         """Paints the text item"""
-        color = self.__settings.lineColor
+        color = self.canvas.settings.lineColor
         if self.color:
             color = self.color
 
         self.setBrush(QBrush(color))
         QGraphicsSimpleTextItem.paint(self, painter, option, widget)
 
-    def getSelectTooltip(self):
+    @staticmethod
+    def getSelectTooltip():
         """Provides the tooltip"""
         return 'Text item'
 
-    def isProxyItem(self):
-        """True if it is a proxy item"""
-        return True
-
-    def getProxiedItem(self):
+    @staticmethod
+    def getProxiedItem():
         """Provides the real item for a proxy one"""
         return None
 
-    def isComment(self):
-        """True if it is a comment"""
-        return False
-
-    def isCMLDoc(self):
-        """True if it is a CML doc item"""
-        return False
-
-    def scopedItem(self):
-        """True if it is a scoped item"""
-        return False
 
 
 class ConnectorCell(CellElement, QGraphicsPathItem):
@@ -521,6 +463,26 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
                 return cells[row][index].minHeight / 2
         return self.height / 2
 
+    def __getNorthXY(self, baseX):
+        """Provides the north coordinates"""
+        settings = self.canvas.settings
+        if self.subKind == self.BOTTOM_IF:
+            cellAbove = self.canvas.cells[self.addr[1] - 1][self.addr[0]]
+            if cellAbove.kind == CellElement.VCANVAS:
+                baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * \
+                         settings.openGroupHSpacer
+        return baseX + settings.mainLine, self.baseY
+
+    def __getSouthXY(self, baseX):
+        """Provides the south coordinates"""
+        settings = self.canvas.settings
+        if self.subKind == self.TOP_IF:
+            cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
+            if cellBelow.kind == CellElement.VCANVAS:
+                baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * \
+                         settings.openGroupHSpacer
+        return baseX + settings.mainLine, self.baseY + self.height
+
     def __getXY(self, location):
         """Provides the location coordinates"""
         settings = self.canvas.settings
@@ -529,31 +491,27 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         baseX = self.baseX
         if self.subKind not in [self.TOP_IF, self.BOTTOM_IF]:
             baseX = self.baseX + hShift
+
         if location == self.NORTH:
-            if self.subKind == self.BOTTOM_IF:
-                cellAbove = self.canvas.cells[self.addr[1] - 1][self.addr[0]]
-                if cellAbove.kind == CellElement.VCANVAS:
-                    baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
-            return baseX + settings.mainLine, self.baseY
+            return self.__getNorthXY(baseX)
         if location == self.SOUTH:
-            if self.subKind == self.TOP_IF:
-                cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
-                if cellBelow.kind == CellElement.VCANVAS:
-                    baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
-            return baseX + settings.mainLine, self.baseY + self.height
+            return self.__getSouthXY(baseX)
         if location == self.WEST:
             return baseX, self.baseY + self.__getY()
         if location == self.EAST:
             return baseX + self.width - hShift, self.baseY + self.__getY()
+
         # It is CENTER
         if self.subKind == self.TOP_IF:
             cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
             if cellBelow.kind == CellElement.VCANVAS:
-                baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+                baseX += cellBelow.maxGlobalOpenGroupDepth * 2 * \
+                         settings.openGroupHSpacer
         elif self.subKind == self.BOTTOM_IF:
             cellAbove = self.canvas.cells[self.addr[1] - 1][self.addr[0]]
             if cellAbove.kind == CellElement.VCANVAS:
-                baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * settings.openGroupHSpacer
+                baseX += cellAbove.maxGlobalOpenGroupDepth * 2 * \
+                         settings.openGroupHSpacer
         return baseX + settings.mainLine, self.baseY + self.__getY()
 
     def __angled(self, begin, end):
@@ -603,10 +561,6 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         self.setPen(pen)
         painter.setPen(pen)
         QGraphicsPathItem.paint(self, painter, option, widget)
-
-    def isProxyItem(self):
-        """True if it is a proxy item"""
-        return True
 
     def getProxiedItem(self):
         """Provides the real item for a proxy one"""

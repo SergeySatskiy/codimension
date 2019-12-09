@@ -253,13 +253,13 @@ class IndependentDocCell(DocCellBase):
         # May be later the connector will look different for two cases below
         if self.leadingForElse:
             self.connector = Connector(
-                settings, self._leftEdge + settings.hCellPadding,
+                self.canvas, self._leftEdge + settings.hCellPadding,
                 self.baseY + self.minHeight / 2,
                 cellToTheLeft.baseX + settings.mainLine,
                 self.baseY + self.minHeight / 2)
         else:
             self.connector = Connector(
-                settings, self._leftEdge + settings.hCellPadding,
+                self.canvas, self._leftEdge + settings.hCellPadding,
                 self.baseY + self.minHeight / 2,
                 cellToTheLeft.baseX + settings.mainLine,
                 self.baseY + self.minHeight / 2)
@@ -302,7 +302,7 @@ class LeadingDocCell(DocCellBase):
         shift = self.hShift * 2 * settings.openGroupHSpacer
         self._leftEdge += shift
 
-        self.connector = Connector(settings, 0, 0, 0, 0)
+        self.connector = Connector(self.canvas, 0, 0, 0, 0)
         connectorPath = QPainterPath()
         connectorPath.moveTo(self._leftEdge + settings.hCellPadding,
                              baseY + self.minHeight / 2)
@@ -339,7 +339,7 @@ class AboveDocCell(DocCellBase):
         if self.needConnector:
             settings = self.canvas.settings
             self.connector = Connector(
-                settings, baseX + settings.mainLine, baseY,
+                self.canvas, baseX + settings.mainLine, baseY,
                 baseX + settings.mainLine, baseY + self.height)
             scene.addItem(self.connector)
 
@@ -359,7 +359,7 @@ class AboveDocCell(DocCellBase):
         # been adjusted with mainLine and hCellPadding
         self._leftEdge = self.baseX
 
-        self.connector = Connector(settings, 0, 0, 0, 0)
+        self.connector = Connector(self.canvas, 0, 0, 0, 0)
         connectorPath = QPainterPath()
         connectorPath.moveTo(self._leftEdge + settings.hCellPadding,
                              baseY + self.minHeight / 2)

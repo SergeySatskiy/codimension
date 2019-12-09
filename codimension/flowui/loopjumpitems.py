@@ -97,7 +97,7 @@ class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + settings.vCellPadding)
         scene.addItem(self.connector)
@@ -218,7 +218,7 @@ class ContinueCell(CellElement, ColorMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + settings.vCellPadding)
         scene.addItem(self.connector)

@@ -23,7 +23,7 @@ from sys import maxsize
 from flowui.scopeitems import ScopeCellElement
 from flowui.cellelement import CellElement
 from flowui.auxitems import RubberBandItem
-from ui.qt import Qt, QTransform, QPoint, QRect, QSize, QCursor, QGraphicsScene
+from ui.qt import Qt, QTransform, QRect, QSize, QGraphicsScene
 
 
 # The default mouse behavior of the QT library is sometimes inconsistent.

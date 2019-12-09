@@ -159,13 +159,13 @@ class IndependentCommentCell(CommentCellBase, QGraphicsPathItem):
         # May be later the connector will look different for two cases below
         if self.leadingForElse:
             self.connector = Connector(
-                settings, self._leftEdge + settings.hCellPadding,
+                self.canvas, self._leftEdge + settings.hCellPadding,
                 self.baseY + self.minHeight / 2,
                 cellToTheLeft.baseX + settings.mainLine,
                 self.baseY + self.minHeight / 2)
         else:
             self.connector = Connector(
-                settings, self._leftEdge + settings.hCellPadding,
+                self.canvas, self._leftEdge + settings.hCellPadding,
                 self.baseY + self.minHeight / 2,
                 cellToTheLeft.baseX + settings.mainLine,
                 self.baseY + self.minHeight / 2)
@@ -338,7 +338,7 @@ class LeadingCommentCell(CommentCellBase, QGraphicsPathItem):
                                  boxWidth, self.minHeight)
         self.setPath(path)
 
-        self.connector = Connector(settings, 0, 0, 0, 0)
+        self.connector = Connector(self.canvas, 0, 0, 0, 0)
         connectorPath = QPainterPath()
         connectorPath.moveTo(self._leftEdge + settings.hCellPadding,
                              baseY + self.minHeight / 2)
@@ -548,7 +548,7 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
             ifCell = self.canvas.cells[self.addr[1]][index]
 
             self.connector = Connector(
-                settings, self._leftEdge + settings.hCellPadding,
+                self.canvas, self._leftEdge + settings.hCellPadding,
                 self.baseY + ifCell.minHeight / 2 + self.IF_SIDE_SHIFT,
                 ifCell.baseX + ifCell.minWidth - settings.hCellPadding,
                 self.baseY + ifCell.minHeight / 2 + self.IF_SIDE_SHIFT)
@@ -561,7 +561,7 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
             height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
 
             self.connector = Connector(
-                settings, self._leftEdge + settings.hCellPadding,
+                self.canvas, self._leftEdge + settings.hCellPadding,
                 self.baseY + height,
                 cellToTheLeft.baseX +
                 cellToTheLeft.minWidth - settings.hCellPadding,
@@ -711,7 +711,7 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
         if self.needConnector:
             settings = self.canvas.settings
             self.connector = Connector(
-                settings, baseX + settings.mainLine, baseY,
+                self.canvas, baseX + settings.mainLine, baseY,
                 baseX + settings.mainLine, baseY + self.height)
             scene.addItem(self.connector)
 
@@ -737,7 +737,7 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
                                  boxWidth, self.minHeight)
         self.setPath(path)
 
-        self.commentConnector = Connector(settings, 0, 0, 0, 0)
+        self.commentConnector = Connector(self.canvas, 0, 0, 0, 0)
         connectorPath = QPainterPath()
         connectorPath.moveTo(self._leftEdge + settings.hCellPadding,
                              baseY + self.minHeight / 2)

@@ -206,12 +206,12 @@ class ScopeCellElement(CellElement):
         if self.subKind == ScopeCellElement.TOP_LEFT:
             # Draw connector if needed
             if self.__needConnector() and self._connector is None:
-                self._connector = Connector(s, baseX + s.mainLine, baseY,
+                self._connector = Connector(self.canvas, baseX + s.mainLine, baseY,
                                             baseX + s.mainLine,
                                             baseY + self.canvas.height)
                 scene.addItem(self._connector)
             if self.__needTopHalfConnector() and self._topHalfConnector is None:
-                self._topHalfConnector = Connector(s, baseX + s.mainLine, baseY,
+                self._topHalfConnector = Connector(self.canvas, baseX + s.mainLine, baseY,
                                                    baseX + s.mainLine,
                                                    baseY + self.canvas.height / 2)
                 scene.addItem(self._topHalfConnector)
@@ -248,7 +248,7 @@ class ScopeCellElement(CellElement):
                     cellToTheLeft = parentCanvas.cells[
                         self.canvas.addr[1]][self.canvas.addr[0] - 1]
                     self._connector = Connector(
-                        s,
+                        self.canvas,
                         cellToTheLeft.baseX + cellToTheLeft.minWidth -
                         s.hCellPadding + s.lineWidth,
                         baseY + 2 * s.vCellPadding,

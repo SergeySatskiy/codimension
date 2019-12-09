@@ -70,7 +70,7 @@ class CodeBlockCell(CellElement, ColorMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
         scene.addItem(self.connector)
@@ -190,7 +190,7 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + settings.vCellPadding)
 
@@ -328,7 +328,7 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + settings.vCellPadding)
 
@@ -470,7 +470,7 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
         scene.addItem(self.connector)
@@ -631,7 +631,7 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + settings.vCellPadding)
 
@@ -745,7 +745,7 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
         scene.addItem(self.connector)
@@ -884,14 +884,14 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         # Add the connectors as separate scene items to make the selection
         # working properly
         settings = self.canvas.settings
-        self.vConnector = Connector(settings,
+        self.vConnector = Connector(self.canvas,
                                     self.baseX + settings.mainLine,
                                     self.baseY,
                                     self.baseX + settings.mainLine,
                                     self.baseY + self.height)
         scene.addItem(self.vConnector)
 
-        self.hConnector = Connector(settings, self.x4, self.y4,
+        self.hConnector = Connector(self.canvas, self.x4, self.y4,
                                     self.baseX + self.width - hShift,
                                     self.y4)
         scene.addItem(self.hConnector)
@@ -899,12 +899,12 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         self.yBelow = CMLVersion.find(self.ref.leadingCMLComments,
                                       CMLsw) is not None
         if self.yBelow:
-            self.rightLabel = Text(settings, "N")
+            self.rightLabel = Text(self.canvas, "N")
             f = self.rightLabel.font()
             f.setBold(True)
             self.rightLabel.setFont(f)
         else:
-            self.rightLabel = Text(settings, "Y")
+            self.rightLabel = Text(self.canvas, "Y")
 
         self.rightLabel.setPos(
             self.x4 + 2,
@@ -1040,7 +1040,7 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
         height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
 
         self.connector = Connector(
-            settings, self.__leftEdge + settings.hCellPadding,
+            self.canvas, self.__leftEdge + settings.hCellPadding,
             self.baseY + height,
             cellToTheLeft.baseX +
             cellToTheLeft.minWidth - settings.hCellPadding,

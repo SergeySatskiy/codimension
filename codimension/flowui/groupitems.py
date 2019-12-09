@@ -150,7 +150,7 @@ class EmptyGroup(GroupItemBase, CellElement, ColorMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
         scene.addItem(self.connector)
@@ -287,7 +287,7 @@ class OpenedGroupBegin(GroupItemBase, CellElement,
         if not self.isTerminal:
             xPos = baseX + settings.mainLine
             xPos += self.selfAndDeeperNestLevel * (2 * settings.openGroupHSpacer)
-            self.connector = Connector(settings,
+            self.connector = Connector(self.canvas,
                                        xPos,
                                        baseY,
                                        xPos,
@@ -366,7 +366,7 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
         settings = self.canvas.settings
         xPos = baseX + settings.mainLine
         xPos += self.selfAndDeeperNestLevel * (2 * settings.openGroupHSpacer)
-        self.connector = Connector(settings,
+        self.connector = Connector(self.canvas,
                                    xPos,
                                    baseY,
                                    xPos,
@@ -421,7 +421,7 @@ class CollapsedGroup(GroupItemBase, CellElement,
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(settings, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
         scene.addItem(self.connector)
