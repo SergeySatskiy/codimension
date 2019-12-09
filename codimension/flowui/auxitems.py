@@ -19,11 +19,15 @@
 
 """Auxiliary items on a canvas which do not derive from CellElement"""
 
+# pylint: disable=C0305
+# pylint: disable=R0902
+# pylint: disable=R0913
+
 
 from sys import maxsize
 from ui.qt import (QPen, QBrush, QPainterPath, Qt, QGraphicsSvgItem,
                    QGraphicsSimpleTextItem, QGraphicsRectItem,
-                   QGraphicsPathItem)
+                   QGraphicsPathItem, QGraphicsLineItem)
 from .cellelement import CellElement
 
 
@@ -240,7 +244,7 @@ class BadgeItem(CellElement, QGraphicsRectItem):
                          self.y() + s.badgeVSpacing,
                          self.__textRect.width(),
                          self.__textRect.height(),
-                         Qt.AlignLeft, self.__text)
+                         Qt.AlignCenter, self.__text)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -300,13 +304,16 @@ class Connector(CellElement, QGraphicsPathItem):
 
 
 
-class RubberBandItem(QGraphicsRectItem):
+class RubberBandItem(CellElement, QGraphicsRectItem):
 
     """Custom rubber band for selection"""
 
-    def __init__(self, settings):
+    def __init__(self, canvas):
+        CellElement.__init__(self, None, canvas, x=None, y=None)
         QGraphicsRectItem.__init__(self)
-        self.__settings = settings
+
+        self.kind = CellElement.RUBBER_BAND
+        self.__settings = canvas.settings
         self.__x = None
         self.__y = None
         self.__width = None
@@ -315,7 +322,7 @@ class RubberBandItem(QGraphicsRectItem):
     def setGeometry(self, rect):
         """Sets the geometry"""
         # This is a mistery. I do not understand why I need to divide by 2.0
-        # however this works. I tried various combinations of initialization,
+        # however this works. I tried various combinations of initialisation,
         # setting the position and mapping. Nothing works but ../2.0. Sick!
         self.__x = rect.x() / 2.0
         self.__y = rect.y() / 2.0
@@ -379,6 +386,48 @@ class Text(CellElement, QGraphicsSimpleTextItem):
         """Provides the real item for a proxy one"""
         return None
 
+
+class Line(CellElement, QGraphicsLineItem):
+
+    """Implementation of the line item"""
+
+    def __init__(self, canvas, x1, y1, x2, y2):
+        CellElement.__init__(self, None, canvas, x=None, y=None)
+        QGraphicsLineItem.__init__(self, x1, y1, x2, y2)
+        self.kind = CellElement.LINE
+
+        self.penStyle = None
+        self.penColor = None
+        self.penWidth = None
+
+    def paint(self, painter, option, widget):
+        """Paints the text item"""
+        color = self.canvas.settings.lineColor
+        if self.penColor:
+            color = self.penColor
+        width = self.canvas.settings.lineWidth
+        if self.penWidth:
+            width = self.penWidth
+
+        pen = QPen(color)
+        pen.setWidth(width)
+        pen.setCapStyle(Qt.FlatCap)
+        pen.setJoinStyle(Qt.RoundJoin)
+        if self.penStyle:
+            pen.setStyle(self.penStyle)
+        self.setPen(pen)
+
+        QGraphicsLineItem.paint(self, painter, option, widget)
+
+    @staticmethod
+    def getSelectTooltip():
+        """Provides the tooltip"""
+        return 'Line item'
+
+    @staticmethod
+    def getProxiedItem():
+        """Provides the real item for a proxy one"""
+        return None
 
 
 class ConnectorCell(CellElement, QGraphicsPathItem):

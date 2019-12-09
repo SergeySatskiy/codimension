@@ -74,13 +74,26 @@ class CFSceneMouseMixin:
         # are to be ignored
         return None
 
+    def __getCanvas(self):
+        """Provides a reference to the canvas (used for rubber band)"""
+        for item in self.items():
+            if item.kind == CellElement.FILE_SCOPE:
+                return item.canvas
+        return None
+
     def __createRubberBand(self, event):
         """Creates the rubber band rectangle and shows it"""
-        self.lmbOrigin = event.scenePos().toPoint()
-        self.rubberBand = RubberBandItem(self.parent().cflowSettings)
-        self.addItem(self.rubberBand)
-        self.rubberBand.setGeometry(QRect(self.lmbOrigin, QSize()))
-        self.rubberBand.hide()
+        # Canvas == None means that there is no module item on the canvas
+        # which is a case when there is exactly nothing drawn. The only
+        # possiblity is that a broken file was open so there is nothing to
+        # select anyway
+        canvas = self.__getCanvas()
+        if canvas is not None:
+            self.lmbOrigin = event.scenePos().toPoint()
+            self.rubberBand = RubberBandItem(canvas)
+            self.addItem(self.rubberBand)
+            self.rubberBand.setGeometry(QRect(self.lmbOrigin, QSize()))
+            self.rubberBand.hide()
 
     def __destroyRubberBand(self):
         """Destroys the rubber band selection rectangle"""

@@ -78,6 +78,8 @@ class CellElement:
     DEPENDENT_CONNECTOR = 303
     TEXT = 304
     RUBBER_BAND = 305
+    LINE = 306
+    GROUP_CORNER_CONROL = 307
 
     EMPTY_GROUP = 500
     OPENED_GROUP_BEGIN = 501
@@ -206,7 +208,8 @@ class CellElement:
         """True if it is a proxy item"""
         return self.kind in (self.BADGE, self.SVG, self.CONNECTOR,
                              self.DEPENDENT_CONNECTOR, self.TEXT,
-                             self.RUBBER_BAND)
+                             self.RUBBER_BAND, self.LINE,
+                             self.GROUP_CORNER_CONROL)
 
     def getProxiedItem(self):
         """Provides the real item for a proxy one"""
@@ -347,6 +350,8 @@ __kindToString = {
     CellElement.BADGE: 'BADGE',
     CellElement.TEXT: 'TEXT',
     CellElement.RUBBER_BAND: 'RUBBER_BAND',
+    CellElement.LINE: 'LINE',
+    CellElement.GROUP_CORNER_CONROL: 'GROUP_CORNER_CONROL',
     CellElement.INDEPENDENT_DOC: 'INDEPENDENT_DOC',
     CellElement.LEADING_DOC: 'LEADING_DOC',
     CellElement.ABOVE_DOC: 'ABOVE_DOC',

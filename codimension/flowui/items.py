@@ -23,7 +23,7 @@ from html import escape
 from ui.qt import (Qt, QPointF, QPen, QBrush, QGraphicsRectItem, QGraphicsItem,
                    QGraphicsPathItem, QStyleOptionGraphicsItem, QStyle)
 from utils.globals import GlobalData
-from .auxitems import Connector, Text
+from .auxitems import Connector, Text, BadgeItem
 from .cml import CMLVersion, CMLsw
 from .routines import getCommentBoxPath, distance
 from .colormixin import ColorMixin
@@ -899,23 +899,38 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         self.yBelow = CMLVersion.find(self.ref.leadingCMLComments,
                                       CMLsw) is not None
         if self.yBelow:
-            self.rightLabel = Text(self.canvas, "N")
-            f = self.rightLabel.font()
-            f.setBold(True)
-            self.rightLabel.setFont(f)
-        else:
-            self.rightLabel = Text(self.canvas, "Y")
+            self.rightBadge = BadgeItem(self, 'n')
+            self.leftBadge = BadgeItem(self, 'y')
 
-        self.rightLabel.setPos(
-            self.x4 + 2,
-            self.y4 - self.rightLabel.boundingRect().height() - 2)
-        scene.addItem(self.rightLabel)
+#            self.rightLabel = Text(self.canvas, "N")
+#            f = self.rightLabel.font()
+#            f.setBold(True)
+#            self.rightLabel.setFont(f)
+        else:
+            self.rightBadge = BadgeItem(self, 'y')
+            self.leftBadge = BadgeItem(self, 'n')
+
+#            self.rightLabel = Text(self.canvas, "Y")
+
+        self.rightBadge.setNeedRectangle(False)
+        self.rightBadge.moveTo(self.x4 - self.rightBadge.width / 2,
+                               self.y3 - self.rightBadge.height / 2)
+        self.leftBadge.setNeedRectangle(False)
+        self.leftBadge.moveTo(self.x1 - self.leftBadge.width / 2,
+                              self.y3 - self.leftBadge.height / 2)
+
+#        self.rightLabel.setPos(
+##            self.x4 + 2,
+#            self.y4 - self.rightLabel.boundingRect().height() - 2)
+#        scene.addItem(self.rightLabel)
 
         penWidth = settings.selectPenWidth - 1
         self.setRect(self.x1 - penWidth, self.y2 - penWidth,
                      self.x4 - self.x1 + 2 * penWidth,
                      self.y6 - self.y2 + 2 * penWidth)
         scene.addItem(self)
+        scene.addItem(self.rightBadge)
+        scene.addItem(self.leftBadge)
 
         self.baseX -= hShift
 

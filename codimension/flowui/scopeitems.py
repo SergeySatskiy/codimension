@@ -322,6 +322,9 @@ class ScopeCellElement(CellElement):
 
     def paint(self, painter, option, widget):
         """Draws the corresponding scope element"""
+        del option
+        del widget
+
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
             brush = QBrush(self.bgColor)
@@ -475,11 +478,13 @@ class ScopeCellElement(CellElement):
 
     def hoverEnterEvent(self, event):
         """Handling mouse enter event"""
+        del event
         if self.__navBarUpdate:
             self.__navBarUpdate(self.getCanvasTooltip())
 
     def hoverLeaveEvent(self, event):
         """Handling mouse enter event"""
+        del event
         # if self.__navBarUpdate:
         #     self.__navBarUpdate("")
         return

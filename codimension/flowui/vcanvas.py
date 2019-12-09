@@ -43,7 +43,7 @@ from .items import (CodeBlockCell,
                     ReturnCell, RaiseCell, AssertCell,
                     SysexitCell, ImportCell,  IfCell,
                     MinimizedExceptCell)
-from .auxitems import ConnectorCell, VacantCell, VSpacerCell
+from .auxitems import ConnectorCell, VacantCell, VSpacerCell, Line
 from .loopjumpitems import BreakCell, ContinueCell
 from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
                          ClassScopeCell, ForScopeCell, WhileScopeCell,
@@ -1616,34 +1616,52 @@ class VirtualCanvas:
             currentX = baseX
             for cell in row:
                 if self.settings.debug:
-                    pen = QPen(Qt.DotLine)
-                    pen.setWidth(1)
                     if cell.kind == CellElement.VCANVAS:
-                        pen.setColor(QColor(255, 0, 0, 255))
-                        scene.addLine(currentX + 1, currentY + 1,
-                                      currentX + cell.width - 2, currentY + 1,
-                                      pen)
-                        scene.addLine(currentX + 1, currentY + 1,
-                                      currentX + 1, currentY + cell.height - 2,
-                                      pen)
-                        scene.addLine(currentX + 1, currentY + cell.height - 2,
-                                      currentX + cell.width - 2,
-                                      currentY + cell.height - 2, pen)
-                        scene.addLine(currentX + cell.width - 2, currentY + 1,
-                                      currentX + cell.width - 2,
-                                      currentY + cell.height - 2, pen)
+                        penColor = QColor(255, 0, 0, 255)
+                        line = Line(self, currentX + 1, currentY + 1,
+                                    currentX + cell.width - 2, currentY + 1)
+                        line.penColor = penColor
+                        scene.addItem(line)
+
+                        line = Line(self, currentX + 1, currentY + 1,
+                                    currentX + 1, currentY + cell.height - 2)
+                        line.penColor = penColor
+                        scene.addItem(line)
+
+                        line = Line(self, currentX + 1, currentY + cell.height - 2,
+                                    currentX + cell.width - 2,
+                                    currentY + cell.height - 2)
+                        line.penColor = penColor
+                        scene.addItem(line)
+
+                        line = Line(self, currentX + cell.width - 2, currentY + 1,
+                                    currentX + cell.width - 2,
+                                    currentY + cell.height - 2)
+                        line.penColor = penColor
+                        scene.addItem(line)
                     else:
-                        pen.setColor(QColor(0, 255, 0, 255))
-                        scene.addLine(currentX, currentY,
-                                      currentX + cell.width, currentY, pen)
-                        scene.addLine(currentX, currentY,
-                                      currentX, currentY + cell.height, pen)
-                        scene.addLine(currentX, currentY + cell.height,
-                                      currentX + cell.width,
-                                      currentY + cell.height, pen)
-                        scene.addLine(currentX + cell.width, currentY,
-                                      currentX + cell.width,
-                                      currentY + cell.height, pen)
+                        penColor = QColor(0, 255, 0, 255)
+                        line = Line(self, currentX, currentY,
+                                    currentX + cell.width, currentY)
+                        line.penColor = penColor
+                        scene.addItem(line)
+
+                        line = Line(self, currentX, currentY,
+                                    currentX, currentY + cell.height)
+                        line.penColor = penColor
+                        scene.addItem(line)
+
+                        line = Line(self, currentX, currentY + cell.height,
+                                    currentX + cell.width,
+                                    currentY + cell.height)
+                        line.penColor = penColor
+                        scene.addItem(line)
+
+                        line = Line(self, currentX + cell.width, currentY,
+                                    currentX + cell.width,
+                                    currentY + cell.height)
+                        line.penColor = penColor
+                        scene.addItem(line)
                 cell.draw(scene, currentX, currentY)
                 currentX += cell.width
             currentY += height

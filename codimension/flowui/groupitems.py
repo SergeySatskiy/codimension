@@ -483,15 +483,16 @@ class CollapsedGroup(GroupItemBase, CellElement,
 
 
 
-class GroupCornerControl(QGraphicsRectItem):
+class GroupCornerControl(CellElement, QGraphicsRectItem):
 
     """Expanded group top left corner control"""
 
     def __init__(self, ref):
+        CellElement.__init__(self, ref, ref.canvas, None, None)
         QGraphicsRectItem.__init__(self)
-        self.ref = ref
+        self.kind = CellElement.GROUP_CORNER_CONROL
 
-        settings = self.ref.canvas.settings
+        settings = self.canvas.settings
         self.__width = settings.openGroupHSpacer * 2 - 1
         self.__height = settings.openGroupVSpacer * 2 - 1
 
@@ -499,7 +500,7 @@ class GroupCornerControl(QGraphicsRectItem):
 
     def moveTo(self, xPos, yPos):
         """Moves to the specified position"""
-        settings = self.ref.canvas.settings
+        settings = self.canvas.settings
 
         # This is a mistery. I do not understand why I need to divide by 2.0
         # however this works. I tried various combinations of initialization,
@@ -514,7 +515,7 @@ class GroupCornerControl(QGraphicsRectItem):
         del option
         del widget
 
-        settings = self.ref.canvas.settings
+        settings = self.canvas.settings
 
         pen = QPen(settings.openGroupControlBorderColor)
         pen.setStyle(Qt.SolidLine)
@@ -542,25 +543,9 @@ class GroupCornerControl(QGraphicsRectItem):
         self.ref.setHighlight(False)
         groupTitlePopup.hide()
 
-    def isProxyItem(self):
-        """True if it is a proxy item"""
-        return True
-
     def getProxiedItem(self):
         """Provides the real item for a proxy one"""
         return self.ref
-
-    def isComment(self):
-        """True if it is a comment"""
-        return False
-
-    def isCMLDoc(self):
-        """True if it is a CML doc item"""
-        return False
-
-    def scopedItem(self):
-        """True if it is a scoped item"""
-        return False
 
 
 
