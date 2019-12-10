@@ -95,13 +95,14 @@ class CodeBlockCell(CellElement, ColorMixin, QGraphicsRectItem):
         rectHeight = self.minHeight - 2 * settings.vCellPadding
 
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            selectPen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
         else:
             pen = QPen(self.borderColor)
-            painter.setPen(pen)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
+
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
         painter.drawRect(self.baseX + settings.hCellPadding,
@@ -222,6 +223,8 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
             pen.setWidth(settings.selectPenWidth)
         else:
             pen = QPen(self.borderColor)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
         painter.setPen(pen)
 
         brush = QBrush(self.bgColor)
@@ -356,12 +359,13 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         settings = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            painter.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
         else:
             pen = QPen(self.borderColor)
-            painter.setPen(pen)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
 
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
@@ -500,13 +504,13 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         settings = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            selectPen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
         else:
             pen = QPen(self.borderColor)
-            painter.setPen(pen)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
 
         dHalf = int(self.__diamondHeight / 2.0)
         dx1 = self.baseX + settings.hCellPadding
@@ -659,12 +663,13 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         settings = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            painter.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
         else:
             pen = QPen(self.borderColor)
-            painter.setPen(pen)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
 
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
@@ -772,13 +777,14 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         settings = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            selectPen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
         else:
             pen = QPen(self.borderColor)
-            painter.setPen(pen)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
+
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
         painter.drawRect(self.baseX + settings.hCellPadding,
@@ -826,7 +832,8 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         self.__textRect = None
         self.vConnector = None
         self.hConnector = None
-        self.rightLabel = None
+        self.leftBadge = None
+        self.rightBadge = None
         self.yBelow = False
 
         # To make double click delivered
@@ -899,18 +906,15 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         self.yBelow = CMLVersion.find(self.ref.leadingCMLComments,
                                       CMLsw) is not None
         if self.yBelow:
-            self.rightBadge = BadgeItem(self, 'n')
-            self.leftBadge = BadgeItem(self, 'y')
-
-#            self.rightLabel = Text(self.canvas, "N")
-#            f = self.rightLabel.font()
-#            f.setBold(True)
-#            self.rightLabel.setFont(f)
+            self.leftBadge = BadgeItem(self, 'Y')
+            self.leftBadge.setFGColor(settings.ifYBranchTextColor)
+            self.rightBadge = BadgeItem(self, 'N')
+            self.rightBadge.setFGColor(settings.ifNBranchTextColor)
         else:
-            self.rightBadge = BadgeItem(self, 'y')
-            self.leftBadge = BadgeItem(self, 'n')
-
-#            self.rightLabel = Text(self.canvas, "Y")
+            self.leftBadge = BadgeItem(self, 'N')
+            self.leftBadge.setFGColor(settings.ifNBranchTextColor)
+            self.rightBadge = BadgeItem(self, 'Y')
+            self.rightBadge.setFGColor(settings.ifYBranchTextColor)
 
         self.rightBadge.setNeedRectangle(False)
         self.rightBadge.moveTo(self.x4 - self.rightBadge.width / 2,
@@ -918,11 +922,6 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         self.leftBadge.setNeedRectangle(False)
         self.leftBadge.moveTo(self.x1 - self.leftBadge.width / 2,
                               self.y3 - self.leftBadge.height / 2)
-
-#        self.rightLabel.setPos(
-##            self.x4 + 2,
-#            self.y4 - self.rightLabel.boundingRect().height() - 2)
-#        scene.addItem(self.rightLabel)
 
         penWidth = settings.selectPenWidth - 1
         self.setRect(self.x1 - penWidth, self.y2 - penWidth,
@@ -942,14 +941,13 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         settings = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            selectPen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
         else:
             pen = QPen(self.borderColor)
-            pen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(pen)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
 
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
@@ -1061,8 +1059,6 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
             cellToTheLeft.minWidth - settings.hCellPadding,
             self.baseY + height)
 
-        # self.connector.penColor = settings.commentLineColor
-        # self.connector.penWidth = settings.commentLineWidth
         self.connector.penStyle = Qt.DotLine
 
         self.setPath(path)
@@ -1081,7 +1077,7 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
             self.setPen(selectPen)
         else:
             pen = QPen(settings.exceptScopeBorderColor)
-            pen.setWidth(settings.lineWidth)
+            pen.setWidth(settings.cfLineWidth)
             pen.setJoinStyle(Qt.RoundJoin)
             self.setPen(pen)
 

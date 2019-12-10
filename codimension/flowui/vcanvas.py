@@ -1558,7 +1558,7 @@ class VirtualCanvas:
 
         if self.hasScope():
             # Right hand side vertical part
-            self.width += self.settings.rectRadius + self.settings.hCellPadding
+            self.width += self.settings.scopeRectRadius + self.settings.hCellPadding
 
         # There is no need to add spacing at the right hand side for groups.
         # The appropriate number of spacers were added for canvases and regular

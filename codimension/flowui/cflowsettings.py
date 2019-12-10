@@ -115,6 +115,17 @@ class CFlowSettings:
         self.openGroupHSpacer = self.__getNormalized('openGroupHSpacer')
         self.hDocLinkPadding = self.__getNormalized('hDocLinkPadding')
         self.vDocLinkPadding = self.__getNormalized('vDocLinkPadding')
+        self.badgeHSpacing = self.__getNormalized('badgeHSpacing')
+        self.badgeVSpacing = self.__getNormalized('badgeVSpacing')
+        self.badgeShift = self.__getNormalized('badgeShift')
+        self.scopeRectRadius = self.__getNormalized('scopeRectRadius')
+        self.badgeRadius = self.__getNormalized('badgeRadius')
+        self.openGroupVSpacer = self.__getNormalized('openGroupVSpacer')
+        self.openGroupHSpacer = self.__getNormalized('openGroupHSpacer')
+        self.collapsedGroupXShift = self.__getNormalized('collapsedGroupXShift')
+        self.collapsedGroupYShift = self.__getNormalized('collapsedGroupYShift')
+        self.emptyGroupXShift = self.__getNormalized('emptyGroupXShift')
+        self.emptyGroupYShift = self.__getNormalized('emptyGroupYShift')
 
 
 def getCflowSettings(paintDevice):

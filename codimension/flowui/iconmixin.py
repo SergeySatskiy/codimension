@@ -27,19 +27,17 @@ class IconMixin:
 
     """Icon (svg) mixin for items like import"""
 
-    HEIGHT = None
-
     def __init__(self, canvas, fName, tooltip=None):
+        self.__iconHeight = None
         self.iconItem = SVGItem(canvas, fName, self)
         self.iconItem.setIconHeight(self.__getIconHeight(canvas.settings))
         if tooltip:
             self.iconItem.setToolTip(tooltip)
 
-    @staticmethod
-    def __getIconHeight(settings):
+    def __getIconHeight(self, settings):
         """Provides the icon height"""
-        if IconMixin.HEIGHT is None:
-            IconMixin.HEIGHT = \
+        if self.__iconHeight is None:
+            self.__iconHeight = \
                 settings.monoFontMetrics.boundingRect('W').height()
-        return IconMixin.HEIGHT
+        return self.__iconHeight
 

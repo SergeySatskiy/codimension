@@ -77,8 +77,8 @@ class ScopeCellElement(CellElement):
         """Provides rendering for the scope elements"""
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.minHeight = s.rectRadius + s.vCellPadding
-            self.minWidth = s.rectRadius + s.hCellPadding
+            self.minHeight = s.scopeRectRadius + s.vCellPadding
+            self.minWidth = s.scopeRectRadius + s.hCellPadding
             # The effect is nice but the CPU consumption becomes so high that
             # the diagram could hardly be scrolled ...
             # effect = QGraphicsDropShadowEffect()
@@ -88,15 +88,15 @@ class ScopeCellElement(CellElement):
             # self.setGraphicsEffect( effect )
         elif self.subKind == ScopeCellElement.LEFT:
             self.minHeight = 0
-            self.minWidth = s.rectRadius + s.hCellPadding
+            self.minWidth = s.scopeRectRadius + s.hCellPadding
         elif self.subKind == ScopeCellElement.BOTTOM_LEFT:
-            self.minHeight = s.rectRadius + s.vCellPadding
-            self.minWidth = s.rectRadius + s.hCellPadding
+            self.minHeight = s.scopeRectRadius + s.vCellPadding
+            self.minWidth = s.scopeRectRadius + s.hCellPadding
         elif self.subKind == ScopeCellElement.TOP:
-            self.minHeight = s.rectRadius + s.vCellPadding
+            self.minHeight = s.scopeRectRadius + s.vCellPadding
             self.minWidth = 0
         elif self.subKind == ScopeCellElement.BOTTOM:
-            self.minHeight = s.rectRadius + s.vCellPadding
+            self.minHeight = s.scopeRectRadius + s.vCellPadding
             self.minWidth = 0
         elif self.subKind == ScopeCellElement.DECLARATION:
             # The declaration location uses a bit of the top cell space
@@ -106,15 +106,15 @@ class ScopeCellElement(CellElement):
 
             self._headerRect = self.getBoundingRect(self._getText())
             self.minHeight = self._headerRect.height() + \
-                             2 * s.vHeaderPadding - s.rectRadius
+                             2 * s.vHeaderPadding - s.scopeRectRadius
             w = self._headerRect.width()
             if badgeItem:
                 w = max(w, badgeItem.width)
-            self.minWidth = w + s.hHeaderPadding - s.rectRadius
+            self.minWidth = w + s.hHeaderPadding - s.scopeRectRadius
             if badgeItem:
                 if badgeItem.withinHeader():
                     self.minWidth = badgeItem.width + \
-                                    s.hHeaderPadding - s.rectRadius
+                                    s.hHeaderPadding - s.scopeRectRadius
             if hasattr( self.ref, "sideComment" ):
                 if self.ref.sideComment:
                     self.minHeight += 2 * s.vTextPadding
@@ -131,17 +131,17 @@ class ScopeCellElement(CellElement):
             if s.hidecomments:
                 self.minHeight = self._sideCommentRect.height() + \
                     2 * (s.vHeaderPadding + s.vHiddenTextPadding) - \
-                    s.rectRadius
+                    s.scopeRectRadius
                 self.minWidth = s.hCellPadding + s.hHiddenTextPadding + \
                     self._sideCommentRect.width() + s.hHiddenTextPadding + \
-                    s.hHeaderPadding - s.rectRadius
+                    s.hHeaderPadding - s.scopeRectRadius
             else:
                 self.minHeight = self._sideCommentRect.height() + \
                     2 * (s.vHeaderPadding + s.vTextPadding) - \
-                    s.rectRadius
+                    s.scopeRectRadius
                 self.minWidth = s.hCellPadding + s.hTextPadding + \
                     self._sideCommentRect.width() + s.hTextPadding + \
-                    s.hHeaderPadding - s.rectRadius
+                    s.hHeaderPadding - s.scopeRectRadius
         elif self.subKind == ScopeCellElement.DOCSTRING:
             docstringText = self.getDocstringText()
             if not s.hidedocstrings:
@@ -149,12 +149,12 @@ class ScopeCellElement(CellElement):
                                                       docstringText)
                 self.minHeight = rect.height() + 2 * s.vHeaderPadding
                 self.minWidth = rect.width() + 2 * (s.hHeaderPadding -
-                                                    s.rectRadius)
+                                                    s.scopeRectRadius)
             else:
                 self.__docBadge = BadgeItem(self, 'doc')
                 self.minHeight = self.__docBadge.height + \
                     2 * (s.selectPenWidth - 1)
-                self.minWidth = 2 * (s.hHeaderPadding - s.rectRadius)
+                self.minWidth = 2 * (s.hHeaderPadding - s.scopeRectRadius)
         elif self.subKind == ScopeCellElement.UNKNOWN:
             raise Exception("Unknown scope element")
         else:
@@ -229,14 +229,14 @@ class ScopeCellElement(CellElement):
                 if self._badgeItem.withinHeader():
                     headerHeight = self.canvas.cells[
                         self.addr[1] + 1][self.addr[0]].height
-                    fullHeight = headerHeight + s.rectRadius
+                    fullHeight = headerHeight + s.scopeRectRadius
                     self._badgeItem.moveTo(
-                        baseX + s.hCellPadding + s.rectRadius,
+                        baseX + s.hCellPadding + s.badgeShift,
                         baseY + s.vCellPadding + fullHeight / 2 -
                         self._badgeItem.height / 2)
                 else:
                     self._badgeItem.moveTo(
-                        baseX + s.hCellPadding + s.rectRadius,
+                        baseX + s.hCellPadding + s.badgeShift,
                         baseY + s.vCellPadding - self._badgeItem.height / 2)
                 scene.addItem(self._badgeItem)
             # Draw a horizontal connector if needed
@@ -250,9 +250,9 @@ class ScopeCellElement(CellElement):
                     self._connector = Connector(
                         self.canvas,
                         cellToTheLeft.baseX + cellToTheLeft.minWidth -
-                        s.hCellPadding + s.lineWidth,
+                        s.hCellPadding + s.boxLineWidth,
                         baseY + 2 * s.vCellPadding,
-                        baseX + s.hCellPadding - s.lineWidth,
+                        baseX + s.hCellPadding - s.boxLineWidth,
                         baseY + 2 * s.vCellPadding)
                     self._connector.penStyle = Qt.DotLine
                     scene.addItem(self._connector)
@@ -267,15 +267,15 @@ class ScopeCellElement(CellElement):
                 yShift = s.vTextPadding
             penWidth = s.selectPenWidth - 1
             self.setRect(
-                baseX - s.rectRadius - penWidth,
-                baseY - s.rectRadius - penWidth,
+                baseX - s.scopeRectRadius - penWidth,
+                baseY - s.scopeRectRadius - penWidth,
                 self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-                self.height + s.rectRadius + penWidth)
+                self.height + s.scopeRectRadius + penWidth)
             scene.addItem(self)
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-            canvasTop = self.baseY - s.rectRadius
+            canvasTop = self.baseY - s.scopeRectRadius
             movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
-                self.width - s.rectRadius - s.vHeaderPadding
+                self.width - s.scopeRectRadius - s.vHeaderPadding
             if s.hidecomments:
                 self.__sideCommentPath = getHiddenCommentPath(
                     movedBaseX + s.hHeaderPadding,
@@ -310,7 +310,7 @@ class ScopeCellElement(CellElement):
         elif self.subKind == ScopeCellElement.DOCSTRING:
             penWidth = s.selectPenWidth - 1
             self.setRect(
-                baseX - s.rectRadius - penWidth,
+                baseX - s.scopeRectRadius - penWidth,
                 baseY - penWidth,
                 self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
                 self.height + 2 * penWidth)
@@ -318,7 +318,7 @@ class ScopeCellElement(CellElement):
             if s.hidedocstrings:
                 scene.addItem(self.__docBadge)
                 self.__docBadge.moveTo(
-                    baseX - s.rectRadius + penWidth, baseY + penWidth)
+                    baseX - s.scopeRectRadius + penWidth, baseY + penWidth)
 
     def paint(self, painter, option, widget):
         """Draws the corresponding scope element"""
@@ -331,20 +331,19 @@ class ScopeCellElement(CellElement):
             painter.setBrush(brush)
 
             if self.isSelected():
-                selectPen = QPen(s.selectColor)
-                selectPen.setWidth(s.selectPenWidth)
-                selectPen.setJoinStyle(Qt.RoundJoin)
-                painter.setPen(selectPen)
+                pen = QPen(s.selectColor)
+                pen.setWidth(s.selectPenWidth)
+                pen.setJoinStyle(Qt.RoundJoin)
             else:
                 pen = QPen(self.borderColor)
-                pen.setWidth(s.lineWidth)
-                painter.setPen(pen)
+                pen.setWidth(s.boxLineWidth)
+            painter.setPen(pen)
 
             painter.drawRoundedRect(self.baseX + s.hCellPadding,
                                     self.baseY + s.vCellPadding,
                                     self.canvas.minWidth - 2 * s.hCellPadding,
                                     self.canvas.minHeight - 2 * s.vCellPadding,
-                                    s.rectRadius, s.rectRadius)
+                                    s.scopeRectRadius, s.scopeRectRadius)
 
         elif self.subKind == ScopeCellElement.DECLARATION:
             brush = QBrush(self.bgColor)
@@ -353,8 +352,8 @@ class ScopeCellElement(CellElement):
             pen = QPen(self.fgColor)
             painter.setFont(s.monoFont)
             painter.setPen(pen)
-            canvasLeft = self.baseX - s.rectRadius
-            canvasTop = self.baseY - s.rectRadius
+            canvasLeft = self.baseX - s.scopeRectRadius
+            canvasTop = self.baseY - s.scopeRectRadius
             textHeight = self._headerRect.height()
             yShift = 0
             if hasattr(self.ref, "sideComment"):
@@ -365,7 +364,7 @@ class ScopeCellElement(CellElement):
                              Qt.AlignLeft, self._getText())
 
             pen = QPen(self.borderColor)
-            pen.setWidth(s.lineWidth)
+            pen.setWidth(s.boxLineWidth)
             painter.setPen(pen)
 
             # If the scope is selected then the line may need to be shorter
@@ -391,16 +390,16 @@ class ScopeCellElement(CellElement):
                 selectPen.setJoinStyle(Qt.RoundJoin)
                 painter.setPen(selectPen)
             else:
-                pen = QPen(s.commentLineColor)
-                pen.setWidth(s.commentLineWidth)
+                pen = QPen(s.commentBorderColor)
+                pen.setWidth(s.boxLineWidth)
                 pen.setJoinStyle(Qt.RoundJoin)
                 painter.setPen(pen)
 
-            canvasTop = self.baseY - s.rectRadius
+            canvasTop = self.baseY - s.scopeRectRadius
             # s.vHeaderPadding below is used intentionally: to have the same
             # spacing on top, bottom and right for the comment box
             movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
-                self.width - s.rectRadius - s.vHeaderPadding
+                self.width - s.scopeRectRadius - s.vHeaderPadding
             painter.drawPath(self.__sideCommentPath)
 
             pen = QPen(s.commentFGColor)
@@ -422,7 +421,7 @@ class ScopeCellElement(CellElement):
             brush = QBrush(self.bgColor)
             painter.setBrush(brush)
 
-            canvasLeft = self.baseX - s.rectRadius
+            canvasLeft = self.baseX - s.scopeRectRadius
 
             if self.isSelected():
                 selectPen = QPen(s.selectColor)
@@ -443,22 +442,22 @@ class ScopeCellElement(CellElement):
 
                 # The background could also be custom
                 pen = QPen(self.bgColor)
-                pen.setWidth(s.lineWidth)
+                pen.setWidth(s.boxLineWidth)
                 pen.setJoinStyle(Qt.MiterJoin)
                 painter.setPen(pen)
 
-                dsCorr = float(s.lineWidth)
+                dsCorr = float(s.boxLineWidth)
                 if self.canvas.cells[row][column].isSelected():
                     dsCorr = float(s.selectPenWidth) / 2.0 + \
-                        float(s.lineWidth) / 2.0
+                        float(s.boxLineWidth) / 2.0
                 painter.drawRect(float(canvasLeft) + dsCorr,
-                                 self.baseY + s.lineWidth,
+                                 self.baseY + s.boxLineWidth,
                                  float(self.canvas.minWidth) -
                                  2.0 * float(s.hCellPadding) - 2.0 * dsCorr,
-                                 self.height - 2 * s.lineWidth)
+                                 self.height - 2 * s.boxLineWidth)
 
                 pen = QPen(self.borderColor)
-                pen.setWidth(s.lineWidth)
+                pen.setWidth(s.boxLineWidth)
                 painter.setPen(pen)
                 painter.drawLine(canvasLeft + correction,
                                  self.baseY + self.height,

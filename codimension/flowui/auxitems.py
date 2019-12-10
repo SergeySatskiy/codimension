@@ -173,8 +173,7 @@ class BadgeItem(CellElement, QGraphicsRectItem):
 
         self.__bgColor = s.badgeBGColor
         self.__fgColor = s.badgeFGColor
-        self.__frameColor = s.badgeLineColor
-        self.__font = s.badgeFont
+        self.__frameColor = s.badgeBorderColor
         self.__needRect = True
 
     def setBGColor(self, bgColor):
@@ -192,10 +191,6 @@ class BadgeItem(CellElement, QGraphicsRectItem):
     def setNeedRectangle(self, value):
         """Sets the need rectangle flag"""
         self.__needRect = value
-
-    def setFont(self, font):
-        """Sets the font"""
-        self.__font = font
 
     def text(self):
         """Provides the text"""
@@ -239,7 +234,7 @@ class BadgeItem(CellElement, QGraphicsRectItem):
 
         pen = QPen(self.__fgColor)
         painter.setPen(pen)
-        painter.setFont(self.__font)
+        painter.setFont(s.badgeFont)
         painter.drawText(self.x() + s.badgeHSpacing,
                          self.y() + s.badgeVSpacing,
                          self.__textRect.width(),
@@ -276,10 +271,10 @@ class Connector(CellElement, QGraphicsPathItem):
 
     def paint(self, painter, option, widget):
         """Paints the connector"""
-        color = self.canvas.settings.lineColor
+        color = self.canvas.settings.cfLineColor
         if self.penColor:
             color = self.penColor
-        width = self.canvas.settings.lineWidth
+        width = self.canvas.settings.cfLineWidth
         if self.penWidth:
             width = self.penWidth
 
@@ -369,7 +364,7 @@ class Text(CellElement, QGraphicsSimpleTextItem):
 
     def paint(self, painter, option, widget):
         """Paints the text item"""
-        color = self.canvas.settings.lineColor
+        color = self.canvas.settings.cfLineColor
         if self.color:
             color = self.color
 
@@ -402,10 +397,10 @@ class Line(CellElement, QGraphicsLineItem):
 
     def paint(self, painter, option, widget):
         """Paints the text item"""
-        color = self.canvas.settings.lineColor
+        color = self.canvas.settings.cfLineColor
         if self.penColor:
             color = self.penColor
-        width = self.canvas.settings.lineWidth
+        width = self.canvas.settings.cfLineWidth
         if self.penWidth:
             width = self.penWidth
 
@@ -604,8 +599,8 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         """Draws the code block"""
         settings = self.canvas.settings
 
-        pen = QPen(settings.lineColor)
-        pen.setWidth(settings.lineWidth)
+        pen = QPen(settings.cfLineColor)
+        pen.setWidth(settings.cfLineWidth)
         pen.setJoinStyle(Qt.RoundJoin)
         self.setPen(pen)
         painter.setPen(pen)

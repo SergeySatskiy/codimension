@@ -120,9 +120,10 @@ class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
         if self.isSelected():
             pen = QPen(settings.selectColor)
             pen.setWidth(settings.selectPenWidth)
-            pen.setJoinStyle(Qt.RoundJoin)
         else:
             pen = QPen(self.borderColor)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
         painter.setPen(pen)
 
         brush = QBrush(self.bgColor)
@@ -242,9 +243,10 @@ class ContinueCell(CellElement, ColorMixin, QGraphicsRectItem):
         if self.isSelected():
             pen = QPen(settings.selectColor)
             pen.setWidth(settings.selectPenWidth)
-            pen.setJoinStyle(Qt.RoundJoin)
         else:
             pen = QPen(self.borderColor)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
         painter.setPen(pen)
 
         brush = QBrush(self.bgColor)

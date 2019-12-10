@@ -40,7 +40,7 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         CommentCellBase.__init__(self, itemRef, canvas, x, y)
         ColorMixin.__init__(self, None, canvas.settings.docLinkBGColor,
                             canvas.settings.docLinkFGColor,
-                            canvas.settings.docLinkLineColor,
+                            canvas.settings.docLinkBorderColor,
                             colorSpec=cmlRef)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.cmlRef = cmlRef
@@ -177,15 +177,13 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         rectHeight = self.minHeight - 2 * settings.vCellPadding
 
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            selectPen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
         else:
             pen = QPen(self.borderColor)
-            pen.setWidth(settings.docLinkLineWidth)
-            pen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(pen)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
 
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
@@ -263,8 +261,8 @@ class IndependentDocCell(DocCellBase):
                 self.baseY + self.minHeight / 2,
                 cellToTheLeft.baseX + settings.mainLine,
                 self.baseY + self.minHeight / 2)
-        self.connector.penColor = settings.docLinkLineColor
-        self.connector.penWidth = settings.docLinkLineWidth
+        self.connector.penColor = self.borderColor
+        self.connector.penWidth = settings.boxLineWidth
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -311,8 +309,8 @@ class LeadingDocCell(DocCellBase):
         connectorPath.lineTo(self._leftEdge - settings.hCellPadding,
                              baseY + self.minHeight + settings.vCellPadding)
         self.connector.setPath(connectorPath)
-        self.connector.penColor = settings.docLinkLineColor
-        self.connector.penWidth = settings.docLinkLineWidth
+        self.connector.penColor = self.borderColor
+        self.connector.penWidth = settings.boxLineWidth
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -368,8 +366,8 @@ class AboveDocCell(DocCellBase):
         connectorPath.lineTo(self._leftEdge - settings.hCellPadding,
                              baseY + self.minHeight + settings.vCellPadding)
         self.connector.setPath(connectorPath)
-        self.connector.penColor = settings.docLinkLineColor
-        self.connector.penWidth = settings.docLinkLineWidth
+        self.connector.penColor = self.borderColor
+        self.connector.penWidth = settings.boxLineWidth
 
     def getSelectTooltip(self):
         """Provides the tooltip"""

@@ -180,12 +180,13 @@ class EmptyGroup(GroupItemBase, CellElement, ColorMixin, QGraphicsRectItem):
         if self.isSelected():
             pen = QPen(settings.selectColor)
             pen.setWidth(settings.selectPenWidth)
-            pen.setJoinStyle(Qt.RoundJoin)
         else:
             pen = QPen(self.borderColor)
             pen.setStyle(Qt.DotLine)
-            pen.setWidth(1)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
         painter.setPen(pen)
+
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
 
@@ -307,18 +308,18 @@ class OpenedGroupBegin(GroupItemBase, CellElement,
 
         # Group rectangle
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            selectPen.setJoinStyle(Qt.RoundJoin)
-            painter.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
         else:
             pen = QPen(self.borderColor)
             if self.highlight:
                 pen.setStyle(Qt.SolidLine)
             else:
                 pen.setStyle(Qt.DotLine)
-            pen.setWidth(1)
-            painter.setPen(pen)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
+
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
 
@@ -451,10 +452,12 @@ class CollapsedGroup(GroupItemBase, CellElement,
         if self.isSelected():
             pen = QPen(settings.selectColor)
             pen.setWidth(settings.selectPenWidth)
-            pen.setJoinStyle(Qt.RoundJoin)
         else:
             pen = QPen(self.borderColor)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
         painter.setPen(pen)
+
         brush = QBrush(self.bgColor)
         painter.setBrush(brush)
 
@@ -519,7 +522,7 @@ class GroupCornerControl(CellElement, QGraphicsRectItem):
 
         pen = QPen(settings.openGroupControlBorderColor)
         pen.setStyle(Qt.SolidLine)
-        pen.setWidth(1)
+        pen.setWidth(settings.openGroupControlLineWidth)
         painter.setPen(pen)
 
         brush = QBrush(settings.openGroupControlBGColor)

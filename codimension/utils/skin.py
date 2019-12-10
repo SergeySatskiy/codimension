@@ -167,15 +167,15 @@ _DEFAULT_CFLOW_SETTINGS = {
 
     'vSpacer': 8,
 
-    # Rounded rectangles radius for the scopes
-    'rectRadius': 4,
+    'scopeRectRadius': 4,
 
     # Rounded rectangles radius for the return-like statements
     'returnRectRadius': 12,
     'minWidth': 100,
 
-    'lineWidth': 2,          # used for connections and box edges
-    'lineColor': QColor(132, 132, 132, 255),
+    'cfLineWidth': 2,        # Control flow line
+    'boxLineWidth': 1,        # All boxes and their leads to CF
+    'cfLineColor': QColor(132, 132, 132, 255),
 
     # Selection
     'selectColor': QColor(63, 81, 181, 255),
@@ -217,23 +217,25 @@ _DEFAULT_CFLOW_SETTINGS = {
     'ifBGColor': QColor(255, 247, 188, 255),
     'ifFGColor': QColor(0, 0, 0, 255),
     'ifBorderColor': QColor(192, 192, 192, 255),
+    'ifYBranchTextColor': QColor(192, 192, 192, 255),
+    'ifNBranchTextColor': QColor(192, 192, 192, 255),
     'ifWidth': 10,           # One if wing width
 
     # Badges
     'badgeBGColor': QColor(230, 230, 230, 255),
     'badgeFGColor': QColor(0, 0, 0, 255),
     'badgeLineWidth': 1,
-    'badgeLineColor': QColor(180, 180, 180, 255),
+    'badgeBorderColor': QColor(180, 180, 180, 255),
     'badgeHSpacing': 2,
     'badgeVSpacing': 1,
     'badgeRadius': 2,
+    'badgeShift': 4,
 
     # Comments: leading, side & independent
     'commentBGColor': QColor(255, 255, 235, 255),
     'commentFGColor': QColor(90, 90, 90, 255),
-    'commentLineColor': QColor(92, 92, 92, 255),
+    'commentBorderColor': QColor(92, 92, 92, 255),
     'commentCorner': 5,      # Top right comment corner
-    'commentLineWidth': 1,
     'vHiddenCommentPadding': 3,
     'hHiddenCommentPadding': 3,
 
@@ -306,6 +308,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'openGroupBorderColor': QColor(32, 32, 32, 255),
     'openGroupControlBGColor': QColor(197, 217, 249, 255),
     'openGroupControlBorderColor': QColor(140, 179, 242, 255),
+    'openGroupControlLineWidth': 1,
 
     'collapsedGroupBGColor': QColor(245, 255, 255, 255),
     'collapsedGroupFGColor': QColor(0, 0, 0, 255),
@@ -328,8 +331,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'vDocLinkPadding': 3,   # in pixels (top and bottom)
     'docLinkBGColor': QColor(219, 230, 246, 255),
     'docLinkFGColor': QColor(0, 0, 0, 255),
-    'docLinkLineColor': QColor(0, 0, 0, 255),
-    'docLinkLineWidth': 1}
+    'docLinkBorderColor': QColor(0, 0, 0, 255)}
 
 
 
