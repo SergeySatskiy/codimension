@@ -144,6 +144,13 @@ class SVGItem(CellElement, QGraphicsSvgItem):
         """Provides the width"""
         return self.boundingRect().width() * self.__scale
 
+    def mouseDoubleClickEvent(self, event):
+        """Handling double click events"""
+        if self.ref.kind == CellElement.EXCEPT_MINIMIZED:
+            self.ref.mouseDoubleClickEvent(event)
+        else:
+            return QGraphicsSvgItem.mouseDoubleClickEvent(self, event)
+
     def getSelectTooltip(self):
         """Provides the tooltip"""
         return "SVG item for " + self.__fName
@@ -226,8 +233,7 @@ class BadgeItem(CellElement, QGraphicsRectItem):
             pen = QPen(self.__frameColor)
             pen.setWidth(s.badgeLineWidth)
             painter.setPen(pen)
-            brush = QBrush(self.__bgColor)
-            painter.setBrush(brush)
+            painter.setBrush(QBrush(self.__bgColor))
             painter.drawRoundedRect(self.x(), self.y(),
                                     self.width, self.height,
                                     s.badgeRadius, s.badgeRadius)
@@ -336,8 +342,7 @@ class RubberBandItem(CellElement, QGraphicsRectItem):
 
         pen = QPen(self.__settings.rubberBandBorderColor)
         painter.setPen(pen)
-        brush = QBrush(self.__settings.rubberBandFGColor)
-        painter.setBrush(brush)
+        painter.setBrush(QBrush(self.__settings.rubberBandFGColor))
         painter.drawRect(self.__x, self.__y,
                          self.__width, self.__height)
 

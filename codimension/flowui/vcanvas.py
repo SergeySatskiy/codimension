@@ -39,10 +39,9 @@ from cdmcfparser import (CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                          WITH_FRAGMENT, TRY_FRAGMENT, CML_COMMENT_FRAGMENT)
 from .cml import CMLVersion, CMLsw, CMLgb, CMLge, CMLdoc
 from .cellelement import CellElement
-from .items import (CodeBlockCell,
-                    ReturnCell, RaiseCell, AssertCell,
-                    SysexitCell, ImportCell,  IfCell,
-                    MinimizedExceptCell)
+from .items import (CodeBlockCell, ReturnCell, RaiseCell, AssertCell,
+                    SysexitCell, ImportCell,  IfCell)
+from .minimizeditems import MinimizedExceptCell
 from .auxitems import ConnectorCell, VacantCell, VSpacerCell, Line
 from .loopjumpitems import BreakCell, ContinueCell
 from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,

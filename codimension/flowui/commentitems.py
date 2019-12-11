@@ -65,11 +65,11 @@ class CommentCellBase(CellElement):
 
     def onDoubleClick(self, line, pos):
         """Jumps to the text editor"""
-        if self._editor:
+        if self.editor:
             GlobalData().mainWindow.raise_()
             GlobalData().mainWindow.activateWindow()
-            self._editor.gotoLine(line, pos)
-            self._editor.setFocus()
+            self.editor.gotoLine(line, pos)
+            self.editor.setFocus()
 
 
 
@@ -175,18 +175,9 @@ class IndependentCommentCell(CommentCellBase, QGraphicsPathItem):
     def paint(self, painter, option, widget):
         """Draws the independent comment"""
         settings = self.canvas.settings
-
-        brush = QBrush(settings.commentBGColor)
-        self.setBrush(brush)
-
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(settings.commentBorderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        self.setPen(pen)
+        self.setPen(self.getPainterPen(self.isSelected(),
+                    settings.commentBorderColor))
+        self.setBrush(QBrush(settings.commentBGColor))
 
         # Hide the dotted outline
         itemOption = QStyleOptionGraphicsItem(option)
@@ -353,6 +344,9 @@ class LeadingCommentCell(CommentCellBase, QGraphicsPathItem):
     def paint(self, painter, option, widget):
         """Draws the leading comment"""
         settings = self.canvas.settings
+        self.setPen(self.getPainterPen(self.isSelected(),
+                                       settings.commentBorderColor))
+        self.setBrush(QBrush(settings.commentBGColor))
 
         # Bottom adjustment
         yShift = self.height - self.minHeight
@@ -361,18 +355,6 @@ class LeadingCommentCell(CommentCellBase, QGraphicsPathItem):
         # Left adjustments
         shift = self.hShift * 2 * settings.openGroupHSpacer
         self._leftEdge += shift
-
-        brush = QBrush(settings.commentBGColor)
-        self.setBrush(brush)
-
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(settings.commentBorderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        self.setPen(pen)
 
         # Hide the dotted outline
         itemOption = QStyleOptionGraphicsItem(option)
@@ -571,18 +553,9 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
     def paint(self, painter, option, widget):
         """Draws the side comment"""
         settings = self.canvas.settings
-
-        brush = QBrush(settings.commentBGColor)
-        self.setBrush(brush)
-
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(settings.commentBorderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        self.setPen(pen)
+        self.setPen(self.getPainterPen(self.isSelected(),
+                                       settings.commentBorderColor))
+        self.setBrush(QBrush(settings.commentBGColor))
 
         # Hide the dotted outline
         itemOption = QStyleOptionGraphicsItem(option)
@@ -746,22 +719,13 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
     def paint(self, painter, option, widget):
         """Draws the leading comment"""
         settings = self.canvas.settings
+        self.setPen(self.getPainterPen(self.isSelected(),
+                                       settings.commentBorderColor))
+        self.setBrush(QBrush(settings.commentBGColor))
 
         # Bottom adjustment
         yShift = self.height - self.minHeight
         baseY = self.baseY + yShift
-
-        brush = QBrush(settings.commentBGColor)
-        self.setBrush(brush)
-
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(settings.commentBorderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        self.setPen(pen)
 
         # Hide the dotted outline
         itemOption = QStyleOptionGraphicsItem(option)

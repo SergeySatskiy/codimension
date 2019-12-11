@@ -327,17 +327,9 @@ class ScopeCellElement(CellElement):
 
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush(self.bgColor)
-            painter.setBrush(brush)
-
-            if self.isSelected():
-                pen = QPen(s.selectColor)
-                pen.setWidth(s.selectPenWidth)
-                pen.setJoinStyle(Qt.RoundJoin)
-            else:
-                pen = QPen(self.borderColor)
-                pen.setWidth(s.boxLineWidth)
-            painter.setPen(pen)
+            painter.setPen(self.getPainterPen(self.isSelected(),
+                                              self.borderColor))
+            painter.setBrush(QBrush(self.bgColor))
 
             painter.drawRoundedRect(self.baseX + s.hCellPadding,
                                     self.baseY + s.vCellPadding,
@@ -381,19 +373,9 @@ class ScopeCellElement(CellElement):
                              self.baseY + self.height)
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-            brush = QBrush(s.commentBGColor)
-            painter.setBrush(brush)
-
-            if self.isSelected():
-                selectPen = QPen(s.selectColor)
-                selectPen.setWidth(s.selectPenWidth)
-                selectPen.setJoinStyle(Qt.RoundJoin)
-                painter.setPen(selectPen)
-            else:
-                pen = QPen(s.commentBorderColor)
-                pen.setWidth(s.boxLineWidth)
-                pen.setJoinStyle(Qt.RoundJoin)
-                painter.setPen(pen)
+            painter.setPen(self.getPainterPen(self.isSelected(),
+                                              s.commentBorderColor))
+            painter.setBrush(QBrush(s.commentBGColor))
 
             canvasTop = self.baseY - s.scopeRectRadius
             # s.vHeaderPadding below is used intentionally: to have the same
@@ -418,8 +400,7 @@ class ScopeCellElement(CellElement):
                                  self._sideCommentRect.height(),
                                  Qt.AlignLeft, self._getSideComment())
         elif self.subKind == ScopeCellElement.DOCSTRING:
-            brush = QBrush(self.bgColor)
-            painter.setBrush(brush)
+            painter.setBrush(QBrush(self.bgColor))
 
             canvasLeft = self.baseX - s.scopeRectRadius
 
@@ -503,7 +484,7 @@ class ScopeCellElement(CellElement):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        if self._editor is None:
+        if self.editor is None:
             return
         if event:
             if event.buttons() != Qt.LeftButton:
@@ -512,27 +493,27 @@ class ScopeCellElement(CellElement):
         if self.subKind == self.SIDE_COMMENT:
             GlobalData().mainWindow.raise_()
             GlobalData().mainWindow.activateWindow()
-            self._editor.gotoLine(self.ref.sideComment.beginLine,
-                                  self.ref.sideComment.beginPos)
-            self._editor.setFocus()
+            self.editor.gotoLine(self.ref.sideComment.beginLine,
+                                 self.ref.sideComment.beginPos)
+            self.editor.setFocus()
             return
         if self.subKind == self.DOCSTRING:
             GlobalData().mainWindow.raise_()
             GlobalData().mainWindow.activateWindow()
-            self._editor.gotoLine(self.ref.docstring.body.beginLine,
-                                  self.ref.docstring.body.beginPos)
-            self._editor.setFocus()
+            self.editor.gotoLine(self.ref.docstring.body.beginLine,
+                                 self.ref.docstring.body.beginPos)
+            self.editor.setFocus()
             return
         if self.subKind == self.DECLARATION:
             GlobalData().mainWindow.raise_()
             GlobalData().mainWindow.activateWindow()
             if self.kind == CellElement.FILE_SCOPE:
-                self._editor.gotoLine(1, 1)   # Good enough for the
-                                              # vast majority of the cases
+                self.editor.gotoLine(1, 1)   # Good enough for the
+                                             # vast majority of the cases
             else:
-                self._editor.gotoLine(self.ref.body.beginLine,
-                                      self.ref.body.beginPos)
-            self._editor.setFocus()
+                self.editor.gotoLine(self.ref.body.beginLine,
+                                     self.ref.body.beginPos)
+            self.editor.setFocus()
             return
 
     def getTopLeftItem(self):

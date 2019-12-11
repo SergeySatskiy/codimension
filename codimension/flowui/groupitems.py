@@ -170,25 +170,17 @@ class EmptyGroup(GroupItemBase, CellElement, ColorMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
+        pen = self.getPainterPen(self.isSelected(), self.borderColor)
+        if not self.isSelected():
+            pen.setStyle(Qt.DotLine)
+        painter.setPen(pen)
+        painter.setBrush(QBrush(self.bgColor))
 
         # Outer rectangle
         rectWidth = self.minWidth - 2 * settings.hCellPadding - \
                     self.N_BACK_RECT * settings.emptyGroupXShift
         rectHeight = self.minHeight - 2 * settings.vCellPadding - \
                      self.N_BACK_RECT * settings.emptyGroupYShift
-
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setStyle(Qt.DotLine)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
 
         for rectNum in range(self.N_BACK_RECT, -1, -1):
             xPos = self.baseX + settings.hCellPadding + \
@@ -305,24 +297,13 @@ class OpenedGroupBegin(GroupItemBase, CellElement,
         del widget      # unused argument
 
         settings = self.canvas.settings
+        pen = self.getPainterPen(self.isSelected(), self.borderColor)
+        if not self.highlight and not self.isSelected():
+            pen.setStyle(Qt.DotLine)
+        painter.setPen(pen)
+        painter.setBrush(QBrush(self.bgColor))
 
         # Group rectangle
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            if self.highlight:
-                pen.setStyle(Qt.SolidLine)
-            else:
-                pen.setStyle(Qt.DotLine)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
-
         fullWidth = self.groupWidth + 2 * settings.openGroupHSpacer
         fullHeight = self.groupHeight + 2 * settings.openGroupVSpacer
         painter.drawRoundedRect(self.baseX + settings.openGroupHSpacer,
@@ -442,24 +423,14 @@ class CollapsedGroup(GroupItemBase, CellElement,
         del widget      # unused argument
 
         settings = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
         # Outer rectangle
         rectWidth = self.minWidth - 2 * settings.hCellPadding - \
                     self.N_BACK_RECT * settings.collapsedGroupXShift
         rectHeight = self.minHeight - 2 * settings.vCellPadding - \
                      self.N_BACK_RECT * settings.collapsedGroupYShift
-
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
 
         for rectNum in range(self.N_BACK_RECT, -1, -1):
             xPos = self.baseX + settings.hCellPadding + \
@@ -524,9 +495,7 @@ class GroupCornerControl(CellElement, QGraphicsRectItem):
         pen.setStyle(Qt.SolidLine)
         pen.setWidth(settings.openGroupControlLineWidth)
         painter.setPen(pen)
-
-        brush = QBrush(settings.openGroupControlBGColor)
-        painter.setBrush(brush)
+        painter.setBrush(QBrush(settings.openGroupControlBGColor))
 
         painter.drawRoundedRect(self.x(), self.y(),
                                 self.__width, self.__height,

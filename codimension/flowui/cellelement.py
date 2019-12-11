@@ -21,7 +21,7 @@
 
 from sys import maxsize
 from html import escape
-from ui.qt import QMimeData, Qt, QApplication
+from ui.qt import QMimeData, Qt, QApplication, QPen
 from utils.globals import GlobalData
 from utils.config import DEFAULT_ENCODING
 from .cml import CMLVersion, CMLrt
@@ -92,7 +92,7 @@ class CellElement:
         self.ref = ref              # reference to the control flow object
         self.addr = [x, y]          # indexes in the current canvas
         self.canvas = canvas        # reference to the canvas
-        self._editor = None
+        self.editor = None
         self._text = None
 
         self.tailComment = False
@@ -170,33 +170,43 @@ class CellElement:
 
     def setEditor(self, editor):
         """Sets the editor counterpart"""
-        self._editor = editor
+        self.editor = editor
 
     def getEditor(self):
         """Provides a reference to the editor"""
-        return self._editor
+        return self.editor
+
+    def getPainterPen(self, selected, borderColor):
+        """Provides the painter pen for the item"""
+        if selected:
+            pen = QPen(self.canvas.settings.selectColor)
+            pen.setWidth(self.canvas.settings.selectPenWidth)
+        else:
+            pen = QPen(borderColor)
+            pen.setWidth(self.canvas.settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        return pen
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor.
 
         default implementation
         """
-        if self._editor is None:
+        if self.editor is None:
             return
         if event:
             if event.buttons() != Qt.LeftButton:
                 return
 
-
         GlobalData().mainWindow.raise_()
         GlobalData().mainWindow.activateWindow()
 
         lineRange = self.getLineRange()
-        line = self._editor.lines[lineRange[0] - 1]
+        line = self.editor.lines[lineRange[0] - 1]
         pos = len(line) - len(line.lstrip())
 
-        self._editor.gotoLine(lineRange[0], pos + 1)
-        self._editor.setFocus()
+        self.editor.gotoLine(lineRange[0], pos + 1)
+        self.editor.setFocus()
 
     def scopedItem(self):
         """True if it is a scoped item"""

@@ -20,12 +20,10 @@
 """Various items used to represent a control flow on a virtual canvas"""
 
 from html import escape
-from ui.qt import (Qt, QPointF, QPen, QBrush, QGraphicsRectItem, QGraphicsItem,
-                   QGraphicsPathItem, QStyleOptionGraphicsItem, QStyle)
-from utils.globals import GlobalData
-from .auxitems import Connector, Text, BadgeItem
+from ui.qt import Qt, QPointF, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
+from .auxitems import Connector, BadgeItem
 from .cml import CMLVersion, CMLsw
-from .routines import getCommentBoxPath, distance
+from .routines import distance
 from .colormixin import ColorMixin
 from .iconmixin import IconMixin
 from .cellelement import CellElement
@@ -70,7 +68,8 @@ class CodeBlockCell(CellElement, ColorMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine,
+                                   baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
         scene.addItem(self.connector)
@@ -90,21 +89,12 @@ class CodeBlockCell(CellElement, ColorMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
         rectWidth = self.minWidth - 2 * settings.hCellPadding
         rectHeight = self.minHeight - 2 * settings.vCellPadding
 
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
         painter.drawRect(self.baseX + settings.hCellPadding,
                          self.baseY + settings.vCellPadding,
                          rectWidth, rectHeight)
@@ -191,7 +181,8 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine,
+                                   baseY,
                                    baseX + settings.mainLine,
                                    baseY + settings.vCellPadding)
 
@@ -217,18 +208,9 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
         painter.drawRoundedRect(
             self.baseX + settings.hCellPadding,
             self.baseY + settings.vCellPadding,
@@ -236,7 +218,8 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
             self.minHeight - 2 * settings.vCellPadding,
             settings.returnRectRadius, settings.returnRectRadius)
         lineXBase = self.baseX + settings.hCellPadding
-        lineXPos = lineXBase + self.iconItem.iconWidth() + 2 * settings.hTextPadding
+        lineXPos = lineXBase + self.iconItem.iconWidth() + \
+                   2 * settings.hTextPadding
         lineYBase = self.baseY + settings.vCellPadding
         painter.drawLine(
             lineXPos, lineYBase,
@@ -331,7 +314,8 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine,
+                                   baseY,
                                    baseX + settings.mainLine,
                                    baseY + settings.vCellPadding)
 
@@ -357,18 +341,9 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
         painter.drawRoundedRect(self.baseX + settings.hCellPadding,
                                 self.baseY + settings.vCellPadding,
                                 self.minWidth - 2 * settings.hCellPadding,
@@ -376,7 +351,8 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
                                 settings.returnRectRadius,
                                 settings.returnRectRadius)
         lineXBase = self.baseX + settings.hCellPadding
-        lineXPos = lineXBase + self.iconItem.iconWidth() + 2 * settings.hTextPadding
+        lineXPos = lineXBase + self.iconItem.iconWidth() + \
+                   2 * settings.hTextPadding
         lineYBase = self.baseY + settings.vCellPadding
         painter.drawLine(
             lineXPos, lineYBase,
@@ -453,8 +429,10 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
 
         # for an arrow box
         singleCharRect = self.getBoundingRect('W')
-        self.__diamondHeight = singleCharRect.height() + 2 * settings.vTextPadding
-        self.__diamondWidth = settings.ifWidth * 2 + singleCharRect.width() + 2 * settings.hTextPadding
+        self.__diamondHeight = singleCharRect.height() + \
+                               2 * settings.vTextPadding
+        self.__diamondWidth = settings.ifWidth * 2 + singleCharRect.width() + \
+                              2 * settings.hTextPadding
 
         self.minHeight = self.__textRect.height() + \
                          2 * settings.vCellPadding + 2 * settings.vTextPadding
@@ -474,7 +452,8 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine,
+                                   baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
         scene.addItem(self.connector)
@@ -502,15 +481,8 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
-
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
         dHalf = int(self.__diamondHeight / 2.0)
         dx1 = self.baseX + settings.hCellPadding
@@ -526,8 +498,6 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         dx6 = dx2
         dy6 = dy5
 
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
         painter.drawPolygon(QPointF(dx1, dy1), QPointF(dx2, dy2),
                             QPointF(dx3, dy3), QPointF(dx4, dy4),
                             QPointF(dx5, dy5), QPointF(dx6, dy6))
@@ -635,7 +605,8 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine,
+                                   baseY,
                                    baseX + settings.mainLine,
                                    baseY + settings.vCellPadding)
 
@@ -661,18 +632,9 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
         painter.drawRoundedRect(self.baseX + settings.hCellPadding,
                                 self.baseY + settings.vCellPadding,
                                 self.minWidth - 2 * settings.hCellPadding,
@@ -680,7 +642,8 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
                                 settings.returnRectRadius,
                                 settings.returnRectRadius)
         lineXBase = self.baseX + settings.hCellPadding
-        lineXPos = lineXBase + self.iconItem.iconWidth() + 2 * settings.hTextPadding
+        lineXPos = lineXBase + self.iconItem.iconWidth() + \
+            2 * settings.hTextPadding
         lineYBase = self.baseY + settings.vCellPadding
         painter.drawLine(
             lineXPos, lineYBase,
@@ -691,7 +654,8 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
         availWidth = \
-            self.minWidth - 2 * settings.hCellPadding - self.iconItem.iconWidth() - \
+            self.minWidth - 2 * settings.hCellPadding - \
+            self.iconItem.iconWidth() - \
             2 * settings.hTextPadding - \
             settings.hTextPadding - settings.returnRectRadius
         textShift = (availWidth - self.__textRect.width()) / 2
@@ -750,7 +714,8 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine,
+                                   baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
         scene.addItem(self.connector)
@@ -775,18 +740,9 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
         painter.drawRect(self.baseX + settings.hCellPadding,
                          self.baseY + settings.vCellPadding,
                          self.minWidth - 2 * settings.hCellPadding,
@@ -939,18 +895,9 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
         painter.drawPolygon(
             QPointF(self.x1, self.y1), QPointF(self.x2, self.y2),
             QPointF(self.x3, self.y3), QPointF(self.x4, self.y4),
@@ -973,155 +920,4 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         """Provides the tooltip"""
         lineRange = self.getLineRange()
         return "If at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
-
-
-class MinimizedExceptCell(CellElement, IconMixin, QGraphicsRectItem):
-
-    """Represents a minimized except block"""
-
-    def __init__(self, ref, canvas, x, y):
-        CellElement.__init__(self, ref, canvas, x, y)
-        IconMixin.__init__(self, canvas, 'raise.svg')
-        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
-        self.kind = CellElement.EXCEPT_MINIMIZED
-
-        self.__setTooltip()
-        self.__leftEdge = None
-        self.connector = None
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-
-    def __setTooltip(self):
-        """Sets the item tooltip"""
-        parts = []
-        for part in self.ref.exceptParts:
-            lines = part.getDisplayValue().splitlines()
-            if len(lines) > 1:
-                parts.append('except: ' + lines[0] + '...')
-            elif len(lines) == 1:
-                parts.append('except: ' + lines[0])
-            else:
-                parts.append('except:')
-        self.iconItem.setToolTip('<pre>' + escape('\n'.join(parts)) + '</pre>')
-
-    def __setupConnector(self):
-        """Sets the connector"""
-        settings = self.canvas.settings
-
-        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
-        self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
-        height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
-
-        self.connector = Connector(
-            self.canvas, self.__leftEdge + settings.hCellPadding,
-            self.baseY + height,
-            cellToTheLeft.baseX +
-            cellToTheLeft.minWidth - settings.hCellPadding,
-            self.baseY + height)
-
-        self.connector.penStyle = Qt.DotLine
-
-    def render(self):
-        """Renders the cell"""
-        settings = self.canvas.settings
-
-        self.minWidth = self.iconItem.iconWidth() + \
-                        2 * (settings.hCellPadding + settings.hHiddenExceptPadding)
-        self.minHeight = self.iconItem.iconHeight() + \
-                         2 * (settings.vCellPadding + settings.vHiddenExceptPadding)
-
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
-
-    def draw(self, scene, baseX, baseY):
-        """Draws the cell"""
-        self.baseX = baseX
-        self.baseY = baseY
-
-        self.__setupConnector()
-        scene.addItem(self.connector)
-
-        settings = self.canvas.settings
-        penWidth = settings.selectPenWidth - 1
-        self.setRect(baseX + settings.hCellPadding - penWidth,
-                     baseY + settings.vCellPadding - penWidth,
-                     self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
-                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
-        scene.addItem(self)
-
-        self.iconItem.setPos(
-            baseX + settings.hCellPadding + settings.hHiddenExceptPadding,
-            baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
-        scene.addItem(self.iconItem)
-
-    def paint(self, painter, option, widget):
-        """Draws the independent comment"""
-        del option
-        del widget
-
-        settings = self.canvas.settings
-
-        rectWidth = self.minWidth - 2 * settings.hCellPadding
-        rectHeight = self.minHeight - 2 * settings.vCellPadding
-
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(settings.hiddenExceptBorderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(settings.hiddenExceptBGColor)
-        painter.setBrush(brush)
-        painter.drawRoundedRect(self.baseX + settings.hCellPadding,
-                                self.baseY + settings.vCellPadding,
-                                rectWidth, rectHeight,
-                                settings.scopeRectRadius,
-                                settings.scopeRectRadius)
-
-    def mouseDoubleClickEvent(self, event):
-        """Jump to the appropriate line in the text editor"""
-        if self._editor:
-            firstExcept = self.ref.exceptParts[0]
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
-            self._editor.gotoLine(firstExcept.body.beginLine,
-                                  firstExcept.body.beginPos)
-            self._editor.setFocus()
-
-    def getLineRange(self):
-        """Provides the line range"""
-        firstLineRange = self.ref.exceptParts[0].getLineRange()
-        lastLineRange = self.ref.exceptParts[-1].getLineRange()
-        return [firstLineRange[0], lastLineRange[1]]
-
-    def getAbsPosRange(self):
-        """Provides the absolute position range"""
-        firstExcept = self.ref.exceptParts[0]
-        lastExcept = self.ref.exceptParts[-1]
-        return [firstExcept.begin, lastExcept.end]
-
-    def getSelectTooltip(self):
-        """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        count = len(self.ref.exceptParts)
-        if count == 1:
-            return 'Minimized except block at lines ' + \
-                   str(lineRange[0]) + "-" + str(lineRange[1])
-        return str(count) + ' minimized except blocks at lines ' + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
-
-    def getDistance(self, absPos):
-        """Provides a distance between the absPos and the item"""
-        absPosRange = self.getAbsPosRange()
-        return distance(absPos, absPosRange[0], absPosRange[1])
-
-    def getLineDistance(self, line):
-        """Provides a distance between the line and the item"""
-        lineRange = self.getLineRange()
-        return distance(line, lineRange[0], lineRange[1])
 

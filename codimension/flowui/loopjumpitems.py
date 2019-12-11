@@ -116,18 +116,8 @@ class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
-
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
         painter.drawRoundedRect(self.x1, self.y1, self.w, self.h, 2, 2)
 
@@ -239,18 +229,8 @@ class ContinueCell(CellElement, ColorMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
-
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
         painter.drawRoundedRect(self.x1, self.y1, self.w, self.h, 2, 2)
 

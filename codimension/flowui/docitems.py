@@ -94,7 +94,7 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
             return
 
         fileName, anchorOrLine = resolveLinkPath(self.cmlRef.link,
-                                                 self._editor.getFileName())
+                                                 self.editor.getFileName())
         if fileName:
             GlobalData().mainWindow.openFile(fileName, anchorOrLine)
 
@@ -172,21 +172,12 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
 
         rectWidth = self.minWidth - 2 * settings.hCellPadding
         rectHeight = self.minHeight - 2 * settings.vCellPadding
 
-        if self.isSelected():
-            pen = QPen(settings.selectColor)
-            pen.setWidth(settings.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(settings.boxLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        brush = QBrush(self.bgColor)
-        painter.setBrush(brush)
         painter.drawRoundedRect(self.baseX + settings.hCellPadding,
                                 self.baseY + settings.vCellPadding,
                                 rectWidth, rectHeight, 0, 0)
