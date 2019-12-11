@@ -147,9 +147,8 @@ class SVGItem(CellElement, QGraphicsSvgItem):
     def mouseDoubleClickEvent(self, event):
         """Handling double click events"""
         if self.ref.kind == CellElement.EXCEPT_MINIMIZED:
-            self.ref.mouseDoubleClickEvent(event)
-        else:
-            return QGraphicsSvgItem.mouseDoubleClickEvent(self, event)
+            return self.ref.mouseDoubleClickEvent(event)
+        return QGraphicsSvgItem.mouseDoubleClickEvent(self, event)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""

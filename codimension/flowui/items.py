@@ -19,6 +19,8 @@
 
 """Various items used to represent a control flow on a virtual canvas"""
 
+# pylint: disable=C0305
+
 from html import escape
 from ui.qt import Qt, QPointF, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .auxitems import Connector, BadgeItem

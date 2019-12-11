@@ -19,6 +19,8 @@
 
 """Various comment items on a virtual canvas"""
 
+# pylint: disable=C0305
+
 from sys import maxsize
 from html import escape
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
@@ -70,6 +72,9 @@ class CommentCellBase(CellElement):
             GlobalData().mainWindow.activateWindow()
             self.editor.gotoLine(line, pos)
             self.editor.setFocus()
+
+    def adjustWidth(self):
+        pass
 
 
 
@@ -176,7 +181,7 @@ class IndependentCommentCell(CommentCellBase, QGraphicsPathItem):
         """Draws the independent comment"""
         settings = self.canvas.settings
         self.setPen(self.getPainterPen(self.isSelected(),
-                    settings.commentBorderColor))
+                                       settings.commentBorderColor))
         self.setBrush(QBrush(settings.commentBGColor))
 
         # Hide the dotted outline

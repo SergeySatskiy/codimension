@@ -71,6 +71,7 @@ class CellElement:
     INDEPENDENT_DOC = 214
     LEADING_DOC = 215
     ABOVE_DOC = 216
+    INDEPENDENT_MINIMIZED_COMMENT = 217
 
     CONNECTOR = 300
     SVG = 301
@@ -234,7 +235,8 @@ class CellElement:
         return self.kind in (self.INDEPENDENT_COMMENT,
                              self.LEADING_COMMENT,
                              self.SIDE_COMMENT,
-                             self.ABOVE_COMMENT)
+                             self.ABOVE_COMMENT,
+                             self.INDEPENDENT_MINIMIZED_COMMENT)
 
     def isCMLDoc(self):
         """True if it is a CML doc item"""
@@ -357,6 +359,7 @@ __kindToString = {
     CellElement.INDEPENDENT_COMMENT: 'INDEPENDENT_COMMENT',
     CellElement.SIDE_COMMENT: 'SIDE_COMMENT',
     CellElement.ABOVE_COMMENT: 'ABOVE_COMMENT',
+    CellElement.INDEPENDENT_MINIMIZED_COMMENT: 'INDEPENDENT_MINIMIZED_COMMENT',
     CellElement.EXCEPT_MINIMIZED: 'EXCEPT_MINIMIZED',
     CellElement.CONNECTOR: 'CONNECTOR',
     CellElement.DEPENDENT_CONNECTOR: 'DEPENDENT_CONNECTOR',

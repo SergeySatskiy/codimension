@@ -19,6 +19,7 @@
 
 """Virtual canvas items to handle groups (opened/collapsed)"""
 
+# pylint: disable=C0305
 
 from html import escape
 from ui.qt import (Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem, QFrame,
@@ -150,7 +151,8 @@ class EmptyGroup(GroupItemBase, CellElement, ColorMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine,
+                                   baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
         scene.addItem(self.connector)
@@ -324,6 +326,7 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
 
         self.groupBeginRow = None
         self.groupBeginColumn = None
+        self.connector = None
 
         self.selfAndDeeperNestLevel = None
 
@@ -403,7 +406,8 @@ class CollapsedGroup(GroupItemBase, CellElement,
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas, baseX + settings.mainLine,
+                                   baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
         scene.addItem(self.connector)

@@ -19,8 +19,10 @@
 
 """Various minimized items for a virtual canvas"""
 
+# pylint: disable=C0305
+
 from html import escape
-from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
+from ui.qt import Qt, QBrush, QGraphicsRectItem, QGraphicsItem
 from utils.globals import GlobalData
 from .auxitems import Connector
 from .routines import distance
@@ -171,4 +173,86 @@ class MinimizedExceptCell(CellElement, IconMixin, QGraphicsRectItem):
         """Provides a distance between the line and the item"""
         lineRange = self.getLineRange()
         return distance(line, lineRange[0], lineRange[1])
+
+
+class MinimizedIndependentCommentCell(CellElement, IconMixin,
+                                      QGraphicsRectItem):
+
+    """Represents a minimized except block"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        IconMixin.__init__(self, canvas, 'hiddencomment.svg')
+        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
+        self.kind = CellElement.INDEPENDENT_MINIMIZED_COMMENT
+
+        self.__setTooltip()
+
+        self.leadingForElse = False
+        self.sideForElse = False
+
+        # To make double click delivered
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def __setTooltip(self):
+        """Sets the item tooltip"""
+        displayValue = self.ref.getDisplayValue()
+        if displayValue:
+            self.iconItem.setToolTip('<pre>' + escape(displayValue) + '</pre>')
+
+    def render(self):
+        """Renders the cell"""
+        settings = self.canvas.settings
+
+        self.minWidth = self.iconItem.iconWidth() + \
+                        2 * (settings.hCellPadding + \
+                             settings.hHiddenCommentPadding)
+        self.minHeight = self.iconItem.iconHeight() + \
+                         2 * (settings.vCellPadding + \
+                              settings.vHiddenCommentPadding)
+
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        self.baseX = baseX
+        self.baseY = baseY
+
+        self.__setupConnector()
+        scene.addItem(self.connector)
+
+        settings = self.canvas.settings
+        penWidth = settings.selectPenWidth - 1
+        self.setRect(baseX + settings.hCellPadding - penWidth,
+                     baseY + settings.vCellPadding - penWidth,
+                     self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
+                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
+        scene.addItem(self)
+
+        self.iconItem.setPos(
+            baseX + settings.hCellPadding + settings.hHiddenExceptPadding,
+            baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
+        scene.addItem(self.iconItem)
+
+    def paint(self, painter, option, widget):
+        """Draws the independent comment"""
+        del option
+        del widget
+
+        settings = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(),
+                                          settings.hiddenExceptBorderColor))
+        painter.setBrush(QBrush(settings.hiddenExceptBGColor))
+
+        rectWidth = self.minWidth - 2 * settings.hCellPadding
+        rectHeight = self.minHeight - 2 * settings.vCellPadding
+
+        painter.drawRoundedRect(self.baseX + settings.hCellPadding,
+                                self.baseY + settings.vCellPadding,
+                                rectWidth, rectHeight,
+                                settings.scopeRectRadius,
+                                settings.scopeRectRadius)
+
 

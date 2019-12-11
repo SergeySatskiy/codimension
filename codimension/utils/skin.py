@@ -238,6 +238,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     'commentCorner': 5,      # Top right comment corner
     'vHiddenCommentPadding': 3,
     'hHiddenCommentPadding': 3,
+    'hiddenCommentBGColor': QColor(255, 255, 235, 255),
+    'hiddenCommentBorderColor': QColor(92, 92, 92, 255),
 
     'mainLine': 25,
 
@@ -280,6 +282,10 @@ _DEFAULT_CFLOW_SETTINGS = {
     'exceptScopeBGColor': QColor(240, 240, 240, 255),
     'exceptScopeFGColor': QColor(0, 0, 0, 255),
     'exceptScopeBorderColor': QColor(192, 192, 192, 255),
+    'hiddenExceptBGColor': QColor(240, 240, 240, 255),
+    'hiddenExceptBorderColor': QColor(192, 192, 192, 255),
+    'hHiddenExceptPadding': 3,
+    'vHiddenExceptPadding': 3,
 
     'finallyScopeBGColor': QColor(248, 248, 248, 255),
     'finallyScopeFGColor': QColor(0, 0, 0, 255),
@@ -330,12 +336,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'docLinkFGColor': QColor(0, 0, 0, 255),
     'docLinkBorderColor': QColor(0, 0, 0, 255),
 
-    'hiddenCommentText': 'c',
-
-    'hiddenExceptBGColor': QColor(240, 240, 240, 255),
-    'hiddenExceptBorderColor': QColor(192, 192, 192, 255),
-    'hHiddenExceptPadding': 3,
-    'vHiddenExceptPadding': 3}
+    'hiddenCommentText': 'c'}
 
 
 

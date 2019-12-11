@@ -19,6 +19,8 @@
 
 """break and continue cells"""
 
+# pylint: disable=C0305
+
 from html import escape
 from ui.qt import QGraphicsRectItem, QPen, Qt, QGraphicsItem, QBrush
 from .cellelement import CellElement

@@ -1374,7 +1374,7 @@ class VirtualCanvas:
                     cflow, self, 2, vacantRow - 1, ScopeCellElement.TOP)
                 self.__allocateCell(vacantRow, 2)
                 self.cells[vacantRow][2] = self.__currentScopeClass(
-                    cflow, self, 2, vacantRow, ScopeCellElement.SIDE_COMMENT)
+                    cflow, self, 2, vacantRow, ScopeCellElement.COMMENT)
 
         vacantRow += 1
         if hasattr(cflow, "docstring"):
@@ -1449,13 +1449,10 @@ class VirtualCanvas:
                 row = self.cells[index]
                 if column < len(row):
                     row[column].render()
-                    if row[column].kind in [CellElement.INDEPENDENT_COMMENT,
-                                            CellElement.SIDE_COMMENT,
-                                            CellElement.LEADING_COMMENT,
-                                            CellElement.INDEPENDENT_DOC,
-                                            CellElement.LEADING_DOC,
-                                            CellElement.ABOVE_DOC]:
-                        row[column].adjustWidth()
+                    if row[column].kind != CellElement.VCANVAS:
+                        if not row[column].scopedItem():
+                            if row[column].isComment() or row[column].isCMLDoc():
+                                row[column].adjustWidth()
                     if not row[column].tailComment:
                         maxColumnWidth = max(row[column].width, maxColumnWidth)
                 index += 1
@@ -1522,13 +1519,10 @@ class VirtualCanvas:
 
                     _, height = cell.render()
                     maxHeight = max(maxHeight, height)
-                    if cell.kind in [CellElement.INDEPENDENT_COMMENT,
-                                     CellElement.SIDE_COMMENT,
-                                     CellElement.LEADING_COMMENT,
-                                     CellElement.INDEPENDENT_DOC,
-                                     CellElement.LEADING_DOC,
-                                     CellElement.ABOVE_DOC]:
-                        cell.adjustWidth()
+                    if cell.kind != CellElement.VCANVAS:
+                        if not cell.scopedItem():
+                            if cell.isComment() or cell.isCMLDoc():
+                                cell.adjustWidth()
                 totalWidth = 0
                 for cell in row:
                     cell.height = maxHeight

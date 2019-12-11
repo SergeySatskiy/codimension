@@ -39,7 +39,7 @@ class ScopeCellElement(CellElement):
     LEFT = 1
     BOTTOM_LEFT = 2
     DECLARATION = 3
-    SIDE_COMMENT = 4
+    COMMENT = 4
     DOCSTRING = 5
     TOP = 6
     BOTTOM = 7
@@ -125,7 +125,7 @@ class ScopeCellElement(CellElement):
             else:
                 self.minWidth += s.hHeaderPadding
             self.minWidth = max(self.minWidth, s.minWidth)
-        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
+        elif self.subKind == ScopeCellElement.COMMENT:
             self._sideCommentRect = self.getBoundingRect(
                 self._getSideComment())
             if s.hidecomments:
@@ -190,7 +190,7 @@ class ScopeCellElement(CellElement):
             try:
                 parentCanvas = self.canvas.canvas
                 cellToTheTop = parentCanvas.cells[
-                        self.canvas.addr[1] - 1][self.canvas.addr[0]]
+                    self.canvas.addr[1] - 1][self.canvas.addr[0]]
                 return cellToTheTop.needConnector
             except:
                 pass
@@ -242,8 +242,8 @@ class ScopeCellElement(CellElement):
             # Draw a horizontal connector if needed
             if self._connector is None:
                 if self.kind == CellElement.EXCEPT_SCOPE or (
-                   self.kind == CellElement.ELSE_SCOPE and
-                   self.__followLoop()):
+                        self.kind == CellElement.ELSE_SCOPE and
+                        self.__followLoop()):
                     parentCanvas = self.canvas.canvas
                     cellToTheLeft = parentCanvas.cells[
                         self.canvas.addr[1]][self.canvas.addr[0] - 1]
@@ -272,7 +272,7 @@ class ScopeCellElement(CellElement):
                 self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
                 self.height + s.scopeRectRadius + penWidth)
             scene.addItem(self)
-        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
+        elif self.subKind == ScopeCellElement.COMMENT:
             canvasTop = self.baseY - s.scopeRectRadius
             movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
                 self.width - s.scopeRectRadius - s.vHeaderPadding
@@ -372,7 +372,7 @@ class ScopeCellElement(CellElement):
                              2 * s.hCellPadding - correction,
                              self.baseY + self.height)
 
-        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
+        elif self.subKind == ScopeCellElement.COMMENT:
             painter.setPen(self.getPainterPen(self.isSelected(),
                                               s.commentBorderColor))
             painter.setBrush(QBrush(s.commentBGColor))
@@ -388,17 +388,19 @@ class ScopeCellElement(CellElement):
             painter.setFont(s.monoFont)
             painter.setPen(pen)
             if s.hidecomments:
-                painter.drawText(movedBaseX + s.hHeaderPadding + s.hHiddenTextPadding,
-                                 canvasTop + s.vHeaderPadding + s.vHiddenTextPadding,
-                                 self._sideCommentRect.width(),
-                                 self._sideCommentRect.height(),
-                                 Qt.AlignLeft, self._getSideComment())
+                painter.drawText(
+                    movedBaseX + s.hHeaderPadding + s.hHiddenTextPadding,
+                    canvasTop + s.vHeaderPadding + s.vHiddenTextPadding,
+                    self._sideCommentRect.width(),
+                    self._sideCommentRect.height(),
+                    Qt.AlignLeft, self._getSideComment())
             else:
-                painter.drawText(movedBaseX + s.hHeaderPadding + s.hTextPadding,
-                                 canvasTop + s.vHeaderPadding + s.vTextPadding,
-                                 self._sideCommentRect.width(),
-                                 self._sideCommentRect.height(),
-                                 Qt.AlignLeft, self._getSideComment())
+                painter.drawText(
+                    movedBaseX + s.hHeaderPadding + s.hTextPadding,
+                    canvasTop + s.vHeaderPadding + s.vTextPadding,
+                    self._sideCommentRect.width(),
+                    self._sideCommentRect.height(),
+                    Qt.AlignLeft, self._getSideComment())
         elif self.subKind == ScopeCellElement.DOCSTRING:
             painter.setBrush(QBrush(self.bgColor))
 
@@ -467,7 +469,6 @@ class ScopeCellElement(CellElement):
         del event
         # if self.__navBarUpdate:
         #     self.__navBarUpdate("")
-        return
 
     def __str__(self):
         """Debugging support"""
@@ -476,7 +477,7 @@ class ScopeCellElement(CellElement):
 
     def isComment(self):
         """True if it is a comment"""
-        return self.subKind == self.SIDE_COMMENT
+        return self.subKind == self.COMMENT
 
     def isDocstring(self):
         """True if it is a docstring"""
@@ -490,7 +491,7 @@ class ScopeCellElement(CellElement):
             if event.buttons() != Qt.LeftButton:
                 return
 
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             GlobalData().mainWindow.raise_()
             GlobalData().mainWindow.activateWindow()
             self.editor.gotoLine(self.ref.sideComment.beginLine,
@@ -531,7 +532,7 @@ class ScopeCellElement(CellElement):
         if self.subKind == self.DOCSTRING:
             return distance(absPos, self.ref.docstring.begin,
                             self.ref.docstring.end)
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return distance(absPos, self.ref.sideComment.begin,
                             self.ref.sideComment.end)
         if self.subKind == self.DECLARATION:
@@ -547,9 +548,8 @@ class ScopeCellElement(CellElement):
                                               self.ref.bangLine.end))
                 return dist
             # Not a file scope
-            else:
-                return distance(absPos, self.ref.body.begin,
-                                self.ref.body.end)
+            return distance(absPos, self.ref.body.begin,
+                            self.ref.body.end)
         return maxsize
 
     def getLineDistance(self, line):
@@ -557,7 +557,7 @@ class ScopeCellElement(CellElement):
         if self.subKind == self.DOCSTRING:
             return distance(line, self.ref.docstring.beginLine,
                             self.ref.docstring.endLine)
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return distance(line, self.ref.sideComment.beginLine,
                             self.ref.sideComment.endLine)
         if self.subKind == self.DECLARATION:
@@ -573,9 +573,8 @@ class ScopeCellElement(CellElement):
                                               self.ref.bangLine.endLine))
                 return dist
             # Not a file scope
-            else:
-                return distance(line, self.ref.body.beginLine,
-                                self.ref.body.endLine)
+            return distance(line, self.ref.body.beginLine,
+                            self.ref.body.endLine)
         return maxsize
 
     def getFirstLine(self):
@@ -598,7 +597,7 @@ _scopeCellElementToString = {
     ScopeCellElement.LEFT: "LEFT",
     ScopeCellElement.BOTTOM_LEFT: "BOTTOM_LEFT",
     ScopeCellElement.DECLARATION: "DECLARATION",
-    ScopeCellElement.SIDE_COMMENT: "SIDE_COMMENT",
+    ScopeCellElement.COMMENT: "COMMENT",
     ScopeCellElement.DOCSTRING: "DOCSTRING",
     ScopeCellElement.TOP: "TOP",
     ScopeCellElement.BOTTOM: "BOTTOM"}
@@ -735,7 +734,7 @@ class FunctionScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getLineRange()
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
@@ -744,7 +743,7 @@ class FunctionScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.DOCSTRING:
             return [self.ref.docstring.body.begin, self.ref.docstring.body.end]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return [self.ref.sideComment.begin, self.ref.sideComment.end]
 
     def getSelectTooltip(self):
@@ -757,7 +756,7 @@ class FunctionScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == self.DOCSTRING:
             return tooltip + "docstring at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return tooltip + "side comment at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
         return tooltip + \
@@ -827,7 +826,7 @@ class ClassScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getLineRange()
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
@@ -836,7 +835,7 @@ class ClassScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.DOCSTRING:
             return [self.ref.docstring.body.begin, self.ref.docstring.body.end]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return [self.ref.sideComment.begin, self.ref.sideComment.end]
 
     def getSelectTooltip(self):
@@ -849,7 +848,7 @@ class ClassScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == self.DOCSTRING:
             return tooltip + "docstring at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return tooltip + "side comment at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
         return tooltip + "scope (" + \
@@ -909,14 +908,14 @@ class ForScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         """Provides the line range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.beginLine, self.ref.endLine]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.begin, self.ref.end]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return [self.ref.sideComment.begin,
                     self.ref.sideComment.end]
 
@@ -927,7 +926,7 @@ class ForScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return tooltip + "scope at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return tooltip + "side comment at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
         return tooltip + "scope (" + \
@@ -987,14 +986,14 @@ class WhileScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         """Provides the lineRange"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.beginLine, self.ref.endLine]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.begin, self.ref.end]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return [self.ref.sideComment.begin,
                     self.ref.sideComment.end]
 
@@ -1005,7 +1004,7 @@ class WhileScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return tooltip + "scope at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return tooltip + "side comment at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
         return tooltip + "scope (" + \
@@ -1053,7 +1052,7 @@ class TryScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             beginLine = self.ref.body.beginLine
             _, endLine = self.ref.suite[-1].getLineRange()
             return [beginLine, endLine]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
@@ -1062,7 +1061,7 @@ class TryScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             begin = self.ref.body.begin
             _, end = self.ref.suite[-1].getAbsPosRange()
             return [begin, end]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return [self.ref.sideComment.begin,
                     self.ref.sideComment.end]
 
@@ -1073,7 +1072,7 @@ class TryScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return tooltip + "scope at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return tooltip + "side comment at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
         return tooltip + "scope (" + \
@@ -1132,14 +1131,14 @@ class WithScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         """Provides the line range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.beginLine, self.ref.endLine]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.begin, self.ref.end]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return [self.ref.sideComment.begin,
                     self.ref.sideComment.end]
 
@@ -1150,7 +1149,7 @@ class WithScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return tooltip + "scope at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return tooltip + "side comment at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
         return tooltip + "scope (" + \
@@ -1212,14 +1211,14 @@ class DecoratorScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         """Provides the line range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.beginLine, self.ref.endLine]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.begin, self.ref.end]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return [self.ref.sideComment.begin, self.ref.sideComment.end]
 
     def getSelectTooltip(self):
@@ -1229,7 +1228,7 @@ class DecoratorScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return tooltip + "scope at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return tooltip + "side comment at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
         return tooltip + "scope (" + \
@@ -1292,14 +1291,14 @@ class ElseScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         """Provides the line range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.beginLine, self.ref.endLine]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.begin, self.ref.end]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return [self.ref.sideComment.begin,
                     self.ref.sideComment.end]
 
@@ -1309,7 +1308,7 @@ class ElseScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return tooltip + "scope at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return tooltip + "side comment at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
         return tooltip + "scope (" + \
@@ -1371,14 +1370,14 @@ class ExceptScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         """Provides the line range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.beginLine, self.ref.endLine]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.begin, self.ref.end]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return [self.ref.sideComment.begin,
                     self.ref.sideComment.end]
 
@@ -1388,7 +1387,7 @@ class ExceptScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return tooltip + "scope at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return tooltip + "side comment at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
         return tooltip + "scope (" + \
@@ -1434,14 +1433,14 @@ class FinallyScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         """Provides the line range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.beginLine, self.ref.endLine]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.TOP_LEFT:
             return [self.ref.body.begin, self.ref.end]
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return [self.ref.sideComment.begin,
                     self.ref.sideComment.end]
 
@@ -1452,7 +1451,7 @@ class FinallyScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == self.TOP_LEFT:
             return tooltip + "scope at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.SIDE_COMMENT:
+        if self.subKind == self.COMMENT:
             return tooltip + "side comment at lines " + \
                 str(lineRange[0]) + "-" + str(lineRange[1])
         return tooltip + "scope (" + \

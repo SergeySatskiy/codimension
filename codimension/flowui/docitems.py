@@ -19,6 +19,8 @@
 
 """Various comment items on a virtual canvas"""
 
+# pylint: disable=C0305
+
 from html import escape
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsItem, QFont,
                    QGraphicsRectItem, QCursor, QDesktopServices, QUrl)
@@ -191,8 +193,8 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
             painter.setPen(pen)
             painter.drawText(
                 self._leftEdge + settings.hCellPadding +
-                    settings.hDocLinkPadding + self.iconItem.iconWidth() +
-                    settings.hDocLinkPadding,
+                settings.hDocLinkPadding + self.iconItem.iconWidth() +
+                settings.hDocLinkPadding,
                 self.baseY + settings.vCellPadding + settings.vDocLinkPadding,
                 self._textRect.width(), self._textRect.height(),
                 Qt.AlignLeft, self._text)
