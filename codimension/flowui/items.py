@@ -906,14 +906,14 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         self.yBelow = CMLVersion.find(self.ref.leadingCMLComments,
                                       CMLsw) is not None
         if self.yBelow:
-            self.leftBadge = BadgeItem(self, 'Y')
+            self.leftBadge = BadgeItem(self, 'y')
             self.leftBadge.setFGColor(settings.ifYBranchTextColor)
-            self.rightBadge = BadgeItem(self, 'N')
+            self.rightBadge = BadgeItem(self, 'n')
             self.rightBadge.setFGColor(settings.ifNBranchTextColor)
         else:
-            self.leftBadge = BadgeItem(self, 'N')
+            self.leftBadge = BadgeItem(self, 'n')
             self.leftBadge.setFGColor(settings.ifNBranchTextColor)
-            self.rightBadge = BadgeItem(self, 'Y')
+            self.rightBadge = BadgeItem(self, 'y')
             self.rightBadge.setFGColor(settings.ifYBranchTextColor)
 
         self.rightBadge.setNeedRectangle(False)
@@ -975,32 +975,22 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         return "If at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
 
 
-class MinimizedExceptCell(CellElement, QGraphicsPathItem):
+class MinimizedExceptCell(CellElement, IconMixin, QGraphicsRectItem):
 
     """Represents a minimized except block"""
 
     def __init__(self, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsPathItem.__init__(self)
+        IconMixin.__init__(self, canvas, 'raise.svg')
+        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.EXCEPT_MINIMIZED
-        self.__text = None
-        self.__textRect = None
+
+        self.__setTooltip()
         self.__leftEdge = None
         self.connector = None
 
-        self.__vTextPadding = canvas.settings.vHiddenTextPadding
-        self.__hTextPadding = canvas.settings.hHiddenTextPadding
-
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-
-    def __getText(self):
-        """Provides the text"""
-        if self.__text is None:
-            self.__text = self.canvas.settings.hiddenExceptText
-            #  + '[' + str(len(self.ref.exceptParts)) + ']'
-            self.__setTooltip()
-        return self.__text
 
     def __setTooltip(self):
         """Sets the item tooltip"""
@@ -1013,43 +1003,14 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
                 parts.append('except: ' + lines[0])
             else:
                 parts.append('except:')
-        self.setToolTip('<pre>' + escape('\n'.join(parts)) + '</pre>')
+        self.iconItem.setToolTip('<pre>' + escape('\n'.join(parts)) + '</pre>')
 
-    def render(self):
-        """Renders the cell"""
-        settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self.__getText())
-
-        self.minHeight = self.__textRect.height() + \
-            2 * settings.vCellPadding + 2 * self.__vTextPadding
-        self.minWidth = self.__textRect.width() + \
-                        2 * settings.hCellPadding + 2 * self.__hTextPadding
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
-
-    def draw(self, scene, baseX, baseY):
-        """Draws the cell"""
-        self.baseX = baseX
-        self.baseY = baseY
-        self.__setupPath()
-        scene.addItem(self.connector)
-        scene.addItem(self)
-
-    def __setupPath(self):
-        """Sets the comment path"""
+    def __setupConnector(self):
+        """Sets the connector"""
         settings = self.canvas.settings
 
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
-        boxWidth = self.__textRect.width() + \
-                   2 * (settings.hCellPadding + self.__hTextPadding)
         self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
-        cellKind = self.canvas.cells[self.addr[1]][self.addr[0] - 1].kind
-
-        self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
-        path = getCommentBoxPath(settings, self.__leftEdge, self.baseY,
-                                 boxWidth, self.minHeight, True)
-
         height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
 
         self.connector = Connector(
@@ -1061,41 +1022,66 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
 
         self.connector.penStyle = Qt.DotLine
 
-        self.setPath(path)
-
-    def paint(self, painter, option, widget):
-        """Draws the side comment"""
+    def render(self):
+        """Renders the cell"""
         settings = self.canvas.settings
 
-        brush = QBrush(settings.exceptScopeBGColor)
-        self.setBrush(brush)
+        self.minWidth = self.iconItem.iconWidth() + \
+                        2 * (settings.hCellPadding + settings.hHiddenExceptPadding)
+        self.minHeight = self.iconItem.iconHeight() + \
+                         2 * (settings.vCellPadding + settings.vHiddenExceptPadding)
+
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        self.baseX = baseX
+        self.baseY = baseY
+
+        self.__setupConnector()
+        scene.addItem(self.connector)
+
+        settings = self.canvas.settings
+        penWidth = settings.selectPenWidth - 1
+        self.setRect(baseX + settings.hCellPadding - penWidth,
+                     baseY + settings.vCellPadding - penWidth,
+                     self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
+                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
+        scene.addItem(self)
+
+        self.iconItem.setPos(
+            baseX + settings.hCellPadding + settings.hHiddenExceptPadding,
+            baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
+        scene.addItem(self.iconItem)
+
+    def paint(self, painter, option, widget):
+        """Draws the independent comment"""
+        del option
+        del widget
+
+        settings = self.canvas.settings
+
+        rectWidth = self.minWidth - 2 * settings.hCellPadding
+        rectHeight = self.minHeight - 2 * settings.vCellPadding
 
         if self.isSelected():
-            selectPen = QPen(settings.selectColor)
-            selectPen.setWidth(settings.selectPenWidth)
-            selectPen.setJoinStyle(Qt.RoundJoin)
-            self.setPen(selectPen)
+            pen = QPen(settings.selectColor)
+            pen.setWidth(settings.selectPenWidth)
         else:
-            pen = QPen(settings.exceptScopeBorderColor)
-            pen.setWidth(settings.cfLineWidth)
-            pen.setJoinStyle(Qt.RoundJoin)
-            self.setPen(pen)
-
-        # Hide the dotted outline
-        itemOption = QStyleOptionGraphicsItem(option)
-        if itemOption.state & QStyle.State_Selected != 0:
-            itemOption.state = itemOption.state & ~QStyle.State_Selected
-        QGraphicsPathItem.paint(self, painter, itemOption, widget)
-
-        # Draw the text in the rectangle
-        pen = QPen(settings.exceptScopeFGColor)
-        painter.setFont(settings.monoFont)
+            pen = QPen(settings.hiddenExceptBorderColor)
+            pen.setWidth(settings.boxLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
         painter.setPen(pen)
-        painter.drawText(
-            self.__leftEdge + settings.hCellPadding + self.__hTextPadding,
-            self.baseY + settings.vCellPadding + self.__vTextPadding,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self.__getText())
+
+        brush = QBrush(settings.hiddenExceptBGColor)
+        painter.setBrush(brush)
+        painter.drawRoundedRect(self.baseX + settings.hCellPadding,
+                                self.baseY + settings.vCellPadding,
+                                rectWidth, rectHeight,
+                                settings.scopeRectRadius,
+                                settings.scopeRectRadius)
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
@@ -1138,3 +1124,4 @@ class MinimizedExceptCell(CellElement, QGraphicsPathItem):
         """Provides a distance between the line and the item"""
         lineRange = self.getLineRange()
         return distance(line, lineRange[0], lineRange[1])
+

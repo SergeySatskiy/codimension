@@ -217,8 +217,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     'ifBGColor': QColor(255, 247, 188, 255),
     'ifFGColor': QColor(0, 0, 0, 255),
     'ifBorderColor': QColor(192, 192, 192, 255),
-    'ifYBranchTextColor': QColor(192, 192, 192, 255),
-    'ifNBranchTextColor': QColor(192, 192, 192, 255),
+    'ifYBranchTextColor': QColor(132, 132, 132, 255),
+    'ifNBranchTextColor': QColor(132, 132, 132, 255),
     'ifWidth': 10,           # One if wing width
 
     # Badges
@@ -297,9 +297,6 @@ _DEFAULT_CFLOW_SETTINGS = {
     'tryElseScopeFGColor': QColor(0, 0, 0, 255),
     'tryElseScopeBorderColor': QColor(192, 192, 192, 255),
 
-    'hiddenCommentText': 'c',
-    'hiddenExceptText': 'e',
-
     # Groups
     'openGroupVSpacer': 3,
     'openGroupHSpacer': 3,
@@ -331,7 +328,14 @@ _DEFAULT_CFLOW_SETTINGS = {
     'vDocLinkPadding': 3,   # in pixels (top and bottom)
     'docLinkBGColor': QColor(219, 230, 246, 255),
     'docLinkFGColor': QColor(0, 0, 0, 255),
-    'docLinkBorderColor': QColor(0, 0, 0, 255)}
+    'docLinkBorderColor': QColor(0, 0, 0, 255),
+
+    'hiddenCommentText': 'c',
+
+    'hiddenExceptBGColor': QColor(240, 240, 240, 255),
+    'hiddenExceptBorderColor': QColor(192, 192, 192, 255),
+    'hHiddenExceptPadding': 3,
+    'vHiddenExceptPadding': 3}
 
 
 
