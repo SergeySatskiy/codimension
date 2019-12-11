@@ -187,12 +187,15 @@ class CellElement:
             if event.buttons() != Qt.LeftButton:
                 return
 
-        lineRange = self.getLineRange()
-        absPosRange = self.getAbsPosRange()
 
         GlobalData().mainWindow.raise_()
         GlobalData().mainWindow.activateWindow()
-        self._editor.gotoLine(lineRange[0], absPosRange[0])
+
+        lineRange = self.getLineRange()
+        line = self._editor.lines[lineRange[0] - 1]
+        pos = len(line) - len(line.lstrip())
+
+        self._editor.gotoLine(lineRange[0], pos + 1)
         self._editor.setFocus()
 
     def scopedItem(self):
@@ -211,7 +214,8 @@ class CellElement:
                              self.RUBBER_BAND, self.LINE,
                              self.GROUP_CORNER_CONROL)
 
-    def getProxiedItem(self):
+    @staticmethod
+    def getProxiedItem():
         """Provides the real item for a proxy one"""
         return None
 
