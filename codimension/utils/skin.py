@@ -744,40 +744,38 @@ def populateSampleSkin():
                       dName, str(exc))
 
     fName = dName + 'app.css'
-    if not os.path.exists(fName):
-        try:
-            saveToFile(fName, _DEFAULT_APP_CSS)
-        except Exception as exc:
-            logging.error('Error creating a sample skin at %s. '
-                          'Cannot write app.css: %s', dName, str(exc))
+    try:
+        saveToFile(fName, _DEFAULT_APP_CSS)
+    except Exception as exc:
+        logging.error('Error creating a sample skin at %s. '
+                      'Cannot write app.css: %s', dName, str(exc))
 
     fName = dName + 'skin.json'
-    if not os.path.exists(fName):
-        try:
-            values = {}
-            for key, value in _DEFAULT_SKIN_SETTINGS.items():
-                if isinstance(value, QFont):
-                    values[key] = QFont(_DEFAULT_SKIN_SETTINGS[key])
-                else:
-                    values[key] = value
-            values['name'] = SAMPLE_SKIN
-            with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
-                json.dump(values, diskfile, indent=4, default=colorFontToJSON)
-        except Exception as exc:
-            logging.error('Error creating a sample skin at %s. '
-                          'Cannot write skin.json: %s', dName, str(exc))
+    try:
+        values = {}
+        for key, value in _DEFAULT_SKIN_SETTINGS.items():
+            if isinstance(value, QFont):
+                values[key] = QFont(_DEFAULT_SKIN_SETTINGS[key])
+            else:
+                values[key] = value
+        values['name'] = SAMPLE_SKIN
+        with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
+            json.dump(values, diskfile, indent=4, default=colorFontToJSON)
+    except Exception as exc:
+        logging.error('Error creating a sample skin at %s. '
+                      'Cannot write skin.json: %s', dName, str(exc))
 
     fName = dName + 'cflow.json'
-    if not os.path.exists(fName):
-        try:
-            values = {}
-            for key, value in _DEFAULT_CFLOW_SETTINGS.items():
-                if isinstance(value, QFont):
-                    values[key] = QFont(_DEFAULT_CFLOW_SETTINGS[key])
-                else:
-                    values[key] = value
-            with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
-                json.dump(values, diskfile, indent=4, default=colorFontToJSON)
-        except Exception as exc:
-            logging.error('Error creating a sample skin at %s. '
-                          'Cannot write cflow.json: %s', dName, str(exc))
+    try:
+        values = {}
+        for key, value in _DEFAULT_CFLOW_SETTINGS.items():
+            if isinstance(value, QFont):
+                values[key] = QFont(_DEFAULT_CFLOW_SETTINGS[key])
+            else:
+                values[key] = value
+        with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
+            json.dump(values, diskfile, indent=4, default=colorFontToJSON)
+    except Exception as exc:
+        logging.error('Error creating a sample skin at %s. '
+                      'Cannot write cflow.json: %s', dName, str(exc))
+
