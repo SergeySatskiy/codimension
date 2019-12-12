@@ -190,6 +190,7 @@ class MinimizedIndependentCommentCell(CellElement, IconMixin,
 
         self.leadingForElse = False
         self.sideForElse = False
+        self.connector = None
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -215,6 +216,29 @@ class MinimizedIndependentCommentCell(CellElement, IconMixin,
         self.width = self.minWidth
         return (self.width, self.height)
 
+    def __setupConnector(self):
+        """Prepares the connector"""
+        settings = self.canvas.settings
+
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        leftEdge = \
+            cellToTheLeft.baseX + settings.mainLine + settings.hCellPadding
+
+        if self.leadingForElse:
+            self.connector = Connector(
+                self.canvas, leftEdge + settings.hCellPadding,
+                self.baseY + self.minHeight / 2,
+                cellToTheLeft.baseX + settings.mainLine,
+                self.baseY + self.minHeight / 2)
+        else:
+            self.connector = Connector(
+                self.canvas, leftEdge + settings.hCellPadding,
+                self.baseY + self.minHeight / 2,
+                cellToTheLeft.baseX + settings.mainLine,
+                self.baseY + self.minHeight / 2)
+        self.connector.penColor = settings.hiddenCommentBorderColor
+        self.connector.penWidth = settings.boxLineWidth
+
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
         self.baseX = baseX
@@ -224,15 +248,20 @@ class MinimizedIndependentCommentCell(CellElement, IconMixin,
         scene.addItem(self.connector)
 
         settings = self.canvas.settings
+        rectWidth = self.iconItem.iconWidth() + \
+                    2 * settings.hHiddenCommentPadding
+        rectHeight = self.iconItem.iconHeight() + \
+                     2 * settings.vHiddenCommentPadding
+
         penWidth = settings.selectPenWidth - 1
         self.setRect(baseX + settings.hCellPadding - penWidth,
                      baseY + settings.vCellPadding - penWidth,
-                     self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
-                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
+                     rectWidth + 2 * penWidth,
+                     rectHeight + 2 * penWidth)
         scene.addItem(self)
 
         self.iconItem.setPos(
-            baseX + settings.hCellPadding + settings.hHiddenExceptPadding,
+            baseX + settings.hCellPadding + settings.hHiddenCommentPadding,
             baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
         scene.addItem(self.iconItem)
 
@@ -243,11 +272,13 @@ class MinimizedIndependentCommentCell(CellElement, IconMixin,
 
         settings = self.canvas.settings
         painter.setPen(self.getPainterPen(self.isSelected(),
-                                          settings.hiddenExceptBorderColor))
-        painter.setBrush(QBrush(settings.hiddenExceptBGColor))
+                                          settings.hiddenCommentBorderColor))
+        painter.setBrush(QBrush(settings.hiddenCommentBGColor))
 
-        rectWidth = self.minWidth - 2 * settings.hCellPadding
-        rectHeight = self.minHeight - 2 * settings.vCellPadding
+        rectWidth = self.iconItem.iconWidth() + \
+                    2 * settings.hHiddenCommentPadding
+        rectHeight = self.iconItem.iconHeight() + \
+                     2 * settings.vHiddenCommentPadding
 
         painter.drawRoundedRect(self.baseX + settings.hCellPadding,
                                 self.baseY + settings.vCellPadding,
@@ -255,4 +286,29 @@ class MinimizedIndependentCommentCell(CellElement, IconMixin,
                                 settings.scopeRectRadius,
                                 settings.scopeRectRadius)
 
+    def adjustWidth(self):
+        settings = self.canvas.settings
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        spareWidth = \
+            cellToTheLeft.width - settings.mainLine - settings.hCellPadding
+        boxWidth = self.minWidth - 2 * settings.hCellPadding
+        if spareWidth >= boxWidth:
+            self.minWidth = 0
+        else:
+            self.minWidth = boxWidth - spareWidth
+        self.width = self.minWidth
+
+    def getLineRange(self):
+        """Provides the line range"""
+        return self.ref.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.ref.begin, self.ref.end]
+
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        lineRange = self.getLineRange()
+        return "Independent comment at lines " + \
+            str(lineRange[0]) + "-" + str(lineRange[1])
 

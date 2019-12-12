@@ -226,6 +226,7 @@ class CFSceneContextMenuMixin:
         count = len(self.selectedItems())
         totalCCGroups = sum(self.countGroupsWithCustomColors())
         totalCCDocs = self.countDocWithCustomColors()
+        minimizedCount = self.countMinimizedItems()
 
         self.__ccAction.setEnabled(totalNonDocComments == 0 and
                                    not hasMinimizedExcepts)
@@ -247,8 +248,10 @@ class CFSceneContextMenuMixin:
         self.__groupAction.setEnabled(self.__canBeGrouped())
 
         itemsWithDocCML = self.countItemsWithCML(CMLdoc)
-        self.__removeDocAction.setEnabled(totalDocLinks + itemsWithDocCML == count)
-        if count != 1 or totalNonDocComments != 0 or hasDocstring or totalGroups != 0:
+        self.__removeDocAction.setEnabled(
+            totalDocLinks + itemsWithDocCML == count)
+        if count != 1 or totalNonDocComments != 0 or hasDocstring or \
+                totalGroups != 0 or minimizedCount > 0:
             self.__editDocAction.setEnabled(False)
             self.__autoDocActon.setEnabled(False)
         else:
@@ -914,6 +917,13 @@ class CFSceneContextMenuMixin:
                    item.cmlRef.fgColor is not None or \
                    item.cmlRef.border is not None:
                     count += 1
+        return count
+
+    def countMinimizedItems(self):
+        count = 0
+        for item in self.selectedItems():
+            if item.isMinimizedItem():
+                count += 1
         return count
 
     def sortSelectedReverse(self):

@@ -41,7 +41,8 @@ from .cml import CMLVersion, CMLsw, CMLgb, CMLge, CMLdoc
 from .cellelement import CellElement
 from .items import (CodeBlockCell, ReturnCell, RaiseCell, AssertCell,
                     SysexitCell, ImportCell,  IfCell)
-from .minimizeditems import MinimizedExceptCell
+from .minimizeditems import (MinimizedExceptCell,
+                             MinimizedIndependentCommentCell)
 from .auxitems import ConnectorCell, VacantCell, VSpacerCell, Line
 from .loopjumpitems import BreakCell, ContinueCell
 from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
@@ -160,6 +161,21 @@ class VirtualCanvas:
         # the spacing is inserted for the open groups
         self.isIfBelowLayout = False
         self.isOuterIfLayout = False
+
+    @staticmethod
+    def scopedItem():
+        """The vcanvas is not a scoped item"""
+        return False
+
+    @staticmethod
+    def isComment():
+        """The vcanvas is not a comment"""
+        return False
+
+    @staticmethod
+    def isCMLDoc():
+        """The vcanvas is not a CML doc"""
+        return False
 
     def getScopeName(self):
         """Provides the name of the scope drawn on the canvas"""
@@ -740,9 +756,14 @@ class VirtualCanvas:
                 self.__allocateCell(vacantRow, column + 1)
                 self.cells[vacantRow][column] = \
                     ConnectorCell(CONN_N_S, self, column, vacantRow)
-                self.cells[vacantRow][column + 1] = \
-                    IndependentCommentCell(item, self, column + 1,
-                                           vacantRow)
+                if self.settings.hidecomments:
+                    self.cells[vacantRow][column + 1] = \
+                        MinimizedIndependentCommentCell(item, self, column + 1,
+                                                        vacantRow)
+                else:
+                    self.cells[vacantRow][column + 1] = \
+                        IndependentCommentCell(item, self, column + 1,
+                                               vacantRow)
                 vacantRow += 1
                 continue
 
@@ -1449,10 +1470,9 @@ class VirtualCanvas:
                 row = self.cells[index]
                 if column < len(row):
                     row[column].render()
-                    if row[column].kind != CellElement.VCANVAS:
-                        if not row[column].scopedItem():
-                            if row[column].isComment() or row[column].isCMLDoc():
-                                row[column].adjustWidth()
+                    if not row[column].scopedItem():
+                        if row[column].isComment() or row[column].isCMLDoc():
+                            row[column].adjustWidth()
                     if not row[column].tailComment:
                         maxColumnWidth = max(row[column].width, maxColumnWidth)
                 index += 1
@@ -1519,10 +1539,9 @@ class VirtualCanvas:
 
                     _, height = cell.render()
                     maxHeight = max(maxHeight, height)
-                    if cell.kind != CellElement.VCANVAS:
-                        if not cell.scopedItem():
-                            if cell.isComment() or cell.isCMLDoc():
-                                cell.adjustWidth()
+                    if not cell.scopedItem():
+                        if cell.isComment() or cell.isCMLDoc():
+                            cell.adjustWidth()
                 totalWidth = 0
                 for cell in row:
                     cell.height = maxHeight

@@ -253,6 +253,11 @@ class CellElement:
         """True if it is a docstring"""
         return False
 
+    def isMinimizedItem(self):
+        """True if it is a minimized item"""
+        return self.kind in (self.INDEPENDENT_MINIMIZED_COMMENT,
+                             self.EXCEPT_MINIMIZED)
+
     def getDistance(self, absPos):
         """Default implementation.
 
