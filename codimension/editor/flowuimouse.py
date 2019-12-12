@@ -63,7 +63,7 @@ class CFSceneMouseMixin:
         if item.subKind in [ScopeCellElement.DECLARATION]:
             # Need to map to the top left item because the out
             return item.getTopLeftItem()
-        if item.subKind in [ScopeCellElement.SIDE_COMMENT,
+        if item.subKind in [ScopeCellElement.COMMENT,
                             ScopeCellElement.DOCSTRING]:
             # No mapping
             return item
@@ -178,7 +178,7 @@ class CFSceneMouseMixin:
                     continue
                 if item.scopedItem():
                     if item.subKind not in [ScopeCellElement.DECLARATION,
-                                            ScopeCellElement.SIDE_COMMENT,
+                                            ScopeCellElement.COMMENT,
                                             ScopeCellElement.DOCSTRING]:
                         continue
 
@@ -280,7 +280,7 @@ class CFSceneMouseMixin:
     def __getItemVisualBeginEnd(self, item):
         """Provides the item visual begin and end"""
         if item.scopedItem():
-            if item.subKind == ScopeCellElement.SIDE_COMMENT:
+            if item.subKind == ScopeCellElement.COMMENT:
                 return item.ref.sideComment.begin, item.ref.sideComment.end
             if item.subKind == ScopeCellElement.DOCSTRING:
                 return item.ref.docstring.begin, item.ref.docstring.end
@@ -300,13 +300,6 @@ class CFSceneMouseMixin:
             return item.ref.body.begin, item.ref.end
 
         # Here: not a scope item.
-        if item.kind in [CellElement.ABOVE_COMMENT,
-                         CellElement.LEADING_COMMENT]:
-            return item.ref.leadingComment.begin, item.ref.leadingComment.end
-        if item.kind == CellElement.SIDE_COMMENT:
-            return item.ref.sideComment.begin, item.ref.sideComment.end
-        if item.kind == CellElement.INDEPENDENT_COMMENT:
-            return item.ref.begin, item.ref.end
         if item.kind == CellElement.ASSERT:
             if item.ref.message is not None:
                 end = item.ref.message.end
@@ -327,18 +320,10 @@ class CFSceneMouseMixin:
             else:
                 end = item.ref.body.end
             return item.ref.body.begin, end
-        if item.kind in [CellElement.OPENED_GROUP_BEGIN,
-                         CellElement.COLLAPSED_GROUP,
-                         CellElement.EXCEPT_MINIMIZED,
-                         CellElement.INDEPENDENT_DOC,
-                         CellElement.LEADING_DOC,
-                         CellElement.ABOVE_DOC,
-                         CellElement.EMPTY_GROUP]:
-            begin, end = item.getAbsPosRange()
-            return begin, end
 
-        # if, import, sys.exit(), continue, break, code block
-        return item.ref.body.begin, item.ref.body.end
+        # All the rest
+        begin, end = item.getAbsPosRange()
+        return begin, end
 
     def findItemsForRef(self, ref):
         """Provides graphics items for the given ref"""
@@ -348,7 +333,7 @@ class CFSceneMouseMixin:
                 continue
             if item.scopedItem():
                 if item.subKind not in [ScopeCellElement.TOP_LEFT,
-                                        ScopeCellElement.SIDE_COMMENT,
+                                        ScopeCellElement.COMMENT,
                                         ScopeCellElement.DOCSTRING]:
                     continue
             if not self.isOpenGroupItem(item):

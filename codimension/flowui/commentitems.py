@@ -65,13 +65,13 @@ class CommentCellBase(CellElement):
             currentLine = part.beginLine
         self._putMimeToClipboard('\n'.join(content))
 
-    def onDoubleClick(self, line, pos):
-        """Jumps to the text editor"""
-        if self.editor:
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
-            self.editor.gotoLine(line, pos)
-            self.editor.setFocus()
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        lineRange = self.getLineRange()
+        if lineRange[0] == lineRange[1]:
+            return 'Comment at line ' + str(lineRange[0])
+        return 'Comment at lines ' + \
+               str(lineRange[0]) + '-' + str(lineRange[1])
 
     def adjustWidth(self):
         pass
@@ -96,9 +96,6 @@ class IndependentCommentCell(CommentCellBase, QGraphicsPathItem):
         """Provides text"""
         if self._text is None:
             self._text = self.ref.getDisplayValue()
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._text) + '</pre>')
-                self._text = self.canvas.settings.hiddenCommentText
         return self._text
 
     def render(self):
@@ -110,8 +107,7 @@ class IndependentCommentCell(CommentCellBase, QGraphicsPathItem):
                          2 * (settings.vCellPadding + self._vTextPadding)
         self.minWidth = self._textRect.width() + \
                         2 * (settings.hCellPadding + self._hTextPadding)
-        if not settings.hidecomments:
-            self.minWidth = max(self.minWidth, settings.minWidth)
+        self.minWidth = max(self.minWidth, settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -130,8 +126,7 @@ class IndependentCommentCell(CommentCellBase, QGraphicsPathItem):
             cellToTheLeft.width - settings.mainLine - settings.hCellPadding
         boxWidth = self._textRect.width() + \
                    2 * (settings.hCellPadding + self._hTextPadding)
-        if not settings.hidecomments:
-            boxWidth = max(boxWidth, settings.minWidth)
+        boxWidth = max(boxWidth, settings.minWidth)
         if spareWidth >= boxWidth:
             self.minWidth = 0
         else:
@@ -155,8 +150,7 @@ class IndependentCommentCell(CommentCellBase, QGraphicsPathItem):
             cellToTheLeft.baseX + settings.mainLine + settings.hCellPadding
         boxWidth = self._textRect.width() + \
                    2 * (settings.hCellPadding + self._hTextPadding)
-        if not settings.hidecomments:
-            boxWidth = max(boxWidth, settings.minWidth)
+        boxWidth = max(boxWidth, settings.minWidth)
         path = getCommentBoxPath(settings, self._leftEdge, self.baseY,
                                  boxWidth, self.minHeight)
         self.setPath(path)
@@ -202,7 +196,9 @@ class IndependentCommentCell(CommentCellBase, QGraphicsPathItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        self.onDoubleClick(self.ref.beginLine, self.ref.beginPos)
+        # Needed custom because this item is used for ifs 'else' side comment
+        CellElement.mouseDoubleClickEvent(self, event,
+                                          self.ref.beginPos)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -211,20 +207,6 @@ class IndependentCommentCell(CommentCellBase, QGraphicsPathItem):
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         return [self.ref.begin, self.ref.end]
-
-    def getSelectTooltip(self):
-        """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Independent comment at lines " + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
-
-    def getDistance(self, absPos):
-        """Provides a distance between the absPos and the item"""
-        return distance(absPos, self.ref.begin, self.ref.end)
-
-    def getLineDistance(self, line):
-        """Provides a distance between the line and the item"""
-        return distance(line, self.ref.beginLine, self.ref.endLine)
 
     def copyToClipboard(self):
         """Copies the item to a clipboard"""
@@ -248,9 +230,6 @@ class LeadingCommentCell(CommentCellBase, QGraphicsPathItem):
         """Provides text"""
         if self._text is None:
             self._text = self.ref.leadingComment.getDisplayValue()
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._text) + '</pre>')
-                self._text = self.canvas.settings.hiddenCommentText
         return self._text
 
     def render(self):
@@ -264,8 +243,7 @@ class LeadingCommentCell(CommentCellBase, QGraphicsPathItem):
         self.minWidth = \
             self._textRect.width() + \
             2 * settings.hCellPadding + 2 * self._hTextPadding
-        if not settings.hidecomments:
-            self.minWidth = max(self.minWidth, settings.minWidth)
+        self.minWidth = max(self.minWidth, settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -289,8 +267,7 @@ class LeadingCommentCell(CommentCellBase, QGraphicsPathItem):
         spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
         boxWidth = self._textRect.width() + \
                    2 * (settings.hCellPadding + self._hTextPadding)
-        if not settings.hidecomments:
-            boxWidth = max(boxWidth, settings.minWidth)
+        boxWidth = max(boxWidth, settings.minWidth)
         if spareWidth >= boxWidth:
             self.minWidth = 0
         else:
@@ -323,8 +300,7 @@ class LeadingCommentCell(CommentCellBase, QGraphicsPathItem):
                 settings.mainLine + settings.hCellPadding
         boxWidth = self._textRect.width() + \
                    2 * (settings.hCellPadding + self._hTextPadding)
-        if not settings.hidecomments:
-            boxWidth = max(boxWidth, settings.minWidth)
+        boxWidth = max(boxWidth, settings.minWidth)
 
         shift = self.hShift * 2 * settings.openGroupHSpacer
         self._leftEdge += shift
@@ -379,11 +355,6 @@ class LeadingCommentCell(CommentCellBase, QGraphicsPathItem):
 
         self._leftEdge -= shift
 
-    def mouseDoubleClickEvent(self, event):
-        """Jump to the appropriate line in the text editor"""
-        self.onDoubleClick(self.ref.leadingComment.beginLine,
-                           self.ref.leadingComment.beginPos)
-
     def getLineRange(self):
         """Provides the line range"""
         return self.ref.leadingComment.getLineRange()
@@ -391,22 +362,6 @@ class LeadingCommentCell(CommentCellBase, QGraphicsPathItem):
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         return [self.ref.leadingComment.begin, self.ref.leadingComment.end]
-
-    def getSelectTooltip(self):
-        """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Leading comment at lines " + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
-
-    def getDistance(self, absPos):
-        """Provides a distance between the absPos and the item"""
-        return distance(absPos, self.ref.leadingComment.begin,
-                        self.ref.leadingComment.end)
-
-    def getLineDistance(self, line):
-        """Provides a distance between the line and the item"""
-        return distance(line, self.ref.leadingComment.beginLine,
-                        self.ref.leadingComment.endLine)
 
     def copyToClipboard(self):
         """Copies the item to a clipboard"""
@@ -508,8 +463,7 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
         if not settings.hidecomments:
             boxWidth = max(boxWidth, settings.minWidth)
         self._leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
-        cellKind = self.canvas.cells[self.addr[1]][self.addr[0] - 1].kind
-        if cellKind == CellElement.CONNECTOR:
+        if cellToTheLeft.kind == CellElement.CONNECTOR:
             # 'if' or 'elif' side comment
             self.__isIfSide = True
             self._leftEdge = \
@@ -583,8 +537,8 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        self.onDoubleClick(self.ref.sideComment.beginLine,
-                           self.ref.sideComment.beginPos)
+        CellElement.mouseDoubleClickEvent(self, event,
+                                          self.ref.sideComment.beginPos)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -593,12 +547,6 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         return [self.ref.sideComment.begin, self.ref.sideComment.end]
-
-    def getSelectTooltip(self):
-        """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Side comment at lines " + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
 
     def getDistance(self, absPos):
         """Provides a distance between the absPos and the item"""
@@ -748,11 +696,6 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
             self._textRect.width(), self._textRect.height(),
             Qt.AlignLeft, self.__getText())
 
-    def mouseDoubleClickEvent(self, event):
-        """Jump to the appropriate line in the text editor"""
-        self.onDoubleClick(self.ref.leadingComment.beginLine,
-                           self.ref.leadingComment.beginPos)
-
     def getLineRange(self):
         """Provides the line range"""
         return self.ref.leadingComment.getLineRange()
@@ -760,22 +703,6 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         return [self.ref.leadingComment.begin, self.ref.leadingComment.end]
-
-    def getSelectTooltip(self):
-        """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Leading comment at lines " + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
-
-    def getDistance(self, absPos):
-        """Provides a distance between the absPos and the item"""
-        return distance(absPos, self.ref.leadingComment.begin,
-                        self.ref.leadingComment.end)
-
-    def getLineDistance(self, line):
-        """Provides a distance between the line and the item"""
-        return distance(line, self.ref.leadingComment.beginLine,
-                        self.ref.leadingComment.endLine)
 
     def copyToClipboard(self):
         """Copies the item to a clipboard"""

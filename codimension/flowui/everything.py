@@ -153,6 +153,7 @@ class C:    # Side
 class C1( B1,
           B2 ):
     " C1 doc "
+    # Leading inside group
     pass
 # cml 1 ge id=2
 
@@ -315,6 +316,7 @@ except Exception:   # Side 2
     pass
 except Exception as ex:
     pass
+# cml 1 doc anchor=000 title="Some anchor"
 # Leading 4
 except:         # Side 4
     pass
@@ -583,6 +585,7 @@ else:
 def ff(x):
     if True:
         # Something
+
         if x > 32:
             x = 32
 

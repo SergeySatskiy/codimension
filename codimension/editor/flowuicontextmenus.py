@@ -1005,7 +1005,7 @@ class CFSceneContextMenuMixin:
     def __areScopeDocstringOrCommentSelected(self):
         for item in self.selectedItems():
             if item.scopedItem():
-                if item.subKind in [ScopeCellElement.SIDE_COMMENT,
+                if item.subKind in [ScopeCellElement.COMMENT,
                                     ScopeCellElement.DOCSTRING]:
                     return True
         return False
@@ -1146,7 +1146,7 @@ class CFSceneContextMenuMixin:
                     if item.scopedItem():
                         if item.subKind not in [ScopeCellElement.TOP_LEFT,
                                                 ScopeCellElement.DOCSTRING,
-                                                ScopeCellElement.SIDE_COMMENT]:
+                                                ScopeCellElement.COMMENT]:
                             continue
                     if item in selected:
                         continue
@@ -1177,7 +1177,7 @@ class CFSceneContextMenuMixin:
             if item.scopedItem():
                 if item.subKind not in [ScopeCellElement.TOP_LEFT,
                                         ScopeCellElement.DOCSTRING,
-                                        ScopeCellElement.SIDE_COMMENT]:
+                                        ScopeCellElement.COMMENT]:
                     continue
             if item in selected:
                 continue

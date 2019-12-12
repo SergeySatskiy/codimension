@@ -72,6 +72,9 @@ class CellElement:
     LEADING_DOC = 215
     ABOVE_DOC = 216
     INDEPENDENT_MINIMIZED_COMMENT = 217
+    LEADING_MINIMIZED_COMMENT = 218
+    SIDE_MINIMIZED_COMMENT = 219
+    ABOVE_MINIMIZED_COMMENT = 220
 
     CONNECTOR = 300
     SVG = 301
@@ -188,7 +191,7 @@ class CellElement:
         pen.setJoinStyle(Qt.RoundJoin)
         return pen
 
-    def mouseDoubleClickEvent(self, event):
+    def mouseDoubleClickEvent(self, event, pos=None):
         """Jump to the appropriate line in the text editor.
 
         default implementation
@@ -203,10 +206,11 @@ class CellElement:
         GlobalData().mainWindow.activateWindow()
 
         lineRange = self.getLineRange()
-        line = self.editor.lines[lineRange[0] - 1]
-        pos = len(line) - len(line.lstrip())
+        if pos is None:
+            line = self.editor.lines[lineRange[0] - 1]
+            pos = len(line) - len(line.lstrip()) + 1
 
-        self.editor.gotoLine(lineRange[0], pos + 1)
+        self.editor.gotoLine(lineRange[0], pos)
         self.editor.setFocus()
 
     def scopedItem(self):
@@ -236,7 +240,10 @@ class CellElement:
                              self.LEADING_COMMENT,
                              self.SIDE_COMMENT,
                              self.ABOVE_COMMENT,
-                             self.INDEPENDENT_MINIMIZED_COMMENT)
+                             self.INDEPENDENT_MINIMIZED_COMMENT,
+                             self.LEADING_MINIMIZED_COMMENT,
+                             self.SIDE_MINIMIZED_COMMENT,
+                             self.ABOVE_MINIMIZED_COMMENT)
 
     def isCMLDoc(self):
         """True if it is a CML doc item"""
@@ -256,7 +263,10 @@ class CellElement:
     def isMinimizedItem(self):
         """True if it is a minimized item"""
         return self.kind in (self.INDEPENDENT_MINIMIZED_COMMENT,
-                             self.EXCEPT_MINIMIZED)
+                             self.LEADING_MINIMIZED_COMMENT,
+                             self.EXCEPT_MINIMIZED,
+                             self.SIDE_MINIMIZED_COMMENT,
+                             self.ABOVE_MINIMIZED_COMMENT)
 
     def getDistance(self, absPos):
         """Default implementation.
@@ -365,6 +375,9 @@ __kindToString = {
     CellElement.SIDE_COMMENT: 'SIDE_COMMENT',
     CellElement.ABOVE_COMMENT: 'ABOVE_COMMENT',
     CellElement.INDEPENDENT_MINIMIZED_COMMENT: 'INDEPENDENT_MINIMIZED_COMMENT',
+    CellElement.LEADING_MINIMIZED_COMMENT: 'LEADING_MINIMIZED_COMMENT',
+    CellElement.SIDE_MINIMIZED_COMMENT: 'SIDE_MINIMIZED_COMMENT',
+    CellElement.ABOVE_MINIMIZED_COMMENT: 'ABOVE_MINIMIZED_COMMENT',
     CellElement.EXCEPT_MINIMIZED: 'EXCEPT_MINIMIZED',
     CellElement.CONNECTOR: 'CONNECTOR',
     CellElement.DEPENDENT_CONNECTOR: 'DEPENDENT_CONNECTOR',

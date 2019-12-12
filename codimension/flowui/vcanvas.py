@@ -42,7 +42,9 @@ from .cellelement import CellElement
 from .items import (CodeBlockCell, ReturnCell, RaiseCell, AssertCell,
                     SysexitCell, ImportCell,  IfCell)
 from .minimizeditems import (MinimizedExceptCell,
-                             MinimizedIndependentCommentCell)
+                             MinimizedIndependentCommentCell,
+                             MinimizedLeadingCommentCell,
+                             MinimizedAboveCommentCell)
 from .auxitems import ConnectorCell, VacantCell, VSpacerCell, Line
 from .loopjumpitems import BreakCell, ContinueCell
 from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
@@ -314,8 +316,12 @@ class VirtualCanvas:
                 self.__allocateCell(row, column + 1)
                 self.cells[row][column] = ConnectorCell(CONN_N_S, self,
                                                         column, row)
-                self.cells[row][column + 1] = LeadingCommentCell(item, self,
-                                                                 column + 1, row)
+                if self.settings.hidecomments:
+                    self.cells[row][column + 1] = MinimizedLeadingCommentCell(
+                        item, self, column + 1, row)
+                else:
+                    self.cells[row][column + 1] = LeadingCommentCell(
+                        item, self, column + 1, row)
                 row += 1
         return row
 
@@ -635,9 +641,14 @@ class VirtualCanvas:
                                 decScope.cells[rowAddr][1] = \
                                     ConnectorCell(CONN_N_S,
                                                   decScope, 1, rowAddr)
-                                decScope.cells[rowAddr][2] = \
-                                    LeadingCommentCell(scopeItem, decScope, 2,
-                                                       rowAddr)
+                                if self.settings.hidecomments:
+                                    decScope.cells[rowAddr][2] = \
+                                        MinimizedLeadingCommentCell(
+                                            scopeItem, decScope, 2, rowAddr)
+                                else:
+                                    decScope.cells[rowAddr][2] = \
+                                        LeadingCommentCell(
+                                            scopeItem, decScope, 2, rowAddr)
 
                         decScope.__allocateCell(decScopeRows - 2, 1)
 
@@ -712,7 +723,10 @@ class VirtualCanvas:
                         self.__allocateAndSet(cRow, column, docComment)
                         cRow += 1
                     if item.leadingComment:
-                        comment = AboveCommentCell(item, self, column, cRow)
+                        if self.settings.hidecomments:
+                            comment = MinimizedAboveCommentCell(item, self, column, cRow)
+                        else:
+                            comment = AboveCommentCell(item, self, column, cRow)
                         comment.needConnector = True
                         self.__allocateAndSet(cRow, column, comment)
 
@@ -725,7 +739,10 @@ class VirtualCanvas:
                             self.__allocateAndSet(cRow, column + 1, docComment)
                             cRow += 1
                         if aboveItems[1][1]:
-                            comment = AboveCommentCell(item.elsePart, self, column + 1, cRow)
+                            if self.settings.hidecomments:
+                                comment = MinimizedAboveCommentCell(item.elsePart, self, column + 1, cRow)
+                            else:
+                                comment = AboveCommentCell(item.elsePart, self, column + 1, cRow)
                             comment.needConnector = aboveItems[1][0] is not None
                             self.__allocateAndSet(cRow, column + 1, comment)
 
@@ -793,7 +810,10 @@ class VirtualCanvas:
                         self.__allocateAndSet(cRow, column, docComment)
                         cRow += 1
                     if item.leadingComment:
-                        comment = AboveCommentCell(item, self, column, cRow)
+                        if self.settings.hidecomments:
+                            comment = MinimizedAboveCommentCell(item, self, column, cRow)
+                        else:
+                            comment = AboveCommentCell(item, self, column, cRow)
                         comment.needConnector = True
                         self.__allocateAndSet(cRow, column, comment)
 
@@ -825,7 +845,10 @@ class VirtualCanvas:
                                 self.__allocateAndSet(cRow, nextColumn, docComment)
                                 cRow += 1
                             if aboveItems[exceptIndex][2]:
-                                comment = AboveCommentCell(exceptPart, self, nextColumn, cRow)
+                                if self.settings.hidecomments:
+                                    comment = MinimizedAboveCommentCell(exceptPart, self, nextColumn, cRow)
+                                else:
+                                    comment = AboveCommentCell(exceptPart, self, nextColumn, cRow)
                                 comment.needConnector = aboveItems[exceptIndex][1] is not None
                                 self.__allocateAndSet(cRow, nextColumn, comment)
 
@@ -1077,8 +1100,12 @@ class VirtualCanvas:
                 if nBranch.leadingComment and not self.settings.noComment:
                     # Draw as an independent comment: insert into the layout
                     conn = ConnectorCell(CONN_N_S, branchLayout, 0, 0)
-                    cItem = IndependentCommentCell(nBranch.leadingComment,
-                                                   branchLayout, 1, 0)
+                    if self.settings.hidecomments:
+                        cItem = MinimizedIndependentCommentCell(
+                            nBranch.leadingComment, branchLayout, 1, 0)
+                    else:
+                        cItem = IndependentCommentCell(nBranch.leadingComment,
+                                                       branchLayout, 1, 0)
                     branchLayout.cells.append([])
                     branchLayout.cells[0].append(conn)
                     branchLayout.cells[0].append(cItem)
@@ -1087,8 +1114,12 @@ class VirtualCanvas:
                     # Draw as an independent comment: insert into the layout
                     rowIndex = scopeCommentRows - 1
                     conn = ConnectorCell(CONN_N_S, branchLayout, 0, rowIndex)
-                    cItem = IndependentCommentCell(nBranch.sideComment,
-                                                   branchLayout, 1, rowIndex)
+                    if self.settings.hidecomments:
+                        cItem = MinimizedIndependentCommentCell(
+                            nBranch.sideComment, branchLayout, 1, rowIndex)
+                    else:
+                        cItem = IndependentCommentCell(
+                            nBranch.sideComment, branchLayout, 1, rowIndex)
                     cItem.sideForElse = True
                     branchLayout.cells.append([])
                     branchLayout.cells[rowIndex].append(conn)
