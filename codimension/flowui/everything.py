@@ -163,7 +163,7 @@ class C3( B1,       # Side 1
           B3 ):
     # cml 1 cc bg=#ffffff
     " C3 doc "
-    pass
+    pass    # Side inside the class
 
 
 class C4( C5 ):
@@ -589,7 +589,8 @@ def ff(x):
         if x > 32:
             x = 32
 
-    # cml 1 doc anchor=some title=Yahoo bg=#6f6 border=#1010ff
+    # cml 1 doc anchor=some title=Yahoo bg=#6f6
+    # cml+ border=#1010ff
     return """ddd %d
 """ % 123
 

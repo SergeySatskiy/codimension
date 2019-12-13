@@ -40,8 +40,6 @@ class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
         QGraphicsRectItem.__init__(self)
         self.kind = CellElement.BREAK
         self.__textRect = None
-        self.__vSpacing = 0
-        self.__hSpacing = 4
         self.connector = None
 
         # Cache for the size
@@ -73,9 +71,9 @@ class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
         """Renders the cell"""
         settings = self.canvas.settings
         self.__textRect = self.getBoundingRect(self._getText())
-        vPadding = 2 * (self.__vSpacing + settings.vCellPadding)
+        vPadding = 2 * (settings.breakVPadding + settings.vCellPadding)
         self.minHeight = self.__textRect.height() + vPadding
-        hPadding = 2 * (self.__hSpacing + settings.hCellPadding)
+        hPadding = 2 * (settings.breakHPadding + settings.hCellPadding)
         self.minWidth = self.__textRect.width() + hPadding
         if settings.noContent:
             self.minWidth = max(self.minWidth, settings.minWidth)
@@ -99,7 +97,8 @@ class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas,
+                                   baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + settings.vCellPadding)
         scene.addItem(self.connector)
@@ -152,8 +151,6 @@ class ContinueCell(CellElement, ColorMixin, QGraphicsRectItem):
         QGraphicsRectItem.__init__(self)
         self.kind = CellElement.CONTINUE
         self.__textRect = None
-        self.__vSpacing = 0
-        self.__hSpacing = 4
         self.connector = None
 
         # Cache for the size
@@ -185,9 +182,9 @@ class ContinueCell(CellElement, ColorMixin, QGraphicsRectItem):
         """Renders the cell"""
         settings = self.canvas.settings
         self.__textRect = self.getBoundingRect(self._getText())
-        vPadding = 2 * (self.__vSpacing + settings.vCellPadding)
+        vPadding = 2 * (settings.continueVPadding + settings.vCellPadding)
         self.minHeight = self.__textRect.height() + vPadding
-        hPadding = 2 * (self.__hSpacing + settings.hCellPadding)
+        hPadding = 2 * (settings.continueHPadding + settings.hCellPadding)
         self.minWidth = self.__textRect.width() + hPadding
         if settings.noContent:
             self.minWidth = max(self.minWidth, settings.minWidth)
@@ -211,7 +208,8 @@ class ContinueCell(CellElement, ColorMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine, baseY,
+        self.connector = Connector(self.canvas,
+                                   baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
                                    baseY + settings.vCellPadding)
         scene.addItem(self.connector)

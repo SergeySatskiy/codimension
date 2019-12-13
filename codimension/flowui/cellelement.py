@@ -191,7 +191,7 @@ class CellElement:
         pen.setJoinStyle(Qt.RoundJoin)
         return pen
 
-    def mouseDoubleClickEvent(self, event, pos=None):
+    def mouseDoubleClickEvent(self, event, line=None, pos=None):
         """Jump to the appropriate line in the text editor.
 
         default implementation
@@ -205,12 +205,13 @@ class CellElement:
         GlobalData().mainWindow.raise_()
         GlobalData().mainWindow.activateWindow()
 
-        lineRange = self.getLineRange()
+        if line is None:
+            line = self.getLineRange()[0]
         if pos is None:
-            line = self.editor.lines[lineRange[0] - 1]
-            pos = len(line) - len(line.lstrip()) + 1
+            lineContent = self.editor.lines[line - 1]
+            pos = len(lineContent) - len(lineContent.lstrip()) + 1
 
-        self.editor.gotoLine(lineRange[0], pos)
+        self.editor.gotoLine(line, pos)
         self.editor.setFocus()
 
     def scopedItem(self):

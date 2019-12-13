@@ -21,9 +21,9 @@
 
 # pylint: disable=C0305
 
+from sys import maxsize
 from html import escape
 from ui.qt import Qt, QBrush, QGraphicsRectItem, QGraphicsItem, QPainterPath
-from utils.globals import GlobalData
 from .auxitems import Connector
 from .iconmixin import IconMixin
 from .cellelement import CellElement
@@ -162,13 +162,10 @@ class MinimizedExceptCell(MinimizedCellBase):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        if self.editor:
-            firstExcept = self.ref.exceptParts[0]
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
-            self.editor.gotoLine(firstExcept.body.beginLine,
-                                 firstExcept.body.beginPos)
-            self.editor.setFocus()
+        firstExcept = self.ref.exceptParts[0]
+        CellElement.mouseDoubleClickEvent(self, event,
+                                          line=firstExcept.body.beginLine,
+                                          pos=firstExcept.body.beginPos)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -188,9 +185,9 @@ class MinimizedExceptCell(MinimizedCellBase):
         count = len(self.ref.exceptParts)
         if count == 1:
             return 'Minimized except block at ' + \
-                   self.getLinesSuffix(lineRange)
+                   CellElement.getLinesSuffix(lineRange)
         return str(count) + ' minimized except blocks at ' + \
-               self.getLinesSuffix(lineRange)
+               CellElement.getLinesSuffix(lineRange)
 
 
 class MinimizedCommentBase:
@@ -201,7 +198,7 @@ class MinimizedCommentBase:
         pass
 
     @staticmethod
-    def getSelectTooltip(lineRange):
+    def selectTooltip(lineRange):
         """Provides the tooltip"""
         return 'Minimized comment at ' + CellElement.getLinesSuffix(lineRange)
 
@@ -270,6 +267,7 @@ class MinimizedIndependentCommentCell(MinimizedCommentBase, MinimizedCellBase):
                        option, widget)
 
     def adjustWidth(self):
+        """Adjust the width"""
         settings = self.canvas.settings
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
@@ -284,7 +282,7 @@ class MinimizedIndependentCommentCell(MinimizedCommentBase, MinimizedCellBase):
         """Jump to the appropriate line in the text editor"""
         # Needed custom because this item is used for ifs 'else' side comment
         CellElement.mouseDoubleClickEvent(self, event,
-                                          self.ref.beginPos)
+                                          pos=self.ref.beginPos)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -296,7 +294,7 @@ class MinimizedIndependentCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        return MinimizedCommentBase.getSelectTooltip(self.getLineRange())
+        return MinimizedCommentBase.selectTooltip(self.getLineRange())
 
 
 class MinimizedLeadingCommentCell(MinimizedCommentBase, MinimizedCellBase):
@@ -337,7 +335,8 @@ class MinimizedLeadingCommentCell(MinimizedCommentBase, MinimizedCellBase):
                              self.baseY + self.minHeight / 2)
         connectorPath.lineTo(leftEdge, self.baseY + self.minHeight / 2)
         connectorPath.lineTo(leftEdge - settings.hCellPadding,
-                             self.baseY + self.minHeight + settings.vCellPadding)
+                             self.baseY + self.minHeight +
+                             settings.vCellPadding)
         self.connector.setPath(connectorPath)
         self.connector.penColor = settings.hiddenCommentBorderColor
         self.connector.penWidth = settings.boxLineWidth
@@ -361,6 +360,7 @@ class MinimizedLeadingCommentCell(MinimizedCommentBase, MinimizedCellBase):
                        option, widget)
 
     def adjustWidth(self):
+        """Adjust the width"""
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         if cellToTheLeft.kind != CellElement.CONNECTOR:
             return
@@ -384,7 +384,7 @@ class MinimizedLeadingCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        return MinimizedCommentBase.getSelectTooltip(self.getLineRange())
+        return MinimizedCommentBase.selectTooltip(self.getLineRange())
 
 
 
@@ -421,7 +421,8 @@ class MinimizedAboveCommentCell(MinimizedCommentBase, MinimizedCellBase):
         connectorPath.lineTo(leftEdge,
                              self.baseY + self.minHeight / 2)
         connectorPath.lineTo(leftEdge - settings.hCellPadding,
-                             self.baseY + self.minHeight + settings.vCellPadding)
+                             self.baseY + self.minHeight +
+                             settings.vCellPadding)
         self.connector.setPath(connectorPath)
         self.connector.penColor = settings.commentBorderColor
         self.connector.penWidth = settings.boxLineWidth
@@ -451,16 +452,15 @@ class MinimizedAboveCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
     def paint(self, painter, option, widget):
         """Draws the independent comment"""
+        settings = self.canvas.settings
+        hShift = settings.mainLine + settings.hCellPadding
         self.paintCell(painter,
-                       self.canvas.settings.hiddenCommentBGColor,
-                       self.canvas.settings.hiddenCommentBorderColor,
-                       option, widget,
-                       hShift=self.canvas.settings.mainLine +
-                              self.canvas.settings.hCellPadding)
+                       settings.hiddenCommentBGColor,
+                       settings.hiddenCommentBorderColor,
+                       option, widget, hShift)
 
     def adjustWidth(self):
         """No need to adjust the width"""
-        pass
 
     def getLineRange(self):
         """Provides the line range"""
@@ -472,7 +472,7 @@ class MinimizedAboveCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        return MinimizedCommentBase.getSelectTooltip(self.getLineRange())
+        return MinimizedCommentBase.selectTooltip(self.getLineRange())
 
 
 
@@ -567,7 +567,7 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
         CellElement.mouseDoubleClickEvent(self, event,
-                                          self.ref.sideComment.beginPos)
+                                          pos=self.ref.sideComment.beginPos)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -579,7 +579,7 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        return MinimizedCommentBase.getSelectTooltip(self.getLineRange())
+        return MinimizedCommentBase.selectTooltip(self.getLineRange())
 
     def getDistance(self, absPos):
         """Provides a distance between the absPos and the item"""

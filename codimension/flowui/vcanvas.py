@@ -44,7 +44,8 @@ from .items import (CodeBlockCell, ReturnCell, RaiseCell, AssertCell,
 from .minimizeditems import (MinimizedExceptCell,
                              MinimizedIndependentCommentCell,
                              MinimizedLeadingCommentCell,
-                             MinimizedAboveCommentCell)
+                             MinimizedAboveCommentCell,
+                             MinimizedSideCommentCell)
 from .auxitems import ConnectorCell, VacantCell, VSpacerCell, Line
 from .loopjumpitems import BreakCell, ContinueCell
 from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
@@ -978,9 +979,12 @@ class VirtualCanvas:
                                   cellClass(item, self, column, vacantRow))
 
             if item.sideComment and not self.settings.noComment:
-                self.__allocateAndSet(vacantRow, column + 1,
-                                      SideCommentCell(item, self, column + 1,
-                                                      vacantRow))
+                if self.settings.hidecomments:
+                    comment = MinimizedSideCommentCell(item, self, column + 1,
+                                                       vacantRow)
+                else:
+                    comment = SideCommentCell(item, self, column + 1, vacantRow)
+                self.__allocateAndSet(vacantRow, column + 1, comment)
             vacantRow += 1
 
             # end of for loop
@@ -1002,8 +1006,11 @@ class VirtualCanvas:
         self.__allocateAndSet(vacantRow, 1, topConnector)
 
         if yBranch.sideComment and not self.settings.noComment:
-            self.__allocateAndSet(vacantRow, 2,
-                                  SideCommentCell(yBranch, self, 2, vacantRow))
+            if self.settings.hidecomments:
+                comment = MinimizedSideCommentCell(yBranch, self, 2, vacantRow)
+            else:
+                comment = SideCommentCell(yBranch, self, 2, vacantRow)
+            self.__allocateAndSet(vacantRow, 2, comment)
         vacantRow += 1
 
         # Test if there is a switch of the branches

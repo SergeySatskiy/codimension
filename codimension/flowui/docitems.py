@@ -28,7 +28,6 @@ from utils.globals import GlobalData
 from utils.misc import resolveLinkPath
 from .auxitems import Connector
 from .cellelement import CellElement
-from .routines import distance
 from .commentitems import CommentCellBase
 from .colormixin import ColorMixin
 from .iconmixin import IconMixin
@@ -74,11 +73,6 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
                 self.setToolTip('<pre>' + escape(self._text) + '</pre>')
                 self._text = ''
         return self._text
-
-    def mouseDoubleClickEvent(self, event):
-        """Jump to the appropriate line in the text editor"""
-        self.onDoubleClick(self.cmlRef.ref.parts[0].beginLine,
-                           self.cmlRef.ref.parts[0].beginPos)
 
     def mouseClickLinkIcon(self):
         """Follows the link"""
@@ -207,20 +201,14 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         """Provides the line range"""
         return self.cmlRef.getLineRange()
 
-    def getDistance(self, absPos):
-        """Provides a distance between the absPos and the item"""
-        return distance(absPos, self.cmlRef.ref.parts[0].begin,
-                        self.cmlRef.ref.parts[-1].end)
-
-    def getLineDistance(self, line):
-        """Provides a distance between the line and the item"""
-        return distance(line, self.cmlRef.ref.parts[0].beginLine,
-                        self.cmlRef.ref.parts[-1].endLine)
-
     def copyToClipboard(self):
         """Copies the item to a clipboard"""
         self._copyToClipboard(self.cmlRef.ref.parts)
 
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        return 'CML doc comment at ' + \
+               CellElement.getLinesSuffix(self.getLineRange())
 
 
 class IndependentDocCell(DocCellBase):
@@ -256,12 +244,6 @@ class IndependentDocCell(DocCellBase):
                 self.baseY + self.minHeight / 2)
         self.connector.penColor = self.borderColor
         self.connector.penWidth = settings.boxLineWidth
-
-    def getSelectTooltip(self):
-        """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Independent CML doc comment at lines " + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
 
 
 
@@ -305,11 +287,6 @@ class LeadingDocCell(DocCellBase):
         self.connector.penColor = self.borderColor
         self.connector.penWidth = settings.boxLineWidth
 
-    def getSelectTooltip(self):
-        """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Leading CML doc comment at lines " + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
 
 
 class AboveDocCell(DocCellBase):
@@ -361,10 +338,4 @@ class AboveDocCell(DocCellBase):
         self.connector.setPath(connectorPath)
         self.connector.penColor = self.borderColor
         self.connector.penWidth = settings.boxLineWidth
-
-    def getSelectTooltip(self):
-        """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Leading CML doc comment at lines " + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
 

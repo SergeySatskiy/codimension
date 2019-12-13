@@ -128,6 +128,10 @@ class CFlowSettings:
         self.collapsedGroupYShift = self.__getNormalized('collapsedGroupYShift')
         self.emptyGroupXShift = self.__getNormalized('emptyGroupXShift')
         self.emptyGroupYShift = self.__getNormalized('emptyGroupYShift')
+        self.breakHPadding = self.__getNormalized('breakHPadding')
+        self.breakVPadding = self.__getNormalized('breakVPadding')
+        self.continueHPadding = self.__getNormalized('continueHPadding')
+        self.continueVPadding = self.__getNormalized('continueVPadding')
 
 
 def getCflowSettings(paintDevice):
