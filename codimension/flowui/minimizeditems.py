@@ -27,6 +27,7 @@ from utils.globals import GlobalData
 from .auxitems import Connector
 from .iconmixin import IconMixin
 from .cellelement import CellElement
+from .routines import distance
 
 
 class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
@@ -59,7 +60,8 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def drawCell(self, scene, baseX, baseY, hIconPadding, setupConnector):
+    def drawCell(self, scene, baseX, baseY, hIconPadding,
+                 setupConnector, hShift=0):
         """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
@@ -70,18 +72,19 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
 
         settings = self.canvas.settings
         penWidth = settings.selectPenWidth - 1
-        self.setRect(baseX + settings.hCellPadding - penWidth,
+        self.setRect(baseX + settings.hCellPadding - penWidth + hShift,
                      baseY + settings.vCellPadding - penWidth,
                      self.rectWidth + 2 * penWidth,
                      self.rectHeight + 2 * penWidth)
         scene.addItem(self)
 
         self.iconItem.setPos(
-            baseX + settings.hCellPadding + hIconPadding,
+            baseX + settings.hCellPadding + hIconPadding + hShift,
             baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
         scene.addItem(self.iconItem)
 
-    def paintCell(self, painter, bgColor, borderColor, option, widget):
+    def paintCell(self, painter, bgColor, borderColor,
+                  option, widget, hShift=0):
         """Draws the independent comment"""
         del option
         del widget
@@ -90,7 +93,7 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
         painter.setPen(self.getPainterPen(self.isSelected(), borderColor))
         painter.setBrush(QBrush(bgColor))
 
-        painter.drawRoundedRect(self.baseX + settings.hCellPadding,
+        painter.drawRoundedRect(self.baseX + settings.hCellPadding + hShift,
                                 self.baseY + settings.vCellPadding,
                                 self.rectWidth, self.rectHeight,
                                 settings.scopeRectRadius,
@@ -184,10 +187,10 @@ class MinimizedExceptCell(MinimizedCellBase):
         lineRange = self.getLineRange()
         count = len(self.ref.exceptParts)
         if count == 1:
-            return 'Minimized except block at lines ' + \
-                   str(lineRange[0]) + "-" + str(lineRange[1])
-        return str(count) + ' minimized except blocks at lines ' + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
+            return 'Minimized except block at ' + \
+                   self.getLinesSuffix(lineRange)
+        return str(count) + ' minimized except blocks at ' + \
+               self.getLinesSuffix(lineRange)
 
 
 class MinimizedCommentBase:
@@ -200,10 +203,7 @@ class MinimizedCommentBase:
     @staticmethod
     def getSelectTooltip(lineRange):
         """Provides the tooltip"""
-        if lineRange[0] == lineRange[1]:
-            return 'Minimized comment at line ' + str(lineRange[0])
-        return 'Minimized comment at lines ' + \
-            str(lineRange[0]) + '-' + str(lineRange[1])
+        return 'Minimized comment at ' + CellElement.getLinesSuffix(lineRange)
 
 
 
@@ -437,26 +437,30 @@ class MinimizedAboveCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
+        settings = self.canvas.settings
         if self.needConnector:
             self.vConnector = Connector(
-                self.canvas, baseX + self.canvas.settings.mainLine, baseY,
-                baseX + self.canvas.settings.mainLine, baseY + self.height)
+                self.canvas, baseX + settings.mainLine, baseY,
+                baseX + settings.mainLine, baseY + self.height)
             scene.addItem(self.vConnector)
 
         self.drawCell(scene, baseX, baseY,
-                      self.canvas.settings.hHiddenCommentPadding,
-                      self.__setupConnector)
+                      settings.hHiddenCommentPadding,
+                      self.__setupConnector,
+                      hShift=settings.mainLine + settings.hCellPadding)
 
     def paint(self, painter, option, widget):
         """Draws the independent comment"""
         self.paintCell(painter,
                        self.canvas.settings.hiddenCommentBGColor,
                        self.canvas.settings.hiddenCommentBorderColor,
-                       option, widget)
+                       option, widget,
+                       hShift=self.canvas.settings.mainLine +
+                              self.canvas.settings.hCellPadding)
 
     def adjustWidth(self):
         """No need to adjust the width"""
-        return
+        pass
 
     def getLineRange(self):
         """Provides the line range"""
@@ -476,11 +480,14 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
     """Represents a minimized side comment"""
 
+    IF_SIDE_SHIFT = 6
+
     def __init__(self, ref, canvas, x, y):
         MinimizedCommentBase.__init__(self)
         MinimizedCellBase.__init__(self, 'hiddencomment.svg',
                                    ref, canvas, x, y)
         self.kind = CellElement.SIDE_MINIMIZED_COMMENT
+        self.__isIfSide = False
 
         self.__setTooltip()
 
@@ -496,5 +503,101 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         if cellToTheLeft.kind == CellElement.CONNECTOR:
-            pass
+            # 'if' or 'elif' side comment
+            self.__isIfSide = True
+            leftEdge = \
+                cellToTheLeft.baseX + settings.mainLine + settings.hCellPadding
 
+            index = self.addr[0] - 1
+            while self.canvas.cells[self.addr[1]][index].kind == \
+                    CellElement.CONNECTOR:
+                index -= 1
+            # The first non-connector cell must be the 'if' cell
+            ifCell = self.canvas.cells[self.addr[1]][index]
+
+            self.connector = Connector(
+                self.canvas, leftEdge + settings.hCellPadding,
+                self.baseY + ifCell.minHeight / 2 + self.IF_SIDE_SHIFT,
+                ifCell.baseX + ifCell.minWidth - settings.hCellPadding,
+                self.baseY + ifCell.minHeight / 2 + self.IF_SIDE_SHIFT)
+        else:
+            # Regular box
+            leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
+            height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
+            self.connector = Connector(
+                self.canvas, leftEdge + settings.hCellPadding,
+                self.baseY + height,
+                cellToTheLeft.baseX +
+                cellToTheLeft.minWidth - settings.hCellPadding,
+                self.baseY + height)
+
+        self.connector.penColor = settings.commentBorderColor
+        self.connector.penWidth = settings.boxLineWidth
+
+    def render(self):
+        """Renders the cell"""
+        return self.renderCell(self.canvas.settings.hHiddenCommentPadding,
+                               self.canvas.settings.vHiddenCommentPadding)
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        self.drawCell(scene, baseX, baseY,
+                      self.canvas.settings.hHiddenCommentPadding,
+                      self.__setupConnector)
+
+    def paint(self, painter, option, widget):
+        """Draws the independent comment"""
+        self.paintCell(painter,
+                       self.canvas.settings.hiddenCommentBGColor,
+                       self.canvas.settings.hiddenCommentBorderColor,
+                       option, widget)
+
+    def adjustWidth(self):
+        """Adjusting the cell width"""
+        settings = self.canvas.settings
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
+        boxWidth = self.minWidth - 2 * settings.hCellPadding
+        if spareWidth >= boxWidth:
+            self.minWidth = 0
+        else:
+            self.minWidth = boxWidth - spareWidth
+        self.width = self.minWidth
+
+    def mouseDoubleClickEvent(self, event):
+        """Jump to the appropriate line in the text editor"""
+        CellElement.mouseDoubleClickEvent(self, event,
+                                          self.ref.sideComment.beginPos)
+
+    def getLineRange(self):
+        """Provides the line range"""
+        return self.ref.sideComment.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return [self.ref.sideComment.begin, self.ref.sideComment.end]
+
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        return MinimizedCommentBase.getSelectTooltip(self.getLineRange())
+
+    def getDistance(self, absPos):
+        """Provides a distance between the absPos and the item"""
+        retval = maxsize
+        for part in self.ref.sideComment.parts:
+            # +1 is for finishing \n character
+            dist = distance(absPos, part.begin, part.end + 1)
+            if dist == 0:
+                return 0
+            retval = min(retval, dist)
+        return retval
+
+    def getLineDistance(self, line):
+        """Provides a distance between the line and the item"""
+        retval = maxsize
+        for part in self.ref.sideComment.parts:
+            dist = distance(line, part.beginLine, part.endLine)
+            if dist == 0:
+                return 0
+            retval = min(retval, dist)
+        return retval

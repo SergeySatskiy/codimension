@@ -331,6 +331,12 @@ class CellElement:
         return [self.ref.body.begin, self.ref.body.end]
 
     @staticmethod
+    def getLinesSuffix(lineRange):
+        if lineRange[0] == lineRange[1]:
+            return 'line ' + str(lineRange[0])
+        return 'lines ' + str(lineRange[0]) + "-" + str(lineRange[1])
+
+    @staticmethod
     def _putMimeToClipboard(value):
         """Copies the value (string) to a clipboard as mime data"""
         mimeData = QMimeData()

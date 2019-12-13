@@ -597,9 +597,6 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
         """Provides text"""
         if self._text is None:
             self._text = self.ref.leadingComment.getDisplayValue()
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._text) + '</pre>')
-                self._text = self.canvas.settings.hiddenCommentText
         return self._text
 
     def render(self):
@@ -612,8 +609,7 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
         # Width of the comment box itself
         self.minWidth = self._textRect.width() + \
                         2 * (settings.hCellPadding + self._hTextPadding)
-        if not settings.hidecomments:
-            self.minWidth = max(self.minWidth, settings.minWidth)
+        self.minWidth = max(self.minWidth, settings.minWidth)
 
         # Add the connector space
         self.minWidth += settings.mainLine + settings.hCellPadding
@@ -650,8 +646,7 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
             self.baseX + settings.mainLine + settings.hCellPadding
         boxWidth = self._textRect.width() + \
                    2 * (settings.hCellPadding + self._hTextPadding)
-        if not settings.hidecomments:
-            boxWidth = max(boxWidth, settings.minWidth)
+        boxWidth = max(boxWidth, settings.minWidth)
 
         path = getCommentBoxPath(settings, self._leftEdge, baseY,
                                  boxWidth, self.minHeight)
