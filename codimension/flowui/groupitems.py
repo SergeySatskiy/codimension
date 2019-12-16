@@ -100,9 +100,8 @@ class GroupItemBase():
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return 'Group at lines ' + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
+        return 'Group at ' + CellElement.getLinesSuffix(self.getLineRange())
+
 
 
 class EmptyGroup(GroupItemBase, CellElement, ColorMixin, QGraphicsRectItem):

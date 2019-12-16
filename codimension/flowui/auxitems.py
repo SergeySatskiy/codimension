@@ -152,7 +152,7 @@ class SVGItem(CellElement, QGraphicsSvgItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        return "SVG item for " + self.__fName
+        return "SVG picture for " + self.__fName
 
     def getProxiedItem(self):
         """Provides the real item for the proxy one"""
@@ -197,10 +197,6 @@ class BadgeItem(CellElement, QGraphicsRectItem):
     def setNeedRectangle(self, value):
         """Sets the need rectangle flag"""
         self.__needRect = value
-
-    def text(self):
-        """Provides the text"""
-        return self.__text
 
     def moveTo(self, xPos, yPos):
         """Moves to the specified position"""
@@ -248,7 +244,7 @@ class BadgeItem(CellElement, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        return "Badge item '" + self.__text + "'"
+        return "Badge '" + self.__text + "'"
 
     def getProxiedItem(self):
         """Provides the real item for a proxy one"""
@@ -295,12 +291,7 @@ class Connector(CellElement, QGraphicsPathItem):
     @staticmethod
     def getSelectTooltip():
         """Provides the tooltip"""
-        return 'Connector item'
-
-    @staticmethod
-    def getProxiedItem():
-        """Provides the real item for a proxy one"""
-        return None
+        return 'Connector'
 
 
 
@@ -345,11 +336,6 @@ class RubberBandItem(CellElement, QGraphicsRectItem):
         painter.drawRect(self.__x, self.__y,
                          self.__width, self.__height)
 
-    @staticmethod
-    def getProxiedItem():
-        """Provides the real item for a proxy one"""
-        return None
-
 
 
 class Text(CellElement, QGraphicsSimpleTextItem):
@@ -378,12 +364,8 @@ class Text(CellElement, QGraphicsSimpleTextItem):
     @staticmethod
     def getSelectTooltip():
         """Provides the tooltip"""
-        return 'Text item'
+        return 'Text'
 
-    @staticmethod
-    def getProxiedItem():
-        """Provides the real item for a proxy one"""
-        return None
 
 
 class Line(CellElement, QGraphicsLineItem):
@@ -421,12 +403,8 @@ class Line(CellElement, QGraphicsLineItem):
     @staticmethod
     def getSelectTooltip():
         """Provides the tooltip"""
-        return 'Line item'
+        return 'Line'
 
-    @staticmethod
-    def getProxiedItem():
-        """Provides the real item for a proxy one"""
-        return None
 
 
 class ConnectorCell(CellElement, QGraphicsPathItem):
@@ -609,16 +587,4 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         self.setPen(pen)
         painter.setPen(pen)
         QGraphicsPathItem.paint(self, painter, option, widget)
-
-    def getProxiedItem(self):
-        """Provides the real item for a proxy one"""
-        return None
-
-    def mouseDoubleClickEvent(self, event):
-        """Handles the mouse double click"""
-        return  # To be on the safe side: override the default implementation
-
-    def setEditor(self, editor):
-        """Sets the editor"""
-        return  # To be on the safe side: override the default implementation
 

@@ -54,6 +54,14 @@ class CellElement:
     EXCEPT_SCOPE = 109
     FINALLY_SCOPE = 110
 
+    # The three items below will be mapped to ELSE_SCOPE
+    # They are needed to distinguish the constructors which use individual
+    # color settings for each kind of else scope. I.e. the graphics scene
+    # will have no items of these types ever
+    FOR_ELSE_SCOPE = 120
+    WHILE_ELSE_SCOPE = 121
+    TRY_ELSE_SCOPE = 122
+
     CODE_BLOCK = 200
     BREAK = 201
     CONTINUE = 202

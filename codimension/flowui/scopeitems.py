@@ -30,11 +30,10 @@ from .cml import CMLVersion
 from .colormixin import ColorMixin
 
 
-class ScopeCellElement(CellElement):
+class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
 
     """Base class for the scope items"""
 
-    UNKNOWN = -1
     TOP_LEFT = 0
     LEFT = 1
     BOTTOM_LEFT = 2
@@ -44,9 +43,20 @@ class ScopeCellElement(CellElement):
     TOP = 6
     BOTTOM = 7
 
-    def __init__(self, ref, canvas, x, y):
+    def __init__(self, ref, canvas, x, y, subKind,
+                 bgColor, fgColor, borderColor):
+        isDocstring = subKind == ScopeCellElement.DOCSTRING
+        if subKind == ScopeCellElement.DOCSTRING:
+            bgColor = canvas.settings.docstringBGColor
+            fgColor = canvas.settings.docstringFGColor
+            # Border color is borrowed from the scope for docstrings
+
         CellElement.__init__(self, ref, canvas, x, y)
-        self.subKind = self.UNKNOWN
+        ColorMixin.__init__(self, ref, bgColor, fgColor, borderColor,
+                            isDocstring=isDocstring)
+        QGraphicsRectItem.__init__(self)
+
+        self.subKind = subKind
         self.docstringText = None
         self._headerRect = None
         self._sideComment = None
@@ -62,6 +72,9 @@ class ScopeCellElement(CellElement):
         # ELSE_SCOPE, EXCEPT_SCOPE and FINALLY_SCOPE
         # It points to TRY, FOR and WHILE approprietely
         self.leaderRef = None
+
+        # To make double click delivered
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def getDocstringText(self):
         """Provides the docstring text"""
@@ -155,8 +168,6 @@ class ScopeCellElement(CellElement):
                 self.minHeight = self.__docBadge.height + \
                     2 * (s.selectPenWidth - 1)
                 self.minWidth = 2 * (s.hHeaderPadding - s.scopeRectRadius)
-        elif self.subKind == ScopeCellElement.UNKNOWN:
-            raise Exception("Unknown scope element")
         else:
             raise Exception("Unrecognized scope element: " +
                             str(self.subKind))
@@ -592,7 +603,6 @@ class ScopeCellElement(CellElement):
 
 
 _scopeCellElementToString = {
-    ScopeCellElement.UNKNOWN: "UNKNOWN",
     ScopeCellElement.TOP_LEFT: "TOP_LEFT",
     ScopeCellElement.LEFT: "LEFT",
     ScopeCellElement.BOTTOM_LEFT: "BOTTOM_LEFT",
@@ -608,27 +618,16 @@ def scopeCellElementToString(kind):
     return _scopeCellElementToString[kind]
 
 
-class FileScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+class FileScopeCell(ScopeCellElement):
 
     """Represents a file scope element"""
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
+    def __init__(self, ref, canvas, x, y, subKind):
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  canvas.settings.fileScopeBGColor,
+                                  canvas.settings.fileScopeFGColor,
+                                  canvas.settings.fileScopeBorderColor)
         self.kind = CellElement.FILE_SCOPE
-        self.subKind = kind
-
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.DOCSTRING:
-            ColorMixin.__init__(self, ref, s.docstringBGColor,
-                                s.docstringFGColor, s.fileScopeBorderColor,
-                                isDocstring=True)
-        else:
-            ColorMixin.__init__(self, ref, s.fileScopeBGColor,
-                                s.fileScopeFGColor, s.fileScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def render(self):
         """Renders the file scope element"""
@@ -674,27 +673,16 @@ class FileScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
         return "Module scope (" + scopeCellElementToString(self.subKind) + ")"
 
 
-class FunctionScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+class FunctionScopeCell(ScopeCellElement):
 
     """Represents a function scope element"""
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
+    def __init__(self, ref, canvas, x, y, subKind):
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  canvas.settings.funcScopeBGColor,
+                                  canvas.settings.funcScopeFGColor,
+                                  canvas.settings.funcScopeBorderColor)
         self.kind = CellElement.FUNC_SCOPE
-        self.subKind = kind
-
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.DOCSTRING:
-            ColorMixin.__init__(self, ref, s.docstringBGColor,
-                                s.docstringFGColor, s.funcScopeBorderColor,
-                                isDocstring=True)
-        else:
-            ColorMixin.__init__(self, ref, s.funcScopeBGColor,
-                                s.funcScopeFGColor, s.funcScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def _getSideComment(self):
         """Provides a side comment"""
@@ -763,27 +751,16 @@ class FunctionScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             "scope (" + scopeCellElementToString(self.subKind) + ")"
 
 
-class ClassScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+class ClassScopeCell(ScopeCellElement):
 
     """Represents a class scope element"""
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
+    def __init__(self, ref, canvas, x, y, subKind):
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  canvas.settings.classScopeBGColor,
+                                  canvas.settings.classScopeFGColor,
+                                  canvas.settings.classScopeBorderColor)
         self.kind = CellElement.CLASS_SCOPE
-        self.subKind = kind
-
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.DOCSTRING:
-            ColorMixin.__init__(self, ref, s.docstringBGColor,
-                                s.docstringFGColor, s.classScopeBorderColor,
-                                isDocstring=True)
-        else:
-            ColorMixin.__init__(self, ref, s.classScopeBGColor,
-                                s.classScopeFGColor, s.classScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def _getSideComment(self):
         """Provides a side comment"""
@@ -855,22 +832,16 @@ class ClassScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             scopeCellElementToString(self.subKind) + ")"
 
 
-class ForScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+class ForScopeCell(ScopeCellElement):
 
     """Represents a for-loop scope element"""
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
+    def __init__(self, ref, canvas, x, y, subKind):
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  canvas.settings.forScopeBGColor,
+                                  canvas.settings.forScopeFGColor,
+                                  canvas.settings.forScopeBorderColor)
         self.kind = CellElement.FOR_SCOPE
-        self.subKind = kind
-
-        s = self.canvas.settings
-        ColorMixin.__init__(self, ref, s.forScopeBGColor, s.forScopeFGColor,
-                            s.forScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def _getSideComment(self):
         """Provides a side comment"""
@@ -933,22 +904,16 @@ class ForScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             scopeCellElementToString(self.subKind) + ")"
 
 
-class WhileScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+class WhileScopeCell(ScopeCellElement):
 
     """Represents a while-loop scope element"""
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
+    def __init__(self, ref, canvas, x, y, subKind):
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  canvas.settings.whileScopeBGColor,
+                                  canvas.settings.whileScopeFGColor,
+                                  canvas.settings.whileScopeBorderColor)
         self.kind = CellElement.WHILE_SCOPE
-        self.subKind = kind
-
-        s = self.canvas.settings
-        ColorMixin.__init__(self, ref, s.whileScopeBGColor,
-                            s.whileScopeFGColor, s.whileScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def _getSideComment(self):
         """Provides a side comment"""
@@ -1011,22 +976,16 @@ class WhileScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             scopeCellElementToString(self.subKind) + ")"
 
 
-class TryScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+class TryScopeCell(ScopeCellElement):
 
     """Represents a try-except scope element"""
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
+    def __init__(self, ref, canvas, x, y, subKind):
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  canvas.settings.tryScopeBGColor,
+                                  canvas.settings.tryScopeFGColor,
+                                  canvas.settings.tryScopeBorderColor)
         self.kind = CellElement.TRY_SCOPE
-        self.subKind = kind
-
-        s = self.canvas.settings
-        ColorMixin.__init__(self, ref, s.tryScopeBGColor, s.tryScopeFGColor,
-                            s.tryScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def _getSideComment(self):
         """Provides a side comment"""
@@ -1079,22 +1038,16 @@ class TryScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             scopeCellElementToString(self.subKind) + ")"
 
 
-class WithScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+class WithScopeCell(ScopeCellElement):
 
     """Represents a with scope element"""
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
+    def __init__(self, ref, canvas, x, y, subKind):
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  canvas.settings.withScopeBGColor,
+                                  canvas.settings.withScopeFGColor,
+                                  canvas.settings.withScopeBorderColor)
         self.kind = CellElement.WITH_SCOPE
-        self.subKind = kind
-
-        s = self.canvas.settings
-        ColorMixin.__init__(self, ref, s.withScopeBGColor, s.withScopeFGColor,
-                            s.withScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def _getSideComment(self):
         """Provides a side comment"""
@@ -1156,22 +1109,16 @@ class WithScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             scopeCellElementToString(self.subKind) + ")"
 
 
-class DecoratorScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+class DecoratorScopeCell(ScopeCellElement):
 
     """Represents a decorator scope element"""
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
+    def __init__(self, ref, canvas, x, y, subKind):
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  canvas.settings.decorScopeBGColor,
+                                  canvas.settings.decorScopeFGColor,
+                                  canvas.settings.decorScopeBorderColor)
         self.kind = CellElement.DECOR_SCOPE
-        self.subKind = kind
-
-        s = self.canvas.settings
-        ColorMixin.__init__(self, ref, s.decorScopeBGColor,
-                            s.decorScopeFGColor, s.decorScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def _getSideComment(self):
         """Provides a side comment"""
@@ -1235,7 +1182,8 @@ class DecoratorScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             scopeCellElementToString(self.subKind) + ")"
 
 
-class ElseScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+
+class ElseScopeCell(ScopeCellElement):
 
     """Represents an else scope element"""
 
@@ -1243,31 +1191,25 @@ class ElseScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
     WHILE_STATEMENT = 1
     TRY_STATEMENT = 2
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
-        self.kind = CellElement.ELSE_SCOPE
-        self.subKind = kind
-        self.after = self
-        self.statement = None
-
-        s = self.canvas.settings
-        if self.statement == self.FOR_STATEMENT:
-            ColorMixin.__init__(self, ref, s.forElseScopeBGColor,
-                                s.forElseScopeFGColor,
-                                s.forElseScopeBorderColor)
-        elif self.statement == self.WHILE_STATEMENT:
-            ColorMixin.__init__(self, ref, s.whileElseScopeBGColor,
-                                s.whileElseScopeFGColor,
-                                s.whileElseScopeBorderColor)
+    def __init__(self, ref, canvas, x, y, subKind, statement):
+        if statement == self.FOR_STATEMENT:
+            bgColor = canvas.settings.forElseScopeBGColor
+            fgColor = canvas.settings.forElseScopeFGColor
+            borderColor = canvas.settings.forElseScopeBorderColor
+        elif statement == self.WHILE_STATEMENT:
+            bgColor = canvas.settings.whileElseScopeBGColor
+            fgColor = canvas.settings.whileElseScopeFGColor
+            borderColor = canvas.settings.whileElseScopeBorderColor
         else:
             # TRY_STATEMENT
-            ColorMixin.__init__(self, ref, s.tryElseScopeBGColor,
-                                s.tryElseScopeFGColor,
-                                s.tryElseScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+            bgColor = canvas.settings.tryElseScopeBGColor
+            fgColor = canvas.settings.tryElseScopeFGColor
+            borderColor = canvas.settings.tryElseScopeBorderColor
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  bgColor, fgColor, borderColor)
+        self.kind = CellElement.ELSE_SCOPE
+        self.statement = statement
+        self.after = self
 
     def _getSideComment(self):
         """Provides a side comment"""
@@ -1315,22 +1257,33 @@ class ElseScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             scopeCellElementToString(self.subKind) + ")"
 
 
-class ExceptScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+
+class ForElseScopeCell(ElseScopeCell):
+    def __init__(self, ref, canvas, x, y, subKind):
+        ElseScopeCell.__init__(self, ref, canvas, x, y, subKind,
+                               ElseScopeCell.FOR_STATEMENT)
+
+class WhileElseScopeCell(ElseScopeCell):
+    def __init__(self, ref, canvas, x, y, subKind):
+        ElseScopeCell.__init__(self, ref, canvas, x, y, subKind,
+                               ElseScopeCell.WHILE_STATEMENT)
+
+class TryElseScopeCell(ElseScopeCell):
+    def __init__(self, ref, canvas, x, y, subKind):
+        ElseScopeCell.__init__(self, ref, canvas, x, y, subKind,
+                               ElseScopeCell.TRY_STATEMENT)
+
+
+class ExceptScopeCell(ScopeCellElement):
 
     """Represents an except scope element"""
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
+    def __init__(self, ref, canvas, x, y, subKind):
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  canvas.settings.exceptScopeBGColor,
+                                  canvas.settings.exceptScopeFGColor,
+                                  canvas.settings.exceptScopeBorderColor)
         self.kind = CellElement.EXCEPT_SCOPE
-        self.subKind = kind
-
-        s = self.canvas.settings
-        ColorMixin.__init__(self, ref, s.exceptScopeBGColor,
-                            s.exceptScopeFGColor, s.exceptScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def _getSideComment(self):
         """Provides a side comment"""
@@ -1394,22 +1347,16 @@ class ExceptScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
             scopeCellElementToString(self.subKind) + ")"
 
 
-class FinallyScopeCell(ScopeCellElement, ColorMixin, QGraphicsRectItem):
+class FinallyScopeCell(ScopeCellElement):
 
     """Represents a finally scope element"""
 
-    def __init__(self, ref, canvas, x, y, kind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y)
-        QGraphicsRectItem.__init__(self)
+    def __init__(self, ref, canvas, x, y, subKind):
+        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
+                                  canvas.settings.finallyScopeBGColor,
+                                  canvas.settings.finallyScopeFGColor,
+                                  canvas.settings.finallyScopeBorderColor)
         self.kind = CellElement.FINALLY_SCOPE
-        self.subKind = kind
-
-        s = self.canvas.settings
-        ColorMixin.__init__(self, ref, s.finallyScopeBGColor,
-                            s.finallyScopeFGColor, s.finallyScopeBorderColor)
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def _getSideComment(self):
         """Provides the side comment"""
