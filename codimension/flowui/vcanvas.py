@@ -30,7 +30,7 @@ The whole canvas is split into independent sections. The growing in one section
 does not affect all the other sections.
 """
 
-from ui.qt import Qt, QPen, QColor
+from ui.qt import QColor
 from cdmcfparser import (CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                          BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
                          RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,
@@ -53,7 +53,8 @@ from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
                          TryScopeCell, WithScopeCell, DecoratorScopeCell,
                          ExceptScopeCell, FinallyScopeCell,
                          ForElseScopeCell, WhileElseScopeCell,
-                         TryElseScopeCell)
+                         TryElseScopeCell, ElseScopeCell,
+                         ScopeHSideEdge, ScopeVSideEdge, ScopeSpacer)
 from .commentitems import (AboveCommentCell, LeadingCommentCell,
                            SideCommentCell, IndependentCommentCell)
 from .groupitems import (EmptyGroup, OpenedGroupBegin, OpenedGroupEnd,
@@ -281,11 +282,8 @@ class VirtualCanvas:
             self.cells.append([])
             lastIndex += 1
             if needScopeEdge:
-                if self.__currentScopeClass:
-                    self.cells[lastIndex].append(
-                        self.__currentScopeClass(self.__currentCF, self,
-                                                 0, lastIndex,
-                                                 ScopeCellElement.LEFT))
+                self.cells[lastIndex].append(
+                    ScopeHSideEdge(self.__currentCF, self, 0, lastIndex))
         lastIndex = len(self.cells[row]) - 1
         while lastIndex < column:
             self.cells[row].append(VacantCell(None, self, lastIndex, row))
@@ -1223,8 +1221,8 @@ class VirtualCanvas:
             if cell.scopedItem():
                 if cell.subKind in [ScopeCellElement.TOP_LEFT,
                                     ScopeCellElement.DECLARATION,
-                                    ScopeCellElement.DOCSTRING,
-                                    ScopeCellElement.BOTTOM_LEFT]:
+                                    ScopeCellElement.DOCSTRING] or \
+                        cell.kind == CellElement.SCOPE_CORNER_EDGE:
                     return -1, None
             if cell.kind == CellElement.OPENED_GROUP_BEGIN:
                 return cellIndex, 1
@@ -1425,8 +1423,8 @@ class VirtualCanvas:
         if hasattr(cflow, "sideComment"):
             if cflow.sideComment and not self.settings.noComment:
                 self.__allocateCell(vacantRow - 1, 2)
-                self.cells[vacantRow - 1][2] = self.__currentScopeClass(
-                    cflow, self, 2, vacantRow - 1, ScopeCellElement.TOP)
+                self.cells[vacantRow - 1][2] = ScopeVSideEdge(cflow, self, 2,
+                                                              vacantRow - 1)
                 self.__allocateCell(vacantRow, 2)
                 self.cells[vacantRow][2] = self.__currentScopeClass(
                     cflow, self, 2, vacantRow, ScopeCellElement.COMMENT)
@@ -1464,8 +1462,7 @@ class VirtualCanvas:
 
         # Allocate the scope footer
         self.__allocateCell(vacantRow, 0, False)
-        self.cells[vacantRow][0] = self.__currentScopeClass(
-            cflow, self, 0, vacantRow, ScopeCellElement.BOTTOM_LEFT)
+        self.cells[vacantRow][0] = ScopeSpacer(cflow, self, 0, vacantRow)
 
     def __dependentRegion(self, rowIndex):
         """True if it is a dependent region"""

@@ -67,11 +67,7 @@ class CFSceneMouseMixin:
                             ScopeCellElement.DOCSTRING]:
             # No mapping
             return item
-        # All the other scope items
-        #   ScopeCellElement.TOP_LEFT, ScopeCellElement.LEFT,
-        #   ScopeCellElement.BOTTOM_LEFT, ScopeCellElement.TOP,
-        #   ScopeCellElement.BOTTOM
-        # are to be ignored
+        # ScopeCellElement.TOP_LEFT is to be ignored
         return None
 
     def __getCanvas(self):

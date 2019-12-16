@@ -26,16 +26,16 @@ from ui.qt import (Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem, QFrame,
                    QLabel, QVBoxLayout, QPalette, QApplication)
 from utils.globals import GlobalData
 from .cellelement import CellElement
-from .auxitems import Connector
+from .auxitems import Connector, SpacerCell
 from .colormixin import ColorMixin
 
 
-class HGroupSpacerCell(CellElement):
+class HGroupSpacerCell(SpacerCell):
 
     """Represents a horizontal spacer cell used to shift items due to groups"""
 
     def __init__(self, ref, canvas, x, y):
-        CellElement.__init__(self, ref, canvas, x, y)
+        SpacerCell.__init__(self, ref, canvas, x, y, width=0, height=0)
         self.kind = CellElement.H_GROUP_SPACER
 
         # Number of spacers to be inserted
@@ -48,13 +48,6 @@ class HGroupSpacerCell(CellElement):
         self.minWidth = self.width
         self.minHeight = self.height
         return (self.width, self.height)
-
-    def draw(self, scene, baseX, baseY):
-        """Draws the cell"""
-        # There is no need to draw anything. The cell just reserves some
-        # horizontal space for better appearance
-        self.baseX = baseX
-        self.baseY = baseY
 
 
 class GroupItemBase():

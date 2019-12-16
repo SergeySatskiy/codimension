@@ -40,6 +40,7 @@ class CellElement:
     H_SPACER = 2
     V_SPACER = 3
     H_GROUP_SPACER = 4
+    SPACER = 5
 
     NO_SCOPE = 99
     FILE_SCOPE = 100
@@ -53,6 +54,9 @@ class CellElement:
     ELSE_SCOPE = 108
     EXCEPT_SCOPE = 109
     FINALLY_SCOPE = 110
+    SCOPE_H_SIDE_EDGE = 111
+    SCOPE_V_SIDE_EDGE = 112
+    SCOPE_CORNER_EDGE = 113
 
     # The three items below will be mapped to ELSE_SCOPE
     # They are needed to distinguish the constructors which use individual
@@ -229,7 +233,9 @@ class CellElement:
                              self.WHILE_SCOPE, self.TRY_SCOPE,
                              self.WITH_SCOPE, self.DECOR_SCOPE,
                              self.ELSE_SCOPE, self.EXCEPT_SCOPE,
-                             self.FINALLY_SCOPE)
+                             self.FINALLY_SCOPE,
+                             self.SCOPE_H_SIDE_EDGE, self.SCOPE_V_SIDE_EDGE,
+                             self.SCOPE_CORNER_EDGE)
 
     def isProxyItem(self):
         """True if it is a proxy item"""
@@ -237,6 +243,11 @@ class CellElement:
                              self.DEPENDENT_CONNECTOR, self.TEXT,
                              self.RUBBER_BAND, self.LINE,
                              self.GROUP_CORNER_CONROL)
+
+    def isSpacerItem(self):
+        """True is it is a some kind of a spacer"""
+        return self.kind in (self.VACANT, self.H_SPACER, self.V_SPACER,
+                             self.H_GROUP_SPACER, self.SPACER)
 
     @staticmethod
     def getProxiedItem():
@@ -364,6 +375,7 @@ __kindToString = {
     CellElement.H_SPACER: 'H_SPACER',
     CellElement.V_SPACER: 'V_SPACER',
     CellElement.H_GROUP_SPACER: 'H_GROUP_SPACER',
+    CellElement.SPACER: 'SPACER',
     CellElement.NO_SCOPE: 'NO_SCOPE',
     CellElement.FILE_SCOPE: 'FILE_SCOPE',
     CellElement.FUNC_SCOPE: 'FUNC_SCOPE',
@@ -376,6 +388,9 @@ __kindToString = {
     CellElement.TRY_SCOPE: 'TRY_SCOPE',
     CellElement.EXCEPT_SCOPE: 'EXCEPT_SCOPE',
     CellElement.FINALLY_SCOPE: 'FINALLY_SCOPE',
+    CellElement.SCOPE_H_SIDE_EDGE: 'SCOPE_H_SIDE_EDGE',
+    CellElement.SCOPE_V_SIDE_EDGE: 'SCOPE_V_SIDE_EDGE',
+    CellElement.SCOPE_CORNER_EDGE: 'SCOPE_CORNER_EDGE',
     CellElement.CODE_BLOCK: 'CODE_BLOCK',
     CellElement.BREAK: 'BREAK',
     CellElement.CONTINUE: 'CONTINUE',

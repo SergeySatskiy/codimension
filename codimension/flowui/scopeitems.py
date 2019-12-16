@@ -19,15 +19,52 @@
 
 """Various items used to represent a control flow on a virtual canvas"""
 
+# pylint: disable=C0305
+# pylint: disable=W0702
+
 from sys import maxsize
 from html import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
-from utils.globals import GlobalData
-from .auxitems import BadgeItem, Connector
+from .auxitems import BadgeItem, Connector, HSpacerCell, VSpacerCell, SpacerCell
 from .cellelement import CellElement
 from .routines import distance, getNoCellCommentBoxPath, getHiddenCommentPath
 from .cml import CMLVersion
 from .colormixin import ColorMixin
+
+
+class ScopeHSideEdge(HSpacerCell):
+
+    """Reserves some space for the scope horizontal edge"""
+
+    def __init__(self, ref, canvas, x, y):
+        HSpacerCell.__init__(self, ref, canvas, x, y,
+                             width=canvas.settings.scopeRectRadius +
+                             canvas.settings.hCellPadding)
+        self.kind = CellElement.SCOPE_H_SIDE_EDGE
+
+
+class ScopeVSideEdge(VSpacerCell):
+
+    """Reserves some space for the scope vertical edge"""
+
+    def __init__(self, ref, canvas, x, y):
+        VSpacerCell.__init__(self, ref, canvas, x, y,
+                             height=canvas.settings.scopeRectRadius +
+                             canvas.settings.vCellPadding)
+        self.kind = CellElement.SCOPE_V_SIDE_EDGE
+
+
+class ScopeSpacer(SpacerCell):
+
+    """Reserves some space for the scope corner"""
+
+    def __init__(self, ref, canvas, x, y):
+        SpacerCell.__init__(self, ref, canvas, x, y,
+                            width=canvas.settings.scopeRectRadius +
+                            canvas.settings.hCellPadding,
+                            height=canvas.settings.scopeRectRadius +
+                            canvas.settings.vCellPadding)
+        self.kind = CellElement.SCOPE_CORNER_EDGE
 
 
 class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
@@ -35,13 +72,9 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
     """Base class for the scope items"""
 
     TOP_LEFT = 0
-    LEFT = 1
-    BOTTOM_LEFT = 2
-    DECLARATION = 3
-    COMMENT = 4
-    DOCSTRING = 5
-    TOP = 6
-    BOTTOM = 7
+    DECLARATION = 1
+    COMMENT = 2
+    DOCSTRING = 3
 
     def __init__(self, ref, canvas, x, y, subKind,
                  bgColor, fgColor, borderColor):
@@ -62,6 +95,7 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
         self._sideComment = None
         self._sideCommentRect = None
         self._badgeItem = None
+        self.__docBadge = None
         self.__navBarUpdate = None
         self._connector = None
         self._topHalfConnector = None
@@ -86,91 +120,91 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
                 self.docstringText = ''
         return self.docstringText
 
-    def _render(self):
-        """Provides rendering for the scope elements"""
+    def __renderTopLeft(self):
+        """Renders the top left corner of the scope"""
         s = self.canvas.settings
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.minHeight = s.scopeRectRadius + s.vCellPadding
-            self.minWidth = s.scopeRectRadius + s.hCellPadding
-            # The effect is nice but the CPU consumption becomes so high that
-            # the diagram could hardly be scrolled ...
-            # effect = QGraphicsDropShadowEffect()
-            # effect.setBlurRadius( 5.0 )
-            # effect.setOffset( 2.0, 2.0 )
-            # effect.setColor( QColor( 180, 180, 180, 180 ) )
-            # self.setGraphicsEffect( effect )
-        elif self.subKind == ScopeCellElement.LEFT:
-            self.minHeight = 0
-            self.minWidth = s.scopeRectRadius + s.hCellPadding
-        elif self.subKind == ScopeCellElement.BOTTOM_LEFT:
-            self.minHeight = s.scopeRectRadius + s.vCellPadding
-            self.minWidth = s.scopeRectRadius + s.hCellPadding
-        elif self.subKind == ScopeCellElement.TOP:
-            self.minHeight = s.scopeRectRadius + s.vCellPadding
-            self.minWidth = 0
-        elif self.subKind == ScopeCellElement.BOTTOM:
-            self.minHeight = s.scopeRectRadius + s.vCellPadding
-            self.minWidth = 0
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            # The declaration location uses a bit of the top cell space
-            # to make the view more compact
-            badgeItem = self.canvas.cells[
-                self.addr[1] - 1][self.addr[0] - 1]._badgeItem
+        self.minHeight = s.scopeRectRadius + s.vCellPadding
+        self.minWidth = s.scopeRectRadius + s.hCellPadding
 
-            self._headerRect = self.getBoundingRect(self._getText())
-            self.minHeight = self._headerRect.height() + \
-                             2 * s.vHeaderPadding - s.scopeRectRadius
-            w = self._headerRect.width()
-            if badgeItem:
-                w = max(w, badgeItem.width)
-            self.minWidth = w + s.hHeaderPadding - s.scopeRectRadius
-            if badgeItem:
-                if badgeItem.withinHeader():
-                    self.minWidth = badgeItem.width + \
-                                    s.hHeaderPadding - s.scopeRectRadius
-            if hasattr( self.ref, "sideComment" ):
-                if self.ref.sideComment:
-                    self.minHeight += 2 * s.vTextPadding
-                    self.minWidth += s.hCellPadding
-                else:
-                    self.minHeight += s.vTextPadding
-                    self.minWidth += s.hHeaderPadding
+    def __renderDeclaration(self):
+        """Renders the scope declaration"""
+        # The declaration location uses a bit of the top cell space
+        # to make the view more compact
+        s = self.canvas.settings
+        badgeItem = self.canvas.cells[
+            self.addr[1] - 1][self.addr[0] - 1]._badgeItem
+
+        self._headerRect = self.getBoundingRect(self._getText())
+        self.minHeight = self._headerRect.height() + \
+                         2 * s.vHeaderPadding - s.scopeRectRadius
+        w = self._headerRect.width()
+        if badgeItem:
+            w = max(w, badgeItem.width)
+        self.minWidth = w + s.hHeaderPadding - s.scopeRectRadius
+        if badgeItem:
+            if badgeItem.withinHeader():
+                self.minWidth = badgeItem.width + \
+                                s.hHeaderPadding - s.scopeRectRadius
+        if hasattr(self.ref, "sideComment"):
+            if self.ref.sideComment:
+                self.minHeight += 2 * s.vTextPadding
+                self.minWidth += s.hCellPadding
             else:
+                self.minHeight += s.vTextPadding
                 self.minWidth += s.hHeaderPadding
-            self.minWidth = max(self.minWidth, s.minWidth)
-        elif self.subKind == ScopeCellElement.COMMENT:
-            self._sideCommentRect = self.getBoundingRect(
-                self._getSideComment())
-            if s.hidecomments:
-                self.minHeight = self._sideCommentRect.height() + \
-                    2 * (s.vHeaderPadding + s.vHiddenTextPadding) - \
-                    s.scopeRectRadius
-                self.minWidth = s.hCellPadding + s.hHiddenTextPadding + \
-                    self._sideCommentRect.width() + s.hHiddenTextPadding + \
-                    s.hHeaderPadding - s.scopeRectRadius
-            else:
-                self.minHeight = self._sideCommentRect.height() + \
-                    2 * (s.vHeaderPadding + s.vTextPadding) - \
-                    s.scopeRectRadius
-                self.minWidth = s.hCellPadding + s.hTextPadding + \
-                    self._sideCommentRect.width() + s.hTextPadding + \
-                    s.hHeaderPadding - s.scopeRectRadius
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            docstringText = self.getDocstringText()
-            if not s.hidedocstrings:
-                rect = s.monoFontMetrics.boundingRect(0, 0, maxsize, maxsize, 0,
-                                                      docstringText)
-                self.minHeight = rect.height() + 2 * s.vHeaderPadding
-                self.minWidth = rect.width() + 2 * (s.hHeaderPadding -
-                                                    s.scopeRectRadius)
-            else:
-                self.__docBadge = BadgeItem(self, 'doc')
-                self.minHeight = self.__docBadge.height + \
-                    2 * (s.selectPenWidth - 1)
-                self.minWidth = 2 * (s.hHeaderPadding - s.scopeRectRadius)
         else:
-            raise Exception("Unrecognized scope element: " +
-                            str(self.subKind))
+            self.minWidth += s.hHeaderPadding
+        self.minWidth = max(self.minWidth, s.minWidth)
+
+    def __renderComment(self):
+        """Renders the scope declaration"""
+        s = self.canvas.settings
+        self._sideCommentRect = self.getBoundingRect(
+            self._getSideComment())
+        if s.hidecomments:
+            self.minHeight = self._sideCommentRect.height() + \
+                2 * (s.vHeaderPadding + s.vHiddenTextPadding) - \
+                s.scopeRectRadius
+            self.minWidth = s.hCellPadding + s.hHiddenTextPadding + \
+                self._sideCommentRect.width() + s.hHiddenTextPadding + \
+                s.hHeaderPadding - s.scopeRectRadius
+        else:
+            self.minHeight = self._sideCommentRect.height() + \
+                2 * (s.vHeaderPadding + s.vTextPadding) - \
+                s.scopeRectRadius
+            self.minWidth = s.hCellPadding + s.hTextPadding + \
+                self._sideCommentRect.width() + s.hTextPadding + \
+                s.hHeaderPadding - s.scopeRectRadius
+
+    def __renderDocstring(self):
+        """Renders the scope docstring"""
+        s = self.canvas.settings
+        docstringText = self.getDocstringText()
+        if not s.hidedocstrings:
+            rect = s.monoFontMetrics.boundingRect(0, 0, maxsize, maxsize, 0,
+                                                  docstringText)
+            self.minHeight = rect.height() + 2 * s.vHeaderPadding
+            self.minWidth = rect.width() + 2 * (s.hHeaderPadding -
+                                                s.scopeRectRadius)
+        else:
+            self.__docBadge = BadgeItem(self, 'doc')
+            self.minHeight = self.__docBadge.height + \
+                2 * (s.selectPenWidth - 1)
+            self.minWidth = 2 * (s.hHeaderPadding - s.scopeRectRadius)
+
+    def renderCell(self):
+        """Provides rendering for the scope elements"""
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self.__renderTopLeft()
+        elif self.subKind == ScopeCellElement.DECLARATION:
+            self.__renderDeclaration()
+        elif self.subKind == ScopeCellElement.COMMENT:
+            self.__renderComment()
+        elif self.subKind == ScopeCellElement.DOCSTRING:
+            self.__renderDocstring()
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
 
     def __followLoop(self):
         """Used to detect if an 'else' scope is for a loop"""
@@ -194,6 +228,7 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
             return True
         if self.kind == CellElement.ELSE_SCOPE:
             return self.statement == ElseScopeCell.TRY_STATEMENT
+        return False
 
     def __needTopHalfConnector(self):
         """True if a half of a connector is needed"""
@@ -217,14 +252,14 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
         if self.subKind == ScopeCellElement.TOP_LEFT:
             # Draw connector if needed
             if self.__needConnector() and self._connector is None:
-                self._connector = Connector(self.canvas, baseX + s.mainLine, baseY,
-                                            baseX + s.mainLine,
-                                            baseY + self.canvas.height)
+                self._connector = Connector(
+                    self.canvas, baseX + s.mainLine, baseY, baseX + s.mainLine,
+                    baseY + self.canvas.height)
                 scene.addItem(self._connector)
             if self.__needTopHalfConnector() and self._topHalfConnector is None:
-                self._topHalfConnector = Connector(self.canvas, baseX + s.mainLine, baseY,
-                                                   baseX + s.mainLine,
-                                                   baseY + self.canvas.height / 2)
+                self._topHalfConnector = Connector(
+                    self.canvas, baseX + s.mainLine, baseY,
+                    baseX + s.mainLine, baseY + self.canvas.height / 2)
                 scene.addItem(self._topHalfConnector)
 
             # Draw the scope rounded rectangle when we see the top left corner
@@ -273,9 +308,6 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
                 self.setAcceptHoverEvents(True)
 
         elif self.subKind == ScopeCellElement.DECLARATION:
-            yShift = 0
-            if hasattr(self.ref, "sideComment"):
-                yShift = s.vTextPadding
             penWidth = s.selectPenWidth - 1
             self.setRect(
                 baseX - s.scopeRectRadius - penWidth,
@@ -331,143 +363,155 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
                 self.__docBadge.moveTo(
                     baseX - s.scopeRectRadius + penWidth, baseY + penWidth)
 
-    def paint(self, painter, option, widget):
-        """Draws the corresponding scope element"""
-        del option
-        del widget
-
+    def __paintTopLeft(self, painter):
+        """Paints the scope rectangle"""
         s = self.canvas.settings
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            painter.setPen(self.getPainterPen(self.isSelected(),
-                                              self.borderColor))
-            painter.setBrush(QBrush(self.bgColor))
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
+        painter.drawRoundedRect(self.baseX + s.hCellPadding,
+                                self.baseY + s.vCellPadding,
+                                self.canvas.minWidth - 2 * s.hCellPadding,
+                                self.canvas.minHeight - 2 * s.vCellPadding,
+                                s.scopeRectRadius, s.scopeRectRadius)
 
-            painter.drawRoundedRect(self.baseX + s.hCellPadding,
-                                    self.baseY + s.vCellPadding,
-                                    self.canvas.minWidth - 2 * s.hCellPadding,
-                                    self.canvas.minHeight - 2 * s.vCellPadding,
-                                    s.scopeRectRadius, s.scopeRectRadius)
+    def __paintDeclaration(self, painter):
+        """Paints the scope header"""
+        s = self.canvas.settings
+        painter.setBrush(QBrush(self.bgColor))
+        pen = QPen(self.fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        canvasLeft = self.baseX - s.scopeRectRadius
+        canvasTop = self.baseY - s.scopeRectRadius
+        textHeight = self._headerRect.height()
+        yShift = 0
+        if hasattr(self.ref, 'sideComment'):
+            yShift = s.vTextPadding
+        painter.drawText(canvasLeft + s.hHeaderPadding,
+                         canvasTop + s.vHeaderPadding + yShift,
+                         self._headerRect.width(), textHeight,
+                         Qt.AlignLeft, self._getText())
 
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            brush = QBrush(self.bgColor)
-            painter.setBrush(brush)
+        pen = QPen(self.borderColor)
+        pen.setWidth(s.boxLineWidth)
+        painter.setPen(pen)
 
-            pen = QPen(self.fgColor)
-            painter.setFont(s.monoFont)
-            painter.setPen(pen)
-            canvasLeft = self.baseX - s.scopeRectRadius
-            canvasTop = self.baseY - s.scopeRectRadius
-            textHeight = self._headerRect.height()
-            yShift = 0
-            if hasattr(self.ref, "sideComment"):
-                yShift = s.vTextPadding
-            painter.drawText(canvasLeft + s.hHeaderPadding,
-                             canvasTop + s.vHeaderPadding + yShift,
-                             self._headerRect.width(), textHeight,
-                             Qt.AlignLeft, self._getText())
+        # If the scope is selected then the line may need to be shorter
+        # to avoid covering the outline
+        row = self.addr[1] - 1
+        column = self.addr[0] - 1
+        correction = 0.0
+        if self.canvas.cells[row][column].isSelected():
+            correction = s.selectPenWidth - 1
+        painter.drawLine(canvasLeft + correction, self.baseY + self.height,
+                         canvasLeft + self.canvas.minWidth -
+                         2 * s.hCellPadding - correction,
+                         self.baseY + self.height)
 
-            pen = QPen(self.borderColor)
-            pen.setWidth(s.boxLineWidth)
-            painter.setPen(pen)
+    def __paintComment(self, painter):
+        """Paints the side comment"""
+        s = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(),
+                                          s.commentBorderColor))
+        painter.setBrush(QBrush(s.commentBGColor))
 
+        canvasTop = self.baseY - s.scopeRectRadius
+        # s.vHeaderPadding below is used intentionally: to have the same
+        # spacing on top, bottom and right for the comment box
+        movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
+            self.width - s.scopeRectRadius - s.vHeaderPadding
+        painter.drawPath(self.__sideCommentPath)
+
+        pen = QPen(s.commentFGColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        if s.hidecomments:
+            painter.drawText(
+                movedBaseX + s.hHeaderPadding + s.hHiddenTextPadding,
+                canvasTop + s.vHeaderPadding + s.vHiddenTextPadding,
+                self._sideCommentRect.width(),
+                self._sideCommentRect.height(),
+                Qt.AlignLeft, self._getSideComment())
+        else:
+            painter.drawText(
+                movedBaseX + s.hHeaderPadding + s.hTextPadding,
+                canvasTop + s.vHeaderPadding + s.vTextPadding,
+                self._sideCommentRect.width(),
+                self._sideCommentRect.height(),
+                Qt.AlignLeft, self._getSideComment())
+
+    def __paintDocstring(self, painter):
+        """Paints the docstring"""
+        s = self.canvas.settings
+        painter.setBrush(QBrush(self.bgColor))
+
+        canvasLeft = self.baseX - s.scopeRectRadius
+
+        if self.isSelected():
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(selectPen)
+            painter.drawRect(canvasLeft, self.baseY,
+                             self.canvas.minWidth - 2 * s.hCellPadding,
+                             self.height)
+        else:
             # If the scope is selected then the line may need to be shorter
             # to avoid covering the outline
-            row = self.addr[1] - 1
+            row = self.addr[1] - 2
             column = self.addr[0] - 1
             correction = 0.0
             if self.canvas.cells[row][column].isSelected():
                 correction = s.selectPenWidth - 1
+
+            # The background could also be custom
+            pen = QPen(self.bgColor)
+            pen.setWidth(s.boxLineWidth)
+            pen.setJoinStyle(Qt.MiterJoin)
+            painter.setPen(pen)
+
+            dsCorr = float(s.boxLineWidth)
+            if self.canvas.cells[row][column].isSelected():
+                dsCorr = float(s.selectPenWidth) / 2.0 + \
+                    float(s.boxLineWidth) / 2.0
+            painter.drawRect(float(canvasLeft) + dsCorr,
+                             self.baseY + s.boxLineWidth,
+                             float(self.canvas.minWidth) -
+                             2.0 * float(s.hCellPadding) - 2.0 * dsCorr,
+                             self.height - 2 * s.boxLineWidth)
+
+            pen = QPen(self.borderColor)
+            pen.setWidth(s.boxLineWidth)
+            painter.setPen(pen)
             painter.drawLine(canvasLeft + correction,
                              self.baseY + self.height,
                              canvasLeft + self.canvas.minWidth -
                              2 * s.hCellPadding - correction,
                              self.baseY + self.height)
 
-        elif self.subKind == ScopeCellElement.COMMENT:
-            painter.setPen(self.getPainterPen(self.isSelected(),
-                                              s.commentBorderColor))
-            painter.setBrush(QBrush(s.commentBGColor))
-
-            canvasTop = self.baseY - s.scopeRectRadius
-            # s.vHeaderPadding below is used intentionally: to have the same
-            # spacing on top, bottom and right for the comment box
-            movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
-                self.width - s.scopeRectRadius - s.vHeaderPadding
-            painter.drawPath(self.__sideCommentPath)
-
-            pen = QPen(s.commentFGColor)
+        if not s.hidedocstrings:
+            pen = QPen(self.fgColor)
             painter.setFont(s.monoFont)
             painter.setPen(pen)
-            if s.hidecomments:
-                painter.drawText(
-                    movedBaseX + s.hHeaderPadding + s.hHiddenTextPadding,
-                    canvasTop + s.vHeaderPadding + s.vHiddenTextPadding,
-                    self._sideCommentRect.width(),
-                    self._sideCommentRect.height(),
-                    Qt.AlignLeft, self._getSideComment())
-            else:
-                painter.drawText(
-                    movedBaseX + s.hHeaderPadding + s.hTextPadding,
-                    canvasTop + s.vHeaderPadding + s.vTextPadding,
-                    self._sideCommentRect.width(),
-                    self._sideCommentRect.height(),
-                    Qt.AlignLeft, self._getSideComment())
+            painter.drawText(canvasLeft + s.hHeaderPadding,
+                             self.baseY + s.vHeaderPadding,
+                             self.canvas.width - 2 * s.hHeaderPadding,
+                             self.height - 2 * s.vHeaderPadding,
+                             Qt.AlignLeft, self.getDocstringText())
+
+    def paint(self, painter, option, widget):
+        """Draws the corresponding scope element"""
+        del option
+        del widget
+
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self.__paintTopLeft(painter)
+        elif self.subKind == ScopeCellElement.DECLARATION:
+            self.__paintDeclaration(painter)
+        elif self.subKind == ScopeCellElement.COMMENT:
+            self.__paintComment(painter)
         elif self.subKind == ScopeCellElement.DOCSTRING:
-            painter.setBrush(QBrush(self.bgColor))
-
-            canvasLeft = self.baseX - s.scopeRectRadius
-
-            if self.isSelected():
-                selectPen = QPen(s.selectColor)
-                selectPen.setWidth(s.selectPenWidth)
-                selectPen.setJoinStyle(Qt.RoundJoin)
-                painter.setPen(selectPen)
-                painter.drawRect(canvasLeft, self.baseY,
-                                 self.canvas.minWidth - 2 * s.hCellPadding,
-                                 self.height)
-            else:
-                # If the scope is selected then the line may need to be shorter
-                # to avoid covering the outline
-                row = self.addr[1] - 2
-                column = self.addr[0] - 1
-                correction = 0.0
-                if self.canvas.cells[row][column].isSelected():
-                    correction = s.selectPenWidth - 1
-
-                # The background could also be custom
-                pen = QPen(self.bgColor)
-                pen.setWidth(s.boxLineWidth)
-                pen.setJoinStyle(Qt.MiterJoin)
-                painter.setPen(pen)
-
-                dsCorr = float(s.boxLineWidth)
-                if self.canvas.cells[row][column].isSelected():
-                    dsCorr = float(s.selectPenWidth) / 2.0 + \
-                        float(s.boxLineWidth) / 2.0
-                painter.drawRect(float(canvasLeft) + dsCorr,
-                                 self.baseY + s.boxLineWidth,
-                                 float(self.canvas.minWidth) -
-                                 2.0 * float(s.hCellPadding) - 2.0 * dsCorr,
-                                 self.height - 2 * s.boxLineWidth)
-
-                pen = QPen(self.borderColor)
-                pen.setWidth(s.boxLineWidth)
-                painter.setPen(pen)
-                painter.drawLine(canvasLeft + correction,
-                                 self.baseY + self.height,
-                                 canvasLeft + self.canvas.minWidth -
-                                 2 * s.hCellPadding - correction,
-                                 self.baseY + self.height)
-
-            if not s.hidedocstrings:
-                pen = QPen(self.fgColor)
-                painter.setFont(s.monoFont)
-                painter.setPen(pen)
-                painter.drawText(canvasLeft + s.hHeaderPadding,
-                                 self.baseY + s.vHeaderPadding,
-                                 self.canvas.width - 2 * s.hHeaderPadding,
-                                 self.height - 2 * s.vHeaderPadding,
-                                 Qt.AlignLeft, self.getDocstringText())
+            self.__paintDocstring(painter)
 
     def hoverEnterEvent(self, event):
         """Handling mouse enter event"""
@@ -496,37 +540,20 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        if self.editor is None:
-            return
-        if event:
-            if event.buttons() != Qt.LeftButton:
-                return
-
         if self.subKind == self.COMMENT:
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
-            self.editor.gotoLine(self.ref.sideComment.beginLine,
-                                 self.ref.sideComment.beginPos)
-            self.editor.setFocus()
-            return
-        if self.subKind == self.DOCSTRING:
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
-            self.editor.gotoLine(self.ref.docstring.body.beginLine,
-                                 self.ref.docstring.body.beginPos)
-            self.editor.setFocus()
-            return
-        if self.subKind == self.DECLARATION:
-            GlobalData().mainWindow.raise_()
-            GlobalData().mainWindow.activateWindow()
+            CellElement.mouseDoubleClickEvent(
+                self, event, pos=self.ref.sideComment.beginPos)
+        elif self.subKind == self.DOCSTRING:
+            CellElement.mouseDoubleClickEvent(
+                self, event, pos=self.ref.docstring.body.beginPos)
+        elif self.subKind == self.DECLARATION:
             if self.kind == CellElement.FILE_SCOPE:
-                self.editor.gotoLine(1, 1)   # Good enough for the
-                                             # vast majority of the cases
+                CellElement.mouseDoubleClickEvent(
+                    self, event, line=1, pos=1)
             else:
-                self.editor.gotoLine(self.ref.body.beginLine,
-                                     self.ref.body.beginPos)
-            self.editor.setFocus()
-            return
+                CellElement.mouseDoubleClickEvent(
+                    self, event, line=self.ref.body.beginLine,
+                    pos=self.ref.body.beginPos)
 
     def getTopLeftItem(self):
         """Provides a top left corner item"""
@@ -596,21 +623,30 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
                 line = CMLVersion.getFirstLine(self.ref.leadingCMLComments)
             if self.ref.docstring.leadingComment:
                 if self.ref.docstring.leadingComment.parts:
-                    line = min(self.ref.docstring.leadingComment.parts[0].beginLine,
-                               line)
+                    line = min(
+                        self.ref.docstring.leadingComment.parts[0].beginLine,
+                        line)
             return min(self.ref.docstring.beginLine, line)
         return CellElement.getFirstLine(self)
+
+    def getTooltipSuffix(self):
+        """Provides the selection tooltip suffix"""
+        if self.subKind == self.TOP_LEFT:
+            return ' at ' + CellElement.getLinesSuffix(self.getLineRange())
+        if self.subKind == self.DOCSTRING:
+            return ' docstring at ' + \
+                CellElement.getLinesSuffix(self.getLineRange())
+        if self.subKind == self.COMMENT:
+            return ' side comment at ' + \
+                CellElement.getLinesSuffix(self.getLineRange())
+        return ' scope (' + scopeCellElementToString(self.subKind) + ')'
 
 
 _scopeCellElementToString = {
     ScopeCellElement.TOP_LEFT: "TOP_LEFT",
-    ScopeCellElement.LEFT: "LEFT",
-    ScopeCellElement.BOTTOM_LEFT: "BOTTOM_LEFT",
     ScopeCellElement.DECLARATION: "DECLARATION",
     ScopeCellElement.COMMENT: "COMMENT",
-    ScopeCellElement.DOCSTRING: "DOCSTRING",
-    ScopeCellElement.TOP: "TOP",
-    ScopeCellElement.BOTTOM: "BOTTOM"}
+    ScopeCellElement.DOCSTRING: "DOCSTRING"}
 
 
 def scopeCellElementToString(kind):
@@ -633,10 +669,7 @@ class FileScopeCell(ScopeCellElement):
         """Renders the file scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, "module")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
@@ -644,9 +677,9 @@ class FileScopeCell(ScopeCellElement):
             if self.ref.body is None:
                 # Special case: the buffer is empty so no body exists
                 return [0, 0]
-            return self.ref.body.getLineRange()
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
@@ -654,23 +687,13 @@ class FileScopeCell(ScopeCellElement):
             if self.ref.body is None:
                 # Special case: the buffer is empty so no body exists
                 return [0, 0]
-            return [self.ref.body.begin, self.ref.body.end]
         if self.subKind == self.DOCSTRING:
-            return [self.ref.docstring.body.begin,
-                    self.ref.docstring.body.end]
+            return self.ref.docstring.body.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
         """Provides a file scope selected tooltip"""
-        lineRange = self.getLineRange()
-        if self.subKind == self.TOP_LEFT:
-            return "Module scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.DOCSTRING:
-            return "Module docstring at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-
-        # Must not really happen
-        return "Module scope (" + scopeCellElementToString(self.subKind) + ")"
+        return 'Module' + self.getTooltipSuffix()
 
 
 class FunctionScopeCell(ScopeCellElement):
@@ -711,44 +734,27 @@ class FunctionScopeCell(ScopeCellElement):
         """Renders the function scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, "def")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getLineRange()
         if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.DOCSTRING:
-            return [self.ref.docstring.body.begin, self.ref.docstring.body.end]
+            return self.ref.docstring.body.getAbsPosRange()
         if self.subKind == self.COMMENT:
-            return [self.ref.sideComment.begin, self.ref.sideComment.end]
+            return self.ref.sideComment.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
         """Provides a selected function block tooltip"""
-        lineRange = self.getLineRange()
-        tooltip = "Function " + self.ref.name.getContent() + " "
-        if self.subKind == self.TOP_LEFT:
-            return tooltip + "scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.DOCSTRING:
-            return tooltip + "docstring at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.COMMENT:
-            return tooltip + "side comment at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        return tooltip + \
-            "scope (" + scopeCellElementToString(self.subKind) + ")"
+        return 'Function' + self.getTooltipSuffix()
 
 
 class ClassScopeCell(ScopeCellElement):
@@ -792,44 +798,27 @@ class ClassScopeCell(ScopeCellElement):
         """Renders the class scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, "class")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getLineRange()
         if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.DOCSTRING:
-            return [self.ref.docstring.body.begin, self.ref.docstring.body.end]
+            return self.ref.docstring.body.getAbsPosRange()
         if self.subKind == self.COMMENT:
-            return [self.ref.sideComment.begin, self.ref.sideComment.end]
+            return self.ref.sideComment.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
         """Provides the selection tooltip"""
-        lineRange = self.getLineRange()
-        tooltip = "Class " + self.ref.name.getContent() + " "
-        if self.subKind == self.TOP_LEFT:
-            return tooltip + "scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.DOCSTRING:
-            return tooltip + "docstring at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.COMMENT:
-            return tooltip + "side comment at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        return tooltip + "scope (" + \
-            scopeCellElementToString(self.subKind) + ")"
+        return 'Class' + self.getTooltipSuffix()
 
 
 class ForScopeCell(ScopeCellElement):
@@ -870,38 +859,23 @@ class ForScopeCell(ScopeCellElement):
         """Renders the for-loop scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, "for")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.COMMENT:
-            return [self.ref.sideComment.begin,
-                    self.ref.sideComment.end]
+            return self.ref.sideComment.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
         """Provides a selected for block tooltip"""
-        lineRange = self.getLineRange()
-        tooltip = "For loop "
-        if self.subKind == self.TOP_LEFT:
-            return tooltip + "scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.COMMENT:
-            return tooltip + "side comment at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        return tooltip + "scope (" + \
-            scopeCellElementToString(self.subKind) + ")"
+        return 'For loop' + self.getTooltipSuffix()
 
 
 class WhileScopeCell(ScopeCellElement):
@@ -942,38 +916,23 @@ class WhileScopeCell(ScopeCellElement):
         """Renders the while-loop scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, "while")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the lineRange"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.COMMENT:
-            return [self.ref.sideComment.begin,
-                    self.ref.sideComment.end]
+            return self.ref.sideComment.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
         """Provides the selected while scope element tooltip"""
-        lineRange = self.getLineRange()
-        tooltip = "While loop "
-        if self.subKind == self.TOP_LEFT:
-            return tooltip + "scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.COMMENT:
-            return tooltip + "side comment at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        return tooltip + "scope (" + \
-            scopeCellElementToString(self.subKind) + ")"
+        return 'While loop' + self.getTooltipSuffix()
 
 
 class TryScopeCell(ScopeCellElement):
@@ -1000,10 +959,7 @@ class TryScopeCell(ScopeCellElement):
         """Renders the try scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, "try")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
@@ -1013,6 +969,7 @@ class TryScopeCell(ScopeCellElement):
             return [beginLine, endLine]
         if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
@@ -1021,21 +978,12 @@ class TryScopeCell(ScopeCellElement):
             _, end = self.ref.suite[-1].getAbsPosRange()
             return [begin, end]
         if self.subKind == self.COMMENT:
-            return [self.ref.sideComment.begin,
-                    self.ref.sideComment.end]
+            return self.ref.sideComment.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
         """Provides the selected try block tooltip"""
-        lineRange = self.getLineRange()
-        tooltip = "Try "
-        if self.subKind == self.TOP_LEFT:
-            return tooltip + "scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.COMMENT:
-            return tooltip + "side comment at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        return tooltip + "scope (" + \
-            scopeCellElementToString(self.subKind) + ")"
+        return 'Try' + self.getTooltipSuffix()
 
 
 class WithScopeCell(ScopeCellElement):
@@ -1075,38 +1023,23 @@ class WithScopeCell(ScopeCellElement):
         """Renders the with block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, "with")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.COMMENT:
-            return [self.ref.sideComment.begin,
-                    self.ref.sideComment.end]
+            return self.ref.sideComment.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
         """Provides the selected with block tooltip"""
-        lineRange = self.getLineRange()
-        tooltip = "With "
-        if self.subKind == self.TOP_LEFT:
-            return tooltip + "scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.COMMENT:
-            return tooltip + "side comment at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        return tooltip + "scope (" + \
-            scopeCellElementToString(self.subKind) + ")"
+        return 'With' + self.getTooltipSuffix()
 
 
 class DecoratorScopeCell(ScopeCellElement):
@@ -1149,38 +1082,23 @@ class DecoratorScopeCell(ScopeCellElement):
         """Renders the decorator"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, " @ ")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.COMMENT:
-            return [self.ref.sideComment.begin, self.ref.sideComment.end]
+            return self.ref.sideComment.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
         """Provides the selected decorator tooltip"""
-        lineRange = self.getLineRange()
-        tooltip = "Decorator "
-        if self.subKind == self.TOP_LEFT:
-            return tooltip + "scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.COMMENT:
-            return tooltip + "side comment at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        return tooltip + "scope (" + \
-            scopeCellElementToString(self.subKind) + ")"
-
+        return 'Decorator' + self.getTooltipSuffix()
 
 
 class ElseScopeCell(ScopeCellElement):
@@ -1224,51 +1142,47 @@ class ElseScopeCell(ScopeCellElement):
         """Renders the else block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, "else")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.COMMENT:
-            return [self.ref.sideComment.begin,
-                    self.ref.sideComment.end]
+            return self.ref.sideComment.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
-        lineRange = self.getLineRange()
-        tooltip = "Else "
-        if self.subKind == self.TOP_LEFT:
-            return tooltip + "scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.COMMENT:
-            return tooltip + "side comment at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        return tooltip + "scope (" + \
-            scopeCellElementToString(self.subKind) + ")"
-
+        """Provides the selection tooltip"""
+        return 'Else' + self.getTooltipSuffix()
 
 
 class ForElseScopeCell(ElseScopeCell):
+
+    """Else scope which is bound to a for loop"""
+
     def __init__(self, ref, canvas, x, y, subKind):
         ElseScopeCell.__init__(self, ref, canvas, x, y, subKind,
                                ElseScopeCell.FOR_STATEMENT)
 
+
 class WhileElseScopeCell(ElseScopeCell):
+
+    """Else scope which is bound to a while loop"""
+
     def __init__(self, ref, canvas, x, y, subKind):
         ElseScopeCell.__init__(self, ref, canvas, x, y, subKind,
                                ElseScopeCell.WHILE_STATEMENT)
 
+
 class TryElseScopeCell(ElseScopeCell):
+
+    """Else scope which is bound to a try block"""
+
     def __init__(self, ref, canvas, x, y, subKind):
         ElseScopeCell.__init__(self, ref, canvas, x, y, subKind,
                                ElseScopeCell.TRY_STATEMENT)
@@ -1314,37 +1228,23 @@ class ExceptScopeCell(ScopeCellElement):
         """Renders the except block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, "except")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.COMMENT:
-            return [self.ref.sideComment.begin,
-                    self.ref.sideComment.end]
+            return self.ref.sideComment.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
-        lineRange = self.getLineRange()
-        tooltip = "Except "
-        if self.subKind == self.TOP_LEFT:
-            return tooltip + "scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.COMMENT:
-            return tooltip + "side comment at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        return tooltip + "scope (" + \
-            scopeCellElementToString(self.subKind) + ")"
+        """Provides the selection tooltip"""
+        return 'Except' + self.getTooltipSuffix()
 
 
 class FinallyScopeCell(ScopeCellElement):
@@ -1371,35 +1271,21 @@ class FinallyScopeCell(ScopeCellElement):
         """Renders the finally block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem(self, "finally")
-        self._render()
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
+        return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.beginLine, self.ref.endLine]
         if self.subKind == self.COMMENT:
             return self.ref.sideComment.getLineRange()
+        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.TOP_LEFT:
-            return [self.ref.body.begin, self.ref.end]
         if self.subKind == self.COMMENT:
-            return [self.ref.sideComment.begin,
-                    self.ref.sideComment.end]
+            return self.ref.sideComment.getAbsPosRange()
+        return CellElement.getAbsPosRange(self)
 
     def getSelectTooltip(self):
         """Provides a tooltip for the selected finally block"""
-        lineRange = self.getLineRange()
-        tooltip = "Finally "
-        if self.subKind == self.TOP_LEFT:
-            return tooltip + "scope at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        if self.subKind == self.COMMENT:
-            return tooltip + "side comment at lines " + \
-                str(lineRange[0]) + "-" + str(lineRange[1])
-        return tooltip + "scope (" + \
-            scopeCellElementToString(self.subKind) + ")"
+        return 'Finally' + self.getTooltipSuffix()
+

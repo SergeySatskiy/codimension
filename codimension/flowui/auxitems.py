@@ -31,74 +31,61 @@ from ui.qt import (QPen, QBrush, QPainterPath, Qt, QGraphicsSvgItem,
 from .cellelement import CellElement
 
 
-class VacantCell(CellElement):
+class SpacerCell(CellElement):
+
+    """A cell which may take some space horizontally or vertically"""
+
+    def __init__(self, ref, canvas, x, y, width=None, height=None):
+        CellElement.__init__(self, ref, canvas, x, y)
+        self.kind = CellElement.SPACER
+        self.height = height
+        self.width = width
+
+    def render(self):
+        """Renders the cell"""
+        if self.width is None:
+            self.width = self.canvas.settings.hSpacer
+        if self.height is None:
+            self.height = self.canvas.settings.vSpacer
+        self.minWidth = self.width
+        self.minHeight = self.height
+        return (self.width, self.height)
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        self.baseX = baseX
+        self.baseY = baseY
+
+
+class VacantCell(SpacerCell):
 
     """A vacant cell which can be later used for some other element"""
 
     def __init__(self, ref, canvas, x, y):
-        CellElement.__init__(self, ref, canvas, x, y)
+        SpacerCell.__init__(self, ref, canvas, x, y, width=0, height=0)
         self.kind = CellElement.VACANT
 
-    def render(self):
-        """Renders the cell"""
-        self.width = 0
-        self.height = 0
-        self.minWidth = 0
-        self.minHeight = 0
-        return (self.width, self.height)
 
-    def draw(self, scene, baseX, baseY):
-        """Draws the cell"""
-        self.baseX = baseX
-        self.baseY = baseY
-
-
-class VSpacerCell(CellElement):
+class VSpacerCell(SpacerCell):
 
     """Represents a vertical spacer cell"""
 
-    def __init__(self, ref, canvas, x, y):
-        CellElement.__init__(self, ref, canvas, x, y)
+    def __init__(self, ref, canvas, x, y, height=None):
+        SpacerCell.__init__(
+            self, ref, canvas, x, y, width=0,
+            height=canvas.settings.vSpacer if height is None else height)
         self.kind = CellElement.V_SPACER
 
-    def render(self):
-        """Renders the cell"""
-        self.width = 0
-        self.height = self.canvas.settings.vSpacer
-        self.minWidth = self.width
-        self.minHeight = self.height
-        return (self.width, self.height)
 
-    def draw(self, scene, baseX, baseY):
-        """Draws the cell"""
-        # There is no need to draw anything. The cell just reserves some
-        # vertical space for better appearance
-        self.baseX = baseX
-        self.baseY = baseY
-
-
-class HSpacerCell(CellElement):
+class HSpacerCell(SpacerCell):
 
     """Represents a horizontal spacer cell"""
 
-    def __init__(self, ref, canvas, x, y):
-        CellElement.__init__(self, ref, canvas, x, y)
+    def __init__(self, ref, canvas, x, y, width=None):
+        SpacerCell.__init__(
+            self, ref, canvas, x, y,
+            width=canvas.settings.hSpacer if width is None else width)
         self.kind = CellElement.H_SPACER
-
-    def render(self):
-        """Renders the cell"""
-        self.width = self.canvas.settings.hSpacer
-        self.height = 0
-        self.minWidth = self.width
-        self.minHeight = self.height
-        return (self.width, self.height)
-
-    def draw(self, scene, baseX, baseY):
-        """Draws the cell"""
-        # There is no need to draw anything. The cell just reserves some
-        # horizontal space for better appearance
-        self.baseX = baseX
-        self.baseY = baseY
 
 
 class SVGItem(CellElement, QGraphicsSvgItem):
@@ -474,19 +461,13 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         column = self.addr[0]
         cells = self.canvas.cells
         for index in range(column - 1, -1, -1):
-            kind = cells[row][index].kind
-            if kind in [CellElement.VACANT, CellElement.H_SPACER,
-                        CellElement.V_SPACER]:
+            cell = cells[row][index]
+            if cell.isSpacerItem():
                 continue
-            if kind in [CellElement.FILE_SCOPE, CellElement.FUNC_SCOPE,
-                        CellElement.CLASS_SCOPE, CellElement.FOR_SCOPE,
-                        CellElement.WHILE_SCOPE, CellElement.TRY_SCOPE,
-                        CellElement.WITH_SCOPE, CellElement.DECOR_SCOPE,
-                        CellElement.ELSE_SCOPE, CellElement.EXCEPT_SCOPE,
-                        CellElement.FINALLY_SCOPE]:
+            if cell.scopedItem():
                 break
-            if kind != CellElement.CONNECTOR:
-                return cells[row][index].minHeight / 2
+            if cell.kind != CellElement.CONNECTOR:
+                return cell.minHeight / 2
         return self.height / 2
 
     def __getNorthXY(self, baseX):
