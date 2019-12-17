@@ -30,7 +30,7 @@ The whole canvas is split into independent sections. The growing in one section
 does not affect all the other sections.
 """
 
-from ui.qt import QColor
+from ui.qt import QColor, QPen, QBrush
 from cdmcfparser import (CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                          BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
                          RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,
@@ -46,7 +46,7 @@ from .minimizeditems import (MinimizedExceptCell,
                              MinimizedLeadingCommentCell,
                              MinimizedAboveCommentCell,
                              MinimizedSideCommentCell)
-from .auxitems import ConnectorCell, VacantCell, VSpacerCell, Line
+from .auxitems import ConnectorCell, VacantCell, VSpacerCell, Line, Rectangle
 from .loopjumpitems import BreakCell, ContinueCell
 from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
                          ClassScopeCell, ForScopeCell, WhileScopeCell,
@@ -282,8 +282,9 @@ class VirtualCanvas:
             self.cells.append([])
             lastIndex += 1
             if needScopeEdge:
-                self.cells[lastIndex].append(
-                    ScopeHSideEdge(self.__currentCF, self, 0, lastIndex))
+                if self.__currentScopeClass:
+                    self.cells[lastIndex].append(
+                        ScopeHSideEdge(self.__currentCF, self, 0, lastIndex))
         lastIndex = len(self.cells[row]) - 1
         while lastIndex < column:
             self.cells[row].append(VacantCell(None, self, lastIndex, row))
@@ -1660,51 +1661,20 @@ class VirtualCanvas:
             for cell in row:
                 if self.settings.debug:
                     if cell.kind == CellElement.VCANVAS:
-                        penColor = QColor(255, 0, 0, 255)
-                        line = Line(self, currentX + 1, currentY + 1,
-                                    currentX + cell.width - 2, currentY + 1)
-                        line.penColor = penColor
-                        scene.addItem(line)
-
-                        line = Line(self, currentX + 1, currentY + 1,
-                                    currentX + 1, currentY + cell.height - 2)
-                        line.penColor = penColor
-                        scene.addItem(line)
-
-                        line = Line(self, currentX + 1, currentY + cell.height - 2,
-                                    currentX + cell.width - 2,
-                                    currentY + cell.height - 2)
-                        line.penColor = penColor
-                        scene.addItem(line)
-
-                        line = Line(self, currentX + cell.width - 2, currentY + 1,
-                                    currentX + cell.width - 2,
-                                    currentY + cell.height - 2)
-                        line.penColor = penColor
-                        scene.addItem(line)
+                        rect = Rectangle(self, currentX + 1, currentY + 1,
+                                         cell.width - 2, cell.height -2)
+                        rect.pen = QPen(QColor(255, 0, 0, 255))
+                        rect.brush = QBrush(QColor(255, 0, 0, 127))
+                        rect.setToolTip('Canvas ' + str(cell.width) + 'x' +
+                                        str(cell.height))
+                        scene.addItem(rect)
                     else:
-                        penColor = QColor(0, 255, 0, 255)
-                        line = Line(self, currentX, currentY,
-                                    currentX + cell.width, currentY)
-                        line.penColor = penColor
-                        scene.addItem(line)
-
-                        line = Line(self, currentX, currentY,
-                                    currentX, currentY + cell.height)
-                        line.penColor = penColor
-                        scene.addItem(line)
-
-                        line = Line(self, currentX, currentY + cell.height,
-                                    currentX + cell.width,
-                                    currentY + cell.height)
-                        line.penColor = penColor
-                        scene.addItem(line)
-
-                        line = Line(self, currentX + cell.width, currentY,
-                                    currentX + cell.width,
-                                    currentY + cell.height)
-                        line.penColor = penColor
-                        scene.addItem(line)
+                        rect = Rectangle(self, currentX, currentY,
+                                         cell.width, cell.height)
+                        rect.pen = QPen(QColor(0, 255, 0, 255))
+                        rect.brush = QBrush(QColor(0, 255, 0, 127))
+                        rect.setToolTip('Item ' + str(cell) + ' ' + str(cell.kind))
+                        scene.addItem(rect)
                 cell.draw(scene, currentX, currentY)
                 currentX += cell.width
             currentY += height

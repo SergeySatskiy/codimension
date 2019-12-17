@@ -38,8 +38,8 @@ class SpacerCell(CellElement):
     def __init__(self, ref, canvas, x, y, width=None, height=None):
         CellElement.__init__(self, ref, canvas, x, y)
         self.kind = CellElement.SPACER
-        self.height = height
         self.width = width
+        self.height = height
 
     def render(self):
         """Renders the cell"""
@@ -369,7 +369,7 @@ class Line(CellElement, QGraphicsLineItem):
         self.penWidth = None
 
     def paint(self, painter, option, widget):
-        """Paints the text item"""
+        """Paints the line item"""
         color = self.canvas.settings.cfLineColor
         if self.penColor:
             color = self.penColor
@@ -391,6 +391,33 @@ class Line(CellElement, QGraphicsLineItem):
     def getSelectTooltip():
         """Provides the tooltip"""
         return 'Line'
+
+
+class Rectangle(CellElement, QGraphicsRectItem):
+
+    """Implementation of the rectangle item"""
+
+    def __init__(self, canvas, x, y, w, h):
+        CellElement.__init__(self, None, canvas, x=None, y=None)
+        QGraphicsRectItem.__init__(self, x, y, w, h)
+        self.kind = CellElement.RECTANGLE
+
+        self.pen = None
+        self.brush = None
+
+    def paint(self, painter, option, widget):
+        """Paints the rectangle item"""
+        if self.pen is not None:
+            self.setPen(self.pen)
+        if self.brush is not None:
+            self.setBrush(self.brush)
+
+        QGraphicsRectItem.paint(self, painter, option, widget)
+
+    @staticmethod
+    def getSelectTooltip():
+        """Provides the tooltip"""
+        return "Rectangle"
 
 
 

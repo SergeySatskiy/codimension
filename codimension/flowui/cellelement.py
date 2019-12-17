@@ -95,7 +95,8 @@ class CellElement:
     TEXT = 304
     RUBBER_BAND = 305
     LINE = 306
-    GROUP_CORNER_CONROL = 307
+    RECTANGLE = 307
+    GROUP_CORNER_CONROL = 308
 
     EMPTY_GROUP = 500
     OPENED_GROUP_BEGIN = 501
@@ -241,7 +242,7 @@ class CellElement:
         """True if it is a proxy item"""
         return self.kind in (self.BADGE, self.SVG, self.CONNECTOR,
                              self.DEPENDENT_CONNECTOR, self.TEXT,
-                             self.RUBBER_BAND, self.LINE,
+                             self.RUBBER_BAND, self.LINE, self.RECTANGLE,
                              self.GROUP_CORNER_CONROL)
 
     def isSpacerItem(self):
@@ -416,6 +417,7 @@ __kindToString = {
     CellElement.TEXT: 'TEXT',
     CellElement.RUBBER_BAND: 'RUBBER_BAND',
     CellElement.LINE: 'LINE',
+    CellElement.RECTANGLE: 'RECTANGLE',
     CellElement.GROUP_CORNER_CONROL: 'GROUP_CORNER_CONROL',
     CellElement.INDEPENDENT_DOC: 'INDEPENDENT_DOC',
     CellElement.LEADING_DOC: 'LEADING_DOC',
