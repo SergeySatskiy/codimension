@@ -20,6 +20,8 @@
 """Virtual canvas items to handle groups (opened/collapsed)"""
 
 # pylint: disable=C0305
+# pylint: disable=R0902
+# pylint: disable=R0913
 
 from html import escape
 from ui.qt import (Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem, QFrame,
@@ -50,11 +52,13 @@ class HGroupSpacerCell(SpacerCell):
         return (self.width, self.height)
 
 
-class GroupItemBase():
+class GroupItemBase(CellElement):
 
     """Common functionality for the group items"""
 
-    def __init__(self, groupBeginCMLRef):
+    def __init__(self, groupBeginCMLRef, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+
         self.nestedRefs = []
 
         self.groupBeginCMLRef = groupBeginCMLRef
@@ -97,15 +101,14 @@ class GroupItemBase():
 
 
 
-class EmptyGroup(GroupItemBase, CellElement, ColorMixin, QGraphicsRectItem):
+class EmptyGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
 
     """Represents an empty group"""
 
     N_BACK_RECT = 2
 
     def __init__(self, ref, groupBeginCMLRef, canvas, x, y):
-        GroupItemBase.__init__(self, groupBeginCMLRef)
-        CellElement.__init__(self, ref, canvas, x, y)
+        GroupItemBase.__init__(self, groupBeginCMLRef, ref, canvas, x, y)
         ColorMixin.__init__(self, None, canvas.settings.emptyGroupBGColor,
                             canvas.settings.emptyGroupFGColor,
                             canvas.settings.emptyGroupBorderColor,
@@ -200,14 +203,12 @@ class EmptyGroup(GroupItemBase, CellElement, ColorMixin, QGraphicsRectItem):
             Qt.AlignLeft, self._getText())
 
 
-class OpenedGroupBegin(GroupItemBase, CellElement,
-                       ColorMixin, QGraphicsRectItem):
+class OpenedGroupBegin(GroupItemBase, ColorMixin, QGraphicsRectItem):
 
     """Represents beginning af a group which can be collapsed"""
 
     def __init__(self, ref, groupBeginCMLRef, canvas, x, y):
-        GroupItemBase.__init__(self, groupBeginCMLRef)
-        CellElement.__init__(self, ref, canvas, x, y)
+        GroupItemBase.__init__(self, groupBeginCMLRef, ref, canvas, x, y)
         ColorMixin.__init__(self, None, canvas.settings.openGroupBGColor,
                             canvas.settings.openGroupFGColor,
                             canvas.settings.openGroupBorderColor,
@@ -273,11 +274,9 @@ class OpenedGroupBegin(GroupItemBase, CellElement,
         # otherwise a half of it is hidden by the group.
         if not self.isTerminal:
             xPos = baseX + settings.mainLine
-            xPos += self.selfAndDeeperNestLevel * (2 * settings.openGroupHSpacer)
-            self.connector = Connector(self.canvas,
-                                       xPos,
-                                       baseY,
-                                       xPos,
+            xPos += \
+                self.selfAndDeeperNestLevel * (2 * settings.openGroupHSpacer)
+            self.connector = Connector(self.canvas, xPos, baseY, xPos,
                                        baseY + settings.openGroupVSpacer * 2)
             scene.addItem(self.connector)
 
@@ -307,13 +306,12 @@ class OpenedGroupBegin(GroupItemBase, CellElement,
                                 settings.openGroupVSpacer)
 
 
-class OpenedGroupEnd(GroupItemBase, CellElement):
+class OpenedGroupEnd(GroupItemBase):
 
     """Represents the end af a group which can be collapsed"""
 
     def __init__(self, ref, groupBeginCMLRef, canvas, x, y):
-        GroupItemBase.__init__(self, groupBeginCMLRef)
-        CellElement.__init__(self, ref, canvas, x, y)
+        GroupItemBase.__init__(self, groupBeginCMLRef, ref, canvas, x, y)
         self.kind = CellElement.OPENED_GROUP_END
 
         self.groupBeginRow = None
@@ -352,16 +350,14 @@ class OpenedGroupEnd(GroupItemBase, CellElement):
 
 
 
-class CollapsedGroup(GroupItemBase, CellElement,
-                     ColorMixin, QGraphicsRectItem):
+class CollapsedGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
 
     """Represents a collapsed group"""
 
     N_BACK_RECT = 2
 
     def __init__(self, ref, groupBeginCMLRef, canvas, x, y):
-        GroupItemBase.__init__(self, groupBeginCMLRef)
-        CellElement.__init__(self, ref, canvas, x, y)
+        GroupItemBase.__init__(self, groupBeginCMLRef, ref, canvas, x, y)
         ColorMixin.__init__(self, None, canvas.settings.collapsedGroupBGColor,
                             canvas.settings.collapsedGroupFGColor,
                             canvas.settings.collapsedGroupBorderColor,

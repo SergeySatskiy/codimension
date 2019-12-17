@@ -20,7 +20,9 @@
 """Various items used to represent a control flow on a virtual canvas"""
 
 # pylint: disable=C0305
+# pylint: disable=C0302
 # pylint: disable=W0702
+# pylint: disable=R0913
 
 from sys import maxsize
 from html import escape
@@ -94,7 +96,7 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
         self._headerRect = None
         self._sideComment = None
         self._sideCommentRect = None
-        self._badgeItem = None
+        self.badgeItem = None
         self.__docBadge = None
         self.__navBarUpdate = None
         self._connector = None
@@ -132,15 +134,15 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
         # to make the view more compact
         s = self.canvas.settings
         badgeItem = self.canvas.cells[
-            self.addr[1] - 1][self.addr[0] - 1]._badgeItem
+            self.addr[1] - 1][self.addr[0] - 1].badgeItem
 
         self._headerRect = self.getBoundingRect(self._getText())
         self.minHeight = self._headerRect.height() + \
                          2 * s.vHeaderPadding - s.scopeRectRadius
-        w = self._headerRect.width()
+        headerRectWidth = self._headerRect.width()
         if badgeItem:
-            w = max(w, badgeItem.width)
-        self.minWidth = w + s.hHeaderPadding - s.scopeRectRadius
+            headerRectWidth = max(headerRectWidth, badgeItem.width)
+        self.minWidth = headerRectWidth + s.hHeaderPadding - s.scopeRectRadius
         if badgeItem:
             if badgeItem.withinHeader():
                 self.minWidth = badgeItem.width + \
@@ -242,126 +244,147 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
                 pass
         return False
 
+    def __drawTopLeft(self):
+        """Draws the top left element of a scope"""
+        s = self.canvas.settings
+
+        # Draw connector if needed
+        if self.__needConnector() and self._connector is None:
+            self._connector = Connector(
+                self.canvas, self.baseX + s.mainLine,
+                self.baseY, self.baseX + s.mainLine,
+                self.baseY + self.canvas.height)
+            self.scene.addItem(self._connector)
+        if self.__needTopHalfConnector() and self._topHalfConnector is None:
+            self._topHalfConnector = Connector(
+                self.canvas, self.baseX + s.mainLine, self.baseY,
+                self.baseX + s.mainLine, self.baseY + self.canvas.height / 2)
+            self.scene.addItem(self._topHalfConnector)
+
+        # Draw the scope rounded rectangle when we see the top left corner
+        penWidth = s.selectPenWidth - 1
+        self.setRect(
+            self.baseX + s.hCellPadding - penWidth,
+            self.baseY + s.vCellPadding - penWidth,
+            self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+            self.canvas.minHeight - 2 * s.vCellPadding + 2 * penWidth)
+        self.scene.addItem(self)
+        self.canvas.scopeRectangle = self
+        if self.badgeItem:
+            if self.badgeItem.withinHeader():
+                headerHeight = self.canvas.cells[
+                    self.addr[1] + 1][self.addr[0]].height
+                fullHeight = headerHeight + s.scopeRectRadius
+                self.badgeItem.moveTo(
+                    self.baseX + s.hCellPadding + s.badgeShift,
+                    self.baseY + s.vCellPadding + fullHeight / 2 -
+                    self.badgeItem.height / 2)
+            else:
+                self.badgeItem.moveTo(
+                    self.baseX + s.hCellPadding + s.badgeShift,
+                    self.baseY + s.vCellPadding - self.badgeItem.height / 2)
+            self.scene.addItem(self.badgeItem)
+        # Draw a horizontal connector if needed
+        if self._connector is None:
+            if self.kind == CellElement.EXCEPT_SCOPE or (
+                    self.kind == CellElement.ELSE_SCOPE and
+                    self.__followLoop()):
+                parentCanvas = self.canvas.canvas
+                cellToTheLeft = parentCanvas.cells[
+                    self.canvas.addr[1]][self.canvas.addr[0] - 1]
+                self._connector = Connector(
+                    self.canvas,
+                    cellToTheLeft.baseX + cellToTheLeft.minWidth -
+                    s.hCellPadding + s.boxLineWidth,
+                    self.baseY + 2 * s.vCellPadding,
+                    self.baseX + s.hCellPadding - s.boxLineWidth,
+                    self.baseY + 2 * s.vCellPadding)
+                self._connector.penStyle = Qt.DotLine
+                self.scene.addItem(self._connector)
+
+        if hasattr(self.scene.parent(), "updateNavigationToolbar"):
+            self.__navBarUpdate = self.scene.parent().updateNavigationToolbar
+            self.setAcceptHoverEvents(True)
+
+    def __drawDeclaration(self):
+        """Draws the declaration item"""
+        s = self.canvas.settings
+        penWidth = s.selectPenWidth - 1
+        self.setRect(
+            self.baseX - s.scopeRectRadius - penWidth,
+            self.baseY - s.scopeRectRadius - penWidth,
+            self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+            self.height + s.scopeRectRadius + penWidth)
+        self.scene.addItem(self)
+
+    def __drawComment(self):
+        """Draws the comment item"""
+        s = self.canvas.settings
+        canvasTop = self.baseY - s.scopeRectRadius
+        movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
+            self.width - s.scopeRectRadius - s.vHeaderPadding
+        if s.hidecomments:
+            self.__sideCommentPath = getHiddenCommentPath(
+                movedBaseX + s.hHeaderPadding,
+                canvasTop + s.vHeaderPadding,
+                self._sideCommentRect.width() + 2 * s.hHiddenTextPadding,
+                self._sideCommentRect.height() + 2 * s.vHiddenTextPadding)
+        else:
+            self.__sideCommentPath = getNoCellCommentBoxPath(
+                movedBaseX + s.hHeaderPadding,
+                canvasTop + s.vHeaderPadding,
+                self._sideCommentRect.width() + 2 * s.hTextPadding,
+                self._sideCommentRect.height() + 2 * s.vTextPadding,
+                s.commentCorner)
+        penWidth = s.selectPenWidth - 1
+        if s.hidecomments:
+            self.setRect(
+                movedBaseX + s.hHeaderPadding - penWidth,
+                canvasTop + s.vHeaderPadding - penWidth,
+                self._sideCommentRect.width() +
+                2 * s.hHiddenTextPadding + 2 * penWidth,
+                self._sideCommentRect.height() +
+                2 * s.vHiddenTextPadding + 2 * penWidth)
+        else:
+            self.setRect(
+                movedBaseX + s.hHeaderPadding - penWidth,
+                canvasTop + s.vHeaderPadding - penWidth,
+                self._sideCommentRect.width() +
+                2 * s.hTextPadding + 2 * penWidth,
+                self._sideCommentRect.height() +
+                2 * s.vTextPadding + 2 * penWidth)
+        self.scene.addItem(self)
+
+    def __drawDocstring(self):
+        """Draws the docstring item"""
+        s = self.canvas.settings
+        penWidth = s.selectPenWidth - 1
+        self.setRect(
+            self.baseX - s.scopeRectRadius - penWidth,
+            self.baseY - penWidth,
+            self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+            self.height + 2 * penWidth)
+        self.scene.addItem(self)
+        if s.hidedocstrings:
+            self.scene.addItem(self.__docBadge)
+            self.__docBadge.moveTo(
+                self.baseX - s.scopeRectRadius + penWidth,
+                self.baseY + penWidth)
+
     def draw(self, scene, baseX, baseY):
         """Draws a scope"""
         self.baseX = baseX
         self.baseY = baseY
         self.scene = scene
 
-        s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            # Draw connector if needed
-            if self.__needConnector() and self._connector is None:
-                self._connector = Connector(
-                    self.canvas, baseX + s.mainLine, baseY, baseX + s.mainLine,
-                    baseY + self.canvas.height)
-                scene.addItem(self._connector)
-            if self.__needTopHalfConnector() and self._topHalfConnector is None:
-                self._topHalfConnector = Connector(
-                    self.canvas, baseX + s.mainLine, baseY,
-                    baseX + s.mainLine, baseY + self.canvas.height / 2)
-                scene.addItem(self._topHalfConnector)
-
-            # Draw the scope rounded rectangle when we see the top left corner
-            penWidth = s.selectPenWidth - 1
-            self.setRect(
-                baseX + s.hCellPadding - penWidth,
-                baseY + s.vCellPadding - penWidth,
-                self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-                self.canvas.minHeight - 2 * s.vCellPadding + 2 * penWidth)
-            scene.addItem(self)
-            self.canvas.scopeRectangle = self
-            if self._badgeItem:
-                if self._badgeItem.withinHeader():
-                    headerHeight = self.canvas.cells[
-                        self.addr[1] + 1][self.addr[0]].height
-                    fullHeight = headerHeight + s.scopeRectRadius
-                    self._badgeItem.moveTo(
-                        baseX + s.hCellPadding + s.badgeShift,
-                        baseY + s.vCellPadding + fullHeight / 2 -
-                        self._badgeItem.height / 2)
-                else:
-                    self._badgeItem.moveTo(
-                        baseX + s.hCellPadding + s.badgeShift,
-                        baseY + s.vCellPadding - self._badgeItem.height / 2)
-                scene.addItem(self._badgeItem)
-            # Draw a horizontal connector if needed
-            if self._connector is None:
-                if self.kind == CellElement.EXCEPT_SCOPE or (
-                        self.kind == CellElement.ELSE_SCOPE and
-                        self.__followLoop()):
-                    parentCanvas = self.canvas.canvas
-                    cellToTheLeft = parentCanvas.cells[
-                        self.canvas.addr[1]][self.canvas.addr[0] - 1]
-                    self._connector = Connector(
-                        self.canvas,
-                        cellToTheLeft.baseX + cellToTheLeft.minWidth -
-                        s.hCellPadding + s.boxLineWidth,
-                        baseY + 2 * s.vCellPadding,
-                        baseX + s.hCellPadding - s.boxLineWidth,
-                        baseY + 2 * s.vCellPadding)
-                    self._connector.penStyle = Qt.DotLine
-                    scene.addItem(self._connector)
-
-            if hasattr(scene.parent(), "updateNavigationToolbar"):
-                self.__navBarUpdate = scene.parent().updateNavigationToolbar
-                self.setAcceptHoverEvents(True)
-
+            self.__drawTopLeft()
         elif self.subKind == ScopeCellElement.DECLARATION:
-            penWidth = s.selectPenWidth - 1
-            self.setRect(
-                baseX - s.scopeRectRadius - penWidth,
-                baseY - s.scopeRectRadius - penWidth,
-                self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-                self.height + s.scopeRectRadius + penWidth)
-            scene.addItem(self)
+            self.__drawDeclaration()
         elif self.subKind == ScopeCellElement.COMMENT:
-            canvasTop = self.baseY - s.scopeRectRadius
-            movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
-                self.width - s.scopeRectRadius - s.vHeaderPadding
-            if s.hidecomments:
-                self.__sideCommentPath = getHiddenCommentPath(
-                    movedBaseX + s.hHeaderPadding,
-                    canvasTop + s.vHeaderPadding,
-                    self._sideCommentRect.width() + 2 * s.hHiddenTextPadding,
-                    self._sideCommentRect.height() + 2 * s.vHiddenTextPadding)
-            else:
-                self.__sideCommentPath = getNoCellCommentBoxPath(
-                    movedBaseX + s.hHeaderPadding,
-                    canvasTop + s.vHeaderPadding,
-                    self._sideCommentRect.width() + 2 * s.hTextPadding,
-                    self._sideCommentRect.height() + 2 * s.vTextPadding,
-                    s.commentCorner)
-            penWidth = s.selectPenWidth - 1
-            if s.hidecomments:
-                self.setRect(
-                    movedBaseX + s.hHeaderPadding - penWidth,
-                    canvasTop + s.vHeaderPadding - penWidth,
-                    self._sideCommentRect.width() +
-                    2 * s.hHiddenTextPadding + 2 * penWidth,
-                    self._sideCommentRect.height() +
-                    2 * s.vHiddenTextPadding + 2 * penWidth)
-            else:
-                self.setRect(
-                    movedBaseX + s.hHeaderPadding - penWidth,
-                    canvasTop + s.vHeaderPadding - penWidth,
-                    self._sideCommentRect.width() +
-                    2 * s.hTextPadding + 2 * penWidth,
-                    self._sideCommentRect.height() +
-                    2 * s.vTextPadding + 2 * penWidth)
-            scene.addItem(self)
+            self.__drawComment()
         elif self.subKind == ScopeCellElement.DOCSTRING:
-            penWidth = s.selectPenWidth - 1
-            self.setRect(
-                baseX - s.scopeRectRadius - penWidth,
-                baseY - penWidth,
-                self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-                self.height + 2 * penWidth)
-            scene.addItem(self)
-            if s.hidedocstrings:
-                scene.addItem(self.__docBadge)
-                self.__docBadge.moveTo(
-                    baseX - s.scopeRectRadius + penWidth, baseY + penWidth)
+            self.__drawDocstring()
 
     def __paintTopLeft(self, painter):
         """Paints the scope rectangle"""
@@ -668,7 +691,7 @@ class FileScopeCell(ScopeCellElement):
     def render(self):
         """Renders the file scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, "module")
+            self.badgeItem = BadgeItem(self, "module")
         return self.renderCell()
 
     def getLineRange(self):
@@ -733,7 +756,7 @@ class FunctionScopeCell(ScopeCellElement):
     def render(self):
         """Renders the function scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, "def")
+            self.badgeItem = BadgeItem(self, "def")
         return self.renderCell()
 
     def getLineRange(self):
@@ -797,7 +820,7 @@ class ClassScopeCell(ScopeCellElement):
     def render(self):
         """Renders the class scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, "class")
+            self.badgeItem = BadgeItem(self, "class")
         return self.renderCell()
 
     def getLineRange(self):
@@ -858,7 +881,7 @@ class ForScopeCell(ScopeCellElement):
     def render(self):
         """Renders the for-loop scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, "for")
+            self.badgeItem = BadgeItem(self, "for")
         return self.renderCell()
 
     def getLineRange(self):
@@ -915,7 +938,7 @@ class WhileScopeCell(ScopeCellElement):
     def render(self):
         """Renders the while-loop scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, "while")
+            self.badgeItem = BadgeItem(self, "while")
         return self.renderCell()
 
     def getLineRange(self):
@@ -958,7 +981,7 @@ class TryScopeCell(ScopeCellElement):
     def render(self):
         """Renders the try scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, "try")
+            self.badgeItem = BadgeItem(self, "try")
         return self.renderCell()
 
     def getLineRange(self):
@@ -1022,7 +1045,7 @@ class WithScopeCell(ScopeCellElement):
     def render(self):
         """Renders the with block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, "with")
+            self.badgeItem = BadgeItem(self, "with")
         return self.renderCell()
 
     def getLineRange(self):
@@ -1081,7 +1104,7 @@ class DecoratorScopeCell(ScopeCellElement):
     def render(self):
         """Renders the decorator"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, " @ ")
+            self.badgeItem = BadgeItem(self, " @ ")
         return self.renderCell()
 
     def getLineRange(self):
@@ -1141,7 +1164,7 @@ class ElseScopeCell(ScopeCellElement):
     def render(self):
         """Renders the else block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, "else")
+            self.badgeItem = BadgeItem(self, "else")
         return self.renderCell()
 
     def getLineRange(self):
@@ -1227,7 +1250,7 @@ class ExceptScopeCell(ScopeCellElement):
     def render(self):
         """Renders the except block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, "except")
+            self.badgeItem = BadgeItem(self, "except")
         return self.renderCell()
 
     def getLineRange(self):
@@ -1270,7 +1293,7 @@ class FinallyScopeCell(ScopeCellElement):
     def render(self):
         """Renders the finally block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem(self, "finally")
+            self.badgeItem = BadgeItem(self, "finally")
         return self.renderCell()
 
     def getLineRange(self):

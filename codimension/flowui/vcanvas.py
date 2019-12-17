@@ -46,7 +46,7 @@ from .minimizeditems import (MinimizedExceptCell,
                              MinimizedLeadingCommentCell,
                              MinimizedAboveCommentCell,
                              MinimizedSideCommentCell)
-from .auxitems import ConnectorCell, VacantCell, VSpacerCell, Line, Rectangle
+from .auxitems import ConnectorCell, VacantCell, VSpacerCell, Rectangle
 from .loopjumpitems import BreakCell, ContinueCell
 from .scopeitems import (ScopeCellElement, FileScopeCell, FunctionScopeCell,
                          ClassScopeCell, ForScopeCell, WhileScopeCell,

@@ -19,6 +19,8 @@
 
 """Base class for everything Codimension puts on the graphics scene"""
 
+# pylint: disable=C0305
+
 from sys import maxsize
 from html import escape
 from ui.qt import QMimeData, Qt, QApplication, QPen
@@ -209,23 +211,22 @@ class CellElement:
 
         default implementation
         """
-        if self.editor is None:
-            return
-        if event:
-            if event.buttons() != Qt.LeftButton:
-                return
+        if self.editor is not None:
+            if event:
+                if event.buttons() != Qt.LeftButton:
+                    return
 
-        GlobalData().mainWindow.raise_()
-        GlobalData().mainWindow.activateWindow()
+            GlobalData().mainWindow.raise_()
+            GlobalData().mainWindow.activateWindow()
 
-        if line is None:
-            line = self.getLineRange()[0]
-        if pos is None:
-            lineContent = self.editor.lines[line - 1]
-            pos = len(lineContent) - len(lineContent.lstrip()) + 1
+            if line is None:
+                line = self.getLineRange()[0]
+            if pos is None:
+                lineContent = self.editor.lines[line - 1]
+                pos = len(lineContent) - len(lineContent.lstrip()) + 1
 
-        self.editor.gotoLine(line, pos)
-        self.editor.setFocus()
+            self.editor.gotoLine(line, pos)
+            self.editor.setFocus()
 
     def scopedItem(self):
         """True if it is a scoped item"""
@@ -353,6 +354,7 @@ class CellElement:
 
     @staticmethod
     def getLinesSuffix(lineRange):
+        """Provides the proper suffix for the selected item tooltips"""
         if lineRange[0] == lineRange[1]:
             return 'line ' + str(lineRange[0])
         return 'lines ' + str(lineRange[0]) + "-" + str(lineRange[1])

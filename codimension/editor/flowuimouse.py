@@ -19,6 +19,8 @@
 
 """Control flow UI widget: handling mouse events"""
 
+# pylint: disable=W0702
+
 from sys import maxsize
 from flowui.scopeitems import ScopeCellElement
 from flowui.cellelement import CellElement
