@@ -20,6 +20,7 @@
 """Various comment items on a virtual canvas"""
 
 # pylint: disable=C0305
+# pylint: disable=R0913
 
 from html import escape
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsItem, QFont,
@@ -65,15 +66,6 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         # This makes double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def _getText(self):
-        """Provides text"""
-        if self._text is None:
-            self._text = self.cmlRef.getTitle()
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._text) + '</pre>')
-                self._text = ''
-        return self._text
-
     def mouseClickLinkIcon(self):
         """Follows the link"""
         if self.cmlRef.link is None:
@@ -97,15 +89,20 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self._getText()
+        title = self.cmlRef.getTitle()
+        self.setupText(self, customText=title, customReplacement='')
 
-        if self._text:
-            self._textRect = self.getBoundingRect(self._text)
-            self.minWidth = self._textRect.width() + settings.hDocLinkPadding
-            self.minHeight = self._textRect.height()
+        if self.text:
+            self.minWidth = self.textRect.width() + settings.hDocLinkPadding
+            self.minHeight = self.textRect.height()
         else:
             self.minWidth = 0
             self.minHeight = self.iconItem.iconHeight()
+            if settings.hidecomments:
+                if title:
+                    self.iconItem.setToolTip(self.iconItem.toolTip() +
+                                             '<hr/><pre>' + escape(title) +
+                                             '</pre>')
 
         self.minHeight += 2 * (settings.vCellPadding + \
                           settings.vDocLinkPadding)
@@ -178,7 +175,7 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
                                 self.baseY + settings.vCellPadding,
                                 rectWidth, rectHeight, 0, 0)
 
-        if self._text:
+        if self.text:
             # Draw the text in the rectangle
             font = QFont(settings.monoFont)
             font.setItalic(True)
@@ -190,8 +187,8 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
                 settings.hDocLinkPadding + self.iconItem.iconWidth() +
                 settings.hDocLinkPadding,
                 self.baseY + settings.vCellPadding + settings.vDocLinkPadding,
-                self._textRect.width(), self._textRect.height(),
-                Qt.AlignLeft, self._text)
+                self.textRect.width(), self.textRect.height(),
+                Qt.AlignLeft, self.text)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""

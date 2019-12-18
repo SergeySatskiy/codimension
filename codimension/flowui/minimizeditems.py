@@ -575,7 +575,7 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        return [self.ref.sideComment.begin, self.ref.sideComment.end]
+        return self.ref.sideComment.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides the tooltip"""

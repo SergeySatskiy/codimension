@@ -123,7 +123,7 @@
   - full view
   - no content, no comment, no docstring
   - no content, no comment, no docstring, no plain items, no decorators
-  - only top level classes and functions
+  - only classes and functions
 * Minor bug fixes
 
 2017 Dec 3 Sergey Satskiy <sergey.satskiy@gmail.com>

@@ -130,8 +130,10 @@ class CFlowSettings:
         self.emptyGroupYShift = self.__getNormalized('emptyGroupYShift')
         self.breakHPadding = self.__getNormalized('breakHPadding')
         self.breakVPadding = self.__getNormalized('breakVPadding')
+        self.breakRectRadius = self.__getNormalized('breakRectRadius')
         self.continueHPadding = self.__getNormalized('continueHPadding')
         self.continueVPadding = self.__getNormalized('continueVPadding')
+        self.continueRectRadius = self.__getNormalized('continueRectRadius')
 
 
 def getCflowSettings(paintDevice):

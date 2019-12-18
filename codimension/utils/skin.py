@@ -191,12 +191,14 @@ _DEFAULT_CFLOW_SETTINGS = {
     'breakBorderColor': QColor(132, 132, 132, 255),
     'breakHPadding': 4,
     'breakVPadding': 0,
+    'breakRectRadius': 2,
 
     'continueBGColor': QColor(138, 198, 209, 255),
     'continueFGColor': QColor(0, 0, 0, 255),
     'continueBorderColor': QColor(132, 132, 132, 255),
     'continueHPadding': 4,
     'continueVPadding': 0,
+    'continueRectRadius': 2,
 
     'returnBGColor': QColor(248, 248, 248, 255),
     'returnFGColor': QColor(0, 0, 0, 255),

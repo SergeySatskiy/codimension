@@ -23,6 +23,7 @@
 
 from html import escape
 from .cml import CMLVersion, CMLrt
+from .cellelement import CellElement
 
 
 class TextMixin:
@@ -40,9 +41,9 @@ class TextMixin:
     def getReplacementText(ref):
         """Provides the replacement text if so from the CML comment"""
         try:
-            rt = CMLVersion.find(ref.leadingCMLComments, CMLrt)
-            if rt:
-                return rt.getText()
+            rtComment = CMLVersion.find(ref.leadingCMLComments, CMLrt)
+            if rtComment:
+                return rtComment.getText()
         except AttributeError:
             # The leadingCMLComments attribute may be not available
             return None
@@ -55,36 +56,45 @@ class TextMixin:
             return graphicsItem.ref.getDisplayValue()
         return customText
 
-    def setupText(self, graphicsItem, customText=None):
-        """Prepares the text and its rectangle; sets tooltip if needed"""
-        from .cellelement import CellElement
-
-        replacement = TextMixin.getReplacementText(graphicsItem.ref)
-
+    @staticmethod
+    def __shouldHideText(graphicsItem):
+        """True if the text should be hidden"""
         settings = graphicsItem.canvas.settings
-        if settings.noContent and \
-            graphicsItem.kind not in [CellElement.CLASS_SCOPE,
-                                      CellElement.FUNC_SCOPE]:
+        if settings.hidecomments:
+            if graphicsItem.isComment() or graphicsItem.isCMLDoc():
+                return True
+
+        if settings.noContent:
+            if graphicsItem.kind not in [CellElement.CLASS_SCOPE,
+                                         CellElement.FUNC_SCOPE]:
+                return True
+
+        return False
+
+    def setupText(self, graphicsItem, customText=None, customReplacement=None):
+        """Prepares the text and its rectangle; sets tooltip if needed"""
+        if customReplacement is None:
+            replacement = TextMixin.getReplacementText(graphicsItem.ref)
+        else:
+            replacement = customReplacement
+
+        if TextMixin.__shouldHideText(graphicsItem):
             # The content needs to be suppressed
             tooltip = '<pre>' + \
-                      self.__getDisplayText(graphicsItem, customText) + \
+                      TextMixin.__getDisplayText(graphicsItem, customText) + \
                       '</pre>'
 
             if replacement:
-                tooltip += '<hr/>Replacement text:<br/><pre>' + \
+                tooltip += '<hr>Replacement text:<pre>' + \
                     escape(replacement) + '</pre>'
             graphicsItem.setToolTip(tooltip)
 
             self.text = ''
         else:
             # No suppression; something needs to be shown
+            self.text = TextMixin.__getDisplayText(graphicsItem, customText)
             if replacement:
+                graphicsItem.setToolTip('<pre>' + escape(self.text) + '</pre>')
                 self.text = replacement
-                graphicsItem.setToolTip(
-                    '<pre>' +
-                    escape(self.__getDisplayText(graphicsItem, customText)) +
-                    '</pre>')
-            else:
-                self.text = self.__getDisplayText(graphicsItem, customText)
         self.textRect = graphicsItem.getBoundingRect(self.text)
 

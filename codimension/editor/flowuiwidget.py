@@ -48,7 +48,7 @@ IDLE_TIMEOUT = 1500
 SMART_ZOOM_ALL = 0          # Show everything
 SMART_ZOOM_NO_CONTENT = 1   # All the boxes are without a content
 SMART_ZOOM_CONTROL_ONLY = 2 # Only scopes (except decorators) and ifs
-SMART_ZOOM_CLASS_FUNC = 3   # Only top level classes and functions
+SMART_ZOOM_CLASS_FUNC = 3   # Only classes and functions
 
 
 def getSmartZoomDescription(smartZoomLevel):
@@ -60,7 +60,7 @@ def getSmartZoomDescription(smartZoomLevel):
     elif smartZoomLevel == SMART_ZOOM_CONTROL_ONLY:
         return 'Smart zoom level: scopes (except decorators) and ifs'
     elif smartZoomLevel == SMART_ZOOM_CLASS_FUNC:
-        return 'Smart zoom level: top level classes and functions'
+        return 'Smart zoom level: only classes and functions'
     return 'Unknown smart zoom level'
 
 

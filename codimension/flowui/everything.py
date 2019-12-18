@@ -129,7 +129,8 @@ def f4( a = """
 
 # cml 1 rt text="My own header"
 def fReplaced( x ):
-    pass
+    def nested():
+        pass
 
 
 #
@@ -175,7 +176,8 @@ class C4( C5 ):
     def member2( self,      # Side 1
                  x, y ):        # Side 2
                                 # Side 3
-        pass
+        def nestedMember():
+            pass
 
 
 #

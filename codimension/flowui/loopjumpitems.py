@@ -20,8 +20,9 @@
 """break and continue cells"""
 
 # pylint: disable=C0305
+# pylint: disable=R0902
+# pylint: disable=R0913
 
-from html import escape
 from ui.qt import QGraphicsRectItem, QPen, Qt, QGraphicsItem, QBrush
 from .cellelement import CellElement
 from .colormixin import ColorMixin
@@ -29,38 +30,36 @@ from .textmixin import TextMixin
 from .auxitems import Connector
 
 
-class BreakCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
+class LoopJumpBase(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
-    """Represents a single break statement"""
+    """Base class for 'break' and 'continue'"""
 
-    def __init__(self, ref, canvas, x, y):
+    def __init__(self, ref, canvas, x, y, bgColor, fgColor, borderColor):
         CellElement.__init__(self, ref, canvas, x, y)
         TextMixin.__init__(self)
-        ColorMixin.__init__(self, ref, self.canvas.settings.breakBGColor,
-                            self.canvas.settings.breakFGColor,
-                            self.canvas.settings.breakBorderColor)
+        ColorMixin.__init__(self, ref, bgColor, fgColor, borderColor)
         QGraphicsRectItem.__init__(self)
-        self.kind = CellElement.BREAK
+
         self.connector = None
 
         # Cache for the size
-        self.x1 = None
-        self.y1 = None
-        self.w = None
-        self.h = None
+        self.xPos = None
+        self.yPos = None
+        self.rectWidth = None
+        self.rectHeight = None
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def render(self):
+    def renderCell(self, customText, hPadding, vPadding):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.setupText(self, customText='break')
+        self.setupText(self, customText=customText)
 
-        vPadding = 2 * (settings.breakVPadding + settings.vCellPadding)
+        vPadding = 2 * (vPadding + settings.vCellPadding)
         self.minHeight = self.textRect.height() + vPadding
 
-        hPadding = 2 * (settings.breakHPadding + settings.hCellPadding)
+        hPadding = 2 * (hPadding + settings.hCellPadding)
         self.minWidth = self.textRect.width() + hPadding
 
         if settings.noContent:
@@ -72,10 +71,10 @@ class BreakCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
     def __calculateSize(self):
         """Calculates the size"""
         settings = self.canvas.settings
-        self.x1 = self.baseX + settings.hCellPadding
-        self.y1 = self.baseY + settings.vCellPadding
-        self.w = self.minWidth - 2 * settings.hCellPadding
-        self.h = self.minHeight - 2 * settings.hCellPadding
+        self.xPos = self.baseX + settings.hCellPadding
+        self.yPos = self.baseY + settings.vCellPadding
+        self.rectWidth = self.minWidth - 2 * settings.hCellPadding
+        self.rectHeight = self.minHeight - 2 * settings.hCellPadding
 
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
@@ -95,146 +94,87 @@ class BreakCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = settings.selectPenWidth - 1
         self.__calculateSize()
-        self.setRect(self.x1 - penWidth, self.y1 - penWidth,
-                     self.w + 2 * penWidth, self.h + 2 * penWidth)
+        self.setRect(self.xPos - penWidth, self.yPos - penWidth,
+                     self.rectWidth + 2 * penWidth,
+                     self.rectHeight + 2 * penWidth)
         scene.addItem(self)
 
-    def paint(self, painter, option, widget):
-        """Draws the break statement"""
-        del option      # unused argument
-        del widget      # unused argument
-
+    def paintCell(self, painter, rectRadius):
+        """Draws the cell"""
         settings = self.canvas.settings
         painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
         painter.setBrush(QBrush(self.bgColor))
 
-        painter.drawRoundedRect(self.x1, self.y1, self.w, self.h, 2, 2)
+        painter.drawRoundedRect(self.xPos, self.yPos,
+                                self.rectWidth, self.rectHeight,
+                                rectRadius, rectRadius)
 
         # Draw the text in the rectangle
         pen = QPen(self.fgColor)
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
 
-        hShift = (self.w - self.textRect.width()) / 2
-        vShift = (self.h - self.textRect.height()) / 2
-        painter.drawText(self.x1 + hShift, self.y1 + vShift,
+        hShift = (self.rectWidth - self.textRect.width()) / 2
+        vShift = (self.rectHeight - self.textRect.height()) / 2
+        painter.drawText(self.xPos + hShift, self.yPos + vShift,
                          self.textRect.width(), self.textRect.height(),
                          Qt.AlignLeft, self.text)
+
+
+class BreakCell(LoopJumpBase):
+
+    """Represents a single break statement"""
+
+    def __init__(self, ref, canvas, x, y):
+        LoopJumpBase.__init__(self, ref, canvas, x, y,
+                              canvas.settings.breakBGColor,
+                              canvas.settings.breakFGColor,
+                              canvas.settings.breakBorderColor)
+        self.kind = CellElement.BREAK
+
+    def render(self):
+        """Renders the cell"""
+        return self.renderCell('break',
+                               self.canvas.settings.breakHPadding,
+                               self.canvas.settings.breakVPadding)
+
+    def paint(self, painter, option, widget):
+        """Draws the cell"""
+        del option
+        del widget
+
+        self.paintCell(painter, self.canvas.settings.breakRectRadius)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
         return 'Break at ' + CellElement.getLinesSuffix(self.getLineRange())
 
 
-class ContinueCell(CellElement, ColorMixin, QGraphicsRectItem):
+class ContinueCell(LoopJumpBase):
 
     """Represents a single continue statement"""
 
     def __init__(self, ref, canvas, x, y):
-        CellElement.__init__(self, ref, canvas, x, y)
-        ColorMixin.__init__(self, ref, self.canvas.settings.continueBGColor,
-                            self.canvas.settings.continueFGColor,
-                            self.canvas.settings.continueBorderColor)
-        QGraphicsRectItem.__init__(self)
+        LoopJumpBase.__init__(self, ref, canvas, x, y,
+                              canvas.settings.continueBGColor,
+                              canvas.settings.continueFGColor,
+                              canvas.settings.continueBorderColor)
         self.kind = CellElement.CONTINUE
-        self.__textRect = None
-        self.connector = None
-
-        # Cache for the size
-        self.x1 = None
-        self.y1 = None
-        self.w = None
-        self.h = None
-
-        # To make double click delivered
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-
-    def _getText(self):
-        """Provides the text"""
-        if self._text is None:
-            self._text = self.getReplacementText()
-            displayText = 'continue'
-            if self._text is None:
-                self._text = displayText
-            else:
-                if displayText:
-                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
-            if self.canvas.settings.noContent:
-                if displayText:
-                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
-                self._text = ''
-        return self._text
 
     def render(self):
         """Renders the cell"""
-        settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
-        vPadding = 2 * (settings.continueVPadding + settings.vCellPadding)
-        self.minHeight = self.__textRect.height() + vPadding
-        hPadding = 2 * (settings.continueHPadding + settings.hCellPadding)
-        self.minWidth = self.__textRect.width() + hPadding
-        if settings.noContent:
-            self.minWidth = max(self.minWidth, settings.minWidth)
-        self.height = self.minHeight
-        self.width = self.minWidth
-        return (self.width, self.height)
-
-    def __calculateSize(self):
-        """Calculates the size"""
-        settings = self.canvas.settings
-        self.x1 = self.baseX + settings.hCellPadding
-        self.y1 = self.baseY + settings.vCellPadding
-        self.w = self.minWidth - 2 * settings.hCellPadding
-        self.h = self.minHeight - 2 * settings.hCellPadding
-
-    def draw(self, scene, baseX, baseY):
-        """Draws the cell"""
-        self.baseX = baseX
-        self.baseY = baseY
-
-        # Add the connector as a separate scene item to make the selection
-        # working properly
-        settings = self.canvas.settings
-        self.connector = Connector(self.canvas,
-                                   baseX + settings.mainLine, baseY,
-                                   baseX + settings.mainLine,
-                                   baseY + settings.vCellPadding)
-        scene.addItem(self.connector)
-
-        # Setting the rectangle is important for the selection and for
-        # redrawing. Thus the selection pen with must be considered too.
-        penWidth = settings.selectPenWidth - 1
-        self.__calculateSize()
-        self.setRect(self.x1 - penWidth, self.y1 - penWidth,
-                     self.w + 2 * penWidth, self.h + 2 * penWidth)
-
-        scene.addItem(self)
+        return self.renderCell('continue',
+                               self.canvas.settings.continueHPadding,
+                               self.canvas.settings.continueVPadding)
 
     def paint(self, painter, option, widget):
         """Draws the break statement"""
         del option      # unused argument
         del widget      # unused argument
 
-        settings = self.canvas.settings
-        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
-        painter.setBrush(QBrush(self.bgColor))
-
-        painter.drawRoundedRect(self.x1, self.y1, self.w, self.h, 2, 2)
-
-        # Draw the text in the rectangle
-        pen = QPen(self.fgColor)
-        painter.setFont(settings.monoFont)
-        painter.setPen(pen)
-
-        hShift = (self.w - self.__textRect.width()) / 2
-        vShift = (self.h - self.__textRect.height()) / 2
-        painter.drawText(self.x1 + hShift, self.y1 + vShift,
-                         self.__textRect.width(), self.__textRect.height(),
-                         Qt.AlignLeft, self._getText())
+        self.paintCell(painter, self.canvas.settings.continueRectRadius)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Continue at lines " + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
+        return "Continue at " + CellElement.getLinesSuffix(self.getLineRange())
 

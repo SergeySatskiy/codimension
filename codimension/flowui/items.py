@@ -21,28 +21,27 @@
 
 # pylint: disable=C0305
 
-from html import escape
 from ui.qt import Qt, QPointF, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .auxitems import Connector, BadgeItem
 from .cml import CMLVersion, CMLsw
-from .routines import distance
 from .colormixin import ColorMixin
 from .iconmixin import IconMixin
 from .cellelement import CellElement
+from .textmixin import TextMixin
 
 
-class CodeBlockCell(CellElement, ColorMixin, QGraphicsRectItem):
+class CodeBlockCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
     """Represents a single code block"""
 
     def __init__(self, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, self.canvas.settings.codeBlockBGColor,
                             self.canvas.settings.codeBlockFGColor,
                             self.canvas.settings.codeBlockBorderColor)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.CODE_BLOCK
-        self.__textRect = None
         self.connector = None
 
         # To make double click delivered
@@ -51,12 +50,12 @@ class CodeBlockCell(CellElement, ColorMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
+        self.setupText(self)
 
         vPadding = 2 * (settings.vCellPadding + settings.vTextPadding)
-        self.minHeight = self.__textRect.height() + vPadding
+        self.minHeight = self.textRect.height() + vPadding
         hPadding = 2 * (settings.hCellPadding + settings.hTextPadding)
-        self.minWidth = max(self.__textRect.width() + hPadding,
+        self.minWidth = max(self.textRect.width() + hPadding,
                             settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
@@ -106,67 +105,52 @@ class CodeBlockCell(CellElement, ColorMixin, QGraphicsRectItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
 
-        textWidth = self.__textRect.width() + 2 * settings.hTextPadding
+        textWidth = self.textRect.width() + 2 * settings.hTextPadding
         textShift = (rectWidth - textWidth) / 2
         painter.drawText(
             self.baseX + settings.hCellPadding +
             settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self._getText())
+            self.textRect.width(), self.textRect.height(),
+            Qt.AlignLeft, self.text)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return 'Code block at lines ' + \
-               str(lineRange[0]) + "-" + str(lineRange[1])
+        return 'Code block at ' + \
+            CellElement.getLinesSuffix(self.getLineRange())
 
 
-class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
+class ReturnCell(CellElement,
+                 TextMixin, ColorMixin, IconMixin, QGraphicsRectItem):
 
     """Represents a single return statement"""
 
     def __init__(self, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, self.canvas.settings.returnBGColor,
                             self.canvas.settings.returnFGColor,
                             self.canvas.settings.returnBorderColor)
         IconMixin.__init__(self, canvas, 'return.svg', 'return')
         QGraphicsRectItem.__init__(self)
         self.kind = CellElement.RETURN
-        self.__textRect = None
         self.connector = None
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def _getText(self):
-        """Provides the text"""
-        if self._text is None:
-            self._text = self.getReplacementText()
-            displayText = self.ref.getDisplayValue()
-            if self._text is None:
-                self._text = displayText
-                if not self._text:
-                    self._text = "None"
-            else:
-                if displayText:
-                    self.setToolTip("<pre>" + escape(displayText) + "</pre>")
-            if self.canvas.settings.noContent:
-                if displayText:
-                    self.setToolTip("<pre>" + escape(displayText) + "</pre>")
-                self._text = ''
-        return self._text
-
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
+        customText = self.ref.getDisplayValue()
+        if not customText:
+            customText = 'None'
+        self.setupText(self, customText=customText)
 
         vPadding = 2 * (settings.vCellPadding + settings.vTextPadding)
-        self.minHeight = self.__textRect.height() + vPadding
+        self.minHeight = self.textRect.height() + vPadding
         self.minWidth = max(
-            self.__textRect.width() + 2 * settings.hCellPadding +
+            self.textRect.width() + 2 * settings.hCellPadding +
             settings.hTextPadding + settings.returnRectRadius +
             2 * settings.hTextPadding + self.iconItem.iconWidth(),
             settings.minWidth)
@@ -235,13 +219,13 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         availWidth = self.minWidth - 2 * settings.hCellPadding - \
                      self.iconItem.iconWidth() - 2 * settings.hTextPadding - \
                      settings.hTextPadding - settings.returnRectRadius
-        textShift = (availWidth - self.__textRect.width()) / 2
+        textShift = (availWidth - self.textRect.width()) / 2
         painter.drawText(
             self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self._getText())
+            self.textRect.width(), self.textRect.height(),
+            Qt.AlignLeft, self.text)
 
     def getLineRange(self):
         """Provides the item line range"""
@@ -257,36 +241,23 @@ class ReturnCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Return at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
-
-    def getDistance(self, absPos):
-        """Provides a distance between the absPos and the item"""
-        if self.ref.value is not None:
-            return distance(absPos, self.ref.body.begin, self.ref.value.end)
-        return distance(absPos, self.ref.body.begin, self.ref.body.end)
-
-    def getLineDistance(self, line):
-        """Provides a distance between the line and the item"""
-        if self.ref.value is not None:
-            return distance(line, self.ref.body.beginLine,
-                            self.ref.value.endLine)
-        return distance(line, self.ref.body.beginLine, self.ref.body.endLine)
+        return 'Return at ' + CellElement.getLinesSuffix(self.getLineRange())
 
 
-class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
+class RaiseCell(CellElement,
+                TextMixin, ColorMixin, IconMixin, QGraphicsRectItem):
 
     """Represents a single raise statement"""
 
     def __init__(self, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, self.canvas.settings.raiseBGColor,
                             self.canvas.settings.raiseFGColor,
                             self.canvas.settings.raiseBorderColor)
         IconMixin.__init__(self, canvas, 'raise.svg', 'raise')
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.RAISE
-        self.__textRect = None
         self.connector = None
 
         # To make double click delivered
@@ -295,12 +266,12 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
+        self.setupText(self)
 
         vPadding = 2 * (settings.vCellPadding + settings.vTextPadding)
-        self.minHeight = self.__textRect.height() + vPadding
+        self.minHeight = self.textRect.height() + vPadding
         self.minWidth = max(
-            self.__textRect.width() + 2 * settings.hCellPadding +
+            self.textRect.width() + 2 * settings.hCellPadding +
             settings.hTextPadding + settings.returnRectRadius +
             2 * settings.hTextPadding + self.iconItem.iconWidth(),
             settings.minWidth)
@@ -367,13 +338,13 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         availWidth = self.minWidth - 2 * settings.hCellPadding - \
                      self.iconItem.iconWidth() - 2 * settings.hTextPadding - \
                      settings.hTextPadding - settings.returnRectRadius
-        textShift = (availWidth - self.__textRect.width()) / 2
+        textShift = (availWidth - self.textRect.width()) / 2
         painter.drawText(
             self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self._getText())
+            self.textRect.width(), self.textRect.height(),
+            Qt.AlignLeft, self.text)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -389,36 +360,23 @@ class RaiseCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Raise at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
-
-    def getDistance(self, absPos):
-        """Provides a distance between the absPos and the item"""
-        if self.ref.value is not None:
-            return distance(absPos, self.ref.body.begin, self.ref.value.end)
-        return distance(absPos, self.ref.body.begin, self.ref.body.end)
-
-    def getLineDistance(self, line):
-        """Provides a distance between the line and the item"""
-        if self.ref.value is not None:
-            return distance(line,
-                            self.ref.body.beginLine, self.ref.value.endLine)
-        return distance(line, self.ref.body.beginLine, self.ref.body.endLine)
+        return 'Raise at ' + CellElement.getLinesSuffix(self.getLineRange())
 
 
-class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
+class AssertCell(CellElement,
+                 TextMixin, ColorMixin, IconMixin, QGraphicsRectItem):
 
     """Represents a single assert statement"""
 
     def __init__(self, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, self.canvas.settings.assertBGColor,
                             self.canvas.settings.assertFGColor,
                             self.canvas.settings.assertBorderColor)
         IconMixin.__init__(self, canvas, 'assert.svg', 'assert')
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.ASSERT
-        self.__textRect = None
         self.connector = None
 
         # To make double click delivered
@@ -427,7 +385,7 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
+        self.setupText(self)
 
         # for an arrow box
         singleCharRect = self.getBoundingRect('W')
@@ -436,10 +394,10 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         self.__diamondWidth = settings.ifWidth * 2 + singleCharRect.width() + \
                               2 * settings.hTextPadding
 
-        self.minHeight = self.__textRect.height() + \
+        self.minHeight = self.textRect.height() + \
                          2 * settings.vCellPadding + 2 * settings.vTextPadding
         self.minWidth = max(
-            self.__textRect.width() + 2 * settings.hCellPadding +
+            self.textRect.width() + 2 * settings.hCellPadding +
             2 * settings.hTextPadding + self.__diamondWidth,
             settings.minWidth)
         self.height = self.minHeight
@@ -516,13 +474,13 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         painter.setPen(pen)
         availWidth = \
             self.minWidth - 2 * settings.hCellPadding - self.__diamondWidth
-        textWidth = self.__textRect.width() + 2 * settings.hTextPadding
+        textWidth = self.textRect.width() + 2 * settings.hTextPadding
         textShift = (availWidth - textWidth) / 2
         painter.drawText(
             dx4 + settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self._getText())
+            self.textRect.width(), self.textRect.height(),
+            Qt.AlignLeft, self.text)
 
     def getLineRange(self):
         """Provides the line range"""
@@ -542,41 +500,23 @@ class AssertCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "Assert at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
-
-    def getDistance(self, absPos):
-        """Provides a distance between the absPos and the item"""
-        if self.ref.message is not None:
-            return distance(absPos, self.ref.body.begin, self.ref.message.end)
-        if self.ref.test is not None:
-            return distance(absPos, self.ref.body.begin, self.ref.test.end)
-        return distance(absPos, self.ref.body.begin, self.ref.body.end)
-
-    def getLineDistance(self, line):
-        """Provides a distance between the line and the item"""
-        if self.ref.message is not None:
-            return distance(line,
-                            self.ref.body.beginLine, self.ref.message.endLine)
-        if self.ref.test is not None:
-            return distance(line,
-                            self.ref.body.beginLine, self.ref.test.endLine)
-        return distance(line, self.ref.body.beginLine, self.ref.body.endLine)
+        return 'Assert at ' + CellElement.getLinesSuffix(self.getLineRange())
 
 
-class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
+class SysexitCell(CellElement,
+                  TextMixin, ColorMixin, IconMixin, QGraphicsRectItem):
 
     """Represents a single sys.exit(...) statement"""
 
     def __init__(self, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, self.canvas.settings.sysexitBGColor,
                             self.canvas.settings.sysexitFGColor,
                             self.canvas.settings.sysexitBorderColor)
         IconMixin.__init__(self, canvas, 'sysexit.svg', 'sys.exit()')
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.SYSEXIT
-        self.__textRect = None
         self.connector = None
 
         # To make double click delivered
@@ -585,13 +525,13 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
+        self.setupText(self)
 
         self.minHeight = \
-            self.__textRect.height() + \
+            self.textRect.height() + \
             2 * (settings.vCellPadding + settings.vTextPadding)
         self.minWidth = max(
-            self.__textRect.width() + 2 * settings.hCellPadding +
+            self.textRect.width() + 2 * settings.hCellPadding +
             settings.hTextPadding + settings.returnRectRadius +
             2 * settings.hTextPadding + self.iconItem.iconWidth(),
             settings.minWidth)
@@ -660,34 +600,34 @@ class SysexitCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
             self.iconItem.iconWidth() - \
             2 * settings.hTextPadding - \
             settings.hTextPadding - settings.returnRectRadius
-        textShift = (availWidth - self.__textRect.width()) / 2
+        textShift = (availWidth - self.textRect.width()) / 2
         painter.drawText(
             self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self._getText())
+            self.textRect.width(), self.textRect.height(),
+            Qt.AlignLeft, self.text)
 
     def getSelectTooltip(self):
         """Provides tooltip"""
-        lineRange = self.getLineRange()
-        return "Sys.exit() at lines " + str(lineRange[0]) + \
-               "-" + str(lineRange[1])
+        return 'Sys.exit() at ' + \
+            CellElement.getLinesSuffix(self.getLineRange())
 
 
-class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
+class ImportCell(CellElement,
+                 TextMixin, ColorMixin, IconMixin, QGraphicsRectItem):
 
     """Represents a single import statement"""
 
     def __init__(self, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, self.canvas.settings.importBGColor,
                             self.canvas.settings.importFGColor,
                             self.canvas.settings.importBorderColor)
         IconMixin.__init__(self, canvas, 'import.svg', 'import')
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.IMPORT
-        self.__textRect = None
         self.connector = None
 
         # To make double click delivered
@@ -696,12 +636,13 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
+        self.setupText(self)
+
         self.minHeight = \
-            self.__textRect.height() + 2 * settings.vCellPadding + \
+            self.textRect.height() + 2 * settings.vCellPadding + \
             2 * settings.vTextPadding
         self.minWidth = max(
-            self.__textRect.width() + 2 * settings.hCellPadding +
+            self.textRect.width() + 2 * settings.hCellPadding +
             2 * settings.hTextPadding + self.iconItem.iconWidth() +
             2 * settings.hTextPadding, settings.minWidth)
         self.height = self.minHeight
@@ -762,32 +703,31 @@ class ImportCell(CellElement, ColorMixin, IconMixin, QGraphicsRectItem):
         painter.setPen(pen)
         textRectWidth = self.minWidth - 2 * settings.hCellPadding - \
                         4 * settings.hTextPadding - self.iconItem.iconWidth()
-        textShift = (textRectWidth - self.__textRect.width()) / 2
+        textShift = (textRectWidth - self.textRect.width()) / 2
         painter.drawText(
             self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self._getText())
+            self.textRect.width(), self.textRect.height(),
+            Qt.AlignLeft, self.text)
 
     def getSelectTooltip(self):
-        """Provides the tooltip"""
         lineRange = self.getLineRange()
-        return "Import at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
+        return 'Import at ' + CellElement.getLinesSuffix(self.getLineRange())
 
 
-class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
+class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
     """Represents a single if statement"""
 
     def __init__(self, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, self.canvas.settings.ifBGColor,
                             self.canvas.settings.ifFGColor,
                             self.canvas.settings.ifBorderColor)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.IF
-        self.__textRect = None
         self.vConnector = None
         self.hConnector = None
         self.leftBadge = None
@@ -800,12 +740,12 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
+        self.setupText(self)
 
-        self.minHeight = self.__textRect.height() + \
+        self.minHeight = self.textRect.height() + \
                          2 * settings.vCellPadding + 2 * settings.vTextPadding
         self.minWidth = max(
-            self.__textRect.width() +
+            self.textRect.width() +
             2 * settings.hCellPadding + 2 * settings.hTextPadding +
             2 * settings.ifWidth,
             settings.minWidth)
@@ -910,16 +850,15 @@ class IfCell(CellElement, ColorMixin, QGraphicsRectItem):
         painter.setPen(pen)
         painter.setFont(settings.monoFont)
         availWidth = self.x3 - self.x2
-        textWidth = self.__textRect.width() + 2 * settings.hTextPadding
+        textWidth = self.textRect.width() + 2 * settings.hTextPadding
         textShift = (availWidth - textWidth) / 2
         painter.drawText(
             self.x2 + settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self._getText())
+            self.textRect.width(), self.textRect.height(),
+            Qt.AlignLeft, self.text)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return "If at lines " + str(lineRange[0]) + "-" + str(lineRange[1])
+        return 'If at ' + CellElement.getLinesSuffix(self.getLineRange())
 

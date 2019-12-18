@@ -32,6 +32,7 @@ from .cellelement import CellElement
 from .routines import distance, getNoCellCommentBoxPath, getHiddenCommentPath
 from .cml import CMLVersion
 from .colormixin import ColorMixin
+from .textmixin import TextMixin
 
 
 class ScopeHSideEdge(HSpacerCell):
@@ -69,7 +70,7 @@ class ScopeSpacer(SpacerCell):
         self.kind = CellElement.SCOPE_CORNER_EDGE
 
 
-class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
+class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
     """Base class for the scope items"""
 
@@ -87,6 +88,7 @@ class ScopeCellElement(CellElement, ColorMixin, QGraphicsRectItem):
             # Border color is borrowed from the scope for docstrings
 
         CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, bgColor, fgColor, borderColor,
                             isDocstring=isDocstring)
         QGraphicsRectItem.__init__(self)

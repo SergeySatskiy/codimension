@@ -30,6 +30,7 @@ from utils.globals import GlobalData
 from .cellelement import CellElement
 from .auxitems import Connector, SpacerCell
 from .colormixin import ColorMixin
+from .textmixin import TextMixin
 
 
 class HGroupSpacerCell(SpacerCell):
@@ -52,12 +53,13 @@ class HGroupSpacerCell(SpacerCell):
         return (self.width, self.height)
 
 
-class GroupItemBase(CellElement):
+class GroupItemBase(CellElement, TextMixin):
 
     """Common functionality for the group items"""
 
     def __init__(self, groupBeginCMLRef, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
 
         self.nestedRefs = []
 
@@ -71,29 +73,17 @@ class GroupItemBase(CellElement):
         """Provides the group ID"""
         return self.groupBeginCMLRef.id
 
-    def _getText(self):
-        """Provides the box text"""
-        if self._text is None:
-            self._text = self.groupBeginCMLRef.getTitle()
-            if self.canvas.settings.noContent:
-                if self._text:
-                    self.setToolTip('<pre>' + escape(self._text) + '</pre>')
-                self._text = ''
-        return self._text
-
     def getTitle(self):
         """Convenience for the UI"""
         return self.groupBeginCMLRef.getTitle()
 
     def getLineRange(self):
         """Provides the line range"""
-        return [self.groupBeginCMLRef.ref.beginLine,
-                self.groupEndCMLRef.ref.endLine]
+        return self.groupBeginCMLRef.ref.getLineRange()
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        return [self.groupBeginCMLRef.ref.begin,
-                self.groupEndCMLRef.ref.end]
+        return self.groupBeginCMLRef.ref.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -116,7 +106,6 @@ class EmptyGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.EMPTY_GROUP
 
-        self.__textRect = None
         self.connector = None
 
         # To make double click delivered
@@ -125,14 +114,14 @@ class EmptyGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
+        self.setupText(self, customText=self.getTitle())
 
         vPadding = 2 * (settings.vCellPadding + settings.vTextPadding) + \
                    self.N_BACK_RECT * settings.emptyGroupYShift
-        self.minHeight = self.__textRect.height() + vPadding
+        self.minHeight = self.textRect.height() + vPadding
         hPadding = 2 * (settings.hCellPadding + settings.hTextPadding) + \
                    self.N_BACK_RECT * settings.emptyGroupXShift
-        self.minWidth = max(self.__textRect.width() + hPadding,
+        self.minWidth = max(self.textRect.width() + hPadding,
                             settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
@@ -191,7 +180,7 @@ class EmptyGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
 
-        textWidth = self.__textRect.width() + 2 * settings.hTextPadding
+        textWidth = self.textRect.width() + 2 * settings.hTextPadding
         textShift = (rectWidth - textWidth) / 2
         painter.drawText(
             self.baseX + settings.hCellPadding +
@@ -199,8 +188,8 @@ class EmptyGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
             textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding +
             self.N_BACK_RECT * settings.emptyGroupYShift,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self._getText())
+            self.textRect.width(), self.textRect.height(),
+            Qt.AlignLeft, self.text)
 
 
 class OpenedGroupBegin(GroupItemBase, ColorMixin, QGraphicsRectItem):
@@ -364,7 +353,6 @@ class CollapsedGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
                             colorSpec=groupBeginCMLRef)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.COLLAPSED_GROUP
-        self.__textRect = None
         self.connector = None
 
         # To make double click delivered
@@ -373,14 +361,14 @@ class CollapsedGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
+        self.setupText(self, customText=self.getTitle())
 
         vPadding = 2 * (settings.vCellPadding + settings.vTextPadding) + \
                    self.N_BACK_RECT * settings.collapsedGroupYShift
-        self.minHeight = self.__textRect.height() + vPadding
+        self.minHeight = self.textRect.height() + vPadding
         hPadding = 2 * (settings.hCellPadding + settings.hTextPadding) + \
                    self.N_BACK_RECT * settings.collapsedGroupXShift
-        self.minWidth = max(self.__textRect.width() + hPadding,
+        self.minWidth = max(self.textRect.width() + hPadding,
                             settings.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
@@ -436,7 +424,7 @@ class CollapsedGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
 
-        textWidth = self.__textRect.width() + 2 * settings.hTextPadding
+        textWidth = self.textRect.width() + 2 * settings.hTextPadding
         textShift = (rectWidth - textWidth) / 2
         painter.drawText(
             self.baseX + settings.hCellPadding +
@@ -444,8 +432,8 @@ class CollapsedGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
             textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding +
             self.N_BACK_RECT * settings.collapsedGroupYShift,
-            self.__textRect.width(), self.__textRect.height(),
-            Qt.AlignLeft, self._getText())
+            self.textRect.width(), self.textRect.height(),
+            Qt.AlignLeft, self.text)
 
 
 
