@@ -25,21 +25,22 @@ from html import escape
 from ui.qt import QGraphicsRectItem, QPen, Qt, QGraphicsItem, QBrush
 from .cellelement import CellElement
 from .colormixin import ColorMixin
+from .textmixin import TextMixin
 from .auxitems import Connector
 
 
-class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
+class BreakCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
     """Represents a single break statement"""
 
     def __init__(self, ref, canvas, x, y):
         CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, self.canvas.settings.breakBGColor,
                             self.canvas.settings.breakFGColor,
                             self.canvas.settings.breakBorderColor)
         QGraphicsRectItem.__init__(self)
         self.kind = CellElement.BREAK
-        self.__textRect = None
         self.connector = None
 
         # Cache for the size
@@ -51,30 +52,17 @@ class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def _getText(self):
-        """Provides the text"""
-        if self._text is None:
-            self._text = self.getReplacementText()
-            displayText = 'break'
-            if self._text is None:
-                self._text = displayText
-            else:
-                if displayText:
-                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
-            if self.canvas.settings.noContent:
-                if displayText:
-                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
-                self._text = ''
-        return self._text
-
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.__textRect = self.getBoundingRect(self._getText())
+        self.setupText(self, customText='break')
+
         vPadding = 2 * (settings.breakVPadding + settings.vCellPadding)
-        self.minHeight = self.__textRect.height() + vPadding
+        self.minHeight = self.textRect.height() + vPadding
+
         hPadding = 2 * (settings.breakHPadding + settings.hCellPadding)
-        self.minWidth = self.__textRect.width() + hPadding
+        self.minWidth = self.textRect.width() + hPadding
+
         if settings.noContent:
             self.minWidth = max(self.minWidth, settings.minWidth)
         self.height = self.minHeight
@@ -127,16 +115,15 @@ class BreakCell(CellElement, ColorMixin, QGraphicsRectItem):
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
 
-        hShift = (self.w - self.__textRect.width()) / 2
-        vShift = (self.h - self.__textRect.height()) / 2
+        hShift = (self.w - self.textRect.width()) / 2
+        vShift = (self.h - self.textRect.height()) / 2
         painter.drawText(self.x1 + hShift, self.y1 + vShift,
-                         self.__textRect.width(), self.__textRect.height(),
-                         Qt.AlignLeft, self._getText())
+                         self.textRect.width(), self.textRect.height(),
+                         Qt.AlignLeft, self.text)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        lineRange = self.getLineRange()
-        return 'Break at lines ' + str(lineRange[0]) + '-' + str(lineRange[1])
+        return 'Break at ' + CellElement.getLinesSuffix(self.getLineRange())
 
 
 class ContinueCell(CellElement, ColorMixin, QGraphicsRectItem):

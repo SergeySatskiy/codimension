@@ -21,6 +21,7 @@
 
 # pylint: disable=C0305
 
+from html import escape
 from .cml import CMLVersion, CMLrt
 
 
@@ -28,24 +29,62 @@ class TextMixin:
 
     """Text mixin to support text displayed by the item and a tooltip"""
 
-    def __init__(self, ref):
-        self.text = None
-        self.replaceText = None
+    def __init__(self):
+        self.text = None            # Text to display; it may be:
+                                    # - text from the code
+                                    # - replacement text if so
+                                    # - nothing if suppressed
         self.textRect = None
-        self.tooltip = None
 
-        self.__retrieveReplacementText(ref)
-
-    def __retrieveReplacementText(self, ref):
+    @staticmethod
+    def getReplacementText(ref):
         """Provides the replacement text if so from the CML comment"""
         try:
-            rt = CMLVersion.find(self.ref.leadingCMLComments, CMLrt)
+            rt = CMLVersion.find(ref.leadingCMLComments, CMLrt)
             if rt:
-                self.replaceText = rt.getText()
+                return rt.getText()
         except AttributeError:
-            pass
+            # The leadingCMLComments attribute may be not available
+            return None
+        return None
+
+    @staticmethod
+    def __getDisplayText(graphicsItem, customText):
+        """Provides the display text"""
+        if customText is None:
+            return graphicsItem.ref.getDisplayValue()
+        return customText
 
     def setupText(self, graphicsItem, customText=None):
         """Prepares the text and its rectangle; sets tooltip if needed"""
-        self.text = customText
+        from .cellelement import CellElement
+
+        replacement = TextMixin.getReplacementText(graphicsItem.ref)
+
+        settings = graphicsItem.canvas.settings
+        if settings.noContent and \
+            graphicsItem.kind not in [CellElement.CLASS_SCOPE,
+                                      CellElement.FUNC_SCOPE]:
+            # The content needs to be suppressed
+            tooltip = '<pre>' + \
+                      self.__getDisplayText(graphicsItem, customText) + \
+                      '</pre>'
+
+            if replacement:
+                tooltip += '<hr/>Replacement text:<br/><pre>' + \
+                    escape(replacement) + '</pre>'
+            graphicsItem.setToolTip(tooltip)
+
+            self.text = ''
+        else:
+            # No suppression; something needs to be shown
+            if replacement:
+                self.text = replacement
+                graphicsItem.setToolTip(
+                    '<pre>' +
+                    escape(self.__getDisplayText(graphicsItem, customText)) +
+                    '</pre>')
+            else:
+                self.text = self.__getDisplayText(graphicsItem, customText)
+        self.textRect = graphicsItem.getBoundingRect(self.text)
 
