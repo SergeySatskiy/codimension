@@ -21,7 +21,7 @@
 
 # pylint: disable=C0305
 
-from .cml import CMLVersion, CMLcc
+from .cml import CMLVersion, CMLrt
 
 
 class TextMixin:

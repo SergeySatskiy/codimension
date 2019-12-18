@@ -243,7 +243,7 @@ class OpenedGroupBegin(GroupItemBase, ColorMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         self.topLeftControl = GroupCornerControl(self)
-        self.width = self.canvas.settings.openGroupVSpacer * 2
+        self.width = self.canvas.settings.openGroupHSpacer * 2
         self.height = self.canvas.settings.openGroupVSpacer * 2
         self.minWidth = self.width
         self.minHeight = self.height

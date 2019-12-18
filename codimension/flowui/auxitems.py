@@ -84,7 +84,8 @@ class HSpacerCell(SpacerCell):
     def __init__(self, ref, canvas, x, y, width=None):
         SpacerCell.__init__(
             self, ref, canvas, x, y,
-            width=canvas.settings.hSpacer if width is None else width)
+            width=canvas.settings.hSpacer if width is None else width,
+            height=0)
         self.kind = CellElement.H_SPACER
 
 
