@@ -94,8 +94,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         QGraphicsRectItem.__init__(self)
 
         self.subKind = subKind
-        self.docstringText = None
-        self._headerRect = None
         self._sideComment = None
         self._sideCommentRect = None
         self.badgeItem = None
@@ -114,16 +112,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def getDocstringText(self):
-        """Provides the docstring text"""
-        if self.docstringText is None:
-            self.docstringText = self.ref.docstring.getDisplayValue()
-            if self.canvas.settings.hidedocstrings:
-                self.setToolTip('<pre>' + escape(self.docstringText) +
-                                '</pre>')
-                self.docstringText = ''
-        return self.docstringText
-
     def __renderTopLeft(self):
         """Renders the top left corner of the scope"""
         s = self.canvas.settings
@@ -135,13 +123,14 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         # The declaration location uses a bit of the top cell space
         # to make the view more compact
         s = self.canvas.settings
+        self.setupText(self)
+
         badgeItem = self.canvas.cells[
             self.addr[1] - 1][self.addr[0] - 1].badgeItem
 
-        self._headerRect = self.getBoundingRect(self._getText())
-        self.minHeight = self._headerRect.height() + \
+        self.minHeight = self.textRect.height() + \
                          2 * s.vHeaderPadding - s.scopeRectRadius
-        headerRectWidth = self._headerRect.width()
+        headerRectWidth = self.textRect.width()
         if badgeItem:
             headerRectWidth = max(headerRectWidth, badgeItem.width)
         self.minWidth = headerRectWidth + s.hHeaderPadding - s.scopeRectRadius
@@ -183,18 +172,18 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
     def __renderDocstring(self):
         """Renders the scope docstring"""
         s = self.canvas.settings
-        docstringText = self.getDocstringText()
-        if not s.hidedocstrings:
-            rect = s.monoFontMetrics.boundingRect(0, 0, maxsize, maxsize, 0,
-                                                  docstringText)
-            self.minHeight = rect.height() + 2 * s.vHeaderPadding
-            self.minWidth = rect.width() + 2 * (s.hHeaderPadding -
-                                                s.scopeRectRadius)
-        else:
+        self.setupText(self, customText=self.ref.docstring.getDisplayValue(),
+                       customReplacement='')
+
+        if s.hidedocstrings:
             self.__docBadge = BadgeItem(self, 'doc')
-            self.minHeight = self.__docBadge.height + \
-                2 * (s.selectPenWidth - 1)
+            self.minHeight = self.__docBadge.height + 2 * (s.selectPenWidth - 1)
             self.minWidth = 2 * (s.hHeaderPadding - s.scopeRectRadius)
+        else:
+
+            self.minHeight = self.textRect.height() + 2 * s.vHeaderPadding
+            self.minWidth = self.textRect.width() + 2 * (s.hHeaderPadding -
+                                                         s.scopeRectRadius)
 
     def renderCell(self):
         """Provides rendering for the scope elements"""
@@ -408,14 +397,14 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         painter.setPen(pen)
         canvasLeft = self.baseX - s.scopeRectRadius
         canvasTop = self.baseY - s.scopeRectRadius
-        textHeight = self._headerRect.height()
+        textHeight = self.textRect.height()
         yShift = 0
         if hasattr(self.ref, 'sideComment'):
             yShift = s.vTextPadding
         painter.drawText(canvasLeft + s.hHeaderPadding,
                          canvasTop + s.vHeaderPadding + yShift,
-                         self._headerRect.width(), textHeight,
-                         Qt.AlignLeft, self._getText())
+                         self.textRect.width(), textHeight,
+                         Qt.AlignLeft, self.text)
 
         pen = QPen(self.borderColor)
         pen.setWidth(s.boxLineWidth)
@@ -522,7 +511,7 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
                              self.baseY + s.vHeaderPadding,
                              self.canvas.width - 2 * s.hHeaderPadding,
                              self.height - 2 * s.vHeaderPadding,
-                             Qt.AlignLeft, self.getDocstringText())
+                             Qt.AlignLeft, self.text)
 
     def paint(self, painter, option, widget):
         """Draws the corresponding scope element"""

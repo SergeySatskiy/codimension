@@ -184,45 +184,45 @@ _DEFAULT_CFLOW_SETTINGS = {
     # Code blocks and other statements
     'codeBlockBGColor': QColor(248, 248, 248, 255),
     'codeBlockFGColor': QColor(0, 0, 0, 255),
-    'codeBlockBorderColor': QColor(192, 192, 192, 255),
+    'codeBlockBorderColor': QColor(150, 150, 150, 255),
 
     'breakBGColor': QColor(250, 227, 217, 255),
     'breakFGColor': QColor(0, 0, 0, 255),
-    'breakBorderColor': QColor(132, 132, 132, 255),
+    'breakBorderColor': QColor(150, 150, 150, 255),
     'breakHPadding': 4,
     'breakVPadding': 0,
     'breakRectRadius': 2,
 
     'continueBGColor': QColor(138, 198, 209, 255),
     'continueFGColor': QColor(0, 0, 0, 255),
-    'continueBorderColor': QColor(132, 132, 132, 255),
+    'continueBorderColor': QColor(150, 150, 150, 255),
     'continueHPadding': 4,
     'continueVPadding': 0,
     'continueRectRadius': 2,
 
     'returnBGColor': QColor(248, 248, 248, 255),
     'returnFGColor': QColor(0, 0, 0, 255),
-    'returnBorderColor': QColor(192, 192, 192, 255),
+    'returnBorderColor': QColor(150, 150, 150, 255),
 
     'raiseBGColor': QColor(248, 248, 248, 255),
     'raiseFGColor': QColor(0, 0, 0, 255),
-    'raiseBorderColor': QColor(192, 192, 192, 255),
+    'raiseBorderColor': QColor(150, 150, 150, 255),
 
     'assertBGColor': QColor(248, 248, 248, 255),
     'assertFGColor': QColor(0, 0, 0, 255),
-    'assertBorderColor': QColor(192, 192, 192, 255),
+    'assertBorderColor': QColor(150, 150, 150, 255),
 
     'sysexitBGColor': QColor(248, 248, 248, 255),
     'sysexitFGColor': QColor(0, 0, 0, 255),
-    'sysexitBorderColor': QColor(192, 192, 192, 255),
+    'sysexitBorderColor': QColor(150, 150, 150, 255),
 
     'importBGColor': QColor(248, 248, 248, 255),
     'importFGColor': QColor(0, 0, 0, 255),
-    'importBorderColor': QColor(192, 192, 192, 255),
+    'importBorderColor': QColor(150, 150, 150, 255),
 
     'ifBGColor': QColor(255, 247, 188, 255),
     'ifFGColor': QColor(0, 0, 0, 255),
-    'ifBorderColor': QColor(192, 192, 192, 255),
+    'ifBorderColor': QColor(150, 150, 150, 255),
     'ifYBranchTextColor': QColor(132, 132, 132, 255),
     'ifNBranchTextColor': QColor(132, 132, 132, 255),
     'ifWidth': 10,           # One if wing width
@@ -231,7 +231,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'badgeBGColor': QColor(230, 230, 230, 255),
     'badgeFGColor': QColor(0, 0, 0, 255),
     'badgeLineWidth': 1,
-    'badgeBorderColor': QColor(180, 180, 180, 255),
+    'badgeBorderColor': QColor(150, 150, 150, 255),
     'badgeHSpacing': 2,
     'badgeVSpacing': 1,
     'badgeRadius': 2,
@@ -240,12 +240,12 @@ _DEFAULT_CFLOW_SETTINGS = {
     # Comments: leading, side & independent
     'commentBGColor': QColor(255, 255, 235, 255),
     'commentFGColor': QColor(90, 90, 90, 255),
-    'commentBorderColor': QColor(92, 92, 92, 255),
+    'commentBorderColor': QColor(150, 150, 150, 255),
     'commentCorner': 5,      # Top right comment corner
     'vHiddenCommentPadding': 3,
     'hHiddenCommentPadding': 3,
     'hiddenCommentBGColor': QColor(255, 255, 235, 255),
-    'hiddenCommentBorderColor': QColor(92, 92, 92, 255),
+    'hiddenCommentBorderColor': QColor(150, 150, 150, 255),
 
     'mainLine': 25,
 
@@ -255,59 +255,59 @@ _DEFAULT_CFLOW_SETTINGS = {
 
     'fileScopeBGColor': QColor(255, 255, 255, 255),
     'fileScopeFGColor': QColor(0, 0, 0, 255),
-    'fileScopeBorderColor': QColor(192, 192, 192, 255),
+    'fileScopeBorderColor': QColor(150, 150, 150, 255),
 
     'funcScopeBGColor': QColor(240, 240, 255, 255),
     'funcScopeFGColor': QColor(0, 0, 0, 255),
-    'funcScopeBorderColor': QColor(192, 192, 192, 255),
+    'funcScopeBorderColor': QColor(150, 150, 150, 255),
 
     'classScopeBGColor': QColor(240, 255, 240, 255),
     'classScopeFGColor': QColor(0, 0, 0, 255),
-    'classScopeBorderColor': QColor(192, 192, 192, 255),
+    'classScopeBorderColor': QColor(150, 150, 150, 255),
 
     'forScopeBGColor': QColor(198, 219, 239, 255),
     'forScopeFGColor': QColor(0, 0, 0, 255),
-    'forScopeBorderColor': QColor(192, 192, 192, 255),
+    'forScopeBorderColor': QColor(150, 150, 150, 255),
 
     'whileScopeBGColor': QColor(198, 219, 239, 255),
     'whileScopeFGColor': QColor(0, 0, 0, 255),
-    'whileScopeBorderColor': QColor(192, 192, 192, 255),
+    'whileScopeBorderColor': QColor(150, 150, 150, 255),
 
     'tryScopeBGColor': QColor(248, 248, 248, 255),
     'tryScopeFGColor': QColor(0, 0, 0, 255),
-    'tryScopeBorderColor': QColor(192, 192, 192, 255),
+    'tryScopeBorderColor': QColor(150, 150, 150, 255),
 
     'decorScopeBGColor': QColor(240, 240, 240, 255),
     'decorScopeFGColor': QColor(0, 0, 0, 255),
-    'decorScopeBorderColor': QColor(192, 192, 192, 255),
+    'decorScopeBorderColor': QColor(150, 150, 150, 255),
 
     'withScopeBGColor': QColor(248, 248, 248, 255),
     'withScopeFGColor': QColor(0, 0, 0, 255),
-    'withScopeBorderColor': QColor(192, 192, 192, 255),
+    'withScopeBorderColor': QColor(150, 150, 150, 255),
 
     'exceptScopeBGColor': QColor(240, 240, 240, 255),
     'exceptScopeFGColor': QColor(0, 0, 0, 255),
-    'exceptScopeBorderColor': QColor(192, 192, 192, 255),
+    'exceptScopeBorderColor': QColor(150, 150, 150, 255),
     'hiddenExceptBGColor': QColor(240, 240, 240, 255),
-    'hiddenExceptBorderColor': QColor(192, 192, 192, 255),
+    'hiddenExceptBorderColor': QColor(150, 150, 150, 255),
     'hHiddenExceptPadding': 3,
     'vHiddenExceptPadding': 3,
 
     'finallyScopeBGColor': QColor(248, 248, 248, 255),
     'finallyScopeFGColor': QColor(0, 0, 0, 255),
-    'finallyScopeBorderColor': QColor(192, 192, 192, 255),
+    'finallyScopeBorderColor': QColor(150, 150, 150, 255),
 
     'forElseScopeBGColor': QColor(198, 219, 239, 255),
     'forElseScopeFGColor': QColor(0, 0, 0, 255),
-    'forElseScopeBorderColor': QColor(192, 192, 192, 255),
+    'forElseScopeBorderColor': QColor(150, 150, 150, 255),
 
     'whileElseScopeBGColor': QColor(198, 219, 239, 255),
     'whileElseScopeFGColor': QColor(0, 0, 0, 255),
-    'whileElseScopeBorderColor': QColor(192, 192, 192, 255),
+    'whileElseScopeBorderColor': QColor(150, 150, 150, 255),
 
     'tryElseScopeBGColor': QColor(248, 248, 248, 255),
     'tryElseScopeFGColor': QColor(0, 0, 0, 255),
-    'tryElseScopeBorderColor': QColor(192, 192, 192, 255),
+    'tryElseScopeBorderColor': QColor(150, 150, 150, 255),
 
     # Groups
     'openGroupVSpacer': 3,
@@ -321,13 +321,13 @@ _DEFAULT_CFLOW_SETTINGS = {
 
     'collapsedGroupBGColor': QColor(245, 255, 255, 255),
     'collapsedGroupFGColor': QColor(0, 0, 0, 255),
-    'collapsedGroupBorderColor': QColor(32, 32, 32, 255),
+    'collapsedGroupBorderColor': QColor(150, 150, 150, 255),
     'collapsedGroupXShift': 4,
     'collapsedGroupYShift': 4,
 
     'emptyGroupBGColor': QColor(245, 255, 255, 255),
     'emptyGroupFGColor': QColor(0, 0, 0, 255),
-    'emptyGroupBorderColor': QColor(32, 32, 32, 255),
+    'emptyGroupBorderColor': QColor(150, 150, 150, 255),
     'emptyGroupXShift': 4,
     'emptyGroupYShift': 4,
 
@@ -340,7 +340,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'vDocLinkPadding': 3,   # in pixels (top and bottom)
     'docLinkBGColor': QColor(219, 230, 246, 255),
     'docLinkFGColor': QColor(0, 0, 0, 255),
-    'docLinkBorderColor': QColor(0, 0, 0, 255),
+    'docLinkBorderColor': QColor(150, 150, 150, 255),
 
     'hiddenCommentText': 'c'}
 

@@ -22,11 +22,10 @@
 # pylint: disable=C0305
 
 from sys import maxsize
-from html import escape
 from ui.qt import QMimeData, Qt, QApplication, QPen
 from utils.globals import GlobalData
 from utils.config import DEFAULT_ENCODING
-from .cml import CMLVersion, CMLrt
+from .cml import CMLVersion
 from .routines import distance
 
 
@@ -112,7 +111,6 @@ class CellElement:
         self.addr = [x, y]          # indexes in the current canvas
         self.canvas = canvas        # reference to the canvas
         self.editor = None
-        self._text = None
 
         self.tailComment = False
 
@@ -305,31 +303,6 @@ class CellElement:
         """
         lineRange = self.getLineRange()
         return distance(line, lineRange[0], lineRange[1])
-
-    def getReplacementText(self):
-        """Provides the CML replacement text if so"""
-        if hasattr(self.ref, "leadingCMLComments"):
-            rt = CMLVersion.find(self.ref.leadingCMLComments, CMLrt)
-            if rt:
-                return rt.getText()
-        return None
-
-    def _getText(self):
-        """Default implementation of the item text provider"""
-        if self._text is None:
-            self._text = self.getReplacementText()
-            displayText = self.ref.getDisplayValue()
-            if self._text is None:
-                self._text = displayText
-            else:
-                if displayText:
-                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
-            if self.canvas.settings.noContent and \
-               self.kind not in [self.CLASS_SCOPE, self.FUNC_SCOPE]:
-                if displayText:
-                    self.setToolTip('<pre>' + escape(displayText) + '</pre>')
-                self._text = ''
-        return self._text
 
     def getFirstLine(self):
         """Provides the first line"""
