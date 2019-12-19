@@ -114,7 +114,8 @@ class EmptyGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.setupText(self, customText=self.getTitle())
+        self.setupText(self, customText=self.getTitle(),
+                       customReplacement='')
 
         vPadding = 2 * (settings.vCellPadding + settings.vTextPadding) + \
                    self.N_BACK_RECT * settings.emptyGroupYShift
@@ -361,7 +362,8 @@ class CollapsedGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
-        self.setupText(self, customText=self.getTitle())
+        self.setupText(self, customText=self.getTitle(),
+                       customReplacement='')
 
         vPadding = 2 * (settings.vCellPadding + settings.vTextPadding) + \
                    self.N_BACK_RECT * settings.collapsedGroupYShift

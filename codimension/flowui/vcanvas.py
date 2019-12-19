@@ -560,6 +560,12 @@ class VirtualCanvas:
                     return vacantRow
         return vacantRow
 
+    def __createIndependentComment(self, ref, canvas, x, y):
+        """Creates an independent comment"""
+        if self.settings.hidecomments:
+            return MinimizedIndependentCommentCell(ref, canvas, x, y)
+        return IndependentCommentCell(ref, canvas, x, y)
+
     def layoutSuite(self, vacantRow, suite,
                     scopeKind=None, cflow=None, column=1,
                     leadingCMLComments=None):
@@ -777,14 +783,9 @@ class VirtualCanvas:
                 self.__allocateCell(vacantRow, column + 1)
                 self.cells[vacantRow][column] = \
                     ConnectorCell(CONN_N_S, self, column, vacantRow)
-                if self.settings.hidecomments:
-                    self.cells[vacantRow][column + 1] = \
-                        MinimizedIndependentCommentCell(item, self, column + 1,
-                                                        vacantRow)
-                else:
-                    self.cells[vacantRow][column + 1] = \
-                        IndependentCommentCell(item, self, column + 1,
-                                               vacantRow)
+                self.cells[vacantRow][column + 1] = \
+                    self.__createIndependentComment(item, self, column + 1,
+                                                    vacantRow)
                 vacantRow += 1
                 continue
 
@@ -1109,12 +1110,8 @@ class VirtualCanvas:
                 if nBranch.leadingComment and not self.settings.noComment:
                     # Draw as an independent comment: insert into the layout
                     conn = ConnectorCell(CONN_N_S, branchLayout, 0, 0)
-                    if self.settings.hidecomments:
-                        cItem = MinimizedIndependentCommentCell(
-                            nBranch.leadingComment, branchLayout, 1, 0)
-                    else:
-                        cItem = IndependentCommentCell(nBranch.leadingComment,
-                                                       branchLayout, 1, 0)
+                    cItem = self.__createIndependentComment(
+                        nBranch.leadingComment, branchLayout, 1, 0)
                     branchLayout.cells.append([])
                     branchLayout.cells[0].append(conn)
                     branchLayout.cells[0].append(cItem)
@@ -1123,12 +1120,8 @@ class VirtualCanvas:
                     # Draw as an independent comment: insert into the layout
                     rowIndex = scopeCommentRows - 1
                     conn = ConnectorCell(CONN_N_S, branchLayout, 0, rowIndex)
-                    if self.settings.hidecomments:
-                        cItem = MinimizedIndependentCommentCell(
-                            nBranch.sideComment, branchLayout, 1, rowIndex)
-                    else:
-                        cItem = IndependentCommentCell(
-                            nBranch.sideComment, branchLayout, 1, rowIndex)
+                    cItem = self.__createIndependentComment(
+                        nBranch.sideComment, branchLayout, 1, rowIndex)
                     cItem.sideForElse = True
                     branchLayout.cells.append([])
                     branchLayout.cells[rowIndex].append(conn)

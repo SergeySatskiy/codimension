@@ -381,14 +381,20 @@ class CFSceneContextMenuMixin:
 
         # If it was one item selection and there was a previous text then
         # set it for editing
+        previousText = None
         if len(self.selectedItems()) == 1:
+            previousText = ''
             cmlComment = CMLVersion.find(
                 self.selectedItems()[0].ref.leadingCMLComments, CMLrt)
             if cmlComment is not None:
-                dlg.setText(cmlComment.getText())
+                previousText = cmlComment.getText()
+                dlg.setText(previousText)
 
         if dlg.exec_():
             replacementText = dlg.text()
+            if previousText == replacementText:
+                return
+
             editor = self.selectedItems()[0].getEditor()
             with editor:
                 for item in self.sortSelectedReverse():

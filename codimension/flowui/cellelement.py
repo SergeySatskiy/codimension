@@ -133,7 +133,8 @@ class CellElement:
 
     def __str__(self):
         return kindToString(self.kind) + \
-               "[" + str(self.width) + ":" + str(self.height) + "]"
+            '[' + str(self.minWidth) + 'x' + str(self.minHeight) + '] -> [' + \
+            str(self.width) + 'x' + str(self.height) + ']'
 
     def render(self):
         """Renders the graphics considering settings"""

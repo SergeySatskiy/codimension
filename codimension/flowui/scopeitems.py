@@ -177,10 +177,10 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
         if s.hidedocstrings:
             self.__docBadge = BadgeItem(self, 'doc')
+            self.__docBadge.setToolTip('<pre>' + escape(self.text) + '</pre>')
             self.minHeight = self.__docBadge.height + 2 * (s.selectPenWidth - 1)
             self.minWidth = 2 * (s.hHeaderPadding - s.scopeRectRadius)
         else:
-
             self.minHeight = self.textRect.height() + 2 * s.vHeaderPadding
             self.minWidth = self.textRect.width() + 2 * (s.hHeaderPadding -
                                                          s.scopeRectRadius)
