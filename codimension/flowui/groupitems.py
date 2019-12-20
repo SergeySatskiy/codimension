@@ -23,7 +23,6 @@
 # pylint: disable=R0902
 # pylint: disable=R0913
 
-from html import escape
 from ui.qt import (Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem, QFrame,
                    QLabel, QVBoxLayout, QPalette, QApplication)
 from utils.globals import GlobalData

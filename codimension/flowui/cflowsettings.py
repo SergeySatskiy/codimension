@@ -19,6 +19,10 @@
 
 """The settings used for rendering and drawing"""
 
+# pylint: disable=C0305
+# pylint: disable=R0902
+# pylint: disable=R0903
+
 # The recommended way to use custom settings is to derive from
 # CFlowSettings and change the required options in a new class __init__.
 # Then to create an instance of the custom settings class and use it
@@ -31,6 +35,21 @@ from utils.globals import GlobalData
 from utils.colorfont import getZoomedCFMonoFont, getZoomedCFBadgeFont
 from utils.settings import Settings
 
+NEED_NORMALIZE = ('ifWidth', 'commentCorner', 'hCellPadding',
+                  'vCellPadding', 'hTextPadding', 'vTextPadding',
+                  'hHeaderPadding', 'vHeaderPadding', 'vSpacer',
+                  'mainLine', 'minWidth', 'returnRectRadius',
+                  'hDocLinkPadding', 'vDocLinkPadding', 'hHiddenExceptPadding',
+                  'vHiddenExceptPadding', 'vHiddenCommentPadding',
+                  'hHiddenCommentPadding', 'badgeHSpacing', 'badgeVSpacing',
+                  'badgeShift', 'scopeRectRadius', 'badgeRadius',
+                  'openGroupVSpacer', 'openGroupHSpacer',
+                  'collapsedGroupXShift', 'collapsedGroupYShift',
+                  'emptyGroupXShift', 'emptyGroupYShift', 'breakHPadding',
+                  'breakVPadding', 'breakRectRadius', 'continueHPadding',
+                  'continueVPadding', 'continueRectRadius',
+                  'hiddenCommentRectRadius', 'hiddenExceptRectRadius',
+                  'ifSideCommentVShift')
 
 class CFlowSettings:
 
@@ -97,44 +116,11 @@ class CFlowSettings:
         noZoomHeight = self.__noZoomFontMetrics.boundingRect('W').height()
         self.coefficient = float(newHeight) / float(noZoomHeight)
 
-        self.ifWidth = self.__getNormalized('ifWidth')
-        self.commentCorner = self.__getNormalized('commentCorner')
-        self.hCellPadding = self.__getNormalized('hCellPadding')
-        self.vCellPadding = self.__getNormalized('vCellPadding')
-        self.hTextPadding = self.__getNormalized('hTextPadding')
-        self.vTextPadding = self.__getNormalized('vTextPadding')
-        self.vHiddenTextPadding = self.__getNormalized('vHiddenTextPadding')
-        self.hHiddenTextPadding = self.__getNormalized('hHiddenTextPadding')
-        self.hHeaderPadding = self.__getNormalized('hHeaderPadding')
-        self.vHeaderPadding = self.__getNormalized('vHeaderPadding')
-        self.vSpacer = self.__getNormalized('vSpacer')
-        self.mainLine = self.__getNormalized('mainLine')
-        self.minWidth = self.__getNormalized('minWidth')
-        self.returnRectRadius = self.__getNormalized('returnRectRadius')
-        self.hDocLinkPadding = self.__getNormalized('hDocLinkPadding')
-        self.vDocLinkPadding = self.__getNormalized('vDocLinkPadding')
-        self.hHiddenExceptPadding = self.__getNormalized('hHiddenExceptPadding')
-        self.vHiddenExceptPadding = self.__getNormalized('vHiddenExceptPadding')
-        self.vHiddenCommentPadding = self.__getNormalized('vHiddenCommentPadding')
-        self.hHiddenCommentPadding = self.__getNormalized('hHiddenCommentPadding')
-        self.badgeHSpacing = self.__getNormalized('badgeHSpacing')
-        self.badgeVSpacing = self.__getNormalized('badgeVSpacing')
-        self.badgeShift = self.__getNormalized('badgeShift')
-        self.scopeRectRadius = self.__getNormalized('scopeRectRadius')
-        self.badgeRadius = self.__getNormalized('badgeRadius')
-        self.openGroupVSpacer = self.__getNormalized('openGroupVSpacer')
-        self.openGroupHSpacer = self.__getNormalized('openGroupHSpacer')
-        self.collapsedGroupXShift = self.__getNormalized('collapsedGroupXShift')
-        self.collapsedGroupYShift = self.__getNormalized('collapsedGroupYShift')
-        self.emptyGroupXShift = self.__getNormalized('emptyGroupXShift')
-        self.emptyGroupYShift = self.__getNormalized('emptyGroupYShift')
-        self.breakHPadding = self.__getNormalized('breakHPadding')
-        self.breakVPadding = self.__getNormalized('breakVPadding')
-        self.breakRectRadius = self.__getNormalized('breakRectRadius')
-        self.continueHPadding = self.__getNormalized('continueHPadding')
-        self.continueVPadding = self.__getNormalized('continueVPadding')
-        self.continueRectRadius = self.__getNormalized('continueRectRadius')
+        for paramName in NEED_NORMALIZE:
+            setattr(self, paramName, self.__getNormalized(paramName))
 
 
 def getCflowSettings(paintDevice):
+    """Provides the control flow settings"""
     return CFlowSettings(paintDevice, GlobalData().skin.cflowSettings)
+

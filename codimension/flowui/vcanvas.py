@@ -119,7 +119,8 @@ class VirtualCanvas:
 
     """Holds the control flow representation"""
 
-    def __init__(self, settings, x, y, validGroups, collapsedGroups, parent):
+    def __init__(self, settings, xAddr, yAddr,
+                 validGroups, collapsedGroups, parent):
         self.kind = CellElement.VCANVAS
 
         # the item instances from items.py or other virtual canvases
@@ -129,7 +130,7 @@ class VirtualCanvas:
         self.canvas = parent
 
         self.settings = settings
-        self.addr = [x, y]
+        self.addr = [xAddr, yAddr]
 
         # Layout support
         self.__currentCF = None
@@ -320,12 +321,9 @@ class VirtualCanvas:
                 self.__allocateCell(row, column + 1)
                 self.cells[row][column] = ConnectorCell(CONN_N_S, self,
                                                         column, row)
-                if self.settings.hidecomments:
-                    self.cells[row][column + 1] = MinimizedLeadingCommentCell(
-                        item, self, column + 1, row)
-                else:
-                    self.cells[row][column + 1] = LeadingCommentCell(
-                        item, self, column + 1, row)
+
+                self.cells[row][column + 1] = self.__createLeadingComment(
+                    item, self, column + 1, row)
                 row += 1
         return row
 
@@ -560,11 +558,29 @@ class VirtualCanvas:
                     return vacantRow
         return vacantRow
 
-    def __createIndependentComment(self, ref, canvas, x, y):
+    def __createIndependentComment(self, ref, canvas, xPos, yPos):
         """Creates an independent comment"""
         if self.settings.hidecomments:
-            return MinimizedIndependentCommentCell(ref, canvas, x, y)
-        return IndependentCommentCell(ref, canvas, x, y)
+            return MinimizedIndependentCommentCell(ref, canvas, xPos, yPos)
+        return IndependentCommentCell(ref, canvas, xPos, yPos)
+
+    def __createLeadingComment(self, ref, canvas, xPos, yPos):
+        """Creates a leading comment"""
+        if self.settings.hidecomments:
+            return MinimizedLeadingCommentCell(ref, canvas, xPos, yPos)
+        return LeadingCommentCell(ref, canvas, xPos, yPos)
+
+    def __createAboveComment(self, ref, canvas, xPos, yPos):
+        """Creates an above comment"""
+        if self.settings.hidecomments:
+            return MinimizedAboveCommentCell(ref, canvas, xPos, yPos)
+        return AboveCommentCell(ref, canvas, xPos, yPos)
+
+    def __createSideComment(self, ref, canvas, xPos, yPos):
+        """Creates a side comment"""
+        if self.settings.hidecomments:
+            return MinimizedSideCommentCell(ref, canvas, xPos, yPos)
+        return SideCommentCell(ref, canvas, xPos, yPos)
 
     def layoutSuite(self, vacantRow, suite,
                     scopeKind=None, cflow=None, column=1,
@@ -651,14 +667,9 @@ class VirtualCanvas:
                                 decScope.cells[rowAddr][1] = \
                                     ConnectorCell(CONN_N_S,
                                                   decScope, 1, rowAddr)
-                                if self.settings.hidecomments:
-                                    decScope.cells[rowAddr][2] = \
-                                        MinimizedLeadingCommentCell(
-                                            scopeItem, decScope, 2, rowAddr)
-                                else:
-                                    decScope.cells[rowAddr][2] = \
-                                        LeadingCommentCell(
-                                            scopeItem, decScope, 2, rowAddr)
+                                decScope.cells[rowAddr][2] = \
+                                    self.__createLeadingComment(
+                                        scopeItem, decScope, 2, rowAddr)
 
                         decScope.__allocateCell(decScopeRows - 2, 1)
 
@@ -733,10 +744,7 @@ class VirtualCanvas:
                         self.__allocateAndSet(cRow, column, docComment)
                         cRow += 1
                     if item.leadingComment:
-                        if self.settings.hidecomments:
-                            comment = MinimizedAboveCommentCell(item, self, column, cRow)
-                        else:
-                            comment = AboveCommentCell(item, self, column, cRow)
+                        comment = self.__createAboveComment(item, self, column, cRow)
                         comment.needConnector = True
                         self.__allocateAndSet(cRow, column, comment)
 
@@ -749,10 +757,7 @@ class VirtualCanvas:
                             self.__allocateAndSet(cRow, column + 1, docComment)
                             cRow += 1
                         if aboveItems[1][1]:
-                            if self.settings.hidecomments:
-                                comment = MinimizedAboveCommentCell(item.elsePart, self, column + 1, cRow)
-                            else:
-                                comment = AboveCommentCell(item.elsePart, self, column + 1, cRow)
+                            comment = self.__createAboveComment(item.elsePart, self, column + 1, cRow)
                             comment.needConnector = aboveItems[1][0] is not None
                             self.__allocateAndSet(cRow, column + 1, comment)
 
@@ -815,10 +820,7 @@ class VirtualCanvas:
                         self.__allocateAndSet(cRow, column, docComment)
                         cRow += 1
                     if item.leadingComment:
-                        if self.settings.hidecomments:
-                            comment = MinimizedAboveCommentCell(item, self, column, cRow)
-                        else:
-                            comment = AboveCommentCell(item, self, column, cRow)
+                        comment = self.__createAboveComment(item, self, column, cRow)
                         comment.needConnector = True
                         self.__allocateAndSet(cRow, column, comment)
 
@@ -850,10 +852,7 @@ class VirtualCanvas:
                                 self.__allocateAndSet(cRow, nextColumn, docComment)
                                 cRow += 1
                             if aboveItems[exceptIndex][2]:
-                                if self.settings.hidecomments:
-                                    comment = MinimizedAboveCommentCell(exceptPart, self, nextColumn, cRow)
-                                else:
-                                    comment = AboveCommentCell(exceptPart, self, nextColumn, cRow)
+                                comment = self.__createAboveComment(exceptPart, self, nextColumn, cRow)
                                 comment.needConnector = aboveItems[exceptIndex][1] is not None
                                 self.__allocateAndSet(cRow, nextColumn, comment)
 
@@ -982,11 +981,7 @@ class VirtualCanvas:
                                   cellClass(item, self, column, vacantRow))
 
             if item.sideComment and not self.settings.noComment:
-                if self.settings.hidecomments:
-                    comment = MinimizedSideCommentCell(item, self, column + 1,
-                                                       vacantRow)
-                else:
-                    comment = SideCommentCell(item, self, column + 1, vacantRow)
+                comment = self.__createSideComment(item, self, column + 1, vacantRow)
                 self.__allocateAndSet(vacantRow, column + 1, comment)
             vacantRow += 1
 
@@ -1009,10 +1004,7 @@ class VirtualCanvas:
         self.__allocateAndSet(vacantRow, 1, topConnector)
 
         if yBranch.sideComment and not self.settings.noComment:
-            if self.settings.hidecomments:
-                comment = MinimizedSideCommentCell(yBranch, self, 2, vacantRow)
-            else:
-                comment = SideCommentCell(yBranch, self, 2, vacantRow)
+            comment = self.__createSideComment(yBranch, self, 2, vacantRow)
             self.__allocateAndSet(vacantRow, 2, comment)
         vacantRow += 1
 

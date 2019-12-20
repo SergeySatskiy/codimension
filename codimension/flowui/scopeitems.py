@@ -29,7 +29,7 @@ from html import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from .auxitems import BadgeItem, Connector, HSpacerCell, VSpacerCell, SpacerCell
 from .cellelement import CellElement
-from .routines import distance, getNoCellCommentBoxPath, getHiddenCommentPath
+from .routines import distance, getNoCellCommentBoxPath
 from .cml import CMLVersion
 from .colormixin import ColorMixin
 from .textmixin import TextMixin
@@ -102,8 +102,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         QGraphicsRectItem.__init__(self)
 
         self.subKind = subKind
-        self._sideComment = None
-        self._sideCommentRect = None
         self.badgeItem = None
         self.__docBadge = None
         self.__navBarUpdate = None
@@ -160,21 +158,21 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
     def __renderComment(self):
         """Renders the scope declaration"""
         s = self.canvas.settings
-        self._sideCommentRect = self.getBoundingRect(
-            self._getSideComment())
+        self.setupText(self, customText=self.getSideComment(),
+                       customReplacement='')
         if s.hidecomments:
-            self.minHeight = self.iconItem.height() + \
+            self.minHeight = self.iconItem.iconHeight() + \
                 2 * (s.vHeaderPadding + s.vHiddenCommentPadding) - \
                 s.scopeRectRadius
-            self.minWidth = s.hCellPadding + self.iconItem.width() + \
+            self.minWidth = s.hCellPadding + self.iconItem.iconWidth() + \
                 2 * s.hHiddenCommentPadding + s.hHeaderPadding - \
                 s.scopeRectRadius
         else:
-            self.minHeight = self._sideCommentRect.height() + \
+            self.minHeight = self.textRect.height() + \
                 2 * (s.vHeaderPadding + s.vTextPadding) - \
                 s.scopeRectRadius
             self.minWidth = s.hCellPadding + s.hTextPadding + \
-                self._sideCommentRect.width() + s.hTextPadding + \
+                self.textRect.width() + s.hTextPadding + \
                 s.hHeaderPadding - s.scopeRectRadius
 
     def __renderDocstring(self):
@@ -322,37 +320,37 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         canvasTop = self.baseY - s.scopeRectRadius
         movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
             self.width - s.scopeRectRadius - s.vHeaderPadding
-        if s.hidecomments:
-            self.__sideCommentPath = getHiddenCommentPath(
-                movedBaseX + s.hHeaderPadding,
-                canvasTop + s.vHeaderPadding,
-                self._sideCommentRect.width() + 2 * s.hHiddenTextPadding,
-                self._sideCommentRect.height() + 2 * s.vHiddenTextPadding)
-        else:
-            self.__sideCommentPath = getNoCellCommentBoxPath(
-                movedBaseX + s.hHeaderPadding,
-                canvasTop + s.vHeaderPadding,
-                self._sideCommentRect.width() + 2 * s.hTextPadding,
-                self._sideCommentRect.height() + 2 * s.vTextPadding,
-                s.commentCorner)
         penWidth = s.selectPenWidth - 1
         if s.hidecomments:
             self.setRect(
                 movedBaseX + s.hHeaderPadding - penWidth,
                 canvasTop + s.vHeaderPadding - penWidth,
-                self._sideCommentRect.width() +
-                2 * s.hHiddenTextPadding + 2 * penWidth,
-                self._sideCommentRect.height() +
-                2 * s.vHiddenTextPadding + 2 * penWidth)
+                self.iconItem.iconWidth() +
+                2 * (s.hHiddenCommentPadding + penWidth),
+                self.iconItem.iconHeight() +
+                2 * (s.vHiddenCommentPadding + penWidth))
+            self.iconItem.setPos(
+                movedBaseX + s.hHeaderPadding + s.hHiddenCommentPadding,
+                canvasTop + s.vHeaderPadding + s.vHiddenCommentPadding)
+            self.iconItem.setToolTip(self.text)
+
+            self.scene.addItem(self)
+            self.scene.addItem(self.iconItem)
         else:
             self.setRect(
                 movedBaseX + s.hHeaderPadding - penWidth,
                 canvasTop + s.vHeaderPadding - penWidth,
-                self._sideCommentRect.width() +
+                self.textRect.width() +
                 2 * s.hTextPadding + 2 * penWidth,
-                self._sideCommentRect.height() +
+                self.textRect.height() +
                 2 * s.vTextPadding + 2 * penWidth)
-        self.scene.addItem(self)
+            self.__sideCommentPath = getNoCellCommentBoxPath(
+                movedBaseX + s.hHeaderPadding,
+                canvasTop + s.vHeaderPadding,
+                self.textRect.width() + 2 * s.hTextPadding,
+                self.textRect.height() + 2 * s.vTextPadding,
+                s.commentCorner)
+            self.scene.addItem(self)
 
     def __drawDocstring(self):
         """Draws the docstring item"""
@@ -442,25 +440,26 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         # spacing on top, bottom and right for the comment box
         movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
             self.width - s.scopeRectRadius - s.vHeaderPadding
-        painter.drawPath(self.__sideCommentPath)
 
-        pen = QPen(s.commentFGColor)
-        painter.setFont(s.monoFont)
-        painter.setPen(pen)
         if s.hidecomments:
-            painter.drawText(
-                movedBaseX + s.hHeaderPadding + s.hHiddenTextPadding,
-                canvasTop + s.vHeaderPadding + s.vHiddenTextPadding,
-                self._sideCommentRect.width(),
-                self._sideCommentRect.height(),
-                Qt.AlignLeft, self._getSideComment())
+            painter.drawRoundedRect(
+                movedBaseX + s.hHeaderPadding,
+                canvasTop + s.vHeaderPadding,
+                self.iconItem.iconWidth() + 2 * s.hHiddenCommentPadding,
+                self.iconItem.iconHeight() + 2 * s.vHiddenCommentPadding,
+                s.hiddenCommentRectRadius, s.hiddenCommentRectRadius)
         else:
+            painter.drawPath(self.__sideCommentPath)
+
+            pen = QPen(s.commentFGColor)
+            painter.setFont(s.monoFont)
+            painter.setPen(pen)
             painter.drawText(
                 movedBaseX + s.hHeaderPadding + s.hTextPadding,
                 canvasTop + s.vHeaderPadding + s.vTextPadding,
-                self._sideCommentRect.width(),
-                self._sideCommentRect.height(),
-                Qt.AlignLeft, self._getSideComment())
+                self.textRect.width(),
+                self.textRect.height(),
+                Qt.AlignLeft, self.text)
 
     def __paintDocstring(self, painter):
         """Paints the docstring"""
@@ -729,28 +728,20 @@ class FunctionScopeCell(ScopeCellElement):
                                   canvas.settings.funcScopeBorderColor)
         self.kind = CellElement.FUNC_SCOPE
 
-    def _getSideComment(self):
+    def getSideComment(self):
         """Provides a side comment"""
-        if self._sideComment is None:
-            # The comment may start not at the first line of the function
-            if self.canvas.settings.hidecomments:
-                linesBefore = 0
-            else:
-                linesBefore = self.ref.sideComment.beginLine - \
-                              self.ref.name.beginLine
-            self._sideComment = '\n' * linesBefore + \
-                                self.ref.sideComment.getDisplayValue()
+        # The comment may start not at the first line of the function
+        if self.canvas.settings.hidecomments:
+            return self.ref.sideComment.getDisplayValue()
 
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
-                self._sideComment = self.canvas.settings.hiddenCommentText
-            else:
-                # The comment may stop before the end of the arguments list
-                linesAfter = self.ref.arguments.endLine - \
-                             self.ref.sideComment.endLine
-                if linesAfter > 0:
-                    self._sideComment += '\n' * linesAfter
-        return self._sideComment
+        linesBefore = self.ref.sideComment.beginLine - \
+                      self.ref.name.beginLine
+        sideComment = '\n' * linesBefore + \
+                      self.ref.sideComment.getDisplayValue()
+
+        # The comment may stop before the end of the arguments list
+        linesAfter = self.ref.arguments.endLine - self.ref.sideComment.endLine
+        return sideComment + '\n' * linesAfter
 
     def render(self):
         """Renders the function scope element"""
@@ -790,31 +781,24 @@ class ClassScopeCell(ScopeCellElement):
                                   canvas.settings.classScopeBorderColor)
         self.kind = CellElement.CLASS_SCOPE
 
-    def _getSideComment(self):
+    def getSideComment(self):
         """Provides a side comment"""
-        if self._sideComment is None:
-            # The comment may start not at the first line of the class
-            if self.canvas.settings.hidecomments:
-                linesBefore = 0
-            else:
-                linesBefore = self.ref.sideComment.beginLine - \
-                              self.ref.name.beginLine
-            self._sideComment = '\n' * linesBefore + \
-                                self.ref.sideComment.getDisplayValue()
-            if self.ref.baseClasses is None:
-                lastLine = self.ref.name.endLine
-            else:
-                lastLine = self.ref.baseClasses.endLine
+        # The comment may start not at the first line of the class
+        if self.canvas.settings.hidecomments:
+            return self.ref.sideComment.getDisplayValue()
 
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
-                self._sideComment = self.canvas.settings.hiddenCommentText
-            else:
-                # The comment may stop before the end of the arguments list
-                linesAfter = lastLine - self.ref.sideComment.endLine
-                if linesAfter > 0:
-                    self._sideComment += '\n' * linesAfter
-        return self._sideComment
+        linesBefore = self.ref.sideComment.beginLine - \
+                      self.ref.name.beginLine
+        sideComment = '\n' * linesBefore + \
+                      self.ref.sideComment.getDisplayValue()
+        if self.ref.baseClasses is None:
+            lastLine = self.ref.name.endLine
+        else:
+            lastLine = self.ref.baseClasses.endLine
+
+        # The comment may stop before the end of the arguments list
+        linesAfter = lastLine - self.ref.sideComment.endLine
+        return sideComment + '\n' * linesAfter
 
     def render(self):
         """Renders the class scope element"""
@@ -854,28 +838,20 @@ class ForScopeCell(ScopeCellElement):
                                   canvas.settings.forScopeBorderColor)
         self.kind = CellElement.FOR_SCOPE
 
-    def _getSideComment(self):
+    def getSideComment(self):
         """Provides a side comment"""
-        if self._sideComment is None:
-            # The comment may start not at the first line of the function
-            if self.canvas.settings.hidecomments:
-                linesBefore = 0
-            else:
-                linesBefore = self.ref.sideComment.beginLine - \
-                              self.ref.iteration.beginLine
-            self._sideComment = '\n' * linesBefore + \
-                                self.ref.sideComment.getDisplayValue()
+        # The comment may start not at the first line of the function
+        if self.canvas.settings.hidecomments:
+            return self.ref.sideComment.getDisplayValue()
 
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
-                self._sideComment = self.canvas.settings.hiddenCommentText
-            else:
-                # The comment may stop before the end of the arguments list
-                linesAfter = self.ref.iteration.endLine - \
-                             self.ref.sideComment.endLine
-                if linesAfter > 0:
-                    self._sideComment += '\n' * linesAfter
-        return self._sideComment
+        linesBefore = self.ref.sideComment.beginLine - \
+                      self.ref.iteration.beginLine
+        sideComment = '\n' * linesBefore + \
+                      self.ref.sideComment.getDisplayValue()
+
+        # The comment may stop before the end of the arguments list
+        linesAfter = self.ref.iteration.endLine - self.ref.sideComment.endLine
+        return sideComment + '\n' * linesAfter
 
     def render(self):
         """Renders the for-loop scope element"""
@@ -911,28 +887,20 @@ class WhileScopeCell(ScopeCellElement):
                                   canvas.settings.whileScopeBorderColor)
         self.kind = CellElement.WHILE_SCOPE
 
-    def _getSideComment(self):
+    def getSideComment(self):
         """Provides a side comment"""
-        if self._sideComment is None:
-            # The comment may start not at the first line of the function
-            if self.canvas.settings.hidecomments:
-                linesBefore = 0
-            else:
-                linesBefore = self.ref.sideComment.beginLine - \
-                              self.ref.condition.beginLine
-            self._sideComment = '\n' * linesBefore + \
-                                self.ref.sideComment.getDisplayValue()
+        # The comment may start not at the first line of the function
+        if self.canvas.settings.hidecomments:
+            return self.ref.sideComment.getDisplayValue()
 
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
-                self._sideComment = self.canvas.settings.hiddenCommentText
-            else:
-                # The comment may stop before the end of the arguments list
-                linesAfter = self.ref.condition.endLine - \
-                             self.ref.sideComment.endLine
-                if linesAfter > 0:
-                    self._sideComment += '\n' * linesAfter
-        return self._sideComment
+        linesBefore = self.ref.sideComment.beginLine - \
+                      self.ref.condition.beginLine
+        sideComment = '\n' * linesBefore + \
+                      self.ref.sideComment.getDisplayValue()
+
+        # The comment may stop before the end of the arguments list
+        linesAfter = self.ref.condition.endLine - self.ref.sideComment.endLine
+        return sideComment + '\n' * linesAfter
 
     def render(self):
         """Renders the while-loop scope element"""
@@ -968,14 +936,9 @@ class TryScopeCell(ScopeCellElement):
                                   canvas.settings.tryScopeBorderColor)
         self.kind = CellElement.TRY_SCOPE
 
-    def _getSideComment(self):
+    def getSideComment(self):
         """Provides a side comment"""
-        if self._sideComment is None:
-            self._sideComment = self.ref.sideComment.getDisplayValue()
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
-                self._sideComment = self.canvas.settings.hiddenCommentText
-        return self._sideComment
+        return self.ref.sideComment.getDisplayValue()
 
     def render(self):
         """Renders the try scope element"""
@@ -1019,27 +982,20 @@ class WithScopeCell(ScopeCellElement):
                                   canvas.settings.withScopeBorderColor)
         self.kind = CellElement.WITH_SCOPE
 
-    def _getSideComment(self):
+    def getSideComment(self):
         """Provides a side comment"""
-        if self._sideComment is None:
-            # The comment may start not at the first line of the function
-            if self.canvas.settings.hidecomments:
-                linesBefore = 0
-            else:
-                linesBefore = self.ref.sideComment.beginLine - \
-                              self.ref.items.beginLine
-            self._sideComment = '\n' * linesBefore + \
-                                self.ref.sideComment.getDisplayValue()
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
-                self._sideComment = self.canvas.settings.hiddenCommentText
-            else:
-                # The comment may stop before the end of the arguments list
-                linesAfter = self.ref.items.endLine - \
-                             self.ref.sideComment.endLine
-                if linesAfter > 0:
-                    self._sideComment += '\n' * linesAfter
-        return self._sideComment
+        # The comment may start not at the first line of the function
+        if self.canvas.settings.hidecomments:
+            return self.ref.sideComment.getDisplayValue()
+
+        linesBefore = self.ref.sideComment.beginLine - \
+                      self.ref.items.beginLine
+        sideComment = '\n' * linesBefore + \
+                      self.ref.sideComment.getDisplayValue()
+
+        # The comment may stop before the end of the arguments list
+        linesAfter = self.ref.items.endLine - self.ref.sideComment.endLine
+        return sideComment + '\n' * linesAfter
 
     def render(self):
         """Renders the with block"""
@@ -1075,30 +1031,24 @@ class DecoratorScopeCell(ScopeCellElement):
                                   canvas.settings.decorScopeBorderColor)
         self.kind = CellElement.DECOR_SCOPE
 
-    def _getSideComment(self):
+    def getSideComment(self):
         """Provides a side comment"""
-        if self._sideComment is None:
-            # The comment may start not at the first line of the function
-            if self.canvas.settings.hidecomments:
-                linesBefore = 0
-            else:
-                linesBefore = self.ref.sideComment.beginLine - \
-                              self.ref.name.beginLine
-            self._sideComment = '\n' * linesBefore + \
-                                self.ref.sideComment.getDisplayValue()
-            if self.ref.arguments is None:
-                lastLine = self.ref.name.endLine
-            else:
-                lastLine = self.ref.arguments.endLine
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
-                self._sideComment = self.canvas.settings.hiddenCommentText
-            else:
-                # The comment may stop before the end of the arguments list
-                linesAfter = lastLine - self.ref.sideComment.endLine
-                if linesAfter > 0:
-                    self._sideComment += '\n' * linesAfter
-        return self._sideComment
+        # The comment may start not at the first line of the function
+        if self.canvas.settings.hidecomments:
+            return self.ref.sideComment.getDisplayValue()
+
+        linesBefore = self.ref.sideComment.beginLine - \
+                      self.ref.name.beginLine
+        sideComment = '\n' * linesBefore + \
+                      self.ref.sideComment.getDisplayValue()
+        if self.ref.arguments is None:
+            lastLine = self.ref.name.endLine
+        else:
+            lastLine = self.ref.arguments.endLine
+
+        # The comment may stop before the end of the arguments list
+        linesAfter = lastLine - self.ref.sideComment.endLine
+        return sideComment + '\n' * linesAfter
 
     def render(self):
         """Renders the decorator"""
@@ -1151,14 +1101,9 @@ class ElseScopeCell(ScopeCellElement):
         self.statement = statement
         self.after = self
 
-    def _getSideComment(self):
+    def getSideComment(self):
         """Provides a side comment"""
-        if self._sideComment is None:
-            self._sideComment = self.ref.sideComment.getDisplayValue()
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
-                self._sideComment = self.canvas.settings.hiddenCommentText
-        return self._sideComment
+        return self.ref.sideComment.getDisplayValue()
 
     def render(self):
         """Renders the else block"""
@@ -1221,30 +1166,21 @@ class ExceptScopeCell(ScopeCellElement):
                                   canvas.settings.exceptScopeBorderColor)
         self.kind = CellElement.EXCEPT_SCOPE
 
-    def _getSideComment(self):
+    def getSideComment(self):
         """Provides a side comment"""
-        if self._sideComment is None:
-            # The comment may start not at the first line of the except
-            if self.ref.clause is None:
-                self._sideComment = self.ref.sideComment.getDisplayValue()
-            else:
-                if self.canvas.settings.hidecomments:
-                    linesBefore = 0
-                else:
-                    linesBefore = self.ref.sideComment.beginLine - \
-                                  self.ref.clause.beginLine
-                self._sideComment = '\n' * linesBefore + \
-                                    self.ref.sideComment.getDisplayValue()
-                lastLine = self.ref.clause.endLine
-                if not self.canvas.settings.hidecomments:
-                    # The comment may stop before the end of the arguments list
-                    linesAfter = lastLine - self.ref.sideComment.endLine
-                    if linesAfter > 0:
-                        self._sideComment += '\n' * linesAfter
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
-                self._sideComment = self.canvas.settings.hiddenCommentText
-        return self._sideComment
+        # The comment may start not at the first line of the except
+        if self.ref.clause is None or self.canvas.settings.hidecomments:
+            return self.ref.sideComment.getDisplayValue()
+
+        linesBefore = self.ref.sideComment.beginLine - \
+                      self.ref.clause.beginLine
+        sideComment = '\n' * linesBefore + \
+                      self.ref.sideComment.getDisplayValue()
+        lastLine = self.ref.clause.endLine
+
+        # The comment may stop before the end of the arguments list
+        linesAfter = lastLine - self.ref.sideComment.endLine
+        return sideComment + '\n' * linesAfter
 
     def render(self):
         """Renders the except block"""
@@ -1280,14 +1216,9 @@ class FinallyScopeCell(ScopeCellElement):
                                   canvas.settings.finallyScopeBorderColor)
         self.kind = CellElement.FINALLY_SCOPE
 
-    def _getSideComment(self):
+    def getSideComment(self):
         """Provides the side comment"""
-        if self._sideComment is None:
-            self._sideComment = self.ref.sideComment.getDisplayValue()
-            if self.canvas.settings.hidecomments:
-                self.setToolTip('<pre>' + escape(self._sideComment) + '</pre>')
-                self._sideComment = self.canvas.settings.hiddenCommentText
-        return self._sideComment
+        return self.ref.sideComment.getDisplayValue()
 
     def render(self):
         """Renders the finally block"""

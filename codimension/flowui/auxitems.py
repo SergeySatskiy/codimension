@@ -276,6 +276,18 @@ class Connector(CellElement, QGraphicsPathItem):
         self.setPen(pen)
         QGraphicsPathItem.paint(self, painter, option, widget)
 
+    def getLastPoint(self):
+        """Provides the last point"""
+        path = self.path()
+        lastElement = path.elementAt(path.elementCount() - 1)
+        return (lastElement.x, lastElement.y)
+
+    def getFirstPoint(self):
+        """Provides the last point"""
+        path = self.path()
+        firstElement = path.elementAt(0)
+        return (firstElement.x, firstElement.y)
+
     @staticmethod
     def getSelectTooltip():
         """Provides the tooltip"""

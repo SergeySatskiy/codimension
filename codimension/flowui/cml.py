@@ -213,7 +213,8 @@ class CMLcc(CMLCommentBase, CMLColorBase):
         CMLVersion.validate(self.ref)
 
         self.populateColors()
-        if self.bgColor is None and self.fgColor is None and self.border is None:
+        if self.bgColor is None and \
+                self.fgColor is None and self.border is None:
             raise Exception("The '" + CMLcc.CODE + "' CML comment does not "
                             "supply neither background nor foreground color "
                             "nor border color")
@@ -264,7 +265,8 @@ class CMLdoc(CMLCommentBase, CMLColorBase):
 
         if self.link is None and self.anchor is None:
             raise Exception("The '" + CMLdoc.CODE +
-                            "' CML comment supplies neither a link nor an anchor")
+                            "' CML comment supplies neither "
+                            "a link nor an anchor")
         if self.anchor:
             if ' ' in self.anchor or '\t' in self.anchor:
                 raise Exception("The '" + CMLdoc.CODE +
@@ -275,14 +277,14 @@ class CMLdoc(CMLCommentBase, CMLColorBase):
     def description():
         """Provides the CML comment description"""
         return "The '" + CMLdoc.CODE + \
-               "' comment is used to provide a link to a documentation.\n" \
-               "Supported properties:\n" \
-               "- 'link': link to the appropriate documentation\n" \
-               "- 'anchor': this ID could be used to provide a link to this comment\n" \
-               "- 'title': what to display on graphics\n" \
-               "- color properties as described in the common section\n\n" \
-               "Example:\n" \
-               "# cml 1 " + CMLdoc.CODE + " link=file:doc/mydoc.md title=\"See more\""
+            "' comment is used to provide a link to a documentation.\n" \
+            "Supported properties:\n" \
+            "- 'link': link to the appropriate documentation\n" \
+            "- 'anchor': this ID could be used to provide a link to this comment\n" \
+            "- 'title': what to display on graphics\n" \
+            "- color properties as described in the common section\n\n" \
+            "Example:\n" \
+            "# cml 1 " + CMLdoc.CODE + " link=file:doc/mydoc.md title=\"See more\""
 
     @staticmethod
     def generate(link, anchor, title, background, foreground, border, pos=1):
@@ -563,9 +565,9 @@ class CMLVersion:
             # This is a special case for CML comments for the module.
             # They need to be considered as belonging to the module suite.
             if hasattr(item, "leadingCMLComments"):
-                warnings += CMLVersion.validateCMLList(item.leadingCMLComments,
-                                                       True, scopeGroupStack,
-                                                       validGroups, allGroupId)
+                warnings += CMLVersion.validateCMLList(
+                    item.leadingCMLComments, True, scopeGroupStack,
+                    validGroups, allGroupId)
 
         # Some items are containers
         if item.kind == IF_FRAGMENT:
@@ -579,61 +581,57 @@ class CMLVersion:
                     warnings += CMLVersion.validateCMLList(
                         part.leadingCMLComments, False, None, None, None,
                         'elif or else parts')
-                warnings += CMLVersion.validateCMLComments(part, validGroups,
-                                                           allGroupId, False)
+                warnings += CMLVersion.validateCMLComments(
+                    part, validGroups, allGroupId, False)
         elif item.kind in [FOR_FRAGMENT, WHILE_FRAGMENT]:
             if item.elsePart:
                 warnings += CMLVersion.validateCMLList(
                     item.elsePart.leadingCMLComments, False, None, None, None,
                     'loop else parts')
-                warnings += CMLVersion.validateCMLComments(item.elsePart,
-                                                           validGroups,
-                                                           allGroupId, False)
+                warnings += CMLVersion.validateCMLComments(
+                    item.elsePart, validGroups, allGroupId, False)
         elif item.kind == TRY_FRAGMENT:
             if item.elsePart:
                 warnings += CMLVersion.validateCMLList(
-                    item.elsePart.leadingCMLComments, False, None, None, None,
-                    'try else parts')
-                warnings += CMLVersion.validateCMLComments(item.elsePart,
-                                                           validGroups,
-                                                           allGroupId, False)
+                    item.elsePart.leadingCMLComments, False,
+                    None, None, None, 'try else parts')
+                warnings += CMLVersion.validateCMLComments(
+                    item.elsePart, validGroups, allGroupId, False)
             if item.finallyPart:
                 warnings += CMLVersion.validateCMLList(
-                    item.finallyPart.leadingCMLComments, False, None, None, None,
-                    'try finally parts')
-                warnings += CMLVersion.validateCMLComments(item.finallyPart,
-                                                           validGroups,
-                                                           allGroupId, False)
+                    item.finallyPart.leadingCMLComments, False,
+                    None, None, None, 'try finally parts')
+                warnings += CMLVersion.validateCMLComments(
+                    item.finallyPart, validGroups, allGroupId, False)
             for part in item.exceptParts:
-                warnings += CMLVersion.validateCMLList(part.leadingCMLComments,
-                                                       False, None, None, None,
-                                                       'try except parts')
-                warnings += CMLVersion.validateCMLComments(part, validGroups,
-                                                           allGroupId, False)
+                warnings += CMLVersion.validateCMLList(
+                    part.leadingCMLComments, False,
+                    None, None, None, 'try except parts')
+                warnings += CMLVersion.validateCMLComments(
+                    part, validGroups, allGroupId, False)
         elif item.kind in [CONTROL_FLOW_FRAGMENT,
                            CLASS_FRAGMENT, FUNCTION_FRAGMENT]:
             if item.docstring:
                 warnings += CMLVersion.validateCMLList(
-                    item.docstring.leadingCMLComments, False, None, None, None,
-                    'docstrings')
+                    item.docstring.leadingCMLComments, False,
+                    None, None, None, 'docstrings')
                 warnings += CMLVersion.validateCMLList(
-                    item.docstring.sideCMLComments, False, None, None, None,
-                    'docstrings')
+                    item.docstring.sideCMLComments, False,
+                    None, None, None, 'docstrings')
 
             if item.kind in [CLASS_FRAGMENT, FUNCTION_FRAGMENT]:
                 if item.decorators:
                     for decorator in item.decorators:
                         warnings += CMLVersion.validateCMLList(
-                            decorator.leadingCMLComments, False, None, None, None,
-                            'decorators')
+                            decorator.leadingCMLComments, False,
+                            None, None, None, 'decorators')
                         warnings += CMLVersion.validateCMLList(
-                            decorator.sideCMLComments, False, None, None, None,
-                            'decorators')
+                            decorator.sideCMLComments, False,
+                            None, None, None, 'decorators')
 
         if hasattr(item, "sideCMLComments"):
-            warnings += CMLVersion.validateCMLList(item.sideCMLComments,
-                                                   False, None, None, None,
-                                                   'side comments')
+            warnings += CMLVersion.validateCMLList(
+                item.sideCMLComments, False, None, None, None, 'side comments')
 
         if hasattr(item, "suite"):
             for index, nestedItem in enumerate(item.suite):

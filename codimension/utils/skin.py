@@ -157,10 +157,6 @@ _DEFAULT_CFLOW_SETTINGS = {
     'hTextPadding': 4,      # in pixels (left and right)
     'vTextPadding': 4,      # in pixels (top and bottom)
 
-    # E.g. comments could be hidden so they need to become smaller
-    'vHiddenTextPadding': 0,
-    'hHiddenTextPadding': 2,
-
     # Scope header (file, decor, loops etc) paddings
     'hHeaderPadding': 5,
     'vHeaderPadding': 5,
@@ -246,6 +242,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     'hHiddenCommentPadding': 3,
     'hiddenCommentBGColor': QColor(255, 255, 235, 255),
     'hiddenCommentBorderColor': QColor(150, 150, 150, 255),
+    'hiddenCommentRectRadius': 2,
+    'ifSideCommentVShift': 10,
 
     'mainLine': 25,
 
@@ -292,6 +290,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'hiddenExceptBorderColor': QColor(150, 150, 150, 255),
     'hHiddenExceptPadding': 3,
     'vHiddenExceptPadding': 3,
+    'hiddenExceptRectRadius': 3,
 
     'finallyScopeBGColor': QColor(248, 248, 248, 255),
     'finallyScopeFGColor': QColor(0, 0, 0, 255),
@@ -340,10 +339,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'vDocLinkPadding': 3,   # in pixels (top and bottom)
     'docLinkBGColor': QColor(219, 230, 246, 255),
     'docLinkFGColor': QColor(0, 0, 0, 255),
-    'docLinkBorderColor': QColor(150, 150, 150, 255),
-
-    'hiddenCommentText': 'c'}
-
+    'docLinkBorderColor': QColor(150, 150, 150, 255)}
 
 
 class Skin:

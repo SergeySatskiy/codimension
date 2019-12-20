@@ -42,6 +42,7 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
         self.rectWidth = None
         self.rectHeight = None
         self.connector = None
+        self.rectRadius = None
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -49,6 +50,11 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
     def renderCell(self, hIconPadding, vIconPadding):
         """Renders the cell"""
         settings = self.canvas.settings
+
+        if self.kind == CellElement.EXCEPT_MINIMIZED:
+            self.rectRadius = settings.hiddenExceptRectRadius
+        else:
+            self.rectRadius = settings.hiddenCommentRectRadius
 
         self.rectWidth = self.iconItem.iconWidth() + 2 * hIconPadding
         self.rectHeight = self.iconItem.iconHeight() + 2 * vIconPadding
@@ -61,7 +67,7 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
         return (self.width, self.height)
 
     def drawCell(self, scene, baseX, baseY, hIconPadding,
-                 setupConnector, hShift=0):
+                 setupConnector):
         """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
@@ -70,21 +76,25 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
         setupConnector()
         scene.addItem(self.connector)
 
+        # xPos matches the connector (which could be drawn in any direction)
+        xPos = max(self.connector.getFirstPoint()[0],
+                   self.connector.getFirstPoint()[0])
+
         settings = self.canvas.settings
         penWidth = settings.selectPenWidth - 1
-        self.setRect(baseX + settings.hCellPadding - penWidth + hShift,
+        self.setRect(xPos - penWidth,
                      baseY + settings.vCellPadding - penWidth,
                      self.rectWidth + 2 * penWidth,
                      self.rectHeight + 2 * penWidth)
         scene.addItem(self)
 
         self.iconItem.setPos(
-            baseX + settings.hCellPadding + hIconPadding + hShift,
+            xPos + hIconPadding,
             baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
         scene.addItem(self.iconItem)
 
     def paintCell(self, painter, bgColor, borderColor,
-                  option, widget, hShift=0):
+                  option, widget):
         """Draws the independent comment"""
         del option
         del widget
@@ -93,13 +103,14 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
         painter.setPen(self.getPainterPen(self.isSelected(), borderColor))
         painter.setBrush(QBrush(bgColor))
 
-        painter.drawRoundedRect(self.baseX + settings.hCellPadding + hShift,
+        # xPos matches the connector (which could be drawn in any direction)
+        xPos = max(self.connector.getFirstPoint()[0],
+                   self.connector.getFirstPoint()[0])
+
+        painter.drawRoundedRect(xPos,
                                 self.baseY + settings.vCellPadding,
                                 self.rectWidth, self.rectHeight,
-                                settings.scopeRectRadius,
-                                settings.scopeRectRadius)
-
-
+                                self.rectRadius, self.rectRadius)
 
 
 class MinimizedExceptCell(MinimizedCellBase):
@@ -447,17 +458,15 @@ class MinimizedAboveCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
         self.drawCell(scene, baseX, baseY,
                       settings.hHiddenCommentPadding,
-                      self.__setupConnector,
-                      hShift=settings.mainLine + settings.hCellPadding)
+                      self.__setupConnector)
 
     def paint(self, painter, option, widget):
         """Draws the independent comment"""
         settings = self.canvas.settings
-        hShift = settings.mainLine + settings.hCellPadding
         self.paintCell(painter,
                        settings.hiddenCommentBGColor,
                        settings.hiddenCommentBorderColor,
-                       option, widget, hShift)
+                       option, widget)
 
     def adjustWidth(self):
         """No need to adjust the width"""
@@ -479,8 +488,6 @@ class MinimizedAboveCommentCell(MinimizedCommentBase, MinimizedCellBase):
 class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
 
     """Represents a minimized side comment"""
-
-    IF_SIDE_SHIFT = 6
 
     def __init__(self, ref, canvas, x, y):
         MinimizedCommentBase.__init__(self)
@@ -515,11 +522,14 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
             # The first non-connector cell must be the 'if' cell
             ifCell = self.canvas.cells[self.addr[1]][index]
 
+            yPos = self.baseY + settings.vCellPadding + \
+                   settings.ifSideCommentVShift
+
             self.connector = Connector(
                 self.canvas, leftEdge + settings.hCellPadding,
-                self.baseY + ifCell.minHeight / 2 + self.IF_SIDE_SHIFT,
+                yPos,
                 ifCell.baseX + ifCell.minWidth - settings.hCellPadding,
-                self.baseY + ifCell.minHeight / 2 + self.IF_SIDE_SHIFT)
+                yPos)
         else:
             # Regular box
             leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth

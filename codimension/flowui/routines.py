@@ -19,6 +19,8 @@
 
 """Various routines used in other places"""
 
+# pylint: disable=C0305
+
 from ui.qt import QPainterPath
 from .cml import CMLdoc
 
@@ -30,14 +32,8 @@ def distance(val, begin, end):
     return min(abs(val - begin), abs(val - end))
 
 
-def getCommentBoxPath(settings, baseX, baseY, width, height,
-                      enforceHidden=False):
+def getCommentBoxPath(settings, baseX, baseY, width, height):
     """Provides the comment box path"""
-    if settings.hidecomments or enforceHidden:
-        return getHiddenCommentPath(baseX + settings.hCellPadding,
-                                    baseY + settings.vCellPadding,
-                                    width - 2 * settings.hCellPadding,
-                                    height - 2 * settings.vCellPadding)
     return getNoCellCommentBoxPath(baseX + settings.hCellPadding,
                                    baseY + settings.vCellPadding,
                                    width - 2 * settings.hCellPadding,
@@ -45,28 +41,20 @@ def getCommentBoxPath(settings, baseX, baseY, width, height,
                                    settings.commentCorner)
 
 
-def getNoCellCommentBoxPath(x, y, width, height, corner):
+def getNoCellCommentBoxPath(xPos, yPos, width, height, corner):
     """Provides the path for exactly specified rectangle"""
     path = QPainterPath()
-    path.moveTo(x, y)
-    path.lineTo(x + width - corner, y)
-    path.lineTo(x + width, y + corner)
-    path.lineTo(x + width, y + height)
-    path.lineTo(x, y + height)
-    path.lineTo(x, y)
+    path.moveTo(xPos, yPos)
+    path.lineTo(xPos + width - corner, yPos)
+    path.lineTo(xPos + width, yPos + corner)
+    path.lineTo(xPos + width, yPos + height)
+    path.lineTo(xPos, yPos + height)
+    path.lineTo(xPos, yPos)
 
     # -1 is to avoid sharp corners of the lines
-    path.moveTo(x + width - corner, y + 1)
-    path.lineTo(x + width - corner, y + corner)
-    path.lineTo(x + width - 1, y + corner)
-    return path
-
-
-def getHiddenCommentPath(x, y, width, height):
-    """Provides the path for the hidden comment"""
-    path = QPainterPath()
-    path.moveTo(x, y)
-    path.addRoundedRect(x, y, width, height, 3, 3)
+    path.moveTo(xPos + width - corner, yPos + 1)
+    path.lineTo(xPos + width - corner, yPos + corner)
+    path.lineTo(xPos + width - 1, yPos + corner)
     return path
 
 

@@ -712,7 +712,7 @@ class ImportCell(CellElement,
             Qt.AlignLeft, self.text)
 
     def getSelectTooltip(self):
-        lineRange = self.getLineRange()
+        """Provides the select tooltip"""
         return 'Import at ' + CellElement.getLinesSuffix(self.getLineRange())
 
 

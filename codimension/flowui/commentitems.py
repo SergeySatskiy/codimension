@@ -350,8 +350,6 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
 
     """Represents a single side comment"""
 
-    IF_SIDE_SHIFT = 6
-
     def __init__(self, ref, canvas, x, y):
         CommentCellBase.__init__(self, ref, canvas, x, y)
         QGraphicsPathItem.__init__(self)
@@ -446,11 +444,14 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
             # The first non-connector cell must be the 'if' cell
             ifCell = self.canvas.cells[self.addr[1]][index]
 
+            yPos = self.baseY + settings.vCellPadding + \
+                   settings.ifSideCommentVShift
+
             self.connector = Connector(
                 self.canvas, self._leftEdge + settings.hCellPadding,
-                self.baseY + ifCell.minHeight / 2 + self.IF_SIDE_SHIFT,
+                yPos,
                 ifCell.baseX + ifCell.minWidth - settings.hCellPadding,
-                self.baseY + ifCell.minHeight / 2 + self.IF_SIDE_SHIFT)
+                yPos)
         else:
             # Regular box
             self._leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
