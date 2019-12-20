@@ -28,6 +28,11 @@ class IconMixin:
     """Icon (svg) mixin for items like import"""
 
     def __init__(self, canvas, fName, tooltip=None):
+        if fName is None:
+            # Needed for the scope items. Not all kinds of them would need
+            # an icon for the comment
+            return
+
         self.__iconHeight = None
         self.iconItem = SVGItem(canvas, fName, self)
         self.iconItem.setIconHeight(self.__getIconHeight(canvas.settings))

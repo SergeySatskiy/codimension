@@ -33,6 +33,7 @@ from .routines import distance, getNoCellCommentBoxPath, getHiddenCommentPath
 from .cml import CMLVersion
 from .colormixin import ColorMixin
 from .textmixin import TextMixin
+from .iconmixin import IconMixin
 
 
 class ScopeHSideEdge(HSpacerCell):
@@ -70,7 +71,8 @@ class ScopeSpacer(SpacerCell):
         self.kind = CellElement.SCOPE_CORNER_EDGE
 
 
-class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
+class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
+                       QGraphicsRectItem):
 
     """Base class for the scope items"""
 
@@ -87,10 +89,16 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
             fgColor = canvas.settings.docstringFGColor
             # Border color is borrowed from the scope for docstrings
 
+        commentIconFileName = None
+        if subKind == ScopeCellElement.COMMENT:
+            if canvas.settings.hidecomments:
+                commentIconFileName = 'hiddencomment.svg'
+
         CellElement.__init__(self, ref, canvas, x, y)
         TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, bgColor, fgColor, borderColor,
                             isDocstring=isDocstring)
+        IconMixin.__init__(self, canvas, commentIconFileName)
         QGraphicsRectItem.__init__(self)
 
         self.subKind = subKind
@@ -155,12 +163,12 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         self._sideCommentRect = self.getBoundingRect(
             self._getSideComment())
         if s.hidecomments:
-            self.minHeight = self._sideCommentRect.height() + \
-                2 * (s.vHeaderPadding + s.vHiddenTextPadding) - \
+            self.minHeight = self.iconItem.height() + \
+                2 * (s.vHeaderPadding + s.vHiddenCommentPadding) - \
                 s.scopeRectRadius
-            self.minWidth = s.hCellPadding + s.hHiddenTextPadding + \
-                self._sideCommentRect.width() + s.hHiddenTextPadding + \
-                s.hHeaderPadding - s.scopeRectRadius
+            self.minWidth = s.hCellPadding + self.iconItem.width() + \
+                2 * s.hHiddenCommentPadding + s.hHeaderPadding - \
+                s.scopeRectRadius
         else:
             self.minHeight = self._sideCommentRect.height() + \
                 2 * (s.vHeaderPadding + s.vTextPadding) - \
