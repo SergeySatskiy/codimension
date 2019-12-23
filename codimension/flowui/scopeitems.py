@@ -161,6 +161,9 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         self.setupText(self, customText=self.getSideComment(),
                        customReplacement='')
         if s.hidecomments:
+            # Visually the icon looks a bit too big so reduce the size to 80%
+            self.iconItem.setIconHeight(self.iconItem.iconHeight() * 0.8)
+
             self.minHeight = self.iconItem.iconHeight() + \
                 2 * (s.vHeaderPadding + s.vHiddenCommentPadding) - \
                 s.scopeRectRadius

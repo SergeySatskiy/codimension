@@ -243,7 +243,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'hiddenCommentBGColor': QColor(255, 255, 235, 255),
     'hiddenCommentBorderColor': QColor(150, 150, 150, 255),
     'hiddenCommentRectRadius': 2,
-    'ifSideCommentVShift': 10,
+    'ifSideCommentVShift': 7,
 
     'mainLine': 25,
 

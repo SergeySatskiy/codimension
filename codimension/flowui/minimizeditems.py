@@ -39,6 +39,9 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
         IconMixin.__init__(self, canvas, iconFileName)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
 
+        # Visually the icon looks a bit too big so reduce the size to 80%
+        self.iconItem.setIconHeight(self.iconItem.iconHeight() * 0.8)
+
         self.rectWidth = None
         self.rectHeight = None
         self.connector = None
@@ -95,7 +98,7 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
 
     def paintCell(self, painter, bgColor, borderColor,
                   option, widget):
-        """Draws the independent comment"""
+        """Paints the comment"""
         del option
         del widget
 
@@ -165,7 +168,7 @@ class MinimizedExceptCell(MinimizedCellBase):
                       self.__setupConnector)
 
     def paint(self, painter, option, widget):
-        """Draws the independent comment"""
+        """Paints the cell"""
         self.paintCell(painter,
                        self.canvas.settings.hiddenExceptBGColor,
                        self.canvas.settings.hiddenExceptBorderColor,
@@ -278,16 +281,7 @@ class MinimizedIndependentCommentCell(MinimizedCommentBase, MinimizedCellBase):
                        option, widget)
 
     def adjustWidth(self):
-        """Adjust the width"""
-        settings = self.canvas.settings
-        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
-        spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
-        boxWidth = self.minWidth - 2 * settings.hCellPadding
-        if spareWidth >= boxWidth:
-            self.minWidth = 0
-        else:
-            self.minWidth = boxWidth - spareWidth
-        self.width = self.minWidth
+        """No need to adjust the width"""
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
@@ -567,11 +561,8 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
         settings = self.canvas.settings
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
-        boxWidth = self.minWidth - 2 * settings.hCellPadding
-        if spareWidth >= boxWidth:
-            self.minWidth = 0
-        else:
-            self.minWidth = boxWidth - spareWidth
+        if spareWidth > 0:
+            self.minWidth = max(0, self.minWidth - spareWidth)
         self.width = self.minWidth
 
     def mouseDoubleClickEvent(self, event):

@@ -731,7 +731,6 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         self.vConnector = None
         self.hConnector = None
         self.leftBadge = None
-        self.rightBadge = None
         self.yBelow = False
 
         # To make double click delivered
@@ -806,17 +805,10 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         if self.yBelow:
             self.leftBadge = BadgeItem(self, 'y')
             self.leftBadge.setFGColor(settings.ifYBranchTextColor)
-            self.rightBadge = BadgeItem(self, 'n')
-            self.rightBadge.setFGColor(settings.ifNBranchTextColor)
         else:
             self.leftBadge = BadgeItem(self, 'n')
             self.leftBadge.setFGColor(settings.ifNBranchTextColor)
-            self.rightBadge = BadgeItem(self, 'y')
-            self.rightBadge.setFGColor(settings.ifYBranchTextColor)
 
-        self.rightBadge.setNeedRectangle(False)
-        self.rightBadge.moveTo(self.x4 - self.rightBadge.width / 2,
-                               self.y3 - self.rightBadge.height / 2)
         self.leftBadge.setNeedRectangle(False)
         self.leftBadge.moveTo(self.x1 - self.leftBadge.width / 2,
                               self.y3 - self.leftBadge.height / 2)
@@ -826,7 +818,6 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
                      self.x4 - self.x1 + 2 * penWidth,
                      self.y6 - self.y2 + 2 * penWidth)
         scene.addItem(self)
-        scene.addItem(self.rightBadge)
         scene.addItem(self.leftBadge)
 
         self.baseX -= hShift

@@ -1476,7 +1476,12 @@ class VirtualCanvas:
             if row:
                 if row[-1].kind in [CellElement.LEADING_COMMENT,
                                     CellElement.INDEPENDENT_COMMENT,
-                                    CellElement.SIDE_COMMENT]:
+                                    CellElement.SIDE_COMMENT,
+                                    CellElement.ABOVE_COMMENT,
+                                    CellElement.LEADING_MINIMIZED_COMMENT,
+                                    CellElement.INDEPENDENT_MINIMIZED_COMMENT,
+                                    CellElement.SIDE_MINIMIZED_COMMENT,
+                                    CellElement.ABOVE_MINIMIZED_COMMENT]:
                     row[-1].tailComment = True
             index += 1
 

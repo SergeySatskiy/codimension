@@ -287,10 +287,12 @@ else:   # Side 1
 # Try
 #
 
+# cml 1 gb id=4 title=fff
 try:
     pass
 except:
     pass
+# cml 1 ge id=4
 
 if True:
     try:
@@ -324,8 +326,7 @@ except:         # Side 4
     pass
 
 # Leading 1
-try:        # Side 1
-            # Side 2
+try:
     a = 10
     b = 20  # Side 1
             # Side 2
