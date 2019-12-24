@@ -619,6 +619,12 @@ class TextEditorTabWidget(QWidget):
         """Provides a reference to the MD rendered view"""
         return self.__mdView
 
+    def terminate(self):
+        """Called just before the tab is closed"""
+        self.__editor.terminate()
+        self.__mdView.terminate()
+        self.__flowUI.terminate()
+
     # Mandatory interface part is below
 
     def getEditor(self):

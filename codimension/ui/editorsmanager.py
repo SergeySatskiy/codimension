@@ -663,7 +663,7 @@ class EditorsManager(QTabWidget):
             # Terminate the syntax highlight if needed
             editor = self.widget(index).getEditor()
             editor.textChanged.disconnect(self.__contentChanged)
-            editor.terminate()
+            self.widget(index).terminate()
 
         closingUUID = self.widget(index).getUUID()
 
@@ -1920,7 +1920,7 @@ class EditorsManager(QTabWidget):
                 if self.widget(index).getType() in editorWidgets:
                     editor = self.widget(index).getEditor()
                     editor.textChanged.disconnect(self.__contentChanged)
-                    editor.terminate()
+                    self.widget(index).terminate()
             # That's the end of the session, so let's save the tabs status
             self.saveTabsStatus()
 

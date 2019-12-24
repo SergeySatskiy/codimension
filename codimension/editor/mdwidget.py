@@ -362,6 +362,12 @@ class MDWidget(QWidget):
         _, _, _, hPos, vPos = getFilePosition(fileName)
         self.setScrollbarPositions(hPos, vPos)
 
+    def terminate(self):
+        """Called when a tab is to be closed"""
+        if self.__updateTimer.isActive():
+            self.__updateTimer.stop()
+        self.__disconnectEditorSignals()
+
     def __connectEditorSignals(self):
         """When it is a python file - connect to the editor signals"""
         if not self.__connected:

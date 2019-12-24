@@ -423,6 +423,12 @@ class FlowUIWidget(QWidget):
         _, _, _, cflowHPos, cflowVPos = getFilePosition(fileName)
         self.setScrollbarPositions(cflowHPos, cflowVPos)
 
+    def terminate(self):
+        """Called when a tab is closed"""
+        if self.__updateTimer.isActive():
+            self.__updateTimer.stop()
+        self.__disconnectEditorSignals()
+
     def __connectEditorSignals(self):
         """When it is a python file - connect to the editor signals"""
         if not self.__connected:
