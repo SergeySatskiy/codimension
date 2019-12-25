@@ -163,10 +163,7 @@ _DEFAULT_CFLOW_SETTINGS = {
 
     'vSpacer': 8,
 
-    'scopeRectRadius': 4,
-
     # Rounded rectangles radius for the return-like statements
-    'returnRectRadius': 12,
     'minWidth': 100,
 
     'cfLineWidth': 2,        # Control flow line
@@ -196,21 +193,22 @@ _DEFAULT_CFLOW_SETTINGS = {
     'continueVPadding': 0,
     'continueRectRadius': 2,
 
-    'returnBGColor': QColor(248, 248, 248, 255),
+    'returnBGColor': QColor(255, 247, 188, 255),
     'returnFGColor': QColor(0, 0, 0, 255),
     'returnBorderColor': QColor(150, 150, 150, 255),
+    'returnRectRadius': 12,
 
-    'raiseBGColor': QColor(248, 248, 248, 255),
+    'raiseBGColor': QColor(219, 210, 210, 255),
     'raiseFGColor': QColor(0, 0, 0, 255),
     'raiseBorderColor': QColor(150, 150, 150, 255),
 
-    'assertBGColor': QColor(248, 248, 248, 255),
+    'assertBGColor': QColor(210, 210, 210, 255),
     'assertFGColor': QColor(0, 0, 0, 255),
     'assertBorderColor': QColor(150, 150, 150, 255),
 
-    'sysexitBGColor': QColor(248, 248, 248, 255),
+    'sysexitBGColor': QColor(255, 156, 156, 255),
     'sysexitFGColor': QColor(0, 0, 0, 255),
-    'sysexitBorderColor': QColor(150, 150, 150, 255),
+    'sysexitBorderColor': QColor(60, 60, 60, 255),
 
     'importBGColor': QColor(248, 248, 248, 255),
     'importFGColor': QColor(0, 0, 0, 255),
@@ -251,6 +249,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     'docstringBGColor': QColor(255, 255, 235, 255),
     'docstringFGColor': QColor(90, 90, 90, 255),
 
+    'scopeRectRadius': 4,
+
     'fileScopeBGColor': QColor(255, 255, 255, 255),
     'fileScopeFGColor': QColor(0, 0, 0, 255),
     'fileScopeBorderColor': QColor(150, 150, 150, 255),
@@ -283,7 +283,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'withScopeFGColor': QColor(0, 0, 0, 255),
     'withScopeBorderColor': QColor(150, 150, 150, 255),
 
-    'exceptScopeBGColor': QColor(240, 240, 240, 255),
+    'exceptScopeBGColor': QColor(210, 210, 210, 255),
     'exceptScopeFGColor': QColor(0, 0, 0, 255),
     'exceptScopeBorderColor': QColor(150, 150, 150, 255),
     'hiddenExceptBGColor': QColor(240, 240, 240, 255),
