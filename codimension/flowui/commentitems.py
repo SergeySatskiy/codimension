@@ -354,7 +354,6 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
         CommentCellBase.__init__(self, ref, canvas, x, y)
         QGraphicsPathItem.__init__(self)
         self.kind = CellElement.SIDE_COMMENT
-        self.__isIfSide = False
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -424,10 +423,19 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
         boxWidth = self.textRect.width() + \
                    2 * (settings.hCellPadding + settings.hTextPadding)
         boxWidth = max(boxWidth, settings.minWidth)
-        self._leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
         if cellToTheLeft.kind == CellElement.CONNECTOR:
-            # 'if' or 'elif' side comment
-            self.__isIfSide = True
+            ifCell = None
+            for cell in self.canvas.cells[self.addr[1]]:
+                if cell.kind == CellElement.IF:
+                    ifCell = cell
+                    break
+        elif cellToTheLeft.kind == CellElement.IF:
+            ifCell = cellToTheLeft
+        else:
+            ifCell = None
+
+        if cellToTheLeft.kind == CellElement.CONNECTOR:
+            # 'if' or 'elif' side comment when there is a connector
             self._leftEdge = \
                 cellToTheLeft.baseX + settings.mainLine + settings.hCellPadding
             boxBaseY = self.baseY
@@ -441,9 +449,6 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
                 width += self.canvas.cells[self.addr[1]][index].width
                 index -= 1
 
-            # The first non-connector cell must be the 'if' cell
-            ifCell = self.canvas.cells[self.addr[1]][index]
-
             yPos = self.baseY + settings.vCellPadding + \
                    settings.ifSideCommentVShift
 
@@ -453,19 +458,31 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
                 ifCell.baseX + ifCell.minWidth - settings.hCellPadding,
                 yPos)
         else:
-            # Regular box
-            self._leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
+            # Regular box or 'if' without an rhs connector
+            if ifCell:
+                self._leftEdge = ifCell.baseX + ifCell.minWidth
+            else:
+                self._leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
             path = getCommentBoxPath(settings, self._leftEdge, self.baseY,
                                      boxWidth, self.minHeight)
 
-            height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
 
-            self.connector = Connector(
-                self.canvas, self._leftEdge + settings.hCellPadding,
-                self.baseY + height,
-                cellToTheLeft.baseX +
-                cellToTheLeft.minWidth - settings.hCellPadding,
-                self.baseY + height)
+            if ifCell:
+                yPos = self.baseY + settings.vCellPadding + \
+                       settings.ifSideCommentVShift
+                self.connector = Connector(
+                    self.canvas, self._leftEdge + settings.hCellPadding,
+                    yPos,
+                    ifCell.baseX + ifCell.minWidth - settings.hCellPadding,
+                    yPos)
+            else:
+                height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
+                self.connector = Connector(
+                    self.canvas, self._leftEdge + settings.hCellPadding,
+                    self.baseY + height,
+                    cellToTheLeft.baseX +
+                    cellToTheLeft.minWidth - settings.hCellPadding,
+                    self.baseY + height)
 
         self.connector.penColor = settings.commentBorderColor
         self.connector.penWidth = settings.boxLineWidth

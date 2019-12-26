@@ -729,9 +729,11 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.IF
         self.vConnector = None
-        self.hConnector = None
+        self.rhsConnector = None
         self.leftBadge = None
         self.yBelow = False
+        self.needHConnector = True
+        self.rhsShift = 0
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -795,10 +797,22 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
                                     self.baseY + self.height)
         scene.addItem(self.vConnector)
 
-        self.hConnector = Connector(self.canvas, self.x4, self.y4,
-                                    self.baseX + self.width - hShift,
-                                    self.y4)
-        scene.addItem(self.hConnector)
+        if self.needHConnector:
+            # Need the RHS connector
+            self.rhsConnector = Connector(self.canvas, self.x4, self.y4,
+                                          self.baseX + self.width - hShift,
+                                          self.y4)
+        else:
+            # Need the bottom connector because the RHS layout used some space
+            # at the left
+            xPos = self.baseX + self.width - self.rhsShift + settings.mainLine - hShift
+            self.rhsConnector = Connector(self.canvas,
+                                          xPos,
+                                          self.y5,
+                                          xPos,
+                                          self.baseY + self.height)
+
+        scene.addItem(self.rhsConnector)
 
         self.yBelow = CMLVersion.find(self.ref.leadingCMLComments,
                                       CMLsw) is not None

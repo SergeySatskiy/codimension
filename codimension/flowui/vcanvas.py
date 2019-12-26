@@ -1564,15 +1564,12 @@ class VirtualCanvas:
                     if not cell.scopedItem():
                         if cell.isComment() or cell.isCMLDoc():
                             cell.adjustWidth()
-                totalWidth = 0
                 for cell in row:
                     cell.height = maxHeight
-                    totalWidth += cell.width
                     if cell.kind == CellElement.VCANVAS:
                         if not cell.hasScope():
                             cell.adjustLastCellHeight(maxHeight)
                 self.height += maxHeight
-                self.width = max(self.width, totalWidth)
             index += 1
 
         # Second pass for the groups
@@ -1590,13 +1587,77 @@ class VirtualCanvas:
                 group.groupWidth = max(group.groupWidth, rowWidth)
             group.groupWidth += (group.selfMaxNestLevel - 1) * 4 * self.settings.openGroupHSpacer
 
-        if self.hasScope():
-            # Right hand side vertical part
-            self.width += self.settings.scopeRectRadius + self.settings.hCellPadding
-
         # There is no need to add spacing at the right hand side for groups.
         # The appropriate number of spacers were added for canvases and regular
         # rows so no adjustments here.
+
+        # Third pass for if branch adjustments
+        for rowIndex, row in enumerate(self.cells):
+            for cellIndex, cell in enumerate(row):
+                if cell.kind == CellElement.IF:
+                    cellBelow = self.cells[rowIndex + 1][cellIndex]
+                    spare = cellBelow.width - cellBelow.minWidth
+                    minShift = 2 * self.settings.hCellPadding + self.settings.mainLine + self.settings.ifWidth
+                    if spare > minShift:
+                        cellBelowRight = self.cells[rowIndex + 1][cellIndex + 1]
+                        if cellBelowRight.kind == CellElement.VCANVAS:
+                            # The rhs branch will be shifted to the left
+                            if spare < cellBelowRight.width:
+                                # The RHS branch is wider than the available shift
+                                # width so use it all
+                                shift = spare
+                            else:
+                                # The RHS branch is narrower than the available
+                                # shift width so use only the cell width
+                                shift = cellBelowRight.width
+                            # Signal the IF cell that there will be no RHS
+                            # connector but a bottom instead
+                            cell.needHConnector = False
+                            cell.rhsShift = shift
+
+                            cellBelow.width -= shift
+                            # Delete the RHS if connector cell
+                            del self.cells[rowIndex][cellIndex + 1]
+
+                            try:
+                                # The if side comment heeds to be re-rendered
+                                # because it is not region dependent anymore
+                                sideCommentCell = self.cells[rowIndex][cellIndex + 1]
+                                if sideCommentCell.kind in [CellElement.SIDE_COMMENT,
+                                                            CellElement.SIDE_MINIMIZED_COMMENT]:
+                                    oldMinHeight = sideCommentCell.minHeight
+                                    oldHeight = sideCommentCell.height
+                                    sideCommentCell.render()
+                                    sideCommentCell.minHeight = oldMinHeight
+                                    sideCommentCell.height = oldHeight
+                                    # The rhs connector has been deleted, so the
+                                    # x address is changed
+                                    sideCommentCell.addr = [cellIndex + 1, rowIndex]
+                            except:
+                                pass
+
+                            # Finishing connector if so, should be adjusted too
+                            try:
+                                closingCell = self.cells[rowIndex + 2][cellIndex]
+                                if closingCell.kind == CellElement.CONNECTOR:
+                                    if closingCell.hasVertical() and closingCell.hasHorizontal():
+                                        closingCell.width -= shift
+                            except:
+                                pass
+                            break
+
+        # The if cells adjustments may have deleted connectors and adjusted
+        # cell width, so recalculate the canves width
+        self.width = 0
+        for row in self.cells:
+            totalWidth = 0
+            for cell in row:
+                totalWidth += cell.width
+            self.width = max(self.width, totalWidth)
+
+        if self.hasScope():
+            # Right hand side vertical part
+            self.width += self.settings.scopeRectRadius + self.settings.hCellPadding
 
         self.minWidth = self.width
         self.minHeight = self.height

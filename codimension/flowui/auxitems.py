@@ -462,14 +462,14 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         self.subKind = self.GENERIC
         self.connections = connections
 
-    def __hasVertical(self):
+    def hasVertical(self):
         """True if has a vertical part"""
         for conn in self.connections:
             if self.NORTH in conn or self.SOUTH in conn:
                 return True
         return False
 
-    def __hasHorizontal(self):
+    def hasHorizontal(self):
         """True if has a horizontal part"""
         for conn in self.connections:
             if self.EAST in conn or self.WEST in conn:
@@ -480,13 +480,13 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         """Renders the cell"""
         settings = self.canvas.settings
 
-        if self.__hasVertical():
+        if self.hasVertical():
             self.minWidth = settings.mainLine + settings.hCellPadding
             self.minWidth += self.hShift * 2 * settings.openGroupHSpacer
         else:
             self.minWidth = 0
 
-        if self.__hasHorizontal():
+        if self.hasHorizontal():
             self.minHeight = 2 * settings.vCellPadding
         else:
             self.minHeight = 0

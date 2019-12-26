@@ -488,7 +488,6 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
         MinimizedCellBase.__init__(self, 'hiddencomment.svg',
                                    ref, canvas, x, y)
         self.kind = CellElement.SIDE_MINIMIZED_COMMENT
-        self.__isIfSide = False
 
         self.__setTooltip()
 
@@ -503,9 +502,20 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
         settings = self.canvas.settings
 
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+
         if cellToTheLeft.kind == CellElement.CONNECTOR:
-            # 'if' or 'elif' side comment
-            self.__isIfSide = True
+            ifCell = None
+            for cell in self.canvas.cells[self.addr[1]]:
+                if cell.kind == CellElement.IF:
+                    ifCell = cell
+                    break
+        elif cellToTheLeft.kind == CellElement.IF:
+            ifCell = cellToTheLeft
+        else:
+            ifCell = None
+
+        if cellToTheLeft.kind == CellElement.CONNECTOR:
+            # 'if' or 'elif' side comment when there is a connector
             leftEdge = \
                 cellToTheLeft.baseX + settings.mainLine + settings.hCellPadding
 
@@ -513,8 +523,6 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
             while self.canvas.cells[self.addr[1]][index].kind == \
                     CellElement.CONNECTOR:
                 index -= 1
-            # The first non-connector cell must be the 'if' cell
-            ifCell = self.canvas.cells[self.addr[1]][index]
 
             yPos = self.baseY + settings.vCellPadding + \
                    settings.ifSideCommentVShift
@@ -525,15 +533,28 @@ class MinimizedSideCommentCell(MinimizedCommentBase, MinimizedCellBase):
                 ifCell.baseX + ifCell.minWidth - settings.hCellPadding,
                 yPos)
         else:
-            # Regular box
-            leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
-            height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
-            self.connector = Connector(
-                self.canvas, leftEdge + settings.hCellPadding,
-                self.baseY + height,
-                cellToTheLeft.baseX +
-                cellToTheLeft.minWidth - settings.hCellPadding,
-                self.baseY + height)
+            # Regular box or 'if' without an rhs connector
+            if ifCell:
+                leftEdge = ifCell.baseX + ifCell.minWidth
+            else:
+                leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
+
+            if ifCell:
+                yPos = self.baseY + settings.vCellPadding + \
+                       settings.ifSideCommentVShift
+                self.connector = Connector(
+                    self.canvas, leftEdge + settings.hCellPadding,
+                    yPos,
+                    ifCell.baseX + ifCell.minWidth - settings.hCellPadding,
+                    yPos)
+            else:
+                height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
+                self.connector = Connector(
+                    self.canvas, leftEdge + settings.hCellPadding,
+                    self.baseY + height,
+                    cellToTheLeft.baseX +
+                    cellToTheLeft.minWidth - settings.hCellPadding,
+                    self.baseY + height)
 
         self.connector.penColor = settings.commentBorderColor
         self.connector.penWidth = settings.boxLineWidth
