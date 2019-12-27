@@ -861,7 +861,7 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
             self.x2 + settings.hTextPadding + textShift,
             self.baseY + settings.vCellPadding + settings.vTextPadding,
             self.textRect.width(), self.textRect.height(),
-            Qt.AlignLeft, self.text)
+            Qt.AlignLeft | Qt.AlignVCenter, self.text)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""

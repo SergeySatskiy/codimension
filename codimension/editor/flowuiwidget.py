@@ -55,11 +55,11 @@ def getSmartZoomDescription(smartZoomLevel):
     """Provides a tooltip for the smart zoom level"""
     if smartZoomLevel == SMART_ZOOM_ALL:
         return 'Smart zoom level: everything is shown'
-    elif smartZoomLevel == SMART_ZOOM_NO_CONTENT:
+    if smartZoomLevel == SMART_ZOOM_NO_CONTENT:
         return 'Smart zoom level: everything without a content'
-    elif smartZoomLevel == SMART_ZOOM_CONTROL_ONLY:
+    if smartZoomLevel == SMART_ZOOM_CONTROL_ONLY:
         return 'Smart zoom level: scopes (except decorators) and ifs'
-    elif smartZoomLevel == SMART_ZOOM_CLASS_FUNC:
+    if smartZoomLevel == SMART_ZOOM_CLASS_FUNC:
         return 'Smart zoom level: only classes and functions'
     return 'Unknown smart zoom level'
 

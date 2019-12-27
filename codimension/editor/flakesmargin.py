@@ -226,7 +226,8 @@ class CDMFlakesMargin(QWidget):
                           ' (value: ' + str(item.complexity) + ')'
                     self.__ccMessages[item.lineno] = (msg, ord(complexity))
                     self.setBlockValue(
-                        self._qpart.document().findBlockByNumber(item.lineno - 1), 1)
+                        self._qpart.document().findBlockByNumber(
+                            item.lineno - 1), 1)
 
         self.__noTooltip = False
         self.update()

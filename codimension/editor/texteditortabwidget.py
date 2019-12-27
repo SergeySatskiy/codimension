@@ -24,7 +24,7 @@ import os.path
 import logging
 from ui.qt import (Qt, QFileInfo, QSize, pyqtSignal, QToolBar, QHBoxLayout,
                    QWidget, QAction, QMenu, QSizePolicy, QToolButton, QDialog,
-                   QVBoxLayout, QSplitter, QMainWindow)
+                   QVBoxLayout, QSplitter)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.importlist import ImportListWidget
 from ui.outsidechanges import OutsideChangeWidget
@@ -621,9 +621,9 @@ class TextEditorTabWidget(QWidget):
 
     def terminate(self):
         """Called just before the tab is closed"""
-        self.__editor.terminate()
         self.__mdView.terminate()
         self.__flowUI.terminate()
+        self.__editor.terminate()
 
     # Mandatory interface part is below
 

@@ -22,6 +22,7 @@
 
 import os.path
 import logging
+from cdmpyparser import getBriefModuleInfoFromMemory
 from ui.qt import (Qt, QTimer, pyqtSignal, QEvent, QToolTip,
                    QCursor, QApplication, QTextOption, QAction,
                    QPlainTextEdit)
@@ -39,7 +40,6 @@ from autocomplete.bufferutils import getContext
 from autocomplete.completelists import (getCompletionList,
                                         getDefinitions, getOccurrences,
                                         getCallSignatures)
-from cdmpyparser import getBriefModuleInfoFromMemory
 from .qpartwrap import QutepartWrapper
 from .editorcontextmenus import EditorContextMenuMixin
 from .linenomargin import CDMLineNumberMargin
@@ -682,7 +682,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             context = getContext(self, info, True)
             if context.getScope() != context.GlobalScope:
                 GlobalData().mainWindow.jumpToLine(context.getLastScopeLine())
-        return
 
     def onShowCalltip(self, showMessage=True):
         """The user requested show calltip"""

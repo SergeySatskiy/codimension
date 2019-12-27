@@ -614,7 +614,7 @@ class BrowserModelBase(QAbstractItemModel):
                 if not found:
                     itemsToRemove.append(classChildItem)
                 continue
-            elif classChildItem.itemType == ClassesItemType:
+            if classChildItem.itemType == ClassesItemType:
                 hadClasses = True
                 if not classObj.classes:
                     itemsToRemove.append(classChildItem)
@@ -623,7 +623,7 @@ class BrowserModelBase(QAbstractItemModel):
                     self.updateClassesItem(classChildItem,
                                            classObj.classes)
                 continue
-            elif classChildItem.itemType == FunctionItemType:
+            if classChildItem.itemType == FunctionItemType:
                 name = classChildItem.sourceObj.name
                 found = False
                 for method in classObj.functions:
@@ -645,7 +645,7 @@ class BrowserModelBase(QAbstractItemModel):
                 if not found:
                     itemsToRemove.append(classChildItem)
                 continue
-            elif classChildItem.itemType == StaticAttributesItemType:
+            if classChildItem.itemType == StaticAttributesItemType:
                 hadStaticAttributes = True
                 if not classObj.classAttributes:
                     itemsToRemove.append(classChildItem)
@@ -653,7 +653,7 @@ class BrowserModelBase(QAbstractItemModel):
                     self.updateAttrItem(classChildItem,
                                         classObj.classAttributes)
                 continue
-            elif classChildItem.itemType == InstanceAttributesItemType:
+            if classChildItem.itemType == InstanceAttributesItemType:
                 hadInstanceAttributes = True
                 if not classObj.instanceAttributes:
                     itemsToRemove.append(classChildItem)

@@ -49,7 +49,8 @@ class CustomColorsDialog(QDialog):
             self.__borderColorButton.setIcon(getIcon('warning.png'))
         else:
             self.__borderColorButton.setColor(bordercolor)
-            self.__borderColorButton.sigColorChanged.connect(self.__onColorChanged)
+            self.__borderColorButton.sigColorChanged.connect(
+                self.__onColorChanged)
 
         QTimer.singleShot(1, self.__onColorChanged)
 
@@ -151,6 +152,9 @@ class SampleBlock(QGraphicsRectItem):
 
     def paint(self, painter, option, widget):
         """Draws the code block"""
+        del option
+        del widget
+
         baseX = (self.__viewWidth - self.__rectWidth) / 2
         baseY = (self.__viewHeight - self.__rectHeight) / 2
 

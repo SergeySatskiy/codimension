@@ -69,7 +69,8 @@ class DocLinkAnchorDialog(QDialog):
             'Select an existing or non existing file')
         gridLayout.addWidget(self.fileButton, 0, 2, 1, 1)
         self.fileButton.clicked.connect(self.__onSelectPath)
-        self.createCheckBox = QCheckBox('Create a markdown file if does not exist', self)
+        self.createCheckBox = QCheckBox(
+            'Create a markdown file if does not exist', self)
         self.createCheckBox.setChecked(False)
         gridLayout.addWidget(self.createCheckBox, 1, 1, 1, 1)
         self.createCheckBox.stateChanged.connect(self.__validate)
@@ -171,8 +172,8 @@ class DocLinkAnchorDialog(QDialog):
         if self.__fileName:
             if os.path.isabs(self.__fileName):
                 fromFile = self.__fileName
-        fName, anchor, errMsg = preResolveLinkPath(txt, fromFile,
-                                                   self.createCheckBox.isChecked())
+        fName, anchor, errMsg = preResolveLinkPath(
+            txt, fromFile, self.createCheckBox.isChecked())
         del anchor
 
         if fName:

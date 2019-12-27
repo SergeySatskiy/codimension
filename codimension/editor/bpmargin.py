@@ -24,9 +24,9 @@ import os.path
 import logging
 import math
 from sys import maxsize
-from ui.qt import QWidget, QPainter, QModelIndex, QToolTip
-import qutepart
 from qutepart.margins import MarginBase
+import qutepart
+from ui.qt import QWidget, QPainter, QModelIndex, QToolTip
 from utils.misc import extendInstance
 from utils.pixmapcache import getPixmap
 from utils.fileutils import isPythonMime

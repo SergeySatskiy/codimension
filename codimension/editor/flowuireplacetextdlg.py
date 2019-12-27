@@ -17,12 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""Dialog to enter a new text for a graphics item"""
+
+
 from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                    QTextEdit)
 from utils.colorfont import getZoomedMonoFont
 
-
-"""Dialog to enter a new text for a graphics item"""
 
 class ReplaceTextDialog(QDialog):
 
