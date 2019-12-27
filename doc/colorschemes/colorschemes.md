@@ -6,7 +6,7 @@ Introduction
 Codimension uses skins to define how certain elements of the user interface
 will look like. A skin is a set of files which reside in a designated directory.
 The files are:
-- app.css: application style sheet
+- app.css: the application style sheet
 - skin.json: general settings
 - cflow.json: control flow diagram settings
 
@@ -22,20 +22,20 @@ When Codimension starts it looks for the available skins in the
 ~/.codimension3/skins/
 ```
 Codimension expects that for each skin there will be a directory with the
-mentioned above files. At least one directory must exist and Codimension
-takes care of the one called `default`.
+mentioned above files.
 
-At the first start Codimension creates the `~/.codimension3/skins/default`
-directory and populates the necessary files. If at some point an error
-is found in the default skin then the files will be overwritten automatically
-with the values Codimension can work with.
+At the start Codimension creates the `~/.codimension3/skins/sample`
+directory and populates the necessary files. The default skin values are
+used to populate the files. The sole purpose of the sample directory is to
+give a good start point to create a custom skin. The sample directory is not
+analysed when a list of available skins is built.
 
 Creating New Skin
 -----------------
 One of the options is to follow these steps:
 - create a new directory for the new skin, e.g. `~/.codimension3/skins/myskin`
 - copy skin.json, cflow.json and app.css from
-  `~/.codimension3/skins/default` to `~/.codimension3/skins/myskin`
+  `~/.codimension3/skins/sample` to `~/.codimension3/skins/myskin`
 - open `~/.codimension3/skins/myskin/skin.json` and update the "name" value to
   the appropriate one, e.g. "My new skin". Next time Codimension starts the
   main menu will have `Options -> Themes -> My new skin` option. If the option
@@ -58,7 +58,7 @@ Here is an example: "Iosevka Term SS01,12,-1,5,50,0,0,0,0,0"
 
 skin.json
 ---------
-Here is a description of the settings stored in skin.json
+Here is a description of some settings (may be incomplete) stored in skin.json
 
 | Name                          | Value |
 |:------------------------------|:------|
@@ -110,73 +110,10 @@ Here is a description of the settings stored in skin.json
 
 cflow.json
 ----------
-Here is a description of the settings stored in cflow.json
-
-| Name                          | Value |
-|:--------------------------|:------|
-| cfMonoFont                | The primitive's text font for zoom level 0 |
-| badgeFont                 | The badge font for zoom level 0 |
-| hCellPadding              | The horizontal cell padding (between primitives) |
-| vCellPadding              | The vertical cell padding (between primitives) |
-| hTextPadding              | The primitive's text horizontal text padding |
-| vTextPadding              | The primitive's text vertical text padding |
-| vHiddenTextPadding        | The scope side hidden comment primitive vertical text padding |
-| hHiddenTextPadding        | The scope side hidden comment primitive horizontal text padding |
-| hHeaderPadding            | The scope primitive header horizontal padding |
-| vHeaderPadding            | The scope primitive header vertical padding |
-| vSpacer                   | The height of the vertical spacer |
-| rectRadius                | The scope primitive rounded rectangle radius |
-| returnRectRadius          | The return primitive rounded rectangle radius |
-| minWidth                  | The minimum width of a primitive |
-| ifWidth                   | The if primitive width of the side corner |
-| commentCorner             | The comment primitive upper right corner folding width/height |
-| lineWidth                 | The connector primitive line width |
-| lineColor                 | The connector primitive line color |
-| selectColor               | The selected primitive outline color |
-| selectPenWidth            | The selected primitive outline width |
-| boxBGColor                | The code block primitive background color |
-| boxFGColor                | The code block primitive foreground color |
-| badgeBGColor              | The scope badge primitive background color |
-| badgeFGColor              | The scope badge primitive foreground color |
-| badgeLineWidth            | The scope badge primitive line width |
-| badgeLineColor            | The scope badge primitive line color |
-| commentBGColor            | The comment primitive background color |
-| commentFGColor            | The comment primitive foreground color |
-| commentLineColor          | The comment primitive line color |
-| commentLineWidth          | The comment primitive line width |
-| mainLine                  | The main execution vertical line shift from the left edge |
-| fileScopeBGColor          | The module (file) scope primitive background color |
-| funcScopeBGColor          | The function scope primitive background color |
-| decorScopeBGColor         | The decorator scope primitive background color |
-| classScopeBGColor         | The class scope primitive background color |
-| forScopeBGColor           | The for scope primitive background color |
-| whileScopeBGColor         | The while scope primitive background color |
-| elseScopeBGColor          | The else scope primitive background color |
-| withScopeBGColor          | The with scope primitive background color |
-| tryScopeBGColor           | The try scope primitive background color |
-| exceptScopeBGColor        | The except scope primitive background color |
-| finallyScopeBGColor       | The finally scope primitive background color |
-| breakBGColor              | The break primitive background color |
-| continueBGColor           | The continue primitive background color |
-| ifBGColor                 | The if primitive background color |
-| hiddenCommentText         | The text to be displayed when the comment primitives are suppressed |
-| hiddenExceptText          | The text to be displayed when the exception primitives are suppressed |
-| collapsedOutlineWidth     | The collapsed group primitive distance between the inner and outer rectangles |
-| openGroupVSpacer          | The open group primitive vertical spacer |
-| openGroupHSpacer          | The open group primitive horizontal spacer |
-| groupBGColor              | The group primitive background color |
-| groupFGColor              | The group primitive foreground color |
-| groupBorderColor          | The group primitive border color |
-| groupControlBGColor       | The collapsed group primitive control box background color |
-| groupControlBorderColor   | The collapsed group primitive control box border color |
-| rubberBandBorderColor     | The rubber band border color |
-| rubberBandFGColor         | The rubber band rectangle color |
-| hDocLinkPadding           | The documentation primitive horizontal padding |
-| vDocLinkPadding           | The documentation primitive vertical padding |
-| docLinkBGColor            | The documentation primitive background color |
-| docLinkFGColor            | The documentation primitive foreground color |
-| docLinkLineColor          | The documentation primitive line color |
-| docLinkLineWidth          | The documentation primitive line width |
+The file contains the settings for the control flow - colors for the individual
+graphics items, fonts, paddings etc. All the efforts were made to have the key
+names intuitively understood so there is no description for them. At any rate,
+experiment and see how the graphics representation is affected.
 
 
 app.css
@@ -192,7 +129,7 @@ If a skin needs to be included into a distribution package so that all the users
 may benefit of it then the following steps need to be taken:
 - the skin directory needs to be included into the project
   `codimension/skins/` directory
-- platform specific needs to be considered
+- platform specific needs to be considered (e.g. fonts availability)
 - the project setup.py needs to be adjusted
 
 Sometimes the settings need to be platform specific. For example, two platforms
@@ -206,4 +143,15 @@ uses platform specific suffixes for the file names. The suffix is formed as:
 When Codimension starts and copies the package provided skins into the user
 home directory it first looks for a platform specific file. If found then
 it is copied with stripped suffix.
+
+
+Overwriting Individual Skin Values
+----------------------------------
+
+Individual skin values can be overwritten. To do so put a json file called
+override.json with a dictionary in it to the skin directory which values you
+want to overwrite. The values from this file will update the skin dictionary.
+
+Also, the skin directory can have pixmaps (png and svg) which will take priority
+when Codimension loads a pixmap.
 
