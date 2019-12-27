@@ -188,8 +188,8 @@ class VirtualCanvas:
 
     def getScopeName(self):
         """Provides the name of the scope drawn on the canvas"""
-        for _, row in enumerate(self.cells):
-            for _, cell in enumerate(row):
+        for row in self.cells:
+            for cell in row:
                 if cell.kind in _scopeToName:
                     return _scopeToName[cell.kind]
                 if cell.kind == CellElement.FUNC_SCOPE:
@@ -328,7 +328,7 @@ class VirtualCanvas:
         return row
 
     def __needLoopCommentRow(self, item):
-        """Tells how many rows need to be resrved for comments/docs for the loops"""
+        """Tells # of rows to be reserved for comments/docs for the loops"""
         if self.settings.noComment:
             return 0, 0, []
 
@@ -385,7 +385,7 @@ class VirtualCanvas:
         return rows, comments
 
     def __checkLeadingCMLComments(self, leadingCMLComments):
-        """Provides a list of group begins and ends as they are in the leading comments"""
+        """Provides a list of group begins/ends as they are in the comments"""
         groups = []
         for comment in leadingCMLComments:
             if hasattr(comment, 'CODE'):
@@ -582,6 +582,306 @@ class VirtualCanvas:
             return MinimizedSideCommentCell(ref, canvas, xPos, yPos)
         return SideCommentCell(ref, canvas, xPos, yPos)
 
+    def __layoutCMLComment(self, item, vacantRow, column):
+        """Lays out a CML comment"""
+        if hasattr(item, 'ref'):
+            # High level CML comment, low level are out of interest
+            if item.CODE == CMLdoc.CODE:
+                conn = ConnectorCell(CONN_N_S, self, column, vacantRow)
+                doc = IndependentDocCell(item, self, column + 1, vacantRow)
+
+                self.__allocateCell(vacantRow, column + 1)
+                self.cells[vacantRow][column] = conn
+                self.cells[vacantRow][column + 1] = doc
+                vacantRow += 1
+        return vacantRow
+
+    def __layoutWith(self, item, vacantRow, column):
+        """Lays out a with statement"""
+        tempVacantRow = vacantRow
+        vacantRow = self.__allocateLeadingComment(item, vacantRow, column)
+        if tempVacantRow == vacantRow:
+            # Nothing has been inserted, i.e. may need a spacer after
+            # the end of an opened group
+            vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
+
+        self.__allocateScope(item, CellElement.WITH_SCOPE, vacantRow, column)
+        return vacantRow + 1
+
+    def __layoutComment(self, item, vacantRow, column):
+        """Lays out a comment"""
+        conn = ConnectorCell(CONN_N_S, self, column, vacantRow)
+        comment = self.__createIndependentComment(item, self, column + 1,
+                                                  vacantRow)
+
+        self.__allocateCell(vacantRow, column + 1)
+        self.cells[vacantRow][column] = conn
+        self.cells[vacantRow][column + 1] = comment
+        return vacantRow + 1
+
+    def __layoutDefClass(self, item, vacantRow, column):
+        """Lays out a function or a class"""
+        scopeCanvas = VirtualCanvas(self.settings, None, None,
+                                    self.__validGroups, self.__collapsedGroups,
+                                    self)
+        scopeItem = item
+        if item.kind == FUNCTION_FRAGMENT:
+            scopeCanvas.layout(item, CellElement.FUNC_SCOPE)
+        else:
+            scopeCanvas.layout(item, CellElement.CLASS_SCOPE)
+
+        if item.decorators and not self.settings.noDecor:
+            for dec in reversed(item.decorators):
+                # Create a decorator scope virtual canvas
+                decScope = VirtualCanvas(self.settings, None, None,
+                                         self.__validGroups,
+                                         self.__collapsedGroups, self)
+                decScopeRows = len(decScope.cells)
+
+                needRows = 1
+                leadingDoc = getDocComment(scopeItem.leadingCMLComments)
+                if not self.settings.noComment:
+                    if leadingDoc is not None:
+                        needRows += 1
+                    if scopeItem.leadingComment:
+                        needRows += 1
+
+                decScope.layout(dec, CellElement.DECOR_SCOPE, needRows)
+                if needRows > 1:
+                    # Need one or two comments
+                    if leadingDoc is not None:
+                        conn = ConnectorCell(CONN_N_S, decScope, 1, 3)
+                        doc = LeadingDocCell(scopeItem, leadingDoc,
+                                             decScope, 2, 3)
+
+                        decScope.__allocateCell(3, 2)
+                        decScope.cells[3][1] = conn
+                        decScope.cells[3][2] = doc
+
+                    if scopeItem.leadingComment:
+                        rowAddr = needRows + 1
+                        conn = ConnectorCell(CONN_N_S, decScope, 1, rowAddr)
+                        comment = self.__createLeadingComment(
+                            scopeItem, decScope, 2, rowAddr)
+
+                        decScope.__allocateCell(rowAddr, 2)
+                        decScope.cells[rowAddr][1] = conn
+                        decScope.cells[rowAddr][2] = comment
+
+                decScope.__allocateCell(decScopeRows - 2, 1)
+
+                # Fix the parent
+                scopeCanvas.parent = decScope
+                scopeCanvas.canvas = decScope
+                # Set the decorator content
+                decScope.cells[decScopeRows - 2][1] = scopeCanvas
+                scopeCanvas.addr = [1, decScopeRows - 2]
+                # Set the current content scope
+                scopeCanvas = decScope
+                scopeItem = dec
+
+        tempVacantRow = vacantRow
+        vacantRow = self.__allocateLeadingComment(scopeItem, vacantRow, column)
+        if tempVacantRow == vacantRow:
+            # Nothing has been inserted, i.e. may need a spacer after
+            # the end of an opened group
+            vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
+
+        # Update the scope canvas parent and address
+        scopeCanvas.parent = self
+        scopeCanvas.addr = [column, vacantRow]
+        self.__allocateAndSet(vacantRow, column, scopeCanvas)
+        return vacantRow + 1
+
+    def __layoutLoop(self, item, vacantRow, column):
+        """Lays out a loop"""
+        targetScope = CellElement.WHILE_SCOPE
+        if item.kind == FOR_FRAGMENT:
+            targetScope = CellElement.FOR_SCOPE
+
+        loopRegionBegin = vacantRow
+        mainRows, elseRows, aboveItems = self.__needLoopCommentRow(item)
+        maxRows = max(mainRows, elseRows)
+        if maxRows > 0:
+            # Main part
+            cRow = vacantRow + (maxRows - mainRows)
+
+            tempVacant = vacantRow
+            while mainRows < maxRows:
+                conn = ConnectorCell(CONN_N_S, self, column, tempVacant)
+                self.__allocateCell(tempVacant, column)
+                self.cells[tempVacant][column] = conn
+                tempVacant += 1
+                mainRows += 1
+
+            if aboveItems[0][0]:
+                doc = AboveDocCell(item, aboveItems[0][0], self, column, cRow)
+                doc.needConnector = True
+                self.__allocateAndSet(cRow, column, doc)
+                cRow += 1
+            if item.leadingComment:
+                comment = self.__createAboveComment(item, self, column, cRow)
+                comment.needConnector = True
+                self.__allocateAndSet(cRow, column, comment)
+
+            if elseRows > 0:
+                cRow = vacantRow + (maxRows - elseRows)
+
+                if aboveItems[1][0]:
+                    doc = AboveDocCell(item.elsePart, aboveItems[1][0], self,
+                                       column + 1, cRow)
+                    self.__allocateAndSet(cRow, column + 1, doc)
+                    cRow += 1
+                if aboveItems[1][1]:
+                    comment = self.__createAboveComment(item.elsePart, self,
+                                                        column + 1, cRow)
+                    comment.needConnector = aboveItems[1][0] is not None
+                    self.__allocateAndSet(cRow, column + 1, comment)
+
+                self.dependentRegions.append((loopRegionBegin,
+                                              vacantRow + maxRows))
+
+            vacantRow += maxRows
+        else:
+            vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
+
+        self.__allocateScope(item, targetScope, vacantRow, column)
+        if item.elsePart:
+            if item.kind == FOR_FRAGMENT:
+                self.__allocateScope(item.elsePart, CellElement.FOR_ELSE_SCOPE,
+                                     vacantRow, column + 1)
+            else:
+                self.__allocateScope(item.elsePart,
+                                     CellElement.WHILE_ELSE_SCOPE,
+                                     vacantRow, column + 1)
+            self.cells[vacantRow][column + 1].setLeaderRef(item)
+        return vacantRow + 1
+
+    def __layoutTry(self, item, vacantRow, column):
+        """Lays out a try statement"""
+        tryRegionBegin = vacantRow
+
+        maxRows, aboveItems = self.__needTryCommentRow(item)
+        if maxRows > 0:
+            # Main part
+            mainRows = aboveItems[0][0]
+            cRow = vacantRow + (maxRows - mainRows)
+
+            tempVacant = vacantRow
+            while mainRows < maxRows:
+                conn = ConnectorCell(CONN_N_S, self, column, tempVacant)
+
+                self.__allocateCell(tempVacant, column)
+                self.cells[tempVacant][column] = conn
+                tempVacant += 1
+                mainRows += 1
+
+            if aboveItems[0][1]:
+                doc = AboveDocCell(item, aboveItems[0][1], self, column, cRow)
+                doc.needConnector = True
+                self.__allocateAndSet(cRow, column, doc)
+                cRow += 1
+            if item.leadingComment:
+                comment = self.__createAboveComment(item, self, column, cRow)
+                comment.needConnector = True
+                self.__allocateAndSet(cRow, column, comment)
+
+            if item.exceptParts and not self.settings.hideexcepts:
+                self.dependentRegions.append((tryRegionBegin,
+                                              vacantRow + maxRows))
+
+
+        self.__allocateScope(item, CellElement.TRY_SCOPE,
+                             vacantRow + maxRows, column)
+
+        if self.settings.hideexcepts:
+            if item.exceptParts:
+                miniExcept = MinimizedExceptCell(item, self, column + 1,
+                                                 vacantRow + maxRows)
+                self.__allocateAndSet(vacantRow + maxRows, column + 1,
+                                      miniExcept)
+        else:
+            nextColumn = column + 1
+            exceptIndex = 1
+            for exceptPart in item.exceptParts:
+                if maxRows > 0:
+                    excRows = aboveItems[exceptIndex][0]
+                    cRow = vacantRow + (maxRows - excRows)
+
+                    if aboveItems[exceptIndex][1]:
+                        doc = AboveDocCell(exceptPart,
+                                           aboveItems[exceptIndex][1],
+                                           self, nextColumn, cRow)
+                        self.__allocateAndSet(cRow, nextColumn, doc)
+                        cRow += 1
+                    if aboveItems[exceptIndex][2]:
+                        comment = self.__createAboveComment(exceptPart, self,
+                                                            nextColumn, cRow)
+                        comment.needConnector = \
+                            aboveItems[exceptIndex][1] is not None
+                        self.__allocateAndSet(cRow, nextColumn, comment)
+
+                self.__allocateScope(exceptPart,
+                                     CellElement.EXCEPT_SCOPE,
+                                     vacantRow + maxRows, nextColumn)
+                self.cells[vacantRow + maxRows][nextColumn].setLeaderRef(item)
+
+                exceptIndex += 1
+                nextColumn += 1
+
+        vacantRow += maxRows
+
+        # The else part goes below
+        if item.elsePart:
+            vacantRow += 1
+            vacantRow = self.__allocateLeadingComment(item.elsePart,
+                                                      vacantRow, column)
+            self.__allocateScope(item.elsePart, CellElement.TRY_ELSE_SCOPE,
+                                 vacantRow, column)
+            self.cells[vacantRow][column].setLeaderRef(item)
+        # The finally part is located below
+        if item.finallyPart:
+            vacantRow += 1
+            vacantRow = self.__allocateLeadingComment(item.finallyPart,
+                                                      vacantRow, column)
+            self.__allocateScope(item.finallyPart, CellElement.FINALLY_SCOPE,
+                                 vacantRow, column)
+            self.cells[vacantRow][column].setLeaderRef(item)
+        return vacantRow + 1
+
+    def __layoutIf(self, item, vacantRow, column):
+        """Lays out an if statement"""
+        lastNonElseIndex = len(item.parts) - 1
+        for index in range(len(item.parts)):
+            if item.parts[index].condition is None:
+                lastNonElseIndex = index - 1
+                break
+
+        canvas = VirtualCanvas(self.settings, 0, 0, self.__validGroups,
+                               self.__collapsedGroups, self)
+        canvas.isNoScope = True
+        canvas.isIfBelowLayout = True
+        canvas.isOuterIfLayout = True
+
+        if lastNonElseIndex == len(item.parts) - 1:
+            # There is no else
+            canvas.layoutIfBranch(item.parts[lastNonElseIndex], None)
+        else:
+            canvas.layoutIfBranch(item.parts[lastNonElseIndex],
+                                  item.parts[lastNonElseIndex + 1])
+
+        index = lastNonElseIndex - 1
+        while index >= 0:
+            tempCanvas = VirtualCanvas(self.settings, 0, 0, self.__validGroups,
+                                       self.__collapsedGroups, self)
+            tempCanvas.isNoScope = True
+            tempCanvas.layoutIfBranch(item.parts[index], canvas)
+            canvas = tempCanvas
+            index -= 1
+
+        self.__allocateAndSet(vacantRow, 1, canvas)
+        return vacantRow + 1
+
     def layoutSuite(self, vacantRow, suite,
                     scopeKind=None, cflow=None, column=1,
                     leadingCMLComments=None):
@@ -606,323 +906,40 @@ class VirtualCanvas:
 
             if item.kind == CML_COMMENT_FRAGMENT:
                 # CML comments are not shown on the diagram
-                if self.settings.noComment:
-                    continue
-
-                if hasattr(item, 'ref'):
-                    # High level CML comment, low level are out of interest
-                    if item.CODE == CMLdoc.CODE:
-                        self.__allocateCell(vacantRow, column + 1)
-                        self.cells[vacantRow][column] = \
-                            ConnectorCell(CONN_N_S, self, column, vacantRow)
-                        self.cells[vacantRow][column + 1] = \
-                            IndependentDocCell(item, self, column + 1,
-                                               vacantRow)
-                        vacantRow += 1
-                        continue
-
+                if not self.settings.noComment:
+                    vacantRow = self.__layoutCMLComment(item, vacantRow, column)
                 continue
 
-            if item.kind in [FUNCTION_FRAGMENT, CLASS_FRAGMENT]:
-                scopeCanvas = VirtualCanvas(self.settings, None, None,
-                                            self.__validGroups,
-                                            self.__collapsedGroups, self)
-                scopeItem = item
-                if item.kind == FUNCTION_FRAGMENT:
-                    scopeCanvas.layout(item, CellElement.FUNC_SCOPE)
-                else:
-                    scopeCanvas.layout(item, CellElement.CLASS_SCOPE)
-
-                if item.decorators and not self.settings.noDecor:
-                    for dec in reversed(item.decorators):
-                        # Create a decorator scope virtual canvas
-                        decScope = VirtualCanvas(self.settings,
-                                                 None, None,
-                                                 self.__validGroups,
-                                                 self.__collapsedGroups, self)
-                        decScopeRows = len(decScope.cells)
-
-                        needRows = 1
-                        leadingDoc = getDocComment(scopeItem.leadingCMLComments)
-                        if not self.settings.noComment:
-                            if leadingDoc is not None:
-                                needRows += 1
-                            if scopeItem.leadingComment:
-                                needRows += 1
-
-                        decScope.layout(dec, CellElement.DECOR_SCOPE, needRows)
-                        if needRows > 1:
-                            # Need one or two comments
-                            if leadingDoc is not None:
-                                decScope.__allocateCell(3, 2)
-                                decScope.cells[3][1] = \
-                                    ConnectorCell(CONN_N_S, decScope, 1, 3)
-                                decScope.cells[3][2] = \
-                                    LeadingDocCell(scopeItem, leadingDoc,
-                                                   decScope, 2, 3)
-
-                            if scopeItem.leadingComment:
-                                rowAddr = needRows + 1
-                                decScope.__allocateCell(rowAddr, 2)
-                                decScope.cells[rowAddr][1] = \
-                                    ConnectorCell(CONN_N_S,
-                                                  decScope, 1, rowAddr)
-                                decScope.cells[rowAddr][2] = \
-                                    self.__createLeadingComment(
-                                        scopeItem, decScope, 2, rowAddr)
-
-                        decScope.__allocateCell(decScopeRows - 2, 1)
-
-                        # Fix the parent
-                        scopeCanvas.parent = decScope
-                        scopeCanvas.canvas = decScope
-                        # Set the decorator content
-                        decScope.cells[decScopeRows - 2][1] = scopeCanvas
-                        scopeCanvas.addr = [1, decScopeRows - 2]
-                        # Set the current content scope
-                        scopeCanvas = decScope
-                        scopeItem = dec
-
-                tempVacantRow = vacantRow
-                vacantRow = self.__allocateLeadingComment(scopeItem, vacantRow, column)
-                if tempVacantRow == vacantRow:
-                    # Nothing has been inserted, i.e. may need a spacer after
-                    # the end of an opened group
-                    vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
-
-                # Update the scope canvas parent and address
-                scopeCanvas.parent = self
-                scopeCanvas.addr = [column, vacantRow]
-                self.__allocateAndSet(vacantRow, column, scopeCanvas)
-                vacantRow += 1
+            if item.kind == COMMENT_FRAGMENT:
+                if not self.settings.noComment:
+                    vacantRow = self.__layoutComment(item, vacantRow, column)
                 continue
 
             if item.kind == WITH_FRAGMENT:
-                if self.settings.noWith:
-                    continue
+                if not self.settings.noWith:
+                    vacantRow = self.__layoutWith(item, vacantRow, column)
+                continue
 
-                tempVacantRow = vacantRow
-                vacantRow = self.__allocateLeadingComment(item, vacantRow, column)
-                if tempVacantRow == vacantRow:
-                    # Nothing has been inserted, i.e. may need a spacer after
-                    # the end of an opened group
-                    vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
-
-                self.__allocateScope(item, CellElement.WITH_SCOPE,
-                                     vacantRow, column)
-                vacantRow += 1
+            if item.kind in [FUNCTION_FRAGMENT, CLASS_FRAGMENT]:
+                vacantRow = self.__layoutDefClass(item, vacantRow, column)
                 continue
 
             if item.kind in [WHILE_FRAGMENT, FOR_FRAGMENT]:
-                targetScope = CellElement.WHILE_SCOPE
-                if item.kind == FOR_FRAGMENT:
-                    targetScope = CellElement.FOR_SCOPE
-
                 if item.kind == FOR_FRAGMENT and self.settings.noFor:
                     continue
                 if item.kind == WHILE_FRAGMENT and self.settings.noWhile:
                     continue
-
-                loopRegionBegin = vacantRow
-                mainRows, elseRows, aboveItems = self.__needLoopCommentRow(item)
-                maxRows = max(mainRows, elseRows)
-                if maxRows > 0:
-                    # Main part
-                    cRow = vacantRow + (maxRows - mainRows)
-
-                    tempVacant = vacantRow
-                    while mainRows < maxRows:
-                        self.__allocateCell(tempVacant, column)
-                        self.cells[tempVacant][column] = \
-                            ConnectorCell(CONN_N_S, self, column, tempVacant)
-                        tempVacant += 1
-                        mainRows += 1
-
-                    if aboveItems[0][0]:
-                        docComment = AboveDocCell(item, aboveItems[0][0], self, column, cRow)
-                        docComment.needConnector = True
-                        self.__allocateAndSet(cRow, column, docComment)
-                        cRow += 1
-                    if item.leadingComment:
-                        comment = self.__createAboveComment(item, self, column, cRow)
-                        comment.needConnector = True
-                        self.__allocateAndSet(cRow, column, comment)
-
-
-                    if elseRows > 0:
-                        cRow = vacantRow + (maxRows - elseRows)
-
-                        if aboveItems[1][0]:
-                            docComment = AboveDocCell(item.elsePart, aboveItems[1][0], self, column + 1, cRow)
-                            self.__allocateAndSet(cRow, column + 1, docComment)
-                            cRow += 1
-                        if aboveItems[1][1]:
-                            comment = self.__createAboveComment(item.elsePart, self, column + 1, cRow)
-                            comment.needConnector = aboveItems[1][0] is not None
-                            self.__allocateAndSet(cRow, column + 1, comment)
-
-                        self.dependentRegions.append((loopRegionBegin,
-                                                      vacantRow + maxRows))
-
-                    vacantRow += maxRows
-                else:
-                    vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
-
-
-                self.__allocateScope(item, targetScope, vacantRow, column)
-                if item.elsePart:
-                    if item.kind == FOR_FRAGMENT:
-                        self.__allocateScope(item.elsePart, CellElement.FOR_ELSE_SCOPE,
-                                             vacantRow, column + 1)
-                    else:
-                        self.__allocateScope(item.elsePart, CellElement.WHILE_ELSE_SCOPE,
-                                             vacantRow, column + 1)
-                    self.cells[vacantRow][column + 1].setLeaderRef(item)
-                vacantRow += 1
-                continue
-
-            if item.kind == COMMENT_FRAGMENT:
-                if self.settings.noComment:
-                    continue
-
-                self.__allocateCell(vacantRow, column + 1)
-                self.cells[vacantRow][column] = \
-                    ConnectorCell(CONN_N_S, self, column, vacantRow)
-                self.cells[vacantRow][column + 1] = \
-                    self.__createIndependentComment(item, self, column + 1,
-                                                    vacantRow)
-                vacantRow += 1
+                vacantRow = self.__layoutLoop(item, vacantRow, column)
                 continue
 
             if item.kind == TRY_FRAGMENT:
-                if self.settings.noTry:
-                    continue
-
-                tryRegionBegin = vacantRow
-
-                maxRows, aboveItems = self.__needTryCommentRow(item)
-                if maxRows > 0:
-                    # Main part
-                    mainRows = aboveItems[0][0]
-                    cRow = vacantRow + (maxRows - mainRows)
-
-                    tempVacant = vacantRow
-                    while mainRows < maxRows:
-                        self.__allocateCell(tempVacant, column)
-                        self.cells[tempVacant][column] = \
-                            ConnectorCell(CONN_N_S, self, column, tempVacant)
-                        tempVacant += 1
-                        mainRows += 1
-
-                    if aboveItems[0][1]:
-                        docComment = AboveDocCell(item, aboveItems[0][1], self, column, cRow)
-                        docComment.needConnector = True
-                        self.__allocateAndSet(cRow, column, docComment)
-                        cRow += 1
-                    if item.leadingComment:
-                        comment = self.__createAboveComment(item, self, column, cRow)
-                        comment.needConnector = True
-                        self.__allocateAndSet(cRow, column, comment)
-
-                    if item.exceptParts and not self.settings.hideexcepts:
-                        self.dependentRegions.append((tryRegionBegin,
-                                                      vacantRow + maxRows))
-
-
-                self.__allocateScope(item, CellElement.TRY_SCOPE,
-                                     vacantRow + maxRows, column)
-
-                if self.settings.hideexcepts:
-                    if item.exceptParts:
-                        miniExcept = MinimizedExceptCell(item, self,
-                                                         column + 1, vacantRow + maxRows)
-                        self.__allocateAndSet(vacantRow + maxRows, column + 1,
-                                              miniExcept)
-                else:
-                    nextColumn = column + 1
-                    exceptIndex = 1
-                    for exceptPart in item.exceptParts:
-                        if maxRows > 0:
-                            excRows = aboveItems[exceptIndex][0]
-                            cRow = vacantRow + (maxRows - excRows)
-
-                            if aboveItems[exceptIndex][1]:
-                                docComment = AboveDocCell(exceptPart, aboveItems[exceptIndex][1],
-                                                          self, nextColumn, cRow)
-                                self.__allocateAndSet(cRow, nextColumn, docComment)
-                                cRow += 1
-                            if aboveItems[exceptIndex][2]:
-                                comment = self.__createAboveComment(exceptPart, self, nextColumn, cRow)
-                                comment.needConnector = aboveItems[exceptIndex][1] is not None
-                                self.__allocateAndSet(cRow, nextColumn, comment)
-
-                        self.__allocateScope(exceptPart,
-                                             CellElement.EXCEPT_SCOPE,
-                                             vacantRow + maxRows, nextColumn)
-                        self.cells[vacantRow + maxRows][nextColumn].setLeaderRef(item)
-
-                        exceptIndex += 1
-                        nextColumn += 1
-
-                vacantRow += maxRows
-
-                # The else part goes below
-                if item.elsePart:
-                    vacantRow += 1
-                    vacantRow = self.__allocateLeadingComment(item.elsePart,
-                                                              vacantRow,
-                                                              column)
-                    self.__allocateScope(item.elsePart, CellElement.TRY_ELSE_SCOPE,
-                                         vacantRow, column)
-                    self.cells[vacantRow][column].setLeaderRef(item)
-                # The finally part is located below
-                if item.finallyPart:
-                    vacantRow += 1
-                    vacantRow = self.__allocateLeadingComment(
-                        item.finallyPart, vacantRow, column)
-                    self.__allocateScope(
-                        item.finallyPart, CellElement.FINALLY_SCOPE,
-                        vacantRow, column)
-                    self.cells[vacantRow][column].setLeaderRef(item)
-                vacantRow += 1
+                if not self.settings.noTry:
+                    vacantRow = self.__layoutTry(item, vacantRow, column)
                 continue
 
             if item.kind == IF_FRAGMENT:
-                if self.settings.noIf:
-                    continue
-
-                lastNonElseIndex = len(item.parts) - 1
-                for index in range(len(item.parts)):
-                    if item.parts[index].condition is None:
-                        lastNonElseIndex = index - 1
-                        break
-
-                canvas = VirtualCanvas(self.settings, 0, 0,
-                                       self.__validGroups,
-                                       self.__collapsedGroups, self)
-                canvas.isNoScope = True
-                canvas.isIfBelowLayout = True
-                canvas.isOuterIfLayout = True
-
-                if lastNonElseIndex == len(item.parts) - 1:
-                    # There is no else
-                    canvas.layoutIfBranch(item.parts[lastNonElseIndex], None)
-                else:
-                    canvas.layoutIfBranch(item.parts[lastNonElseIndex],
-                                          item.parts[lastNonElseIndex + 1])
-
-                index = lastNonElseIndex - 1
-                while index >= 0:
-                    tempCanvas = VirtualCanvas(self.settings, 0, 0,
-                                               self.__validGroups,
-                                               self.__collapsedGroups, self)
-                    tempCanvas.isNoScope = True
-                    tempCanvas.layoutIfBranch(item.parts[index], canvas)
-                    canvas = tempCanvas
-                    index -= 1
-
-                self.__allocateAndSet(vacantRow, 1, canvas)
-                vacantRow += 1
+                if not self.settings.noIf:
+                    vacantRow = self.__layoutIf(item, vacantRow, column)
                 continue
 
             # Below are the single cell fragments possibly with comments
@@ -981,7 +998,8 @@ class VirtualCanvas:
                                   cellClass(item, self, column, vacantRow))
 
             if item.sideComment and not self.settings.noComment:
-                comment = self.__createSideComment(item, self, column + 1, vacantRow)
+                comment = self.__createSideComment(item, self,
+                                                   column + 1, vacantRow)
                 self.__allocateAndSet(vacantRow, column + 1, comment)
             vacantRow += 1
 
@@ -1724,7 +1742,8 @@ class VirtualCanvas:
                                          cell.width, cell.height)
                         rect.pen = QPen(QColor(0, 255, 0, 255))
                         rect.brush = QBrush(QColor(0, 255, 0, 127))
-                        rect.setToolTip('Item ' + str(cell) + ' ' + str(cell.kind))
+                        rect.setToolTip('Item ' + str(cell) +
+                                        ' ' + str(cell.kind))
                         scene.addItem(rect)
                 cell.draw(scene, currentX, currentY)
                 currentX += cell.width
