@@ -72,6 +72,7 @@ class GlobalDataWrapper:
 
         self.graphvizAvailable = self.__checkGraphviz()
         self.javaAvailable = self.__checkJava()
+        self.hexdumpAvailable = self.__checkHexdump()
 
     def getProfileOutputPath(self, procuuid):
         """Provides the path to the profile output file"""
@@ -146,6 +147,11 @@ class GlobalDataWrapper:
     def __checkJava():
         """Checks if java is available"""
         return find_executable('java') is not None
+
+    @staticmethod
+    def __checkHexdump():
+        """Checks if hexdump is available"""
+        return find_executable('hexdump') is not None
 
 
 globalsSingleton = GlobalDataWrapper()

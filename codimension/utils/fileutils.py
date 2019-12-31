@@ -681,14 +681,6 @@ def compactPath(path, width, measure=len):
     return ''
 
 
-def isPythonFile(fName):
-    """True if it is a python file"""
-    mime, _, _ = getFileProperties(fName)
-    if mime is None:
-        return False
-    return 'python' in mime
-
-
 def isPythonMime(mime):
     """True if it is a python mime"""
     if mime is None:
@@ -701,6 +693,12 @@ def isMarkdownMime(mime):
     if mime:
         return 'markdown' in mime
     return False
+
+
+def isPythonFile(fName):
+    """True if it is a python file"""
+    mime, _, _ = getFileProperties(fName)
+    return isPythonMime(mime)
 
 
 def isPythonCompiledFile(fName):
