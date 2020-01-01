@@ -1,12 +1,18 @@
-2019 XXX XX Sergey Satskiy <sergey.satskiy@tuta.io>
+2020 Jan 01 Sergey Satskiy <sergey.satskiy@tuta.io>
 
-* Version 4.6.1
+* Version 4.7.0
 * Adding pylint plugin
 * Plugin manager bug fixes and minor improvements
 * Graphics pane icon scaling in a uniform way
 * Slight changes for the graphics primitives with icons
 * Font selection dialogs for zoom level 0 instead of the font family selection
 * Bumping up the cdmcfparser version to 2.2.3
+* Bumping up the jedi library version to 0.15.2
+* Bumping up the PyQt library version to 5.11.3
+* Individual settings for each graphics primitive
+* Changed policy of working with skins
+* New rendering of the if statements RHS branches
+* Updated colors for the default skin
 
 2019 Oct 30 Sergey Satskiy <sergey.satskiy@tuta.io>
 
