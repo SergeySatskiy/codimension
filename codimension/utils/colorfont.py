@@ -272,7 +272,7 @@ def getZoomedMarginFont():
     return font
 
 
-def getLabelStyle(modelLabel):
+def getLabelStyle(modelLabel, headerLabel=True):
     """Creates a label stylesheet for the given owner widget"""
     bgColor = modelLabel.palette().color(modelLabel.backgroundRole())
 
@@ -288,10 +288,15 @@ def getLabelStyle(modelLabel):
                      min(green + delta, 255),
                      min(blue + delta, 255))
 
-    props = ('border-radius: 3px',
-             'padding: 4px',
-             'background-color: ' + colorAsString(bgColor, True),
-             'border: 1px solid ' + colorAsString(borderColor, True))
+    if headerLabel:
+        props = ('border-radius: 3px',
+                 'padding: 4px',
+                 'background-color: ' + colorAsString(bgColor, True),
+                 'border: 1px solid ' + colorAsString(borderColor, True))
+    else:
+        props = ('border-radius: 3px',
+                 'padding: 4px',
+                 'border: 1px solid ' + colorAsString(borderColor, True))
     return '; '.join(props)
 
 

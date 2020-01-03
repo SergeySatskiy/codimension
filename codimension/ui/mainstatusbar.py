@@ -24,7 +24,8 @@ from utils.colorfont import getLabelStyle
 from utils.pixmapcache import getIcon
 from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
 from .qt import Qt, QLabel, QPalette, QColor, QMenu, QDialog, QApplication
-from .fitlabel import FitPathLabel
+from .fitlabel import (FitPathLabel, FramedLabelWithDoubleClick,
+                       LabelWithDoubleClickSignal)
 
 
 class MainWindowStatusBarMixin:
@@ -70,29 +71,26 @@ class MainWindowStatusBarMixin:
         self.__statusBar.addPermanentWidget(self.sbDebugState)
         self.sbDebugState.setVisible(False)
 
-        self.sbLanguage = QLabel(self.__statusBar)
-        self.sbLanguage.setStyleSheet(labelStylesheet)
+        self.sbLanguage = FramedLabelWithDoubleClick(parent=self.__statusBar,
+                                                     headerLabel=True)
         self.__statusBar.addPermanentWidget(self.sbLanguage)
 
-        self.sbEncoding = QLabel(self.__statusBar)
-        self.sbEncoding.setStyleSheet(labelStylesheet)
+        self.sbEncoding = FramedLabelWithDoubleClick(parent=self.__statusBar,
+                                                     headerLabel=True)
         self.__statusBar.addPermanentWidget(self.sbEncoding)
 
-        self.sbEol = QLabel(self.__statusBar)
-        self.sbEol.setStyleSheet(labelStylesheet)
+        self.sbEol = FramedLabelWithDoubleClick(parent=self.__statusBar,
+                                                headerLabel=True)
         self.__statusBar.addPermanentWidget(self.sbEol)
 
-        self.sbWritable = QLabel(self.__statusBar)
-        self.sbWritable.setStyleSheet(labelStylesheet)
+        self.sbWritable = FramedLabelWithDoubleClick(parent=self.__statusBar,
+                                                     headerLabel=True)
         self.__statusBar.addPermanentWidget(self.sbWritable)
 
-        # FitPathLabel has support for double click event,
-        # so it is used here. Purely it would be better to have another
-        # class for a pixmap label. But I am lazy.
-        self.sbPyflakes = FitPathLabel(self.__statusBar)
+        self.sbPyflakes = LabelWithDoubleClickSignal(self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbPyflakes)
 
-        self.sbCC = FitPathLabel(self.__statusBar)
+        self.sbCC = LabelWithDoubleClickSignal(self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbCC)
 
         self.sbFile = FitPathLabel(self.__statusBar)
@@ -105,17 +103,35 @@ class MainWindowStatusBarMixin:
         self.sbFile.customContextMenuRequested.connect(
             self._showPathLabelContextMenu)
 
-        self.sbLine = QLabel(self.__statusBar)
+        self.sbLine = FramedLabelWithDoubleClick(callback=self.copyLine,
+                                                 parent=self.__statusBar,
+                                                 headerLabel=True)
         self.sbLine.setMinimumWidth(72)
         self.sbLine.setAlignment(Qt.AlignCenter)
-        self.sbLine.setStyleSheet(labelStylesheet)
         self.__statusBar.addPermanentWidget(self.sbLine)
 
-        self.sbPos = QLabel(self.__statusBar)
+        self.sbPos = FramedLabelWithDoubleClick(callback=self.copyPos,
+                                                parent=self.__statusBar,
+                                                headerLabel=True)
         self.sbPos.setMinimumWidth(72)
         self.sbPos.setAlignment(Qt.AlignCenter)
-        self.sbPos.setStyleSheet(labelStylesheet)
         self.__statusBar.addPermanentWidget(self.sbPos)
+
+    def copyLine(self):
+        """Copies the line number to the buffer"""
+        self.__copyLinePos(self.sbLine)
+
+    def copyPos(self):
+        """Copies the pos number to the buffer"""
+        self.__copyLinePos(self.sbPos)
+
+    @staticmethod
+    def __copyLinePos(label):
+        """Copies the line/pos label content to the buffer"""
+        txt = label.text().strip().lower()
+        if not txt.endswith('n/a'):
+            txt = txt[txt.find(':') + 1:].strip()
+            QApplication.clipboard().setText(txt)
 
     def showStatusBarMessage(self, msg, timeout=10000):
         """Shows a temporary status bar message, default 10sec"""

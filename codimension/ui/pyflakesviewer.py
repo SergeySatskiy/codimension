@@ -88,6 +88,7 @@ class PyflakesViewer(QObject):
         self.__ccLabel.setContextMenuPolicy(Qt.CustomContextMenu)
         self.__ccLabel.customContextMenuRequested.connect(
             self.__showCCContextMenu)
+        self.__ccLabel.doubleClicked.connect(self.__jumpToFirstCC)
 
     def __onTabChanged(self, index):
         """Triggered when another tab becomes active"""
@@ -283,6 +284,19 @@ class PyflakesViewer(QObject):
             contextMenu.popup(self.__ccLabel.mapToGlobal(pos))
         else:
             del contextMenu
+
+    def __jumpToFirstCC(self):
+        """Double click on the cc icon"""
+        if self.__currentUUID is None:
+            return
+        if self.__currentUUID not in self.__flakesResults:
+            return
+
+        if self.__flakesResults[self.__currentUUID].ccMessages:
+            firstItem = self.__flakesResults[self.__currentUUID].ccMessages[0]
+            widget = self.__editorsManager.getWidgetByUUID(self.__currentUUID)
+            if widget:
+                self.__editorsManager.jumpToLine(firstItem.lineno)
 
     def __onContextMenu(self, act):
         """Triggered when a context menu item is selected"""

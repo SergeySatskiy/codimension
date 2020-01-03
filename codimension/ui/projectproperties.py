@@ -285,14 +285,15 @@ class ProjectPropertiesDialog(QDialog):
         # Creation date
         creationDateLabel = QLabel("Creation date:", self)
         gridLayout.addWidget(creationDateLabel, 12, 0, 1, 1)
-        self.creationDateEdit = FramedLabelWithDoubleClick()
+        self.creationDateEdit = FramedLabelWithDoubleClick(headerLabel=False)
         self.creationDateEdit.setToolTip("Double click to copy")
         gridLayout.addWidget(self.creationDateEdit, 12, 1, 1, 1)
 
         # Project UUID
         uuidLabel = QLabel("UUID:", self)
         gridLayout.addWidget(uuidLabel, 13, 0, 1, 1)
-        self.uuidEdit = FramedLabelWithDoubleClick("", self.__copyProjectPath)
+        self.uuidEdit = FramedLabelWithDoubleClick("", self.__copyProjectPath,
+                                                   headerLabel=False)
         gridLayout.addWidget(self.uuidEdit, 13, 1, 1, 1)
 
         verticalLayout.addLayout(gridLayout)

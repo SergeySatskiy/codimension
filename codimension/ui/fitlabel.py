@@ -26,6 +26,7 @@
 """Labels which can change its content to fit the label size"""
 
 from utils.fileutils import compactPath
+from utils.colorfont import getLabelStyle
 from .qt import Qt, pyqtSignal, QLabel, QApplication, QFrame
 
 
@@ -55,14 +56,28 @@ class FitLabel(QLabel):
         QLabel.setText(self, txt)
 
 
-class FitPathLabel(QLabel):
+class LabelWithDoubleClickSignal(QLabel):
 
-    """a label showing a file path compacted to fit it's size"""
+    """A label which generates a double click signal"""
 
     doubleClicked = pyqtSignal()
 
     def __init__(self, parent=None):
         QLabel.__init__(self, parent)
+
+    def mouseDoubleClickEvent(self, event):
+        """Generates the doubleClicked signal"""
+        if event.button() == Qt.LeftButton:
+            self.doubleClicked.emit()
+        QLabel.mouseDoubleClickEvent(self, event)
+
+
+class FitPathLabel(LabelWithDoubleClickSignal):
+
+    """a label showing a file path compacted to fit it's size"""
+
+    def __init__(self, parent=None):
+        LabelWithDoubleClickSignal.__init__(self, parent)
         self.__path = ''
 
     def setPath(self, path):
@@ -94,20 +109,18 @@ class FitPathLabel(QLabel):
         """Length of a text in pixels"""
         return self.fontMetrics().width(txt)
 
-    def mouseDoubleClickEvent(self, event):
-        """Generates the doubleClicked signal"""
-        if event.button() == Qt.LeftButton:
-            self.doubleClicked.emit()
-        QLabel.mouseDoubleClickEvent(self, event)
 
-
+# headerLabel == True => the background gets lighter
+# headerLabel == False => the background is not changed
+# in all cases some spacing is added and a darker frame is added
 class FramedLabelWithDoubleClick(QLabel):
 
     """A label with a frame and double click for copy content to clipboard"""
 
-    def __init__(self, text=None, callback=None, parent=None):
+    def __init__(self, text=None, callback=None, parent=None,
+                 headerLabel=False):
         QLabel.__init__(self, parent)
-        self.setFrameStyle(QFrame.StyledPanel)
+        self.setStyleSheet('QLabel {' + getLabelStyle(self, headerLabel) + '}')
         if text is not None:
             self.setText(text)
         self.__callback = callback

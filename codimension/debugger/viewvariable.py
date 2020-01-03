@@ -25,7 +25,7 @@ from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
 from utils.pixmapcache import getIcon
 from ui.fitlabel import FramedLabelWithDoubleClick
 from utils.globals import GlobalData
-from utils.colorfont import getZoomedMonoFont, getLabelStyle
+from utils.colorfont import getZoomedMonoFont
 
 
 class ViewVariableDialog(QDialog):
@@ -67,27 +67,26 @@ class ViewVariableDialog(QDialog):
         varScopeLabel = QLabel("Scope:", self)
         gridLayout.addWidget(varScopeLabel, 0, 0, Qt.AlignCenter)
         if isGlobal:
-            varScopeValue = FramedLabelWithDoubleClick("Global")
+            varScopeValue = FramedLabelWithDoubleClick("Global",
+                                                       headerLabel=True)
         else:
-            varScopeValue = FramedLabelWithDoubleClick("Local")
+            varScopeValue = FramedLabelWithDoubleClick("Local",
+                                                       headerLabel=True)
         varScopeValue.setToolTip("Double click to copy")
-        varScopeValue.setStyleSheet(getLabelStyle(varScopeLabel))
         font = varScopeValue.font()
         font.setFamily(GlobalData().skin['monoFont'].family())
         gridLayout.addWidget(varScopeValue, 0, 1)
 
         varNameLabel = QLabel("Name:", self)
         gridLayout.addWidget(varNameLabel, 1, 0, Qt.AlignCenter)
-        varNameValue = FramedLabelWithDoubleClick(varName)
+        varNameValue = FramedLabelWithDoubleClick(varName, headerLabel=True)
         varNameValue.setToolTip("Double click to copy")
-        varNameValue.setStyleSheet(getLabelStyle(varNameLabel))
         gridLayout.addWidget(varNameValue, 1, 1)
 
         varTypeLabel = QLabel("Type:", self)
         gridLayout.addWidget(varTypeLabel, 2, 0, Qt.AlignCenter)
-        varTypeValue = FramedLabelWithDoubleClick(varType)
+        varTypeValue = FramedLabelWithDoubleClick(varType, headerLabel=True)
         varTypeValue.setToolTip("Double click to copy")
-        varTypeValue.setStyleSheet(getLabelStyle(varTypeLabel))
         gridLayout.addWidget(varTypeValue, 2, 1)
 
         varValueLabel = QLabel("Value:", self)
