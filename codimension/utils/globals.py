@@ -64,6 +64,7 @@ class GlobalDataWrapper:
         self.screenWidth = 0
         self.screenHeight = 0
         self.version = "unknown"
+        self.originalSysPath = None
         self.project = CodimensionProject()
 
         self.pluginManager = CDMPluginManager()

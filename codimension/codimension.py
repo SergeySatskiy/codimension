@@ -41,6 +41,7 @@ from optparse import OptionParser
 sys.argv[0] = os.path.realpath(__file__)
 
 # Make it possible to import from the subdirectories
+originalSysPath = sys.path
 srcDir = os.path.dirname(sys.argv[0])
 if srcDir not in sys.path:
     sys.path.insert(0, srcDir)
@@ -53,6 +54,9 @@ from utils.skin import Skin, populateSampleSkin
 from utils.config import DEFAULT_ENCODING
 from utils.settings import Settings, SETTINGS_DIR
 from utils.globals import GlobalData
+
+# Need for the correct import resolution
+GlobalData().originalSysPath = originalSysPath
 
 
 try:

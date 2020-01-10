@@ -22,6 +22,7 @@
 # pylint: disable=W0702
 # pylint: disable=W0703
 
+import sys
 import os
 import os.path
 import importlib
@@ -94,86 +95,138 @@ def buildDirModules(path, infoLabel=None):
     return __scanDir("", abspath, infoLabel)
 
 
+def __appendResult(value, result):
+    """Appends to the results if it is unique"""
+    if not value in result:
+        result.append(value)
+
 
 def __resolveImport(importObj, baseAndProjectPaths, result, errors):
     """Resolves imports like: 'import x'"""
-    try:
-        try:
-            spec = importlib.util.find_spec(importObj.name)
-            if spec:
-                # Found system wide or in venv
-                result.append([importObj.name, spec.origin, []])
-                return
-        except:
-            pass
 
-        # Try in the base path and the project imports if so
-        spec = importlib.machinery.PathFinder.find_spec(importObj.name,
-                                                        baseAndProjectPaths)
+    # import x.y
+    # Could be (priority wise)
+    # I:   <dir>/x/y/__init__.py
+    # II:  <dir>/x/y.py
+
+    oldSysPath = sys.path
+    sys.path = GlobalData().originalSysPath + baseAndProjectPaths
+
+    try:
+        spec = importlib.util.find_spec(importObj.name)
         if spec:
-            result.append([importObj.name, spec.origin, []])
-        else:
-            errors.append("Could not resolve 'import " + importObj.name +
-                          "' at line " + str(importObj.line))
+            if spec.has_location:
+                __appendResult([importObj.name, spec.origin, []], result)
+                return
+            if spec.loader is not None:
+                if 'builtin' in spec.loader.__name__.lower():
+                    __appendResult([importObj.name, 'built-in', []], result)
+                    return
+
+            # Something unknown; it's not clear what to do
     except:
-        errors.append("Could not resolve 'import " + importObj.name +
-                      "' at line " + str(importObj.line))
+        pass
+    finally:
+        sys.path = oldSysPath
+
+    errors.append("Could not resolve 'import " + importObj.name +
+                  "' at line " + str(importObj.line))
+
+
+def __resolveFrom(importObj, importName, basePath, result, errors):
+    """Common resolution imports like 'from [.]x import y"""
+    try:
+        spec = importlib.util.find_spec(importName, basePath)
+        if spec:
+            if spec.has_location:
+                __appendResult([importObj.name, spec.origin,
+                                [what.name for what in importObj.what]],
+                               result)
+                return
+
+            # No location but it could be a builtin module
+            if spec.loader is not None:
+                if 'builtin' in spec.loader.__name__.lower():
+                    __appendResult([importObj.name, 'built-in',
+                                    [what.name for what in importObj.what]],
+                                   result)
+                    return
+
+                # Unknown loader so not clear what to do
+                errors.append("Could not resolve 'from " +
+                              importObj.name + " import ..." +
+                              "' at line " + str(importObj.line))
+                return
+
+            # Loader is None but found something. Maybe it is a submodule
+            if spec.submodule_search_locations:
+                for what in importObj.what:
+                    impName = importName + '.' + what.name
+                    found = False
+                    try:
+                        spec = importlib.util.find_spec(impName, basePath)
+                        if spec:
+                            visibleName = importObj.name + '.' + what.name
+                            if spec.has_location:
+                                __appendResult([visibleName, spec.origin, []],
+                                               result)
+                                found = True
+                            elif spec.loader is not None:
+                                if 'builtin' in spec.loader.__name__.lower():
+                                    __appendResult(
+                                        [visibleName, 'builtin module', []],
+                                        result)
+                                    found = True
+                    except:
+                        pass
+                    if not found:
+                        errors.append("Could not resolve 'from " +
+                                      importObj.name + " import " +
+                                      what.name + "' at line " +
+                                      str(importObj.line))
+                return
+    except:
+        pass
+
+    errors.append("Could not resolve 'from " +
+                  importObj.name + " import ...' at line " +
+                  str(importObj.line))
 
 
 def __resolveFromImport(importObj, basePath, baseAndProjectPaths,
                         result, errors):
     """Resolves imports like: 'from x import y'"""
-    try:
-        try:
-            spec = importlib.util.find_spec(importObj.name)
-            if spec:
-                # Found system wide or in venv
-                result.append([importObj.name, spec.origin,
-                               [what.name for what in importObj.what]])
-                return
-        except:
-            pass
 
-        # Try in the base path and the project imports if so
-        try:
-            spec = importlib.machinery.PathFinder.find_spec(
-                importObj.name, baseAndProjectPaths)
-            if spec:
-                result.append([importObj.name, spec.origin,
-                               [what.name for what in importObj.what]])
-                return
-        except:
-            pass
+    # from x.y import z
+    # Could be (priority wise)
+    # I:    <dir>/x/y/__init__.py  -> z
+    # II:   <dir>/x/y.py  -> z
+    # III:  <dir>/x/y/z/__init__.py
+    # IV:   <dir>/x/y/z.py
 
-        # try the name as a directory name
-        project = GlobalData().project
-        importNameAsPath = importObj.name.replace('.', os.path.sep)
-        pathsToSearch = [os.path.normpath(basePath + os.path.sep +
-                                          importNameAsPath)]
-        if project.isLoaded():
-            for importPath in project.getImportDirsAsAbsolutePaths():
-                pathsToSearch.append(
-                    os.path.normpath(importPath + os.path.sep +
-                                     importNameAsPath))
+    oldSysPath = sys.path
+    sys.path = GlobalData().originalSysPath + baseAndProjectPaths
 
-        for what in importObj.what:
-            spec = importlib.machinery.PathFinder.find_spec(
-                what.name, pathsToSearch)
-            if spec:
-                result.append([what.name, spec.origin, []])
-            else:
-                errors.append("Could not resolve 'from " +
-                              importObj.name + " import " + what.name +
-                              "' at line " + str(what.line))
-    except:
-        errors.append("Could not resolve 'from " +
-                      importObj.name + " import ...' at line " +
-                      str(importObj.line))
+    __resolveFrom(importObj, importObj.name, basePath, result, errors)
+
+    sys.path = oldSysPath
 
 
 def __resolveRelativeImport(importObj, basePath, result, errors):
     """Resolves imports like: 'from ..x import y'"""
-    try:
+
+    # from ...x.y import z
+    # Could be (priority wise)
+    # I:    <dir>/x/y/__init__.py  -> z
+    # II:   <dir>/x/y.py  -> z
+    # III:  <dir>/x/y/z/__init__.py
+    # IV:   <dir>/x/y/z.py
+
+    if basePath is None:
+        errors.append("Could not resolve 'from " + importObj.name +
+                      " import ...' at line " + str(importObj.line) +
+                      " because the editing buffer has not been saved yet")
+    else:
         path = basePath
         current = importObj.name[1:]
         error = False
@@ -192,34 +245,13 @@ def __resolveRelativeImport(importObj, basePath, result, errors):
         if not path:
             path = os.path.sep  # reached the root directory
 
-        try:
-            spec = importlib.machinery.PathFinder.find_spec(
-                current, [os.path.normpath(path)])
-            if spec:
-                result.append([importObj.name, spec.origin,
-                               [what.name for what in importObj.what]])
-                return
-        except:
-            pass
+        # This is a relative import so only one path needs to be searched
+        oldSysPath = sys.path
+        sys.path = [path]
 
-        # try the name as a directory name
-        importNameAsPath = current.replace('.', os.path.sep)
-        pathsToSearch = [os.path.normpath(path + os.path.sep +
-                                          importNameAsPath)]
+        __resolveFrom(importObj, current, path, result, errors)
 
-        for what in importObj.what:
-            spec = importlib.machinery.PathFinder.find_spec(what.name,
-                                                            pathsToSearch)
-            if spec:
-                result.append([what.name, spec.origin, []])
-            else:
-                errors.append("Could not resolve 'from " +
-                              importObj.name + " import " + what.name +
-                              "' at line " + str(what.line))
-    except:
-        errors.append("Could not resolve 'from " +
-                      importObj.name + " import ...' at line " +
-                      str(importObj.line))
+        sys.path = oldSysPath
 
 
 def resolveImports(fileName, imports):
@@ -236,12 +268,21 @@ def resolveImports(fileName, imports):
     errors = []
     result = []
 
-    basePath = os.path.dirname(fileName)    # no '/' at the end
-    project = GlobalData().project
+    origImporterCacheKeys = set(sys.path_importer_cache.keys())
+    origSysModulesKeys = set(sys.modules.keys())
 
-    baseAndProjectPaths = [basePath]
+    if fileName:
+        basePath = os.path.dirname(fileName)    # no '/' at the end
+        baseAndProjectPaths = [basePath]
+    else:
+        basePath = None
+        baseAndProjectPaths = []
+
+    project = GlobalData().project
     if project.isLoaded():
-        baseAndProjectPaths += project.getImportDirsAsAbsolutePaths()
+        for importDir in project.getImportDirsAsAbsolutePaths():
+            if importDir not in baseAndProjectPaths:
+                baseAndProjectPaths.append(importDir)
 
     for importObj in imports:
         if not importObj.what:
@@ -255,6 +296,18 @@ def resolveImports(fileName, imports):
             # case 3: from .i3 import x3, y3
             #      or from . import x4, y4
             __resolveRelativeImport(importObj, basePath, result, errors)
+
+    importlib.invalidate_caches()
+
+    newImporterCacheKeys = set(sys.path_importer_cache.keys())
+    diff = newImporterCacheKeys - origImporterCacheKeys
+    for key in diff:
+        del sys.path_importer_cache[key]
+
+    newSysModulesKeys = set(sys.modules.keys())
+    diff = newSysModulesKeys - origSysModulesKeys
+    for key in diff:
+        del sys.modules[key]
 
     return result, errors
 
