@@ -127,6 +127,22 @@ class NavigationBar(QFrame):
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         editorsManager.sigFileTypeChanged.connect(self.__onFileTypeChanged)
 
+    def terminate(self):
+        """Closing up"""
+        self.__disconnectEditorSignals()
+        self.__updateTimer.stop()
+        self.__updateTimer.timeout.disconnect(self.updateBar)
+
+        # Editors manager dependency
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.sigFileTypeChanged.disconnect(self.__onFileTypeChanged)
+
+        # Combo boxes signals
+        self.__globalScopeCombo.jumpToLine.disconnect(self.__onJumpToLine)
+        for item in self.__path:
+            item.combo.jumpToLine.disconnect(self.__onJumpToLine)
+
     def getEditor(self):
         """Provides the editor"""
         return self.__editor

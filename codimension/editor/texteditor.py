@@ -905,6 +905,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def terminate(self):
         """Overloaded version to pass the request to margins too"""
+        self.cursorPositionChanged.disconnect(self._onCursorPositionChanged)
+        self.__completer.activated.disconnect(self.insertCompletion)
+        self.__calltipTimer.timeout.disconnect(self.__onCalltipTimer)
+
         for margin in self.getMargins():
             if hasattr(margin, 'onClose'):
                 margin.onClose()

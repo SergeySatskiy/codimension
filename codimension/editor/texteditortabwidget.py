@@ -621,6 +621,11 @@ class TextEditorTabWidget(QWidget):
 
     def terminate(self):
         """Called just before the tab is closed"""
+        self.__splitter.splitterMoved.disconnect(self.flowSplitterMoved)
+        Settings().sigFlowSplitterChanged.disconnect(
+            self.otherFlowSplitterMoved)
+
+        self.__navigationBar.terminate()
         self.__mdView.terminate()
         self.__flowUI.terminate()
         self.__editor.terminate()

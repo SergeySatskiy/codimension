@@ -136,3 +136,8 @@ class CDMLineNumberMargin(QWidget):
     def onTextZoomChanged(self):
         """Triggered when a zoom has been changed"""
         self.setFont(getZoomedMarginFont())
+
+    def onClose(self):
+        """The editor is going to be closed"""
+        self._qpart.blockCountChanged.disconnect(self.__updateWidth)
+

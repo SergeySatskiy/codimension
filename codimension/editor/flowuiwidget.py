@@ -429,6 +429,24 @@ class FlowUIWidget(QWidget):
             self.__updateTimer.stop()
         self.__disconnectEditorSignals()
 
+        self.__mainWindow = GlobalData().mainWindow
+        editorsManager = self.__mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.sigFileTypeChanged.disconnect(self.__onFileTypeChanged)
+
+        Settings().sigHideDocstringsChanged.disconnect(
+            self.__onHideDocstringsChanged)
+        Settings().sigHideCommentsChanged.disconnect(self.__onHideCommentsChanged)
+        Settings().sigHideExceptsChanged.disconnect(self.__onHideExceptsChanged)
+        Settings().sigSmartZoomChanged.disconnect(self.__onSmartZoomChanged)
+
+        # Helps GC to collect more
+        for index in range(self.smartViews.count()):
+            scene = self.smartViews.widget(index).scene
+            scene.clear()
+
+        self.smartViews = None
+        self.__cf = None
+
     def __connectEditorSignals(self):
         """When it is a python file - connect to the editor signals"""
         if not self.__connected:

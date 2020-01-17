@@ -1752,6 +1752,14 @@ class EditorsManager(QTabWidget):
         editor.cursorPositionChanged.connect(self.__cursorPositionChanged)
         editor.sigEscapePressed.connect(self.__onESC)
 
+    def __disconnectEditorWidget(self, editorWidget):
+        """Disconnects the editor's signals"""
+        editor = editorWidget.getEditor()
+        editor.modificationChanged.disconnect(self.__modificationChanged)
+        editor.textChanged.disconnect(self.__contentChanged)
+        editor.cursorPositionChanged.disconnect(self.__cursorPositionChanged)
+        editor.sigEscapePressed.disconnect(self.__onESC)
+
     # Arguments: modified
     def __modificationChanged(self, _=None):
         """Triggered when the file is changed"""
@@ -1918,8 +1926,7 @@ class EditorsManager(QTabWidget):
                 editorWidgets = [MainWindowTabWidgetBase.PlainTextEditor,
                                  MainWindowTabWidgetBase.VCSAnnotateViewer]
                 if self.widget(index).getType() in editorWidgets:
-                    editor = self.widget(index).getEditor()
-                    editor.textChanged.disconnect(self.__contentChanged)
+                    self.__disconnectEditorWidget(self.widget(index))
                     self.widget(index).terminate()
             # That's the end of the session, so let's save the tabs status
             self.saveTabsStatus()

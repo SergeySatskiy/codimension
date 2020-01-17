@@ -505,3 +505,18 @@ class CDMBreakpointMargin(QWidget):
         # The signal is generated when the text is deleted and it happens when
         # the editor is destroyed
         self._qpart.blockCountChanged.disconnect(self.__onBlockCountChanged)
+
+        # Editors manager dependency
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.sigFileTypeChanged.disconnect(self.__onFileTypeChanged)
+
+        self.blockClicked.disconnect(self.__onBlockClicked)
+
+        bpointModel = self.__debugger.getBreakPointModel()
+        bpointModel.rowsAboutToBeRemoved.disconnect(self.__deleteBreakPoints)
+        bpointModel.sigDataAboutToBeChanged.disconnect(
+            self.__breakPointDataAboutToBeChanged)
+        bpointModel.dataChanged.disconnect(self.__changeBreakPoints)
+        bpointModel.rowsInserted.disconnect(self.__addBreakPoints)
+

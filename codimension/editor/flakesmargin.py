@@ -231,3 +231,11 @@ class CDMFlakesMargin(QWidget):
 
         self.__noTooltip = False
         self.update()
+
+    def onClose(self):
+        """The editor is going to be closed"""
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.sigFileTypeChanged.disconnect(self.__onFileTypeChanged)
+        self._qpart.blockCountChanged.disconnect(self.update)
+

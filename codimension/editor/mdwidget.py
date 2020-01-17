@@ -129,6 +129,13 @@ class MDViewer(TextViewer):
             # https://www.qtcentre.org/threads/6744-QTextEdit-and-delayed-image-loading
             self.setLineWrapColumnOrWidth(0)
 
+    def terminate(self):
+        """Called when a tab is to be closed"""
+        Settings().webResourceCache.sigResourceSaved.disconnect(
+            self.onResourceSaved)
+        Settings().plantUMLCache.sigRenderReady.disconnect(
+            self.onPlantUMLRender)
+
 
 class MDTopBar(QFrame):
 
@@ -364,9 +371,14 @@ class MDWidget(QWidget):
 
     def terminate(self):
         """Called when a tab is to be closed"""
+        self.mdView.terminate()
+
         if self.__updateTimer.isActive():
             self.__updateTimer.stop()
         self.__disconnectEditorSignals()
+
+        editorsManager = self.__mainWindow.em
+        editorsManager.sigFileTypeChanged.disconnect(self.__onFileTypeChanged)
 
     def __connectEditorSignals(self):
         """When it is a python file - connect to the editor signals"""
