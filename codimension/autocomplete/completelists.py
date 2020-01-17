@@ -97,7 +97,7 @@ def getOccurrences(editor, fileName, line=None, pos=None):
 def getJediScript(source, line, column, srcPath, needSysPath=True):
     """Provides the jedi Script object considering the current project"""
     jedi.settings.additional_dynamic_modules = []
-    paths = sys.path[:] if needSysPath else []
+    paths = GlobalData().originalSysPath[:] if needSysPath else []
 
     # This make relative imports resolvable
     if os.path.isabs(srcPath):
