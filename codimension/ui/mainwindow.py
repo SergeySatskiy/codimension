@@ -585,6 +585,7 @@ class CodimensionMainWindow(QMainWindow):
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.floatingRendererButton = QToolButton(self)
+        self.floatingRendererButton.setObjectName('floatingRendererButton')
         self.floatingRendererButton.setIcon(getIcon('floatingrenderer.png'))
         self.floatingRendererButton.setToolTip('Floating/embedded renderer')
         self.floatingRendererButton.setFocusPolicy(Qt.NoFocus)
@@ -616,7 +617,7 @@ class CodimensionMainWindow(QMainWindow):
         dbgSpacer = QWidget()
         dbgSpacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         dbgSpacer.setFixedWidth(40)
-        self.__toolbar.addWidget(dbgSpacer)
+        self.__toolbar.addWidget(dbgSpacer).setObjectName('debugSpacer')
         self.__toolbar.addAction(self.__dbgStop)
         self.__toolbar.addAction(self.__dbgRestart)
         self.__toolbar.addAction(self.__dbgGo)
@@ -628,7 +629,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__dbgDumpSettingsAct = self.__toolbar.addWidget(
             self.__dbgDumpSettingsButton)
 
-        self.__toolbar.addWidget(spacer)
+        self.__toolbar.addWidget(spacer).setObjectName('expandingSpacer')
         self.__toolbar.addWidget(self.floatingRendererButton)
 
         # Heck! The only QAction can be hidden
