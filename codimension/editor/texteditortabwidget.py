@@ -624,11 +624,27 @@ class TextEditorTabWidget(QWidget):
         self.__splitter.splitterMoved.disconnect(self.flowSplitterMoved)
         Settings().sigFlowSplitterChanged.disconnect(
             self.otherFlowSplitterMoved)
+        self.__cleanupLayout()
 
         self.__navigationBar.terminate()
         self.__mdView.terminate()
         self.__flowUI.terminate()
         self.__editor.terminate()
+
+    def __cleanupLayout(self):
+        """Disconnects QT widget signals and destroys the UI items"""
+        printButton = self.toolbar.findChild(QAction, 'printButton')
+        printButton.triggered.disconnect(self.__onPrint)
+        printButton.deleteLater()
+
+        printPreviewButton = self.toolbar.findChild(QAction, 'printPreviewButton')
+        printPreviewButton.triggered.connect(self.__onPrintPreview)
+        printPreviewButton.deleteLater()
+
+        self.importsDiagramButton.deleteLater()
+        self.runScriptButton.deleteLater()
+        self.toolbar.deleteLater()
+
 
     # Mandatory interface part is below
 
