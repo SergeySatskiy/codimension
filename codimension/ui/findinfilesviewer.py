@@ -293,6 +293,7 @@ class FindResultsTreeWidget(QTreeWidget):
         brush = QBrush(QColor(255, 227, 227))
         item.setBackground(0, brush)
         item.setBackground(1, brush)
+        item.setBackground(2, brush)
         childIndex = item.childCount() - 1
         while childIndex >= 0:
             childItem = item.child(childIndex)
