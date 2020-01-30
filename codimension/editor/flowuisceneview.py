@@ -99,6 +99,12 @@ class CFGraphicsScene(QGraphicsScene,
                     return item
         return None
 
+    def terminate(self):
+        """Called when a tab is closed"""
+        self.selectionChanged.disconnect(self.selChanged)
+        self.clear()
+        self.terminateMenus()
+
 
 
 class CFGraphicsView(QGraphicsView):
@@ -208,3 +214,8 @@ class CFGraphicsView(QGraphicsView):
             else:
                 val = float(itemRect.topLeft().x()) - 15.0
                 self.horizontalScrollBar().setValue(val)
+
+    def terminate(self):
+        """Called when a tab is closed"""
+        self.scene.terminate()
+        self.scene.deleteLater()

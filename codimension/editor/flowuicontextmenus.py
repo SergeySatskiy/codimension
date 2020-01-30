@@ -179,8 +179,15 @@ class CFSceneContextMenuMixin:
             self.__buildGroupMenu(selectedItems)
         self.menu.popup(event.screenPos())
 
+    def __destroyDynamicMenu(self):
+        """Properly cleans up the menu memory"""
+        if self.menu is not None:
+            self.menu.deleteLater()
+            self.menu = None
+
     def __buildIndividualMenu(self, item):
         """Builds a context menu for the given item"""
+        self.__destroyDynamicMenu()
         self.menu = QMenu()
         if type(item) in self.individualMenus:
             individualPart = self.individualMenus[type(item)]
@@ -194,6 +201,7 @@ class CFSceneContextMenuMixin:
 
     def __buildGroupMenu(self, items):
         """Builds a context menu for the group of items"""
+        self.__destroyDynamicMenu()
         self.menu = QMenu()
         if type(items[0]) in self.individualMenus:
             if self.areSelectedOfTypes([[items[0].kind, items[0].subKind]]):
@@ -1231,3 +1239,14 @@ class CFSceneContextMenuMixin:
                             # Selected items belong to more than one branch
                             return True
         return False
+
+    def terminateMenus(self):
+        """Called when a tab is closed"""
+        self.sceneMenu.deleteLater()
+        self.commonMenu.deleteLater()
+        self.groupMenu.deleteLater()
+        self.__destroyDynamicMenu()
+
+        for menu in self.individualMenus.values():
+            menu.deleteLater()
+

@@ -94,10 +94,10 @@ class EditorContextMenuMixin:
             getIcon('homepagemenu.png'), 'Open in browser', self.openInBrowser)
         self._menu.addSeparator()
 
-        self.__menuHighlightInPrj = self._menu.addAction(
+        self._menuHighlightInPrj = self._menu.addAction(
             getIcon("highlightmenu.png"), "&Highlight in project browser",
             editorsManager.onHighlightInPrj)
-        self.__menuHighlightInFS = self._menu.addAction(
+        self._menuHighlightInFS = self._menu.addAction(
             getIcon("highlightmenu.png"), "H&ighlight in file system browser",
             editorsManager.onHighlightInFS)
         self._menuHighlightInOutline = self._menu.addAction(
@@ -106,8 +106,6 @@ class EditorContextMenuMixin:
 
         # Plugins support
         self.__pluginMenuSeparator = self._menu.addSeparator()
-        mainWindow = GlobalData().mainWindow
-        editorsManager = mainWindow.editorsManagerWidget.editorsManager
         registeredMenus = editorsManager.getPluginMenus()
         if registeredMenus:
             for path in registeredMenus:
@@ -116,9 +114,9 @@ class EditorContextMenuMixin:
             self.__pluginMenuSeparator.setVisible(False)
 
         editorsManager.sigPluginContextMenuAdded.connect(
-            self.__onPluginMenuAdded)
+            self._onPluginMenuAdded)
         editorsManager.sigPluginContextMenuRemoved.connect(
-            self.__onPluginMenuRemoved)
+            self._onPluginMenuRemoved)
 
     def __initReloadEncodingMenu(self):
         """Creates the encoding menu for reloading the existing file"""
@@ -197,9 +195,9 @@ class EditorContextMenuMixin:
         self.__menuOpenAsFile.setEnabled(self.openAsFileAvailable())
         self.__menuDownloadAndShow.setEnabled(self.downloadAndShowAvailable())
         self.__menuOpenInBrowser.setEnabled(self.downloadAndShowAvailable())
-        self.__menuHighlightInPrj.setEnabled(
+        self._menuHighlightInPrj.setEnabled(
             absFileName and GlobalData().project.isProjectFile(fileName))
-        self.__menuHighlightInFS.setEnabled(absFileName)
+        self._menuHighlightInFS.setEnabled(absFileName)
         self._menuHighlightInOutline.setEnabled(isPython)
         self._menuHighlightInOutline.setEnabled(isPython)
 
@@ -316,7 +314,7 @@ class EditorContextMenuMixin:
             self.redo()
             self._parent.modificationChanged()
 
-    def __onPluginMenuAdded(self, menu, count):
+    def _onPluginMenuAdded(self, menu, count):
         """Triggered when a new menu was added"""
         del count   # unused argument
         self._menu.addMenu(menu)
@@ -351,7 +349,7 @@ class EditorContextMenuMixin:
         """Triggered to disassemble the buffer with optimization level 2"""
         self.__onDisasm(OPT_OPTIMIZE_DOCSTRINGS)
 
-    def __onPluginMenuRemoved(self, menu, count):
+    def _onPluginMenuRemoved(self, menu, count):
         """Triggered when a menu was deleted"""
         self._menu.removeAction(menu.menuAction())
         self.__pluginMenuSeparator.setVisible(count != 0)
@@ -364,6 +362,27 @@ class EditorContextMenuMixin:
             line, _ = self.cursorPosition
             GlobalData().mainWindow.highlightInOutline(context, int(line) + 1)
             self.setFocus()
+
+    def terminateMenus(self):
+        """Called when the tab is closed"""
+        self.encodingReloadMenu.triggered.disconnect(
+            self.__onReloadWithEncoding)
+        self.encodingReloadMenu.deleteLater()
+        self.encodingReloadActGrp.deleteLater()
+        self.encodingWriteMenu.triggered.disconnect(self.__onReadWriteEncoding)
+        self.encodingWriteMenu.deleteLater()
+        self.encodingWriteActGrp.deleteLater()
+        self.toolsMenu.deleteLater()
+        self.disasmMenu.deleteLater()
+        self.diagramsMenu.deleteLater()
+        self._menu.deleteLater()
+
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.sigPluginContextMenuAdded.disconnect(
+            self._onPluginMenuAdded)
+        editorsManager.sigPluginContextMenuRemoved.disconnect(
+            self._onPluginMenuRemoved)
 
     @staticmethod
     def __updateMainWindowStatusBar():

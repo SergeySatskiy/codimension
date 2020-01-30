@@ -427,6 +427,8 @@ class FlowUIWidget(QWidget):
         """Called when a tab is closed"""
         if self.__updateTimer.isActive():
             self.__updateTimer.stop()
+        self.__updateTimer.deleteLater()
+
         self.__disconnectEditorSignals()
 
         self.__mainWindow = GlobalData().mainWindow
@@ -441,11 +443,31 @@ class FlowUIWidget(QWidget):
 
         # Helps GC to collect more
         for index in range(self.smartViews.count()):
-            scene = self.smartViews.widget(index).scene
-            scene.clear()
+            self.smartViews.widget(index).terminate()
 
-        self.smartViews = None
+        self.smartViews.deleteLater()
+        self.__navBar.deleteLater()
         self.__cf = None
+
+        self.__saveAsButton.menu().deleteLater()
+        self.__saveAsButton.deleteLater()
+
+        self.__levelUpButton.clicked.disconnect(self.onSmartZoomLevelUp)
+        self.__levelUpButton.deleteLater()
+
+        self.__levelDownButton.clicked.disconnect(self.onSmartZoomLevelDown)
+        self.__levelDownButton.deleteLater()
+
+        self.__hideDocstrings.clicked.disconnect(self.__onHideDocstrings)
+        self.__hideDocstrings.deleteLater()
+
+        self.__hideComments.clicked.disconnect(self.__onHideComments)
+        self.__hideComments.deleteLater()
+
+        self.__hideExcepts.clicked.disconnect(self.__onHideExcepts)
+        self.__hideExcepts.deleteLater()
+
+        self.__toolbar.deleteLater()
 
     def __connectEditorSignals(self):
         """When it is a python file - connect to the editor signals"""

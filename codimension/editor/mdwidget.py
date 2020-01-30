@@ -162,17 +162,17 @@ class MDTopBar(QFrame):
         self.__layout.setContentsMargins(0, 0, 0, 0)
 
         # Create info icon
-        self.__infoIcon = QLabel()
+        self.__infoIcon = QLabel(self)
         self.__infoIcon.setPixmap(getPixmap('cfunknown.png'))
         self.__layout.addWidget(self.__infoIcon)
 
-        self.__warningsIcon = QLabel()
+        self.__warningsIcon = QLabel(self)
         self.__warningsIcon.setPixmap(getPixmap('cfwarning.png'))
         self.__layout.addWidget(self.__warningsIcon)
 
         self.clearWarnings()
 
-        self.__spacer = QWidget()
+        self.__spacer = QWidget(self)
         self.__spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.__spacer.setMinimumWidth(0)
         self.__layout.addWidget(self.__spacer)
@@ -291,9 +291,9 @@ class MDWidget(QWidget):
         self.__toolbar.setContentsMargins(0, 0, 0, 0)
 
         # Some control buttons could be added later
-        printButton = QAction(getIcon('printer.png'), 'Print', self)
-        printButton.triggered.connect(self.__onPrint)
-        self.__toolbar.addAction(printButton)
+        self.printButton = QAction(getIcon('printer.png'), 'Print', self)
+        self.printButton.triggered.connect(self.__onPrint)
+        self.__toolbar.addAction(self.printButton)
 
         return self.__toolbar
 
@@ -372,13 +372,23 @@ class MDWidget(QWidget):
     def terminate(self):
         """Called when a tab is to be closed"""
         self.mdView.terminate()
+        self.mdView.deleteLater()
 
         if self.__updateTimer.isActive():
             self.__updateTimer.stop()
+        self.__updateTimer.deleteLater()
+
         self.__disconnectEditorSignals()
 
         editorsManager = self.__mainWindow.em
         editorsManager.sigFileTypeChanged.disconnect(self.__onFileTypeChanged)
+
+        self.printButton.triggered.disconnect(self.__onPrint)
+        self.printButton.deleteLater()
+
+        self.__topBar.deleteLater()
+        self.__toolbar.deleteLater()
+
 
     def __connectEditorSignals(self):
         """When it is a python file - connect to the editor signals"""

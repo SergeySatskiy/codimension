@@ -147,9 +147,9 @@ class TextEditorTabWidget(QWidget):
 
         # Imports diagram and its menu
         importsMenu = QMenu(self)
-        importsDlgAct = importsMenu.addAction(
+        self.importsDlgAct = importsMenu.addAction(
             getIcon('detailsdlg.png'), 'Fine tuned imports diagram')
-        importsDlgAct.triggered.connect(self.onImportDgmTuned)
+        self.importsDlgAct.triggered.connect(self.onImportDgmTuned)
         self.importsDiagramButton = QToolButton(self.toolbar)
         self.importsDiagramButton.setIcon(getIcon('importsdiagram.png'))
         self.importsDiagramButton.setToolTip('Generate imports diagram')
@@ -162,9 +162,9 @@ class TextEditorTabWidget(QWidget):
 
         # Run script and its menu
         runScriptMenu = QMenu(self)
-        runScriptDlgAct = runScriptMenu.addAction(
+        self.runScriptDlgAct = runScriptMenu.addAction(
             getIcon('detailsdlg.png'), 'Set run/debug parameters')
-        runScriptDlgAct.triggered.connect(self.onRunScriptDlg)
+        self.runScriptDlgAct.triggered.connect(self.onRunScriptDlg)
         self.runScriptButton = QToolButton(self.toolbar)
         self.runScriptButton.setIcon(getIcon('run.png'))
         self.runScriptButton.setToolTip('Run script')
@@ -177,9 +177,9 @@ class TextEditorTabWidget(QWidget):
 
         # Profile script and its menu
         profileScriptMenu = QMenu(self)
-        profileScriptDlgAct = profileScriptMenu.addAction(
+        self.profileScriptDlgAct = profileScriptMenu.addAction(
             getIcon('detailsdlg.png'), 'Set profile parameters')
-        profileScriptDlgAct.triggered.connect(self.onProfileScriptDlg)
+        self.profileScriptDlgAct.triggered.connect(self.onProfileScriptDlg)
         self.profileScriptButton = QToolButton(self.toolbar)
         self.profileScriptButton.setIcon(getIcon('profile.png'))
         self.profileScriptButton.setToolTip('Profile script')
@@ -192,9 +192,9 @@ class TextEditorTabWidget(QWidget):
 
         # Debug script and its menu
         debugScriptMenu = QMenu(self)
-        debugScriptDlgAct = debugScriptMenu.addAction(
+        self.debugScriptDlgAct = debugScriptMenu.addAction(
             getIcon('detailsdlg.png'), 'Set run/debug parameters')
-        debugScriptDlgAct.triggered.connect(self.onDebugScriptDlg)
+        self.debugScriptDlgAct.triggered.connect(self.onDebugScriptDlg)
         self.debugScriptButton = QToolButton(self.toolbar)
         self.debugScriptButton.setIcon(getIcon('debugger.png'))
         self.debugScriptButton.setToolTip('Debug script')
@@ -307,7 +307,7 @@ class TextEditorTabWidget(QWidget):
 
         hLayout.addLayout(vLayout)
         hLayout.addWidget(self.toolbar)
-        widget = QWidget()
+        widget = QWidget(self)
         widget.setLayout(hLayout)
 
         self.__splitter = QSplitter(Qt.Horizontal, self)
@@ -320,7 +320,7 @@ class TextEditorTabWidget(QWidget):
         self.__renderLayout.setSpacing(0)
         self.__renderLayout.addWidget(self.__flowUI)
         self.__renderLayout.addWidget(self.__mdView)
-        self.__renderWidget = QWidget()
+        self.__renderWidget = QWidget(self)
         self.__renderWidget.setLayout(self.__renderLayout)
 
         self.__splitter.addWidget(widget)
@@ -627,12 +627,25 @@ class TextEditorTabWidget(QWidget):
         self.__cleanupLayout()
 
         self.__navigationBar.terminate()
+        self.__navigationBar.deleteLater()
+
         self.__mdView.terminate()
+        self.__mdView.deleteLater()
+
         self.__flowUI.terminate()
+        self.__flowUI.deleteLater()
+
         self.__editor.terminate()
+        self.__editor.deleteLater()
 
     def __cleanupLayout(self):
         """Disconnects QT widget signals and destroys the UI items"""
+        self.__editor.redoAvailable.disconnect(self.__redoAvailable)
+        self.__editor.undoAvailable.disconnect(self.__undoAvailable)
+        self.__editor.modificationChanged.disconnect(self.modificationChanged)
+        self.__editor.sigCFlowSyncRequested.disconnect(self.cflowSyncRequested)
+        self.__editor.languageChanged.disconnect(self.__languageChanged)
+
         printButton = self.toolbar.findChild(QAction, 'printButton')
         printButton.triggered.disconnect(self.__onPrint)
         printButton.deleteLater()
@@ -641,8 +654,52 @@ class TextEditorTabWidget(QWidget):
         printPreviewButton.triggered.connect(self.__onPrintPreview)
         printPreviewButton.deleteLater()
 
+        self.importsDlgAct.triggered.disconnect(self.onImportDgmTuned)
+        self.importsDlgAct.deleteLater()
+        self.importsDiagramButton.menu().deleteLater()
+        self.importsDiagramButton.clicked.disconnect(self.onImportDgm)
         self.importsDiagramButton.deleteLater()
+
+        self.runScriptDlgAct.triggered.disconnect(self.onRunScriptDlg)
+        self.runScriptDlgAct.deleteLater()
+        self.runScriptButton.menu().deleteLater()
+        self.runScriptButton.clicked.disconnect(self.onRunScript)
         self.runScriptButton.deleteLater()
+
+        self.profileScriptDlgAct.triggered.disconnect(self.onProfileScriptDlg)
+        self.profileScriptDlgAct.deleteLater()
+        self.profileScriptButton.menu().deleteLater()
+        self.profileScriptButton.clicked.disconnect(self.onProfileScript)
+        self.profileScriptButton.deleteLater()
+
+        self.debugScriptDlgAct.triggered.disconnect(self.onDebugScriptDlg)
+        self.debugScriptDlgAct.deleteLater()
+        self.debugScriptButton.menu().deleteLater()
+        self.debugScriptButton.clicked.disconnect(self.onDebugScript)
+        self.debugScriptButton.deleteLater()
+
+        self.disasmScriptButton.clicked.disconnect(self.__editor._onDisasm0)
+        self.disasmScriptButton.menu().deleteLater()
+        self.disasmScriptButton.deleteLater()
+
+        self.deadCodeScriptButton.triggered.disconnect(self.__onDeadCode)
+        self.deadCodeScriptButton.deleteLater()
+
+        self.__undoButton.triggered.disconnect(self.__editor.onUndo)
+        self.__undoButton.deleteLater()
+
+        self.__redoButton.triggered.disconnect(self.__editor.onRedo)
+        self.__redoButton.deleteLater()
+
+        self.removeTrailingSpacesButton.triggered.disconnect(
+            self.onRemoveTrailingWS)
+        self.removeTrailingSpacesButton.deleteLater()
+
+        self.expandTabsButton.triggered.disconnect(self.onExpandTabs)
+        self.expandTabsButton.deleteLater()
+
+        self.__renderWidget.deleteLater()
+
         self.toolbar.deleteLater()
 
 
