@@ -344,13 +344,6 @@ class FileOutlineViewer(QWidget):
         if uuid in self.__outlineBrowsers:
             self.__layout.removeWidget(self.__outlineBrowsers[uuid].browser)
             self.__outlineBrowsers[uuid].browser.deleteLater()
-
-            widget = self.__editorsManager.getWidgetByUUID(uuid)
-            if widget is not None:
-                editor = widget.getEditor()
-                editor.textChanged.disconnect(self.__onBufferChanged)
-                editor.cursorPositionChanged.disconnect(self.__cursorPositionChanged)
-
             del self.__outlineBrowsers[uuid]
 
     def __onSavedBufferAs(self, fileName, uuid):

@@ -919,6 +919,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             if hasattr(margin, 'onClose'):
                 margin.onClose()
         QutepartWrapper.terminate(self)
+        self.disconnect()
 
     def resizeEvent(self, event):
         """Resize the parent panels if required"""
