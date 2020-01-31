@@ -106,7 +106,6 @@ class PyflakesViewer(QObject):
             widget = self.__editorsManager.getWidgetByIndex(index)
         if widget is None:
             self.__currentUUID = None
-            self.setAnalysisNotAvailable(self.__uiLabel, self.__ccLabel)
             return
 
         if widget.getType() not in [MainWindowTabWidgetBase.PlainTextEditor,
@@ -200,6 +199,12 @@ class PyflakesViewer(QObject):
     def __onTabClosed(self, uuid):
         """Triggered when a tab is closed"""
         if uuid in self.__flakesResults:
+            self.setAnalysisNotAvailable(self.__uiLabel, self.__ccLabel)
+            widget = self.__editorsManager.getWidgetByUUID(uuid)
+            if widget is not None:
+                editor = widget.getEditor()
+                editor.textChanged.disconnect(self.__onBufferChanged)
+                editor.cursorPositionChanged.disconnect(self.__cursorPositionChanged)
             del self.__flakesResults[uuid]
 
     def __onSavedBufferAs(self, fileName, uuid):

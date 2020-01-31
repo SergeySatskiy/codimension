@@ -45,7 +45,6 @@ class OutlineAttributes:
         self.info = None
         self.shortFileName = ""
         self.changed = False
-        return
 
 
 class FileOutlineViewer(QWidget):
@@ -201,9 +200,7 @@ class FileOutlineViewer(QWidget):
         else:
             widget = self.__editorsManager.getWidgetByIndex(index)
         if widget is None:
-            if self.__currentUUID is not None:
-                self.__outlineBrowsers[self.__currentUUID].browser.hide()
-                self.__currentUUID = None
+            self.__currentUUID = None
             self.__noneLabel.show()
             self.showParsingErrorsButton.setEnabled(False)
             return
@@ -345,6 +342,15 @@ class FileOutlineViewer(QWidget):
     def __onTabClosed(self, uuid):
         """Triggered when a tab is closed"""
         if uuid in self.__outlineBrowsers:
+            self.__layout.removeWidget(self.__outlineBrowsers[uuid].browser)
+            self.__outlineBrowsers[uuid].browser.deleteLater()
+
+            widget = self.__editorsManager.getWidgetByUUID(uuid)
+            if widget is not None:
+                editor = widget.getEditor()
+                editor.textChanged.disconnect(self.__onBufferChanged)
+                editor.cursorPositionChanged.disconnect(self.__cursorPositionChanged)
+
             del self.__outlineBrowsers[uuid]
 
     def __onSavedBufferAs(self, fileName, uuid):

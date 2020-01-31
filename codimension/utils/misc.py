@@ -28,6 +28,7 @@ import getpass
 import locale
 import datetime
 import logging
+import traceback
 from .globals import GlobalData
 from .settings import SETTINGS_DIR
 from .fileutils import getFileContent, isFileOpenable, isCreatable
@@ -373,3 +374,9 @@ def preResolveLinkPath(link, fromFile, canBeCreated):
     return None, None, \
         "The link '" + effectiveLink + \
         "' does not point to an existing file"
+
+def printStack():
+    """Prints the stack in the log window"""
+    for line in traceback.format_stack():
+        print(line.strip())
+

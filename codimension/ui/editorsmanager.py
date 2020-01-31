@@ -87,7 +87,7 @@ class EditorsManager(QTabWidget):
     sigTabRunChanged = pyqtSignal(bool)
     sigPluginContextMenuAdded = pyqtSignal(QMenu, int)
     sigPluginContextMenuRemoved = pyqtSignal(QMenu, int)
-    sigTabClosed = pyqtSignal(str)
+    sigTabClosed = pyqtSignal(str)  # Emitted right before the tab is deleted
     sigFileUpdated = pyqtSignal(str, str)
     sigBufferSavedAs = pyqtSignal(str, str)
     sigFileTypeChanged = pyqtSignal(str, str, str)
@@ -661,11 +661,12 @@ class EditorsManager(QTabWidget):
         if widgetType in [MainWindowTabWidgetBase.PlainTextEditor,
                           MainWindowTabWidgetBase.VCSAnnotateViewer]:
             # Terminate the syntax highlight if needed
-            editor = self.widget(index).getEditor()
-            editor.textChanged.disconnect(self.__contentChanged)
+            self.__disconnectEditorWidget(self.widget(index))
             self.widget(index).terminate()
+            self.widget(index).deleteLater()
 
         closingUUID = self.widget(index).getUUID()
+        self.sigTabClosed.emit(closingUUID)
 
         # Check if it is necessary to add a file to the recent history
         if widgetType in [MainWindowTabWidgetBase.PlainTextEditor,
@@ -698,7 +699,6 @@ class EditorsManager(QTabWidget):
         self.__skipHistoryUpdate = False
         self.__updateControls()
         self.saveTabsStatus()
-        self.sigTabClosed.emit(closingUUID)
 
     def updateFilePosition(self, index):
         """Updates the file position of a file loaded to the given tab"""
