@@ -444,6 +444,7 @@ class FlowUIWidget(QWidget):
         # Helps GC to collect more
         for index in range(self.smartViews.count()):
             self.smartViews.widget(index).terminate()
+            self.smartViews.widget(index).deleteLater()
 
         self.smartViews.deleteLater()
         self.__navBar.deleteLater()

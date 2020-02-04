@@ -42,6 +42,9 @@ class MainWindowMenuMixin:
 
     """Main window menu mixin"""
 
+    def __init__(self):
+        pass
+
     def _initMainMenu(self):
         """Initializes the main menu bar"""
         menuBar = self.menuBar()
