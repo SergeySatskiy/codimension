@@ -47,6 +47,13 @@ class CodeBlockCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        CellElement.cleanup(self)
+        TextMixin.cleanup(self)
+        ColorMixin.cleanup(self)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -138,6 +145,14 @@ class ReturnCell(CellElement,
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        CellElement.cleanup(self)
+        TextMixin.cleanup(self)
+        ColorMixin.cleanup(self)
+        IconMixin.cleanup(self)
 
     def render(self):
         """Renders the cell"""
@@ -263,6 +278,14 @@ class RaiseCell(CellElement,
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        CellElement.cleanup(self)
+        TextMixin.cleanup(self)
+        ColorMixin.cleanup(self)
+        IconMixin.cleanup(self)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -381,6 +404,14 @@ class AssertCell(CellElement,
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        CellElement.cleanup(self)
+        TextMixin.cleanup(self)
+        ColorMixin.cleanup(self)
+        IconMixin.cleanup(self)
 
     def render(self):
         """Renders the cell"""
@@ -522,6 +553,14 @@ class SysexitCell(CellElement,
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        CellElement.cleanup(self)
+        TextMixin.cleanup(self)
+        ColorMixin.cleanup(self)
+        IconMixin.cleanup(self)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -633,6 +672,14 @@ class ImportCell(CellElement,
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        CellElement.cleanup(self)
+        TextMixin.cleanup(self)
+        ColorMixin.cleanup(self)
+        IconMixin.cleanup(self)
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -737,6 +784,15 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.vConnector = None
+        self.rhsConnector = None
+        self.leftBadge = None
+        CellElement.cleanup(self)
+        TextMixin.cleanup(self)
+        ColorMixin.cleanup(self)
 
     def render(self):
         """Renders the cell"""

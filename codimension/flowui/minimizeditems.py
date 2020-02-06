@@ -50,6 +50,12 @@ class MinimizedCellBase(CellElement, IconMixin, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        CellElement.cleanup(self)
+        IconMixin.cleanup(self)
+
     def renderCell(self, hIconPadding, vIconPadding):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -405,6 +411,11 @@ class MinimizedAboveCommentCell(MinimizedCommentBase, MinimizedCellBase):
         self.needConnector = False
         self.vConnector = None
         self.__setTooltip()
+
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.vConnector = None
+        MinimizedCellBase.cleanup(self)
 
     def __setTooltip(self):
         """Sets the item tooltip"""

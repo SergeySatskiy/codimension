@@ -239,3 +239,5 @@ class CDMFlakesMargin(QWidget):
         editorsManager.sigFileTypeChanged.disconnect(self.__onFileTypeChanged)
         self._qpart.blockCountChanged.disconnect(self.update)
 
+        # Release the editor reference
+        self._qpart = None

@@ -149,6 +149,7 @@ class FlowUIWidget(QWidget):
         self.__toolbar = None
         self.__navBar = None
         self.__cf = None
+        self.__canvas = None
         self.__validGroups = []
         self.__allGroupId = set()
 
@@ -313,8 +314,8 @@ class FlowUIWidget(QWidget):
                                   str(err[1]) + '] ' + err[2])
             self.__navBar.setErrors(errors)
             return
-        self.__cf = cf
 
+        self.__cf = cf
         if self.isDebugMode():
             logging.info('Parsed file: %s', formatFlow(str(self.__cf)))
             logging.info('Parse timing: %f', end - start)
@@ -348,6 +349,15 @@ class FlowUIWidget(QWidget):
 
         self.redrawScene()
 
+    def __cleanupCanvas(self):
+        """Cleans up the canvas"""
+        if self.__canvas is not None:
+            self.__canvas.cleanup()
+            self.__canvas = None
+        for item in self.scene().items():
+            item.cleanup()
+        self.scene().clear()
+
     def redrawScene(self):
         """Redraws the scene"""
         smartZoomLevel = Settings()['smartZoom']
@@ -361,7 +371,6 @@ class FlowUIWidget(QWidget):
         self.cflowSettings = tweakSmartSettings(self.cflowSettings,
                                                 smartZoomLevel)
 
-        self.scene().clear()
         try:
             fileName = self.__parentWidget.getFileName()
             if not fileName:
@@ -369,16 +378,18 @@ class FlowUIWidget(QWidget):
             collapsedGroups = getCollapsedGroups(fileName)
 
             # Top level canvas has no adress and no parent canvas
-            canvas = VirtualCanvas(self.cflowSettings, None, None,
-                                   self.__validGroups, collapsedGroups, None)
+            self.__cleanupCanvas()
+            self.__canvas = VirtualCanvas(self.cflowSettings, None, None,
+                                          self.__validGroups, collapsedGroups,
+                                          None)
             lStart = timer()
-            canvas.layoutModule(self.__cf)
+            self.__canvas.layoutModule(self.__cf)
             lEnd = timer()
-            canvas.setEditor(self.__editor)
-            width, height = canvas.render()
+            self.__canvas.setEditor(self.__editor)
+            width, height = self.__canvas.render()
             rEnd = timer()
             self.scene().setSceneRect(0, 0, width, height)
-            canvas.draw(self.scene(), 0, 0)
+            self.__canvas.draw(self.scene(), 0, 0)
             dEnd = timer()
             if self.isDebugMode():
                 logging.info('Redrawing is done. Size: %d x %d', width, height)
@@ -408,6 +419,7 @@ class FlowUIWidget(QWidget):
         if not isPythonMime(newFileType):
             self.__disconnectEditorSignals()
             self.__updateTimer.stop()
+            self.__cleanupCanvas()
             self.__cf = None
             self.__validGroups = []
             self.setVisible(False)
@@ -442,6 +454,7 @@ class FlowUIWidget(QWidget):
         Settings().sigSmartZoomChanged.disconnect(self.__onSmartZoomChanged)
 
         # Helps GC to collect more
+        self.__cleanupCanvas()
         for index in range(self.smartViews.count()):
             self.smartViews.widget(index).terminate()
             self.smartViews.widget(index).deleteLater()
@@ -469,6 +482,9 @@ class FlowUIWidget(QWidget):
         self.__hideExcepts.deleteLater()
 
         self.__toolbar.deleteLater()
+
+        self.__editor = None
+        self.__parentWidget = None
 
     def __connectEditorSignals(self):
         """When it is a python file - connect to the editor signals"""

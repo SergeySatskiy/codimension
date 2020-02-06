@@ -66,6 +66,13 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         # This makes double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.cmlRef = None
+        CommentCellBase.cleanup(self)
+        ColorMixin.cleanup(self)
+        IconMixin.cleanup(self)
+
     def mouseClickLinkIcon(self):
         """Follows the link"""
         if self.cmlRef.link is None:
@@ -81,8 +88,8 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
             QDesktopServices.openUrl(QUrl(self.cmlRef.link))
             return
 
-        fileName, anchorOrLine = resolveLinkPath(self.cmlRef.link,
-                                                 self.editor.getFileName())
+        fileName, anchorOrLine = resolveLinkPath(
+            self.cmlRef.link, self.getEditor().getFileName())
         if fileName:
             GlobalData().mainWindow.openFile(fileName, anchorOrLine)
 

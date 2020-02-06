@@ -37,6 +37,11 @@ class TextMixin:
                                     # - nothing if suppressed
         self.textRect = None
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.text = None
+        self.textRect = None
+
     @staticmethod
     def getReplacementText(ref):
         """Provides the replacement text if so from the CML comment"""

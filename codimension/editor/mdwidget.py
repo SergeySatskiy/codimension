@@ -389,6 +389,8 @@ class MDWidget(QWidget):
         self.__topBar.deleteLater()
         self.__toolbar.deleteLater()
 
+        self.__editor = None
+        self.__parentWidget = None
 
     def __connectEditorSignals(self):
         """When it is a python file - connect to the editor signals"""

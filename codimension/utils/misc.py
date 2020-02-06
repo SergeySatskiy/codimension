@@ -29,6 +29,7 @@ import locale
 import datetime
 import logging
 import traceback
+import gc
 from .globals import GlobalData
 from .settings import SETTINGS_DIR
 from .fileutils import getFileContent, isFileOpenable, isCreatable
@@ -379,4 +380,21 @@ def printStack():
     """Prints the stack in the log window"""
     for line in traceback.format_stack():
         print(line.strip())
+
+
+def printReferences(obj):
+    """Prints the object references"""
+    if obj is None:
+        print('No object to print references')
+    else:
+        refs = gc.get_referrers(obj)
+        print('Object references (total ' + str(len(refs)) + '):')
+        for item in refs:
+            print('---')
+            print(type(item))
+            val = repr(item)
+            if len(val) > 512:
+                print('Truncated: ' + val[:512])
+            else:
+                print(val)
 

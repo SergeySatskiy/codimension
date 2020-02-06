@@ -66,7 +66,8 @@ class CDMBreakpointMargin(QWidget):
         QWidget.__init__(self, parent)
 
         extendInstance(self, MarginBase)
-        MarginBase.__init__(self, parent, "cdm_bpoint_margin", getMarginBits())
+        MarginBase.__init__(self, parent,
+                            "cdm_bpoint_margin", getMarginBits())
         self.setMouseTracking(True)
 
         self.__debugger = debugger
@@ -506,6 +507,9 @@ class CDMBreakpointMargin(QWidget):
         # the editor is destroyed
         self._qpart.blockCountChanged.disconnect(self.__onBlockCountChanged)
 
+        # Release the text editor link
+        self._qpart = None
+
         # Editors manager dependency
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
@@ -519,4 +523,3 @@ class CDMBreakpointMargin(QWidget):
             self.__breakPointDataAboutToBeChanged)
         bpointModel.dataChanged.disconnect(self.__changeBreakPoints)
         bpointModel.rowsInserted.disconnect(self.__addBreakPoints)
-

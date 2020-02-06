@@ -42,6 +42,12 @@ class CommentCellBase(CellElement, TextMixin):
         self._leftEdge = None
         self.connector = None
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        CellElement.cleanup(self)
+        TextMixin.cleanup(self)
+
     def _copyToClipboard(self, parts):
         """Copies the item to a clipboard"""
         commonLeadingSpaces = maxsize
@@ -570,6 +576,11 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.commentConnector = None
+        CommentCellBase.cleanup(self)
 
     def render(self):
         """Renders the cell"""

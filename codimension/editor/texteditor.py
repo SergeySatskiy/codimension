@@ -114,7 +114,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
     def __initHotKeys(self):
         """Initializes a map for the hot keys event filter"""
         self.autoIndentLineAction.setShortcut('Ctrl+Shift+I')
+
         self.invokeCompletionAction.setEnabled(False)
+        self.invokeCompletionAction.deleteLater()
+        self.invokeCompletionAction = None
+
         self.__hotKeys = {
             CTRL_SHIFT: {Qt.Key_T: self.onJumpToTop,
                          Qt.Key_M: self.onJumpToMiddle,
@@ -905,6 +909,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
 
     def terminate(self):
         """Overloaded version to pass the request to margins too"""
+        self.__hotKeys = None
         self.cursorPositionChanged.disconnect(self._onCursorPositionChanged)
 
         self.__completer.activated.disconnect(self.insertCompletion)
@@ -918,8 +923,22 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         for margin in self.getMargins():
             if hasattr(margin, 'onClose'):
                 margin.onClose()
-        QutepartWrapper.terminate(self)
         self.disconnect()
+        QutepartWrapper.terminate(self)
+        self._indenter = None
+        self._completer._qpart = None
+        self._completer = None
+        if self._highlighter is not None:
+            self._highlighter._syntax = None
+            self._highlighter._document = None
+            self._highlighter._textEdit = None
+        self._solidEdgeLine.deleteLater()
+        self._solidEdgeLine = None
+        self._rectangularSelection._qpart = None
+        self._rectangularSelection = None
+        self._lines._qpart = None
+        self._lines._doc = None
+        self._lines = None
 
     def resizeEvent(self, event):
         """Resize the parent panels if required"""

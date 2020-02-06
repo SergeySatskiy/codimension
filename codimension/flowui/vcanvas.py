@@ -128,6 +128,7 @@ class VirtualCanvas:
 
         # Reference to the upper level canvas or None for the most upper canvas
         self.canvas = parent
+        self.editor = None
 
         self.settings = settings
         self.addr = [xAddr, yAddr]
@@ -170,6 +171,28 @@ class VirtualCanvas:
         # the spacing is inserted for the open groups
         self.isIfBelowLayout = False
         self.isOuterIfLayout = False
+
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.canvas = None
+        self.editor = None
+        self.settings = None
+        self.addr = None
+        self.__currentCF = None
+        self.__currentScopeClass = None
+        self.scopeRectangle = None
+        self.__validGroups = None
+        self.__validGroupBeginLines = None
+        self.__validGroupEndLines = None
+        self.__validGroupLines = None
+        self.__collapsedGroups = None
+        self.__groupStack = None
+
+        for row in self.cells:
+            if row:
+                for cell in row:
+                    cell.cleanup()
+        self.cells = None
 
     @staticmethod
     def scopedItem():
@@ -1005,6 +1028,9 @@ class VirtualCanvas:
 
             # end of for loop
 
+        if scopeKind:
+            self.__currentCF = None
+
         return vacantRow
 
     def layoutIfBranch(self, yBranch, nBranch):
@@ -1468,6 +1494,8 @@ class VirtualCanvas:
         self.__allocateCell(vacantRow, 0, False)
         self.cells[vacantRow][0] = ScopeSpacer(cflow, self, 0, vacantRow)
 
+        self.__currentCF = None
+
     def __dependentRegion(self, rowIndex):
         """True if it is a dependent region"""
         if self.dependentRegions:
@@ -1712,10 +1740,7 @@ class VirtualCanvas:
 
     def setEditor(self, editor):
         """Provides the editor counterpart"""
-        for row in self.cells:
-            if row:
-                for cell in row:
-                    cell.setEditor(editor)
+        self.editor = editor
 
     def draw(self, scene, baseX, baseY):
         """Draws the diagram on the real canvas"""

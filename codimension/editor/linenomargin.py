@@ -141,3 +141,5 @@ class CDMLineNumberMargin(QWidget):
         """The editor is going to be closed"""
         self._qpart.blockCountChanged.disconnect(self.__updateWidth)
 
+        # Release the editor reference
+        self._qpart = None

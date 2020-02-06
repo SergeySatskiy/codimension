@@ -143,6 +143,9 @@ class NavigationBar(QFrame):
         for item in self.__path:
             item.combo.jumpToLine.disconnect(self.__onJumpToLine)
 
+        # Release the editor reference
+        self.__editor = None
+
     def getEditor(self):
         """Provides the editor"""
         return self.__editor

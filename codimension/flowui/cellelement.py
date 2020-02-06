@@ -110,7 +110,6 @@ class CellElement:
         self.ref = ref              # reference to the control flow object
         self.addr = [x, y]          # indexes in the current canvas
         self.canvas = canvas        # reference to the canvas
-        self.editor = None
 
         self.tailComment = False
 
@@ -135,6 +134,12 @@ class CellElement:
         return kindToString(self.kind) + \
             '[' + str(self.minWidth) + 'x' + str(self.minHeight) + '] -> [' + \
             str(self.width) + 'x' + str(self.height) + ']'
+
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.ref = None
+        self.addr = None
+        self.canvas = None
 
     def render(self):
         """Renders the graphics considering settings"""
@@ -186,13 +191,12 @@ class CellElement:
                    str(self.canvas.minHeight) + ")"
         return path
 
-    def setEditor(self, editor):
-        """Sets the editor counterpart"""
-        self.editor = editor
-
     def getEditor(self):
         """Provides a reference to the editor"""
-        return self.editor
+        canvas = self.canvas
+        while canvas.canvas is not None:
+            canvas = canvas.canvas
+        return canvas.editor
 
     def getPainterPen(self, selected, borderColor):
         """Provides the painter pen for the item"""
@@ -210,7 +214,8 @@ class CellElement:
 
         default implementation
         """
-        if self.editor is not None:
+        editor = self.getEditor()
+        if editor is not None:
             if event:
                 if event.buttons() != Qt.LeftButton:
                     return
@@ -221,11 +226,11 @@ class CellElement:
             if line is None:
                 line = self.getLineRange()[0]
             if pos is None:
-                lineContent = self.editor.lines[line - 1]
+                lineContent = editor.lines[line - 1]
                 pos = len(lineContent) - len(lineContent.lstrip()) + 1
 
-            self.editor.gotoLine(line, pos)
-            self.editor.setFocus()
+            editor.gotoLine(line, pos)
+            editor.setFocus()
 
     def scopedItem(self):
         """True if it is a scoped item"""

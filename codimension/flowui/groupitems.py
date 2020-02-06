@@ -68,6 +68,14 @@ class GroupItemBase(CellElement, TextMixin):
         # True if the previous item is terminal, i.e no connector needed
         self.isTerminal = False
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.nestedRefs = None
+        self.groupBeginCMLRef = None
+        self.groupEndCMLRef = None
+        CellElement.cleanup(self)
+        TextMixin.cleanup(self)
+
     def getGroupId(self):
         """Provides the group ID"""
         return self.groupBeginCMLRef.id
@@ -109,6 +117,12 @@ class EmptyGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        GroupItemBase.cleanup(self)
+        ColorMixin.cleanup(self)
 
     def render(self):
         """Renders the cell"""
@@ -222,6 +236,13 @@ class OpenedGroupBegin(GroupItemBase, ColorMixin, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        self.topLeftControl = None
+        GroupItemBase.cleanup(self)
+        ColorMixin.cleanup(self)
+
     def setHighlight(self, newValue):
         """Changes the highlight status of the group"""
         if self.highlight != newValue:
@@ -309,6 +330,11 @@ class OpenedGroupEnd(GroupItemBase):
 
         self.selfAndDeeperNestLevel = None
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        GroupItemBase.cleanup(self)
+
     def render(self):
         """Renders the cell"""
         self.width = 0
@@ -357,6 +383,12 @@ class CollapsedGroup(GroupItemBase, ColorMixin, QGraphicsRectItem):
 
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        GroupItemBase.cleanup(self)
+        ColorMixin.cleanup(self)
 
     def render(self):
         """Renders the cell"""

@@ -56,9 +56,17 @@ class QutepartWrapper(Qutepart):
         self.mime = None
 
         # Remove all the default margins
+        self.getMargin('mark_area').setVisible(False)
+        self.blockCountChanged.disconnect(self.getMargin('mark_area').update)
         self.delMargin('mark_area')
+        self._markArea = None
+        self.getMargin('line_numbers').setVisible(False)
         self.delMargin('line_numbers')
+
         self.completionEnabled = False
+        self._completer.terminate()
+        self.textChanged.disconnect(self._completer._onTextChanged)
+        self.document().modificationChanged.disconnect(self._completer._onModificationChanged)
 
         # Search/replace support
         self.__matchesCache = None

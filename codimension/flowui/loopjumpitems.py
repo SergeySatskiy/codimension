@@ -51,6 +51,13 @@ class LoopJumpBase(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+    def cleanup(self):
+        """Cleans up the references etc"""
+        self.connector = None
+        CellElement.cleanup(self)
+        TextMixin.cleanup(self)
+        ColorMixin.cleanup(self)
+
     def renderCell(self, customText, hPadding, vPadding):
         """Renders the cell"""
         settings = self.canvas.settings

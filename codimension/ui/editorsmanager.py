@@ -1928,6 +1928,7 @@ class EditorsManager(QTabWidget):
                 if self.widget(index).getType() in editorWidgets:
                     self.__disconnectEditorWidget(self.widget(index))
                     self.widget(index).terminate()
+
             # That's the end of the session, so let's save the tabs status
             self.saveTabsStatus()
 
