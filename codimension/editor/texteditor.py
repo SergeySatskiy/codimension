@@ -107,6 +107,15 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.__initHotKeys()
         self.installEventFilter(self)
 
+    def _drawIndentMarkersAndEdge(self, paintEventRect):
+        """"Overriden function"""
+        # At the termination time the indenter is set to None to release
+        # the editor reference. However a paint event may still appear for
+        # the editor to be closed. The paint event uses the indenter in the
+        # qutepart code. So the condition below prevents a crash
+        if self._indenter is not None:
+            QutepartWrapper._drawIndentMarkersAndEdge(self, paintEventRect)
+
     def dedentLine(self):
         """Dedent the current line or selection"""
         self.decreaseIndentAction.activate(QAction.Trigger)

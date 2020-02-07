@@ -485,6 +485,8 @@ class FlowUIWidget(QWidget):
 
         self.__editor = None
         self.__parentWidget = None
+        self.cflowSettings = None
+        self.__displayProps = None
 
     def __connectEditorSignals(self):
         """When it is a python file - connect to the editor signals"""
