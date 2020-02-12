@@ -342,9 +342,13 @@ class FileOutlineViewer(QWidget):
     def __onTabClosed(self, uuid):
         """Triggered when a tab is closed"""
         if uuid in self.__outlineBrowsers:
-            self.__layout.removeWidget(self.__outlineBrowsers[uuid].browser)
-            self.__outlineBrowsers[uuid].browser.deleteLater()
+            browser = self.__outlineBrowsers[uuid].browser
+            self.__layout.removeWidget(browser)
+            browser.hide()
+            browser.deleteLater()
             del self.__outlineBrowsers[uuid]
+            if uuid == self.__currentUUID:
+                self.__currentUUID = None
 
     def __onSavedBufferAs(self, fileName, uuid):
         """Triggered when a file is saved with a new name"""
