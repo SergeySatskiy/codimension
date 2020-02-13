@@ -22,6 +22,7 @@
 import os.path
 import logging
 import uuid
+import sip
 from math import ceil
 from timeit import default_timer as timer
 from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QPainter, QImage,
@@ -356,6 +357,7 @@ class FlowUIWidget(QWidget):
             self.__canvas = None
         for item in self.scene().items():
             item.cleanup()
+            sip.delete(item)
         self.scene().clear()
 
     def redrawScene(self):
