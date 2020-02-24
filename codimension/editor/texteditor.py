@@ -934,20 +934,6 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                 margin.onClose()
         self.disconnect()
         QutepartWrapper.terminate(self)
-        self._indenter = None
-        self._completer._qpart = None
-        self._completer = None
-        if self._highlighter is not None:
-            self._highlighter._syntax = None
-            self._highlighter._document = None
-            self._highlighter._textEdit = None
-        self._solidEdgeLine.deleteLater()
-        self._solidEdgeLine = None
-        self._rectangularSelection._qpart = None
-        self._rectangularSelection = None
-        self._lines._qpart = None
-        self._lines._doc = None
-        self._lines = None
 
     def resizeEvent(self, event):
         """Resize the parent panels if required"""

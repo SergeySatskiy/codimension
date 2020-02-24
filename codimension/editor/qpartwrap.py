@@ -827,3 +827,24 @@ class QutepartWrapper(Qutepart):
             return selectedText.lower().startswith('http://') or \
                    selectedText.lower().startswith('www.')
         return False
+
+    def terminate(self):
+        """Cleans up memory"""
+        Qutepart.terminate(self)
+        self.document().disconnect()
+
+        self._indenter = None
+        self._completer._qpart = None
+        self._completer = None
+        if self._highlighter is not None:
+            self._highlighter._syntax = None
+            self._highlighter._document = None
+            self._highlighter._textEdit = None
+        self._solidEdgeLine.deleteLater()
+        self._solidEdgeLine = None
+        self._rectangularSelection._qpart = None
+        self._rectangularSelection = None
+        self._lines._qpart = None
+        self._lines._doc = None
+        self._lines = None
+
