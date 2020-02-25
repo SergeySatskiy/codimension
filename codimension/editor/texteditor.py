@@ -930,8 +930,10 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         self.terminateMenus()
 
         for margin in self.getMargins():
+            margin.clear()
             if hasattr(margin, 'onClose'):
                 margin.onClose()
+            margin.deleteLater()
         self.disconnect()
         QutepartWrapper.terminate(self)
 
