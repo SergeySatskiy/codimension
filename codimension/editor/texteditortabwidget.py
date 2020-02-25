@@ -700,6 +700,7 @@ class TextEditorTabWidget(QWidget):
 
         self.__renderWidget.deleteLater()
 
+        self.importsBar.deleteLater()
         self.toolbar.deleteLater()
 
 
