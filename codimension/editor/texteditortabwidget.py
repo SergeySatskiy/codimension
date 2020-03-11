@@ -23,11 +23,12 @@
 import os.path
 import logging
 from ui.qt import (Qt, QFileInfo, QSize, pyqtSignal, QToolBar, QHBoxLayout,
-                   QWidget, QAction, QMenu, QSizePolicy, QToolButton, QDialog,
+                   QWidget, QAction, QMenu, QToolButton, QDialog,
                    QVBoxLayout, QSplitter)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.importlist import ImportListWidget
 from ui.outsidechanges import OutsideChangeWidget
+from ui.spacers import ToolBarExpandingSpacer, ToolBarVSpacer
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
@@ -140,9 +141,7 @@ class TextEditorTabWidget(QWidget):
         printPreviewButton.setVisible(False)
         printPreviewButton.setObjectName('printPreviewButton')
 
-        printSpacer = QWidget(self.toolbar)
-        printSpacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        printSpacer.setFixedHeight(8)
+        printSpacer = ToolBarVSpacer(self.toolbar, 8)
         printSpacer.setObjectName('printSpacer')
 
         # Imports diagram and its menu
@@ -233,9 +232,7 @@ class TextEditorTabWidget(QWidget):
         self.deadCodeScriptButton.setEnabled(False)
         self.deadCodeScriptButton.setObjectName('deadCodeScriptButton')
 
-        undoSpacer = QWidget(self.toolbar)
-        undoSpacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        undoSpacer.setFixedHeight(8)
+        undoSpacer = ToolBarVSpacer(self.toolbar, 8)
         undoSpacer.setObjectName('undoSpacer')
 
         self.__undoButton = QAction(getIcon('undo.png'), 'Undo (Ctrl+Z)',
@@ -252,8 +249,7 @@ class TextEditorTabWidget(QWidget):
         self.__redoButton.setEnabled(False)
         self.__redoButton.setObjectName('redoButton')
 
-        spacer = QWidget(self.toolbar)
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        spacer = ToolBarExpandingSpacer(self.toolbar)
         spacer.setObjectName('spacer')
 
         self.removeTrailingSpacesButton = QAction(

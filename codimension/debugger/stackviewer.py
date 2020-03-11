@@ -21,11 +21,10 @@
 
 import os.path
 from ui.qt import (Qt, QSizePolicy, QFrame, QTreeWidget, QToolButton,
-                   QTreeWidgetItem, QHeaderView, QVBoxLayout, QLabel, QWidget,
-                   QAbstractItemView, QMenu, QSpacerItem, QHBoxLayout,
-                   QCursor)
+                   QTreeWidgetItem, QHeaderView, QVBoxLayout, QWidget,
+                   QAbstractItemView, QMenu, QToolBar, QCursor, QSize)
 from ui.itemdelegates import NoOutlineHeightDelegate
-from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
+from ui.labels import HeaderFitLabel
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
@@ -90,9 +89,6 @@ class StackViewer(QWidget):
         self.__createPopupMenu()
         self.__createLayout()
 
-        if not Settings()['showStackViewer']:
-            self.__onShowHide(True)
-
     def __createPopupMenu(self):
         """Creates the popup menu"""
         self.__framesMenu = QMenu()
@@ -108,31 +104,26 @@ class StackViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
-        self.__stackLabel = QLabel("Stack", self)
-
-        self.headerFrame = QFrame()
-        self.headerFrame.setObjectName('stackheader')
-        self.headerFrame.setStyleSheet('QFrame#stackheader {' +
-                                       getLabelStyle(self.__stackLabel) + '}')
-        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
+        self.__stackLabel = HeaderFitLabel(self)
+        self.__stackLabel.setText('Stack')
+        self.__stackLabel.setSizePolicy(QSizePolicy.Expanding,
+                                        QSizePolicy.Fixed)
+        self.__stackLabel.setMinimumWidth(10)
 
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise(True)
         self.__showHideButton.setIcon(getIcon('less.png'))
-        self.__showHideButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
-        self.__showHideButton.setToolTip("Hide frames list")
+        self.__showHideButton.setFixedSize(self.__stackLabel.height(),
+                                           self.__stackLabel.height())
+        self.__showHideButton.setToolTip('Hide frames list')
         self.__showHideButton.setFocusPolicy(Qt.NoFocus)
         self.__showHideButton.clicked.connect(self.__onShowHide)
 
-        headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addSpacing(3)
-        headerLayout.addWidget(self.__stackLabel)
-        headerLayout.addSpacerItem(expandingSpacer)
-        headerLayout.addWidget(self.__showHideButton)
-        self.headerFrame.setLayout(headerLayout)
+        self.headerToolbar = QToolBar(self)
+        self.headerToolbar.setIconSize(QSize(16, 16))
+        self.headerToolbar.setContentsMargins(1, 1, 1, 1)
+        self.headerToolbar.addWidget(self.__stackLabel)
+        self.headerToolbar.addWidget(self.__showHideButton)
 
         self.__framesList = QTreeWidget(self)
         self.__framesList.setSortingEnabled(False)
@@ -155,36 +146,36 @@ class StackViewer(QWidget):
         self.__framesList.customContextMenuRequested.connect(
             self.__showContextMenu)
 
-        self.__framesList.setHeaderLabels(["", "File:line",
-                                           "Function", "Arguments",
-                                           "Full path"])
+        self.__framesList.setHeaderLabels(['', 'File:line',
+                                           'Function', 'Arguments',
+                                           'Full path'])
 
-        verticalLayout.addWidget(self.headerFrame)
+        verticalLayout.addWidget(self.headerToolbar)
         verticalLayout.addWidget(self.__framesList)
 
     def __onShowHide(self, startup=False):
         """Triggered when show/hide button is clicked"""
         if startup or self.__framesList.isVisible():
-            self.__framesList.setVisible(False)
-            self.__showHideButton.setIcon(getIcon('more.png'))
-            self.__showHideButton.setToolTip("Show frames list")
-
             self.__minH = self.minimumHeight()
             self.__maxH = self.maximumHeight()
+            self.splitterSize = self.parent().sizes()[1]
 
-            self.setMinimumHeight(self.headerFrame.height())
-            self.setMaximumHeight(self.headerFrame.height())
+            self.__framesList.setVisible(False)
+            self.__showHideButton.setIcon(getIcon('more.png'))
+            self.__showHideButton.setToolTip('Show frames list')
 
-            Settings()['showStackViewer'] = False
+            self.setMinimumHeight(self.headerToolbar.height())
+            self.setMaximumHeight(self.headerToolbar.height())
         else:
             self.__framesList.setVisible(True)
             self.__showHideButton.setIcon(getIcon('less.png'))
-            self.__showHideButton.setToolTip("Hide frames list")
+            self.__showHideButton.setToolTip('Hide frames list')
 
             self.setMinimumHeight(self.__minH)
             self.setMaximumHeight(self.__maxH)
-
-            Settings()['showStackViewer'] = True
+            splitterSizes = self.parent().sizes()
+            splitterSizes[1] = self.splitterSize
+            self.parent().setSizes(splitterSizes)
 
     def clear(self):
         """Clears the content"""

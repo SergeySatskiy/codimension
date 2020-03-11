@@ -31,14 +31,12 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
 from utils.fileutils import isPythonMime, isPythonFile, isPythonCompiledFile
-from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
                                 ImportsDiagramProgress)
 from analysis.disasm import (OPT_NO_OPTIMIZATION, OPT_OPTIMIZE_ASSERT,
                              OPT_OPTIMIZE_DOCSTRINGS)
-from .qt import (QSize, Qt, QWidget, QVBoxLayout, QSplitter,
-                 QToolBar, QAction, QToolButton, QHBoxLayout, QLabel,
-                 QSpacerItem, QSizePolicy, QDialog, QMenu, QFrame,
+from .qt import (QSize, Qt, QWidget, QVBoxLayout, QSplitter, QToolBar,
+                 QAction, QToolButton, QSizePolicy, QDialog, QMenu,
                  QMessageBox, QCursor, pyqtSignal)
 from .projectproperties import ProjectPropertiesDialog
 from .filesystembrowser import FileSystemBrowser
@@ -51,6 +49,8 @@ from .viewitems import (NoItemType, DirectoryItemType, SysPathItemType,
                         ClassItemType, DecoratorItemType, AttributeItemType,
                         GlobalItemType, ImportWhatItemType)
 from .newnesteddir import NewProjectDirDialog
+from .labels import HeaderFitLabel
+from .spacers import ToolBarExpandingSpacer
 
 
 class ProjectViewer(QWidget):
@@ -73,14 +73,14 @@ class ProjectViewer(QWidget):
         self.__createProjectPopupMenu()
 
         layout = QVBoxLayout()
-        layout.setContentsMargins(1, 1, 1, 1)
-        splitter = QSplitter(Qt.Vertical)
-        splitter.addWidget(self.upper)
-        splitter.addWidget(self.lower)
-        splitter.setCollapsible(0, False)
-        splitter.setCollapsible(1, False)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.splitter = QSplitter(Qt.Vertical)
+        self.splitter.addWidget(self.upper)
+        self.splitter.addWidget(self.lower)
+        self.splitter.setCollapsible(0, False)
+        self.splitter.setCollapsible(1, False)
 
-        layout.addWidget(splitter)
+        layout.addWidget(self.splitter)
         self.setLayout(layout)
 
         self.__updateFSToolbarButtons()
@@ -109,10 +109,11 @@ class ProjectViewer(QWidget):
         # Keep the min and max height of the FS part initialized
         self.__minH = self.lower.minimumHeight()
         self.__maxH = self.lower.maximumHeight()
+        self.__splitterSizes = self.splitter.sizes()
 
-        # At the beginning the FS viewer is shown, so hide it if needed
-        if not Settings()['showFSViewer']:
-            self.__onShowHide(True)
+        # Restoring of the lower part state via self.onShowHide(True)
+        # is done in the codimension.py when the UI is already launched and
+        # drawn. Otherwise the height is not calculated properly
 
     def setTooltips(self, switchOn):
         """Triggers the tooltips mode"""
@@ -123,44 +124,39 @@ class ProjectViewer(QWidget):
         """Creates the upper part of the project viewer"""
         self.projectTreeView = ProjectBrowser(self.__mainWindow)
 
-        self.projectLabel = QLabel("Project: none", self)
-
         # Header part: label + i-button
-        headerFrame = QFrame()
-        headerFrame.setObjectName('prjheader')
-        headerFrame.setStyleSheet('QFrame#prjheader {' +
-                                  getLabelStyle(self.projectLabel) + '}')
-        headerFrame.setFixedHeight(HEADER_HEIGHT)
+        self.projectLabel = HeaderFitLabel(self)
+        self.projectLabel.setText('Project: none')
+        self.projectLabel.setSizePolicy(QSizePolicy.Expanding,
+                                        QSizePolicy.Fixed)
+        self.projectLabel.setMinimumWidth(10)
 
-        expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
-        fixedSpacer = QSpacerItem(3, 3)
-
-        self.propertiesButton = QToolButton()
+        self.propertiesButton = QToolButton(self)
         self.propertiesButton.setAutoRaise(True)
         self.propertiesButton.setIcon(getIcon('smalli.png'))
-        self.propertiesButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
-        self.propertiesButton.setToolTip("Project properties")
+        self.propertiesButton.setFixedSize(self.projectLabel.height(),
+                                           self.projectLabel.height())
+        self.propertiesButton.setToolTip('Project properties')
         self.propertiesButton.setEnabled(False)
         self.propertiesButton.setFocusPolicy(Qt.NoFocus)
         self.propertiesButton.clicked.connect(self.projectProperties)
 
-        self.unloadButton = QToolButton()
+        self.unloadButton = QToolButton(self)
         self.unloadButton.setAutoRaise(True)
         self.unloadButton.setIcon(getIcon('unloadproject.png'))
-        self.unloadButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
-        self.unloadButton.setToolTip("Unload project")
+        self.unloadButton.setFixedSize(self.projectLabel.height(),
+                                       self.projectLabel.height())
+        self.unloadButton.setToolTip('Unload project')
         self.unloadButton.setEnabled(False)
         self.unloadButton.setFocusPolicy(Qt.NoFocus)
         self.unloadButton.clicked.connect(self.unloadProject)
 
-        headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addWidget(self.unloadButton)
-        headerLayout.addSpacerItem(fixedSpacer)
-        headerLayout.addWidget(self.projectLabel)
-        headerLayout.addSpacerItem(expandingSpacer)
-        headerLayout.addWidget(self.propertiesButton)
-        headerFrame.setLayout(headerLayout)
+        self.prjHeaderToolbar = QToolBar(self)
+        self.prjHeaderToolbar.setIconSize(QSize(18, 18))
+        self.prjHeaderToolbar.setContentsMargins(1, 1, 1, 1)
+        self.prjHeaderToolbar.addWidget(self.unloadButton)
+        self.prjHeaderToolbar.addWidget(self.projectLabel)
+        self.prjHeaderToolbar.addWidget(self.propertiesButton)
 
         # Toolbar part - buttons
         self.prjFindWhereUsedButton = QAction(
@@ -187,7 +183,6 @@ class ProjectViewer(QWidget):
         self.upperToolbar.setMovable(False)
         self.upperToolbar.setAllowedAreas(Qt.TopToolBarArea)
         self.upperToolbar.setIconSize(QSize(16, 16))
-        self.upperToolbar.setFixedHeight(28)
         self.upperToolbar.setContentsMargins(0, 0, 0, 0)
         self.upperToolbar.addAction(self.prjFindWhereUsedButton)
         self.upperToolbar.addAction(self.prjFindInDirButton)
@@ -204,7 +199,7 @@ class ProjectViewer(QWidget):
         pLayout = QVBoxLayout()
         pLayout.setContentsMargins(0, 0, 0, 0)
         pLayout.setSpacing(0)
-        pLayout.addWidget(headerFrame)
+        pLayout.addWidget(self.prjHeaderToolbar)
         pLayout.addWidget(self.upperToolbar)
         pLayout.addWidget(self.projectTreeView)
 
@@ -301,30 +296,25 @@ class ProjectViewer(QWidget):
     def __createFilesystemPartLayout(self):
         """Creates the lower part of the project viewer"""
         # Header part: label + show/hide button
-        projectLabel = QLabel("File system", self)
+        self.fsLabel = HeaderFitLabel(self)
+        self.fsLabel.setText('File system')
+        self.fsLabel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.fsLabel.setMinimumWidth(10)
 
-        self.headerFrame = QFrame()
-        self.headerFrame.setObjectName('fsheader')
-        self.headerFrame.setStyleSheet('QFrame#fsheader {' +
-                                       getLabelStyle(projectLabel) + '}')
-        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
-
-        self.__showHideButton = QToolButton()
+        self.__showHideButton = QToolButton(self)
         self.__showHideButton.setAutoRaise(True)
         self.__showHideButton.setIcon(getIcon('less.png'))
-        self.__showHideButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
-        self.__showHideButton.setToolTip("Hide file system tree")
+        self.__showHideButton.setFixedSize(self.fsLabel.height(),
+                                           self.fsLabel.height())
+        self.__showHideButton.setToolTip('Hide file system tree')
         self.__showHideButton.setFocusPolicy(Qt.NoFocus)
-        self.__showHideButton.clicked.connect(self.__onShowHide)
+        self.__showHideButton.clicked.connect(self.onShowHide)
 
-        headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(3, 0, 0, 0)
-        headerLayout.addWidget(projectLabel)
-        headerLayout.addSpacerItem(expandingSpacer)
-        headerLayout.addWidget(self.__showHideButton)
-        self.headerFrame.setLayout(headerLayout)
+        self.fsHeaderToolbar = QToolBar(self)
+        self.fsHeaderToolbar.setIconSize(QSize(16, 16))
+        self.fsHeaderToolbar.setContentsMargins(1, 1, 1, 1)
+        self.fsHeaderToolbar.addWidget(self.fsLabel)
+        self.fsHeaderToolbar.addWidget(self.__showHideButton)
 
         # Tree view part
         self.filesystemView = FileSystemBrowser()
@@ -359,28 +349,24 @@ class ProjectViewer(QWidget):
         self.fsReloadButton = QAction(getIcon('reload.png'),
                                       'Re-read the file system tree', self)
         self.fsReloadButton.triggered.connect(self.filesystemView.reload)
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.lowerToolbar = QToolBar()
         self.lowerToolbar.setMovable(False)
         self.lowerToolbar.setAllowedAreas(Qt.TopToolBarArea)
         self.lowerToolbar.setIconSize(QSize(16, 16))
-        self.lowerToolbar.setFixedHeight(28)
         self.lowerToolbar.setContentsMargins(0, 0, 0, 0)
         self.lowerToolbar.addAction(self.fsFindInDirButton)
         self.lowerToolbar.addAction(self.fsAddTopLevelDirButton)
         self.lowerToolbar.addAction(self.fsRemoveTopLevelDirButton)
         self.lowerToolbar.addAction(self.fsCopyToClipboardButton)
         self.lowerToolbar.addAction(self.fsShowParsingErrorsButton)
-        self.lowerToolbar.addWidget(spacer)
+        self.lowerToolbar.addWidget(ToolBarExpandingSpacer(self))
         self.lowerToolbar.addAction(self.fsReloadButton)
-
 
         fsLayout = QVBoxLayout()
         fsLayout.setContentsMargins(0, 0, 0, 0)
         fsLayout.setSpacing(0)
-        fsLayout.addWidget(self.headerFrame)
+        fsLayout.addWidget(self.fsHeaderToolbar)
         fsLayout.addWidget(self.lowerToolbar)
         fsLayout.addWidget(self.filesystemView)
 
@@ -1100,29 +1086,31 @@ class ProjectViewer(QWidget):
         self.projectTreeView.onFileTypeChanged(fileName, uuid, newMime)
         self.filesystemView.onFileTypeChanged(fileName, uuid, newMime)
 
-    def __onShowHide(self, startup=False):
+    def onShowHide(self, startup=False):
         """Triggered when show/hide button is clicked"""
         if startup or self.filesystemView.isVisible():
+            self.__minH = self.lower.minimumHeight()
+            self.__maxH = self.lower.maximumHeight()
+            self.__splitterSizes = self.splitter.sizes()
+
             self.filesystemView.setVisible(False)
             self.lowerToolbar.setVisible(False)
             self.__showHideButton.setIcon(getIcon('more.png'))
-            self.__showHideButton.setToolTip("Show file system tree")
+            self.__showHideButton.setToolTip('Show file system tree')
 
-            self.__minH = self.lower.minimumHeight()
-            self.__maxH = self.lower.maximumHeight()
-
-            self.lower.setMinimumHeight(self.headerFrame.height())
-            self.lower.setMaximumHeight(self.headerFrame.height())
+            self.lower.setMinimumHeight(self.fsHeaderToolbar.height())
+            self.lower.setMaximumHeight(self.fsHeaderToolbar.height())
 
             Settings()['showFSViewer'] = False
         else:
             self.filesystemView.setVisible(True)
             self.lowerToolbar.setVisible(True)
             self.__showHideButton.setIcon(getIcon('less.png'))
-            self.__showHideButton.setToolTip("Hide file system tree")
+            self.__showHideButton.setToolTip('Hide file system tree')
 
             self.lower.setMinimumHeight(self.__minH)
             self.lower.setMaximumHeight(self.__maxH)
+            self.splitter.setSizes(self.__splitterSizes)
 
             Settings()['showFSViewer'] = True
 
@@ -1136,7 +1124,7 @@ class ProjectViewer(QWidget):
         if result:
             # Found, so check if the panel is shown
             if not self.filesystemView.isVisible():
-                self.__onShowHide()
+                self.onShowHide()
         return result
 
     def __onPluginActivated(self, plugin):

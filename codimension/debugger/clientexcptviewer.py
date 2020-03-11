@@ -26,9 +26,10 @@ from ui.qt import (Qt, pyqtSignal, QSize, QSizePolicy, QFrame, QTreeWidget,
                    QAbstractItemView, QMenu, QHBoxLayout,
                    QCursor, QAction, QToolBar)
 from ui.itemdelegates import NoOutlineHeightDelegate
+from ui.labels import HeaderFitLabel
+from ui.spacers import ToolBarExpandingSpacer
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
-from utils.colorfont import getLabelStyle, HEADER_HEIGHT
 from utils.project import CodimensionProject
 from .variableitems import getDisplayValue, getTooltipValue
 
@@ -189,19 +190,16 @@ class ClientExceptionsViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
-        self.__excptLabel = QLabel("Exceptions", self)
+        self.__excptLabel = HeaderFitLabel(self)
+        self.__excptLabel.setText('Exceptions')
+        self.__excptLabel.setSizePolicy(QSizePolicy.Expanding,
+                                        QSizePolicy.Fixed)
+        self.__excptLabel.setMinimumWidth(10)
 
-        self.headerFrame = QFrame()
-        self.headerFrame.setObjectName('excpt')
-        self.headerFrame.setStyleSheet('QFrame#excpt {' +
-                                       getLabelStyle(self.__excptLabel) + '}')
-        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addSpacing(3)
-        headerLayout.addWidget(self.__excptLabel)
-        self.headerFrame.setLayout(headerLayout)
+        self.headerToolbar = QToolBar(self)
+        self.headerToolbar.setIconSize(QSize(18, 18))
+        self.headerToolbar.setContentsMargins(1, 1, 1, 1)
+        self.headerToolbar.addWidget(self.__excptLabel)
 
         self.exceptionsList = QTreeWidget(self)
         self.exceptionsList.setSortingEnabled(False)
@@ -218,10 +216,6 @@ class ClientExceptionsViewer(QWidget):
             getIcon('add.png'), "Add exception to the list of ignored", self)
         self.__addToIgnoreButton.triggered.connect(self.__onAddToIgnore)
         self.__addToIgnoreButton.setEnabled(False)
-
-        expandingSpacer = QWidget()
-        expandingSpacer.setSizePolicy(QSizePolicy.Expanding,
-                                      QSizePolicy.Expanding)
 
         self.__jumpToCodeButton = QAction(
             getIcon('gotoline.png'), "Jump to the code", self)
@@ -242,7 +236,7 @@ class ClientExceptionsViewer(QWidget):
         self.toolbar.setContentsMargins(0, 0, 0, 0)
         self.toolbar.addAction(self.__addToIgnoreButton)
         self.toolbar.addAction(self.__jumpToCodeButton)
-        self.toolbar.addWidget(expandingSpacer)
+        self.toolbar.addWidget(ToolBarExpandingSpacer(self.toolbar))
         self.toolbar.addAction(self.__delAllButton)
 
         self.exceptionsList.itemDoubleClicked.connect(
@@ -255,7 +249,7 @@ class ClientExceptionsViewer(QWidget):
         self.exceptionsList.setHeaderLabels(["Exception",
                                              "Function", "Arguments"])
 
-        verticalLayout.addWidget(self.headerFrame)
+        verticalLayout.addWidget(self.headerToolbar)
         verticalLayout.addWidget(self.toolbar)
         verticalLayout.addWidget(self.exceptionsList)
 

@@ -20,12 +20,11 @@
 """Codimension main window status bar"""
 
 import os.path
-from utils.colorfont import getLabelStyle
 from utils.pixmapcache import getIcon
 from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
-from .qt import Qt, QLabel, QPalette, QColor, QMenu, QDialog, QApplication
-from .fitlabel import (FitPathLabel, FramedLabelWithDoubleClick,
-                       LabelWithDoubleClickSignal)
+from .qt import Qt, QPalette, QColor, QMenu, QDialog, QApplication
+from .labels import (StatusBarPixmapLabel, StatusBarPathLabel,
+                     StatusBarFramedLabel)
 
 
 class MainWindowStatusBarMixin:
@@ -53,66 +52,57 @@ class MainWindowStatusBarMixin:
         self.__statusBar = self.statusBar()
         self.__statusBar.setSizeGripEnabled(True)
 
-        self.sbVCSStatus = FitPathLabel(self.__statusBar)
+        self.sbVCSStatus = StatusBarPixmapLabel('ignore', self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbVCSStatus)
         self.sbVCSStatus.setVisible(False)
         self.sbVCSStatus.setContextMenuPolicy(Qt.CustomContextMenu)
         self.sbVCSStatus.customContextMenuRequested.connect(
             self._showVCSLabelContextMenu)
 
-        self.sbDebugState = QLabel("Debugger: unknown", self.__statusBar)
-        labelStylesheet = 'QLabel {' + getLabelStyle(self.sbDebugState) + '}'
-
-        self.sbDebugState.setStyleSheet(labelStylesheet)
-        self.sbDebugState.setAutoFillBackground(True)
+        self.sbDebugState = StatusBarFramedLabel(
+            text='Debugger: unknown', callback=None, parent=self.__statusBar)
         dbgPalette = self.sbDebugState.palette()
         dbgPalette.setColor(QPalette.Background, QColor(255, 255, 127))
         self.sbDebugState.setPalette(dbgPalette)
         self.__statusBar.addPermanentWidget(self.sbDebugState)
         self.sbDebugState.setVisible(False)
 
-        self.sbLanguage = FramedLabelWithDoubleClick(parent=self.__statusBar,
-                                                     headerLabel=True)
+        self.sbLanguage = StatusBarFramedLabel(parent=self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbLanguage)
 
-        self.sbEncoding = FramedLabelWithDoubleClick(parent=self.__statusBar,
-                                                     headerLabel=True)
+        self.sbEncoding = StatusBarFramedLabel(parent=self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbEncoding)
 
-        self.sbEol = FramedLabelWithDoubleClick(parent=self.__statusBar,
-                                                headerLabel=True)
+        self.sbEol = StatusBarFramedLabel(parent=self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbEol)
 
-        self.sbWritable = FramedLabelWithDoubleClick(parent=self.__statusBar,
-                                                     headerLabel=True)
+        self.sbWritable = StatusBarFramedLabel(parent=self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbWritable)
 
-        self.sbPyflakes = LabelWithDoubleClickSignal(self.__statusBar)
+        self.sbPyflakes = StatusBarPixmapLabel('signal', self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbPyflakes)
 
-        self.sbCC = LabelWithDoubleClickSignal(self.__statusBar)
+        self.sbCC = StatusBarPixmapLabel('signal', self.__statusBar)
         self.__statusBar.addPermanentWidget(self.sbCC)
 
-        self.sbFile = FitPathLabel(self.__statusBar)
+        self.sbFile = StatusBarPathLabel(
+            callback=self._onPathLabelDoubleClick,
+            parent=self.__statusBar)
         self.sbFile.setMaximumWidth(512)
         self.sbFile.setMinimumWidth(128)
-        self.sbFile.setStyleSheet(labelStylesheet)
         self.__statusBar.addPermanentWidget(self.sbFile, True)
-        self.sbFile.doubleClicked.connect(self._onPathLabelDoubleClick)
         self.sbFile.setContextMenuPolicy(Qt.CustomContextMenu)
         self.sbFile.customContextMenuRequested.connect(
             self._showPathLabelContextMenu)
 
-        self.sbLine = FramedLabelWithDoubleClick(callback=self.copyLine,
-                                                 parent=self.__statusBar,
-                                                 headerLabel=True)
+        self.sbLine = StatusBarFramedLabel(callback=self.copyLine,
+                                           parent=self.__statusBar)
         self.sbLine.setMinimumWidth(72)
         self.sbLine.setAlignment(Qt.AlignCenter)
         self.__statusBar.addPermanentWidget(self.sbLine)
 
-        self.sbPos = FramedLabelWithDoubleClick(callback=self.copyPos,
-                                                parent=self.__statusBar,
-                                                headerLabel=True)
+        self.sbPos = StatusBarFramedLabel(callback=self.copyPos,
+                                          parent=self.__statusBar)
         self.sbPos.setMinimumWidth(72)
         self.sbPos.setAlignment(Qt.AlignCenter)
         self.__statusBar.addPermanentWidget(self.sbPos)

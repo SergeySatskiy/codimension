@@ -95,13 +95,13 @@ class FunctionsViewer(QWidget):
         self.toolbar.setMovable(False)
         self.toolbar.setAllowedAreas(Qt.TopToolBarArea)
         self.toolbar.setIconSize(QSize(16, 16))
-        self.toolbar.setFixedHeight(28)
         self.toolbar.setContentsMargins(0, 0, 0, 0)
         self.toolbar.addAction(self.definitionButton)
         self.toolbar.addAction(self.findButton)
         self.toolbar.addAction(self.copyPathButton)
 
         filterLabel = QLabel("  Filter ")
+        filterLabel.setStyleSheet('background: transparent')
         self.toolbar.addWidget(filterLabel)
         self.filterEdit = CDMComboBox(True, self.toolbar)
         self.filterEdit.setSizePolicy(QSizePolicy.Expanding,

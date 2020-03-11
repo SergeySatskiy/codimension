@@ -33,7 +33,7 @@ from .qt import (Qt, QEvent, QObject, QDialog, QLineEdit, QGridLayout, QLabel,
                  QTextEdit, QDialogButtonBox, QVBoxLayout, QPushButton,
                  QFileDialog, QMessageBox, QListWidget, QAbstractItemView,
                  QApplication, QComboBox)
-from .fitlabel import FramedLabelWithDoubleClick
+from .labels import FramedLabel
 from .itemdelegates import NoOutlineHeightDelegate
 from .completers import DirCompleter, FileCompleter
 
@@ -285,15 +285,16 @@ class ProjectPropertiesDialog(QDialog):
         # Creation date
         creationDateLabel = QLabel("Creation date:", self)
         gridLayout.addWidget(creationDateLabel, 12, 0, 1, 1)
-        self.creationDateEdit = FramedLabelWithDoubleClick(headerLabel=False)
+        self.creationDateEdit = FramedLabel(parent=self)
         self.creationDateEdit.setToolTip("Double click to copy")
         gridLayout.addWidget(self.creationDateEdit, 12, 1, 1, 1)
 
         # Project UUID
         uuidLabel = QLabel("UUID:", self)
         gridLayout.addWidget(uuidLabel, 13, 0, 1, 1)
-        self.uuidEdit = FramedLabelWithDoubleClick("", self.__copyProjectPath,
-                                                   headerLabel=False)
+        self.uuidEdit = FramedLabel(text='',
+                                    callback=self.__copyProjectPath,
+                                    parent=self)
         gridLayout.addWidget(self.uuidEdit, 13, 1, 1, 1)
 
         verticalLayout.addLayout(gridLayout)

@@ -46,6 +46,9 @@ srcDir = os.path.dirname(sys.argv[0])
 if srcDir not in sys.path:
     sys.path.insert(0, srcDir)
 
+# Use the python parser in the qutepart component
+os.environ['QPART_CPARSER'] = 'N'
+
 from ui.qt import QTimer, QMessageBox
 from ui.application import CodimensionApplication
 from ui.splashscreen import SplashScreen
@@ -240,6 +243,9 @@ class CodimensionUILauncher:
         settings = Settings()
         mainWindow = globalData.mainWindow
         mainWindow.getToolbar().setVisible(settings['showMainToolBar'])
+
+        if not settings['showFSViewer']:
+            mainWindow.projectViewer.onShowHide(True)
 
         needSignal = True
         if self.__options.cleanStart:

@@ -85,6 +85,7 @@ from .mainstatusbar import MainWindowStatusBarMixin
 from .mainmenu import MainWindowMenuMixin
 from .mainredirectedio import MainWindowRedirectedIOMixin
 from .floatingrendererwindow import DetachedRendererWindow
+from .spacers import ToolBarExpandingSpacer, ToolBarHSpacer
 # cml 1 ge id=1
 
 
@@ -581,9 +582,6 @@ class CodimensionMainWindow(QMainWindow):
         self.__dbgDumpSettingsButton.clicked.connect(
             self._onDumpDebugSettings)
 
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
         self.floatingRendererButton = QToolButton(self)
         self.floatingRendererButton.setObjectName('floatingRendererButton')
         self.floatingRendererButton.setIcon(getIcon('floatingrenderer.png'))
@@ -614,10 +612,8 @@ class CodimensionMainWindow(QMainWindow):
         self.__toolbar.addAction(self.__projectDocButton)
 
         # Debugger part begin
-        dbgSpacer = QWidget()
-        dbgSpacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        dbgSpacer.setFixedWidth(40)
-        self.__toolbar.addWidget(dbgSpacer).setObjectName('debugSpacer')
+        self.__toolbar.addWidget(
+            ToolBarHSpacer(self.__toolbar, 40)).setObjectName('debugSpacer')
         self.__toolbar.addAction(self.__dbgStop)
         self.__toolbar.addAction(self.__dbgRestart)
         self.__toolbar.addAction(self.__dbgGo)
@@ -629,7 +625,8 @@ class CodimensionMainWindow(QMainWindow):
         self.__dbgDumpSettingsAct = self.__toolbar.addWidget(
             self.__dbgDumpSettingsButton)
 
-        self.__toolbar.addWidget(spacer).setObjectName('expandingSpacer')
+        self.__toolbar.addWidget(
+            ToolBarExpandingSpacer(self.__toolbar)).setObjectName('expandingSpacer')
         self.__toolbar.addWidget(self.floatingRendererButton)
 
         # Heck! The only QAction can be hidden

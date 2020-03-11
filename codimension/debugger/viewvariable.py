@@ -23,7 +23,7 @@
 from ui.qt import (Qt, QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                    QGridLayout, QTextEdit)
 from utils.pixmapcache import getIcon
-from ui.fitlabel import FramedLabelWithDoubleClick
+from ui.labels import HeaderLabel
 from utils.globals import GlobalData
 from utils.colorfont import getZoomedMonoFont
 
@@ -66,12 +66,8 @@ class ViewVariableDialog(QDialog):
         gridLayout.setSpacing(4)
         varScopeLabel = QLabel("Scope:", self)
         gridLayout.addWidget(varScopeLabel, 0, 0, Qt.AlignCenter)
-        if isGlobal:
-            varScopeValue = FramedLabelWithDoubleClick("Global",
-                                                       headerLabel=True)
-        else:
-            varScopeValue = FramedLabelWithDoubleClick("Local",
-                                                       headerLabel=True)
+        varScopeValue = HeaderLabel('Global' if isGlobal else 'Local',
+                                    parent=self)
         varScopeValue.setToolTip("Double click to copy")
         font = varScopeValue.font()
         font.setFamily(GlobalData().skin['monoFont'].family())
@@ -79,13 +75,13 @@ class ViewVariableDialog(QDialog):
 
         varNameLabel = QLabel("Name:", self)
         gridLayout.addWidget(varNameLabel, 1, 0, Qt.AlignCenter)
-        varNameValue = FramedLabelWithDoubleClick(varName, headerLabel=True)
+        varNameValue = HeaderLabel(varName, parent=self)
         varNameValue.setToolTip("Double click to copy")
         gridLayout.addWidget(varNameValue, 1, 1)
 
         varTypeLabel = QLabel("Type:", self)
         gridLayout.addWidget(varTypeLabel, 2, 0, Qt.AlignCenter)
-        varTypeValue = FramedLabelWithDoubleClick(varType, headerLabel=True)
+        varTypeValue = HeaderLabel(varType, parent=self)
         varTypeValue.setToolTip("Double click to copy")
         gridLayout.addWidget(varTypeValue, 2, 1)
 

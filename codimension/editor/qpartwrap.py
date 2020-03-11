@@ -833,6 +833,7 @@ class QutepartWrapper(Qutepart):
         Qutepart.terminate(self)
         self.document().disconnect()
 
+        self._indenter._qpart = None
         self._indenter = None
         self._completer._qpart = None
         self._completer = None

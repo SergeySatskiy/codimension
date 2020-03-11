@@ -19,6 +19,7 @@
 
 """definition of the codimension QT based application class"""
 
+import qdarkstyle
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from .garbagecollector import GarbageCollector
@@ -60,9 +61,20 @@ class CodimensionApplication(QApplication):
 
         self.focusChanged.connect(self.__onFocusChanged)
 
+        appCSS = ''
+        if GlobalData().skin['dark']:
+            appCSS = qdarkstyle.load_stylesheet(qt_api='pyqt5')
+            #appCSS = appCSS.replace('QStatusBar QLabel',
+            #                        'QStatusBar QComboBox')
+            #appCSS = appCSS.replace('QStatusBar::item',
+            #                        'QStatusBar QComboBox')
+
         # Avoid having rectangular frames on the status bar and
         # some application wide style changes
-        appCSS = GlobalData().skin['appCSS']
+        adjustmentCSS = GlobalData().skin['appCSS']
+        if adjustmentCSS:
+            appCSS += '\n' + adjustmentCSS
+
         if appCSS:
             self.setStyleSheet(appCSS)
 

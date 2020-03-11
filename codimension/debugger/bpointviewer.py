@@ -21,16 +21,16 @@
 
 import logging
 from ui.qt import (Qt, pyqtSignal, QSize, QSizePolicy, QFrame, QTreeView,
-                   QHeaderView, QVBoxLayout, QSortFilterProxyModel, QLabel,
-                   QWidget, QAbstractItemView, QMenu, QHBoxLayout,
-                   QCursor, QItemSelectionModel, QDialog, QToolBar,
-                   QAction, QModelIndex)
+                   QHeaderView, QVBoxLayout, QSortFilterProxyModel,
+                   QWidget, QAbstractItemView, QMenu, QAction, QModelIndex,
+                   QCursor, QItemSelectionModel, QDialog, QToolBar)
 from ui.itemdelegates import NoOutlineHeightDelegate
+from ui.labels import HeaderFitLabel
+from ui.spacers import ToolBarHSpacer, ToolBarExpandingSpacer
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
-from utils.colorfont import getLabelStyle, HEADER_HEIGHT
 from .editbreakpoint import BreakpointEditDialog
 from .breakpoint import Breakpoint
 from .bputils import getBreakpointLines
@@ -317,20 +317,16 @@ class BreakPointViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
-        self.__breakpointLabel = QLabel("Breakpoints", self)
+        self.__breakpointLabel = HeaderFitLabel(self)
+        self.__breakpointLabel.setText('Breakpoints')
+        self.__breakpointLabel.setSizePolicy(QSizePolicy.Expanding,
+                                             QSizePolicy.Fixed)
+        self.__breakpointLabel.setMinimumWidth(10)
 
-        self.headerFrame = QFrame()
-        self.headerFrame.setObjectName('bpheader')
-        self.headerFrame.setStyleSheet('QFrame#bpheader {' +
-                                       getLabelStyle(self.__breakpointLabel) +
-                                       '}')
-        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addSpacing(3)
-        headerLayout.addWidget(self.__breakpointLabel)
-        self.headerFrame.setLayout(headerLayout)
+        self.headerToolbar = QToolBar(self)
+        self.headerToolbar.setIconSize(QSize(18, 18))
+        self.headerToolbar.setContentsMargins(1, 1, 1, 1)
+        self.headerToolbar.addWidget(self.__breakpointLabel)
 
         self.bpointsList = BreakPointView(self, bpointsModel)
 
@@ -385,30 +381,19 @@ class BreakPointViewer(QWidget):
         self.toolbar.setContentsMargins(0, 0, 0, 0)
         self.toolbar.addAction(self.__editButton)
         self.toolbar.addAction(self.__jumpToCodeButton)
-        fixedSpacer2 = QWidget()
-        fixedSpacer2.setFixedWidth(5)
-        self.toolbar.addWidget(fixedSpacer2)
+        self.toolbar.addWidget(ToolBarHSpacer(self.toolbar, 5))
         self.toolbar.addAction(self.__enableButton)
         self.toolbar.addAction(self.__enableAllButton)
-        fixedSpacer3 = QWidget()
-        fixedSpacer3.setFixedWidth(5)
-        self.toolbar.addWidget(fixedSpacer3)
+        self.toolbar.addWidget(ToolBarHSpacer(self.toolbar, 5))
         self.toolbar.addAction(self.__disableButton)
         self.toolbar.addAction(self.__disableAllButton)
-        expandingSpacer = QWidget()
-        expandingSpacer.setSizePolicy(QSizePolicy.Expanding,
-                                      QSizePolicy.Expanding)
-        fixedSpacer4 = QWidget()
-        fixedSpacer4.setFixedWidth(5)
-        self.toolbar.addWidget(fixedSpacer4)
-        self.toolbar.addWidget(expandingSpacer)
+        self.toolbar.addWidget(ToolBarHSpacer(self.toolbar, 5))
+        self.toolbar.addWidget(ToolBarExpandingSpacer(self.toolbar))
         self.toolbar.addAction(self.__delButton)
-        fixedSpacer5 = QWidget()
-        fixedSpacer5.setFixedWidth(5)
-        self.toolbar.addWidget(fixedSpacer5)
+        self.toolbar.addWidget(ToolBarHSpacer(self.toolbar, 5))
         self.toolbar.addAction(self.__delAllButton)
 
-        verticalLayout.addWidget(self.headerFrame)
+        verticalLayout.addWidget(self.headerToolbar)
         verticalLayout.addWidget(self.toolbar)
         verticalLayout.addWidget(self.bpointsList)
 

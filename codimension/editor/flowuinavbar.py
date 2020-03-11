@@ -19,10 +19,10 @@
 
 """Control flow UI navigation bar"""
 
-from ui.qt import Qt, QWidget, QHBoxLayout, QLabel, QFrame, QSizePolicy
-from ui.fitlabel import FitLabel
+from ui.qt import Qt, QHBoxLayout, QLabel, QFrame, QSizePolicy
+from ui.labels import HeaderFitLabel, HeaderLabel
+from ui.spacers import ToolBarExpandingSpacer
 from utils.pixmapcache import getPixmap
-from utils.colorfont import getLabelStyle
 
 
 class ControlFlowNavigationBar(QFrame):
@@ -60,11 +60,8 @@ class ControlFlowNavigationBar(QFrame):
 
         self.clearWarnings()
 
-        labelStylesheet = 'QLabel {' + getLabelStyle(self.__infoIcon) + '}'
-
         # Create the path label
-        self.__pathLabel = FitLabel(self)
-        self.__pathLabel.setStyleSheet(labelStylesheet)
+        self.__pathLabel = HeaderFitLabel(self)
         self.__pathLabel.setTextFormat(Qt.PlainText)
         self.__pathLabel.setAlignment(Qt.AlignLeft)
         self.__pathLabel.setWordWrap(False)
@@ -74,14 +71,12 @@ class ControlFlowNavigationBar(QFrame):
         self.__pathLabel.setMinimumWidth(40)
         self.__layout.addWidget(self.__pathLabel)
 
-        self.__spacer = QWidget()
-        self.__spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.__spacer = ToolBarExpandingSpacer(self)
         self.__spacer.setMinimumWidth(0)
         self.__layout.addWidget(self.__spacer)
 
         # Create the selection label
-        self.__selectionLabel = QLabel(self)
-        self.__selectionLabel.setStyleSheet(labelStylesheet)
+        self.__selectionLabel = HeaderLabel('', None, self)
         self.__selectionLabel.setTextFormat(Qt.PlainText)
         self.__selectionLabel.setAlignment(Qt.AlignCenter)
         self.__selectionLabel.setWordWrap(False)

@@ -20,13 +20,13 @@
 """Variables viewer"""
 
 
-from ui.qt import (Qt, QFrame, QVBoxLayout, QLabel, QWidget, QSizePolicy,
-                   QSpacerItem, QGridLayout, QHBoxLayout, QToolButton,
-                   QPushButton, QMenu)
+from ui.qt import (Qt, QFrame, QVBoxLayout, QWidget, QSizePolicy, QMenu,
+                   QSpacerItem, QGridLayout, QToolButton, QPushButton,
+                   QToolBar, QSize)
 from ui.combobox import CDMComboBox
+from ui.labels import HeaderFitLabel
 from utils.pixmapcache import getIcon
 from utils.settings import Settings
-from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 from utils.globals import GlobalData
 from .variablesbrowser import VariablesBrowser
 from .varfilters import VARIABLE_FILTERS
@@ -59,15 +59,11 @@ class VariablesViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
-        self.__headerLabel = QLabel("Variables", self)
-
-        headerFrame = QFrame()
-        headerFrame.setObjectName('varsheader')
-        headerFrame.setStyleSheet('QFrame#varsheader {' +
-                                  getLabelStyle(self.__headerLabel) + '}')
-        headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
+        self.__headerLabel = HeaderFitLabel(self)
+        self.__headerLabel.setText('Variables')
+        self.__headerLabel.setSizePolicy(QSizePolicy.Expanding,
+                                         QSizePolicy.Fixed)
+        self.__headerLabel.setMinimumWidth(10)
 
         self.__filterMenu = QMenu(self)
         self.__showAllAct =  self.__filterMenu.addAction('Show all variables')
@@ -88,7 +84,8 @@ class VariablesViewer(QWidget):
         self.__filterButton.setPopupMode(QToolButton.InstantPopup)
         self.__filterButton.setMenu(self.__filterMenu)
         self.__filterButton.setFocusPolicy(Qt.NoFocus)
-        self.__filterButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
+        self.__filterButton.setFixedSize(self.__headerLabel.height(),
+                                         self.__headerLabel.height())
 
         self.__execStatement = CDMComboBox(True)
         self.__execStatement.setSizePolicy(QSizePolicy.Expanding,
@@ -104,14 +101,11 @@ class VariablesViewer(QWidget):
         self.__execButton.setFixedHeight(26)
         self.__execButton.clicked.connect(self.__onExec)
 
-        headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.setSpacing(0)
-        headerLayout.addSpacing(3)
-        headerLayout.addWidget(self.__headerLabel)
-        headerLayout.addSpacerItem(expandingSpacer)
-        headerLayout.addWidget(self.__filterButton)
-        headerFrame.setLayout(headerLayout)
+        self.headerToolbar = QToolBar(self)
+        self.headerToolbar.setIconSize(QSize(18, 18))
+        self.headerToolbar.setContentsMargins(1, 1, 1, 1)
+        self.headerToolbar.addWidget(self.__headerLabel)
+        self.headerToolbar.addWidget(self.__filterButton)
 
         execLayout = QGridLayout()
         execLayout.setContentsMargins(1, 1, 1, 1)
@@ -119,7 +113,7 @@ class VariablesViewer(QWidget):
         execLayout.addWidget(self.__execStatement, 0, 0)
         execLayout.addWidget(self.__execButton, 0, 1)
 
-        verticalLayout.addWidget(headerFrame)
+        verticalLayout.addWidget(self.headerToolbar)
         verticalLayout.addWidget(self.__browser)
         verticalLayout.addLayout(execLayout)
 

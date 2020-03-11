@@ -26,7 +26,7 @@ from utils.fileutils import isPythonFile
 from utils.colorfont import getZoomedMonoFont
 from .qt import (Qt, QDialog, QTextEdit, QDialogButtonBox, QVBoxLayout,
                  QSizePolicy)
-from .fitlabel import FitLabel
+from .labels import FitLabel
 
 
 class ParserErrorsDialog(QDialog):

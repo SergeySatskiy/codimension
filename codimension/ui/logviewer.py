@@ -29,8 +29,8 @@ from utils.pixmapcache import getIcon
 from utils.colorfont import getZoomedMonoFont
 from .qt import (Qt, QSize, QColor, QBrush, QTextCursor, QCursor,
                  QPlainTextEdit, QMenu, QHBoxLayout, QWidget, QAction,
-                 QToolBar, QSizePolicy)
-
+                 QToolBar)
+from .spacers import ToolBarExpandingSpacer
 
 MAX_LINES = 10000
 
@@ -94,8 +94,6 @@ class LogViewer(QWidget):
         self.copyButton = QAction(getIcon('copymenu.png'),
                                   'Copy to clipboard', self)
         self.copyButton.triggered.connect(self.messages.copy)
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.clearButton = QAction(getIcon('trash.png'), 'Clear all', self)
         self.clearButton.triggered.connect(self.__clear)
 
@@ -109,7 +107,7 @@ class LogViewer(QWidget):
         self.toolbar.setContentsMargins(0, 0, 0, 0)
         self.toolbar.addAction(self.selectAllButton)
         self.toolbar.addAction(self.copyButton)
-        self.toolbar.addWidget(spacer)
+        self.toolbar.addWidget(ToolBarExpandingSpacer(self.toolbar))
         self.toolbar.addAction(self.clearButton)
 
         # layout

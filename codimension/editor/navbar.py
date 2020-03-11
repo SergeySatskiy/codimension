@@ -168,7 +168,6 @@ class NavigationBar(QFrame):
 
     def __createLayout(self):
         """Creates the layout"""
-        self.setFixedHeight(26)
         self.__layout = QHBoxLayout(self)
         self.__layout.setContentsMargins(0, 0, 0, 0)
 
@@ -186,6 +185,7 @@ class NavigationBar(QFrame):
         self.__spacer.setSizePolicy(QSizePolicy.Expanding,
                                     QSizePolicy.Expanding)
         self.__layout.addWidget(self.__spacer)
+        self.setFixedHeight(self.__globalScopeCombo.height())
 
     def __updateInfoIcon(self, state):
         """Updates the information icon"""
@@ -353,25 +353,17 @@ class NavigationBar(QFrame):
                 self.__globalScopeCombo.count())
 
         for glob in self.__currentInfo.globals:
-            self.__globalScopeCombo.addItem(getIcon('globalvar.png'),
-                                            glob.name, glob.line)
+            self.__globalScopeCombo.addItem('global ' + glob.name, glob.line)
         for imp in self.__currentInfo.imports:
-            self.__globalScopeCombo.addItem(getIcon('imports.png'),
-                                            imp.name, imp.line)
+            self.__globalScopeCombo.addItem('import ' + imp.name, imp.line)
 
     @staticmethod
     def __populateClassesAndFunctions(infoObj, combo):
         """Populates the combo with classes and functions from the infoObj"""
         for klass in infoObj.classes:
-            combo.addItem(getIcon('class.png'), klass.name, klass.line)
+            combo.addItem('class ' + klass.name, klass.line)
         for func in infoObj.functions:
-            if func.isPrivate():
-                icon = getIcon('method_private.png')
-            elif func.isProtected():
-                icon = getIcon('method_protected.png')
-            else:
-                icon = getIcon('method.png')
-            combo.addItem(icon, func.name, func.line)
+            combo.addItem('def ' + func.name, func.line)
 
     def __cursorPositionChanged(self):
         """Cursor position changed"""

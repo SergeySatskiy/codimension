@@ -20,11 +20,11 @@
 """Thread viewer"""
 
 
-from ui.qt import (Qt, QFrame, QTreeWidget, QToolButton, QTreeWidgetItem,
-                   QHeaderView, QVBoxLayout, QLabel, QWidget, QHBoxLayout,
-                   QAbstractItemView, QSizePolicy, QSpacerItem)
+from ui.qt import (Qt, QTreeWidget, QToolButton, QTreeWidgetItem,
+                   QHeaderView, QVBoxLayout, QWidget, QSize, QToolBar,
+                   QAbstractItemView, QSizePolicy)
 from ui.itemdelegates import NoOutlineHeightDelegate
-from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
+from ui.labels import HeaderFitLabel
 from utils.pixmapcache import getIcon
 from utils.settings import Settings
 
@@ -34,7 +34,7 @@ class ThreadItem(QTreeWidgetItem):
     """Single thread item data structure"""
 
     def __init__(self, tid, name, state):
-        QTreeWidgetItem.__init__(self, ["", name, state, str(tid)])
+        QTreeWidgetItem.__init__(self, ['', name, state, str(tid)])
 
         self.__isCurrent = False
         self.__setTooltip()
@@ -87,40 +87,32 @@ class ThreadsViewer(QWidget):
         self.__debugger = debugger
         self.__createLayout()
 
-        if not Settings()['showThreadViewer']:
-            self.__onShowHide(True)
-
     def __createLayout(self):
         """Creates the widget layout"""
         verticalLayout = QVBoxLayout(self)
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
-        self.__threadsLabel = QLabel("Threads", self)
-
-        self.headerFrame = QFrame()
-        self.headerFrame.setObjectName('threadheader')
-        self.headerFrame.setStyleSheet('QFrame#threadheader {' +
-                                       getLabelStyle(self.__threadsLabel) + '}')
-        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
+        self.__threadsLabel = HeaderFitLabel(self)
+        self.__threadsLabel.setText('Threads')
+        self.__threadsLabel.setSizePolicy(QSizePolicy.Expanding,
+                                          QSizePolicy.Fixed)
+        self.__threadsLabel.setMinimumWidth(10)
 
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise(True)
         self.__showHideButton.setIcon(getIcon('less.png'))
-        self.__showHideButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
-        self.__showHideButton.setToolTip("Hide threads list")
+        self.__showHideButton.setFixedSize(self.__threadsLabel.height(),
+                                           self.__threadsLabel.height())
+        self.__showHideButton.setToolTip('Hide threads list')
         self.__showHideButton.setFocusPolicy(Qt.NoFocus)
         self.__showHideButton.clicked.connect(self.__onShowHide)
 
-        headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addSpacing(3)
-        headerLayout.addWidget(self.__threadsLabel)
-        headerLayout.addSpacerItem(expandingSpacer)
-        headerLayout.addWidget(self.__showHideButton)
-        self.headerFrame.setLayout(headerLayout)
+        self.headerToolbar = QToolBar(self)
+        self.headerToolbar.setIconSize(QSize(16, 16))
+        self.headerToolbar.setContentsMargins(1, 1, 1, 1)
+        self.headerToolbar.addWidget(self.__threadsLabel)
+        self.headerToolbar.addWidget(self.__showHideButton)
 
         self.__threadsList = QTreeWidget()
         self.__threadsList.setSortingEnabled(False)
@@ -139,23 +131,22 @@ class ThreadsViewer(QWidget):
         self.__threadsList.itemClicked.connect(self.__onThreadClicked)
         self.__threadsList.setHeaderLabels(["", "Name", "State", "TID"])
 
-        verticalLayout.addWidget(self.headerFrame)
+        verticalLayout.addWidget(self.headerToolbar)
         verticalLayout.addWidget(self.__threadsList)
 
     def __onShowHide(self, startup=False):
         """Triggered when show/hide button is clicked"""
         if startup or self.__threadsList.isVisible():
+            self.__minH = self.minimumHeight()
+            self.__maxH = self.maximumHeight()
+            self.splitterSize = self.parent().sizes()[1]
+
             self.__threadsList.setVisible(False)
             self.__showHideButton.setIcon(getIcon('more.png'))
             self.__showHideButton.setToolTip("Show threads list")
 
-            self.__minH = self.minimumHeight()
-            self.__maxH = self.maximumHeight()
-
-            self.setMinimumHeight(self.headerFrame.height())
-            self.setMaximumHeight(self.headerFrame.height())
-
-            Settings()['showThreadViewer'] = False
+            self.setMinimumHeight(self.headerToolbar.height())
+            self.setMaximumHeight(self.headerToolbar.height())
         else:
             self.__threadsList.setVisible(True)
             self.__showHideButton.setIcon(getIcon('less.png'))
@@ -163,8 +154,9 @@ class ThreadsViewer(QWidget):
 
             self.setMinimumHeight(self.__minH)
             self.setMaximumHeight(self.__maxH)
-
-            Settings()['showThreadViewer'] = True
+            splitterSizes = self.parent().sizes()
+            splitterSizes[1] = self.splitterSize
+            self.parent().setSizes(splitterSizes)
 
     def __resizeColumns(self):
         """Resize the files list columns"""

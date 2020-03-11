@@ -22,10 +22,11 @@
 
 import logging
 from ui.qt import (QTreeWidget, QAbstractItemView, QWidget, QVBoxLayout, Qt,
-                   QFrame, QAction, QHBoxLayout, QToolBar, QSize, QLabel,
-                   QSizePolicy, QRegExp, QTreeWidgetItem, QApplication)
+                   QFrame, QAction, QToolBar, QSize, QSizePolicy, QRegExp,
+                   QTreeWidgetItem, QApplication)
 from ui.itemdelegates import NoOutlineHeightDelegate
-from utils.colorfont import getLabelStyle, HEADER_HEIGHT
+from ui.spacers import ToolBarHSpacer, ToolBarExpandingSpacer
+from ui.labels import HeaderFitLabel
 from utils.settings import Settings
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
@@ -153,19 +154,16 @@ class CallTraceViewer(QWidget):
         verticalLayout.setContentsMargins(0, 0, 0, 0)
         verticalLayout.setSpacing(0)
 
-        self.__calltraceLabel = QLabel("Call Trace", self)
+        self.__calltraceLabel = HeaderFitLabel(self)
+        self.__calltraceLabel.setText('Call Trace')
+        self.__calltraceLabel.setSizePolicy(QSizePolicy.Expanding,
+                                            QSizePolicy.Fixed)
+        self.__calltraceLabel.setMinimumWidth(10)
 
-        self.headerFrame = QFrame()
-        self.headerFrame.setObjectName('calltraceheader')
-        self.headerFrame.setStyleSheet('QFrame#calltraceheader {' +
-                                       getLabelStyle(self.__calltraceLabel) + '}')
-        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(0, 0, 0, 0)
-        headerLayout.addSpacing(3)
-        headerLayout.addWidget(self.__calltraceLabel)
-        self.headerFrame.setLayout(headerLayout)
+        self.headerToolbar = QToolBar(self)
+        self.headerToolbar.setIconSize(QSize(18, 18))
+        self.headerToolbar.setContentsMargins(1, 1, 1, 1)
+        self.headerToolbar.addWidget(self.__calltraceLabel)
 
         self.calltraceList = CallTraceBrowser(self)
 
@@ -206,21 +204,14 @@ class CallTraceViewer(QWidget):
         self.toolbar.addAction(self.__startButton)
         self.toolbar.addAction(self.__stopButton)
 
-        fixedSpacer2 = QWidget()
-        fixedSpacer2.setFixedWidth(15)
-        self.toolbar.addWidget(fixedSpacer2)
+        self.toolbar.addWidget(ToolBarHSpacer(self.toolbar, 15))
         self.toolbar.addAction(self.__resizeButton)
         self.toolbar.addAction(self.__copyButton)
-        expandingSpacer = QWidget()
-        expandingSpacer.setSizePolicy(QSizePolicy.Expanding,
-                                      QSizePolicy.Expanding)
-        fixedSpacer4 = QWidget()
-        fixedSpacer4.setFixedWidth(5)
-        self.toolbar.addWidget(fixedSpacer4)
-        self.toolbar.addWidget(expandingSpacer)
+        self.toolbar.addWidget(ToolBarHSpacer(self.toolbar, 5))
+        self.toolbar.addWidget(ToolBarExpandingSpacer(self.toolbar))
         self.toolbar.addAction(self.__clearButton)
 
-        verticalLayout.addWidget(self.headerFrame)
+        verticalLayout.addWidget(self.headerToolbar)
         verticalLayout.addWidget(self.toolbar)
         verticalLayout.addWidget(self.calltraceList)
 

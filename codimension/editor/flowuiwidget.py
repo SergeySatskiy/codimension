@@ -27,9 +27,10 @@ from math import ceil
 from timeit import default_timer as timer
 from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QPainter, QImage,
                    QToolBar, QWidget, QPrinter, QApplication, QHBoxLayout,
-                   QLabel, QVBoxLayout, QSizePolicy, QFileDialog,
+                   QLabel, QVBoxLayout, QFileDialog,
                    QDialog, QMenu, QToolButton, QMessageBox, QSvgGenerator,
                    QStackedWidget)
+from ui.spacers import ToolBarExpandingSpacer, ToolBarVSpacer
 from cdmcfparser import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas, formatFlow
 from flowui.cflowsettings import getCflowSettings
@@ -219,44 +220,42 @@ class FlowUIWidget(QWidget):
             getIcon('copymenu.png'), 'Copy to clipboard')
         saveAsCopyToClipboardAct.triggered.connect(self.copyToClipboard)
 
-        self.__saveAsButton = QToolButton(self)
+        self.__saveAsButton = QToolButton(self.__toolbar)
         self.__saveAsButton.setIcon(getIcon('saveasmenu.png'))
         self.__saveAsButton.setToolTip('Save as')
         self.__saveAsButton.setPopupMode(QToolButton.InstantPopup)
         self.__saveAsButton.setMenu(saveAsMenu)
         self.__saveAsButton.setFocusPolicy(Qt.NoFocus)
 
-        self.__levelUpButton = QToolButton(self)
+        self.__levelUpButton = QToolButton(self.__toolbar)
         self.__levelUpButton.setFocusPolicy(Qt.NoFocus)
         self.__levelUpButton.setIcon(getIcon('levelup.png'))
         self.__levelUpButton.setToolTip('Smart zoom level up (Shift+wheel)')
         self.__levelUpButton.clicked.connect(self.onSmartZoomLevelUp)
-        self.__levelIndicator = QLabel('<b>0</b>', self)
+        self.__levelIndicator = QLabel('<b>0</b>', self.__toolbar)
         self.__levelIndicator.setAlignment(Qt.AlignCenter)
-        self.__levelDownButton = QToolButton(self)
+        self.__levelIndicator.setStyleSheet('QLabel {background: transparent}')
+        self.__levelDownButton = QToolButton(self.__toolbar)
         self.__levelDownButton.setFocusPolicy(Qt.NoFocus)
         self.__levelDownButton.setIcon(getIcon('leveldown.png'))
         self.__levelDownButton.setToolTip('Smart zoom level down (Shift+wheel)')
         self.__levelDownButton.clicked.connect(self.onSmartZoomLevelDown)
 
-        fixedSpacer = QWidget()
-        fixedSpacer.setFixedHeight(10)
-
-        self.__hideDocstrings = QToolButton(self)
+        self.__hideDocstrings = QToolButton(self.__toolbar)
         self.__hideDocstrings.setCheckable(True)
         self.__hideDocstrings.setIcon(getIcon('hidedocstrings.png'))
         self.__hideDocstrings.setToolTip('Show/hide docstrings')
         self.__hideDocstrings.setFocusPolicy(Qt.NoFocus)
         self.__hideDocstrings.setChecked(Settings()['hidedocstrings'])
         self.__hideDocstrings.clicked.connect(self.__onHideDocstrings)
-        self.__hideComments = QToolButton(self)
+        self.__hideComments = QToolButton(self.__toolbar)
         self.__hideComments.setCheckable(True)
         self.__hideComments.setIcon(getIcon('hidecomments.png'))
         self.__hideComments.setToolTip('Show/hide comments')
         self.__hideComments.setFocusPolicy(Qt.NoFocus)
         self.__hideComments.setChecked(Settings()['hidecomments'])
         self.__hideComments.clicked.connect(self.__onHideComments)
-        self.__hideExcepts = QToolButton(self)
+        self.__hideExcepts = QToolButton(self.__toolbar)
         self.__hideExcepts.setCheckable(True)
         self.__hideExcepts.setIcon(getIcon('hideexcepts.png'))
         self.__hideExcepts.setToolTip('Show/hide except blocks')
@@ -264,18 +263,16 @@ class FlowUIWidget(QWidget):
         self.__hideExcepts.setChecked(Settings()['hideexcepts'])
         self.__hideExcepts.clicked.connect(self.__onHideExcepts)
 
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
         self.__toolbar.addWidget(self.__saveAsButton)
-        self.__toolbar.addWidget(spacer)
+        self.__toolbar.addWidget(ToolBarExpandingSpacer(self.__toolbar))
         self.__toolbar.addWidget(self.__levelUpButton)
         self.__toolbar.addWidget(self.__levelIndicator)
         self.__toolbar.addWidget(self.__levelDownButton)
-        self.__toolbar.addWidget(fixedSpacer)
+        self.__toolbar.addWidget(ToolBarVSpacer(self.__toolbar, 10))
         self.__toolbar.addWidget(self.__hideDocstrings)
         self.__toolbar.addWidget(self.__hideComments)
         self.__toolbar.addWidget(self.__hideExcepts)
+
         return self.__toolbar
 
     def __createNavigationBar(self):

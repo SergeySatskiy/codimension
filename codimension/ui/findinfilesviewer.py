@@ -25,10 +25,11 @@ from utils.fileutils import getFileProperties
 from utils.project import CodimensionProject
 from utils.colorfont import getZoomedMonoFont
 from .qt import (Qt, QSize, QTimer, QToolBar, QCursor, QBrush, QHBoxLayout,
-                 QWidget, QAction, QLabel, QSizePolicy, QFrame,
+                 QWidget, QAction, QLabel, QFrame,
                  QTreeWidget, QApplication, QTreeWidgetItem,
                  QHeaderView, QToolTip, QPalette, QColor, QVBoxLayout)
 from .itemdelegates import NoOutlineHeightDelegate
+from .spacers import ToolBarExpandingSpacer
 
 
 cellHeight = 20     # default
@@ -348,9 +349,6 @@ class FindInFilesViewer(QWidget):
         del parent  # unused argument
 
         # Buttons
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
         self.clearButton = QAction(getIcon('trash.png'), 'Clear', self)
         self.clearButton.triggered.connect(self.__clear)
 
@@ -363,7 +361,7 @@ class FindInFilesViewer(QWidget):
         self.toolbar.setFixedWidth(28)
         self.toolbar.setContentsMargins(0, 0, 0, 0)
 
-        self.toolbar.addWidget(spacer)
+        self.toolbar.addWidget(ToolBarExpandingSpacer(self.toolbar))
         self.toolbar.addAction(self.clearButton)
 
         self.__resultsTree = FindResultsTreeWidget()

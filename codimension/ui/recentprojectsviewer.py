@@ -25,16 +25,16 @@ from utils.pixmapcache import getIcon
 from utils.settings import Settings
 from utils.project import CodimensionProject, getProjectFileTooltip
 from utils.globals import GlobalData
-from utils.colorfont import getLabelStyle, HEADER_HEIGHT, HEADER_BUTTON
 from utils.fileutils import (getFileProperties, isPythonMime,
                              isCDMProjectMime, isImageViewable)
 from utils.diskvaluesrelay import removeRecentFile, getRecentFiles
 from .qt import (Qt, QSize, QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
-                 QToolButton, QWidget, QAction, QDialog, QSpacerItem,
-                 QVBoxLayout, QSizePolicy, QToolBar, QApplication, QFrame,
-                 QLabel, QHBoxLayout, QSplitter, QCursor)
+                 QToolButton, QWidget, QAction, QDialog, QVBoxLayout,
+                 QSizePolicy, QToolBar, QApplication, QSplitter, QCursor)
 from .projectproperties import ProjectPropertiesDialog
 from .itemdelegates import NoOutlineHeightDelegate
+from .labels import HeaderFitLabel
+from .spacers import ToolBarExpandingSpacer
 
 
 class RecentProjectViewItem(QTreeWidgetItem):
@@ -188,6 +188,7 @@ class RecentProjectsViewer(QWidget):
 
         self.__minH = None
         self.__maxH = None
+        self.__splitterSizes = None
 
         self.upper = self.__createRecentFilesLayout()
         self.lower = self.__createRecentProjectsLayout()
@@ -196,13 +197,13 @@ class RecentProjectsViewer(QWidget):
 
         layout = QVBoxLayout()
         layout.setContentsMargins(1, 1, 1, 1)
-        splitter = QSplitter(Qt.Vertical)
-        splitter.addWidget(self.upper)
-        splitter.addWidget(self.lower)
-        splitter.setCollapsible(0, False)
-        splitter.setCollapsible(1, False)
+        self.splitter = QSplitter(Qt.Vertical)
+        self.splitter.addWidget(self.upper)
+        self.splitter.addWidget(self.lower)
+        self.splitter.setCollapsible(0, False)
+        self.splitter.setCollapsible(1, False)
 
-        layout.addWidget(splitter)
+        layout.addWidget(self.splitter)
         self.setLayout(layout)
 
         self.__populateProjects()
@@ -262,18 +263,15 @@ class RecentProjectsViewer(QWidget):
 
     def __createRecentFilesLayout(self):
         """Creates the upper part - recent files"""
-        recentFilesLabel = QLabel("Recent files", self)
+        recentFilesLabel = HeaderFitLabel(self)
+        recentFilesLabel.setText("Recent files")
+        recentFilesLabel.setSizePolicy(QSizePolicy.Expanding,
+                                       QSizePolicy.Fixed)
+        recentFilesLabel.setMinimumWidth(10)
 
-        headerFrame = QFrame()
-        headerFrame.setObjectName('fheader')
-        headerFrame.setStyleSheet('QFrame#fheader {' +
-                                  getLabelStyle(recentFilesLabel) + '}')
-        headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(3, 0, 0, 0)
-        headerLayout.addWidget(recentFilesLabel)
-        headerFrame.setLayout(headerLayout)
+        rfHeaderToolbar = QToolBar(self)
+        rfHeaderToolbar.setContentsMargins(1, 1, 1, 1)
+        rfHeaderToolbar.addWidget(recentFilesLabel)
 
         self.recentFilesView = QTreeWidget()
         self.recentFilesView.setAlternatingRowColors(True)
@@ -299,8 +297,6 @@ class RecentProjectsViewer(QWidget):
         self.copyFilePathButton = QAction(getIcon('copymenu.png'),
                                           'Copy path to clipboard', self)
         self.copyFilePathButton.triggered.connect(self.__filePathToClipboard)
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.trashFileButton = QAction(getIcon('delitem.png'),
                                        'Remove selected (not from the disk)',
                                        self)
@@ -310,17 +306,16 @@ class RecentProjectsViewer(QWidget):
         self.upperToolbar.setMovable(False)
         self.upperToolbar.setAllowedAreas(Qt.TopToolBarArea)
         self.upperToolbar.setIconSize(QSize(16, 16))
-        self.upperToolbar.setFixedHeight(28)
         self.upperToolbar.setContentsMargins(0, 0, 0, 0)
         self.upperToolbar.addAction(self.openFileButton)
         self.upperToolbar.addAction(self.copyFilePathButton)
-        self.upperToolbar.addWidget(spacer)
+        self.upperToolbar.addWidget(ToolBarExpandingSpacer(self))
         self.upperToolbar.addAction(self.trashFileButton)
 
         recentFilesLayout = QVBoxLayout()
         recentFilesLayout.setContentsMargins(0, 0, 0, 0)
         recentFilesLayout.setSpacing(0)
-        recentFilesLayout.addWidget(headerFrame)
+        recentFilesLayout.addWidget(rfHeaderToolbar)
         recentFilesLayout.addWidget(self.upperToolbar)
         recentFilesLayout.addWidget(self.recentFilesView)
 
@@ -335,30 +330,26 @@ class RecentProjectsViewer(QWidget):
 
     def __createRecentProjectsLayout(self):
         """Creates the bottom layout"""
-        recentProjectsLabel = QLabel("Recent projects", self)
+        recentProjectsLabel = HeaderFitLabel(self)
+        recentProjectsLabel.setText('Recent projects')
+        recentProjectsLabel.setSizePolicy(QSizePolicy.Expanding,
+                                          QSizePolicy.Fixed)
+        recentProjectsLabel.setMinimumWidth(10)
 
-        self.headerFrame = QFrame()
-        self.headerFrame.setObjectName('pheader')
-        self.headerFrame.setStyleSheet('QFrame#pheader {' +
-                                       getLabelStyle(recentProjectsLabel) + '}')
-        self.headerFrame.setFixedHeight(HEADER_HEIGHT)
-
-        expandingSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding)
-
-        self.__showHideButton = QToolButton()
+        self.__showHideButton = QToolButton(self)
         self.__showHideButton.setAutoRaise(True)
         self.__showHideButton.setIcon(getIcon('less.png'))
-        self.__showHideButton.setFixedSize(HEADER_BUTTON, HEADER_BUTTON)
-        self.__showHideButton.setToolTip("Hide recent projects list")
+        self.__showHideButton.setFixedSize(recentProjectsLabel.height(),
+                                           recentProjectsLabel.height())
+        self.__showHideButton.setToolTip('Hide recent projects list')
         self.__showHideButton.setFocusPolicy(Qt.NoFocus)
         self.__showHideButton.clicked.connect(self.__onShowHide)
 
-        headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins(3, 0, 0, 0)
-        headerLayout.addWidget(recentProjectsLabel)
-        headerLayout.addSpacerItem(expandingSpacer)
-        headerLayout.addWidget(self.__showHideButton)
-        self.headerFrame.setLayout(headerLayout)
+        self.rpHeaderToolbar = QToolBar(self)
+        self.rpHeaderToolbar.setIconSize(QSize(16, 16))
+        self.rpHeaderToolbar.setContentsMargins(1, 1, 1, 1)
+        self.rpHeaderToolbar.addWidget(recentProjectsLabel)
+        self.rpHeaderToolbar.addWidget(self.__showHideButton)
 
         # Toolbar part - buttons
         self.loadButton = QAction(getIcon('load.png'),
@@ -371,8 +362,6 @@ class RecentProjectsViewer(QWidget):
         self.copyPrjPathButton = QAction(getIcon('copymenu.png'),
                                          'Copy path to clipboard', self)
         self.copyPrjPathButton.triggered.connect(self.__prjPathToClipboard)
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.trashButton = QAction(getIcon('delitem.png'),
                                    'Remove selected (not from the disk)', self)
         self.trashButton.triggered.connect(self.__deleteProject)
@@ -381,12 +370,11 @@ class RecentProjectsViewer(QWidget):
         self.lowerToolbar.setMovable(False)
         self.lowerToolbar.setAllowedAreas(Qt.TopToolBarArea)
         self.lowerToolbar.setIconSize(QSize(16, 16))
-        self.lowerToolbar.setFixedHeight(28)
         self.lowerToolbar.setContentsMargins(0, 0, 0, 0)
         self.lowerToolbar.addAction(self.loadButton)
         self.lowerToolbar.addAction(self.propertiesButton)
         self.lowerToolbar.addAction(self.copyPrjPathButton)
-        self.lowerToolbar.addWidget(spacer)
+        self.lowerToolbar.addWidget(ToolBarExpandingSpacer(self))
         self.lowerToolbar.addAction(self.trashButton)
 
         self.projectsView = QTreeWidget()
@@ -409,7 +397,7 @@ class RecentProjectsViewer(QWidget):
         recentProjectsLayout = QVBoxLayout()
         recentProjectsLayout.setContentsMargins(0, 0, 0, 0)
         recentProjectsLayout.setSpacing(0)
-        recentProjectsLayout.addWidget(self.headerFrame)
+        recentProjectsLayout.addWidget(self.rpHeaderToolbar)
         recentProjectsLayout.addWidget(self.lowerToolbar)
         recentProjectsLayout.addWidget(self.projectsView)
 
@@ -729,24 +717,26 @@ class RecentProjectsViewer(QWidget):
     def __onShowHide(self):
         """Triggered when show/hide button is clicked"""
         if self.projectsView.isVisible():
+            self.__minH = self.lower.minimumHeight()
+            self.__maxH = self.lower.maximumHeight()
+            self.__splitterSizes = self.splitter.sizes()
+
             self.projectsView.setVisible(False)
             self.lowerToolbar.setVisible(False)
             self.__showHideButton.setIcon(getIcon('more.png'))
-            self.__showHideButton.setToolTip("Show recent projects list")
+            self.__showHideButton.setToolTip('Show recent projects list')
 
-            self.__minH = self.lower.minimumHeight()
-            self.__maxH = self.lower.maximumHeight()
-
-            self.lower.setMinimumHeight(self.headerFrame.height())
-            self.lower.setMaximumHeight(self.headerFrame.height())
+            self.lower.setMinimumHeight(self.rpHeaderToolbar.height())
+            self.lower.setMaximumHeight(self.rpHeaderToolbar.height())
         else:
             self.projectsView.setVisible(True)
             self.lowerToolbar.setVisible(True)
             self.__showHideButton.setIcon(getIcon('less.png'))
-            self.__showHideButton.setToolTip("Hide recent projects list")
+            self.__showHideButton.setToolTip('Hide recent projects list')
 
             self.lower.setMinimumHeight(self.__minH)
             self.lower.setMaximumHeight(self.__maxH)
+            self.splitter.setSizes(self.__splitterSizes)
 
     def __onDebugMode(self, newState):
         """Triggered when debug mode has changed"""

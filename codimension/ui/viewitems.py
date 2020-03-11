@@ -634,12 +634,14 @@ class TreeViewFunctionItem(TreeViewItem):
 
         self.__updateTooltip()
 
-        if functionObj.isPrivate():
-            self.icon = getIcon('method_private.png')
-        elif functionObj.isProtected():
-            self.icon = getIcon('method_protected.png')
-        else:
-            self.icon = getIcon('method.png')
+        # It looks better without an icon at all
+        self.icon = None
+        # if functionObj.isPrivate():
+        #     self.icon = getIcon('method_private.png')
+        # elif functionObj.isProtected():
+        #     self.icon = getIcon('method_protected.png')
+        # else:
+        #     self.icon = getIcon('method.png')
 
         self.populated = False
         self.lazyPopulation = True
@@ -669,12 +671,14 @@ class TreeViewClassItem(TreeViewItem):
 
         self.__updateTooltip()
 
-        if classObj.isPrivate():
-            self.icon = getIcon('class_private.png')
-        elif classObj.isProtected():
-            self.icon = getIcon('class_protected.png')
-        else:
-            self.icon = getIcon('class.png')
+        # It looks better without an icon at all
+        self.icon = None
+        # if classObj.isPrivate():
+        #     self.icon = getIcon('class_private.png')
+        # elif classObj.isProtected():
+        #     self.icon = getIcon('class_protected.png')
+        # else:
+        #     self.icon = getIcon('class.png')
 
         # Decide if it should be expandable
         if classObj.decorators or \
@@ -761,9 +765,13 @@ class TreeViewGlobalItem(TreeViewItem):
 
     def __setIcon(self):
         """Sets the icon depending on access type"""
-        if self.sourceObj.isPrivate():
-            self.icon = getIcon('attribute_private.png')
-        elif self.sourceObj.isProtected():
-            self.icon = getIcon('attribute_protected.png')
-        else:
-            self.icon = getIcon('attribute.png')
+        # It looks better without an icon at all
+        self.icon = None
+
+        # if self.sourceObj.isPrivate():
+        #     self.icon = getIcon('attribute_private.png')
+        # elif self.sourceObj.isProtected():
+        #     self.icon = getIcon('attribute_protected.png')
+        # else:
+        #     self.icon = getIcon('attribute.png')
+

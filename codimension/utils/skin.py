@@ -47,6 +47,7 @@ isMac = sys.platform.lower() == 'darwin'
 
 _DEFAULT_SKIN_SETTINGS = {
     'name': 'default',
+    'dark': False,
     'marginPaper': QColor(228, 228, 228, 255),
     'marginPaperDebug': QColor(255, 228, 228, 255),
     'marginColor': QColor(128, 128, 128, 255),
@@ -114,7 +115,10 @@ _DEFAULT_SKIN_SETTINGS = {
     'ioconsoleMarginStderrColor': QColor(204, 51, 0, 255),
     'ioconsoleMarginIDEMsgColor': QColor(128, 128, 128, 255),
 
-    'invalidInputPaper': QColor(255, 193, 204, 100)}
+    'invalidInputPaper': QColor(255, 193, 204, 100),
+
+    'headerLabelBGColor': QColor(255, 255, 255, 255),
+    'headerLabelBorderColor': QColor(179, 175, 171, 255)}
 
 
 _DEFAULT_APP_CSS = """
@@ -125,8 +129,7 @@ QToolTip
   font-size: 11px;
   border: 1px solid gray;
   background-color: #fff;
-  padding: 2px;
-}
+  padding: 2px; }
 QTreeView
 { alternate-background-color: #eef0f1;
   background-color: #fff; }
@@ -142,7 +145,50 @@ QTextEdit
 QPlainTextEdit
 { background-color: #fff; }
 QListView
-{ background-color: #fff; }"""
+{ background-color: #fff; }
+
+QStatusBar StatusBarFramedLabel
+{ border-radius: 3px;
+  padding: 4px;
+  background-color: #fff;
+  border: 1px solid #b3afab; }
+QStatusBar StatusBarPixmapLabel
+{ background: transparent; }
+QStatusBar StatusBarPathLabel
+{ border-radius: 3px;
+  padding: 4px;
+  background-color: #fff;
+  border: 1px solid #b3afab; }
+FramedLabel
+{ border-radius: 3px;
+  padding: 4px;
+  background: transparent;
+  border: 1px solid #b3afab; }
+HeaderLabel
+{ border-radius: 3px;
+  padding: 4px;
+  background-color: #fff;
+  border: 1px solid #b3afab; }
+FramedFitLabel
+{ border-radius: 3px;
+  padding: 4px;
+  background: transparent;
+  border: 1px solid #b3afab; }
+HeaderFitLabel
+{ border-radius: 3px;
+  padding: 4px;
+  background-color: #fff;
+  border: 1px solid #b3afab; }
+FramedFitPathLabel
+{ border-radius: 3px;
+  padding: 4px;
+  background: transparent;
+  border: 1px solid #b3afab; }
+HeaderFitPathLabel
+{ border-radius: 3px;
+  padding: 4px;
+  background-color: #fff;
+  border: 1px solid #b3afab; }"""
 
 
 _DEFAULT_CFLOW_SETTINGS = {

@@ -36,7 +36,7 @@ from .qt import (QCursor, Qt, QDialog, QDialogButtonBox, QVBoxLayout,
                  QSizePolicy, QLabel, QProgressBar, QApplication, QComboBox,
                  QGridLayout, QHBoxLayout, QCheckBox, QRadioButton,
                  QGroupBox, QPushButton, QFileDialog)
-from .fitlabel import FitPathLabel
+from .labels import FitPathLabel
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -435,7 +435,7 @@ class FindInFilesDialog(QDialog):
         verticalLayout.addWidget(filesGroupbox)
 
         # File label
-        self.fileLabel = FitPathLabel(self)
+        self.fileLabel = FitPathLabel(parent=self)
         self.fileLabel.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
         verticalLayout.addWidget(self.fileLabel)
 
