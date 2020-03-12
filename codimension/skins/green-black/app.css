@@ -1,0 +1,64 @@
+
+QStatusBar StatusBarFramedLabel {
+  border-radius: 3px;
+  padding: 4px;
+  background-color: #202020;
+  border: 1px solid #855b00;
+}
+
+QStatusBar StatusBarPixmapLabel {
+  background: transparent;
+}
+
+QStatusBar StatusBarPathLabel {
+  border-radius: 3px;
+  padding: 4px;
+  background-color: #202020;
+  border: 1px solid #855b00;
+}
+
+FramedLabel {
+  border-radius: 3px;
+  padding: 4px;
+  background: transparent;
+  border: 1px solid #855b00;
+}
+
+HeaderLabel {
+  border-radius: 3px;
+  padding: 4px;
+  background-color: #202020;
+  border: 1px solid #855b00;
+}
+
+FramedFitLabel {
+  border-radius: 3px;
+  padding: 4px;
+  background: transparent;
+  border: 1px solid #855b00;
+}
+
+HeaderFitLabel {
+  border-radius: 3px;
+  padding: 4px;
+  background-color: #202020;
+  border: 1px solid #855b00;
+}
+
+FramedFitPathLabel {
+  border-radius: 3px;
+  padding: 4px;
+  background: transparent;
+  border: 1px solid #855b00;
+}
+
+HeaderFitPathLabel {
+  border-radius: 3px;
+  padding: 4px;
+  background-color: #202020;
+  border: 1px solid #855b00;
+}
+
+QToolBar QToolButton:disabled {
+  border: 1px solid #19232d;
+}
