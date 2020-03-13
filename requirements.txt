@@ -14,3 +14,4 @@ vulture==1.0
 gprof2dot==2017.9.19
 mistune==0.8.4
 pygments==2.4.2
+qdarkstyle==2.8
