@@ -25,9 +25,9 @@ from ui.qt import (Qt, pyqtSignal, QCursor,
                    QTreeWidgetItem, QTreeWidget, QLabel, QWidget, QVBoxLayout,
                    QHeaderView, QMenu, QAbstractItemView, QSizePolicy)
 from ui.itemdelegates import NoOutlineHeightDelegate
+from ui.labels import HeaderFitLabel
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
-from utils.colorfont import getLabelStyle
 
 
 FLOAT_FORMAT = "%8.6f"
@@ -272,10 +272,11 @@ class ProfileTableViewer(QWidget):
               str(totalCalls) + " function calls (" + \
               str(totalPrimitiveCalls) + " primitive calls) in " + \
               FLOAT_FORMAT % totalTime + " CPU seconds"
-        summary = QLabel(txt, self)
+        summary = HeaderFitLabel(self)
+        summary.setText(txt)
         summary.setToolTip(txt)
         summary.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
-        summary.setStyleSheet('QLabel {' + getLabelStyle(summary) + '}')
+        summary.setMinimumWidth(10)
 
         vLayout = QVBoxLayout()
         vLayout.setContentsMargins(0, 0, 0, 0)

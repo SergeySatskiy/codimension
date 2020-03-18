@@ -59,7 +59,7 @@ class FitLabel(QLabel):
         self.__customTooltip = tooltip
         if tooltip is None:
             tooltip = ''
-        QLabel.setToolTip(tooltip)
+        QLabel.setToolTip(self, tooltip)
 
 
 class FramedFitLabel(FitLabel):

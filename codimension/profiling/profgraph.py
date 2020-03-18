@@ -30,10 +30,10 @@ from ui.qt import (Qt, QPointF, pyqtSignal, QFont, QPen, QColor,
                    QVBoxLayout, QGraphicsScene, QGraphicsPathItem,
                    QStyle, QGraphicsTextItem, QStyleOptionGraphicsItem,
                    QGraphicsItem, QGraphicsRectItem, QSizePolicy)
+from ui.labels import HeaderFitLabel
 from utils.settings import Settings
 from utils.globals import GlobalData
 from utils.pixmapcache import getPixmap
-from utils.colorfont import getLabelStyle
 from diagram.plaindotparser import getGraphFromPlainDotData
 from diagram.importsdgmgraphics import DiagramWidget
 from .proftable import FLOAT_FORMAT
@@ -277,10 +277,11 @@ class ProfileGraphViewer(QWidget):
               str(totalCalls) + " function calls (" + \
               str(totalPrimitiveCalls) + " primitive calls) in " + \
               FLOAT_FORMAT % totalTime + " CPU seconds"
-        summary = QLabel(txt, self)
+        summary = HeaderFitLabel(self)
+        summary.setText(txt)
         summary.setToolTip(txt)
         summary.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
-        summary.setStyleSheet('QLabel {' + getLabelStyle(summary) + '}')
+        summary.setMinimumWidth(10)
 
         self.__scene = QGraphicsScene()
         self.__viewer = DiagramWidget()
