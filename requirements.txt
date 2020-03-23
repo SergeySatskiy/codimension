@@ -9,7 +9,7 @@ PyQt5==5.11.3
 python-magic==0.4.15
 qutepart
 yapsy==1.12.0
-jedi==0.15.2
+jedi==0.16.0
 vulture==1.0
 gprof2dot==2017.9.19
 mistune==0.8.4
