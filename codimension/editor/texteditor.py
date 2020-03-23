@@ -934,6 +934,7 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
             if hasattr(margin, 'onClose'):
                 margin.onClose()
             margin.deleteLater()
+        self._margins = None
         self.disconnect()
         QutepartWrapper.terminate(self)
 
