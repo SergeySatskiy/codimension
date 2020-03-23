@@ -170,16 +170,6 @@ class BadgeItem(CellElement, QGraphicsRectItem):
         self.__frameColor = s.badgeBorderColor
         self.__needRect = True
 
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.__text = None
-        self.__textRect = None
-        self.__bgColor = None
-        self.__fgColor = None
-        self.__frameColor = None
-
-        CellElement.cleanup(self)
-
     def setBGColor(self, bgColor):
         """Sets the background color"""
         self.__bgColor = bgColor
@@ -267,11 +257,6 @@ class Connector(CellElement, QGraphicsPathItem):
         self.penStyle = None
         self.penColor = None
         self.penWidth = None
-
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.penColor = None
-        CellElement.cleanup(self)
 
     def paint(self, painter, option, widget):
         """Paints the connector"""
@@ -367,11 +352,6 @@ class Text(CellElement, QGraphicsSimpleTextItem):
 
         self.color = None
 
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.color = None
-        CellElement.cleanup(self)
-
     def paint(self, painter, option, widget):
         """Paints the text item"""
         color = self.canvas.settings.cfLineColor
@@ -400,11 +380,6 @@ class Line(CellElement, QGraphicsLineItem):
         self.penStyle = None
         self.penColor = None
         self.penWidth = None
-
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.penColor = None
-        CellElement.cleanup(self)
 
     def paint(self, painter, option, widget):
         """Paints the line item"""
@@ -442,12 +417,6 @@ class Rectangle(CellElement, QGraphicsRectItem):
 
         self.pen = None
         self.brush = None
-
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.pen = None
-        self.brush = None
-        CellElement.cleanup(self)
 
     def paint(self, painter, option, widget):
         """Paints the rectangle item"""
@@ -492,11 +461,6 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
         self.kind = CellElement.CONNECTOR
         self.subKind = self.GENERIC
         self.connections = connections
-
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.connections = None
-        CellElement.cleanup(self)
 
     def hasVertical(self):
         """True if has a vertical part"""

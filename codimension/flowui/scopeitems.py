@@ -118,22 +118,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.badgeItem = None
-        self.__docBadge = None
-        self.__navBarUpdate = None
-        self._connector = None
-        self._topHalfConnector = None
-        self.scene = None
-        self.__sideCommentPath = None
-        self.leaderRef = None
-
-        CellElement.cleanup(self)
-        TextMixin.cleanup(self)
-        ColorMixin.cleanup(self)
-        IconMixin.cleanup(self)
-
     def __renderTopLeft(self):
         """Renders the top left corner of the scope"""
         s = self.canvas.settings
@@ -1119,12 +1103,6 @@ class ElseScopeCell(ScopeCellElement):
         self.kind = CellElement.ELSE_SCOPE
         self.statement = statement
         self.after = self
-
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.statement = None
-        self.after = None
-        ScopeCellElement.cleanup(self)
 
     def getSideComment(self):
         """Provides a side comment"""

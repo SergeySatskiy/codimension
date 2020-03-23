@@ -49,24 +49,13 @@ class QutepartWrapper(Qutepart):
     highlightOn = False
 
     def __init__(self, parent):
-        Qutepart.__init__(self, parent)
+        Qutepart.__init__(self, needMarkArea=False, needLineNumbers=False,
+                          needCompleter=False)
+        self.setParent(parent)
 
         self.encoding = None
         self.explicitUserEncoding = None
         self.mime = None
-
-        # Remove all the default margins
-        self.getMargin('mark_area').setVisible(False)
-        self.blockCountChanged.disconnect(self.getMargin('mark_area').update)
-        self.delMargin('mark_area')
-        self._markArea = None
-        self.getMargin('line_numbers').setVisible(False)
-        self.delMargin('line_numbers')
-
-        self.completionEnabled = False
-        self._completer.terminate()
-        self.textChanged.disconnect(self._completer._onTextChanged)
-        self.document().modificationChanged.disconnect(self._completer._onModificationChanged)
 
         # Search/replace support
         self.__matchesCache = None
@@ -835,8 +824,6 @@ class QutepartWrapper(Qutepart):
 
         self._indenter._qpart = None
         self._indenter = None
-        self._completer._qpart = None
-        self._completer = None
         if self._highlighter is not None:
             self._highlighter._syntax = None
             self._highlighter._document = None

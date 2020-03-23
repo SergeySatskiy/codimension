@@ -191,8 +191,8 @@ class VirtualCanvas:
         for row in self.cells:
             if row:
                 for cell in row:
-                    cell.cleanup()
-        self.cells = None
+                    if isinstance(cell, VirtualCanvas):
+                        cell.cleanup()
 
     @staticmethod
     def scopedItem():

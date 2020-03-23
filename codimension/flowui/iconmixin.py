@@ -39,10 +39,6 @@ class IconMixin:
         if tooltip:
             self.iconItem.setToolTip(tooltip)
 
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.iconItem = None
-
     def __getIconHeight(self, settings):
         """Provides the icon height"""
         if self.__iconHeight is None:

@@ -51,12 +51,6 @@ class ColorMixin:
             # all the other items
             self.__getCustomColors(ref)
 
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.bgColor = None
-        self.fgColor = None
-        self.borderColor = None
-
     def getColors(self):
         """Provides the item colors"""
         return self.bgColor, self.fgColor, self.borderColor

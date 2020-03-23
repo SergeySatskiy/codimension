@@ -353,7 +353,6 @@ class FlowUIWidget(QWidget):
             self.__canvas.cleanup()
             self.__canvas = None
         for item in self.scene().items():
-            item.cleanup()
             sip.delete(item)
         self.scene().clear()
 

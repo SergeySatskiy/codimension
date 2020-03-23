@@ -135,12 +135,6 @@ class CellElement:
             '[' + str(self.minWidth) + 'x' + str(self.minHeight) + '] -> [' + \
             str(self.width) + 'x' + str(self.height) + ']'
 
-    def cleanup(self):
-        """Cleans up the references etc"""
-        self.ref = None
-        self.addr = None
-        self.canvas = None
-
     def render(self):
         """Renders the graphics considering settings"""
         raise Exception("render() is not implemented for " +
