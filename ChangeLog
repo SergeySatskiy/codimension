@@ -1,15 +1,17 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@tuta.io>
 
-* Version X.X.X
+* Version 4.7.1
 * Updated procedure of resolving imports
-* Better memory management
+* Better memory management: a few memory leaks are fixed; the qutepart
+  thirdparty text editor component C python parser leaks so it was replaced
+  with the python written parser
 * Bumping up the jedi library version to 0.16.0
 * Bumping up the vulture library version to 1.3
 * Bumping up the radon library version to 4.1.0
 * Bumping up the pygments library version to 2.6.1
 * Bumping up the qutepart editor version to 3.3.0.post1
 * Adding the system info plugin
-* Preparing for a new dark color skin
+* Minor bug fixes
 
 2020 Jan 01 Sergey Satskiy <sergey.satskiy@tuta.io>
 
