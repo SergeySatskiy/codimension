@@ -477,7 +477,7 @@ class TreeViewGlobalsItem(TreeViewItem):
 
         self.sourceObj = infoObj
         self.itemType = GlobalsItemType
-        self.icon = getIcon('globalvar.png')
+        self.icon = getIcon('globals.png')
         self.populated = False
         self.lazyPopulation = True
 
@@ -594,7 +594,10 @@ class TreeViewImportItem(TreeViewItem):
 
         self.sourceObj = importObj
         self.itemType = ImportItemType
-        self.icon = getIcon('imports.png')
+
+        # It looks better without an icon at all
+        self.icon = None
+        # self.icon = getIcon('imports.png')
 
         self.populated = False
         self.lazyPopulation = True
@@ -614,7 +617,10 @@ class TreeViewWhatItem(TreeViewItem):
 
         self.sourceObj = whatObj
         self.itemType = ImportWhatItemType
-        self.icon = getIcon('importwhat.png')
+
+        # It looks better without an icon at all
+        self.icon = None
+        # self.icon = getIcon('importwhat.png')
 
     def updateData(self, whatObj):
         """Updates data model source"""
@@ -738,12 +744,15 @@ class TreeViewAttributeItem(TreeViewItem):
 
     def __setIcon(self):
         """Sets the icon depending on access type"""
-        if self.sourceObj.isPrivate():
-            self.icon = getIcon('attribute_private.png')
-        elif self.sourceObj.isProtected():
-            self.icon = getIcon('attribute_protected.png')
-        else:
-            self.icon = getIcon('attribute.png')
+        # It looks better without an icon at all
+        self.icon = None
+
+        # if self.sourceObj.isPrivate():
+        #     self.icon = getIcon('attribute_private.png')
+        # elif self.sourceObj.isProtected():
+        #     self.icon = getIcon('attribute_protected.png')
+        # else:
+        #     self.icon = getIcon('attribute.png')
 
 
 class TreeViewGlobalItem(TreeViewItem):

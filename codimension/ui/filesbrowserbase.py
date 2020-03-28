@@ -68,6 +68,11 @@ class FilesBrowserSortFilterProxyModel(QSortFilterProxyModel):
         rhs = right.model() and right.model().item(right) or None
 
         if lhs and rhs:
+            if lhs.itemType != rhs.itemType:
+                if lhs.itemType == DecoratorItemType:
+                    return False
+                if rhs.itemType == DecoratorItemType:
+                    return False
             return lhs.lessThan(rhs, self.__sortColumn, self.__sortOrder)
         return False
 
