@@ -1,6 +1,7 @@
-XXXX XXX XX Sergey Satskiy <sergey.satskiy@tuta.io>
+2020 Apr 09 Sergey Satskiy <sergey.satskiy@tuta.io>
 
-* Version X.X.X
+* Version 4.8.0
+* Python 3.8 support
 * Better icons for some items
 * Fix: better sorting of the class decorators in various browsers
 
