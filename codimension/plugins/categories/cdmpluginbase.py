@@ -312,7 +312,7 @@ class IDEAccess():
         # Search
         searchPanel = SidePanel(self.mainWindow.findInFilesViewer)
         searchPanel.views["search"] = ViewAndToolbar(
-            searchPanel.widget.getResultsTree(),
+            searchPanel.widget.getResultsViewer(),
             searchPanel.widget.toolbar)
         self.__sidePanels["search"] = searchPanel
 

@@ -65,6 +65,8 @@ class GlobalDataWrapper:
         self.screenHeight = 0
         self.version = "unknown"
         self.originalSysPath = None
+        self.searchProviders = {}
+
         self.project = CodimensionProject()
 
         self.pluginManager = CDMPluginManager()
@@ -138,6 +140,10 @@ class GlobalDataWrapper:
         if not isPythonFile(path):
             raise Exception('Trying to parse non-python file: ' + path)
         return self.briefModinfoCache.get(path)
+
+    def registerSearchProvider(self, cls):
+        """Registers a search provider"""
+        self.searchProviders[cls.getName()] = cls
 
     @staticmethod
     def __checkGraphviz():

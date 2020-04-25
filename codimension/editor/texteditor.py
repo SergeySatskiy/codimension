@@ -28,8 +28,9 @@ from ui.qt import (Qt, QTimer, pyqtSignal, QEvent, QToolTip,
                    QPlainTextEdit)
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from ui.completer import CodeCompleter
-from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
 from ui.calltip import Calltip
+from search.searchsupport import ItemToSearchIn, getSearchItemIndex
+from search.occurrencesprovider import OccurrencesSearchProvider
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.encoding import (readEncodedFile, detectEolString,
@@ -781,14 +782,11 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
         definitions = getOccurrences(self, fileName)
         QApplication.restoreOverrideCursor()
 
-        if len(definitions) == 0:
-            GlobalData().mainWindow.showStatusBarMessage('No occurences found')
-            return
-
-        # There are found items
-        GlobalData().mainWindow.showStatusBarMessage('')
         result = []
         for definition in definitions:
+            if definition.line is None or definition.module_path is None:
+                continue
+
             fName = definition.module_path
             if not fName:
                 fName = fileName
@@ -805,7 +803,19 @@ class TextEditor(QutepartWrapper, EditorContextMenuMixin):
                 index = len(result) - 1
             result[index].addMatch(definition.name, lineno)
 
-        GlobalData().mainWindow.displayFindInFiles('', result)
+        if len(result) == 0:
+            GlobalData().mainWindow.showStatusBarMessage('No occurences found')
+            return
+
+        # There are found items
+        GlobalData().mainWindow.showStatusBarMessage('')
+
+        GlobalData().mainWindow.displayFindInFiles(
+            OccurrencesSearchProvider().getName(),
+            result, {'name': definitions[0].name,
+                     'filename': fileName,
+                     'line': self.cursorPosition[0] + 1,
+                     'column': self.cursorPosition[1]})
 
     def insertCompletion(self, text):
         """Triggered when a completion is selected"""

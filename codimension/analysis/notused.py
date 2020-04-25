@@ -28,7 +28,8 @@ import tempfile
 from subprocess import Popen, PIPE
 from ui.qt import (QCursor, Qt, QTimer, QDialog, QDialogButtonBox, QVBoxLayout,
                    QLabel, QApplication)
-from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
+from search.searchsupport import ItemToSearchIn, getSearchItemIndex
+from search.vultureprovider import VultureSearchProvider
 from utils.globals import GlobalData
 from utils.config import DEFAULT_ENCODING
 
@@ -38,8 +39,8 @@ class NotUsedAnalysisProgress(QDialog):
 
     """Progress of the not used analysis"""
 
-    def __init__(self, path, parent=None):
-        QDialog.__init__(self, parent)
+    def __init__(self, path, newSearch=True):
+        QDialog.__init__(self, GlobalData().mainWindow)
 
         path = os.path.abspath(path)
         if not os.path.exists(path):
@@ -48,6 +49,8 @@ class NotUsedAnalysisProgress(QDialog):
 
         self.__path = path
 
+        self.__newSearch = newSearch
+        self.candidates = None
         self.__cancelRequest = False
         self.__inProgress = False
 
@@ -56,13 +59,26 @@ class NotUsedAnalysisProgress(QDialog):
         self.__found = 0        # Number of found
 
         self.__createLayout()
+        title = 'Dead code analysis for '
         if os.path.isdir(path):
-            self.setWindowTitle('Dead code analysis for all project files')
+            project = GlobalData().project
+            if project.isLoaded() and project.getProjectDir() == path:
+                title += 'all project files'
+            else:
+                title += 'dir ' + os.path.basename(os.path.normpath(path))
         else:
-            self.setWindowTitle('Dead code analysis for ' +
-                                os.path.basename(path))
+            title += os.path.basename(path)
+
+        if not self.__newSearch:
+            title += ' (do again)'
+
+        self.setWindowTitle(title)
         self.__updateFoundLabel()
-        QTimer.singleShot(0, self.__process)
+
+    def exec_(self):
+        """Executes the dialog"""
+        QTimer.singleShot(1, self.__process)
+        QDialog.exec_(self)
 
     def keyPressEvent(self, event):
         """Processes the ESC key specifically"""
@@ -146,7 +162,7 @@ class NotUsedAnalysisProgress(QDialog):
         # could have syntax errors - there will be messages on stderr. The
         # other files are fine so there will be messages on stdout
         stdout, stderr = self.__run()
-        candidates = []
+        self.candidates = []
         for line in stdout.splitlines():
             line = line.strip()
             if line:
@@ -171,7 +187,7 @@ class NotUsedAnalysisProgress(QDialog):
                 except:
                     continue
 
-                index = getSearchItemIndex(candidates, fileName)
+                index = getSearchItemIndex(self.candidates, fileName)
                 if index < 0:
                     widget = mainWindow.getWidgetForFileName(fileName)
                     if widget is None:
@@ -179,25 +195,31 @@ class NotUsedAnalysisProgress(QDialog):
                     else:
                         uuid = widget.getUUID()
                     newItem = ItemToSearchIn(fileName, uuid)
-                    candidates.append(newItem)
-                    index = len(candidates) - 1
-                candidates[index].addMatch('', lineno, message)
+                    self.candidates.append(newItem)
+                    index = len(self.candidates) - 1
+                self.candidates[index].addMatch('', lineno, message)
 
                 self.__found += 1
                 self.__updateFoundLabel()
                 QApplication.processEvents()
 
-        if self.__found == 0:
-            if stderr:
-                logging.error('Error running vulture for ' + self.__path +
-                              ':\n' + stderr)
+        if self.__newSearch:
+            # Do the action only for the new search.
+            # Redo action will handle the results on its own
+            if self.__found == 0:
+                if stderr:
+                    logging.error('Error running vulture for ' + self.__path +
+                                  ':\n' + stderr)
+                else:
+                    logging.info('No unused candidates found')
             else:
-                logging.info('No unused candidates found')
-        else:
-            mainWindow.displayFindInFiles('', candidates)
+                mainWindow.displayFindInFiles(VultureSearchProvider.getName(),
+                                              self.candidates,
+                                              {'path': self.__path})
 
         QApplication.restoreOverrideCursor()
         self.__infoLabel.setText('Done')
         self.__inProgress = False
 
         self.accept()
+

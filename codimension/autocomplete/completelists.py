@@ -21,21 +21,62 @@
 
 
 import os
+import os.path
 import sys
 import logging
 import jedi
+from jedi.api.project import Project
 from utils.globals import GlobalData
 from utils.fileutils import getFileContent
+from ui.qt import QDir
 from .bufferutils import getEditorTags
+
+
+# Global variables to avoid creating a jedi project every time
+jediProject = None
+
+def getJediProject(force=False):
+    """Provides a jedi project"""
+    global jediProject
+
+    if force or jediProject is None:
+        project = GlobalData().project
+        if project.isLoaded():
+            jPath = project.getProjectDir()
+
+            addedPaths = []
+            for path in project.getImportDirsAsAbsolutePaths():
+                if path not in addedPaths:
+                    addedPaths.append(path)
+            projectDir = project.getProjectDir()
+            if projectDir not in addedPaths:
+                addedPaths.append(projectDir)
+
+        else:
+            jPath = os.path.realpath(QDir.homePath())
+            addedPaths = ()
+
+        jediProject = Project(jPath,
+                              sys_path=GlobalData().originalSysPath[:],
+                              added_sys_path=addedPaths)
+
+    return jediProject
+
+
+def getJediScript(code, srcPath):
+    """Provides the jedi Script object considering the current project"""
+    if not os.path.isabs(srcPath):
+        # Pretend it is in the user home dir
+        srcPath = os.path.realpath(QDir.homePath()) + os.path.sep + srcPath
+    return jedi.Script(code=code, path=srcPath, project=getJediProject())
 
 
 def getCallSignatures(editor, fileName):
     """Provides a list of call signatures"""
     line, pos = editor.cursorPosition
     try:
-        script = getJediScript(editor.text, line + 1, pos,
-                               fileName if fileName else '')
-        return script.call_signatures()
+        script = getJediScript(editor.text, fileName)
+        return script.get_signatures(line=line + 1, column=pos)
     except Exception as exc:
         logging.error('jedi library failed to provide call signatures: ' +
                       str(exc))
@@ -48,9 +89,8 @@ def getDefinitions(editor, fileName):
     line, pos = editor.cursorPosition
 
     try:
-        script = getJediScript(editor.text, line + 1, pos,
-                               fileName if fileName else '')
-        definitions = script.goto_definitions()
+        script = getJediScript(editor.text, fileName)
+        definitions = script.infer(line=line + 1, column=pos)
 
         # Filter out those on which there is no way to jump
         for definition in definitions:
@@ -85,44 +125,12 @@ def getOccurrences(editor, fileName, line=None, pos=None):
             return []
 
     try:
-        script = getJediScript(text, line, pos,
-                               fileName if fileName else '', False)
-        return script.usages()
+        script = getJediScript(text, fileName)
+        return script.get_references(line=line, column=pos)
     except Exception as exc:
         logging.error('jedi library failed to provide usages: ' +
                       str(exc))
     return []
-
-
-def getJediScript(source, line, column, srcPath, needSysPath=True):
-    """Provides the jedi Script object considering the current project"""
-    jedi.settings.additional_dynamic_modules = []
-    paths = GlobalData().originalSysPath[:] if needSysPath else []
-
-    # This make relative imports resolvable
-    if os.path.isabs(srcPath):
-        dirName = os.path.dirname(srcPath)
-        if dirName not in paths:
-            paths.append(dirName)
-
-    project = GlobalData().project
-    if not project.isLoaded():
-        # Add the other opened files if so
-        mainWindow = GlobalData().mainWindow
-        for path in mainWindow.editorsManager().getOpenedList():
-            if path[0]:
-                if path[0].lower().endswith('.py'):
-                    jedi.settings.additional_dynamic_modules.append(path[0])
-        return jedi.Script(source, line, column, srcPath, sys_path=paths)
-
-    for path in project.getImportDirsAsAbsolutePaths():
-        if path not in paths:
-            paths.append(path)
-    projectDir = project.getProjectDir()
-    if projectDir not in paths:
-        paths.append(projectDir)
-
-    return jedi.Script(source, line, column, srcPath, sys_path=paths)
 
 
 def getCompletionList(editor, fileName):
@@ -133,10 +141,9 @@ def getCompletionList(editor, fileName):
     items = []
     line, pos = editor.cursorPosition
     try:
-        script = getJediScript(editor.text, line + 1, pos,
-                               fileName if fileName else '')
+        script = getJediScript(editor.text, fileName)
 
-        for item in script.completions():
+        for item in script.complete(line=line + 1, column=pos):
             items.append(item.name)
     except Exception as exc:
         logging.error('jedi library could not provide completions: ' +
@@ -147,3 +154,4 @@ def getCompletionList(editor, fileName):
 
     # jedi provided nothing => last resort: words in the editor buffer
     return list(getEditorTags(editor))
+

@@ -50,13 +50,19 @@ from debugger.calltraceviewer import CallTraceViewer
 from debugger.bpwp import DebuggerBreakWatchPoints
 from debugger.bputils import clearValidBreakpointLinesCache
 from debugger.client.protocol_cdm_dbg import UNHANDLED_EXCEPTION
-from autocomplete.completelists import getOccurrences
+from autocomplete.completelists import getOccurrences, getJediProject
 from analysis.disasm import (getFileDisassembled, getCompiledfileDisassembled,
                              getBufferDisassembled)
 from analysis.notused import NotUsedAnalysisProgress
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
 from profiling.profwidget import ProfileResultsWidget
+from search.findinfilesdialog import FindInFilesDialog
+from search.searchsupport import ItemToSearchIn, getSearchItemIndex
+from search.searchresultsviewer import SearchResultsViewer, hideSearchTooltip
+from search.findinfilesprovider import FindInFilesSearchProvider
+from search.vultureprovider import VultureSearchProvider
+from search.occurrencesprovider import OccurrencesSearchProvider
 from .qt import (Qt, QSize, QTimer, QDir, QUrl, pyqtSignal, QToolBar, QWidget,
                  QVBoxLayout, QSplitter, QSizePolicy, QAction,
                  QMainWindow, QApplication, QCursor, QToolButton, QTabBar,
@@ -76,8 +82,6 @@ from .editorsmanager import EditorsManager
 from .projectproperties import ProjectPropertiesDialog
 from .findreplacewidget import FindReplaceWidget
 from .gotolinewidget import GotoLineWidget
-from .findinfiles import FindInFilesDialog, ItemToSearchIn, getSearchItemIndex
-from .findinfilesviewer import FindInFilesViewer, hideSearchTooltip
 from .findname import FindNameDialog
 from .findfile import FindFileDialog
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
@@ -231,6 +235,8 @@ class CodimensionMainWindow(QMainWindow):
         if settings['floatingRenderer']:
             self.__detachedRenderer.show()
 
+        self.__registerSearchProviders()
+
     def restoreWindowPosition(self):
         """Makes sure that the window frame delta is proper"""
         screenSize = GlobalData().application.desktop().screenGeometry()
@@ -323,9 +329,9 @@ class CodimensionMainWindow(QMainWindow):
                                  'Globals', 'globals', 4)
 
         # Create search results viewer
-        self.findInFilesViewer = FindInFilesViewer()
+        self.searchResultsViewer = SearchResultsViewer()
         self._bottomSideBar.addTab(
-            self.findInFilesViewer,
+            self.searchResultsViewer,
             getIcon('findindir.png'), 'Search results', 'search', 1)
         self._bottomSideBar.tabButton('search', QTabBar.RightSide).resize(0, 0)
 
@@ -706,6 +712,10 @@ class CodimensionMainWindow(QMainWindow):
                 QTimer.singleShot(1, self.__delayedEditorsTabRestore)
         self.updateRunDebugButtons()
 
+        # Updating of the jedi library project should happen regardless
+        # whether the properties or the whole project is changed
+        getJediProject(force=True)
+
     def __delayedEditorsTabRestore(self):
         """Delayed restore editor tabs"""
         self.em.restoreTabs(GlobalData().project.tabStatus)
@@ -793,7 +803,9 @@ class CodimensionMainWindow(QMainWindow):
         dlg = FindInFilesDialog(FindInFilesDialog.IN_PROJECT, txt, "")
         dlg.exec_()
         if dlg.searchResults:
-            self.displayFindInFiles(dlg.searchRegexp, dlg.searchResults)
+            self.displayFindInFiles(FindInFilesSearchProvider().getName(),
+                                    dlg.searchResults,
+                                    dlg.getParameters())
 
     def toStdout(self, txt):
         """Triggered when a new message comes"""
@@ -1009,9 +1021,10 @@ class CodimensionMainWindow(QMainWindow):
                 os.unlink(fileName)
                 logging.info("IDE new file template deleted")
 
-    def displayFindInFiles(self, searchRegexp, searchResults):
+    def displayFindInFiles(self, providerId, searchResults, parameters):
         """Displays the results on a tab"""
-        self.findInFilesViewer.showReport(searchRegexp, searchResults)
+        self.searchResultsViewer.showReport(providerId, searchResults,
+                                            parameters)
         self.activateBottomTab('search')
 
     def activateBottomTab(self, tabName):
@@ -1046,7 +1059,7 @@ class CodimensionMainWindow(QMainWindow):
         project = GlobalData().project
         if project.isLoaded():
             try:
-                dlg = NotUsedAnalysisProgress(project.getProjectDir(), self)
+                dlg = NotUsedAnalysisProgress(project.getProjectDir())
                 dlg.exec_()
             except Exception as exc:
                 logging.error(str(exc))
@@ -1071,7 +1084,7 @@ class CodimensionMainWindow(QMainWindow):
         """Tab dead code analysis"""
         try:
             currentWidget = self.em.currentWidget()
-            dlg = NotUsedAnalysisProgress(currentWidget.getFileName(), self)
+            dlg = NotUsedAnalysisProgress(currentWidget.getFileName())
             dlg.exec_()
         except Exception as exc:
             logging.error(str(exc))
@@ -1803,13 +1816,12 @@ class CodimensionMainWindow(QMainWindow):
         definitions = getOccurrences(None, fileName, item.line, item.pos)
         QApplication.restoreOverrideCursor()
 
-        if len(definitions) == 0:
-            self.showStatusBarMessage('No occurrences found')
-            return
-
         self.showStatusBarMessage('')
         result = []
         for definition in definitions:
+            if definition.line is None or definition.module_path is None:
+                continue
+
             fName = definition.module_path
             if not fName:
                 fName = fileName
@@ -1826,7 +1838,16 @@ class CodimensionMainWindow(QMainWindow):
                 index = len(result) - 1
             result[index].addMatch(item.name, lineno)
 
-        self.displayFindInFiles('', result)
+        if len(result) == 0:
+            self.showStatusBarMessage('No occurrences found')
+            return
+
+        self.displayFindInFiles(OccurrencesSearchProvider().getName(),
+                                result,
+                                {'name': item.name,
+                                 'filename': fileName,
+                                 'line': item.line,
+                                 'column': item.column})
 
     def _onTabOpenImport(self):
         """Triggered when open import is requested"""
@@ -2354,3 +2375,10 @@ class CodimensionMainWindow(QMainWindow):
         if not self.__detachedRenderer.isHidden():
             self.__detachedRenderer.raise_()
             self.__detachedRenderer.activateWindow()
+
+    def __registerSearchProviders(self):
+        """Registers all the search providers"""
+        GlobalData().registerSearchProvider(FindInFilesSearchProvider())
+        GlobalData().registerSearchProvider(VultureSearchProvider())
+        GlobalData().registerSearchProvider(OccurrencesSearchProvider())
+

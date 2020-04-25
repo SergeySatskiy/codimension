@@ -112,6 +112,10 @@ class Calltip(QFrame):
 
     def highlightParameter(self, number):
         """Hightlights the given parameter number, 0 - based"""
+        if number is None:
+            # A case when a function has no arguments
+            self.__calltipLabel.setText(self.__text)
+            return
         if number == self.__highlightedParam:
             return
         if self.__paramPositions is None:

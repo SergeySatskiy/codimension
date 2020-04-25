@@ -25,6 +25,8 @@ from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
 from utils.fileutils import isPythonMime, isCDMProjectMime, getFileProperties
 from utils.project import getProjectFileTooltip
+from search.findinfilesdialog import FindInFilesDialog
+from search.findinfilesprovider import FindInFilesSearchProvider
 from .qt import (Qt, QModelIndex, QSortFilterProxyModel, QAbstractItemView,
                  QApplication, QTreeView, pyqtSignal)
 from .viewitems import (DirectoryItemType, SysPathItemType, GlobalsItemType,
@@ -40,7 +42,6 @@ from .viewitems import (DirectoryItemType, SysPathItemType, GlobalsItemType,
                         TreeViewFunctionsItem, TreeViewClassesItem)
 from .itemdelegates import NoOutlineHeightDelegate
 from .parsererrors import ParserErrorsDialog
-from .findinfiles import FindInFilesDialog
 
 
 class FilesBrowserSortFilterProxyModel(QSortFilterProxyModel):
@@ -322,8 +323,9 @@ class FilesBrowser(QTreeView):
         dlg = FindInFilesDialog(FindInFilesDialog.IN_DIRECTORY, "", searchDir)
         dlg.exec_()
         if dlg.searchResults:
-            GlobalData().mainWindow.displayFindInFiles(dlg.searchRegexp,
-                                                       dlg.searchResults)
+            GlobalData().mainWindow.displayFindInFiles(
+                FindInFilesSearchProvider().getName(),
+                dlg.searchResults, dlg.getParameters())
 
     def selectionChanged(self, selected, deselected):
         """Triggered when the selection changed"""
