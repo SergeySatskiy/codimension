@@ -500,6 +500,14 @@ class GroupCornerControl(CellElement, QGraphicsRectItem):
         """Provides the real item for a proxy one"""
         return self.ref
 
+    def getLineRange(self):
+        """Provides the line range"""
+        return self.ref.getLineRange()
+
+    def getAbsPosRange(self):
+        """Provides the absolute position range"""
+        return self.ref.getAbsPosRange()
+
 
 
 class GroupTitlePopup(QFrame):
