@@ -160,6 +160,7 @@ def getPackages():
             'codimension.profiling',
             'codimension.ui',
             'codimension.utils',
+            'codimension.search',
             'codimension.debugger', 'codimension.debugger.client',
             'codimension.plugins',
             'codimension.plugins.categories',
