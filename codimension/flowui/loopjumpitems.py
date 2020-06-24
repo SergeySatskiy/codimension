@@ -64,6 +64,14 @@ class LoopJumpBase(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
         if settings.noContent:
             self.minWidth = max(self.minWidth, settings.minWidth)
+
+        # Add comment and documentation badges
+        badgesHSpace, badgeVSpace = self.appendCommentBadges()
+        self.minHeight += badgeVSpace
+        self.minWidth = max(settings.mainLine + settings.badgeGroupSpacing +
+                            badgesHSpace + settings.hCellPadding,
+                            self.minWidth)
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -76,10 +84,18 @@ class LoopJumpBase(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         self.rectWidth = self.minWidth - 2 * settings.hCellPadding
         self.rectHeight = self.minHeight - 2 * settings.hCellPadding
 
+        if self.hasAboveBadges():
+            badgeRowHeight = self.getBadgeRowHeight()
+            self.yPos += badgeRowHeight + settings.badgeToScopeVPadding
+            self.rectHeight -= badgeRowHeight + settings.badgeToScopeVPadding
+
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
+
+        # Draw comment badges
+        takenByBadges = self.drawCommentBadges(scene)
 
         # Add the connector as a separate scene item to make the selection
         # working properly
@@ -87,14 +103,15 @@ class LoopJumpBase(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         self.connector = Connector(self.canvas,
                                    baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,
-                                   baseY + settings.vCellPadding)
+                                   baseY + settings.vCellPadding + takenByBadges)
         scene.addItem(self.connector)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = settings.selectPenWidth - 1
         self.__calculateSize()
-        self.setRect(self.xPos - penWidth, self.yPos - penWidth,
+        self.setRect(self.xPos - penWidth,
+                     self.yPos - penWidth,
                      self.rectWidth + 2 * penWidth,
                      self.rectHeight + 2 * penWidth)
         scene.addItem(self)

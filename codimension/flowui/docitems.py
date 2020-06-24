@@ -32,6 +32,7 @@ from .cellelement import CellElement
 from .commentitems import CommentCellBase
 from .colormixin import ColorMixin
 from .iconmixin import IconMixin
+from .routines import getDoclinkIconAndTooltip
 
 
 class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
@@ -46,21 +47,18 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
                             colorSpec=cmlRef)
         QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.cmlRef = cmlRef
+        pixmapFile, tooltip = getDoclinkIconAndTooltip(self.cmlRef)
 
-        # They all have the same icon
+        # They all have an icon
         if cmlRef.link is not None and cmlRef.anchor is not None:
-            IconMixin.__init__(self, canvas, 'docanchor.svg',
-                               'Jump to the documentation')
+            IconMixin.__init__(self, canvas, pixmapFile, tooltip)
             self.iconItem.setCursor(QCursor(Qt.PointingHandCursor))
         else:
             if cmlRef.link is not None:
-                IconMixin.__init__(self, canvas, 'doclink.svg',
-                                   'Jump to the documentation')
+                IconMixin.__init__(self, canvas, pixmapFile, tooltip)
                 self.iconItem.setCursor(QCursor(Qt.PointingHandCursor))
             else:
-                IconMixin.__init__(self, canvas, 'anchor.svg',
-                                   'Documentation anchor')
-
+                IconMixin.__init__(self, canvas, pixmapFile, tooltip)
 
         # They all are double clickable
         # This makes double click delivered
@@ -204,7 +202,7 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
-        return 'CML doc comment at ' + \
+        return 'Link/anchor at ' + \
                CellElement.getLinesSuffix(self.getLineRange())
 
 

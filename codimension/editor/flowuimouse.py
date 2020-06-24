@@ -23,7 +23,7 @@
 
 from sys import maxsize
 from flowui.scopeitems import ScopeCellElement
-from flowui.cellelement import CellElement
+from flowui.cellelement import CellElement, kindToString
 from flowui.auxitems import RubberBandItem
 from ui.qt import Qt, QTransform, QRect, QSize, QGraphicsScene
 
@@ -65,8 +65,7 @@ class CFSceneMouseMixin:
         if item.subKind in [ScopeCellElement.DECLARATION]:
             # Need to map to the top left item because the out
             return item.getTopLeftItem()
-        if item.subKind in [ScopeCellElement.COMMENT,
-                            ScopeCellElement.DOCSTRING]:
+        if item.subKind in [ScopeCellElement.DOCSTRING]:
             # No mapping
             return item
         # ScopeCellElement.TOP_LEFT is to be ignored
@@ -135,12 +134,17 @@ class CFSceneMouseMixin:
         """Handles mouse movement"""
         if self.lmbOrigin and self.rubberBand:
             # Draw the rubber band selection rectangle
-            rect = QRect(self.lmbOrigin, event.scenePos().toPoint())
-            self.rubberBand.setGeometry(rect.normalized())
-            if not self.__isRubberBandVisible():
-                if abs(rect.left() - rect.right()) >= RUBBER_BAND_MIN_SIZE or \
-                   abs(rect.top() - rect.bottom()) >= RUBBER_BAND_MIN_SIZE:
-                    self.rubberBand.show()
+            try:
+                rect = QRect(self.lmbOrigin, event.scenePos().toPoint())
+                self.rubberBand.setGeometry(rect.normalized())
+                if not self.__isRubberBandVisible():
+                    if abs(rect.left() - rect.right()) >= RUBBER_BAND_MIN_SIZE or \
+                       abs(rect.top() - rect.bottom()) >= RUBBER_BAND_MIN_SIZE:
+                        self.rubberBand.show()
+            except:
+                # Sometimes there is a race and the rubber band has already
+                # been destroyed
+                pass
         QGraphicsScene.mouseMoveEvent(self, event)
 
     def __isRubberBandVisible(self):
@@ -170,20 +174,26 @@ class CFSceneMouseMixin:
             # Detect intersections
             self.clearSelection()
             for item in self.items():
-                if not isinstance(item, CellElement):
-                    continue
                 if item.isProxyItem():
                     continue
                 if item.scopedItem():
-                    if item.subKind not in [ScopeCellElement.DECLARATION,
-                                            ScopeCellElement.COMMENT,
-                                            ScopeCellElement.DOCSTRING]:
+                    # Some scope items have no header element at all
+                    # like try/except with no condition, else
+                    if item.kind in [CellElement.TRY_SCOPE,
+                                     CellElement.ELSE_SCOPE,
+                                     CellElement.FINALLY_SCOPE,
+                                     CellElement.EXCEPT_SCOPE]:
+                        if item.subKind != ScopeCellElement.TOP_LEFT:
+                            continue
+
+                    elif item.subKind not in [ScopeCellElement.DECLARATION,
+                                              ScopeCellElement.DOCSTRING]:
                         continue
 
                     if item.subKind == ScopeCellElement.DECLARATION:
                         item = item.getTopLeftItem()
 
-                # The call must be done on item. (not on rubberBand.)
+                # The call must be done on item (not on rubberBand)
                 if item.collidesWithItem(self.rubberBand,
                                          Qt.ContainsItemBoundingRect):
                     self.addToSelection(item)
@@ -223,7 +233,16 @@ class CFSceneMouseMixin:
                     if self.isOpenGroupItem(item):
                         self.addToSelection(item)
                     else:
-                        for itemForRef in self.findItemsForRef(logicalItem.ref):
+                        if logicalItem.kind in [CellElement.SCOPE_COMMENT_BADGE,
+                                                CellElement.SCOPE_DOCLINK_BADGE,
+                                                CellElement.SCOPE_EXCEPT_BADGE,
+                                                CellElement.SCOPE_DOCSTRING_BADGE,
+                                                CellElement.SCOPE_DECORATOR_BADGE]:
+                            itemsForRef = self.findItemsForRef(logicalItem.ref.ref)
+                        else:
+                            itemsForRef = self.findItemsForRef(logicalItem.ref)
+
+                        for itemForRef in itemsForRef:
                             self.addToSelection(itemForRef)
 
         self.__destroyRubberBand()
@@ -242,24 +261,54 @@ class CFSceneMouseMixin:
         """Tells if the item is already included into some other selected"""
         toSelectBegin, toSelectEnd = self.__getItemVisualBeginEnd(itemToSelect)
 
-        items = self.selectedItems()
-        for item in items:
-            isGroup = self.isOpenGroupItem(item)
-            if not item.scopedItem() and not isGroup:
+        for scope in self.getSelectedOuterScopes():
+            scopeBegin, scopeEnd = self.__getItemVisualBeginEnd(scope)
+            if toSelectBegin >= scopeBegin and toSelectEnd <= scopeEnd:
+                # toSelect is nested to an outer selected scope
+                if itemToSelect.kind == CellElement.SIDE_COMMENT:
+                    if itemToSelect.ref == scope.ref:
+                        return False
+                elif itemToSelect.kind == CellElement.SCOPE_DOCSTRING_BADGE:
+                    if itemToSelect.ref == scope:
+                        return False
+                elif itemToSelect.kind == CellElement.SCOPE_COMMENT_BADGE:
+                    if itemToSelect.isSideComment:
+                        if itemToSelect.ref == scope:
+                            return False
+                return True
+        return False
+
+    def getSelectedOuterScopes(self):
+        """Provides a list of selected outer scopes or groups"""
+        selectedOuterScopes = []
+        for item in self.selectedItems():
+            if not item.scopedItem() and not self.isOpenGroupItem(item):
                 continue
             if item.scopedItem():
                 if item.subKind != ScopeCellElement.TOP_LEFT:
                     continue
-
             itemBegin, itemEnd = self.__getItemVisualBeginEnd(item)
-            if toSelectBegin > itemBegin and toSelectEnd < itemEnd:
-                return True
-        return False
+
+            handled = False
+            toRemove = []
+            for scope in selectedOuterScopes:
+                scopeBegin, scopeEnd = self.__getItemVisualBeginEnd(scope)
+                if itemBegin > scopeBegin and itemEnd < scopeEnd:
+                    # item is in the selected outer scope: do nothing
+                    handled = True
+                    break
+                if scopeBegin > itemBegin and scopeEnd < itemEnd:
+                    # Item covers the scope in the list
+                    toRemove.append(scope)
+            for removeItem in toRemove:
+                selectedOuterScopes.remove(removeItem)
+            if not handled:
+                selectedOuterScopes.append(item)
+        return selectedOuterScopes
 
     def deselectNested(self, itemToSelect):
         """Deselects all the nested items if needed"""
-        isGroup = itemToSelect.kind == CellElement.OPENED_GROUP_BEGIN
-        if not itemToSelect.scopedItem() and not isGroup:
+        if not itemToSelect.scopedItem() and not self.isOpenGroupItem(itemToSelect):
             # The only scope items and groups require
             # deselection of the nested items
             return
@@ -269,17 +318,23 @@ class CFSceneMouseMixin:
                 return
 
         toSelectBegin, toSelectEnd = self.__getItemVisualBeginEnd(itemToSelect)
-        items = self.selectedItems()
-        for item in items:
+        for item in self.selectedItems():
             itemBegin, itemEnd = self.__getItemVisualBeginEnd(item)
             if itemBegin >= toSelectBegin and itemEnd <= toSelectEnd:
+                if item.kind == CellElement.SCOPE_DOCSTRING_BADGE:
+                    if item.ref == itemToSelect:
+                        continue
+                elif item.kind == CellElement.SCOPE_COMMENT_BADGE:
+                    if item.ref == itemToSelect:
+                        continue
+                elif item.kind == CellElement.SIDE_COMMENT:
+                    if item.ref == itemToSelect.ref:
+                        continue
                 item.setSelected(False)
 
     def __getItemVisualBeginEnd(self, item):
         """Provides the item visual begin and end"""
         if item.scopedItem():
-            if item.subKind == ScopeCellElement.COMMENT:
-                return item.ref.sideComment.begin, item.ref.sideComment.end
             if item.subKind == ScopeCellElement.DOCSTRING:
                 return item.ref.docstring.begin, item.ref.docstring.end
             # File scope differs from the other scopes
@@ -318,6 +373,10 @@ class CFSceneMouseMixin:
             else:
                 end = item.ref.body.end
             return item.ref.body.begin, end
+        if item.kind == CellElement.OPENED_GROUP_BEGIN:
+            begin, _ = item.groupBeginCMLRef.ref.getAbsPosRange()
+            _, end = item.groupEndCMLRef.ref.getAbsPosRange()
+            return begin, end
 
         # All the rest
         begin, end = item.getAbsPosRange()
@@ -327,17 +386,24 @@ class CFSceneMouseMixin:
         """Provides graphics items for the given ref"""
         result = []
         for item in self.items():
-            if not isinstance(item, CellElement):
+            if item.kind in [CellElement.BADGE, CellElement.SVG]:
                 continue
             if item.scopedItem():
                 if item.subKind not in [ScopeCellElement.TOP_LEFT,
-                                        ScopeCellElement.COMMENT,
                                         ScopeCellElement.DOCSTRING]:
                     continue
             if not self.isOpenGroupItem(item):
                 if hasattr(item, "ref"):
-                    if item.ref is ref:
-                        result.append(item)
+                    if item.kind in [CellElement.SCOPE_COMMENT_BADGE,
+                                     CellElement.SCOPE_DOCLINK_BADGE,
+                                     CellElement.SCOPE_EXCEPT_BADGE,
+                                     CellElement.SCOPE_DOCSTRING_BADGE,
+                                     CellElement.SCOPE_DECORATOR_BADGE]:
+                        if item.ref.ref is ref:
+                            result.append(item)
+                    else:
+                        if item.ref is ref:
+                            result.append(item)
         return result
 
     @staticmethod
@@ -359,8 +425,6 @@ class CFSceneMouseMixin:
         distance = maxsize
 
         for item in self.items():
-            if not isinstance(item, CellElement):
-                continue
             if item.isProxyItem():
                 continue
 
@@ -398,3 +462,4 @@ class CFSceneMouseMixin:
                 distance = dist
                 candidate = item
         return self.__getLogicalItem(candidate), distance
+

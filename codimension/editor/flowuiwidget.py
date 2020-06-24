@@ -178,6 +178,7 @@ class FlowUIWidget(QWidget):
             self.__onHideDocstringsChanged)
         Settings().sigHideCommentsChanged.connect(self.__onHideCommentsChanged)
         Settings().sigHideExceptsChanged.connect(self.__onHideExceptsChanged)
+        Settings().sigHideDecorsChanged.connect(self.__onHideDecorsChanged)
         Settings().sigSmartZoomChanged.connect(self.__onSmartZoomChanged)
 
         self.setSmartZoomLevel(Settings()['smartZoom'])
@@ -262,6 +263,13 @@ class FlowUIWidget(QWidget):
         self.__hideExcepts.setFocusPolicy(Qt.NoFocus)
         self.__hideExcepts.setChecked(Settings()['hideexcepts'])
         self.__hideExcepts.clicked.connect(self.__onHideExcepts)
+        self.__hideDecors = QToolButton(self.__toolbar)
+        self.__hideDecors.setCheckable(True)
+        self.__hideDecors.setIcon(getIcon('hidedecors.png'))
+        self.__hideDecors.setToolTip('Show/hide decorators')
+        self.__hideDecors.setFocusPolicy(Qt.NoFocus)
+        self.__hideDecors.setChecked(Settings()['hidedecors'])
+        self.__hideDecors.clicked.connect(self.__onHideDecors)
 
         self.__toolbar.addWidget(self.__saveAsButton)
         self.__toolbar.addWidget(ToolBarExpandingSpacer(self.__toolbar))
@@ -272,6 +280,7 @@ class FlowUIWidget(QWidget):
         self.__toolbar.addWidget(self.__hideDocstrings)
         self.__toolbar.addWidget(self.__hideComments)
         self.__toolbar.addWidget(self.__hideExcepts)
+        self.__toolbar.addWidget(self.__hideDecors)
 
         return self.__toolbar
 
@@ -449,6 +458,7 @@ class FlowUIWidget(QWidget):
             self.__onHideDocstringsChanged)
         Settings().sigHideCommentsChanged.disconnect(self.__onHideCommentsChanged)
         Settings().sigHideExceptsChanged.disconnect(self.__onHideExceptsChanged)
+        Settings().sigHideDecorsChanged.disconnect(self.__onHideDecorsChanged)
         Settings().sigSmartZoomChanged.disconnect(self.__onSmartZoomChanged)
 
         # Helps GC to collect more
@@ -478,6 +488,9 @@ class FlowUIWidget(QWidget):
 
         self.__hideExcepts.clicked.disconnect(self.__onHideExcepts)
         self.__hideExcepts.deleteLater()
+
+        self.__hideDecors.clicked.disconnect(self.__onHideDecors)
+        self.__hideDecors.deleteLater()
 
         self.__toolbar.deleteLater()
 
@@ -769,6 +782,20 @@ class FlowUIWidget(QWidget):
         firstOnScreen = self.scene().getFirstLogicalItem()
         settings = Settings()
         self.__hideExcepts.setChecked(settings['hideexcepts'])
+        if self.__checkNeedRedraw():
+            self.scene().restoreSelectionByTooltip(selection)
+            self.__restoreScroll(firstOnScreen)
+
+    def __onHideDecors(self):
+        """Triggered when a hide decorators button is pressed"""
+        Settings()['hidedecors'] = not Settings()['hidedecors']
+
+    def __onHideDecorsChanged(self):
+        """Signalled by settings"""
+        selection = self.scene().serializeSelection()
+        firstOnScreen = self.scene().getFirstLogicalItem()
+        settings = Settings()
+        self.__hideDecors.setChecked(settings['hidedecors'])
         if self.__checkNeedRedraw():
             self.scene().restoreSelectionByTooltip(selection)
             self.__restoreScroll(firstOnScreen)

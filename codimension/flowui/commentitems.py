@@ -411,6 +411,13 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
         """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
+
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        if cellToTheLeft.kind == CellElement.VCANVAS:
+            topLeft = cellToTheLeft.canvas.cells[0][0]
+            if topLeft.hasAboveBadges():
+                self.baseY += topLeft.getBadgeRowHeight() + self.canvas.settings.badgeToScopeVPadding
+
         self.__setupPath()
         scene.addItem(self.connector)
         scene.addItem(self)

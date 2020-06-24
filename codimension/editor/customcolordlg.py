@@ -42,23 +42,16 @@ class CustomColorsDialog(QDialog):
         self.__bgColorButton.sigColorChanged.connect(self.__onColorChanged)
         self.__fgColorButton.setColor(fgcolor)
         self.__fgColorButton.sigColorChanged.connect(self.__onColorChanged)
-        if bordercolor is None:
-            self.__borderColorButton.setEnabled(False)
-            self.__borderColorButton.setToolTip(
-                'Border colors are not supported for docstrings')
-            self.__borderColorButton.setIcon(getIcon('warning.png'))
-        else:
-            self.__borderColorButton.setColor(bordercolor)
-            self.__borderColorButton.sigColorChanged.connect(
-                self.__onColorChanged)
+        self.__borderColorButton.setColor(bordercolor)
+        self.__borderColorButton.sigColorChanged.connect(self.__onColorChanged)
 
         QTimer.singleShot(1, self.__onColorChanged)
 
     def __createLayout(self):
         """Creates the dialog layout"""
         self.setMinimumWidth(300)
-        self.setMinimumHeight(200)
-        self.resize(300, 200)
+        self.setMinimumHeight(250)
+        self.resize(400, 300)
         self.setSizeGripEnabled(True)
 
         verticalLayout = QVBoxLayout(self)
@@ -75,12 +68,14 @@ class CustomColorsDialog(QDialog):
         self.__fgColorButton = ColorButton('', self)
         gridLayout.addWidget(self.__fgColorButton, 1, 1, 1, 1)
 
-        borderLabel = QLabel('Select border color:', self)
+        borderLabel = QLabel('Select border color (*):', self)
         gridLayout.addWidget(borderLabel, 2, 0, 1, 1)
         self.__borderColorButton = ColorButton('', self)
         gridLayout.addWidget(self.__borderColorButton, 2, 1, 1, 1)
 
         verticalLayout.addLayout(gridLayout)
+        verticalLayout.addWidget(
+            QLabel('(*): docstrings use it only when shown as badges'))
 
         # Sample area
         self.__scene = QGraphicsScene()

@@ -204,8 +204,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     'vTextPadding': 4,      # in pixels (top and bottom)
 
     # Scope header (file, decor, loops etc) paddings
-    'hHeaderPadding': 5,
-    'vHeaderPadding': 5,
+    'hHeaderPadding': 4,
+    'vHeaderPadding': 4,
 
     'vSpacer': 8,
 
@@ -267,6 +267,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     'ifNBranchTextColor': QColor(132, 132, 132, 255),
     'ifWidth': 10,           # One if wing width
 
+    'decorRectRadius': 2,
+
     # Badges
     'badgeBGColor': QColor(230, 230, 230, 255),
     'badgeFGColor': QColor(0, 0, 0, 255),
@@ -275,7 +277,11 @@ _DEFAULT_CFLOW_SETTINGS = {
     'badgeHSpacing': 2,
     'badgeVSpacing': 1,
     'badgeRadius': 2,
-    'badgeShift': 4,
+    'badgeShift': 0,
+    'badgeToScopeVPadding': 3,
+    'badgeToBadgeHSpacing': 4,
+    'badgePixmapSpacing': 4,    # For square badges like comment, decorator etc
+    'badgeGroupSpacing': 10,
 
     # Comments: leading, side & independent
     'commentBGColor': QColor(255, 255, 235, 255),
@@ -294,6 +300,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     # docstring border cannot be changed; it is a property of the scope
     'docstringBGColor': QColor(255, 255, 235, 255),
     'docstringFGColor': QColor(90, 90, 90, 255),
+    'docstringBorderColor': QColor(150, 150, 150, 255),
 
     'scopeRectRadius': 4,
 

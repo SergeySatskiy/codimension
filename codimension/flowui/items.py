@@ -22,12 +22,13 @@
 # pylint: disable=C0305
 
 from ui.qt import Qt, QPointF, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
-from .auxitems import Connector, BadgeItem
+from .auxitems import Connector, BadgeItem, SVGItem
 from .cml import CMLVersion, CMLsw
 from .colormixin import ColorMixin
 from .iconmixin import IconMixin
 from .cellelement import CellElement
 from .textmixin import TextMixin
+from .routines import getDocComment
 
 
 class CodeBlockCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
@@ -57,6 +58,14 @@ class CodeBlockCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         hPadding = 2 * (settings.hCellPadding + settings.hTextPadding)
         self.minWidth = max(self.textRect.width() + hPadding,
                             settings.minWidth)
+
+        # Add comment and documentation badges
+        badgesHSpace, badgeVSpace = self.appendCommentBadges()
+        self.minHeight += badgeVSpace
+        self.minWidth = max(settings.mainLine + settings.badgeGroupSpacing +
+                            badgesHSpace + settings.hCellPadding,
+                            self.minWidth)
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -75,13 +84,18 @@ class CodeBlockCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
                                    baseY + self.height)
         scene.addItem(self.connector)
 
+        # Draw comment badges
+        takenByBadges = self.drawCommentBadges(scene)
+
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
+        xPos = baseX + settings.hCellPadding
+        yPos = baseY + settings.vCellPadding
         penWidth = settings.selectPenWidth - 1
-        self.setRect(baseX + settings.hCellPadding - penWidth,
-                     baseY + settings.vCellPadding - penWidth,
-                     self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
-                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
+        self.setRect(
+            xPos - penWidth, yPos - penWidth + takenByBadges,
+            self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
+            self.minHeight - 2 * settings.vCellPadding + 2 * penWidth - takenByBadges)
         scene.addItem(self)
 
     def paint(self, painter, option, widget):
@@ -96,9 +110,14 @@ class CodeBlockCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         rectWidth = self.minWidth - 2 * settings.hCellPadding
         rectHeight = self.minHeight - 2 * settings.vCellPadding
 
+        yPos = self.baseY + settings.vCellPadding
+        if self.hasAboveBadges():
+            badgeRowHeight = self.getBadgeRowHeight()
+            yPos += badgeRowHeight + settings.badgeToScopeVPadding
+            rectHeight -= badgeRowHeight + settings.badgeToScopeVPadding
+
         painter.drawRect(self.baseX + settings.hCellPadding,
-                         self.baseY + settings.vCellPadding,
-                         rectWidth, rectHeight)
+                         yPos, rectWidth, rectHeight)
 
         # Draw the text in the rectangle
         pen = QPen(self.fgColor)
@@ -110,7 +129,7 @@ class CodeBlockCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         painter.drawText(
             self.baseX + settings.hCellPadding +
             settings.hTextPadding + textShift,
-            self.baseY + settings.vCellPadding + settings.vTextPadding,
+            yPos + settings.vTextPadding,
             self.textRect.width(), self.textRect.height(),
             Qt.AlignLeft, self.text)
 
@@ -155,6 +174,13 @@ class ReturnCell(CellElement,
             2 * settings.hTextPadding + self.iconItem.iconWidth(),
             settings.minWidth)
 
+        # Add comment and documentation badges
+        badgesHSpace, badgeVSpace = self.appendCommentBadges()
+        self.minHeight += badgeVSpace
+        self.minWidth = max(settings.mainLine + settings.badgeGroupSpacing +
+                            badgesHSpace + settings.hCellPadding,
+                            self.minWidth)
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -164,25 +190,28 @@ class ReturnCell(CellElement,
         self.baseX = baseX
         self.baseY = baseY
 
+        # Draw comment badges
+        takenByBadges = self.drawCommentBadges(scene)
+
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
         self.connector = Connector(self.canvas, baseX + settings.mainLine,
                                    baseY,
                                    baseX + settings.mainLine,
-                                   baseY + settings.vCellPadding)
+                                   baseY + settings.vCellPadding + takenByBadges)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = settings.selectPenWidth - 1
         self.setRect(baseX + settings.hCellPadding - penWidth,
-                     baseY + settings.vCellPadding - penWidth,
+                     baseY + settings.vCellPadding - penWidth + takenByBadges,
                      self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
-                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
+                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth - takenByBadges)
 
         self.iconItem.setPos(
             baseX + settings.hCellPadding + settings.hTextPadding,
-            baseY + self.minHeight/2 - self.iconItem.iconHeight()/2)
+            baseY + self.minHeight/2 - self.iconItem.iconHeight()/2 + takenByBadges/2)
 
         scene.addItem(self.connector)
         scene.addItem(self)
@@ -197,19 +226,23 @@ class ReturnCell(CellElement,
         painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
         painter.setBrush(QBrush(self.bgColor))
 
+        rectWidth = self.minWidth - 2 * settings.hCellPadding
+        rectHeight = self.minHeight - 2 * settings.vCellPadding
+
+        yPos = self.baseY + settings.vCellPadding
+        xPos = self.baseX + settings.hCellPadding
+
+        if self.hasAboveBadges():
+            badgeRowHeight = self.getBadgeRowHeight()
+            yPos += badgeRowHeight + settings.badgeToScopeVPadding
+            rectHeight -= badgeRowHeight + settings.badgeToScopeVPadding
+
         painter.drawRoundedRect(
-            self.baseX + settings.hCellPadding,
-            self.baseY + settings.vCellPadding,
-            self.minWidth - 2 * settings.hCellPadding,
-            self.minHeight - 2 * settings.vCellPadding,
+            xPos, yPos, rectWidth, rectHeight,
             settings.returnRectRadius, settings.returnRectRadius)
-        lineXBase = self.baseX + settings.hCellPadding
-        lineXPos = lineXBase + self.iconItem.iconWidth() + \
+        lineXPos = xPos + self.iconItem.iconWidth() + \
                    2 * settings.hTextPadding
-        lineYBase = self.baseY + settings.vCellPadding
-        painter.drawLine(
-            lineXPos, lineYBase,
-            lineXPos, lineYBase + self.minHeight - 2 * settings.vCellPadding)
+        painter.drawLine(lineXPos, yPos, lineXPos, yPos + rectHeight)
 
         # Draw the text in the rectangle
         pen = QPen(self.fgColor)
@@ -221,9 +254,9 @@ class ReturnCell(CellElement,
                      settings.hTextPadding - settings.returnRectRadius
         textShift = (availWidth - self.textRect.width()) / 2
         painter.drawText(
-            self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
+            xPos + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
-            self.baseY + settings.vCellPadding + settings.vTextPadding,
+            yPos + settings.vTextPadding,
             self.textRect.width(), self.textRect.height(),
             Qt.AlignLeft, self.text)
 
@@ -275,6 +308,14 @@ class RaiseCell(CellElement,
             settings.hTextPadding + settings.returnRectRadius +
             2 * settings.hTextPadding + self.iconItem.iconWidth(),
             settings.minWidth)
+
+        # Add comment and documentation badges
+        badgesHSpace, badgeVSpace = self.appendCommentBadges()
+        self.minHeight += badgeVSpace
+        self.minWidth = max(settings.mainLine + settings.badgeGroupSpacing +
+                            badgesHSpace + settings.hCellPadding,
+                            self.minWidth)
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -284,25 +325,28 @@ class RaiseCell(CellElement,
         self.baseX = baseX
         self.baseY = baseY
 
+        # Draw comment badges
+        takenByBadges = self.drawCommentBadges(scene)
+
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
         self.connector = Connector(self.canvas, baseX + settings.mainLine,
                                    baseY,
                                    baseX + settings.mainLine,
-                                   baseY + settings.vCellPadding)
+                                   baseY + settings.vCellPadding + takenByBadges)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen must be considered too.
         penWidth = settings.selectPenWidth - 1
         self.setRect(baseX + settings.hCellPadding - penWidth,
-                     baseY + settings.vCellPadding - penWidth,
+                     baseY + settings.vCellPadding - penWidth + takenByBadges,
                      self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
-                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
+                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth - takenByBadges)
 
         self.iconItem.setPos(
             baseX + settings.hCellPadding + settings.hTextPadding,
-            baseY + self.minHeight/2 - self.iconItem.iconHeight()/2)
+            baseY + self.minHeight/2 - self.iconItem.iconHeight()/2 + takenByBadges/2)
 
         scene.addItem(self.connector)
         scene.addItem(self)
@@ -317,19 +361,24 @@ class RaiseCell(CellElement,
         painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
         painter.setBrush(QBrush(self.bgColor))
 
-        painter.drawRoundedRect(self.baseX + settings.hCellPadding,
-                                self.baseY + settings.vCellPadding,
-                                self.minWidth - 2 * settings.hCellPadding,
-                                self.minHeight - 2 * settings.vCellPadding,
-                                settings.returnRectRadius,
-                                settings.returnRectRadius)
-        lineXBase = self.baseX + settings.hCellPadding
-        lineXPos = lineXBase + self.iconItem.iconWidth() + \
+        rectWidth = self.minWidth - 2 * settings.hCellPadding
+        rectHeight = self.minHeight - 2 * settings.vCellPadding
+
+        yPos = self.baseY + settings.vCellPadding
+        xPos = self.baseX + settings.hCellPadding
+
+        if self.hasAboveBadges():
+            badgeRowHeight = self.getBadgeRowHeight()
+            yPos += badgeRowHeight + settings.badgeToScopeVPadding
+            rectHeight -= badgeRowHeight + settings.badgeToScopeVPadding
+
+        painter.drawRoundedRect(
+            xPos, yPos, rectWidth, rectHeight,
+            settings.returnRectRadius, settings.returnRectRadius)
+
+        lineXPos = xPos + self.iconItem.iconWidth() + \
                    2 * settings.hTextPadding
-        lineYBase = self.baseY + settings.vCellPadding
-        painter.drawLine(
-            lineXPos, lineYBase,
-            lineXPos, lineYBase + self.minHeight - 2 * settings.vCellPadding)
+        painter.drawLine(lineXPos, yPos, lineXPos, yPos + rectHeight)
 
         # Draw the text in the rectangle
         pen = QPen(self.fgColor)
@@ -340,9 +389,9 @@ class RaiseCell(CellElement,
                      settings.hTextPadding - settings.returnRectRadius
         textShift = (availWidth - self.textRect.width()) / 2
         painter.drawText(
-            self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
+            xPos + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
-            self.baseY + settings.vCellPadding + settings.vTextPadding,
+            yPos + settings.vTextPadding,
             self.textRect.width(), self.textRect.height(),
             Qt.AlignLeft, self.text)
 
@@ -400,6 +449,14 @@ class AssertCell(CellElement,
             self.textRect.width() + 2 * settings.hCellPadding +
             2 * settings.hTextPadding + self.__diamondWidth,
             settings.minWidth)
+
+        # Add comment and documentation badges
+        badgesHSpace, badgeVSpace = self.appendCommentBadges()
+        self.minHeight += badgeVSpace
+        self.minWidth = max(settings.mainLine + settings.badgeGroupSpacing +
+                            badgesHSpace + settings.hCellPadding,
+                            self.minWidth)
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -409,6 +466,9 @@ class AssertCell(CellElement,
         self.baseX = baseX
         self.baseY = baseY
 
+        # Draw comment badges
+        takenByBadges = self.drawCommentBadges(scene)
+
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
@@ -416,22 +476,22 @@ class AssertCell(CellElement,
                                    baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
-        scene.addItem(self.connector)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen must be considered too.
         penWidth = settings.selectPenWidth - 1
         self.setRect(baseX + settings.hCellPadding - penWidth,
-                     baseY + settings.vCellPadding - penWidth,
+                     baseY + settings.vCellPadding - penWidth + takenByBadges,
                      self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
-                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
+                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth - takenByBadges)
 
         settings = self.canvas.settings
         self.iconItem.setPos(
             baseX + self.__diamondWidth / 2 +
             settings.hCellPadding - self.iconItem.iconWidth() / 2,
-            baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
+            baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2 + takenByBadges/2)
 
+        scene.addItem(self.connector)
         scene.addItem(self)
         scene.addItem(self.iconItem)
 
@@ -444,9 +504,13 @@ class AssertCell(CellElement,
         painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
         painter.setBrush(QBrush(self.bgColor))
 
+        takenByBadges = 0
+        if self.hasAboveBadges():
+            takenByBadges = self.getBadgeRowHeight() + settings.badgeToScopeVPadding
+
         dHalf = int(self.__diamondHeight / 2.0)
         dx1 = self.baseX + settings.hCellPadding
-        dy1 = self.baseY + int(self.minHeight / 2)
+        dy1 = self.baseY + takenByBadges + int((self.minHeight - takenByBadges)/2)
         dx2 = dx1 + settings.ifWidth
         dy2 = dy1 - dHalf
         dx3 = dx1 + self.__diamondWidth - settings.ifWidth
@@ -462,10 +526,10 @@ class AssertCell(CellElement,
                             QPointF(dx3, dy3), QPointF(dx4, dy4),
                             QPointF(dx5, dy5), QPointF(dx6, dy6))
 
-        painter.drawRect(dx4 + 1, self.baseY + settings.vCellPadding,
+        painter.drawRect(dx4 + 1, self.baseY + settings.vCellPadding + takenByBadges,
                          self.minWidth - 2 * settings.hCellPadding -
                          self.__diamondWidth,
-                         self.minHeight - 2 * settings.vCellPadding)
+                         self.minHeight - 2 * settings.vCellPadding - takenByBadges)
 
 
         # Draw the text in the rectangle
@@ -478,7 +542,7 @@ class AssertCell(CellElement,
         textShift = (availWidth - textWidth) / 2
         painter.drawText(
             dx4 + settings.hTextPadding + textShift,
-            self.baseY + settings.vCellPadding + settings.vTextPadding,
+            self.baseY + settings.vCellPadding + settings.vTextPadding + takenByBadges,
             self.textRect.width(), self.textRect.height(),
             Qt.AlignLeft, self.text)
 
@@ -535,6 +599,14 @@ class SysexitCell(CellElement,
             settings.hTextPadding + settings.returnRectRadius +
             2 * settings.hTextPadding + self.iconItem.iconWidth(),
             settings.minWidth)
+
+        # Add comment and documentation badges
+        badgesHSpace, badgeVSpace = self.appendCommentBadges()
+        self.minHeight += badgeVSpace
+        self.minWidth = max(settings.mainLine + settings.badgeGroupSpacing +
+                            badgesHSpace + settings.hCellPadding,
+                            self.minWidth)
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -544,25 +616,28 @@ class SysexitCell(CellElement,
         self.baseX = baseX
         self.baseY = baseY
 
+        # Draw comment badges
+        takenByBadges = self.drawCommentBadges(scene)
+
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
         self.connector = Connector(self.canvas, baseX + settings.mainLine,
                                    baseY,
                                    baseX + settings.mainLine,
-                                   baseY + settings.vCellPadding)
+                                   baseY + settings.vCellPadding + takenByBadges)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = settings.selectPenWidth - 1
         self.setRect(baseX + settings.hCellPadding - penWidth,
-                     baseY + settings.vCellPadding - penWidth,
+                     baseY + settings.vCellPadding - penWidth + takenByBadges,
                      self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
-                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
+                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth - takenByBadges)
 
         self.iconItem.setPos(
             baseX + settings.hCellPadding + settings.hTextPadding,
-            baseY + self.minHeight/2 - self.iconItem.iconHeight() / 2)
+            baseY + self.minHeight/2 - self.iconItem.iconHeight() / 2 + takenByBadges / 2)
 
         scene.addItem(self.connector)
         scene.addItem(self)
@@ -577,19 +652,23 @@ class SysexitCell(CellElement,
         painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
         painter.setBrush(QBrush(self.bgColor))
 
-        painter.drawRoundedRect(self.baseX + settings.hCellPadding,
-                                self.baseY + settings.vCellPadding,
-                                self.minWidth - 2 * settings.hCellPadding,
-                                self.minHeight - 2 * settings.vCellPadding,
-                                settings.returnRectRadius,
-                                settings.returnRectRadius)
-        lineXBase = self.baseX + settings.hCellPadding
-        lineXPos = lineXBase + self.iconItem.iconWidth() + \
-            2 * settings.hTextPadding
-        lineYBase = self.baseY + settings.vCellPadding
-        painter.drawLine(
-            lineXPos, lineYBase,
-            lineXPos, lineYBase + self.minHeight - 2 * settings.vCellPadding)
+        rectWidth = self.minWidth - 2 * settings.hCellPadding
+        rectHeight = self.minHeight - 2 * settings.vCellPadding
+
+        yPos = self.baseY + settings.vCellPadding
+        xPos = self.baseX + settings.hCellPadding
+
+        if self.hasAboveBadges():
+            badgeRowHeight = self.getBadgeRowHeight()
+            yPos += badgeRowHeight + settings.badgeToScopeVPadding
+            rectHeight -= badgeRowHeight + settings.badgeToScopeVPadding
+
+        painter.drawRoundedRect(
+            xPos, yPos, rectWidth, rectHeight,
+            settings.returnRectRadius, settings.returnRectRadius)
+        lineXPos = xPos + self.iconItem.iconWidth() + \
+                   2 * settings.hTextPadding
+        painter.drawLine(lineXPos, yPos, lineXPos, yPos + rectHeight)
 
         # Draw the text in the rectangle
         pen = QPen(self.fgColor)
@@ -602,9 +681,9 @@ class SysexitCell(CellElement,
             settings.hTextPadding - settings.returnRectRadius
         textShift = (availWidth - self.textRect.width()) / 2
         painter.drawText(
-            self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
+            xPos + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
-            self.baseY + settings.vCellPadding + settings.vTextPadding,
+            yPos + settings.vTextPadding,
             self.textRect.width(), self.textRect.height(),
             Qt.AlignLeft, self.text)
 
@@ -645,6 +724,14 @@ class ImportCell(CellElement,
             self.textRect.width() + 2 * settings.hCellPadding +
             2 * settings.hTextPadding + self.iconItem.iconWidth() +
             2 * settings.hTextPadding, settings.minWidth)
+
+        # Add comment and documentation badges
+        badgesHSpace, badgeVSpace = self.appendCommentBadges()
+        self.minHeight += badgeVSpace
+        self.minWidth = max(settings.mainLine + settings.badgeGroupSpacing +
+                            badgesHSpace + settings.hCellPadding,
+                            self.minWidth)
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -654,6 +741,9 @@ class ImportCell(CellElement,
         self.baseX = baseX
         self.baseY = baseY
 
+        # Draw comment badges
+        takenByBadges = self.drawCommentBadges(scene)
+
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
@@ -661,19 +751,20 @@ class ImportCell(CellElement,
                                    baseY,
                                    baseX + settings.mainLine,
                                    baseY + self.height)
-        scene.addItem(self.connector)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen must be considered too.
         penWidth = settings.selectPenWidth - 1
         self.setRect(baseX + settings.hCellPadding - penWidth,
-                     baseY + settings.vCellPadding - penWidth,
+                     baseY + settings.vCellPadding - penWidth + takenByBadges,
                      self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
-                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
+                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth - takenByBadges)
 
         self.iconItem.setPos(
             baseX + settings.hCellPadding + settings.hTextPadding,
-            baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
+            baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2 + takenByBadges / 2)
+
+        scene.addItem(self.connector)
         scene.addItem(self)
         scene.addItem(self.iconItem)
 
@@ -686,16 +777,21 @@ class ImportCell(CellElement,
         painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
         painter.setBrush(QBrush(self.bgColor))
 
-        painter.drawRect(self.baseX + settings.hCellPadding,
-                         self.baseY + settings.vCellPadding,
-                         self.minWidth - 2 * settings.hCellPadding,
-                         self.minHeight - 2 * settings.vCellPadding)
-        painter.drawLine(self.baseX + settings.hCellPadding +
-                         self.iconItem.iconWidth() + 2 * settings.hTextPadding,
-                         self.baseY + settings.vCellPadding,
-                         self.baseX + settings.hCellPadding +
-                         self.iconItem.iconWidth() + 2 * settings.hTextPadding,
-                         self.baseY + self.minHeight - settings.vCellPadding)
+        rectWidth = self.minWidth - 2 * settings.hCellPadding
+        rectHeight = self.minHeight - 2 * settings.vCellPadding
+
+        yPos = self.baseY + settings.vCellPadding
+        xPos = self.baseX + settings.hCellPadding
+
+        if self.hasAboveBadges():
+            badgeRowHeight = self.getBadgeRowHeight()
+            yPos += badgeRowHeight + settings.badgeToScopeVPadding
+            rectHeight -= badgeRowHeight + settings.badgeToScopeVPadding
+
+        painter.drawRect(xPos, yPos, rectWidth, rectHeight)
+        lineXPos = xPos + self.iconItem.iconWidth() + \
+                   2 * settings.hTextPadding
+        painter.drawLine(lineXPos, yPos, lineXPos, yPos + rectHeight)
 
         # Draw the text in the rectangle
         pen = QPen(self.fgColor)
@@ -705,15 +801,156 @@ class ImportCell(CellElement,
                         4 * settings.hTextPadding - self.iconItem.iconWidth()
         textShift = (textRectWidth - self.textRect.width()) / 2
         painter.drawText(
-            self.baseX + settings.hCellPadding + self.iconItem.iconWidth() +
+            xPos + self.iconItem.iconWidth() +
             3 * settings.hTextPadding + textShift,
-            self.baseY + settings.vCellPadding + settings.vTextPadding,
+            yPos + settings.vTextPadding,
             self.textRect.width(), self.textRect.height(),
             Qt.AlignLeft, self.text)
 
     def getSelectTooltip(self):
         """Provides the select tooltip"""
         return 'Import at ' + CellElement.getLinesSuffix(self.getLineRange())
+
+
+class DecoratorCell(CellElement,
+                    TextMixin, ColorMixin, QGraphicsRectItem):
+
+    """Represents a single decorator statement"""
+
+    def __init__(self, ref, canvas, x, y, forClass):
+        CellElement.__init__(self, ref, canvas, x, y)
+        TextMixin.__init__(self)
+
+        if forClass:
+            bgColor = self.canvas.settings.classScopeBGColor
+            fgColor = self.canvas.settings.classScopeFGColor
+            borderColor = self.canvas.settings.classScopeBorderColor
+        else:
+            bgColor = self.canvas.settings.funcScopeBGColor
+            fgColor = self.canvas.settings.funcScopeFGColor
+            borderColor = self.canvas.settings.funcScopeBorderColor
+
+        ColorMixin.__init__(self, ref, bgColor, fgColor, borderColor)
+        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
+        self.kind = CellElement.DECORATOR
+        self.connector = None
+        self.decorBadge = BadgeItem(self, '@', drawText=False)
+
+        # To make double click delivered
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+
+    def render(self):
+        """Renders the cell"""
+        settings = self.canvas.settings
+        self.setupText(self)
+
+        vPadding = 2 * (settings.vCellPadding + settings.vTextPadding)
+        textHeight = self.textRect.height() + vPadding
+        badgeHeight = self.decorBadge.height + vPadding
+        self.minHeight = max(textHeight, badgeHeight)
+
+        self.minWidth = max(
+            self.textRect.width() + 2 * settings.hCellPadding +
+            3 * settings.hTextPadding + self.decorBadge.width,
+            settings.minWidth)
+
+        # Add comment and documentation badges
+        badgesHSpace, badgeVSpace = self.appendCommentBadges()
+        self.minHeight += badgeVSpace
+        self.minWidth = max(settings.mainLine + settings.badgeGroupSpacing +
+                            badgesHSpace + settings.hCellPadding,
+                            self.minWidth)
+
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
+        self.baseX = baseX
+        self.baseY = baseY
+
+        # Draw comment badges
+        takenByBadges = self.drawCommentBadges(scene)
+
+        # Add the connector as a separate scene item to make the selection
+        # working properly
+        settings = self.canvas.settings
+        self.connector = Connector(self.canvas, baseX + settings.mainLine,
+                                   baseY,
+                                   baseX + settings.mainLine,
+                                   baseY + self.height + takenByBadges)
+        scene.addItem(self.connector)
+
+        # Setting the rectangle is important for the selection and for
+        # redrawing. Thus the selection pen must be considered too.
+        penWidth = settings.selectPenWidth - 1
+        self.setRect(baseX + settings.hCellPadding - penWidth,
+                     baseY + settings.vCellPadding - penWidth + takenByBadges,
+                     self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
+                     self.minHeight - 2 * settings.vCellPadding + 2 * penWidth - takenByBadges)
+
+        badgeXPos = self.baseX + settings.hCellPadding + settings.hTextPadding
+        badgeYPos = self.baseY + (self.minHeight - self.decorBadge.height + takenByBadges) / 2
+        self.decorBadge.moveTo(badgeXPos, badgeYPos)
+
+        scene.addItem(self)
+        scene.addItem(self.decorBadge)
+
+        # The icon can be not exactly square
+        self.decorPixmap = SVGItem(self.canvas, 'decorator.svg', self)
+        self.decorPixmap.setIconHeight(100)
+        if self.decorPixmap.iconWidth() > self.decorPixmap.iconHeight():
+            self.decorPixmap.setIconWidth(self.decorBadge.width -
+                                          2 * settings.badgePixmapSpacing)
+        else:
+            self.decorPixmap.setIconHeight(self.decorBadge.height -
+                                           2 * settings.badgePixmapSpacing)
+
+        self.decorPixmap.setPos(
+            badgeXPos +
+                (self.decorBadge.width - self.decorPixmap.iconWidth()) / 2,
+            badgeYPos +
+                (self.decorBadge.height - self.decorPixmap.iconHeight()) / 2)
+        scene.addItem(self.decorPixmap)
+
+    def paint(self, painter, option, widget):
+        """Draws the import statement"""
+        del option      # unused argument
+        del widget      # unused argument
+
+        settings = self.canvas.settings
+        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
+        painter.setBrush(QBrush(self.bgColor))
+
+        rectWidth = self.minWidth - 2 * settings.hCellPadding
+        rectHeight = self.minHeight - 2 * settings.vCellPadding
+
+        yPos = self.baseY + settings.vCellPadding
+        xPos = self.baseX + settings.hCellPadding
+
+        if self.hasAboveBadges():
+            badgeRowHeight = self.getBadgeRowHeight()
+            yPos += badgeRowHeight + settings.badgeToScopeVPadding
+            rectHeight -= badgeRowHeight + settings.badgeToScopeVPadding
+
+        painter.drawRoundedRect(xPos, yPos, rectWidth, rectHeight,
+                                settings.decorRectRadius,
+                                settings.decorRectRadius)
+
+        # Draw the text in the rectangle
+        pen = QPen(self.fgColor)
+        painter.setFont(settings.monoFont)
+        painter.setPen(pen)
+        painter.drawText(
+            xPos + self.decorBadge.width + 2 * settings.hTextPadding,
+            yPos + settings.vTextPadding,
+            self.textRect.width(), self.textRect.height(),
+            Qt.AlignLeft, self.text)
+
+    def getSelectTooltip(self):
+        """Provides the select tooltip"""
+        return 'Decorator at ' + CellElement.getLinesSuffix(self.getLineRange())
 
 
 class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
@@ -751,11 +988,19 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
             2 * settings.ifWidth,
             settings.minWidth)
         self.minWidth += self.hShift * 2 * settings.openGroupHSpacer
+
+        # Add comment and documentation badges
+        badgesHSpace, badgeVSpace = self.appendCommentBadges()
+        self.minHeight += badgeVSpace
+        self.minWidth = max(settings.mainLine + settings.badgeGroupSpacing +
+                            badgesHSpace + settings.hCellPadding,
+                            self.minWidth)
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def __calcPolygon(self):
+    def __calcPolygon(self, takenByBadges):
         """Calculates the polygon"""
         settings = self.canvas.settings
 
@@ -763,16 +1008,16 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         baseX = self.baseX + shift
 
         self.x1 = baseX + settings.hCellPadding
-        self.y1 = self.baseY + self.minHeight / 2
+        self.y1 = self.baseY + (self.minHeight - takenByBadges)/ 2 + takenByBadges
         self.x2 = baseX + settings.hCellPadding + settings.ifWidth
-        self.y2 = self.baseY + settings.vCellPadding
+        self.y2 = self.baseY + settings.vCellPadding + takenByBadges
         self.x3 = baseX + self.minWidth - \
                   settings.hCellPadding - settings.ifWidth - shift
         self.y3 = self.y2
         self.x4 = self.x3 + settings.ifWidth
         self.y4 = self.y1
         self.x5 = self.x3
-        self.y5 = self.baseY + (self.minHeight - settings.vCellPadding)
+        self.y5 = self.y1 + (self.y1 - self.y2)
         self.x6 = self.x2
         self.y6 = self.y5
 
@@ -781,7 +1026,10 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         self.baseX = baseX
         self.baseY = baseY
 
-        self.__calcPolygon()
+        # Draw comment badges
+        takenByBadges = self.drawCommentBadges(scene)
+
+        self.__calcPolygon(takenByBadges)
 
         settings = self.canvas.settings
         hShift = self.hShift * 2 * settings.openGroupHSpacer
@@ -845,6 +1093,10 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
         painter.setBrush(QBrush(self.bgColor))
 
+        takenByBadges = 0
+        if self.hasAboveBadges():
+            takenByBadges = self.getBadgeRowHeight() + settings.badgeToScopeVPadding
+
         painter.drawPolygon(
             QPointF(self.x1, self.y1), QPointF(self.x2, self.y2),
             QPointF(self.x3, self.y3), QPointF(self.x4, self.y4),
@@ -859,7 +1111,7 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         textShift = (availWidth - textWidth) / 2
         painter.drawText(
             self.x2 + settings.hTextPadding + textShift,
-            self.baseY + settings.vCellPadding + settings.vTextPadding,
+            self.baseY + settings.vCellPadding + settings.vTextPadding + takenByBadges,
             self.textRect.width(), self.textRect.height(),
             Qt.AlignLeft | Qt.AlignVCenter, self.text)
 

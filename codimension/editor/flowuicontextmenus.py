@@ -222,7 +222,7 @@ class CFSceneContextMenuMixin:
         totalComments = self.countComments()
         hasComment = totalComments > 0
         hasDocstring = self.isDocstringInSelection()
-        hasMinimizedExcepts = self.isInSelected([(CellElement.EXCEPT_MINIMIZED,
+        hasMinimizedExcepts = self.isInSelected([(CellElement.SCOPE_EXCEPT_BADGE,
                                                   None)])
         # Doc links are considered comments as well
         totalDocLinks = self.countInSelected([(CellElement.INDEPENDENT_DOC, None),
@@ -324,9 +324,7 @@ class CFSceneContextMenuMixin:
 
         bgcolor, fgcolor, bordercolor = self.selectedItems()[0].getColors()
         hasDocstring = self.isDocstringInSelection()
-        dlg = CustomColorsDialog(bgcolor, fgcolor,
-                                 None if hasDocstring else bordercolor,
-                                 self.parent())
+        dlg = CustomColorsDialog(bgcolor, fgcolor, bordercolor, self.parent())
         if dlg.exec_():
             bgcolor = dlg.backgroundColor()
             fgcolor = dlg.foregroundColor()
@@ -976,7 +974,7 @@ class CFSceneContextMenuMixin:
             return False
         if self.__areAllSelectedComments():
             return False
-        if self.__areScopeDocstringOrCommentSelected():
+        if self.__areScopeDocstringSelected():
             return False
         if self.__isModuleSelected():
             return False
@@ -1016,11 +1014,10 @@ class CFSceneContextMenuMixin:
                 return False
         return True
 
-    def __areScopeDocstringOrCommentSelected(self):
+    def __areScopeDocstringSelected(self):
         for item in self.selectedItems():
             if item.scopedItem():
-                if item.subKind in [ScopeCellElement.COMMENT,
-                                    ScopeCellElement.DOCSTRING]:
+                if item.subKind in [ScopeCellElement.DOCSTRING]:
                     return True
         return False
 
@@ -1054,7 +1051,7 @@ class CFSceneContextMenuMixin:
                     # here: no except blocks on the diagram, they are collapsed
                     tryItems = self.findItemsForRef(item.ref)
                     for tryItem in tryItems:
-                        if tryItem.kind == CellElement.EXCEPT_MINIMIZED:
+                        if tryItem.kind == CellElement.SCOPE_EXCEPT_BADGE:
                             if not tryItem.isSelected():
                                 return True
                             break
@@ -1075,7 +1072,7 @@ class CFSceneContextMenuMixin:
                 for relatedItem in self.findItemsForRef(item.leaderRef):
                     if relatedItem not in selected:
                         return True
-            elif item.kind == CellElement.EXCEPT_MINIMIZED:
+            elif item.kind == CellElement.SCOPE_EXCEPT_BADGE:
                 # here: no except blocks on the diagram, they are collapsed
                 tryItems = self.findItemsForRef(item.ref)
                 for tryItem in tryItems:
@@ -1159,8 +1156,7 @@ class CFSceneContextMenuMixin:
                         continue
                     if item.scopedItem():
                         if item.subKind not in [ScopeCellElement.TOP_LEFT,
-                                                ScopeCellElement.DOCSTRING,
-                                                ScopeCellElement.COMMENT]:
+                                                ScopeCellElement.DOCSTRING]:
                             continue
                     if item in selected:
                         continue
@@ -1190,8 +1186,7 @@ class CFSceneContextMenuMixin:
                 continue
             if item.scopedItem():
                 if item.subKind not in [ScopeCellElement.TOP_LEFT,
-                                        ScopeCellElement.DOCSTRING,
-                                        ScopeCellElement.COMMENT]:
+                                        ScopeCellElement.DOCSTRING]:
                     continue
             if item in selected:
                 continue

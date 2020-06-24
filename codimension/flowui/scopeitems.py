@@ -27,13 +27,14 @@
 from sys import maxsize
 from html import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
-from .auxitems import BadgeItem, Connector, HSpacerCell, VSpacerCell, SpacerCell
+from .auxitems import (BadgeItem, Connector, HSpacerCell, VSpacerCell,
+                       SpacerCell, DocstringBadgeItem, CommentBadgeItem,
+                       ExceptBadgeItem, DecorBadgeItem, DocLinkBadgeItem)
 from .cellelement import CellElement
-from .routines import distance, getNoCellCommentBoxPath
+from .routines import distance, getNoCellCommentBoxPath, getDocComment
 from .cml import CMLVersion
 from .colormixin import ColorMixin
 from .textmixin import TextMixin
-from .iconmixin import IconMixin
 
 
 class ScopeHSideEdge(HSpacerCell):
@@ -71,39 +72,35 @@ class ScopeSpacer(SpacerCell):
         self.kind = CellElement.SCOPE_CORNER_EDGE
 
 
-class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
-                       QGraphicsRectItem):
+class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
     """Base class for the scope items"""
 
     TOP_LEFT = 0
     DECLARATION = 1
-    COMMENT = 2
     DOCSTRING = 3
 
     def __init__(self, ref, canvas, x, y, subKind,
                  bgColor, fgColor, borderColor):
         isDocstring = subKind == ScopeCellElement.DOCSTRING
-        if subKind == ScopeCellElement.DOCSTRING:
+        if isDocstring:
             bgColor = canvas.settings.docstringBGColor
             fgColor = canvas.settings.docstringFGColor
-            # Border color is borrowed from the scope for docstrings
-
-        commentIconFileName = None
-        if subKind == ScopeCellElement.COMMENT:
-            if canvas.settings.hidecomments:
-                commentIconFileName = 'hiddencomment.svg'
+            # This is the case of the full text docstring i.e. the border color
+            # is borowed from the scope
 
         CellElement.__init__(self, ref, canvas, x, y)
         TextMixin.__init__(self)
         ColorMixin.__init__(self, ref, bgColor, fgColor, borderColor,
                             isDocstring=isDocstring)
-        IconMixin.__init__(self, canvas, commentIconFileName)
+        if isDocstring:
+            # The color mixin may overwrite the border color of the docstring
+            # so it needs to be recovered for the full text docstrings
+            self.borderColor = borderColor
+
         QGraphicsRectItem.__init__(self)
 
         self.subKind = subKind
-        self.badgeItem = None
-        self.__docBadge = None
         self.__navBarUpdate = None
         self._connector = None
         self._topHalfConnector = None
@@ -122,61 +119,22 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         """Renders the top left corner of the scope"""
         s = self.canvas.settings
         self.minHeight = s.scopeRectRadius + s.vCellPadding
+        if self.hasAboveBadges():
+            self.minHeight += self.getBadgeRowHeight() + s.badgeToScopeVPadding
         self.minWidth = s.scopeRectRadius + s.hCellPadding
 
     def __renderDeclaration(self):
         """Renders the scope declaration"""
-        # The declaration location uses a bit of the top cell space
-        # to make the view more compact
         s = self.canvas.settings
         self.setupText(self)
 
-        badgeItem = self.canvas.cells[
-            self.addr[1] - 1][self.addr[0] - 1].badgeItem
-
+        # Top and left edges are in the neiborgh cells
         self.minHeight = self.textRect.height() + \
                          2 * s.vHeaderPadding - s.scopeRectRadius
-        headerRectWidth = self.textRect.width()
-        if badgeItem:
-            headerRectWidth = max(headerRectWidth, badgeItem.width)
-        self.minWidth = headerRectWidth + s.hHeaderPadding - s.scopeRectRadius
-        if badgeItem:
-            if badgeItem.withinHeader():
-                self.minWidth = badgeItem.width + \
-                                s.hHeaderPadding - s.scopeRectRadius
-        if hasattr(self.ref, "sideComment"):
-            if self.ref.sideComment:
-                self.minHeight += 2 * s.vTextPadding
-                self.minWidth += s.hCellPadding
-            else:
-                self.minHeight += s.vTextPadding
-                self.minWidth += s.hHeaderPadding
-        else:
-            self.minWidth += s.hHeaderPadding
+        self.minWidth = self.textRect.width() + \
+                        2 * s.hHeaderPadding - s.scopeRectRadius
+
         self.minWidth = max(self.minWidth, s.minWidth)
-
-    def __renderComment(self):
-        """Renders the scope declaration"""
-        s = self.canvas.settings
-        self.setupText(self, customText=self.getSideComment(),
-                       customReplacement='')
-        if s.hidecomments:
-            # Visually the icon looks a bit too big so reduce the size to 80%
-            self.iconItem.setIconHeight(self.iconItem.iconHeight() * 0.8)
-
-            self.minHeight = self.iconItem.iconHeight() + \
-                2 * (s.vHeaderPadding + s.vHiddenCommentPadding) - \
-                s.scopeRectRadius
-            self.minWidth = s.hCellPadding + self.iconItem.iconWidth() + \
-                2 * s.hHiddenCommentPadding + s.hHeaderPadding - \
-                s.scopeRectRadius
-        else:
-            self.minHeight = self.textRect.height() + \
-                2 * (s.vHeaderPadding + s.vTextPadding) - \
-                s.scopeRectRadius
-            self.minWidth = s.hCellPadding + s.hTextPadding + \
-                self.textRect.width() + s.hTextPadding + \
-                s.hHeaderPadding - s.scopeRectRadius
 
     def __renderDocstring(self):
         """Renders the scope docstring"""
@@ -184,24 +142,25 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         self.setupText(self, customText=self.ref.docstring.getDisplayValue(),
                        customReplacement='')
 
-        if s.hidedocstrings:
-            self.__docBadge = BadgeItem(self, 'doc')
-            self.__docBadge.setToolTip('<pre>' + escape(self.text) + '</pre>')
-            self.minHeight = self.__docBadge.height + 2 * (s.selectPenWidth - 1)
-            self.minWidth = 2 * (s.hHeaderPadding - s.scopeRectRadius)
-        else:
-            self.minHeight = self.textRect.height() + 2 * s.vHeaderPadding
-            self.minWidth = self.textRect.width() + 2 * (s.hHeaderPadding -
-                                                         s.scopeRectRadius)
+        self.minHeight = self.textRect.height() + 2 * s.vHeaderPadding
+        self.minWidth = self.textRect.width() + 2 * (s.hHeaderPadding -
+                                                     s.scopeRectRadius)
 
     def renderCell(self):
         """Provides rendering for the scope elements"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
+            self.normalizeBadgesHeight()
             self.__renderTopLeft()
+
+            # Sometimes there are many badges and little content
+            # So the widest value needs to be picked.
+            # The wiered s.scopeRectRadius / 2 is because the badges start
+            # from the very edge of the scope
+            s = self.canvas.settings
+            self.minWidth = max(self.__getBadgeRawWidth() - s.scopeRectRadius / 2,
+                                self.minWidth)
         elif self.subKind == ScopeCellElement.DECLARATION:
             self.__renderDeclaration()
-        elif self.subKind == ScopeCellElement.COMMENT:
-            self.__renderComment()
         elif self.subKind == ScopeCellElement.DOCSTRING:
             self.__renderDocstring()
         self.height = self.minHeight
@@ -214,6 +173,8 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         column = self.canvas.addr[0] - 1
         cells = self.canvas.canvas.cells
         try:
+            if cells[row][column].kind == CellElement.SIDE_COMMENT:
+                return True
             if cells[row][column].kind == CellElement.VCANVAS:
                 return cells[row][column].cells[0][0].kind \
                     in [CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE]
@@ -223,7 +184,7 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
 
     def __needConnector(self):
         """True if a connector is required"""
-        if self.kind in [CellElement.FOR_SCOPE, CellElement.DECOR_SCOPE,
+        if self.kind in [CellElement.FOR_SCOPE,
                          CellElement.WHILE_SCOPE, CellElement.FUNC_SCOPE,
                          CellElement.CLASS_SCOPE, CellElement.WITH_SCOPE,
                          CellElement.FINALLY_SCOPE, CellElement.TRY_SCOPE]:
@@ -242,7 +203,26 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
                 return cellToTheTop.needConnector
             except:
                 pass
+        elif self.kind == CellElement.FILE_SCOPE:
+            s = self.canvas.settings
+            if not s.noComment and not s.hidecomments:
+                if self.ref.leadingComment or getDocComment(self.ref.leadingCMLComments):
+                    return True
         return False
+
+    def __getBadgeRawWidth(self):
+        """Provides the badges raw width"""
+        # It must correspond what __drawTopLeft() does
+        s = self.canvas.settings
+        width = 0
+        for badge in self.aboveBadges:
+            if badge is not None:
+                width += badge.width + s.badgeToBadgeHSpacing
+            else:
+                width += s.badgeGroupSpacing
+        if width > 0:
+            width += s.badgeShift
+        return width
 
     def __drawTopLeft(self):
         """Draws the top left element of a scope"""
@@ -250,40 +230,56 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
 
         # Draw connector if needed
         if self.__needConnector() and self._connector is None:
+            # The connector needs to go only to the middle of the badge
+            # so there will be two of them
             self._connector = Connector(
                 self.canvas, self.baseX + s.mainLine,
                 self.baseY, self.baseX + s.mainLine,
-                self.baseY + self.canvas.height)
+                self.baseY + s.vCellPadding)
             self.scene.addItem(self._connector)
+
+            yPosBegin = sum((self.baseY, s.vCellPadding,
+                             self.getBadgeRowHeight(),
+                             s.badgeToScopeVPadding, 1))
+            bottomConnector = Connector(
+                self.canvas, self.baseX + s.mainLine,
+                yPosBegin,
+                self.baseX + s.mainLine,
+                self.baseY + self.canvas.height)
+            self.scene.addItem(bottomConnector)
         if self.__needTopHalfConnector() and self._topHalfConnector is None:
+            # The connector needs to go only to the badge
             self._topHalfConnector = Connector(
                 self.canvas, self.baseX + s.mainLine, self.baseY,
-                self.baseX + s.mainLine, self.baseY + self.canvas.height / 2)
+                self.baseX + s.mainLine, self.baseY + s.vCellPadding)
             self.scene.addItem(self._topHalfConnector)
 
         # Draw the scope rounded rectangle when we see the top left corner
         penWidth = s.selectPenWidth - 1
+
+        yPos = self.baseY + s.vCellPadding - penWidth
+        height = self.canvas.minHeight - 2 * s.vCellPadding + 2 * penWidth
+        if self.hasAboveBadges():
+            yPos += self.getBadgeRowHeight() + s.badgeToScopeVPadding
+            height -= self.getBadgeRowHeight() + s.badgeToScopeVPadding
         self.setRect(
-            self.baseX + s.hCellPadding - penWidth,
-            self.baseY + s.vCellPadding - penWidth,
-            self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-            self.canvas.minHeight - 2 * s.vCellPadding + 2 * penWidth)
+            self.baseX + s.hCellPadding - penWidth, yPos,
+            self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth, height)
         self.scene.addItem(self)
         self.canvas.scopeRectangle = self
-        if self.badgeItem:
-            if self.badgeItem.withinHeader():
-                headerHeight = self.canvas.cells[
-                    self.addr[1] + 1][self.addr[0]].height
-                fullHeight = headerHeight + s.scopeRectRadius
-                self.badgeItem.moveTo(
-                    self.baseX + s.hCellPadding + s.badgeShift,
-                    self.baseY + s.vCellPadding + fullHeight / 2 -
-                    self.badgeItem.height / 2)
+
+        # Draw badges
+        xPos = self.baseX + s.hCellPadding + s.badgeShift
+        yPos = self.baseY + s.vCellPadding
+        for badge in self.aboveBadges:
+            if badge is not None:
+                badge.moveTo(xPos, yPos)
+                self.scene.addItem(badge)
+                badge.draw(self.scene, xPos, yPos)
+                xPos += badge.width + s.badgeToBadgeHSpacing
             else:
-                self.badgeItem.moveTo(
-                    self.baseX + s.hCellPadding + s.badgeShift,
-                    self.baseY + s.vCellPadding - self.badgeItem.height / 2)
-            self.scene.addItem(self.badgeItem)
+                xPos += s.badgeGroupSpacing
+
         # Draw a horizontal connector if needed
         if self._connector is None:
             if self.kind == CellElement.EXCEPT_SCOPE or (
@@ -292,15 +288,27 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
                 parentCanvas = self.canvas.canvas
                 cellToTheLeft = parentCanvas.cells[
                     self.canvas.addr[1]][self.canvas.addr[0] - 1]
+                sideComment = None
+                if cellToTheLeft.kind == CellElement.SIDE_COMMENT:
+                    sideComment = cellToTheLeft
+                    cellToTheLeft = parentCanvas.cells[
+                        self.canvas.addr[1]][self.canvas.addr[0] - 2]
+
+                yPos = self.baseY + 2 * s.vCellPadding + \
+                       self.getBadgeRowHeight() + s.badgeToScopeVPadding
                 self._connector = Connector(
                     self.canvas,
                     cellToTheLeft.baseX + cellToTheLeft.minWidth -
                     s.hCellPadding + s.boxLineWidth,
-                    self.baseY + 2 * s.vCellPadding,
+                    yPos,
                     self.baseX + s.hCellPadding - s.boxLineWidth,
-                    self.baseY + 2 * s.vCellPadding)
+                    yPos)
                 self._connector.penStyle = Qt.DotLine
                 self.scene.addItem(self._connector)
+
+                if sideComment:
+                    # The dotted line must be drawn under the comment
+                    sideComment.setZValue(1)
 
         if hasattr(self.scene.parent(), "updateNavigationToolbar"):
             self.__navBarUpdate = self.scene.parent().updateNavigationToolbar
@@ -317,44 +325,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
             self.height + s.scopeRectRadius + penWidth)
         self.scene.addItem(self)
 
-    def __drawComment(self):
-        """Draws the comment item"""
-        s = self.canvas.settings
-        canvasTop = self.baseY - s.scopeRectRadius
-        movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
-            self.width - s.scopeRectRadius - s.vHeaderPadding
-        penWidth = s.selectPenWidth - 1
-        if s.hidecomments:
-            self.setRect(
-                movedBaseX + s.hHeaderPadding - penWidth,
-                canvasTop + s.vHeaderPadding - penWidth,
-                self.iconItem.iconWidth() +
-                2 * (s.hHiddenCommentPadding + penWidth),
-                self.iconItem.iconHeight() +
-                2 * (s.vHiddenCommentPadding + penWidth))
-            self.iconItem.setPos(
-                movedBaseX + s.hHeaderPadding + s.hHiddenCommentPadding,
-                canvasTop + s.vHeaderPadding + s.vHiddenCommentPadding)
-            self.iconItem.setToolTip(self.text)
-
-            self.scene.addItem(self)
-            self.scene.addItem(self.iconItem)
-        else:
-            self.setRect(
-                movedBaseX + s.hHeaderPadding - penWidth,
-                canvasTop + s.vHeaderPadding - penWidth,
-                self.textRect.width() +
-                2 * s.hTextPadding + 2 * penWidth,
-                self.textRect.height() +
-                2 * s.vTextPadding + 2 * penWidth)
-            self.__sideCommentPath = getNoCellCommentBoxPath(
-                movedBaseX + s.hHeaderPadding,
-                canvasTop + s.vHeaderPadding,
-                self.textRect.width() + 2 * s.hTextPadding,
-                self.textRect.height() + 2 * s.vTextPadding,
-                s.commentCorner)
-            self.scene.addItem(self)
-
     def __drawDocstring(self):
         """Draws the docstring item"""
         s = self.canvas.settings
@@ -365,11 +335,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
             self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
             self.height + 2 * penWidth)
         self.scene.addItem(self)
-        if s.hidedocstrings:
-            self.scene.addItem(self.__docBadge)
-            self.__docBadge.moveTo(
-                self.baseX - s.scopeRectRadius + penWidth,
-                self.baseY + penWidth)
 
     def draw(self, scene, baseX, baseY):
         """Draws a scope"""
@@ -381,8 +346,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
             self.__drawTopLeft()
         elif self.subKind == ScopeCellElement.DECLARATION:
             self.__drawDeclaration()
-        elif self.subKind == ScopeCellElement.COMMENT:
-            self.__drawComment()
         elif self.subKind == ScopeCellElement.DOCSTRING:
             self.__drawDocstring()
 
@@ -391,10 +354,16 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         s = self.canvas.settings
         painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
         painter.setBrush(QBrush(self.bgColor))
+
+        yPos = self.baseY + s.vCellPadding
+        height = self.canvas.minHeight - 2 * s.vCellPadding
+        if self.hasAboveBadges():
+            yPos += self.getBadgeRowHeight() + s.badgeToScopeVPadding
+            height -= self.getBadgeRowHeight() + s.badgeToScopeVPadding
         painter.drawRoundedRect(self.baseX + s.hCellPadding,
-                                self.baseY + s.vCellPadding,
+                                yPos,
                                 self.canvas.minWidth - 2 * s.hCellPadding,
-                                self.canvas.minHeight - 2 * s.vCellPadding,
+                                height,
                                 s.scopeRectRadius, s.scopeRectRadius)
 
     def __paintDeclaration(self, painter):
@@ -406,13 +375,10 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         painter.setPen(pen)
         canvasLeft = self.baseX - s.scopeRectRadius
         canvasTop = self.baseY - s.scopeRectRadius
-        textHeight = self.textRect.height()
-        yShift = 0
-        if hasattr(self.ref, 'sideComment'):
-            yShift = s.vTextPadding
+
         painter.drawText(canvasLeft + s.hHeaderPadding,
-                         canvasTop + s.vHeaderPadding + yShift,
-                         self.textRect.width(), textHeight,
+                         canvasTop + s.vHeaderPadding,
+                         self.textRect.width(), self.textRect.height(),
                          Qt.AlignLeft, self.text)
 
         pen = QPen(self.borderColor)
@@ -430,39 +396,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
                          canvasLeft + self.canvas.minWidth -
                          2 * s.hCellPadding - correction,
                          self.baseY + self.height)
-
-    def __paintComment(self, painter):
-        """Paints the side comment"""
-        s = self.canvas.settings
-        painter.setPen(self.getPainterPen(self.isSelected(),
-                                          s.commentBorderColor))
-        painter.setBrush(QBrush(s.commentBGColor))
-
-        canvasTop = self.baseY - s.scopeRectRadius
-        # s.vHeaderPadding below is used intentionally: to have the same
-        # spacing on top, bottom and right for the comment box
-        movedBaseX = self.canvas.baseX + self.canvas.minWidth - \
-            self.width - s.scopeRectRadius - s.vHeaderPadding
-
-        if s.hidecomments:
-            painter.drawRoundedRect(
-                movedBaseX + s.hHeaderPadding,
-                canvasTop + s.vHeaderPadding,
-                self.iconItem.iconWidth() + 2 * s.hHiddenCommentPadding,
-                self.iconItem.iconHeight() + 2 * s.vHiddenCommentPadding,
-                s.hiddenCommentRectRadius, s.hiddenCommentRectRadius)
-        else:
-            painter.drawPath(self.__sideCommentPath)
-
-            pen = QPen(s.commentFGColor)
-            painter.setFont(s.monoFont)
-            painter.setPen(pen)
-            painter.drawText(
-                movedBaseX + s.hHeaderPadding + s.hTextPadding,
-                canvasTop + s.vHeaderPadding + s.vTextPadding,
-                self.textRect.width(),
-                self.textRect.height(),
-                Qt.AlignLeft, self.text)
 
     def __paintDocstring(self, painter):
         """Paints the docstring"""
@@ -513,15 +446,14 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
                              2 * s.hCellPadding - correction,
                              self.baseY + self.height)
 
-        if not s.hidedocstrings:
-            pen = QPen(self.fgColor)
-            painter.setFont(s.monoFont)
-            painter.setPen(pen)
-            painter.drawText(canvasLeft + s.hHeaderPadding,
-                             self.baseY + s.vHeaderPadding,
-                             self.canvas.width - 2 * s.hHeaderPadding,
-                             self.height - 2 * s.vHeaderPadding,
-                             Qt.AlignLeft, self.text)
+        pen = QPen(self.fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        painter.drawText(canvasLeft + s.hHeaderPadding,
+                         self.baseY + s.vHeaderPadding,
+                         self.canvas.width - 2 * s.hHeaderPadding,
+                         self.height - 2 * s.vHeaderPadding,
+                         Qt.AlignLeft, self.text)
 
     def paint(self, painter, option, widget):
         """Draws the corresponding scope element"""
@@ -532,8 +464,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
             self.__paintTopLeft(painter)
         elif self.subKind == ScopeCellElement.DECLARATION:
             self.__paintDeclaration(painter)
-        elif self.subKind == ScopeCellElement.COMMENT:
-            self.__paintComment(painter)
         elif self.subKind == ScopeCellElement.DOCSTRING:
             self.__paintDocstring(painter)
 
@@ -556,7 +486,7 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
 
     def isComment(self):
         """True if it is a comment"""
-        return self.subKind == self.COMMENT
+        return False
 
     def isDocstring(self):
         """True if it is a docstring"""
@@ -564,10 +494,7 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        if self.subKind == self.COMMENT:
-            CellElement.mouseDoubleClickEvent(
-                self, event, pos=self.ref.sideComment.beginPos)
-        elif self.subKind == self.DOCSTRING:
+        if self.subKind == self.DOCSTRING:
             CellElement.mouseDoubleClickEvent(
                 self, event, pos=self.ref.docstring.body.beginPos)
         elif self.subKind == self.DECLARATION:
@@ -594,9 +521,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         if self.subKind == self.DOCSTRING:
             return distance(absPos, self.ref.docstring.begin,
                             self.ref.docstring.end)
-        if self.subKind == self.COMMENT:
-            return distance(absPos, self.ref.sideComment.begin,
-                            self.ref.sideComment.end)
         if self.subKind == self.DECLARATION:
             if self.kind == CellElement.FILE_SCOPE:
                 dist = maxsize
@@ -619,9 +543,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         if self.subKind == self.DOCSTRING:
             return distance(line, self.ref.docstring.beginLine,
                             self.ref.docstring.endLine)
-        if self.subKind == self.COMMENT:
-            return distance(line, self.ref.sideComment.beginLine,
-                            self.ref.sideComment.endLine)
         if self.subKind == self.DECLARATION:
             if self.kind == CellElement.FILE_SCOPE:
                 dist = maxsize
@@ -660,16 +581,31 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, IconMixin,
         if self.subKind == self.DOCSTRING:
             return ' docstring at ' + \
                 CellElement.getLinesSuffix(self.getLineRange())
-        if self.subKind == self.COMMENT:
-            return ' side comment at ' + \
-                CellElement.getLinesSuffix(self.getLineRange())
         return ' scope (' + scopeCellElementToString(self.subKind) + ')'
+
+    def needDeclaration(self):
+        """Helps for the canvas layout. Some items don't need a declaration"""
+        if self.kind in [self.ELSE_SCOPE, self.FINALLY_SCOPE, self.TRY_SCOPE]:
+            return False
+        if self.kind == self.EXCEPT_SCOPE:
+            return self.ref.clause is not None
+        return True
+
+    def getColors(self):
+        """Custom colors for docstrings"""
+        if self.subKind == self.DOCSTRING:
+            s = self.canvas.settings
+            colorMixin = ColorMixin(self.ref, s.docstringBGColor,
+                                    s.docstringFGColor,
+                                    s.docstringBorderColor,
+                                    isDocstring=True)
+            return colorMixin.getColors()
+        return ColorMixin.getColors(self)
 
 
 _scopeCellElementToString = {
     ScopeCellElement.TOP_LEFT: "TOP_LEFT",
     ScopeCellElement.DECLARATION: "DECLARATION",
-    ScopeCellElement.COMMENT: "COMMENT",
     ScopeCellElement.DOCSTRING: "DOCSTRING"}
 
 
@@ -692,7 +628,19 @@ class FileScopeCell(ScopeCellElement):
     def render(self):
         """Renders the file scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, "module")
+            self.aboveBadges.append(BadgeItem(self, 'module'))
+            self.aboveBadges.append(None)   # Spacer
+            s = self.canvas.settings
+            if self.ref.docstring and s.hidedocstrings and not s.noDocstring:
+                self.aboveBadges.append(DocstringBadgeItem(self, 'doc'))
+            if s.hidecomments and not s.noComment:
+                leadingDoc = getDocComment(self.ref.leadingCMLComments)
+                if leadingDoc:
+                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                if self.ref.leadingComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                if self.ref.sideComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, True))
         return self.renderCell()
 
     def getLineRange(self):
@@ -713,7 +661,7 @@ class FileScopeCell(ScopeCellElement):
                 return [0, 0]
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
+        return self.ref.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides a file scope selected tooltip"""
@@ -731,42 +679,38 @@ class FunctionScopeCell(ScopeCellElement):
                                   canvas.settings.funcScopeBorderColor)
         self.kind = CellElement.FUNC_SCOPE
 
-    def getSideComment(self):
-        """Provides a side comment"""
-        # The comment may start not at the first line of the function
-        if self.canvas.settings.hidecomments:
-            return self.ref.sideComment.getDisplayValue()
-
-        linesBefore = self.ref.sideComment.beginLine - \
-                      self.ref.name.beginLine
-        sideComment = '\n' * linesBefore + \
-                      self.ref.sideComment.getDisplayValue()
-
-        # The comment may stop before the end of the arguments list
-        linesAfter = self.ref.arguments.endLine - self.ref.sideComment.endLine
-        return sideComment + '\n' * linesAfter
-
     def render(self):
         """Renders the function scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, "def")
+            self.aboveBadges.append(BadgeItem(self, 'def'))
+            self.aboveBadges.append(None)   # Spacer
+            s = self.canvas.settings
+            if self.ref.docstring and s.hidedocstrings and not s.noDocstring:
+                self.aboveBadges.append(DocstringBadgeItem(self, 'doc'))
+            if self.ref.decorators and s.hidedecors:
+                for index, _ in enumerate(self.ref.decorators):
+                    self.aboveBadges.append(DecorBadgeItem(self, index))
+            if s.hidecomments and not s.noComment:
+                leadingDoc = getDocComment(self.ref.leadingCMLComments)
+                if leadingDoc:
+                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                if self.ref.leadingComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                if self.ref.sideComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, True))
         return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getLineRange()
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getLineRange()
         return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getAbsPosRange()
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
+        return self.ref.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides a selected function block tooltip"""
@@ -784,46 +728,38 @@ class ClassScopeCell(ScopeCellElement):
                                   canvas.settings.classScopeBorderColor)
         self.kind = CellElement.CLASS_SCOPE
 
-    def getSideComment(self):
-        """Provides a side comment"""
-        # The comment may start not at the first line of the class
-        if self.canvas.settings.hidecomments:
-            return self.ref.sideComment.getDisplayValue()
-
-        linesBefore = self.ref.sideComment.beginLine - \
-                      self.ref.name.beginLine
-        sideComment = '\n' * linesBefore + \
-                      self.ref.sideComment.getDisplayValue()
-        if self.ref.baseClasses is None:
-            lastLine = self.ref.name.endLine
-        else:
-            lastLine = self.ref.baseClasses.endLine
-
-        # The comment may stop before the end of the arguments list
-        linesAfter = lastLine - self.ref.sideComment.endLine
-        return sideComment + '\n' * linesAfter
-
     def render(self):
         """Renders the class scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, "class")
+            self.aboveBadges.append(BadgeItem(self, 'class'))
+            self.aboveBadges.append(None)   # Spacer
+            s = self.canvas.settings
+            if self.ref.docstring and s.hidedocstrings and not s.noDocstring:
+                self.aboveBadges.append(DocstringBadgeItem(self, 'doc'))
+            if self.ref.decorators and s.hidedecors:
+                for index, _ in enumerate(self.ref.decorators):
+                    self.aboveBadges.append(DecorBadgeItem(self, index))
+            if s.hidecomments and not s.noComment:
+                leadingDoc = getDocComment(self.ref.leadingCMLComments)
+                if leadingDoc:
+                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                if self.ref.leadingComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                if self.ref.sideComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, True))
         return self.renderCell()
 
     def getLineRange(self):
         """Provides the line range"""
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getLineRange()
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getLineRange()
         return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
         if self.subKind == self.DOCSTRING:
             return self.ref.docstring.body.getAbsPosRange()
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
+        return self.ref.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides the selection tooltip"""
@@ -841,38 +777,25 @@ class ForScopeCell(ScopeCellElement):
                                   canvas.settings.forScopeBorderColor)
         self.kind = CellElement.FOR_SCOPE
 
-    def getSideComment(self):
-        """Provides a side comment"""
-        # The comment may start not at the first line of the function
-        if self.canvas.settings.hidecomments:
-            return self.ref.sideComment.getDisplayValue()
-
-        linesBefore = self.ref.sideComment.beginLine - \
-                      self.ref.iteration.beginLine
-        sideComment = '\n' * linesBefore + \
-                      self.ref.sideComment.getDisplayValue()
-
-        # The comment may stop before the end of the arguments list
-        linesAfter = self.ref.iteration.endLine - self.ref.sideComment.endLine
-        return sideComment + '\n' * linesAfter
-
     def render(self):
         """Renders the for-loop scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, "for")
+            self.aboveBadges.append(BadgeItem(self, "for"))
+            self.aboveBadges.append(None)   # Spacer
+            s = self.canvas.settings
+            if s.hidecomments and not s.noComment:
+                leadingDoc = getDocComment(self.ref.leadingCMLComments)
+                if leadingDoc:
+                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                if self.ref.leadingComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                if self.ref.sideComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, True))
         return self.renderCell()
-
-    def getLineRange(self):
-        """Provides the line range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getLineRange()
-        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
+        return self.ref.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides a selected for block tooltip"""
@@ -890,38 +813,25 @@ class WhileScopeCell(ScopeCellElement):
                                   canvas.settings.whileScopeBorderColor)
         self.kind = CellElement.WHILE_SCOPE
 
-    def getSideComment(self):
-        """Provides a side comment"""
-        # The comment may start not at the first line of the function
-        if self.canvas.settings.hidecomments:
-            return self.ref.sideComment.getDisplayValue()
-
-        linesBefore = self.ref.sideComment.beginLine - \
-                      self.ref.condition.beginLine
-        sideComment = '\n' * linesBefore + \
-                      self.ref.sideComment.getDisplayValue()
-
-        # The comment may stop before the end of the arguments list
-        linesAfter = self.ref.condition.endLine - self.ref.sideComment.endLine
-        return sideComment + '\n' * linesAfter
-
     def render(self):
         """Renders the while-loop scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, "while")
+            self.aboveBadges.append(BadgeItem(self, "while"))
+            self.aboveBadges.append(None)   # Spacer
+            s = self.canvas.settings
+            if s.hidecomments and not s.noComment:
+                leadingDoc = getDocComment(self.ref.leadingCMLComments)
+                if leadingDoc:
+                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                if self.ref.leadingComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                if self.ref.sideComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, True))
         return self.renderCell()
-
-    def getLineRange(self):
-        """Provides the lineRange"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getLineRange()
-        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
+        return self.ref.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides the selected while scope element tooltip"""
@@ -939,14 +849,23 @@ class TryScopeCell(ScopeCellElement):
                                   canvas.settings.tryScopeBorderColor)
         self.kind = CellElement.TRY_SCOPE
 
-    def getSideComment(self):
-        """Provides a side comment"""
-        return self.ref.sideComment.getDisplayValue()
-
     def render(self):
         """Renders the try scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, "try")
+            self.aboveBadges.append(BadgeItem(self, "try"))
+            self.aboveBadges.append(None)   # Spacer
+            s = self.canvas.settings
+            if s.hidecomments and not s.noComment:
+                leadingDoc = getDocComment(self.ref.leadingCMLComments)
+                if leadingDoc:
+                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                if self.ref.leadingComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                if self.ref.sideComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, True))
+            if s.hideexcepts:
+                for index, _ in enumerate(self.ref.exceptParts):
+                    self.aboveBadges.append(ExceptBadgeItem(self, index))
         return self.renderCell()
 
     def getLineRange(self):
@@ -955,19 +874,13 @@ class TryScopeCell(ScopeCellElement):
             beginLine = self.ref.body.beginLine
             _, endLine = self.ref.suite[-1].getLineRange()
             return [beginLine, endLine]
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getLineRange()
         return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.TOP_LEFT:
-            begin = self.ref.body.begin
-            _, end = self.ref.suite[-1].getAbsPosRange()
-            return [begin, end]
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
+        begin = self.ref.body.begin
+        _, end = self.ref.suite[-1].getAbsPosRange()
+        return [begin, end]
 
     def getSelectTooltip(self):
         """Provides the selected try block tooltip"""
@@ -985,95 +898,29 @@ class WithScopeCell(ScopeCellElement):
                                   canvas.settings.withScopeBorderColor)
         self.kind = CellElement.WITH_SCOPE
 
-    def getSideComment(self):
-        """Provides a side comment"""
-        # The comment may start not at the first line of the function
-        if self.canvas.settings.hidecomments:
-            return self.ref.sideComment.getDisplayValue()
-
-        linesBefore = self.ref.sideComment.beginLine - \
-                      self.ref.items.beginLine
-        sideComment = '\n' * linesBefore + \
-                      self.ref.sideComment.getDisplayValue()
-
-        # The comment may stop before the end of the arguments list
-        linesAfter = self.ref.items.endLine - self.ref.sideComment.endLine
-        return sideComment + '\n' * linesAfter
-
     def render(self):
         """Renders the with block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, "with")
+            self.aboveBadges.append(BadgeItem(self, "with"))
+            self.aboveBadges.append(None)   # Spacer
+            s = self.canvas.settings
+            if s.hidecomments and not s.noComment:
+                leadingDoc = getDocComment(self.ref.leadingCMLComments)
+                if leadingDoc:
+                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                if self.ref.leadingComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                if self.ref.sideComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, True))
         return self.renderCell()
-
-    def getLineRange(self):
-        """Provides the line range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getLineRange()
-        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
+        return self.ref.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides the selected with block tooltip"""
         return 'With' + self.getTooltipSuffix()
-
-
-class DecoratorScopeCell(ScopeCellElement):
-
-    """Represents a decorator scope element"""
-
-    def __init__(self, ref, canvas, x, y, subKind):
-        ScopeCellElement.__init__(self, ref, canvas, x, y, subKind,
-                                  canvas.settings.decorScopeBGColor,
-                                  canvas.settings.decorScopeFGColor,
-                                  canvas.settings.decorScopeBorderColor)
-        self.kind = CellElement.DECOR_SCOPE
-
-    def getSideComment(self):
-        """Provides a side comment"""
-        # The comment may start not at the first line of the function
-        if self.canvas.settings.hidecomments:
-            return self.ref.sideComment.getDisplayValue()
-
-        linesBefore = self.ref.sideComment.beginLine - \
-                      self.ref.name.beginLine
-        sideComment = '\n' * linesBefore + \
-                      self.ref.sideComment.getDisplayValue()
-        if self.ref.arguments is None:
-            lastLine = self.ref.name.endLine
-        else:
-            lastLine = self.ref.arguments.endLine
-
-        # The comment may stop before the end of the arguments list
-        linesAfter = lastLine - self.ref.sideComment.endLine
-        return sideComment + '\n' * linesAfter
-
-    def render(self):
-        """Renders the decorator"""
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, " @ ")
-        return self.renderCell()
-
-    def getLineRange(self):
-        """Provides the line range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getLineRange()
-        return CellElement.getLineRange(self)
-
-    def getAbsPosRange(self):
-        """Provides the absolute position range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
-
-    def getSelectTooltip(self):
-        """Provides the selected decorator tooltip"""
-        return 'Decorator' + self.getTooltipSuffix()
 
 
 class ElseScopeCell(ScopeCellElement):
@@ -1104,27 +951,25 @@ class ElseScopeCell(ScopeCellElement):
         self.statement = statement
         self.after = self
 
-    def getSideComment(self):
-        """Provides a side comment"""
-        return self.ref.sideComment.getDisplayValue()
-
     def render(self):
         """Renders the else block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, "else")
+            self.aboveBadges.append(BadgeItem(self, "else"))
+            self.aboveBadges.append(None)   # Spacer
+            s = self.canvas.settings
+            if s.hidecomments and not s.noComment:
+                leadingDoc = getDocComment(self.ref.leadingCMLComments)
+                if leadingDoc:
+                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                if self.ref.leadingComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                if self.ref.sideComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, True))
         return self.renderCell()
-
-    def getLineRange(self):
-        """Provides the line range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getLineRange()
-        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
+        return self.ref.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides the selection tooltip"""
@@ -1169,39 +1014,25 @@ class ExceptScopeCell(ScopeCellElement):
                                   canvas.settings.exceptScopeBorderColor)
         self.kind = CellElement.EXCEPT_SCOPE
 
-    def getSideComment(self):
-        """Provides a side comment"""
-        # The comment may start not at the first line of the except
-        if self.ref.clause is None or self.canvas.settings.hidecomments:
-            return self.ref.sideComment.getDisplayValue()
-
-        linesBefore = self.ref.sideComment.beginLine - \
-                      self.ref.clause.beginLine
-        sideComment = '\n' * linesBefore + \
-                      self.ref.sideComment.getDisplayValue()
-        lastLine = self.ref.clause.endLine
-
-        # The comment may stop before the end of the arguments list
-        linesAfter = lastLine - self.ref.sideComment.endLine
-        return sideComment + '\n' * linesAfter
-
     def render(self):
         """Renders the except block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, "except")
+            self.aboveBadges.append(BadgeItem(self, "except"))
+            self.aboveBadges.append(None)   # Spacer
+            s = self.canvas.settings
+            if s.hidecomments and not s.noComment:
+                leadingDoc = getDocComment(self.ref.leadingCMLComments)
+                if leadingDoc:
+                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                if self.ref.leadingComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                if self.ref.sideComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, True))
         return self.renderCell()
-
-    def getLineRange(self):
-        """Provides the line range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getLineRange()
-        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
+        return self.ref.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides the selection tooltip"""
@@ -1219,27 +1050,25 @@ class FinallyScopeCell(ScopeCellElement):
                                   canvas.settings.finallyScopeBorderColor)
         self.kind = CellElement.FINALLY_SCOPE
 
-    def getSideComment(self):
-        """Provides the side comment"""
-        return self.ref.sideComment.getDisplayValue()
-
     def render(self):
         """Renders the finally block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.badgeItem = BadgeItem(self, "finally")
+            self.aboveBadges.append(BadgeItem(self, "finally"))
+            self.aboveBadges.append(None)   # Spacer
+            s = self.canvas.settings
+            if s.hidecomments and not s.noComment:
+                leadingDoc = getDocComment(self.ref.leadingCMLComments)
+                if leadingDoc:
+                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                if self.ref.leadingComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                if self.ref.sideComment:
+                    self.aboveBadges.append(CommentBadgeItem(self, True))
         return self.renderCell()
-
-    def getLineRange(self):
-        """Provides the line range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getLineRange()
-        return CellElement.getLineRange(self)
 
     def getAbsPosRange(self):
         """Provides the absolute position range"""
-        if self.subKind == self.COMMENT:
-            return self.ref.sideComment.getAbsPosRange()
-        return CellElement.getAbsPosRange(self)
+        return self.ref.getAbsPosRange()
 
     def getSelectTooltip(self):
         """Provides a tooltip for the selected finally block"""

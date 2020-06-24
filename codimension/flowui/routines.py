@@ -71,3 +71,22 @@ def getDocComment(cmlComments):
     """CML doc comment reference or None"""
     return getCMLComment(cmlComments, CMLdoc.CODE)
 
+
+def getDoclinkIconAndTooltip(cmlRef, hidden=False):
+    """Provides the icon file name and a tooltip for a doc item"""
+    if cmlRef.link is not None and cmlRef.anchor is not None:
+        pixmap = 'docanchor.svg'
+        tooltip = 'Jump to the documentation'
+    elif cmlRef.link is not None:
+        pixmap = 'doclink.svg'
+        tooltip = 'Jump to the documentation'
+    else:
+        pixmap = 'anchor.svg'
+        tooltip = 'Documentation anchor'
+
+    if hidden:
+        pixmap = 'hidden' + pixmap
+        if cmlRef.title:
+            tooltip = cmlRef.title
+    return pixmap, tooltip
+

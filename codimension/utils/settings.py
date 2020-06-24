@@ -176,6 +176,7 @@ _DEFAULT_SETTINGS = {
     'hidedocstrings': False,
     'hidecomments': False,
     'hideexcepts': False,
+    'hidedecors': False,
 
     # Debug variable filters
     'dbgfltlocal': True,
@@ -254,6 +255,7 @@ class SettingsWrapper(QObject,
     sigHideDocstringsChanged = pyqtSignal()
     sigHideCommentsChanged = pyqtSignal()
     sigHideExceptsChanged = pyqtSignal()
+    sigHideDecorsChanged = pyqtSignal()
     sigSmartZoomChanged = pyqtSignal()
     sigRecentFilesChanged = pyqtSignal()
 
@@ -474,6 +476,8 @@ class SettingsWrapper(QObject,
             self.sigHideCommentsChanged.emit()
         elif key == 'hideexcepts':
             self.sigHideExceptsChanged.emit()
+        elif key == 'hidedecors':
+            self.sigHideDecorsChanged.emit()
         self.flush()
 
     def onTextZoomIn(self):

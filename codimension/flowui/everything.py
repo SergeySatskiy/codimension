@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # encoding: utf-8
+# cml 1 doc anchor=000 title="Some anchor"
 # cml 1 cc bg=#ffffff
 # File top comment
 
@@ -13,6 +14,11 @@ File docstring
 # Code blocks
 #
 
+# cml 1 doc anchor=000 title="Some anchor"
+# cml 1 doc link=000 title="Some link"
+# cml 1 doc link=000 anchor=999 title="BOTH"
+
+
 
 # cml 1 rt text="one"
 # cml 1 gb id=1 title="Outer group"
@@ -23,10 +29,11 @@ one = 1
 two = 2
 # cml 1 ge id=0
 
+# cml 1 doc anchor=000 title="Some anchor"
 # Leading
-a = 10      # Side
-b = 20      # Side
-            # Side last
+a = 1      # Side
+b = 2      # Side
+           # Side last
 
 
 c = """
@@ -36,9 +43,11 @@ c = """
                 # Another side
 # cml 1 ge id=1
 
+# cml 1 gb id=5 title="One item group"
 '''
 ...
 '''
+# cml 1 ge id=5
 
 
 # cml 1 gb id=3 title="Empty group"
@@ -71,6 +80,7 @@ a = 10      # Side
 import sys, \
        os.path
 
+# cml 1 doc link=000 title="Some link"
 # Leading
 import sys      # Side
                 # Side last
@@ -188,6 +198,7 @@ class C4( C5 ):
 def d():
     pass
 
+# cml 1 doc anchor=000 title="Some anchor"
 # Leading
 @decor2     # Side 1
             # Side 2
@@ -197,7 +208,8 @@ def d():
 # Leading
 @decor2( x,     # Side 1
          y )    # Side 2
-def d():
+def d():    # side inside decor
+            # Second line
     pass
 
 @decor3
@@ -297,6 +309,7 @@ except:
 if True:
     try:
         pass
+    # cml 1 cc bg=#1dd21a fg=#000 border=#969696
     except Exception:
         pass
     except Exception as ex:
@@ -360,6 +373,7 @@ for x in y:
     # cml 1 cc bg=0,230,0 fg=255,255,255
     # Leading 1
     # Leading 2
+    # cml 1 doc link=000 anchor=999 title="BOTH"
     break   # Side 1
             # Side 2
 
@@ -371,6 +385,7 @@ while True:
     # cml 1 cc bg=0,230,0 fg=255,255,255
     # Leading 1
     # Leading 2
+    # cml 1 doc link=000 anchor=999 title="BOTH"
     continue    # Side 1
                 # Side 2
 
@@ -417,6 +432,8 @@ def f16():
 
 assert x != 154
 
+# cml 1 doc link=000 anchor=999 title="BOTH"
+# Leading
 assert x != 154 and \
        y != 154 and \
        z != 154
@@ -444,6 +461,8 @@ raise Exception( 1 +
                  2 +
                  3 )
 
+
+# cml 1 doc link=000 title="Some link"
 # cml 1 cc bg=0,230,0 fg=0,0,230
 # Leading
 raise Exception( 1 +    # Side 1
@@ -464,6 +483,7 @@ sys.exit( 0 +
           0 +
           0 )
 
+# cml 1 doc link=000 title="Some link"
 # Leading
 sys.exit( 0 +   # Side 1
           0 )   # Side 2
@@ -586,7 +606,10 @@ else:
 
 # cml 1 doc link=888 title=zdkslsdlks
 def ff(x):
-    if True:
+
+    # cml 1 doc link=888 title="some doc link"
+    # If leading comment
+    if True:        # If side comment
         # Something
 
         if x > 32:

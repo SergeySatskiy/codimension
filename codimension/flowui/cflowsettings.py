@@ -43,13 +43,15 @@ NEED_NORMALIZE = ('ifWidth', 'commentCorner', 'hCellPadding',
                   'vHiddenExceptPadding', 'vHiddenCommentPadding',
                   'hHiddenCommentPadding', 'badgeHSpacing', 'badgeVSpacing',
                   'badgeShift', 'scopeRectRadius', 'badgeRadius',
+                  'badgePixmapSpacing', 'badgeToBadgeHSpacing',
+                  'badgeToScopeVPadding', 'badgeGroupSpacing',
                   'openGroupVSpacer', 'openGroupHSpacer',
                   'collapsedGroupXShift', 'collapsedGroupYShift',
                   'emptyGroupXShift', 'emptyGroupYShift', 'breakHPadding',
                   'breakVPadding', 'breakRectRadius', 'continueHPadding',
                   'continueVPadding', 'continueRectRadius',
                   'hiddenCommentRectRadius', 'hiddenExceptRectRadius',
-                  'ifSideCommentVShift')
+                  'ifSideCommentVShift', 'decorRectRadius')
 
 class CFlowSettings:
 
@@ -74,6 +76,7 @@ class CFlowSettings:
         setattr(self, 'hidedocstrings', settings['hidedocstrings'])
         setattr(self, 'hidecomments', settings['hidecomments'])
         setattr(self, 'hideexcepts', settings['hideexcepts'])
+        setattr(self, 'hidedecors', settings['hidedecors'])
 
         # Dynamic settings for the smart zoom feature
         setattr(self, 'noContent', False)

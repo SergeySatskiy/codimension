@@ -26,7 +26,7 @@ from ui.qt import QMimeData, Qt, QApplication, QPen
 from utils.globals import GlobalData
 from utils.config import DEFAULT_ENCODING
 from .cml import CMLVersion
-from .routines import distance
+from .routines import distance, getDocComment
 
 
 class CellElement:
@@ -51,13 +51,12 @@ class CellElement:
     WHILE_SCOPE = 104
     TRY_SCOPE = 105
     WITH_SCOPE = 106
-    DECOR_SCOPE = 107
-    ELSE_SCOPE = 108
-    EXCEPT_SCOPE = 109
-    FINALLY_SCOPE = 110
-    SCOPE_H_SIDE_EDGE = 111
-    SCOPE_V_SIDE_EDGE = 112
-    SCOPE_CORNER_EDGE = 113
+    ELSE_SCOPE = 107
+    EXCEPT_SCOPE = 108
+    FINALLY_SCOPE = 109
+    SCOPE_H_SIDE_EDGE = 110
+    SCOPE_V_SIDE_EDGE = 111
+    SCOPE_CORNER_EDGE = 112
 
     # The three items below will be mapped to ELSE_SCOPE
     # They are needed to distinguish the constructors which use individual
@@ -80,14 +79,12 @@ class CellElement:
     INDEPENDENT_COMMENT = 210
     SIDE_COMMENT = 211
     ABOVE_COMMENT = 212
-    EXCEPT_MINIMIZED = 213
     INDEPENDENT_DOC = 214
     LEADING_DOC = 215
     ABOVE_DOC = 216
     INDEPENDENT_MINIMIZED_COMMENT = 217
-    LEADING_MINIMIZED_COMMENT = 218
-    SIDE_MINIMIZED_COMMENT = 219
-    ABOVE_MINIMIZED_COMMENT = 220
+    INDEPENDENT_MINIMIZED_DOC = 218
+    DECORATOR = 221
 
     CONNECTOR = 300
     SVG = 301
@@ -98,6 +95,11 @@ class CellElement:
     LINE = 306
     RECTANGLE = 307
     GROUP_CORNER_CONROL = 308
+    SCOPE_DOCSTRING_BADGE = 309
+    SCOPE_COMMENT_BADGE = 310
+    SCOPE_EXCEPT_BADGE = 311
+    SCOPE_DECORATOR_BADGE = 312
+    SCOPE_DOCLINK_BADGE = 313
 
     EMPTY_GROUP = 500
     OPENED_GROUP_BEGIN = 501
@@ -130,15 +132,102 @@ class CellElement:
         self.itemID = canvas.settings.itemID
         canvas.settings.itemID += 1
 
+        # The badges must be of the equal height so they are collected
+        # in this list
+        self.aboveBadges = []
+
     def __str__(self):
         return kindToString(self.kind) + \
             '[' + str(self.minWidth) + 'x' + str(self.minHeight) + '] -> [' + \
             str(self.width) + 'x' + str(self.height) + ']'
 
+    def normalizeBadgesHeight(self):
+        """Makes all the badges of the same height (max)"""
+        maxHeight = -1
+        for badge in self.aboveBadges:
+            if badge is not None:
+                maxHeight = max(maxHeight, badge.height)
+        for badge in self.aboveBadges:
+            if badge is not None:
+                badge.height = maxHeight
+                # make sure the badge is at least square
+                if badge.width < badge.height:
+                    badge.width = badge.height
+
+    def getBadgeRowHeight(self):
+        """Provides the height of the badges row"""
+        for badge in self.aboveBadges:
+            if badge is not None:
+                return badge.height
+        return 0
+
+    def hasAboveBadges(self):
+        """True if there are top badges"""
+        for badge in self.aboveBadges:
+            if badge is not None:
+                return True
+        return False
+
+    def appendCommentBadges(self):
+        """Appends the comment badges (regular, non scope items)"""
+        from .auxitems import DocLinkBadgeItem, CommentBadgeItem
+        # Returns the width and height added by the badges row
+        settings = self.canvas.settings
+        if settings.hidecomments and not settings.noComment:
+            badgeCount = 0
+            leadingDoc = getDocComment(self.ref.leadingCMLComments)
+            if leadingDoc:
+                self.aboveBadges.append(DocLinkBadgeItem(self))
+                badgeCount += 1
+            if self.ref.leadingComment:
+                self.aboveBadges.append(CommentBadgeItem(self, False))
+                badgeCount += 1
+            if self.ref.sideComment:
+                self.aboveBadges.append(CommentBadgeItem(self, True))
+                badgeCount += 1
+
+            if badgeCount > 0:
+                self.normalizeBadgesHeight()
+                width = settings.badgeShift
+                for badge in self.aboveBadges:
+                    if badge:
+                        width += badge.width + settings.badgeToBadgeHSpacing
+                    else:
+                        width += settings.badgeGroupSpacing
+                if self.aboveBadges[-1] is not None:
+                    width -= settings.badgeToBadgeHSpacing
+                return width, self.getBadgeRowHeight() + settings.badgeToScopeVPadding
+        return 0, 0
+
     def render(self):
         """Renders the graphics considering settings"""
         raise Exception("render() is not implemented for " +
                         kindToString(self.kind))
+
+    def drawCommentBadges(self, scene):
+        """Draws the badges raw"""
+        # Returns the height added by the badges row
+        if self.hasAboveBadges():
+            settings = self.canvas.settings
+            badgeEndXPos = self.baseX + self.minWidth - settings.hCellPadding
+            yPos = self.baseY + settings.vCellPadding
+            first = True
+            for badge in reversed(self.aboveBadges):
+                if first:
+                    badgeEndXPos -= settings.badgeShift
+                if badge is not None:
+                    if not first:
+                        badgeEndXPos -= settings.badgeToBadgeHSpacing
+                    badgeXPos = badgeEndXPos - badge.width
+                    badge.moveTo(badgeXPos, yPos)
+                    scene.addItem(badge)
+                    badge.draw(scene, badgeXPos, yPos)
+                    badgeEndXPos = badgeXPos
+                else:
+                    badgeEndXPos -= settings.badgeGroupSpacing
+                first = False
+            return self.getBadgeRowHeight() + settings.badgeToScopeVPadding
+        return 0
 
     def draw(self, scene, baseX, baseY):
         """Draws the element on the real canvas. Should respect settings."""
@@ -231,7 +320,7 @@ class CellElement:
         return self.kind in (self.FILE_SCOPE, self.FUNC_SCOPE,
                              self.CLASS_SCOPE, self.FOR_SCOPE,
                              self.WHILE_SCOPE, self.TRY_SCOPE,
-                             self.WITH_SCOPE, self.DECOR_SCOPE,
+                             self.WITH_SCOPE,
                              self.ELSE_SCOPE, self.EXCEPT_SCOPE,
                              self.FINALLY_SCOPE,
                              self.SCOPE_H_SIDE_EDGE, self.SCOPE_V_SIDE_EDGE,
@@ -261,9 +350,8 @@ class CellElement:
                              self.SIDE_COMMENT,
                              self.ABOVE_COMMENT,
                              self.INDEPENDENT_MINIMIZED_COMMENT,
-                             self.LEADING_MINIMIZED_COMMENT,
-                             self.SIDE_MINIMIZED_COMMENT,
-                             self.ABOVE_MINIMIZED_COMMENT)
+                             self.SCOPE_COMMENT_BADGE,
+                             self.SCOPE_DOCLINK_BADGE)
 
     def isCMLDoc(self):
         """True if it is a CML doc item"""
@@ -275,18 +363,19 @@ class CellElement:
         return self.kind in (self.OPENED_GROUP_BEGIN, self.OPENED_GROUP_END,
                              self.COLLAPSED_GROUP, self.EMPTY_GROUP)
 
-    @staticmethod
-    def isDocstring():
+    def isDocstring(self):
         """True if it is a docstring"""
-        return False
+        return self.kind == self.SCOPE_DOCSTRING_BADGE
 
     def isMinimizedItem(self):
         """True if it is a minimized item"""
         return self.kind in (self.INDEPENDENT_MINIMIZED_COMMENT,
-                             self.LEADING_MINIMIZED_COMMENT,
-                             self.EXCEPT_MINIMIZED,
-                             self.SIDE_MINIMIZED_COMMENT,
-                             self.ABOVE_MINIMIZED_COMMENT)
+                             self.INDEPENDENT_MINIMIZED_DOC,
+                             self.SCOPE_EXCEPT_BADGE,
+                             self.SCOPE_DOCSTRING_BADGE,
+                             self.SCOPE_COMMENT_BADGE,
+                             self.SCOPE_DECORATOR_BADGE,
+                             self.SCOPE_DOCLINK_BADGE)
 
     def getDistance(self, absPos):
         """Default implementation.
@@ -356,7 +445,6 @@ __kindToString = {
     CellElement.FILE_SCOPE: 'FILE_SCOPE',
     CellElement.FUNC_SCOPE: 'FUNC_SCOPE',
     CellElement.CLASS_SCOPE: 'CLASS_SCOPE',
-    CellElement.DECOR_SCOPE: 'DECOR_SCOPE',
     CellElement.FOR_SCOPE: 'FOR_SCOPE',
     CellElement.WHILE_SCOPE: 'WHILE_SCOPE',
     CellElement.ELSE_SCOPE: 'ELSE_SCOPE',
@@ -381,10 +469,8 @@ __kindToString = {
     CellElement.SIDE_COMMENT: 'SIDE_COMMENT',
     CellElement.ABOVE_COMMENT: 'ABOVE_COMMENT',
     CellElement.INDEPENDENT_MINIMIZED_COMMENT: 'INDEPENDENT_MINIMIZED_COMMENT',
-    CellElement.LEADING_MINIMIZED_COMMENT: 'LEADING_MINIMIZED_COMMENT',
-    CellElement.SIDE_MINIMIZED_COMMENT: 'SIDE_MINIMIZED_COMMENT',
-    CellElement.ABOVE_MINIMIZED_COMMENT: 'ABOVE_MINIMIZED_COMMENT',
-    CellElement.EXCEPT_MINIMIZED: 'EXCEPT_MINIMIZED',
+    CellElement.INDEPENDENT_MINIMIZED_DOC: 'INDEPENDENT_MINIMIZED_DOC',
+    CellElement.DECORATOR: 'DECORATOR',
     CellElement.CONNECTOR: 'CONNECTOR',
     CellElement.DEPENDENT_CONNECTOR: 'DEPENDENT_CONNECTOR',
     CellElement.SVG: 'SVG',
@@ -394,6 +480,11 @@ __kindToString = {
     CellElement.LINE: 'LINE',
     CellElement.RECTANGLE: 'RECTANGLE',
     CellElement.GROUP_CORNER_CONROL: 'GROUP_CORNER_CONROL',
+    CellElement.SCOPE_DOCSTRING_BADGE: 'SCOPE_DOCSTRING_BADGE',
+    CellElement.SCOPE_COMMENT_BADGE: 'SCOPE_COMMENT_BADGE',
+    CellElement.SCOPE_EXCEPT_BADGE: 'SCOPE_EXCEPT_BADGE',
+    CellElement.SCOPE_DECORATOR_BADGE: 'SCOPE_DECORATOR_BADGE',
+    CellElement.SCOPE_DOCLINK_BADGE: 'SCOPE_DOCLINK_BADGE',
     CellElement.INDEPENDENT_DOC: 'INDEPENDENT_DOC',
     CellElement.LEADING_DOC: 'LEADING_DOC',
     CellElement.ABOVE_DOC: 'ABOVE_DOC',

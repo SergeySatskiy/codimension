@@ -76,13 +76,10 @@ class ColorMixin:
         if leadingCML:
             colorSpec = CMLVersion.find(leadingCML, CMLcc)
             if colorSpec:
-
-                # NOTE: no border color support for the docstrings
-
-                if colorSpec.bgColor:
-                    self.bgColor = colorSpec.bgColor
-                if colorSpec.fgColor:
-                    self.fgColor = colorSpec.fgColor
+                # NOTE: no border color support for the docstrings full
+                #       text in the scope however used for a hidden (badge)
+                #       kind of docstring
+                self.__getFromColorSpec(colorSpec)
 
     def __getCustomColors(self, ref):
         """Provides the colors to be used for an item"""
