@@ -558,6 +558,12 @@ class VirtualCanvas:
 
     def __checkOpenGroupBefore(self, vacantRow, column):
         """Checks if the previous row is an open group end"""
+        if True:
+            # Not needed anymore - the badges are now always out of the scope
+            # so they are properly considered when item is rendered. So there
+            # is no need of the additional spacing
+            return vacantRow
+
         if vacantRow > 0:
             for cell in self.cells[vacantRow - 1]:
                 if cell.kind in [CellElement.OPENED_GROUP_END,

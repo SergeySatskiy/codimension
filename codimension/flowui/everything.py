@@ -299,12 +299,14 @@ else:   # Side 1
 # Try
 #
 
+# cml 1 gb id=6 title="Outer group"
 # cml 1 gb id=4 title=fff
 try:
     pass
 except:
     pass
 # cml 1 ge id=4
+# cml 1 ge id=6
 
 if True:
     try:
