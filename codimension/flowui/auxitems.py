@@ -948,7 +948,7 @@ class DecorBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        decLine = self.getLineRange()[0]
+        decLine = self.ref.ref.decorators[self.decorIndex].body.beginLine
         decPos = self.ref.ref.decorators[self.decorIndex].body.beginPos
         CellElement.mouseDoubleClickEvent(
             self.ref, event, line=decLine, pos=decPos)
