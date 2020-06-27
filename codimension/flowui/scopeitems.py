@@ -687,7 +687,7 @@ class FunctionScopeCell(ScopeCellElement):
             s = self.canvas.settings
             if self.ref.docstring and s.hidedocstrings and not s.noDocstring:
                 self.aboveBadges.append(DocstringBadgeItem(self, 'doc'))
-            if self.ref.decorators and s.hidedecors:
+            if self.ref.decorators and s.hidedecors and not s.noDecor:
                 for index, _ in enumerate(self.ref.decorators):
                     self.aboveBadges.append(DecorBadgeItem(self, index))
             if s.hidecomments and not s.noComment:
@@ -736,7 +736,7 @@ class ClassScopeCell(ScopeCellElement):
             s = self.canvas.settings
             if self.ref.docstring and s.hidedocstrings and not s.noDocstring:
                 self.aboveBadges.append(DocstringBadgeItem(self, 'doc'))
-            if self.ref.decorators and s.hidedecors:
+            if self.ref.decorators and s.hidedecors and not s.noDecor:
                 for index, _ in enumerate(self.ref.decorators):
                     self.aboveBadges.append(DecorBadgeItem(self, index))
             if s.hidecomments and not s.noComment:
