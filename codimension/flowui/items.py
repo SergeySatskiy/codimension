@@ -1009,7 +1009,7 @@ class IfCell(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
         self.x1 = baseX + settings.hCellPadding
         self.y1 = self.baseY + (self.minHeight - takenByBadges)/ 2 + takenByBadges
-        self.x2 = baseX + settings.hCellPadding + settings.ifWidth
+        self.x2 = self.x1 + settings.ifWidth
         self.y2 = self.baseY + settings.vCellPadding + takenByBadges
         self.x3 = baseX + self.minWidth - \
                   settings.hCellPadding - settings.ifWidth - shift

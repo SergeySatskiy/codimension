@@ -26,7 +26,7 @@
 
 from sys import maxsize
 from html import escape
-from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
+from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem, QPointF, QColor
 from .auxitems import (BadgeItem, Connector, HSpacerCell, VSpacerCell,
                        SpacerCell, DocstringBadgeItem, CommentBadgeItem,
                        ExceptBadgeItem, DecorBadgeItem, DocLinkBadgeItem)
@@ -134,6 +134,10 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         self.minWidth = self.textRect.width() + \
                         2 * s.hHeaderPadding - s.scopeRectRadius
 
+        if self.kind in [CellElement.WHILE_SCOPE,
+                         CellElement.FOR_SCOPE]:
+            self.minWidth += 2 * s.ifWidth + 2 * s.loopHeaderPadding
+
         self.minWidth = max(self.minWidth, s.minWidth)
 
     def __renderDocstring(self):
@@ -238,12 +242,9 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
                 self.baseY + s.vCellPadding)
             self.scene.addItem(self._connector)
 
-            yPosBegin = sum((self.baseY, s.vCellPadding,
-                             self.getBadgeRowHeight(),
-                             s.badgeToScopeVPadding, 1))
             bottomConnector = Connector(
                 self.canvas, self.baseX + s.mainLine,
-                yPosBegin,
+                self.baseY + self.canvas.height - s.vCellPadding,
                 self.baseX + s.mainLine,
                 self.baseY + self.canvas.height)
             self.scene.addItem(bottomConnector)
@@ -282,9 +283,8 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
         # Draw a horizontal connector if needed
         if self._connector is None:
-            if self.kind == CellElement.EXCEPT_SCOPE or (
-                    self.kind == CellElement.ELSE_SCOPE and
-                    self.__followLoop()):
+            afterLoop = self.kind == CellElement.ELSE_SCOPE and self.__followLoop()
+            if self.kind == CellElement.EXCEPT_SCOPE or afterLoop:
                 parentCanvas = self.canvas.canvas
                 cellToTheLeft = parentCanvas.cells[
                     self.canvas.addr[1]][self.canvas.addr[0] - 1]
@@ -296,10 +296,14 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
                 yPos = self.baseY + 2 * s.vCellPadding + \
                        self.getBadgeRowHeight() + s.badgeToScopeVPadding
+                startXPos = cellToTheLeft.baseX + cellToTheLeft.minWidth - \
+                            s.hCellPadding + s.boxLineWidth
+                if afterLoop:
+                    startXPos -= s.loopHeaderPadding
+
                 self._connector = Connector(
                     self.canvas,
-                    cellToTheLeft.baseX + cellToTheLeft.minWidth -
-                    s.hCellPadding + s.boxLineWidth,
+                    startXPos,
                     yPos,
                     self.baseX + s.hCellPadding - s.boxLineWidth,
                     yPos)
@@ -313,6 +317,32 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         if hasattr(self.scene.parent(), "updateNavigationToolbar"):
             self.__navBarUpdate = self.scene.parent().updateNavigationToolbar
             self.setAcceptHoverEvents(True)
+
+        if self.kind in [CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE]:
+            self.__calcPolygon()
+
+    def __calcPolygon(self):
+        """Calculates the polygon for loops"""
+        s = self.canvas.settings
+        yTopPos = self.baseY + s.vCellPadding
+        if self.hasAboveBadges():
+            yTopPos += self.getBadgeRowHeight() + s.badgeToScopeVPadding
+
+        cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
+        halfDeclHeight = (cellBelow.height + s.scopeRectRadius) / 2
+
+        self.x1 = self.baseX + s.hCellPadding + s.loopHeaderPadding
+        self.y1 = yTopPos + halfDeclHeight
+        self.x2 = self.x1 + s.ifWidth
+        self.y2 = self.y1 - halfDeclHeight
+        self.x4 = self.baseX + self.canvas.minWidth - s.hCellPadding - s.loopHeaderPadding
+        self.y4 = self.y1
+        self.x3 = self.x4 - s.ifWidth
+        self.y3 = self.y2
+        self.x5 = self.x3
+        self.y5 = self.y4 + halfDeclHeight
+        self.x6 = self.x2
+        self.y6 = self.y5
 
     def __drawDeclaration(self):
         """Draws the declaration item"""
@@ -360,42 +390,69 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         if self.hasAboveBadges():
             yPos += self.getBadgeRowHeight() + s.badgeToScopeVPadding
             height -= self.getBadgeRowHeight() + s.badgeToScopeVPadding
+
+        if self.kind in [CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE]:
+            cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
+            halfDeclHeight = (cellBelow.height + s.scopeRectRadius) / 2
+            yPos += halfDeclHeight
+            height -= halfDeclHeight
+
         painter.drawRoundedRect(self.baseX + s.hCellPadding,
                                 yPos,
                                 self.canvas.minWidth - 2 * s.hCellPadding,
                                 height,
                                 s.scopeRectRadius, s.scopeRectRadius)
 
+        if self.kind in [CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE]:
+            painter.drawPolygon(
+                QPointF(self.x1, self.y1), QPointF(self.x2, self.y2),
+                QPointF(self.x3, self.y3), QPointF(self.x4, self.y4),
+                QPointF(self.x5, self.y5), QPointF(self.x6, self.y6))
+
     def __paintDeclaration(self, painter):
         """Paints the scope header"""
         s = self.canvas.settings
-        painter.setBrush(QBrush(self.bgColor))
-        pen = QPen(self.fgColor)
-        painter.setFont(s.monoFont)
-        painter.setPen(pen)
         canvasLeft = self.baseX - s.scopeRectRadius
         canvasTop = self.baseY - s.scopeRectRadius
 
-        painter.drawText(canvasLeft + s.hHeaderPadding,
-                         canvasTop + s.vHeaderPadding,
-                         self.textRect.width(), self.textRect.height(),
-                         Qt.AlignLeft, self.text)
-
-        pen = QPen(self.borderColor)
-        pen.setWidth(s.boxLineWidth)
-        painter.setPen(pen)
-
-        # If the scope is selected then the line may need to be shorter
-        # to avoid covering the outline
         row = self.addr[1] - 1
         column = self.addr[0] - 1
-        correction = 0.0
-        if self.canvas.cells[row][column].isSelected():
-            correction = s.selectPenWidth - 1
-        painter.drawLine(canvasLeft + correction, self.baseY + self.height,
-                         canvasLeft + self.canvas.minWidth -
-                         2 * s.hCellPadding - correction,
-                         self.baseY + self.height)
+        topLeftCell = self.canvas.cells[row][column]
+
+        if self.kind not in [CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE]:
+            painter.setBrush(QBrush(self.bgColor))
+
+            pen = QPen(self.borderColor)
+            pen.setWidth(s.boxLineWidth)
+            painter.setPen(pen)
+
+            # If the scope is selected then the line may need to be shorter
+            # to avoid covering the outline
+            correction = 0.0
+            if topLeftCell.isSelected():
+                correction = s.selectPenWidth - 1
+            painter.drawLine(canvasLeft + correction, self.baseY + self.height,
+                             canvasLeft + self.canvas.minWidth -
+                             2 * s.hCellPadding - correction,
+                             self.baseY + self.height)
+
+        pen = QPen(self.fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+
+        if self.kind in [CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE]:
+            availWidth = topLeftCell.x3 - topLeftCell.x2
+            textWidth = self.textRect.width() + 2 * s.hTextPadding
+            textShift = (availWidth - textWidth) / 2
+            painter.drawText(topLeftCell.x2 + s.hTextPadding + textShift,
+                             canvasTop + s.vHeaderPadding,
+                             self.textRect.width(), self.textRect.height(),
+                             Qt.AlignLeft | Qt.AlignVCenter, self.text)
+        else:
+            painter.drawText(canvasLeft + s.hHeaderPadding,
+                             canvasTop + s.vHeaderPadding,
+                             self.textRect.width(), self.textRect.height(),
+                             Qt.AlignLeft, self.text)
 
     def __paintDocstring(self, painter):
         """Paints the docstring"""

@@ -51,7 +51,8 @@ NEED_NORMALIZE = ('ifWidth', 'commentCorner', 'hCellPadding',
                   'breakVPadding', 'breakRectRadius', 'continueHPadding',
                   'continueVPadding', 'continueRectRadius',
                   'hiddenCommentRectRadius', 'hiddenExceptRectRadius',
-                  'ifSideCommentVShift', 'decorRectRadius')
+                  'ifSideCommentVShift', 'decorRectRadius',
+                  'loopHeaderPadding')
 
 class CFlowSettings:
 

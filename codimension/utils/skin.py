@@ -303,6 +303,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'docstringBorderColor': QColor(150, 150, 150, 255),
 
     'scopeRectRadius': 4,
+    'loopHeaderPadding': 7,
 
     'fileScopeBGColor': QColor(255, 255, 255, 255),
     'fileScopeFGColor': QColor(0, 0, 0, 255),
