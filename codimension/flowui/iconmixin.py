@@ -43,6 +43,6 @@ class IconMixin:
         """Provides the icon height"""
         if self.__iconHeight is None:
             self.__iconHeight = \
-                settings.monoFontMetrics.boundingRect('W').height()
+                settings.monoFontMetrics.boundingRect('W').height() * 0.8
         return self.__iconHeight
 
