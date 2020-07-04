@@ -556,32 +556,6 @@ class VirtualCanvas:
         # We are not in a group now, so process the item
         return False, vacantRow
 
-    def __checkOpenGroupBefore(self, vacantRow, column):
-        """Checks if the previous row is an open group end"""
-        if True:
-            # Not needed anymore - the badges are now always out of the scope
-            # so they are properly considered when item is rendered. So there
-            # is no need of the additional spacing
-            return vacantRow
-
-        if vacantRow > 0:
-            for cell in self.cells[vacantRow - 1]:
-                if cell.kind in [CellElement.OPENED_GROUP_END,
-                                 CellElement.OPENED_GROUP_BEGIN]:
-                    # Need to insert a connector or a spacer
-                    if cell.isTerminal:
-                        spacerColumn = column
-                    else:
-                        spacerColumn = column + 1
-                        conn = ConnectorCell(CONN_N_S, self, column, vacantRow)
-                        self.__allocateAndSet(vacantRow, column, conn)
-                    spacer = VSpacerCell(None, self, spacerColumn, vacantRow)
-                    self.__allocateAndSet(vacantRow, spacerColumn, spacer)
-
-                    vacantRow += 1
-                    return vacantRow
-        return vacantRow
-
     def __createIndependentComment(self, ref, canvas, xPos, yPos):
         """Creates an independent comment"""
         if self.settings.hidecomments:
@@ -628,13 +602,7 @@ class VirtualCanvas:
 
     def __layoutWith(self, item, vacantRow, column):
         """Lays out a with statement"""
-        tempVacantRow = vacantRow
         vacantRow = self.__allocateLeadingComment(item, vacantRow, column)
-        if tempVacantRow == vacantRow:
-            # Nothing has been inserted, i.e. may need a spacer after
-            # the end of an opened group
-            vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
-
         self.__allocateScope(item, CellElement.WITH_SCOPE, vacantRow, column)
         if self.__needSideComment(item):
             comment = self.__createSideComment(item, self,
@@ -679,12 +647,8 @@ class VirtualCanvas:
         else:
             scopeCanvas.layout(item, CellElement.CLASS_SCOPE)
 
-        tempVacantRow = vacantRow
+        # Leading comment and doc
         vacantRow = self.__allocateLeadingComment(item, vacantRow, column)
-        if tempVacantRow == vacantRow:
-            # Nothing has been inserted, i.e. may need a spacer after
-            # the end of an opened group
-            vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
 
         # Update the scope canvas parent and address
         scopeCanvas.parent = self
@@ -749,8 +713,6 @@ class VirtualCanvas:
                                               vacantRow + maxRows))
 
             vacantRow += maxRows
-        else:
-            vacantRow = self.__checkOpenGroupBefore(vacantRow, column)
 
         self.__allocateScope(item, targetScope, vacantRow, column)
 
