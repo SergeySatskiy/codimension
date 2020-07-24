@@ -358,6 +358,8 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
+        self.__vDecorShift = 0
+
     def getCommentText(self):
         """Provides the text"""
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
@@ -372,6 +374,18 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
                           self.ref.body.beginLine
         return '\n' * linesBefore + self.ref.sideComment.getDisplayValue()
 
+    def __calcVDecorShift(self):
+        settings = self.canvas.settings
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        if cellToTheLeft.kind == CellElement.VCANVAS:
+            topLeft = cellToTheLeft.cells[0][0]
+            if topLeft.aboveBadges.hasAny():
+                self.__vDecorShift = topLeft.aboveBadges.height + \
+                                     settings.badgeToScopeVPadding
+        elif cellToTheLeft.kind == CellElement.DECORATOR:
+            self.__vDecorShift = cellToTheLeft.aboveBadges.height + \
+                                 settings.badgeToScopeVPadding
+
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
@@ -383,6 +397,10 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
         self.minWidth = self.textRect.width() + \
                         2 * settings.hCellPadding + 2 * settings.hTextPadding
         self.minWidth = max(self.minWidth, settings.minWidth)
+
+        self.__calcVDecorShift()
+        self.minHeight += self.__vDecorShift
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -412,13 +430,11 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
         self.baseX = baseX
         self.baseY = baseY
 
-        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
-        if cellToTheLeft.kind == CellElement.VCANVAS:
-            topLeft = cellToTheLeft.canvas.cells[0][0]
-            if topLeft.hasAboveBadges():
-                self.baseY += topLeft.getBadgeRowHeight() + self.canvas.settings.badgeToScopeVPadding
-
+        self.baseY += self.__vDecorShift
+        self.minHeight -= self.__vDecorShift
         self.__setupPath()
+        self.minHeight += self.__vDecorShift
+
         scene.addItem(self.connector)
         scene.addItem(self)
 
@@ -483,7 +499,13 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
                     ifCell.baseX + ifCell.minWidth - settings.hCellPadding,
                     yPos)
             else:
-                height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
+                if cellToTheLeft.kind == CellElement.DECORATOR:
+                    cellHeight = cellToTheLeft.minHeight - \
+                                 cellToTheLeft.aboveBadges.height - \
+                                 settings.badgeToScopeVPadding
+                    height = min(self.minHeight / 2, cellHeight / 2)
+                else:
+                    height = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
                 self.connector = Connector(
                     self.canvas, self._leftEdge + settings.hCellPadding,
                     self.baseY + height,
@@ -575,12 +597,22 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
         self.needConnector = False
         self.commentConnector = None
 
+        # Decorators have a small badge so the connector needs to touch it
+        # more to the left than the usual main line
+        self.smallBadge = False
+        self.hanging = False
+        self.commentMainLine = None
+
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
     def render(self):
         """Renders the cell"""
         settings = self.canvas.settings
+        self.commentMainLine = settings.mainLine
+        if self.smallBadge:
+            self.commentMainLine = settings.decorMainLine
+
         self.setupText(self,
                        customText=self.ref.leadingComment.getDisplayValue(),
                        customReplacement='')
@@ -593,7 +625,7 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
         self.minWidth = max(self.minWidth, settings.minWidth)
 
         # Add the connector space
-        self.minWidth += settings.mainLine + settings.hCellPadding
+        self.minWidth += self.commentMainLine + settings.hCellPadding
 
         self.height = self.minHeight
         self.width = self.minWidth
@@ -607,9 +639,17 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
 
         if self.needConnector:
             settings = self.canvas.settings
+            yShift = 0
+            if self.hanging:
+                yShift = settings.vCellPadding
+
             self.connector = Connector(
-                self.canvas, baseX + settings.mainLine, baseY,
-                baseX + settings.mainLine, baseY + self.height)
+                self.canvas,
+                baseX + self.commentMainLine,
+                baseY + yShift,
+                baseX + self.commentMainLine,
+                baseY + self.height + yShift)
+            self.connector.penWidth = settings.boxLineWidth
             scene.addItem(self.connector)
 
         scene.addItem(self.commentConnector)
@@ -624,7 +664,7 @@ class AboveCommentCell(CommentCellBase, QGraphicsPathItem):
         baseY = self.baseY + yShift
 
         self._leftEdge = \
-            self.baseX + settings.mainLine + settings.hCellPadding
+            self.baseX + self.commentMainLine + settings.hCellPadding
         boxWidth = self.textRect.width() + \
                    2 * (settings.hCellPadding + settings.hTextPadding)
         boxWidth = max(boxWidth, settings.minWidth)

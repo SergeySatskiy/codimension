@@ -3,7 +3,9 @@
 * Version 4.9.0
 * Fixed installation package
 * New graphics
-* Bug fixes on the graphics pane (selection, rubber band)
+* Bug fixes on the graphics pane (selection, rubber band, side comments,
+  continue/break rendering etc)
+* Introducing above badges for pretty much all items (when minimized)
 
 2020 Apr 25 Sergey Satskiy <sergey.satskiy@tuta.io>
 

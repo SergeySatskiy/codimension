@@ -58,7 +58,12 @@ class CFSceneMouseMixin:
             return None
         if item.isProxyItem():
             # This is for an SVG, a badge, a text and a connector
-            return item.getProxiedItem()
+            proxied = item.getProxiedItem()
+            while proxied is not None:
+                if not proxied.isProxyItem():
+                    break
+                proxied = proxied.getProxiedItem()
+            return proxied
         if not item.scopedItem():
             return item
         # Here: it is a scope item. Need to map/suppress in some cases

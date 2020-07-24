@@ -323,9 +323,9 @@ class VirtualCanvas:
 
     def __allocateLeadingComment(self, item, row, column):
         """Allocates a leading comment if so"""
-        if not self.settings.noComment:
+        if not self.settings.noComment and not self.settings.hidecomments:
             leadingDoc = getDocComment(item.leadingCMLComments)
-            if leadingDoc and not self.settings.hidecomments:
+            if leadingDoc:
                 self.__allocateCell(row, column + 1)
                 self.cells[row][column] = ConnectorCell(CONN_N_S, self,
                                                         column, row)
@@ -334,7 +334,7 @@ class VirtualCanvas:
                                                              column + 1, row)
                 row += 1
 
-            if item.leadingComment and not self.settings.hidecomments:
+            if item.leadingComment:
                 self.__allocateCell(row, column + 1)
                 self.cells[row][column] = ConnectorCell(CONN_N_S, self,
                                                         column, row)
@@ -621,23 +621,37 @@ class VirtualCanvas:
         self.cells[vacantRow][column + 1] = comment
         return vacantRow + 1
 
+    def __firstDecorNeedFullComments(self, item):
+        """Provides the number of the required rows"""
+        if not item.decorators:
+            return 0
+        if self.settings.noDecor or self.settings.hidedecors:
+            return 0
+        if self.settings.noComment or self.settings.hidecomments:
+            return 0
+        count = 0
+        decor = item.decorators[0]
+        if decor.leadingComment:
+            count += 1
+        leadingDoc = getDocComment(decor.leadingCMLComments)
+        if leadingDoc:
+            count += 1
+        return count
+
+    def __itemNeedFullComments(self, item):
+        """Provides the number of required rows"""
+        if self.settings.noComment or self.settings.hidecomments:
+            return 0
+        count = 0
+        if item.leadingComment:
+            count += 1
+        leadingDoc = getDocComment(item.leadingCMLComments)
+        if leadingDoc:
+            count += 1
+        return count
+
     def __layoutDefClass(self, item, vacantRow, column):
         """Lays out a function or a class"""
-        # Decorators go first
-        if item.decorators and not self.settings.noDecor and not self.settings.hidedecors:
-            for dec in item.decorators:
-                vacantRow = self.__allocateLeadingComment(dec,
-                                                          vacantRow, column)
-                self.__allocateAndSet(
-                    vacantRow, column,
-                    DecoratorCell(dec, self, column, vacantRow,
-                                  item.kind == CLASS_FRAGMENT))
-                if self.__needSideComment(dec):
-                    comment = self.__createSideComment(dec, self,
-                                                       column + 1, vacantRow)
-                    self.__allocateAndSet(vacantRow, column + 1, comment)
-                vacantRow += 1
-
         # Now the class or function scope
         scopeCanvas = VirtualCanvas(self.settings, None, None,
                                     self.__validGroups, self.__collapsedGroups,
@@ -647,18 +661,77 @@ class VirtualCanvas:
         else:
             scopeCanvas.layout(item, CellElement.CLASS_SCOPE)
 
+        decorComments = self.__firstDecorNeedFullComments(item)
+        mainComments = self.__itemNeedFullComments(item)
+
+        if decorComments > 0:
+            defClassRegionBegin = vacantRow
+
+        if decorComments > mainComments:
+            # Allocate connectors
+            connectorCount = decorComments - mainComments
+            while connectorCount > 0:
+                conn = ConnectorCell(CONN_N_S, self, column, vacantRow)
+                self.__allocateCell(vacantRow, column)
+                self.cells[vacantRow][column] = conn
+                vacantRow += 1
+                connectorCount -= 1
+
         # Leading comment and doc
         vacantRow = self.__allocateLeadingComment(item, vacantRow, column)
+
+        if decorComments > 0:
+            decorColumn = column + 1
+            if item.sideComment:
+                decorColumn += 1
+
+            tempVacantRow = defClassRegionBegin
+            if mainComments > decorComments:
+                spare = mainComments - decorComments
+                tempVacantRow += spare
+            decor = item.decorators[0]
+            leadingDoc = getDocComment(decor.leadingCMLComments)
+            if leadingDoc:
+                doc = AboveDocCell(decor, leadingDoc, self,
+                                   decorColumn, tempVacantRow)
+                doc.needConnector = False
+                doc.smallBadge = True
+                doc.hanging = True
+                self.__allocateAndSet(tempVacantRow, decorColumn, doc)
+                tempVacantRow += 1
+            if decor.leadingComment:
+                comment = self.__createAboveComment(decor, self, decorColumn,
+                                                    tempVacantRow)
+                comment.needConnector = leadingDoc is not None
+                comment.smallBadge = True
+                comment.hanging = True
+                self.__allocateAndSet(tempVacantRow, decorColumn, comment)
+
+            self.dependentRegions.append((defClassRegionBegin,
+                                          defClassRegionBegin +
+                                          max(mainComments, decorComments)))
 
         # Update the scope canvas parent and address
         scopeCanvas.parent = self
         scopeCanvas.addr = [column, vacantRow]
         self.__allocateAndSet(vacantRow, column, scopeCanvas)
 
+        vacantColumn = column + 1
         if self.__needSideComment(item):
             comment = self.__createSideComment(item, self,
-                                               column + 1, vacantRow)
-            self.__allocateAndSet(vacantRow, column + 1, comment)
+                                               vacantColumn, vacantRow)
+            self.__allocateAndSet(vacantRow, vacantColumn, comment)
+            vacantColumn += 1
+
+        if item.decorators and not self.settings.noDecor and not self.settings.hidedecors:
+            if item.decorators:
+                decoratorCanvas = VirtualCanvas(self.settings, vacantColumn,
+                                                vacantRow, self.__validGroups,
+                                                self.__collapsedGroups,
+                                                self)
+                decoratorCanvas.layoutDecorators(item, scopeCanvas.cells[0][0])
+                self.__allocateAndSet(vacantRow, vacantColumn, decoratorCanvas)
+
         return vacantRow + 1
 
     def __layoutLoop(self, item, vacantRow, column):
@@ -795,6 +868,7 @@ class VirtualCanvas:
                         doc = AboveDocCell(exceptPart,
                                            aboveItems[exceptIndex][1],
                                            self, vacantColumn, cRow)
+                        doc.hanging = True
                         self.__allocateAndSet(cRow, vacantColumn, doc)
                         cRow += 1
                     if aboveItems[exceptIndex][2]:
@@ -802,6 +876,7 @@ class VirtualCanvas:
                                                             vacantColumn, cRow)
                         comment.needConnector = \
                             aboveItems[exceptIndex][1] is not None
+                        comment.hanging = True
                         self.__allocateAndSet(cRow, vacantColumn, comment)
 
                 self.__allocateScope(exceptPart,
@@ -880,6 +955,45 @@ class VirtualCanvas:
 
         self.__allocateAndSet(vacantRow, 1, canvas)
         return vacantRow + 1
+
+    def layoutDecorators(self, item, scopeItem):
+        """Lays out decorators"""
+        isClass = item.kind == CLASS_FRAGMENT
+
+        vacantRow = 0
+        column = 0
+        lastIndex = len(item.decorators) - 1
+        for index, dec in enumerate(item.decorators):
+            if index > 0:
+                # The very first decorator comments are allocated together with
+                # the class/function so it is skipped here
+                if not self.settings.noComment and not self.settings.hidecomments:
+                    leadingDoc = getDocComment(dec.leadingCMLComments)
+                    if leadingDoc:
+                        doc = AboveDocCell(dec, leadingDoc, self, column, vacantRow)
+                        doc.needConnector = False
+                        doc.smallBadge = True
+                        doc.hanging = True
+                        self.__allocateAndSet(vacantRow, column, doc)
+                        vacantRow += 1
+
+                    if dec.leadingComment:
+                        comment = self.__createAboveComment(dec, self, column, vacantRow)
+                        comment.needConnector = leadingDoc is not None
+                        comment.smallBadge = True
+                        hanging = True
+                        self.__allocateAndSet(vacantRow, column, comment)
+                        vacantRow += 1
+
+            cell = DecoratorCell(dec, self, column, vacantRow, scopeItem)
+            cell.isFirst = index == 0
+
+            self.__allocateAndSet(vacantRow, column, cell)
+            if self.__needSideComment(dec):
+                comment = self.__createSideComment(dec, self,
+                                                   column + 1, vacantRow)
+                self.__allocateAndSet(vacantRow, column + 1, comment)
+            vacantRow += 1
 
     def layoutSuite(self, vacantRow, suite,
                     scopeKind=None, cflow=None, column=1,
@@ -1202,7 +1316,21 @@ class VirtualCanvas:
                               VSpacerCell(None, self, 1, vacantRow))
         vacantRow += 1
 
-        vacantRow = self.__allocateLeadingComment(cflow, vacantRow, 1)
+        if not self.settings.noComment and not self.settings.hidecomments:
+            leadingDoc = getDocComment(cflow.leadingCMLComments)
+            if leadingDoc:
+                doc = AboveDocCell(cflow, leadingDoc, self, 1, vacantRow)
+                doc.needConnector = False
+                doc.hanging = True
+                self.__allocateAndSet(vacantRow, 1, doc)
+                vacantRow += 1
+            if cflow.leadingComment:
+                comment = self.__createAboveComment(cflow, self, 1, vacantRow)
+                comment.needConnector = leadingDoc is not None
+                comment.hanging = True
+                self.__allocateAndSet(vacantRow, 1, comment)
+                vacantRow += 1
+
         self.__allocateScope(cflow, CellElement.FILE_SCOPE, vacantRow, 0)
 
         # Second stage: shifts to accomadate open groups

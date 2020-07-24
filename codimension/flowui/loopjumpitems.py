@@ -66,10 +66,11 @@ class LoopJumpBase(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
             self.minWidth = max(self.minWidth, settings.minWidth)
 
         # Add comment and documentation badges
-        badgesHSpace, badgeVSpace = self.appendCommentBadges()
-        self.minHeight += badgeVSpace
+        self.appendCommentBadges()
+        if self.aboveBadges.hasAny():
+            self.minHeight += self.aboveBadges.height + settings.badgeToScopeVPadding
         self.minWidth = max(settings.mainLine + settings.badgeGroupSpacing +
-                            badgesHSpace + settings.hCellPadding,
+                            self.aboveBadges.width + settings.hCellPadding,
                             self.minWidth)
 
         self.height = self.minHeight
@@ -82,24 +83,27 @@ class LoopJumpBase(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         self.xPos = self.baseX + settings.hCellPadding
         self.yPos = self.baseY + settings.vCellPadding
         self.rectWidth = self.minWidth - 2 * settings.hCellPadding
-        self.rectHeight = self.minHeight - 2 * settings.hCellPadding
+        self.rectHeight = self.minHeight - 2 * settings.vCellPadding
 
-        if self.hasAboveBadges():
-            badgeRowHeight = self.getBadgeRowHeight()
-            self.yPos += badgeRowHeight + settings.badgeToScopeVPadding
-            self.rectHeight -= badgeRowHeight + settings.badgeToScopeVPadding
+        if self.aboveBadges.hasAny():
+            badgeShift = self.aboveBadges.height + settings.badgeToScopeVPadding
+            self.yPos += badgeShift
+            self.rectHeight -= badgeShift
 
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
+        settings = self.canvas.settings
 
         # Draw comment badges
-        takenByBadges = self.drawCommentBadges(scene)
+        self.aboveBadges.draw(scene, settings, baseX, baseY, self.minWidth)
+        takenByBadges = 0
+        if self.aboveBadges.hasAny():
+            takenByBadges = self.aboveBadges.height + settings.badgeToScopeVPadding
 
         # Add the connector as a separate scene item to make the selection
         # working properly
-        settings = self.canvas.settings
         self.connector = Connector(self.canvas,
                                    baseX + settings.mainLine, baseY,
                                    baseX + settings.mainLine,

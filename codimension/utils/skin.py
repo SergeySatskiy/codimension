@@ -199,7 +199,7 @@ _DEFAULT_CFLOW_SETTINGS = {
                  buildFont('Monospace,9,-1,5,50,0,0,0,0,0'),
 
     'hCellPadding': 6,      # in pixels (left and right)
-    'vCellPadding': 8,      # in pixels (top and bottom)
+    'vCellPadding': 4,      # in pixels (top and bottom)
     'hTextPadding': 4,      # in pixels (left and right)
     'vTextPadding': 4,      # in pixels (top and bottom)
 
@@ -212,7 +212,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     # Rounded rectangles radius for the return-like statements
     'minWidth': 100,
 
-    'cfLineWidth': 2,        # Control flow line
+    'cfLineWidth': 1,        # Control flow line
     'boxLineWidth': 1,        # All boxes and their leads to CF
     'cfLineColor': QColor(132, 132, 132, 255),
 
@@ -277,7 +277,6 @@ _DEFAULT_CFLOW_SETTINGS = {
     'badgeHSpacing': 2,
     'badgeVSpacing': 1,
     'badgeRadius': 2,
-    'badgeShift': 0,
     'badgeToScopeVPadding': 3,
     'badgeToBadgeHSpacing': 4,
     'badgePixmapSpacing': 4,    # For square badges like comment, decorator etc
@@ -296,6 +295,7 @@ _DEFAULT_CFLOW_SETTINGS = {
     'ifSideCommentVShift': 7,
 
     'mainLine': 25,
+    'decorMainLine': 15,
 
     # docstring border cannot be changed; it is a property of the scope
     'docstringBGColor': QColor(255, 255, 235, 255),

@@ -29,12 +29,13 @@ from html import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem, QPointF, QColor
 from .auxitems import (BadgeItem, Connector, HSpacerCell, VSpacerCell,
                        SpacerCell, DocstringBadgeItem, CommentBadgeItem,
-                       ExceptBadgeItem, DecorBadgeItem, DocLinkBadgeItem)
+                       ExceptBadgeItem, ScopeDecorBadgeItem, DocLinkBadgeItem)
 from .cellelement import CellElement
 from .routines import distance, getNoCellCommentBoxPath, getDocComment
 from .cml import CMLVersion
 from .colormixin import ColorMixin
 from .textmixin import TextMixin
+from .abovebadges import AboveBadgesSpacer
 
 
 class ScopeHSideEdge(HSpacerCell):
@@ -103,7 +104,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         self.subKind = subKind
         self.__navBarUpdate = None
         self._connector = None
-        self._topHalfConnector = None
         self.scene = None
         self.__sideCommentPath = None
 
@@ -119,9 +119,16 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         """Renders the top left corner of the scope"""
         s = self.canvas.settings
         self.minHeight = s.scopeRectRadius + s.vCellPadding
-        if self.hasAboveBadges():
-            self.minHeight += self.getBadgeRowHeight() + s.badgeToScopeVPadding
+        if self.aboveBadges.hasAny():
+            self.minHeight += self.aboveBadges.height + s.badgeToScopeVPadding
         self.minWidth = s.scopeRectRadius + s.hCellPadding
+
+        # Sometimes there are many badges and little content
+        # So the widest value needs to be picked.
+        # The wiered s.scopeRectRadius / 2 is because the badges start
+        # from the very edge of the scope
+        self.minWidth = max(self.aboveBadges.width + s.scopeRectRadius / 2,
+                            self.minWidth)
 
     def __renderDeclaration(self):
         """Renders the scope declaration"""
@@ -153,16 +160,7 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
     def renderCell(self):
         """Provides rendering for the scope elements"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.normalizeBadgesHeight()
             self.__renderTopLeft()
-
-            # Sometimes there are many badges and little content
-            # So the widest value needs to be picked.
-            # The wiered s.scopeRectRadius / 2 is because the badges start
-            # from the very edge of the scope
-            s = self.canvas.settings
-            self.minWidth = max(self.__getBadgeRawWidth() - s.scopeRectRadius / 2,
-                                self.minWidth)
         elif self.subKind == ScopeCellElement.DECLARATION:
             self.__renderDeclaration()
         elif self.subKind == ScopeCellElement.DOCSTRING:
@@ -197,37 +195,6 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
             return self.statement == ElseScopeCell.TRY_STATEMENT
         return False
 
-    def __needTopHalfConnector(self):
-        """True if a half of a connector is needed"""
-        if self.kind in [CellElement.ELSE_SCOPE, CellElement.EXCEPT_SCOPE]:
-            try:
-                parentCanvas = self.canvas.canvas
-                cellToTheTop = parentCanvas.cells[
-                    self.canvas.addr[1] - 1][self.canvas.addr[0]]
-                return cellToTheTop.needConnector
-            except:
-                pass
-        elif self.kind == CellElement.FILE_SCOPE:
-            s = self.canvas.settings
-            if not s.noComment and not s.hidecomments:
-                if self.ref.leadingComment or getDocComment(self.ref.leadingCMLComments):
-                    return True
-        return False
-
-    def __getBadgeRawWidth(self):
-        """Provides the badges raw width"""
-        # It must correspond what __drawTopLeft() does
-        s = self.canvas.settings
-        width = 0
-        for badge in self.aboveBadges:
-            if badge is not None:
-                width += badge.width + s.badgeToBadgeHSpacing
-            else:
-                width += s.badgeGroupSpacing
-        if width > 0:
-            width += s.badgeShift
-        return width
-
     def __drawTopLeft(self):
         """Draws the top left element of a scope"""
         s = self.canvas.settings
@@ -244,25 +211,20 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
             bottomConnector = Connector(
                 self.canvas, self.baseX + s.mainLine,
-                self.baseY + self.canvas.height - s.vCellPadding,
+                self.baseY + self.minHeight,
                 self.baseX + s.mainLine,
                 self.baseY + self.canvas.height)
             self.scene.addItem(bottomConnector)
-        if self.__needTopHalfConnector() and self._topHalfConnector is None:
-            # The connector needs to go only to the badge
-            self._topHalfConnector = Connector(
-                self.canvas, self.baseX + s.mainLine, self.baseY,
-                self.baseX + s.mainLine, self.baseY + s.vCellPadding)
-            self.scene.addItem(self._topHalfConnector)
 
         # Draw the scope rounded rectangle when we see the top left corner
         penWidth = s.selectPenWidth - 1
 
         yPos = self.baseY + s.vCellPadding - penWidth
         height = self.canvas.minHeight - 2 * s.vCellPadding + 2 * penWidth
-        if self.hasAboveBadges():
-            yPos += self.getBadgeRowHeight() + s.badgeToScopeVPadding
-            height -= self.getBadgeRowHeight() + s.badgeToScopeVPadding
+        if self.aboveBadges.hasAny():
+            badgeShift = self.aboveBadges.height + s.badgeToScopeVPadding
+            yPos += badgeShift
+            height -= badgeShift
         self.setRect(
             self.baseX + s.hCellPadding - penWidth, yPos,
             self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth, height)
@@ -270,16 +232,11 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         self.canvas.scopeRectangle = self
 
         # Draw badges
-        xPos = self.baseX + s.hCellPadding + s.badgeShift
-        yPos = self.baseY + s.vCellPadding
-        for badge in self.aboveBadges:
-            if badge is not None:
-                badge.moveTo(xPos, yPos)
-                self.scene.addItem(badge)
-                badge.draw(self.scene, xPos, yPos)
-                xPos += badge.width + s.badgeToBadgeHSpacing
-            else:
-                xPos += s.badgeGroupSpacing
+        # The scope badges do not use the RHS edge, they all are drawn from the
+        # left edge so there is no need in the last parameter which is a
+        # min width
+        self.aboveBadges.draw(self.scene, s,
+                              self.baseX, self.baseY, None)
 
         # Draw a horizontal connector if needed
         if self._connector is None:
@@ -288,16 +245,15 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
                 parentCanvas = self.canvas.canvas
                 cellToTheLeft = parentCanvas.cells[
                     self.canvas.addr[1]][self.canvas.addr[0] - 1]
-                sideComment = None
                 if cellToTheLeft.kind == CellElement.SIDE_COMMENT:
-                    sideComment = cellToTheLeft
                     cellToTheLeft = parentCanvas.cells[
                         self.canvas.addr[1]][self.canvas.addr[0] - 2]
 
-                yPos = self.baseY + 2 * s.vCellPadding + \
-                       self.getBadgeRowHeight() + s.badgeToScopeVPadding
-                startXPos = cellToTheLeft.baseX + cellToTheLeft.minWidth - \
-                            s.hCellPadding + s.boxLineWidth
+                yPos = self.baseY + s.vCellPadding + self.aboveBadges.height / 2
+
+                cellToTheLeft = cellToTheLeft.cells[0][0]
+                startXPos = cellToTheLeft.baseX + s.hCellPadding + cellToTheLeft.aboveBadges[0].width
+
                 if afterLoop:
                     startXPos -= s.loopHeaderPadding
 
@@ -310,9 +266,7 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
                 self._connector.penStyle = Qt.DotLine
                 self.scene.addItem(self._connector)
 
-                if sideComment:
-                    # The dotted line must be drawn under the comment
-                    sideComment.setZValue(1)
+                cellToTheLeft.aboveBadges.raizeAllButFirst()
 
         if hasattr(self.scene.parent(), "updateNavigationToolbar"):
             self.__navBarUpdate = self.scene.parent().updateNavigationToolbar
@@ -325,8 +279,8 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
         """Calculates the polygon for loops"""
         s = self.canvas.settings
         yTopPos = self.baseY + s.vCellPadding
-        if self.hasAboveBadges():
-            yTopPos += self.getBadgeRowHeight() + s.badgeToScopeVPadding
+        if self.aboveBadges.hasAny():
+            yTopPos += self.aboveBadges.height + s.badgeToScopeVPadding
 
         cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
         halfDeclHeight = (cellBelow.height + s.scopeRectRadius) / 2
@@ -387,9 +341,10 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
 
         yPos = self.baseY + s.vCellPadding
         height = self.canvas.minHeight - 2 * s.vCellPadding
-        if self.hasAboveBadges():
-            yPos += self.getBadgeRowHeight() + s.badgeToScopeVPadding
-            height -= self.getBadgeRowHeight() + s.badgeToScopeVPadding
+        if self.aboveBadges.hasAny():
+            badgeShift = self.aboveBadges.height + s.badgeToScopeVPadding
+            yPos += badgeShift
+            height -= badgeShift
 
         if self.kind in [CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE]:
             cellBelow = self.canvas.cells[self.addr[1] + 1][self.addr[0]]
@@ -659,6 +614,14 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
             return colorMixin.getColors()
         return ColorMixin.getColors(self)
 
+    def appendSpacerAndBadge(self, groupSpacerAdded, badge):
+        s = self.canvas.settings
+        if groupSpacerAdded:
+            self.aboveBadges.append(AboveBadgesSpacer(s.badgeToBadgeHSpacing))
+        else:
+            self.aboveBadges.append(AboveBadgesSpacer(s.badgeGroupSpacing))
+        self.aboveBadges.append(badge)
+
 
 _scopeCellElementToString = {
     ScopeCellElement.TOP_LEFT: "TOP_LEFT",
@@ -686,18 +649,26 @@ class FileScopeCell(ScopeCellElement):
         """Renders the file scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.aboveBadges.append(BadgeItem(self, 'module'))
-            self.aboveBadges.append(None)   # Spacer
             s = self.canvas.settings
+            groupSpacerAdded = False
             if self.ref.docstring and s.hidedocstrings and not s.noDocstring:
-                self.aboveBadges.append(DocstringBadgeItem(self, 'doc'))
+                self.appendSpacerAndBadge(groupSpacerAdded,
+                                          DocstringBadgeItem(self, 'doc'))
+                groupSpacerAdded = True
             if s.hidecomments and not s.noComment:
                 leadingDoc = getDocComment(self.ref.leadingCMLComments)
                 if leadingDoc:
-                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              DocLinkBadgeItem(self))
+                    groupSpacerAdded = True
                 if self.ref.leadingComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, False))
+                    groupSpacerAdded = True
                 if self.ref.sideComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, True))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, True))
+                    groupSpacerAdded = True
         return self.renderCell()
 
     def getLineRange(self):
@@ -740,21 +711,31 @@ class FunctionScopeCell(ScopeCellElement):
         """Renders the function scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.aboveBadges.append(BadgeItem(self, 'def'))
-            self.aboveBadges.append(None)   # Spacer
             s = self.canvas.settings
+            groupSpacerAdded = False
             if self.ref.docstring and s.hidedocstrings and not s.noDocstring:
-                self.aboveBadges.append(DocstringBadgeItem(self, 'doc'))
+                self.appendSpacerAndBadge(groupSpacerAdded,
+                                          DocstringBadgeItem(self, 'doc'))
+                groupSpacerAdded = True
             if self.ref.decorators and s.hidedecors and not s.noDecor:
                 for index, _ in enumerate(self.ref.decorators):
-                    self.aboveBadges.append(DecorBadgeItem(self, index))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              ScopeDecorBadgeItem(self, index))
+                    groupSpacerAdded = True
             if s.hidecomments and not s.noComment:
                 leadingDoc = getDocComment(self.ref.leadingCMLComments)
                 if leadingDoc:
-                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              DocLinkBadgeItem(self))
+                    groupSpacerAdded = True
                 if self.ref.leadingComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, False))
+                    groupSpacerAdded = True
                 if self.ref.sideComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, True))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, True))
+                    groupSpacerAdded = True
         return self.renderCell()
 
     def getLineRange(self):
@@ -789,21 +770,31 @@ class ClassScopeCell(ScopeCellElement):
         """Renders the class scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.aboveBadges.append(BadgeItem(self, 'class'))
-            self.aboveBadges.append(None)   # Spacer
             s = self.canvas.settings
+            groupSpacerAdded = False
             if self.ref.docstring and s.hidedocstrings and not s.noDocstring:
-                self.aboveBadges.append(DocstringBadgeItem(self, 'doc'))
+                self.appendSpacerAndBadge(groupSpacerAdded,
+                                          DocstringBadgeItem(self, 'doc'))
+                groupSpacerAdded = True
             if self.ref.decorators and s.hidedecors and not s.noDecor:
                 for index, _ in enumerate(self.ref.decorators):
-                    self.aboveBadges.append(DecorBadgeItem(self, index))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              ScopeDecorBadgeItem(self, index))
+                    groupSpacerAdded = True
             if s.hidecomments and not s.noComment:
                 leadingDoc = getDocComment(self.ref.leadingCMLComments)
                 if leadingDoc:
-                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              DocLinkBadgeItem(self))
+                    groupSpacerAdded = True
                 if self.ref.leadingComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, False))
+                    groupSpacerAdded = True
                 if self.ref.sideComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, True))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, True))
+                    groupSpacerAdded = True
         return self.renderCell()
 
     def getLineRange(self):
@@ -838,16 +829,22 @@ class ForScopeCell(ScopeCellElement):
         """Renders the for-loop scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.aboveBadges.append(BadgeItem(self, "for"))
-            self.aboveBadges.append(None)   # Spacer
             s = self.canvas.settings
+            groupSpacerAdded = False
             if s.hidecomments and not s.noComment:
                 leadingDoc = getDocComment(self.ref.leadingCMLComments)
                 if leadingDoc:
-                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              DocLinkBadgeItem(self))
+                    groupSpacerAdded = True
                 if self.ref.leadingComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, False))
+                    groupSpacerAdded = True
                 if self.ref.sideComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, True))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, True))
+                    groupSpacerAdded = True
         return self.renderCell()
 
     def getAbsPosRange(self):
@@ -874,16 +871,22 @@ class WhileScopeCell(ScopeCellElement):
         """Renders the while-loop scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.aboveBadges.append(BadgeItem(self, "while"))
-            self.aboveBadges.append(None)   # Spacer
             s = self.canvas.settings
+            groupSpacerAdded = False
             if s.hidecomments and not s.noComment:
                 leadingDoc = getDocComment(self.ref.leadingCMLComments)
                 if leadingDoc:
-                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              DocLinkBadgeItem(self))
+                    groupSpacerAdded = True
                 if self.ref.leadingComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, False))
+                    groupSpacerAdded = True
                 if self.ref.sideComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, True))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, True))
+                    groupSpacerAdded = True
         return self.renderCell()
 
     def getAbsPosRange(self):
@@ -910,19 +913,27 @@ class TryScopeCell(ScopeCellElement):
         """Renders the try scope element"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.aboveBadges.append(BadgeItem(self, "try"))
-            self.aboveBadges.append(None)   # Spacer
             s = self.canvas.settings
+            groupSpacerAdded = False
             if s.hidecomments and not s.noComment:
                 leadingDoc = getDocComment(self.ref.leadingCMLComments)
                 if leadingDoc:
-                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              DocLinkBadgeItem(self))
+                    groupSpacerAdded = True
                 if self.ref.leadingComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, False))
+                    groupSpacerAdded = True
                 if self.ref.sideComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, True))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, True))
+                    groupSpacerAdded = True
             if s.hideexcepts:
                 for index, _ in enumerate(self.ref.exceptParts):
-                    self.aboveBadges.append(ExceptBadgeItem(self, index))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              ExceptBadgeItem(self, index))
+                    groupSpacerAdded = True
         return self.renderCell()
 
     def getLineRange(self):
@@ -959,16 +970,22 @@ class WithScopeCell(ScopeCellElement):
         """Renders the with block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.aboveBadges.append(BadgeItem(self, "with"))
-            self.aboveBadges.append(None)   # Spacer
             s = self.canvas.settings
+            groupSpacerAdded = False
             if s.hidecomments and not s.noComment:
                 leadingDoc = getDocComment(self.ref.leadingCMLComments)
                 if leadingDoc:
-                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              DocLinkBadgeItem(self))
+                    groupSpacerAdded = True
                 if self.ref.leadingComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, False))
+                    groupSpacerAdded = True
                 if self.ref.sideComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, True))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, True))
+                    groupSpacerAdded = True
         return self.renderCell()
 
     def getAbsPosRange(self):
@@ -1012,16 +1029,22 @@ class ElseScopeCell(ScopeCellElement):
         """Renders the else block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.aboveBadges.append(BadgeItem(self, "else"))
-            self.aboveBadges.append(None)   # Spacer
             s = self.canvas.settings
+            groupSpacerAdded = False
             if s.hidecomments and not s.noComment:
                 leadingDoc = getDocComment(self.ref.leadingCMLComments)
                 if leadingDoc:
-                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              DocLinkBadgeItem(self))
+                    groupSpacerAdded = True
                 if self.ref.leadingComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, False))
+                    groupSpacerAdded = True
                 if self.ref.sideComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, True))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, True))
+                    groupSpacerAdded = True
         return self.renderCell()
 
     def getAbsPosRange(self):
@@ -1075,16 +1098,22 @@ class ExceptScopeCell(ScopeCellElement):
         """Renders the except block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.aboveBadges.append(BadgeItem(self, "except"))
-            self.aboveBadges.append(None)   # Spacer
             s = self.canvas.settings
+            groupSpacerAdded = False
             if s.hidecomments and not s.noComment:
                 leadingDoc = getDocComment(self.ref.leadingCMLComments)
                 if leadingDoc:
-                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              DocLinkBadgeItem(self))
+                    groupSpacerAdded = True
                 if self.ref.leadingComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, False))
+                    groupSpacerAdded = True
                 if self.ref.sideComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, True))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, True))
+                    groupSpacerAdded = True
         return self.renderCell()
 
     def getAbsPosRange(self):
@@ -1111,16 +1140,22 @@ class FinallyScopeCell(ScopeCellElement):
         """Renders the finally block"""
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.aboveBadges.append(BadgeItem(self, "finally"))
-            self.aboveBadges.append(None)   # Spacer
             s = self.canvas.settings
+            groupSpacerAdded = False
             if s.hidecomments and not s.noComment:
                 leadingDoc = getDocComment(self.ref.leadingCMLComments)
                 if leadingDoc:
-                    self.aboveBadges.append(DocLinkBadgeItem(self))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              DocLinkBadgeItem(self))
+                    groupSpacerAdded = True
                 if self.ref.leadingComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, False))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, False))
+                    groupSpacerAdded = True
                 if self.ref.sideComment:
-                    self.aboveBadges.append(CommentBadgeItem(self, True))
+                    self.appendSpacerAndBadge(groupSpacerAdded,
+                                              CommentBadgeItem(self, True))
+                    groupSpacerAdded = True
         return self.renderCell()
 
     def getAbsPosRange(self):

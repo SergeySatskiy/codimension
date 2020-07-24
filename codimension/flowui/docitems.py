@@ -144,6 +144,10 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         self._setupConnector()
         scene.addItem(self.connector)
 
+        # Bottom adjustment
+        yShift = self.height - self.minHeight
+        baseY = self.baseY + yShift
+
         settings = self.canvas.settings
         penWidth = settings.selectPenWidth - 1
         self.setRect(baseX + settings.hCellPadding - penWidth,
@@ -169,8 +173,12 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         rectWidth = self.minWidth - 2 * settings.hCellPadding
         rectHeight = self.minHeight - 2 * settings.vCellPadding
 
+        # Bottom adjustment
+        yShift = self.height - self.minHeight
+        baseY = self.baseY + yShift
+
         painter.drawRoundedRect(self.baseX + settings.hCellPadding,
-                                self.baseY + settings.vCellPadding,
+                                baseY + settings.vCellPadding,
                                 rectWidth, rectHeight, 0, 0)
 
         if self.text:
@@ -184,7 +192,7 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
                 self._leftEdge + settings.hCellPadding +
                 settings.hDocLinkPadding + self.iconItem.iconWidth() +
                 settings.hDocLinkPadding,
-                self.baseY + settings.vCellPadding + settings.vDocLinkPadding,
+                baseY + settings.vCellPadding + settings.vDocLinkPadding,
                 self.textRect.width(), self.textRect.height(),
                 Qt.AlignLeft, self.text)
 
@@ -297,17 +305,28 @@ class AboveDocCell(DocCellBase):
         self.kind = CellElement.ABOVE_DOC
         self.needConnector = False
 
+        # Decorators have a small badge so the connector needs to touch it
+        # more to the left than the usual main line
+        self.smallBadge = False
+        self.hanging = False
+
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
+        settings = self.canvas.settings
+        mainLine = settings.mainLine
+        if self.smallBadge:
+            mainLine = settings.decorMainLine
         if self.needConnector:
-            settings = self.canvas.settings
+            yShift = 0
+            if self.hanging:
+                yShift = settings.vCellPadding
             self.connector = Connector(
-                self.canvas, baseX + settings.mainLine, baseY,
-                baseX + settings.mainLine, baseY + self.height)
+                self.canvas, baseX + mainLine, baseY + yShift,
+                baseX + mainLine, baseY + self.height + yShift)
             scene.addItem(self.connector)
 
         DocCellBase.draw(self, scene,
-                         baseX + self.canvas.settings.mainLine +
+                         baseX + mainLine +
                          self.canvas.settings.hCellPadding, baseY)
 
     def _setupConnector(self):

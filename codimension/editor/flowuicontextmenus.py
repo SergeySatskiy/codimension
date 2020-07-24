@@ -873,7 +873,11 @@ class CFSceneContextMenuMixin:
         if item.isDocstring():
             # Side comments for docstrings? Nonesense! So they are ignored
             # even if they are collected
-            cml = CMLVersion.find(item.ref.docstring.leadingCMLComments, cmlType)
+            if item.kind == CellElement.SCOPE_DOCSTRING_BADGE:
+                docstr = item.ref.ref.docstring
+            else:
+                docstr = item.ref.docstring
+            cml = CMLVersion.find(docstr.leadingCMLComments, cmlType)
             if cml is not None:
                 return cml
 
@@ -1118,7 +1122,14 @@ class CFSceneContextMenuMixin:
             pos = first.groupBeginCMLRef.ref.parts[0].beginPos
         else:
             firstLine = first.getLineRange()[0]
-            pos = first.ref.beginPos
+            if first.kind in [CellElement.SCOPE_DOCSTRING_BADGE,
+                              CellElement.SCOPE_COMMENT_BADGE,
+                              CellElement.SCOPE_EXCEPT_BADGE,
+                              CellElement.SCOPE_DECORATOR_BADGE,
+                              CellElement.SCOPE_DOCLINK_BADGE]:
+                pos = first.beginPos
+            else:
+                pos = first.ref.beginPos
 
         if last.scopedItem():
             lastLine = last.ref.endLine
@@ -1224,6 +1235,13 @@ class CFSceneContextMenuMixin:
                                    CellElement.LEADING_DOC,
                                    CellElement.ABOVE_DOC]:
                     branchId = item.cmlRef.ref.getParentIfID()
+                elif item.kind in [CellElement.SCOPE_DOCSTRING_BADGE,
+                                   CellElement.SCOPE_COMMENT_BADGE,
+                                   CellElement.SCOPE_EXCEPT_BADGE,
+                                   CellElement.SCOPE_DECORATOR_BADGE,
+                                   CellElement.SCOPE_DOCLINK_BADGE,
+                                   CellElement.INDEPENDENT_MINIMIZED_DOC]:
+                    branchId = item.ref.ref.getParentIfID()
                 else:
                     branchId = item.ref.getParentIfID()
                 if branchId is not None:

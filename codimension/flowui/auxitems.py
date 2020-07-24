@@ -152,7 +152,7 @@ class BadgeItemBase(CellElement):
 
     """Base class for all the badges"""
 
-    def __init__(self, ref, text):
+    def __init__(self, ref, text, icon=None):
         CellElement.__init__(self, ref, ref.canvas, None, None)
 
         # Note: all the badge refs always refer to the top left corner
@@ -160,6 +160,8 @@ class BadgeItemBase(CellElement):
 
         s = ref.canvas.settings
         self.text = text
+        self.icon = icon
+        self.iconItem = None
         self.textRect = s.badgeFontMetrics.boundingRect(0, 0, maxsize,
                                                         maxsize, 0, text)
 
@@ -178,9 +180,37 @@ class BadgeItemBase(CellElement):
 
     def draw(self, scene, baseX, baseY):
         """Some of the badges overload it"""
-        del scene   # unused argument
-        del baseX   # unused argument
-        del baseY   # unused argument
+        if self.icon is None:
+            return
+
+        # The badge is square
+        s = self.ref.canvas.settings
+        self.iconItem = SVGItem(self.ref.canvas, self.icon, self)
+        sideSize = self.height - 2 * s.badgePixmapSpacing
+        self.iconItem.setIconHeight(sideSize)
+
+        self.iconItem.setPos(baseX + (self.width - sideSize) / 2,
+                             baseY + (self.height - sideSize) / 2)
+        scene.addItem(self.iconItem)
+
+    def paintBadgeRectangle(self, painter, isSelected, borderColor, bgColor):
+        """Draws the badge filled rectange"""
+        s = self.ref.canvas.settings
+
+        if isSelected:
+            pen = QPen(s.selectColor)
+            pen.setWidth(s.selectPenWidth)
+        else:
+            pen = QPen(borderColor)
+            pen.setWidth(s.badgeLineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
+
+        painter.setBrush(QBrush(bgColor))
+        painter.drawRoundedRect(self.x(), self.y(),
+                                self.width, self.height,
+                                s.badgeRadius, s.badgeRadius)
+
 
 
 class BadgeItem(BadgeItemBase, QGraphicsRectItem):
@@ -529,8 +559,8 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
             if cell.scopedItem():
                 break
             if cell.kind != CellElement.CONNECTOR:
-                if cell.hasAboveBadges():
-                    return (cell.minHeight + cell.getBadgeRowHeight() +
+                if cell.aboveBadges.hasAny():
+                    return (cell.minHeight + cell.aboveBadges.height +
                             self.canvas.settings.badgeToScopeVPadding) / 2
                 return cell.minHeight / 2
         return self.height / 2
@@ -637,7 +667,7 @@ class ConnectorCell(CellElement, QGraphicsPathItem):
 
 class DocstringBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
 
-    """Serves the scope badges"""
+    """Serves the scope docstring badges"""
 
     def __init__(self, ref, text):
         BadgeItemBase.__init__(self, ref, text)
@@ -660,21 +690,10 @@ class DocstringBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
         del option
         del widget
 
+        self.paintBadgeRectangle(painter, self.isSelected(),
+                                 self.borderColor, self.bgColor)
+
         s = self.ref.canvas.settings
-
-        if self.isSelected():
-            pen = QPen(s.selectColor)
-            pen.setWidth(s.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(s.badgeLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        painter.setBrush(QBrush(self.bgColor))
-        painter.drawRoundedRect(self.x(), self.y(),
-                                self.width, self.height,
-                                s.badgeRadius, s.badgeRadius)
 
         pen = QPen(self.fgColor)
         painter.setPen(pen)
@@ -704,12 +723,16 @@ class DocstringBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
         """Provides the absolute position range"""
         return self.ref.ref.docstring.body.getAbsPosRange()
 
+    @property
+    def beginPos(self):
+        return self.ref.ref.docstring.body.beginPos
+
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
         CellElement.mouseDoubleClickEvent(
             self.ref, event,
             line=self.ref.ref.docstring.body.beginLine,
-            pos=self.ref.ref.docstring.body.beginPos)
+            pos=self.beginPos)
 
 
 class CommentBadgeItem(BadgeItemBase, QGraphicsRectItem):
@@ -717,7 +740,7 @@ class CommentBadgeItem(BadgeItemBase, QGraphicsRectItem):
     """Serves the scope badges"""
 
     def __init__(self, ref, isSideComment):
-        BadgeItemBase.__init__(self, ref, '#')
+        BadgeItemBase.__init__(self, ref, '#', 'hiddencomment.svg')
         QGraphicsRectItem.__init__(self)
 
         self.kind = CellElement.SCOPE_COMMENT_BADGE
@@ -732,38 +755,15 @@ class CommentBadgeItem(BadgeItemBase, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def draw(self, scene, xPos, yPos):
-        """Overload to have an icon instead of text"""
-        # The badge is square
-        s = self.ref.canvas.settings
-        self.iconItem = SVGItem(self.ref.canvas, 'hiddencomment.svg', self)
-        sideSize = self.height - 2 * s.badgePixmapSpacing
-        self.iconItem.setIconHeight(sideSize)
-
-        self.iconItem.setPos(xPos + (self.width - sideSize) / 2,
-                             yPos + (self.height - sideSize) / 2)
-        scene.addItem(self.iconItem)
-
     def paint(self, painter, option, widget):
         """Paints the badge item"""
         del option
         del widget
 
         s = self.ref.canvas.settings
-
-        if self.isSelected():
-            pen = QPen(s.selectColor)
-            pen.setWidth(s.selectPenWidth)
-        else:
-            pen = QPen(s.commentBorderColor)
-            pen.setWidth(s.badgeLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        painter.setBrush(QBrush(s.commentBGColor))
-        painter.drawRoundedRect(self.x(), self.y(),
-                                self.width, self.height,
-                                s.badgeRadius, s.badgeRadius)
+        self.paintBadgeRectangle(painter, self.isSelected(),
+                                 s.commentBorderColor,
+                                 s.commentBGColor)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -781,15 +781,22 @@ class CommentBadgeItem(BadgeItemBase, QGraphicsRectItem):
             return self.ref.ref.sideComment.getAbsPosRange()
         return self.ref.ref.leadingComment.getAbsPosRange()
 
+    @property
+    def beginPos(self):
+        if self.isSideComment:
+            return self.ref.ref.sideComment.beginPos
+        return self.ref.ref.leadingComment.beginPos
+
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        beginLine = self.getLineRange()[0]
-        if self.isSideComment:
-            beginPos = self.ref.ref.sideComment.beginPos
-        else:
-            beginPos = self.ref.ref.leadingComment.beginPos
         CellElement.mouseDoubleClickEvent(
-            self.ref, event, line=beginLine, pos=beginPos)
+            self.ref, event,
+            line=self.getLineRange()[0], pos=self.beginPos)
+
+    def setZValue(self, val):
+        QGraphicsRectItem.setZValue(self, val)
+        if self.iconItem:
+            self.iconItem.setZValue(val)
 
 
 class ExceptBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
@@ -797,7 +804,7 @@ class ExceptBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
     """Serves the scope badges"""
 
     def __init__(self, ref, excIndex):
-        BadgeItemBase.__init__(self, ref, 'x')
+        BadgeItemBase.__init__(self, ref, 'x', 'hiddenexcept.svg')
         s = ref.canvas.settings
         ColorMixin.__init__(self, ref.ref.exceptParts[excIndex],
                             s.exceptScopeBGColor,
@@ -819,38 +826,13 @@ class ExceptBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def draw(self, scene, xPos, yPos):
-        """Overload to have an icon instead of text"""
-        # The badge is square
-        s = self.ref.canvas.settings
-        self.iconItem = SVGItem(self.ref.canvas, 'hiddenexcept.svg', self)
-        sideSize = self.height - 2 * s.badgePixmapSpacing
-        self.iconItem.setIconHeight(sideSize)
-
-        self.iconItem.setPos(xPos + (self.width - sideSize) / 2,
-                             yPos + (self.height - sideSize) / 2)
-        scene.addItem(self.iconItem)
-
     def paint(self, painter, option, widget):
         """Paints the badge item"""
         del option
         del widget
 
-        s = self.ref.canvas.settings
-
-        if self.isSelected():
-            pen = QPen(s.selectColor)
-            pen.setWidth(s.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(s.badgeLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        painter.setBrush(QBrush(self.bgColor))
-        painter.drawRoundedRect(self.x(), self.y(),
-                                self.width, self.height,
-                                s.badgeRadius, s.badgeRadius)
+        self.paintBadgeRectangle(painter, self.isSelected(),
+                                 self.borderColor, self.bgColor)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -864,20 +846,68 @@ class ExceptBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
         """Provides the absolute position range"""
         return self.ref.ref.exceptParts[self.excIndex].getAbsPosRange()
 
+    @property
+    def beginPos(self):
+        return self.ref.ref.exceptParts[self.excIndex].body.beginPos
+
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
-        excLine = self.getLineRange()[0]
-        excPos = self.ref.ref.exceptParts[self.excIndex].body.beginPos
         CellElement.mouseDoubleClickEvent(
-            self.ref, event, line=excLine, pos=excPos)
+            self.ref, event,
+            line=self.getLineRange()[0],
+            pos=self.beginPos)
+
+    def setZValue(self, val):
+        QGraphicsRectItem.setZValue(self, val)
+        if self.iconItem:
+            self.iconItem.setZValue(val)
 
 
-class DecorBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
+class DecorBadgeItem(BadgeItemBase, QGraphicsRectItem):
+
+    """Badge item for fully drawn decorators"""
+
+    def __init__(self, ref):
+        BadgeItemBase.__init__(self, ref, '@', 'decorator.svg')
+        QGraphicsRectItem.__init__(self)
+        self.kind = CellElement.BADGE
+
+    def paint(self, painter, option, widget):
+        """Paints the badge item"""
+        del option
+        del widget
+
+        s = self.ref.canvas.settings
+        self.paintBadgeRectangle(painter, False, s.badgeBorderColor,
+                                 s.badgeBGColor)
+
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
+        return "Badge '" + self.text + "'"
+
+    def getProxiedItem(self):
+        """Provides the real item for a proxy one"""
+        return self.ref
+
+    def mouseDoubleClickEvent(self, event):
+        """Jump to the appropriate line in the text editor"""
+        CellElement.mouseDoubleClickEvent(
+                self.ref, event, line=self.ref.ref.body.beginLine,
+                pos=self.ref.ref.body.beginPos)
+
+    def setZValue(self, val):
+        QGraphicsRectItem.setZValue(self, val)
+        if self.iconItem:
+            self.iconItem.setZValue(val)
+
+
+
+class ScopeDecorBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
 
     """Serves the scope badges"""
 
     def __init__(self, ref, decorIndex):
-        BadgeItemBase.__init__(self, ref, '@')
+        BadgeItemBase.__init__(self, ref, '@', 'decorator.svg')
         s = ref.canvas.settings
         if ref.kind == CellElement.FUNC_SCOPE:
             bgColor = s.funcScopeBGColor
@@ -901,38 +931,13 @@ class DecorBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def draw(self, scene, xPos, yPos):
-        """Overload to have an icon instead of text"""
-        # The badge is square
-        s = self.ref.canvas.settings
-        self.iconItem = SVGItem(self.ref.canvas, 'decorator.svg', self)
-        sideSize = self.height - 2 * s.badgePixmapSpacing
-        self.iconItem.setIconHeight(sideSize)
-
-        self.iconItem.setPos(xPos + (self.width - sideSize) / 2,
-                             yPos + (self.height - sideSize) / 2)
-        scene.addItem(self.iconItem)
-
     def paint(self, painter, option, widget):
         """Paints the badge item"""
         del option
         del widget
 
-        s = self.ref.canvas.settings
-
-        if self.isSelected():
-            pen = QPen(s.selectColor)
-            pen.setWidth(s.selectPenWidth)
-        else:
-            pen = QPen(self.borderColor)
-            pen.setWidth(s.badgeLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        painter.setBrush(QBrush(self.bgColor))
-        painter.drawRoundedRect(self.x(), self.y(),
-                                self.width, self.height,
-                                s.badgeRadius, s.badgeRadius)
+        self.paintBadgeRectangle(painter, self.isSelected(),
+                                 self.borderColor, self.bgColor)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -946,12 +951,20 @@ class DecorBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
         """Provides the absolute position range"""
         return self.ref.ref.decorators[self.decorIndex].getAbsPosRange()
 
+    @property
+    def beginPos(self):
+        return self.ref.ref.decorators[self.decorIndex].body.beginPos
+
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
         decLine = self.ref.ref.decorators[self.decorIndex].body.beginLine
-        decPos = self.ref.ref.decorators[self.decorIndex].body.beginPos
         CellElement.mouseDoubleClickEvent(
-            self.ref, event, line=decLine, pos=decPos)
+            self.ref, event, line=decLine, pos=self.beginPos)
+
+    def setZValue(self, val):
+        QGraphicsRectItem.setZValue(self, val)
+        if self.iconItem:
+            self.iconItem.setZValue(val)
 
 
 class DocLinkBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
@@ -959,8 +972,10 @@ class DocLinkBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
     """Serves the scope badges"""
 
     def __init__(self, ref):
-        BadgeItemBase.__init__(self, ref, 'd')
-        self.cmlRef = getDocComment(self.ref.ref.leadingCMLComments)
+        self.cmlRef = getDocComment(ref.ref.leadingCMLComments)
+        pixmapFile, _ = getDoclinkIconAndTooltip(self.cmlRef)
+
+        BadgeItemBase.__init__(self, ref, 'd', pixmapFile)
         s = ref.canvas.settings
         ColorMixin.__init__(self, None, s.docLinkBGColor,
                             s.docLinkFGColor, s.docLinkBorderColor,
@@ -975,41 +990,13 @@ class DocLinkBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
         # To make double click delivered
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def draw(self, scene, xPos, yPos):
-        """Overload to have an icon instead of text"""
-        # The badge is square
-        s = self.ref.canvas.settings
-        pixmapFile, _ = getDoclinkIconAndTooltip(self.cmlRef)
-        self.iconItem = SVGItem(self.ref.canvas, pixmapFile, self)
-        sideSize = self.height - 2 * s.badgePixmapSpacing
-        self.iconItem.setIconHeight(sideSize)
-
-        self.iconItem.setPos(xPos + (self.width - sideSize) / 2,
-                             yPos + (self.height - sideSize) / 2)
-        scene.addItem(self.iconItem)
-
     def paint(self, painter, option, widget):
         """Paints the badge item"""
         del option
         del widget
 
-        s = self.ref.canvas.settings
-
-        if self.isSelected():
-            pen = QPen(s.selectColor)
-            pen.setWidth(s.selectPenWidth)
-        else:
-            #pen = QPen(s.commentBorderColor)
-            pen = QPen(self.borderColor)
-            pen.setWidth(s.badgeLineWidth)
-        pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(pen)
-
-        #painter.setBrush(QBrush(s.commentBGColor))
-        painter.setBrush(QBrush(self.bgColor))
-        painter.drawRoundedRect(self.x(), self.y(),
-                                self.width, self.height,
-                                s.badgeRadius, s.badgeRadius)
+        self.paintBadgeRectangle(painter, self.isSelected(),
+                                 self.borderColor, self.bgColor)
 
     def getSelectTooltip(self):
         """Provides the tooltip"""
@@ -1023,10 +1010,18 @@ class DocLinkBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
         """Provides the absolute position range"""
         return self.cmlRef.getAbsPosRange()
 
+    @property
+    def beginPos(self):
+        return self.cmlRef.ref.parts[0].beginPos
+
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
         beginLine = self.getLineRange()[0]
-        beginPos = self.cmlRef.ref.parts[0].beginPos
         CellElement.mouseDoubleClickEvent(
-            self.ref, event, line=beginLine, pos=beginPos)
+            self.ref, event, line=beginLine, pos=self.beginPos)
+
+    def setZValue(self, val):
+        QGraphicsRectItem.setZValue(self, val)
+        if self.iconItem:
+            self.iconItem.setZValue(val)
 

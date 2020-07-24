@@ -27,6 +27,7 @@ from utils.globals import GlobalData
 from utils.config import DEFAULT_ENCODING
 from .cml import CMLVersion
 from .routines import distance, getDocComment
+from .abovebadges import AboveBadges, AboveBadgesDivider, AboveBadgesSpacer
 
 
 class CellElement:
@@ -132,102 +133,51 @@ class CellElement:
         self.itemID = canvas.settings.itemID
         canvas.settings.itemID += 1
 
-        # The badges must be of the equal height so they are collected
-        # in this list
-        self.aboveBadges = []
+        self.aboveBadges = AboveBadges()
 
     def __str__(self):
         return kindToString(self.kind) + \
             '[' + str(self.minWidth) + 'x' + str(self.minHeight) + '] -> [' + \
             str(self.width) + 'x' + str(self.height) + ']'
 
-    def normalizeBadgesHeight(self):
-        """Makes all the badges of the same height (max)"""
-        maxHeight = -1
-        for badge in self.aboveBadges:
-            if badge is not None:
-                maxHeight = max(maxHeight, badge.height)
-        for badge in self.aboveBadges:
-            if badge is not None:
-                badge.height = maxHeight
-                # make sure the badge is at least square
-                if badge.width < badge.height:
-                    badge.width = badge.height
-
-    def getBadgeRowHeight(self):
-        """Provides the height of the badges row"""
-        for badge in self.aboveBadges:
-            if badge is not None:
-                return badge.height
-        return 0
-
-    def hasAboveBadges(self):
-        """True if there are top badges"""
-        for badge in self.aboveBadges:
-            if badge is not None:
-                return True
-        return False
-
     def appendCommentBadges(self):
         """Appends the comment badges (regular, non scope items)"""
         from .auxitems import DocLinkBadgeItem, CommentBadgeItem
-        # Returns the width and height added by the badges row
+
         settings = self.canvas.settings
         if settings.hidecomments and not settings.noComment:
-            badgeCount = 0
+            dividerAdded = False
             leadingDoc = getDocComment(self.ref.leadingCMLComments)
             if leadingDoc:
+                self.aboveBadges.append(AboveBadgesDivider())
+                dividerAdded = True
                 self.aboveBadges.append(DocLinkBadgeItem(self))
-                badgeCount += 1
             if self.ref.leadingComment:
+                if dividerAdded:
+                    self.aboveBadges.append(
+                        AboveBadgesSpacer(settings.badgeToBadgeHSpacing))
+                else:
+                    self.aboveBadges.append(AboveBadgesDivider())
+                    dividerAdded = True
                 self.aboveBadges.append(CommentBadgeItem(self, False))
-                badgeCount += 1
             if self.ref.sideComment:
+                if dividerAdded:
+                    self.aboveBadges.append(
+                        AboveBadgesSpacer(settings.badgeToBadgeHSpacing))
+                else:
+                    self.aboveBadges.append(AboveBadgesDivider())
+                    dividerAdded = True
                 self.aboveBadges.append(CommentBadgeItem(self, True))
-                badgeCount += 1
-
-            if badgeCount > 0:
-                self.normalizeBadgesHeight()
-                width = settings.badgeShift
-                for badge in self.aboveBadges:
-                    if badge:
-                        width += badge.width + settings.badgeToBadgeHSpacing
-                    else:
-                        width += settings.badgeGroupSpacing
-                if self.aboveBadges[-1] is not None:
-                    width -= settings.badgeToBadgeHSpacing
-                return width, self.getBadgeRowHeight() + settings.badgeToScopeVPadding
-        return 0, 0
 
     def render(self):
         """Renders the graphics considering settings"""
         raise Exception("render() is not implemented for " +
                         kindToString(self.kind))
 
-    def drawCommentBadges(self, scene):
+    def drawBadges(self, scene):
         """Draws the badges raw"""
-        # Returns the height added by the badges row
-        if self.hasAboveBadges():
-            settings = self.canvas.settings
-            badgeEndXPos = self.baseX + self.minWidth - settings.hCellPadding
-            yPos = self.baseY + settings.vCellPadding
-            first = True
-            for badge in reversed(self.aboveBadges):
-                if first:
-                    badgeEndXPos -= settings.badgeShift
-                if badge is not None:
-                    if not first:
-                        badgeEndXPos -= settings.badgeToBadgeHSpacing
-                    badgeXPos = badgeEndXPos - badge.width
-                    badge.moveTo(badgeXPos, yPos)
-                    scene.addItem(badge)
-                    badge.draw(scene, badgeXPos, yPos)
-                    badgeEndXPos = badgeXPos
-                else:
-                    badgeEndXPos -= settings.badgeGroupSpacing
-                first = False
-            return self.getBadgeRowHeight() + settings.badgeToScopeVPadding
-        return 0
+        self.drawBadges(scene, self.canvas.settings,
+                        self.baseX, self.baseY, self.minWidth)
 
     def draw(self, scene, baseX, baseY):
         """Draws the element on the real canvas. Should respect settings."""

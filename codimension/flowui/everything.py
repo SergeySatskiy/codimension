@@ -202,18 +202,28 @@ def d():
 # Leading
 @decor2     # Side 1
             # Side 2
+            # Side 3
+            # Side 4
+            # Side 5
+            # side 6
+
 def d():
     pass
 
+# cml 1 doc anchor=000 title="Some anchor"
 # Leading
 @decor2( x,     # Side 1
          y )    # Side 2
-def d():    # side inside decor
-            # Second line
+def d():    # s
+            # Se
     pass
 
-@decor3
+@decor3     # Side
+            # More
+            # ole
+# ZZZZZZZZZZZZZZZZZZ
 @decor4
+# Some comments
 class Cd:
     pass
 
@@ -326,6 +336,7 @@ else:
 
 
 # Leading 1
+# cml 1 doc anchor=000 title="Some anchor"
 try:        # Side 1
     pass
 # Leading 2
@@ -340,7 +351,7 @@ except Exception as ex:
 except:         # Side 4
     pass
 
-# Leading 1
+# cml 1 doc anchor=000 title="Some anchor"
 try:
     a = 10
     b = 20  # Side 1
