@@ -852,9 +852,10 @@ class ExceptBadgeItem(BadgeItemBase, ColorMixin, QGraphicsRectItem):
 
     def mouseDoubleClickEvent(self, event):
         """Jump to the appropriate line in the text editor"""
+        line = self.ref.ref.exceptParts[self.excIndex].body.getLineRange()[0]
         CellElement.mouseDoubleClickEvent(
             self.ref, event,
-            line=self.getLineRange()[0],
+            line=line,
             pos=self.beginPos)
 
     def setZValue(self, val):
