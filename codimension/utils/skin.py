@@ -212,8 +212,8 @@ _DEFAULT_CFLOW_SETTINGS = {
     # Rounded rectangles radius for the return-like statements
     'minWidth': 100,
 
-    'cfLineWidth': 1,        # Control flow line
-    'boxLineWidth': 1,        # All boxes and their leads to CF
+    'cfLineWidth': 1,       # Control flow line
+    'boxLineWidth': 1,      # All boxes and their leads to CF
     'cfLineColor': QColor(132, 132, 132, 255),
 
     # Selection
@@ -320,10 +320,16 @@ _DEFAULT_CFLOW_SETTINGS = {
     'forScopeBGColor': QColor(198, 219, 239, 255),
     'forScopeFGColor': QColor(0, 0, 0, 255),
     'forScopeBorderColor': QColor(150, 150, 150, 255),
+    'forScopeHeaderBorderColor': QColor(150, 150, 150, 255),
+    'forScopeHeaderBGColor': QColor(218, 239, 255, 255),
+    'forScopeHeaderPenWidth': 2,
 
     'whileScopeBGColor': QColor(198, 219, 239, 255),
     'whileScopeFGColor': QColor(0, 0, 0, 255),
     'whileScopeBorderColor': QColor(150, 150, 150, 255),
+    'whileScopeHeaderBorderColor': QColor(150, 150, 150, 255),
+    'whileScopeHeaderBGColor': QColor(218, 239, 255, 255),
+    'whileScopeHeaderPenWidth': 2,
 
     'tryScopeBGColor': QColor(248, 248, 248, 255),
     'tryScopeFGColor': QColor(0, 0, 0, 255),

@@ -359,6 +359,22 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
                                 s.scopeRectRadius, s.scopeRectRadius)
 
         if self.kind in [CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE]:
+            # Brush
+            if self.kind == CellElement.FOR_SCOPE:
+                painter.setBrush(QBrush(s.forScopeHeaderBGColor))
+            else:
+                painter.setBrush(QBrush(s.whileScopeHeaderBGColor))
+
+            # Pen, if not selected
+            if not self.isSelected():
+                if self.kind == CellElement.FOR_SCOPE:
+                    pen = QPen(QColor(s.forScopeHeaderBorderColor))
+                    pen.setWidth(s.forScopeHeaderPenWidth)
+                else:
+                    pen = QPen(QColor(s.whileScopeHeaderBorderColor))
+                    pen.setWidth(s.whileScopeHeaderPenWidth)
+                painter.setPen(pen)
+
             painter.drawPolygon(
                 QPointF(self.x1, self.y1), QPointF(self.x2, self.y2),
                 QPointF(self.x3, self.y3), QPointF(self.x4, self.y4),
