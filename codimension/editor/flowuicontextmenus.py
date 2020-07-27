@@ -1115,7 +1115,6 @@ class CFSceneContextMenuMixin:
 
     def __getLineRange(self, selected):
         first = selected[0]
-        last = selected[-1]
 
         if first.kind == CellElement.OPENED_GROUP_BEGIN:
             firstLine = first.groupBeginCMLRef.ref.parts[0].beginLine
@@ -1131,12 +1130,16 @@ class CFSceneContextMenuMixin:
             else:
                 pos = first.ref.beginPos
 
-        if last.scopedItem():
-            lastLine = last.ref.endLine
-        elif last.kind == CellElement.OPENED_GROUP_BEGIN:
-            lastLine = last.groupEndCMLRef.ref.parts[-1].endLine
-        else:
-            lastLine = last.getLineRange()[1]
+        lastLine = -1
+        for item in selected:
+            if item.scopedItem():
+                lastLine = max(lastLine, item.ref.endLine)
+            elif item.kind == CellElement.OPENED_GROUP_BEGIN:
+                lastLine = max(lastLine,
+                               item.groupEndCMLRef.ref.parts[-1].endLine)
+            else:
+                lastLine = max(lastLine, item.getLineRange()[1])
+
         return firstLine, lastLine, pos
 
     def __getSelectedScopeRegions(self, selected):
