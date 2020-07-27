@@ -1041,6 +1041,19 @@ class CFSceneContextMenuMixin:
                     for relatedItem in self.findItemsForRef(item.ref.elsePart):
                         if relatedItem not in selected:
                             return True
+            elif item.kind in [CellElement.FUNC_SCOPE,
+                               CellElement.CLASS_SCOPE]:
+                if item.ref.decorators:
+                    s = item.canvas.settings
+                    if not s.noDecor and not s.hidedecors:
+                        # Full decorators are drawn
+                        for decor in item.ref.decorators:
+                            for relatedItem in self.findItemsForRef(decor):
+                                if relatedItem not in selected:
+                                    return True
+            elif item.kind in [CellElement.DECORATOR]:
+                if not item.scopeItem.isSelected():
+                    return True
             elif item.kind in [CellElement.TRY_SCOPE]:
                 # It could be that the exception blocks are hidden, so there
                 # will be exactly one more item instead of many and that item
