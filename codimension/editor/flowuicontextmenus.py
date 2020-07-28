@@ -946,22 +946,31 @@ class CFSceneContextMenuMixin:
         """Sorts the selected items in reverse order"""
         result = []
         for item in self.selectedItems():
-            itemBegin = item.getAbsPosRange()[0]
             for index in range(len(result)):
-                if itemBegin > result[index].getAbsPosRange()[0]:
+                if self.itemAbsPosLess(result[index], item):
                     result.insert(index, item)
                     break
             else:
                 result.append(item)
         return result
 
+    @staticmethod
+    def itemAbsPosLess(lhs, rhs):
+        lhsBegin, lhsEnd = lhs.getAbsPosRange()
+        rhsBegin, rhsEnd = rhs.getAbsPosRange()
+
+        if lhsBegin < rhsBegin:
+            return True
+        if lhsBegin == rhsBegin:
+            return lhsEnd < rhsEnd
+        return False
+
     def sortSelected(self, selected):
         """Sorts the selected items in direct order"""
         result = []
         for item in selected:
-            itemBegin = item.getAbsPosRange()[0]
             for index in range(len(result)):
-                if itemBegin < result[index].getAbsPosRange()[0]:
+                if self.itemAbsPosLess(item, result[index]):
                     result.insert(index, item)
                     break
             else:
