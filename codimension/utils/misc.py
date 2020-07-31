@@ -376,10 +376,18 @@ def preResolveLinkPath(link, fromFile, canBeCreated):
         "The link '" + effectiveLink + \
         "' does not point to an existing file"
 
-def printStack():
+def printStack(limit=100):
     """Prints the stack in the log window"""
+    lines = []
     for line in traceback.format_stack():
-        print(line.strip())
+        lines.append(line.strip())
+
+    # The last item is this very one so strip it
+    lines = lines[:-1]
+
+    if len(lines) > limit:
+        lines = lines[-limit:]
+    print('\n'.join(lines))
 
 
 def printReferences(obj):
