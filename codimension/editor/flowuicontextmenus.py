@@ -985,11 +985,13 @@ class CFSceneContextMenuMixin:
         if Settings()['smartZoom'] not in [SMART_ZOOM_ALL,
                                            SMART_ZOOM_NO_CONTENT]:
             return False
-        if self.__areAllSelectedComments():
+        if self.__areAllSelectedDependentComments():
             return False
         if self.__areScopeDocstringSelected():
             return False
         if self.__isModuleSelected():
+            return False
+        if self.__areAllSelectedBadges():
             return False
 
         # Extend the selection with all the selected items comments
@@ -1020,10 +1022,14 @@ class CFSceneContextMenuMixin:
             return False
         return True
 
-    def __areAllSelectedComments(self):
+    def __areAllSelectedDependentComments(self):
         """True if all selected items are comments"""
         for item in self.selectedItems():
-            if not item.isComment():
+            if item.kind not in [CellElement.SIDE_COMMENT,
+                                 CellElement.LEADING_COMMENT,
+                                 CellElement.ABOVE_COMMENT,
+                                 CellElement.LEADING_DOC,
+                                 CellElement.ABOVE_DOC]:
                 return False
         return True
 
@@ -1040,6 +1046,17 @@ class CFSceneContextMenuMixin:
             if item.kind == CellElement.FILE_SCOPE:
                 return True
         return False
+
+    def __areAllSelectedBadges(self):
+        """True if all the selected items are badges"""
+        for item in self.selectedItems():
+            if item.kind not in [CellElement.SCOPE_EXCEPT_BADGE,
+                                 CellElement.SCOPE_DOCSTRING_BADGE,
+                                 CellElement.SCOPE_COMMENT_BADGE,
+                                 CellElement.SCOPE_DECORATOR_BADGE,
+                                 CellElement.SCOPE_DOCLINK_BADGE]:
+                return False
+        return True
 
     def __areIncompleteScopeSelected(self, selected):
         """True if an incomplete scope selected"""

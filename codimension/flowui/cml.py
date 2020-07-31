@@ -163,6 +163,10 @@ class CMLCommentBase:
         """Provides the absolute position range"""
         return [self.ref.parts[0].begin, self.ref.parts[-1].end]
 
+    @property
+    def beginPos(self):
+        return self.ref.parts[0].beginPos
+
 
 class CMLsw(CMLCommentBase):
 
@@ -621,10 +625,15 @@ class CMLVersion:
 
             if item.kind in [CLASS_FRAGMENT, FUNCTION_FRAGMENT]:
                 if item.decorators:
-                    for decorator in item.decorators:
-                        warnings += CMLVersion.validateCMLList(
-                            decorator.leadingCMLComments, False,
-                            None, None, None, 'decorators')
+                    for index, decorator in enumerate(item.decorators):
+                        if index == 0:
+                            warnings += CMLVersion.validateCMLList(
+                                decorator.leadingCMLComments, True,
+                                scopeGroupStack, validGroups, allGroupId)
+                        else:
+                            warnings += CMLVersion.validateCMLList(
+                                decorator.leadingCMLComments, False,
+                                None, None, None, ' not first decorators')
                         warnings += CMLVersion.validateCMLList(
                             decorator.sideCMLComments, False,
                             None, None, None, 'decorators')
@@ -650,7 +659,16 @@ class CMLVersion:
                         warnings.append(warn)
                     continue
 
-                if hasattr(nestedItem, "leadingCMLComments"):
+                if nestedItem.kind in [CLASS_FRAGMENT, FUNCTION_FRAGMENT]:
+                    if nestedItem.decorators:
+                        warnings += CMLVersion.validateCMLList(
+                            nestedItem.decorators[0].leadingCMLComments, True,
+                            scopeGroupStack, validGroups, allGroupId)
+                    else:
+                        warnings += CMLVersion.validateCMLList(
+                            nestedItem.leadingCMLComments, True,
+                            scopeGroupStack, validGroups, allGroupId)
+                elif hasattr(nestedItem, "leadingCMLComments"):
                     warnings += CMLVersion.validateCMLList(
                         nestedItem.leadingCMLComments, True, scopeGroupStack,
                         validGroups, allGroupId)

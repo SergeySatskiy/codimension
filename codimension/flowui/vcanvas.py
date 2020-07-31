@@ -431,6 +431,11 @@ class VirtualCanvas:
             return self.__checkLeadingCMLComments(
                 item.parts[0].leadingCMLComments)
 
+        if item.kind in [FUNCTION_FRAGMENT, CLASS_FRAGMENT]:
+            if item.decorators:
+                return self.__checkLeadingCMLComments(
+                    item.decorators[0].leadingCMLComments)
+
         # The item may have a leading CML comment which ends a valid group
         if not hasattr(item, 'leadingCMLComments'):
             return []
