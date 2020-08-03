@@ -1,4 +1,4 @@
-2020 XXX XX Sergey Satskiy <sergey.satskiy@tuta.io>
+2020 Aug 03 Sergey Satskiy <sergey.satskiy@tuta.io>
 
 * Version 4.9.0
 * Fixed installation package
@@ -6,6 +6,7 @@
 * Bug fixes on the graphics pane (selection, rubber band, side comments,
   continue/break rendering etc)
 * Introducing above badges for pretty much all items (when minimized)
+* Bumping up the vulture library version to 1.6
 
 2020 Apr 25 Sergey Satskiy <sergey.satskiy@tuta.io>
 
