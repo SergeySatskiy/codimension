@@ -991,7 +991,7 @@ class CFSceneContextMenuMixin:
             return False
         if self.__isModuleSelected():
             return False
-        if self.__areAllSelectedBadges():
+        if self.__areHangingDependentSelected():
             return False
 
         # Extend the selection with all the selected items comments
@@ -1047,16 +1047,31 @@ class CFSceneContextMenuMixin:
                 return True
         return False
 
-    def __areAllSelectedBadges(self):
-        """True if all the selected items are badges"""
+    def __areHangingDependentSelected(self):
+        """True if e.g. a comment or doc is selected but the item is not"""
+        scopeBadges = (CellElement.SCOPE_EXCEPT_BADGE,
+                       CellElement.SCOPE_DOCSTRING_BADGE,
+                       CellElement.SCOPE_COMMENT_BADGE,
+                       CellElement.SCOPE_DECORATOR_BADGE,
+                       CellElement.SCOPE_DOCLINK_BADGE)
+        docAndComments = (CellElement.LEADING_COMMENT,
+                          CellElement.SIDE_COMMENT,
+                          CellElement.ABOVE_COMMENT,
+                          CellElement.LEADING_DOC,
+                          CellElement.ABOVE_DOC)
         for item in self.selectedItems():
-            if item.kind not in [CellElement.SCOPE_EXCEPT_BADGE,
-                                 CellElement.SCOPE_DOCSTRING_BADGE,
-                                 CellElement.SCOPE_COMMENT_BADGE,
-                                 CellElement.SCOPE_DECORATOR_BADGE,
-                                 CellElement.SCOPE_DOCLINK_BADGE]:
-                return False
-        return True
+            if item.kind in scopeBadges:
+                if not item.ref.isSelected():
+                    return True
+            elif item.kind in docAndComments:
+                for relatedItem in self.findItemsForRef(item.ref):
+                    if relatedItem.kind in scopeBadges:
+                        continue
+                    if relatedItem.kind in docAndComments:
+                        continue
+                    if not relatedItem.isSelected():
+                        return True
+        return False
 
     def __areIncompleteScopeSelected(self, selected):
         """True if an incomplete scope selected"""
@@ -1117,7 +1132,7 @@ class CFSceneContextMenuMixin:
                         return True
             elif item.kind == CellElement.SCOPE_EXCEPT_BADGE:
                 # here: no except blocks on the diagram, they are collapsed
-                tryItems = self.findItemsForRef(item.ref)
+                tryItems = self.findItemsForRef(item.ref.ref)
                 for tryItem in tryItems:
                     if tryItem.kind == CellElement.TRY_SCOPE:
                         if tryItem.subKind == ScopeCellElement.TOP_LEFT:
@@ -1134,7 +1149,7 @@ class CFSceneContextMenuMixin:
         boundComments = []
         selected = self.selectedItems()
         for item in selected:
-            if not item.isComment() and not self.isOpenGroupItem(item):
+            if not item.isComment() and not item.isCMLDoc() and not self.isOpenGroupItem(item):
                 for relatedItem in self.findItemsForRef(item.ref):
                     if relatedItem not in selected:
                         boundComments.append(relatedItem)
