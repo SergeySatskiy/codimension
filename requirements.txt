@@ -1,7 +1,7 @@
 cdmpyparser==3.2.1
 cdmcfparser==2.3.2
 cdmgcplugin==1.0.4
-cdmpylintplugin==1.0.3
+cdmpylintplugin==1.0.4
 cdmsysinfoplugin==1.0.0
 pyflakes==2.1.1
 flake8==3.7.7
@@ -10,9 +10,9 @@ PyQt5==5.11.3
 python-magic==0.4.15
 qutepart==3.3.0.post1
 yapsy==1.12.0
-jedi==0.17.0
+jedi==0.17.2
 vulture==1.6
 gprof2dot==2017.9.19
 mistune==0.8.4
 pygments==2.6.1
-qdarkstyle==2.8
+qdarkstyle==2.8.1

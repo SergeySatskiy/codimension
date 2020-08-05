@@ -3,6 +3,9 @@
 * Version 4.9.1
 * Bug fix: broken disassembling for python 3.7/3.8 - a new field was added to
   metadata header in .pyc files
+* Bumping up the jedi library version to 0.17.2
+* Bumping up the qdarkstyle library version to 2.8.1
+* Bumping up the pylint plugin version to 1.0.4
 
 2020 Aug 03 Sergey Satskiy <sergey.satskiy@tuta.io>
 
