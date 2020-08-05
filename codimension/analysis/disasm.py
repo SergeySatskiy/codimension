@@ -95,6 +95,10 @@ def getCompiledfileDisassembled(pycPath, pyPath, optimization,
         size = pycFile.read(4)
         size = struct.unpack('I', size)[0]
 
+    if sys.version_info.major == 3 and sys.version_info.minor >= 7:
+        flags = pycFile.read(4)
+        del flags
+
     code = marshal.load(pycFile)
     magic = binascii.hexlify(magic).decode('utf-8')
     timestamp = time.asctime(
