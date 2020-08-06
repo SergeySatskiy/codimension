@@ -1,4 +1,4 @@
-2020 XXX XX Sergey Satskiy <sergey.satskiy@tuta.io>
+2020 Aug 06 Sergey Satskiy <sergey.satskiy@tuta.io>
 
 * Version 4.9.1
 * Bug fix: broken disassembling for python 3.7/3.8 - a new field was added to
