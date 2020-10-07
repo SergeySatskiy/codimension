@@ -43,6 +43,7 @@ class ControlFlowNavigationBar(QFrame):
         self.__pathLabel = None
         self.__createLayout()
         self.__currentIconState = self.STATE_UNKNOWN
+        self.__hasErrors = False
 
     def __createLayout(self):
         """Creates the layout"""
@@ -85,17 +86,35 @@ class ControlFlowNavigationBar(QFrame):
                                             QSizePolicy.Fixed)
         self.__selectionLabel.setMinimumWidth(40)
         self.__layout.addWidget(self.__selectionLabel)
-        self.setSelectionLabel(0, None)
+
+    def serialize(self):
+        """For the purpose of switching between views"""
+        return {'path': self.__pathLabel.text(),
+                'state': self.__currentIconState,
+                'warningsvisible': self.__warningsIcon.isVisible(),
+                'warnings': self.__warningsIcon.toolTip(),
+                'icontooltip': self.__infoIcon.toolTip(),
+                'selectiontext': self.__selectionLabel.text(),
+                'selectiontooltip': self.__selectionLabel.toolTip()}
+
+    def deserialize(self, values):
+        """Restores the nav bar state when views are switched"""
+        self.__pathLabel.setText(values['path'])
+        self.updateInfoIcon(values['state'])
+        self.__warningsIcon.setVisible(values['warningsvisible'])
+        self.__warningsIcon.setToolTip(values['warnings'])
+        self.__infoIcon.setToolTip(values['icontooltip'])
+        self.__selectionLabel.setText(values['selectiontext'])
+        self.__selectionLabel.setToolTip(values['selectiontooltip'])
 
     def clearWarnings(self):
         """Clears the warnings"""
         self.__warningsIcon.setVisible(False)
-        self.__warningsIcon.setToolTip("")
+        self.__warningsIcon.setToolTip('')
 
     def setWarnings(self, warnings):
         """Sets the warnings"""
-        self.__warningsIcon.setToolTip(
-            'Control flow parser warnings:\n' + '\n'.join(warnings))
+        self.__warningsIcon.setToolTip(warnings)
         self.__warningsIcon.setVisible(True)
 
     def clearErrors(self):
@@ -104,8 +123,7 @@ class ControlFlowNavigationBar(QFrame):
 
     def setErrors(self, errors):
         """Sets the errors"""
-        self.__infoIcon.setToolTip(
-            'Control flow parser errors:\n' + '\n'.join(errors))
+        self.__infoIcon.setToolTip(errors)
 
     def updateInfoIcon(self, state):
         """Updates the information icon"""
@@ -114,27 +132,27 @@ class ControlFlowNavigationBar(QFrame):
 
         if state == self.STATE_OK_UTD:
             self.__infoIcon.setPixmap(getPixmap('cfokutd.png'))
-            self.__infoIcon.setToolTip("Control flow is up to date")
+            self.__infoIcon.setToolTip("View is up to date")
             self.__currentIconState = self.STATE_OK_UTD
         elif state == self.STATE_OK_CHN:
             self.__infoIcon.setPixmap(getPixmap('cfokchn.png'))
-            self.__infoIcon.setToolTip("Control flow is not up to date; "
+            self.__infoIcon.setToolTip("View is not up to date; "
                                        "will be updated on idle")
             self.__currentIconState = self.STATE_OK_CHN
         elif state == self.STATE_BROKEN_UTD:
             self.__infoIcon.setPixmap(getPixmap('cfbrokenutd.png'))
-            self.__infoIcon.setToolTip("Control flow might be invalid "
+            self.__infoIcon.setToolTip("View might be invalid "
                                        "due to invalid python code")
             self.__currentIconState = self.STATE_BROKEN_UTD
         elif state == self.STATE_BROKEN_CHN:
             self.__infoIcon.setPixmap(getPixmap('cfbrokenchn.png'))
-            self.__infoIcon.setToolTip("Control flow might be invalid; "
+            self.__infoIcon.setToolTip("View might be invalid; "
                                        "will be updated on idle")
             self.__currentIconState = self.STATE_BROKEN_CHN
         else:
             # STATE_UNKNOWN
             self.__infoIcon.setPixmap(getPixmap('cfunknown.png'))
-            self.__infoIcon.setToolTip("Control flow state is unknown")
+            self.__infoIcon.setToolTip("View state is unknown")
             self.__currentIconState = self.STATE_UNKNOWN
 
     def getCurrentState(self):
@@ -154,11 +172,12 @@ class ControlFlowNavigationBar(QFrame):
         """Sets selection label"""
         self.__selectionLabel.setText(str(text))
         if tooltip:
-            self.__selectionLabel.setToolTip("Selected items:\n" +
+            self.__selectionLabel.setToolTip('Selected items:\n' +
                                              str(tooltip))
         else:
-            self.__selectionLabel.setToolTip("Number of selected items")
+            self.__selectionLabel.setToolTip('Number of selected items')
 
     def resizeEvent(self, event):
         """Editor has resized"""
         QFrame.resizeEvent(self, event)
+

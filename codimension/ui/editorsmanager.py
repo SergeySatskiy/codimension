@@ -719,6 +719,9 @@ class EditorsManager(QTabWidget):
             if isPythonMime(widget.getMime()):
                 cfEditor = widget.getCFEditor()
                 scrollHPos, scrollVPos = cfEditor.getScrollbarPositions()
+                if scrollHPos is None or scrollVPos is None:
+                    # Keep it as it was
+                    _, _, _, scrollHPos, scrollVPos = getFilePosition(fileName)
             elif isMarkdownMime(widget.getMime()):
                 mdView = widget.getMDView()
                 scrollHPos, scrollVPos = mdView.getScrollbarPositions()
@@ -888,10 +891,7 @@ class EditorsManager(QTabWidget):
         else:
             # This is a text editor with flow UI
             self.sigTabRunChanged.emit(widget.isTabRunEnabled())
-            if widget.getCFEditor().dirty():
-                selection = widget.getCFEditor().scene().serializeSelection()
-                widget.getCFEditor().process()
-                widget.getCFEditor().scene().restoreSelectionByTooltip(selection)
+            widget.getCFEditor().onCurrentTabChanged()
 
     def onHelp(self):
         """Triggered when F1 is received"""

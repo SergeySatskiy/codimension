@@ -107,6 +107,9 @@ class CellElement:
     OPENED_GROUP_END = 502
     COLLAPSED_GROUP = 503
 
+    # Dependencies diagram items
+    DEPS_SELF_MODULE = 600
+
     def __init__(self, ref, canvas, x, y):
         self.kind = self.UNKNOWN
         self.subKind = self.UNKNOWN
@@ -441,7 +444,8 @@ __kindToString = {
     CellElement.EMPTY_GROUP: 'EMPTY_GROUP',
     CellElement.OPENED_GROUP_BEGIN: 'OPENED_GROUP_BEGIN',
     CellElement.OPENED_GROUP_END: 'OPENED_GROUP_END',
-    CellElement.COLLAPSED_GROUP: 'COLLAPSED_GROUP'}
+    CellElement.COLLAPSED_GROUP: 'COLLAPSED_GROUP',
+    CellElement.DEPS_SELF_MODULE: 'DEPS_SELF_MODULE'}
 
 
 def kindToString(kind):

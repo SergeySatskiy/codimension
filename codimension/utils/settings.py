@@ -177,6 +177,7 @@ _DEFAULT_SETTINGS = {
     'hidecomments': False,
     'hideexcepts': False,
     'hidedecors': False,
+    'disasmLevel': 0,                   # 0 -> no optimization
 
     # Debug variable filters
     'dbgfltlocal': True,
@@ -246,7 +247,8 @@ class SettingsWrapper(QObject,
 
     """Provides settings singleton facility"""
 
-    MAX_SMART_ZOOM = 3
+    MAX_SMART_ZOOM = 4
+    MIN_SMART_ZOOM = -3
 
     sigRecentListChanged = pyqtSignal()
     sigFlowSplitterChanged = pyqtSignal()
@@ -258,6 +260,7 @@ class SettingsWrapper(QObject,
     sigHideDecorsChanged = pyqtSignal()
     sigSmartZoomChanged = pyqtSignal()
     sigRecentFilesChanged = pyqtSignal()
+    sigDisasmLevelChanged = pyqtSignal()
 
     def __init__(self):
         QObject.__init__(self)
@@ -446,11 +449,13 @@ class SettingsWrapper(QObject,
                             ') will be adjusted to ' + str(minCFlowZoom) +
                             ' due to it is less than min fonts allowed.')
             self.__values['flowZoom'] = minCFlowZoom
-        if self.__values['smartZoom'] < 0:
+        if self.__values['smartZoom'] < SettingsWrapper.MIN_SMART_ZOOM:
             warnings.append('The current smart zoom (' +
                             str(self.__values['smartZoom']) +
-                            ') will be adjusted to 0 due to it must be >= 0')
-            self.__values['smartZoom'] = 0
+                            ') will be adjusted to ' +
+                            str(SettingsWrapper.MIN_SMART_ZOOM) +
+                            ' due to it is less than min allowed.')
+            self.__values['smartZoom'] = SettingsWrapper.MIN_SMART_ZOOM
         elif self.__values['smartZoom'] > SettingsWrapper.MAX_SMART_ZOOM:
             warnings.append('The current smart zoom (' +
                             str(self.__values['smartZoom']) +
@@ -478,6 +483,8 @@ class SettingsWrapper(QObject,
             self.sigHideExceptsChanged.emit()
         elif key == 'hidedecors':
             self.sigHideDecorsChanged.emit()
+        elif key == 'disasmLevel':
+            self.sigDisasmLevelChanged.emit()
         self.flush()
 
     def onTextZoomIn(self):
@@ -509,7 +516,7 @@ class SettingsWrapper(QObject,
 
     def onSmartZoomOut(self):
         """Triggered when the smart zoom is changed"""
-        if self.__values['smartZoom'] > 0:
+        if self.__values['smartZoom'] > SettingsWrapper.MIN_SMART_ZOOM:
             self.__values['smartZoom'] -= 1
             self.flush()
             self.sigSmartZoomChanged.emit()

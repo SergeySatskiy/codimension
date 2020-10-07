@@ -22,14 +22,13 @@
 import os.path
 import logging
 import uuid
-import sip
 from math import ceil
 from timeit import default_timer as timer
 from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QPainter, QImage,
                    QToolBar, QWidget, QPrinter, QApplication, QHBoxLayout,
-                   QLabel, QVBoxLayout, QFileDialog,
+                   QLabel, QVBoxLayout, QFileDialog, QActionGroup, QAction,
                    QDialog, QMenu, QToolButton, QMessageBox, QSvgGenerator,
-                   QStackedWidget)
+                   QStackedWidget, QApplication)
 from ui.spacers import ToolBarExpandingSpacer, ToolBarVSpacer
 from cdmcfparser import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas, formatFlow
@@ -43,27 +42,105 @@ from utils.diskvaluesrelay import (getFilePosition, getCollapsedGroups,
                                    setCollapsedGroups)
 from .flowuinavbar import ControlFlowNavigationBar
 from .flowuisceneview import CFGraphicsView
+from .astview import ASTView
+from .disasmview import DisassemblyView
+from .binview import BinView
 
 
 IDLE_TIMEOUT = 1500
 
+
+SMART_ZOOM_BIN = -3         # Shows the pyc binary
+SMART_ZOOM_DISASM = -2      # Show the code disassembly
+SMART_ZOOM_AST = -1         # Show the code AST
 SMART_ZOOM_ALL = 0          # Show everything
 SMART_ZOOM_NO_CONTENT = 1   # All the boxes are without a content
 SMART_ZOOM_CONTROL_ONLY = 2 # Only scopes and ifs
 SMART_ZOOM_CLASS_FUNC = 3   # Only classes and functions
+SMART_ZOOM_FS = 4           # File system dependencies view
+
+SMART_ZOOM_MIN = SMART_ZOOM_BIN
+SMART_ZOOM_MAX = SMART_ZOOM_FS
+
+
+class SmartZoomStaticProps:
+
+    """Zoom level properties"""
+
+    def __init__(self, label, description, viewIndex,
+                 isControlFlow, selectionAvailable):
+        self.label = label
+        self.description = description
+        self.viewIndex = viewIndex
+        self.isControlFlow = isControlFlow
+        self.selectionAvailable = selectionAvailable
+
+
+# Number: [label, description, view index, is a control flow]
+# The dictionary must be in sync with FlowUIWidget::__createStackedViews() in
+# terms of the view indexes
+ZOOM_PROPS = {
+    SMART_ZOOM_BIN:
+        SmartZoomStaticProps('B', 'pyc binary', 4, False, False),
+    SMART_ZOOM_DISASM:
+        SmartZoomStaticProps('D', 'disassembly', 3, False, False),
+    SMART_ZOOM_AST: SmartZoomStaticProps('A', 'AST', 2, False, True),
+    SMART_ZOOM_ALL:
+        SmartZoomStaticProps('0', 'everything is shown', 0, True, True),
+    SMART_ZOOM_NO_CONTENT:
+        SmartZoomStaticProps('1', 'everything without a content', 0, True, True),
+    SMART_ZOOM_CONTROL_ONLY:
+        SmartZoomStaticProps('2', 'scopes and ifs', 0, True, True),
+    SMART_ZOOM_CLASS_FUNC:
+        SmartZoomStaticProps('3', 'only classes and functions', 0, True, True),
+    SMART_ZOOM_FS:
+        SmartZoomStaticProps('4', 'dependencies', 1, False, True)
+}
+
+
+class SmartZoomDynamicProps:
+
+    """Displaying properties of a certain zoom"""
+
+    def __init__(self, viewIndexes):
+        if isinstance(viewIndexes, list):
+            self.viewIndexes = viewIndexes
+        else:
+            self.viewIndexes = [viewIndexes]
+
+        self.navBarState = {'path': '',
+                            'state': ControlFlowNavigationBar.STATE_UNKNOWN,
+                            'warningsvisible': False,
+                            'warnings': '',
+                            'icontooltip': 'View state is unknown',
+                            'selectiontext': '',
+                            'selectiontooltip': ''}
+        self.dirty = True
 
 
 def getSmartZoomDescription(smartZoomLevel):
     """Provides a tooltip for the smart zoom level"""
-    if smartZoomLevel == SMART_ZOOM_ALL:
-        return 'Smart zoom level: everything is shown'
-    if smartZoomLevel == SMART_ZOOM_NO_CONTENT:
-        return 'Smart zoom level: everything without a content'
-    if smartZoomLevel == SMART_ZOOM_CONTROL_ONLY:
-        return 'Smart zoom level: scopes and ifs'
-    if smartZoomLevel == SMART_ZOOM_CLASS_FUNC:
-        return 'Smart zoom level: only classes and functions'
-    return 'Unknown smart zoom level'
+    prefix = 'Smart zoom level: '
+    try:
+        return prefix + ZOOM_PROPS[smartZoomLevel].description
+    except:
+        return 'Unknown smart zoom level'
+
+def getSelectionAvailable(viewIndex):
+    for key in ZOOM_PROPS.keys():
+        if ZOOM_PROPS[key].viewIndex == viewIndex:
+            return ZOOM_PROPS[key].selectionAvailable
+    return False
+
+def isControlFlowView(viewIndex):
+    for key in ZOOM_PROPS.keys():
+        if ZOOM_PROPS[key].viewIndex == viewIndex:
+            return ZOOM_PROPS[key].isControlFlow
+    return False
+
+def isControlFlowLevel(smartZoom):
+    return smartZoom in [SMART_ZOOM_ALL, SMART_ZOOM_NO_CONTENT,
+                         SMART_ZOOM_CONTROL_ONLY, SMART_ZOOM_CLASS_FUNC]
 
 
 def tweakSmartSettings(cflowSettings, smartZoom):
@@ -132,12 +209,15 @@ class FlowUIWidget(QWidget):
         self.__parentWidget = parent
         self.__connected = False
         self.__needPathUpdate = False
+        self.__scrollRestored = False
 
         self.cflowSettings = getCflowSettings(self)
         self.__displayProps = (self.cflowSettings.hidedocstrings,
                                self.cflowSettings.hidecomments,
                                self.cflowSettings.hideexcepts,
                                Settings()['smartZoom'])
+        self.__disasmLevel = Settings()['disasmLevel']
+        self.__binLevel = Settings()['disasmLevel']
 
         hLayout = QHBoxLayout()
         hLayout.setContentsMargins(0, 0, 0, 0)
@@ -169,6 +249,21 @@ class FlowUIWidget(QWidget):
 
         self.updateSettings()
 
+        self.__dynamicProps = [
+            SmartZoomDynamicProps(
+                ZOOM_PROPS[SMART_ZOOM_BIN].viewIndex),
+            SmartZoomDynamicProps(
+                ZOOM_PROPS[SMART_ZOOM_DISASM].viewIndex),
+            SmartZoomDynamicProps(
+                ZOOM_PROPS[SMART_ZOOM_AST].viewIndex),
+            SmartZoomDynamicProps(
+                [ZOOM_PROPS[SMART_ZOOM_ALL].viewIndex,
+                 ZOOM_PROPS[SMART_ZOOM_NO_CONTENT].viewIndex,
+                 ZOOM_PROPS[SMART_ZOOM_CONTROL_ONLY].viewIndex,
+                 ZOOM_PROPS[SMART_ZOOM_CLASS_FUNC].viewIndex]),
+            SmartZoomDynamicProps(
+                ZOOM_PROPS[SMART_ZOOM_FS].viewIndex)]
+
         # Connect to the change file type signal
         self.__mainWindow = GlobalData().mainWindow
         editorsManager = self.__mainWindow.editorsManagerWidget.editorsManager
@@ -180,8 +275,51 @@ class FlowUIWidget(QWidget):
         Settings().sigHideExceptsChanged.connect(self.__onHideExceptsChanged)
         Settings().sigHideDecorsChanged.connect(self.__onHideDecorsChanged)
         Settings().sigSmartZoomChanged.connect(self.__onSmartZoomChanged)
+        Settings().sigDisasmLevelChanged.connect(self.__onDisasmLevelChanged)
 
+        self.__restoreNavBarProps()
         self.setSmartZoomLevel(Settings()['smartZoom'])
+
+    def __saveNavBarProps(self):
+        """Saves the current view props in the dynamic props"""
+        currentIndex = self.smartViews.currentIndex()
+        for item in self.__dynamicProps:
+            if currentIndex in item.viewIndexes:
+                item.navBarState = self.__navBar.serialize()
+                return
+
+    def __restoreNavBarProps(self):
+        """Restores the current view props from the dynamic props"""
+        currentIndex = self.smartViews.currentIndex()
+        for item in self.__dynamicProps:
+            if currentIndex in item.viewIndexes:
+                # dirty hack: initial selection values
+                if not getSelectionAvailable(currentIndex):
+                    item.navBarState['selectiontext'] = 'n/a'
+                    item.navBarState['selectiontooltip'] = 'Number of selected items'
+                else:
+                    if not item.navBarState['selectiontext']:
+                        item.navBarState['selectiontext'] = '0'
+                        item.navBarState['selectiontooltip'] = 'Number of selected items'
+                self.__navBar.deserialize(item.navBarState)
+                return
+
+    def __markViewsDirty(self):
+        """Marks all the views dirty"""
+        for item in self.__dynamicProps:
+            item.dirty = True
+
+    def __markViewClean(self):
+        currentIndex = self.smartViews.currentIndex()
+        for item in self.__dynamicProps:
+            if currentIndex in item.viewIndexes:
+                item.dirty = False
+
+    def __isCurrentViewDirty(self):
+        currentIndex = self.smartViews.currentIndex()
+        for item in self.__dynamicProps:
+            if currentIndex in item.viewIndexes:
+                return item.dirty
 
     def getParentWidget(self):
         return self.__parentWidget
@@ -271,18 +409,67 @@ class FlowUIWidget(QWidget):
         self.__hideDecors.setChecked(Settings()['hidedecors'])
         self.__hideDecors.clicked.connect(self.__onHideDecors)
 
-        self.__toolbar.addWidget(self.__saveAsButton)
+        # Optimization buttons for disasm view
+        self.__optActGroup = QActionGroup(self.__toolbar)
+        self.__noOpt = QAction('0', self.__optActGroup)
+        f = self.__noOpt.font()
+        f.setBold(True)
+        self.__noOpt.setFont(f)
+        self.__noOpt.setCheckable(True)
+        self.__noOpt.setToolTip('No optimization (level 0)')
+        self.__noOpt.setChecked(Settings()['disasmLevel'] == 0)
+        self.__noOpt.triggered.connect(self.__onOpt0)
+
+        self.__assertOpt = QAction('1', self.__optActGroup)
+        f = self.__assertOpt.font()
+        f.setBold(True)
+        self.__assertOpt.setFont(f)
+        self.__assertOpt.setCheckable(True)
+        self.__assertOpt.setToolTip('Assert optimization (level 1)')
+        self.__assertOpt.setChecked(Settings()['disasmLevel'] == 1)
+        self.__assertOpt.triggered.connect(self.__onOpt1)
+
+        self.__docOpt = QAction('2', self.__optActGroup)
+        f = self.__docOpt.font()
+        f.setBold(True)
+        self.__docOpt.setFont(f)
+        self.__docOpt.setCheckable(True)
+        self.__docOpt.setToolTip('Assert + docstring optimization (level 2)')
+        self.__docOpt.setChecked(Settings()['disasmLevel'] == 2)
+        self.__docOpt.triggered.connect(self.__onOpt2)
+
+        self.__saveAsAction = self.__toolbar.addWidget(self.__saveAsButton)
         self.__toolbar.addWidget(ToolBarExpandingSpacer(self.__toolbar))
+        self.__hideDocAction = self.__toolbar.addWidget(self.__hideDocstrings)
+        self.__hideComAction = self.__toolbar.addWidget(self.__hideComments)
+        self.__hideExcptAction = self.__toolbar.addWidget(self.__hideExcepts)
+        self.__hideDecorActions = self.__toolbar.addWidget(self.__hideDecors)
+        self.__toolbar.addAction(self.__noOpt)
+        self.__toolbar.addAction(self.__assertOpt)
+        self.__toolbar.addAction(self.__docOpt)
+        self.__toolbar.addWidget(ToolBarVSpacer(self.__toolbar, 10))
         self.__toolbar.addWidget(self.__levelUpButton)
         self.__toolbar.addWidget(self.__levelIndicator)
         self.__toolbar.addWidget(self.__levelDownButton)
-        self.__toolbar.addWidget(ToolBarVSpacer(self.__toolbar, 10))
-        self.__toolbar.addWidget(self.__hideDocstrings)
-        self.__toolbar.addWidget(self.__hideComments)
-        self.__toolbar.addWidget(self.__hideExcepts)
-        self.__toolbar.addWidget(self.__hideDecors)
 
         return self.__toolbar
+
+    def __setToolbarStatus(self, smartZoomLevel):
+        """Enable/disable the toolbar buttons"""
+        isControlFlow = ZOOM_PROPS[smartZoomLevel].isControlFlow
+
+        # Buttons
+        self.__saveAsAction.setVisible(isControlFlow)
+
+        self.__hideDocAction.setVisible(isControlFlow)
+        self.__hideComAction.setVisible(isControlFlow)
+        self.__hideExcptAction.setVisible(isControlFlow)
+        self.__hideDecorActions.setVisible(isControlFlow)
+
+        optEnabled = smartZoomLevel in [SMART_ZOOM_DISASM, SMART_ZOOM_BIN]
+        self.__noOpt.setVisible(optEnabled)
+        self.__assertOpt.setVisible(optEnabled)
+        self.__docOpt.setVisible(optEnabled)
 
     def __createNavigationBar(self):
         """Creates the navigation bar"""
@@ -294,8 +481,23 @@ class FlowUIWidget(QWidget):
         self.smartViews = QStackedWidget(self)
         self.smartViews.setContentsMargins(0, 0, 0, 0)
 
+        # index 0: control flow
         self.smartViews.addWidget(CFGraphicsView(self.__navBar, self))
-        self.smartViews.addWidget(CFGraphicsView(self.__navBar, self))
+        # index 1: dependencies
+        self.smartViews.addWidget(QWidget(self))
+        # index 2: AST
+        astView = ASTView(self.__navBar, self)
+        astView.sigGotoLine.connect(self.__gotoLine)
+        self.smartViews.addWidget(astView)
+        # index 3: Disassembly
+        disasmView = DisassemblyView(self.__navBar, self)
+        disasmView.sigGotoLine.connect(self.__gotoLine)
+        self.smartViews.addWidget(disasmView)
+        # index 4: Binary
+        self.smartViews.addWidget(BinView(self.__navBar, self))
+
+        # Default view at the beginning is the control flow
+        self.smartViews.setCurrentIndex(0)
         return self.smartViews
 
     def process(self):
@@ -303,6 +505,37 @@ class FlowUIWidget(QWidget):
         if not self.__connected:
             self.__connectEditorSignals()
 
+        if self.dirty():
+            if self.__updateTimer.isActive():
+                # Just in case; should not be needed but it is an extra safety
+                self.__updateTimer.stop()
+
+            smartZoomLevel = Settings()['smartZoom']
+            if ZOOM_PROPS[smartZoomLevel].isControlFlow:
+                print('Populating control flow')
+                self.__processControlFlow()
+                print('Populated')
+            elif smartZoomLevel == SMART_ZOOM_BIN:
+                print('Populating BIN')
+                self.__processBin()
+                print('Populated')
+            elif smartZoomLevel == SMART_ZOOM_DISASM:
+                print('Populating disasm')
+                self.__processDisasm()
+                print('Populated')
+            elif smartZoomLevel == SMART_ZOOM_AST:
+                print('Populating AsT')
+                self.__processAST()
+                print('Populated')
+            elif smartZoomLevel == SMART_ZOOM_FS:
+                print('Populating FS')
+                self.__processFS()
+                print('Populated')
+
+            self.__markViewClean()
+
+    def __processControlFlow(self):
+        """Updates everything for the control flow"""
         start = timer()
         cf = getControlFlowFromMemory(self.__editor.text)
         end = timer()
@@ -319,7 +552,8 @@ class FlowUIWidget(QWidget):
                 else:
                     errors.append('[' + str(err[0]) + ':' +
                                   str(err[1]) + '] ' + err[2])
-            self.__navBar.setErrors(errors)
+            self.__navBar.setErrors(
+                'Control flow parser errors:\n' + '\n'.join(errors))
             return
 
         self.__cf = cf
@@ -350,23 +584,77 @@ class FlowUIWidget(QWidget):
                 else:
                     warnings.append('[' + str(warn[0]) + ':' +
                                     str(warn[1]) + '] ' + warn[2])
-            self.__navBar.setWarnings(warnings)
+            self.__navBar.setWarnings(
+                'Control flow parser warnings:\n' + '\n'.join(warnings))
         else:
             self.__navBar.clearWarnings()
 
         self.redrawScene()
+
+    def __processBin(self):
+        """Processes the binary view"""
+        fileName = self.__parentWidget.getFileName()
+        if not fileName:
+            # That's a buffer which has never been saved so the source is
+            # needed
+            fileName = self.__parentWidget.getShortName()
+            self.view().populateBinary(
+                self.__editor.text, self.__parentWidget.getEncoding(),
+                fileName)
+        else:
+            if self.__parentWidget.isModified():
+                # Buffer is modified, so need the source
+                self.view().populateBinary(
+                    self.__editor.text, self.__parentWidget.getEncoding(),
+                    fileName)
+            else:
+                self.view().populateBinary(
+                    None, self.__parentWidget.getEncoding(), fileName)
+        self.__binLevel = Settings()['disasmLevel']
+
+    def __processDisasm(self):
+        """Processes the disassembly view"""
+        fileName = self.__parentWidget.getFileName()
+        if not fileName:
+            # That's a buffer which has never been saved so the source is
+            # needed
+            fileName = self.__parentWidget.getShortName()
+            self.view().populateDisassembly(
+                self.__editor.text, self.__parentWidget.getEncoding(),
+                fileName)
+        else:
+            if self.__parentWidget.isModified():
+                # Buffer is modified, so need the source
+                self.view().populateDisassembly(
+                    self.__editor.text, self.__parentWidget.getEncoding(),
+                    fileName)
+            else:
+                self.view().populateDisassembly(
+                    None, self.__parentWidget.getEncoding(), fileName)
+
+        self.__disasmLevel = Settings()['disasmLevel']
+
+    def __processAST(self):
+        """Processes the AST view"""
+        fileName = self.__parentWidget.getFileName()
+        if not fileName:
+            fileName = self.__parentWidget.getShortName()
+
+        self.view().populateAST(self.__editor.text, fileName)
+
+    def __processFS(self):
+        """Processes the file system view"""
 
     def __cleanupCanvas(self):
         """Cleans up the canvas"""
         if self.__canvas is not None:
             self.__canvas.cleanup()
             self.__canvas = None
-        for item in self.scene().items():
-            sip.delete(item)
-        self.scene().clear()
 
     def redrawScene(self):
         """Redraws the scene"""
+        self.scene().clear()
+
         smartZoomLevel = Settings()['smartZoom']
         self.cflowSettings = getCflowSettings(self)
         if self.dirty():
@@ -385,7 +673,6 @@ class FlowUIWidget(QWidget):
             collapsedGroups = getCollapsedGroups(fileName)
 
             # Top level canvas has no adress and no parent canvas
-            self.__cleanupCanvas()
             self.__canvas = VirtualCanvas(self.cflowSettings, None, None,
                                           self.__validGroups, collapsedGroups,
                                           None)
@@ -409,14 +696,17 @@ class FlowUIWidget(QWidget):
 
     def onFlowZoomChanged(self):
         """Triggered when a flow zoom is changed"""
-        if self.__cf:
-            selection = self.scene().serializeSelection()
-            firstOnScreen = self.scene().getFirstLogicalItem()
-            self.cflowSettings.onFlowZoomChanged()
-            self.redrawScene()
-            self.updateNavigationToolbar('')
-            self.scene().restoreSelectionByID(selection)
-            self.__restoreScroll(firstOnScreen)
+        smartZoomLevel = Settings()['smartZoom']
+        self.__setToolbarStatus(smartZoomLevel)
+        if ZOOM_PROPS[smartZoomLevel].isControlFlow:
+            if self.__cf:
+                selection = self.scene().serializeSelection()
+                firstOnScreen = self.scene().getFirstLogicalItem()
+                self.cflowSettings.onFlowZoomChanged()
+                self.redrawScene()
+                self.updateNavigationToolbar('')
+                self.scene().restoreSelectionByID(selection)
+                self.__restoreScroll(firstOnScreen)
 
     def __onFileTypeChanged(self, fileName, uuid, newFileType):
         """Triggered when a buffer content type has changed"""
@@ -460,11 +750,13 @@ class FlowUIWidget(QWidget):
         Settings().sigHideExceptsChanged.disconnect(self.__onHideExceptsChanged)
         Settings().sigHideDecorsChanged.disconnect(self.__onHideDecorsChanged)
         Settings().sigSmartZoomChanged.disconnect(self.__onSmartZoomChanged)
+        Settings().sigDisasmLevelChanged.disconnect(self.__onDisasmLevelChanged)
 
         # Helps GC to collect more
         self.__cleanupCanvas()
         for index in range(self.smartViews.count()):
-            self.smartViews.widget(index).terminate()
+            if hasattr(self.smartViews.widget(index), 'terminate'):
+                self.smartViews.widget(index).terminate()
             self.smartViews.widget(index).deleteLater()
 
         self.smartViews.deleteLater()
@@ -502,6 +794,7 @@ class FlowUIWidget(QWidget):
     def __connectEditorSignals(self):
         """When it is a python file - connect to the editor signals"""
         if not self.__connected:
+            QApplication.processEvents()
             self.__editor.cursorPositionChanged.connect(
                 self.__cursorPositionChanged)
             self.__editor.textChanged.connect(self.__onBufferChanged)
@@ -525,6 +818,7 @@ class FlowUIWidget(QWidget):
     def __onBufferChanged(self):
         """Triggered to update status icon and to restart the timer"""
         self.__updateTimer.stop()
+        self.__markViewsDirty()
         if self.__navBar.getCurrentState() in [self.__navBar.STATE_OK_UTD,
                                                self.__navBar.STATE_OK_CHN,
                                                self.__navBar.STATE_UNKNOWN]:
@@ -735,14 +1029,21 @@ class FlowUIWidget(QWidget):
 
     def getScrollbarPositions(self):
         """Provides the scrollbar positions"""
-        hScrollBar = self.view().horizontalScrollBar()
-        vScrollBar = self.view().verticalScrollBar()
-        return hScrollBar.value(), vScrollBar.value()
+        if self.__scrollRestored:
+            cfViewIndex = ZOOM_PROPS[SMART_ZOOM_ALL].viewIndex
+            cfWidget = self.smartViews.widget(cfViewIndex)
+            hScrollBar = cfWidget.horizontalScrollBar()
+            vScrollBar = cfWidget.verticalScrollBar()
+            return hScrollBar.value(), vScrollBar.value()
+        return None, None
 
     def setScrollbarPositions(self, hPos, vPos):
         """Sets the scrollbar positions for the view"""
-        self.view().horizontalScrollBar().setValue(hPos)
-        self.view().verticalScrollBar().setValue(vPos)
+        if not self.__scrollRestored:
+            if isControlFlowLevel(Settings()['smartZoom']):
+                self.view().horizontalScrollBar().setValue(hPos)
+                self.view().verticalScrollBar().setValue(vPos)
+                self.__scrollRestored = True
 
     def __onHideDocstrings(self):
         """Triggered when a hide docstring button is pressed"""
@@ -809,13 +1110,43 @@ class FlowUIWidget(QWidget):
             return True
         return False
 
+    def onCurrentTabChanged(self):
+        """Editors manager changed the tab"""
+        currentSmartZoom = Settings()['smartZoom']
+        if self.dirty():
+            if ZOOM_PROPS[currentSmartZoom].isControlFlow:
+                selection = self.scene().serializeSelection()
+                self.process()
+                self.scene().restoreSelectionByTooltip(selection)
+
+                # It could be the first time to switch to the tab with
+                # the control flow so set the scrollbar position
+                if not self.__scrollRestored:
+                    fileName = self.__parentWidget.getFileName()
+                    if fileName:
+                        _, _, _, cflowHPos, cflowVPos = getFilePosition(fileName)
+                        self.setScrollbarPositions(cflowHPos, cflowVPos)
+            else:
+                self.process()
+
     def dirty(self):
         """True if some other tab has switched display settings"""
-        settings = Settings()
-        return self.__displayProps[0] != settings['hidedocstrings'] or \
-            self.__displayProps[1] != settings['hidecomments'] or \
-            self.__displayProps[2] != settings['hideexcepts'] or \
-            self.__displayProps[3] != settings['smartZoom']
+        if self.__isCurrentViewDirty():
+            return True
+
+        currentSmartZoom = Settings()['smartZoom']
+        if ZOOM_PROPS[currentSmartZoom].isControlFlow:
+            settings = Settings()
+            return self.__displayProps[0] != settings['hidedocstrings'] or \
+                self.__displayProps[1] != settings['hidecomments'] or \
+                self.__displayProps[2] != settings['hideexcepts'] or \
+                self.__displayProps[3] != settings['smartZoom']
+        if currentSmartZoom == SMART_ZOOM_DISASM:
+            return self.__disasmLevel != Settings()['disasmLevel']
+        if currentSmartZoom == SMART_ZOOM_BIN:
+            return self.__binLevel != Settings()['disasmLevel']
+
+        return False
 
     def onSmartZoomLevelUp(self):
         """Triggered when an upper smart zoom level was requested"""
@@ -827,25 +1158,74 @@ class FlowUIWidget(QWidget):
 
     def setSmartZoomLevel(self, smartZoomLevel):
         """Sets the new smart zoom level"""
-        maxSmartZoom = Settings().MAX_SMART_ZOOM
-        if smartZoomLevel < 0 or smartZoomLevel > maxSmartZoom:
+        if smartZoomLevel < SMART_ZOOM_MIN:
+            return
+        if smartZoomLevel > SMART_ZOOM_MAX:
             return
 
-        self.__levelIndicator.setText('<b>' + str(smartZoomLevel) + '</b>')
+        self.__levelIndicator.setText(
+            '<b>' + ZOOM_PROPS[smartZoomLevel].label + '</b>')
         self.__levelIndicator.setToolTip(
             getSmartZoomDescription(smartZoomLevel))
-        self.__levelUpButton.setEnabled(smartZoomLevel < maxSmartZoom)
-        self.__levelDownButton.setEnabled(smartZoomLevel > 0)
-        self.smartViews.setCurrentIndex(smartZoomLevel)
+        self.__levelUpButton.setEnabled(smartZoomLevel < SMART_ZOOM_MAX)
+        self.__levelDownButton.setEnabled(smartZoomLevel > SMART_ZOOM_MIN)
+
+        self.__saveNavBarProps()
+        self.__setToolbarStatus(smartZoomLevel)
+        self.smartViews.setCurrentIndex(ZOOM_PROPS[smartZoomLevel].viewIndex)
+        self.__restoreNavBarProps()
 
     def __onSmartZoomChanged(self):
         """Triggered when a smart zoom changed"""
-        selection = self.scene().serializeSelection()
-        firstOnScreen = self.scene().getFirstLogicalItem()
-        self.setSmartZoomLevel(Settings()['smartZoom'])
+        newZoomLevel = Settings()['smartZoom']
+
+        isOldCF = isControlFlowView(self.smartViews.currentIndex())
+        isNewCF = ZOOM_PROPS[newZoomLevel].isControlFlow
+
+        if isOldCF and isNewCF:
+            selection = self.scene().serializeSelection()
+            firstOnScreen = self.scene().getFirstLogicalItem()
+
+        self.setSmartZoomLevel(newZoomLevel)
+
         if self.__checkNeedRedraw():
-            self.scene().restoreSelectionByTooltip(selection)
-            self.__restoreScroll(firstOnScreen)
+            if isOldCF and isNewCF:
+                self.scene().restoreSelectionByTooltip(selection)
+                self.__restoreScroll(firstOnScreen)
+            elif isNewCF:
+                # May be the scroll position needs to be restored for this
+                # particular file
+                fileName = self.__parentWidget.getFileName()
+                if fileName:
+                    _, _, _, cflowHPos, cflowVPos = getFilePosition(fileName)
+                    self.setScrollbarPositions(cflowHPos, cflowVPos)
+
+    def __onOpt0(self, checked):
+        """Disasm level 0 triggered"""
+        if checked and Settings()['disasmLevel'] != 0:
+            Settings()['disasmLevel'] = 0
+
+    def __onOpt1(self, checked):
+        """Disasm level 1 triggered"""
+        if checked and Settings()['disasmLevel'] != 1:
+            Settings()['disasmLevel'] = 1
+
+    def __onOpt2(self, checked):
+        """Disasm level 2 triggered"""
+        if checked and Settings()['disasmLevel'] != 2:
+            Settings()['disasmLevel'] = 2
+
+    def __onDisasmLevelChanged(self):
+        """Disasm level changed"""
+        disasmLevel = Settings()['disasmLevel']
+        if disasmLevel == 0:
+            self.__noOpt.setChecked(True)
+        elif disasmLevel == 1:
+            self.__assertOpt.setChecked(True)
+        else:
+            self.__docOpt.setChecked(True)
+
+        self.__checkNeedRedraw()
 
     def __restoreScroll(self, toItem):
         """Restores the view scrolling to the best possible position"""
@@ -890,3 +1270,7 @@ class FlowUIWidget(QWidget):
     def isDebugMode():
         """True if it is a debug mode"""
         return GlobalData().skin['debug']
+
+    def __gotoLine(self, line, pos):
+        self.__editor.gotoLine(line, pos)
+        self.__editor.setFocus()
