@@ -14,5 +14,5 @@ jedi==0.17.2
 vulture==1.6
 gprof2dot==2017.9.19
 mistune==0.8.4
-pygments==2.6.1
+pygments==2.7.4
 qdarkstyle==2.8.1
