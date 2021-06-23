@@ -1,0 +1,7 @@
+flexslider.css
+--------------
+The original flexslider.css is adjusted:
+- with the paths to fonts. Basically '../' was added in front of all the paths
+- some styles were modified to look nicer within the overall design of the main
+  page
+

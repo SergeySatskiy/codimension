@@ -1,0 +1,108 @@
+/* Ubuntu Font Family Bower-ready v0.1.10 */
+
+/* BEGIN Ubuntu Regular */
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('../fonts/ubuntu-regular-webfont.eot');
+    src: url('../fonts/ubuntu-regular-webfont-1.eot') format('embedded-opentype'),
+         url('../fonts/ubuntu-regular-webfont.woff') format('woff'),
+         url('../fonts/ubuntu-regular-webfont.ttf') format('truetype'),
+         url('../fonts/ubuntu-regular-webfont.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+/* END Ubuntu Regular */
+
+/* BEGIN Ubuntu Regular Italic */
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('../fonts/ubuntu-regular-italic-webfont.eot');
+    src: url('../fonts/ubuntu-regular-italic-webfont-1.eot') format('embedded-opentype'),
+         url('../fonts/ubuntu-regular-italic-webfont.woff') format('woff'),
+         url('../fonts/ubuntu-regular-italic-webfont.ttf') format('truetype'),
+         url('../fonts/ubuntu-regular-italic-webfont.svg') format('svg');
+    font-weight: normal;
+    font-style: italic;
+}
+/* END Ubuntu Regular Italic */
+
+/* BEGIN Ubuntu Bold */
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('../fonts/ubuntu-bold-webfont.eot');
+    src: url('../fonts/ubuntu-bold-webfont-1.eot') format('embedded-opentype'),
+         url('../fonts/ubuntu-bold-webfont.woff') format('woff'),
+         url('../fonts/ubuntu-bold-webfont.ttf') format('truetype'),
+         url('../fonts/ubuntu-bold-webfont.svg') format('svg');
+    font-weight: bold;
+    font-style: normal;
+}
+/* END Ubuntu Bold */
+
+/* BEGIN Ubuntu Bold Italic */
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('../fonts/ubuntu-bold-italic-webfont.eot');
+    src: url('../fonts/ubuntu-bold-italic-webfont-1.eot') format('embedded-opentype'),
+         url('../fonts/ubuntu-bold-italic-webfont.woff') format('woff'),
+         url('../fonts/ubuntu-bold-italic-webfont.ttf') format('truetype'),
+         url('../fonts/ubuntu-bold-italic-webfont.svg') format('svg');
+    font-weight: bold;
+    font-style: italic;
+}
+/* END Ubuntu Bold Italic */
+/* MIT License (MIT), Copyright (c) 2015 Ewerton Assis <earaujoassis@gmail.com>*/
+
+/* BEGIN Ubuntu Mono Regular */
+@font-face {
+    font-family: 'Ubuntu Monospace';
+    src: url('../fonts/ubuntumono-regular-webfont.eot');
+    src: url('../fonts/ubuntumono-regular-webfont-1.eot') format('embedded-opentype'),
+         url('../fonts/ubuntumono-regular-webfont.woff') format('woff'),
+         url('../fonts/ubuntumono-regular-webfont.ttf') format('truetype'),
+         url('../fonts/ubuntumono-regular-webfont.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+/* END Ubuntu Mono Regular */
+
+/* BEGIN Ubuntu Mono Italic */
+@font-face {
+    font-family: 'Ubuntu Monospace';
+    src: url('../fonts/ubuntumono-regular-italic-webfont.eot');
+    src: url('../fonts/ubuntumono-regular-italic-webfont-1.eot') format('embedded-opentype'),
+         url('../fonts/ubuntumono-regular-italic-webfont.woff') format('woff'),
+         url('../fonts/ubuntumono-regular-italic-webfont.ttf') format('truetype'),
+         url('../fonts/ubuntumono-regular-italic-webfont.svg') format('svg');
+    font-weight: normal;
+    font-style: italic;
+}
+/* END Ubuntu Mono Italic */
+
+/* BEGIN Ubuntu Mono Bold */
+@font-face {
+    font-family: 'Ubuntu Monospace';
+    src: url('../fonts/ubuntumono-b-webfont.eot');
+    src: url('../fonts/ubuntumono-b-webfont-1.eot') format('embedded-opentype'),
+         url('../fonts/ubuntumono-b-webfont.woff') format('woff'),
+         url('../fonts/ubuntumono-b-webfont.ttf') format('truetype'),
+         url('../fonts/ubuntumono-b-webfont.svg') format('svg');
+    font-weight: bold;
+    font-style: normal;
+}
+/* END Ubuntu Mono Bold */
+
+/* BEGIN Ubuntu Mono Bold Italic */
+@font-face {
+    font-family: 'Ubuntu Monospace';
+    src: url('../fonts/ubuntumono-bold-italic-webfont.eot');
+    src: url('../fonts/ubuntumono-bold-italic-webfont-1.eot') format('embedded-opentype'),
+         url('../fonts/ubuntumono-bold-italic-webfont.woff') format('woff'),
+         url('../fonts/ubuntumono-bold-italic-webfont.ttf') format('truetype'),
+         url('../fonts/ubuntumono-bold-italic-webfont.svg') format('svg');
+    font-weight: bold;
+    font-style: italic;
+
+}
+/* END Ubuntu Mono Bold Italic */
