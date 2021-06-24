@@ -32,8 +32,10 @@ from distutils.version import StrictVersion
 CATEGORIES = ["VersionControlSystemInterface",
               "WizardInterface"]
 
-VENV_PLUGINS_PATH = os.path.normpath(
-    os.path.dirname(sys.argv[0]) + '/../cdmplugins')
+
+def isVirtualEnvironment():
+    """True if the virtual environment is active"""
+    return hasattr(sys, 'real_prefix') or sys.base_prefix != sys.prefix
 
 
 class CDMPluginManager(PluginManager, QObject):
@@ -60,10 +62,23 @@ class CDMPluginManager(PluginManager, QObject):
 
     def __init__(self):
         QObject.__init__(self)
-        PluginManager.__init__(self, None,
-                               [SETTINGS_DIR + "plugins",
-                                "/usr/share/codimension3-plugins",
-                                VENV_PLUGINS_PATH], "cdmp")
+
+        searchPaths = [SETTINGS_DIR + "plugins",
+                       "/usr/share/codimension3-plugins"]
+        if isVirtualEnvironment():
+            candidate = os.path.normpath(os.path.dirname(sys.argv[0]) +
+                        '/../cdmplugins')
+            if os.path.exists(candidate):
+                searchPaths.append(candidate)
+
+            for path in sys.path:
+                if path.endswith('/site-packages'):
+                    candidate = path + '/cdmplugins'
+                    if os.path.exists(candidate):
+                        if not candidate in searchPaths:
+                            searchPaths.append(candidate)
+
+        PluginManager.__init__(self, None, searchPaths, "cdmp")
 
         self.inactivePlugins = {}   # Categorized inactive plugins
         self.activePlugins = {}     # Categorized active plugins
