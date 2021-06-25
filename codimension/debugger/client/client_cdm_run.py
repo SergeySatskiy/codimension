@@ -24,7 +24,7 @@ import sys
 import socket
 import traceback
 import os.path
-import imp
+import types
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket, QHostAddress
 from outredir_cdm_dbg import OutStreamRedirector
 from cdm_dbg_utils import sendJSONCommand, waitForIDEMessage
@@ -176,7 +176,7 @@ class RedirectedIORunWrapper():
         fileName = arguments[0]
 
         oldMainMod = sys.modules['__main__']
-        mainMod = imp.new_module('__main__')
+        mainMod = types.ModuleType('__main__')
         sys.modules['__main__'] = mainMod
         mainMod.__file__ = fileName
         mainMod.__builtins__ = builtins
