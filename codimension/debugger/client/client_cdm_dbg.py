@@ -36,7 +36,7 @@ from clientbase_cdm_dbg import DebugClientBase
 from threadextension_cdm_dbg import ThreadExtension
 
 
-CLIENT_DEBUG = True
+CLIENT_DEBUG = False
 
 
 class DebugClient(DebugClientBase, DebugBase, ThreadExtension):
