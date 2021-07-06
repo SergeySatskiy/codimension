@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - Linux and Mac Download and Installation</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/text.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/github.css">
+
+  <script type="text/javascript" src="../assets/cdm/js/jquery.min.js"></script>
+  <script type="text/javascript" src="../assets/cdm/js/highlight.pack.js"></script>
+  <script>
+  hljs.initHighlightingOnLoad();
+  </script>
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../index.htm"><img src="../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+        <!--
+          <form id="topsearch" action="search-results.html" method="get">
+          <input type="text" name="search" id="q" placeholder="Search">
+          <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+          </form>
+        -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../index.htm">Home</a>
+        </li>
+        <li class="child">
+          <a href="../about/index.htm">About</a>
+          <ul>
+            <li class="child">
+              <a href="../about/features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="../about/screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="../about/team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child ancestor">
+          <a href="index.htm">Download</a>
+          <ul>
+            <li class="child selected">
+              <a href="linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child">
+              <a href="runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../documentation/index.htm">Documentation</a>
+          <ul>
+            <li class="child">
+              <a href="../documentation/visualization-technology/index.htm">Visualization Technology</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../contribute/index.htm">Contribute</a>
+          <ul>
+            <li class="child">
+              <a href="../contribute/codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="../contribute/noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="index.htm">Download</a>&nbsp;&nbsp;»&nbsp;&nbsp;Linux and Mac Download and Installation
+      </div>
+
+      <h1>Linux Download and Installation</h1>
+      <p align="justify"><b>Note:</b> Codimension was tested on Ubuntu. It should work on the other Linux flavors as well however it was not explicitly checked.</p>
+      <p>Codimension requires python 3.5 or higher and a few other packages (see the 'Troubleshooting' section).</p>
+      <p>It is pip installable so what most of the users need to do is to create a virtual environment and run pip, e.g. (for Ubuntu 17.10):</p>
+      <pre><code class="bash">$ cd
+$ virtualenv -p python3 venvp3
+$ source ~/venvp3/bin/activate
+(venvp3) $ pip install wheel
+(venvp3) $ pip install codimension
+</code></pre>
+      <p>The commands above will install Codimension IDE together with all its dependencies. Then run Codimension:</p>
+      <pre><code class="bash">(venvp3) $ codimension
+</code></pre><br>
+      <h1>Mac Download and Installation</h1>
+      <p align="justify"><b>Note:</b> Codimension was tested on macOS High Sierra</p>
+      <p>Make sure you have Python 3 installed. Out of the shelf macOS comes only with Python 2. So, if it was not done before, Python 3 needs to be installed manually. To do that please follow the
+      instructions from <a href="https://www.python.org/downloads/">python.org</a>.</p>
+      <p>The interpreter version must be 3.5 or higher:</p>
+      <pre><code class="bash">$ python3 --version
+Python 3.6.4</code></pre>
+      <p>Also developer tools are required (xcode or command line tools). If not installed previously, run terminal and type:</p>
+      <pre><code class="bash">$ xcode-select --install
+</code></pre>
+      <p>The last pre-requisite is to have PCRE and libmagic libraries installed as well as graphviz package. Here is how it could be done:</p>
+      <pre><code class="bash">$ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+$ brew install pcre
+$ brew install libmagic
+$ brew install graphviz
+</code></pre>
+      <p>Codimension is pip installable so what most of the users need to do is to create a virtual environment and run pip3:</p>
+      <pre><code class="bash">$ cd
+$ pip3 install virtualenv
+$ virtualenv -p python3 venvp3
+$ source ~/venvp3/bin/activate
+(venvp3) $ pip3 install wheel
+(venvp3) $ pip3 install pyqt5
+(venvp3) $ pip3 install codimension
+</code></pre>
+      <p>The commands above will install Codimension IDE together with all its dependencies. Then run Codimension:</p>
+      <pre><code class="bash">(venvp3) $ codimension &
+</code></pre>
+      <h2>Troubleshooting</h2>
+      <p>Some features (like building a dependency diagram) require a system wide available packages. Their installation depends on a system. E.g. on Ubuntu you would need to do the following:</p>
+      <pre><code class="bash">(venvp3) $ sudo apt-get install graphviz
+</code></pre>
+      <p align="justify">Also the IDE depends on a couple of the binary modules which are compiled at the time of the installation. So your system needs a g++ compiler installed as well as python
+      interpreter header files. To install the required packages on Ubuntu you would need to do the following:</p>
+      <pre><code class="bash">(venvp3) $ sudo apt-get install g++
+$ sudo apt-get install python3-dev
+$ sudo apt-get install libpcre3-dev
+</code></pre><br>
+      <p align="justify"><b>Note:</b> Python 2 versions are not supported anymore. The packages though are still available and the instructions could be found on <a href=
+      "python2linuxdownload.html">this</a> page.</p>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

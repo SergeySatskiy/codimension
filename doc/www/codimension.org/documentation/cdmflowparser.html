@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - Control Flow Parser</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/text.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/github.css">
+
+  <script type="text/javascript" src="../assets/cdm/js/jquery.min.js"></script>
+  <script type="text/javascript" src="../assets/cdm/js/highlight.pack.js"></script>
+  <script>
+  hljs.initHighlightingOnLoad();
+  </script>
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../index.htm"><img src="../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+        <!--
+          <form id="topsearch" action="search-results.html" method="get">
+          <input type="text" name="search" id="q" placeholder="Search">
+          <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+          </form>
+        -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../index.htm">Home</a>
+        </li>
+        <li class="child">
+          <a href="../about/index.htm">About</a>
+          <ul>
+            <li class="child">
+              <a href="../about/features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="../about/screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="../about/team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../download/index.htm">Download</a>
+          <ul>
+            <li class="child">
+              <a href="../download/linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="../download/sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child">
+              <a href="../download/runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child ancestor">
+          <a href="index.htm">Documentation</a>
+          <ul>
+            <li class="child">
+              <a href="visualization-technology/index.htm">Visualization Technology</a>
+            </li>
+            <li class="child">
+              <a href="faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child">
+              <a href="cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child selected">
+              <a href="cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child">
+              <a href="codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../contribute/index.htm">Contribute</a>
+          <ul>
+            <li class="child">
+              <a href="../contribute/codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="../contribute/noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="index.htm">Documentation</a>&nbsp;&nbsp;»&nbsp;&nbsp;Control Flow Parser
+      </div>
+      <h1>Control Flow Parser</h1>
+      <h2>Overview</h2>
+      <p>Control flow parser is a Python 2 extension module. It takes a file with a python code (or a character buffer), parses it and provides a hierarchical representation of the code in terms of
+      fragments. Each fragment describes a portion of the input content: a start point (line, column and absolute position) plus an end point (line, column and absolute position).</p>
+      <p>Comments are preserved too.</p>
+      <p>The parser is developed within the Codimension IDE project however could be used in any other project. The parser source code is located on GitHub and named <a href=
+      "https://github.com/SergeySatskiy/cdm-flowparser">cdm-flowparser</a>.</p>
+      <p>Codimension IDE uses the parser to generate a flowchart like diagrams for an arbitrary Python code as the user types it. Basically a pause in typing is detected and the diagram is
+      regenerated. The parser provides the necessery input for the further stages of laying out, rendering and drawing stages.</p>
+      <h2>Visualizing Parser Output</h2>
+      <p>Suppose there is the following file <code>~/my-file.py</code> with the following content:</p>
+      <pre><code class="python">#!/usr/bin/python
+import sys
+
+# I like comments
+a = 154
+for x in xrange( a ):
+    print "x = " + str( x )
+
+sys.exit( 0 )
+</code></pre>
+      <p>Then you can run a test utility:</p>
+      <pre><code class="bash">$ ~/cdm-flowparser/utils/run.py ~/my-file.py
+</code></pre>
+      <p>The output will be the following:</p>
+      <pre><code class="bash">$ ~/cdm-flowparser/utils/run.py ~/my-file.py
+Running control flow parser version: trunk
+Module location: /home/swift/.local/lib/python2.7/site-packages/cdmcf.so
+&lt;ControlFlow [0:119] (1,1) (9,13)
+ Body: [18:119] (2,1) (9,13)
+ LeadingComment: None
+ SideComment: None
+ LeadingCMLComments: n/a
+ SideCMLComments: n/a
+ isOK: true
+ Errors: n/a
+ Warnings: n/a
+ BangLine: [0:16] (1,1) (1,17)
+ EncodingLine: None
+ Docstring: None
+ Suite: &lt;Import [18:27] (2,1) (2,10)
+         Body: [18:27] (2,1) (2,10)
+         LeadingComment: None
+         SideComment: None
+         LeadingCMLComments: n/a
+         SideCMLComments: n/a
+         FromPart: None
+         WhatPart: [25:27] (2,8) (2,10)
+        &gt;
+        &lt;CodeBlock [30:54] (4,1) (5,7)
+         Body: [48:54] (5,1) (5,7)
+         LeadingComment: &lt;Comment [30:46] (4,1) (4,17)
+                          Parts: &lt;Fragment [30:46] (4,1) (4,17)
+                                 &gt;
+                         &gt;
+         SideComment: None
+         LeadingCMLComments: n/a
+         SideCMLComments: n/a
+        &gt;
+        &lt;For [56:104] (6,1) (7,27)
+         Body: [56:76] (6,1) (6,21)
+         LeadingComment: None
+         SideComment: None
+         LeadingCMLComments: n/a
+         SideCMLComments: n/a
+         Iteration: [60:75] (6,5) (6,20)
+         Suite: &lt;CodeBlock [82:104] (7,5) (7,27)
+                 Body: [82:104] (7,5) (7,27)
+                 LeadingComment: None
+                 SideComment: None
+                 LeadingCMLComments: n/a
+                 SideCMLComments: n/a
+                &gt;
+         ElsePart: None
+        &gt;
+        &lt;SysExit [107:119] (9,1) (9,13)
+         Body: [107:119] (9,1) (9,13)
+         LeadingComment: None
+         SideComment: None
+         LeadingCMLComments: n/a
+         SideCMLComments: n/a
+         Argument: [117:117] (9,11) (9,11)
+        &gt;
+&gt;
+</code></pre>
+      <h2>Usage</h2>
+      <p>Basically the <code>run.py</code> utility has the following essential lines:</p>
+      <pre><code class="python">from cdmcf import getControlFlowFromFile
+controlFlow = getControlFlowFromFile( "my-file.py" )
+
+# Serializes nicely the controlFlow object
+# See the run.py for the details of how it is done
+</code></pre>
+      <p>See the <code>run.py</code> utility <a href="https://github.com/SergeySatskiy/cdm-flowparser/blob/master/utils/run.py">source code</a> for details.</p>
+      <h2>Installation</h2>
+      <p>The control flow parser package is build for a few platforms. Please refer to the instructions located on the <a href="../download/linuxdownload.html">Linux Download</a> page. The page
+      describes how to install all the packages Codimension IDE needs but if you need the control flow parser only please follow the steps for one package: cdmflowparser-x.x.x</p>
+      <h2>Building From Git Clone</h2>
+      <p>Building from git clone provides you the most up to date code with a risk of instability. Please use it on your own risk.</p>
+      <pre><code class="bash">$ cd
+$ git clone https://github.com/SergeySatskiy/cdm-flowparser.git
+$ cd ~/cdm-flowparser
+$ make
+$ make localinstall
+$ make check
+</code></pre>
+      <h2>Links</h2>
+      <ul>
+        <li>Avalable <a href="https://github.com/SergeySatskiy/cdm-flowparser/releases">releases</a> including previous ones (if so).<br>
+          The list includes packages for some platforms and the corresponding source code archives.
+        </li>
+        <li>Latest source <a href="https://github.com/SergeySatskiy/cdm-flowparser/archive/master.zip">zip archive</a> (may include unstable changes)
+        </li>
+        <li>
+          <a href="https://github.com/SergeySatskiy/cdm-flowparser/issues">Bug tracking</a> system
+        </li>
+        <li>Browse the <a href="https://github.com/SergeySatskiy/cdm-flowparser">cdm-flowparser source code</a> on GitHub
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

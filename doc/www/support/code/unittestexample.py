@@ -7,14 +7,14 @@ def median(pool):
     copy = sorted(pool)
     size = len(copy)
     if size % 2 == 1:
-        return copy[(size - 1) / 2]
+        return copy[int((size - 1) / 2)]
     else:
-        return (copy[size / 2 - 1] +
-                copy[size / 2]) / 2
+        return (copy[int(size / 2 - 1)] +
+                copy[int(size / 2)]) / 2
 
 class TestMedian(unittest.TestCase):
     def testMedian(self):
-        self.failUnlessEqual(
+        self.assertEqual(
                 median([2, 9, 9, 7,
                         9, 2, 4, 5, 8]), 7)
 

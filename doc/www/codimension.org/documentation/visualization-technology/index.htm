@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - Visualization Technology</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../../assets/cdm/css/text.css">
+  <link rel="stylesheet" type="text/css" href="../../assets/cdm/css/github.css">
+
+  <script type="text/javascript" src="../../assets/cdm/js/jquery.min.js"></script>
+  <script type="text/javascript" src="../../assets/cdm/js/highlight.pack.js"></script>
+  <script>
+  hljs.initHighlightingOnLoad();
+  </script>
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../../index.htm"><img src="../../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+        <!--
+          <form id="topsearch" action="search-results.html" method="get">
+          <input type="text" name="search" id="q" placeholder="Search">
+          <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+          </form>
+        -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../../index.htm">Home</a>
+        </li>
+        <li class="child">
+          <a href="../../about/index.htm">About</a>
+          <ul>
+            <li class="child">
+              <a href="../../about/features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="../../about/screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="../../about/team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../../download/index.htm">Download</a>
+          <ul>
+            <li class="child">
+              <a href="../../download/linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="../../download/sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child">
+              <a href="../../download/runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child ancestor">
+          <a href="../index.htm">Documentation</a>
+          <ul>
+            <li class="child selected">
+              <a href="index.htm">Visualization Technology</a>
+            </li>
+            <li class="child">
+              <a href="../faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="../cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="../pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child">
+              <a href="../cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child">
+              <a href="../cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child">
+              <a href="../codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../../contribute/index.htm">Contribute</a>
+          <ul>
+            <li class="child">
+              <a href="../../contribute/codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="../../contribute/noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="../index.htm">Documentation</a>&nbsp;&nbsp;»&nbsp;&nbsp;Visualization Technology
+      </div>
+      <h1>Python Code Visualization: Text to Flowcharts</h1>
+      <h2>Annotation (April 2017)</h2>
+      <p>The article describes the technology which enables generation of flowchart-like diagrams on the fly while an arbitrary python code is typed. The technology enables not only viewing the
+      diagrams but modifying them as well opening the future for the features which could not be introduced for the text at all.</p>
+      <p>The article covers the following major areas:</p>
+      <ul>
+        <li>Motivation through engineering practice</li>
+        <li>Graphics primitives</li>
+        <li>The tool which implements the technology: Codimension IDE</li>
+        <li>Codimension architecture</li>
+        <li>Parsing, laying out, rendering and drawing implementation</li>
+        <li>Future of the technology</li>
+        <li>Codimension Markup Language: CML v.1</li>
+      </ul>
+      <h2>Media</h2>
+      <p>There are two options:</p>
+      <table class="bioitem">
+        <tr>
+          <td class="img" rowspan="1">
+            <a href="../../assets/cdm/technology/PythonCodeVisualization.pdf"><img width="80px" height="80px" src="../../assets/cdm/images/filetypes/pdf.png" title="Download pdf"></a>
+          </td>
+          <td style="padding-left: 40px">
+            <p>Download the article in <a href="../../assets/cdm/technology/PythonCodeVisualization.pdf">pdf</a>, or</p>
+          </td>
+        </tr>
+        <tr>
+          <td class="img" rowspan="1">
+            <a href="python-code-visualization.html"><img width="80px" height="80px" src="../../assets/cdm/images/monitor.png" title="Read online"></a>
+          </td>
+          <td style="padding-left: 40px">
+            <p>Read it <a href="python-code-visualization.html">online</a></p>
+          </td>
+        </tr>
+      </table>
+      <h2>Contacts</h2>
+      <p>If you have questions or comments about the presentation please direct them to <a href="mailto:sergey.satskiy@gmail.com">Sergey Satskiy</a>.</p>
+      <h2>Attic</h2>
+      <p>The technology was presented on Python Meetup DC in March 2016. It was supposed to be a two sessions presentation however only the first session took place. The presentation covered pretty
+      much the same topics as the article above (the article is rather an extended version of the presentation plus a more convenient format to read).</p>
+      <p>Here are the links to the original presentation media which are actually more of the historical rather than practical interests: a <a href=
+      "../../assets/cdm/visualization/Visualization.pdf">pdf</a> version or an <a href="slide-1.html">online</a> version.</p>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

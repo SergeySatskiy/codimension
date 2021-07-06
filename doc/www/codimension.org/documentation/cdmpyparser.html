@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - Brief Python Parser</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/text.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/github.css">
+
+  <script type="text/javascript" src="../assets/cdm/js/jquery.min.js"></script>
+  <script type="text/javascript" src="../assets/cdm/js/highlight.pack.js"></script>
+  <script>
+  hljs.initHighlightingOnLoad();
+  </script>
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../index.htm"><img src="../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+        <!--
+          <form id="topsearch" action="search-results.html" method="get">
+          <input type="text" name="search" id="q" placeholder="Search">
+          <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+          </form>
+        -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../index.htm">Home</a>
+        </li>
+        <li class="child">
+          <a href="../about/index.htm">About</a>
+          <ul>
+            <li class="child">
+              <a href="../about/features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="../about/screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="../about/team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../download/index.htm">Download</a>
+          <ul>
+            <li class="child">
+              <a href="../download/linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="../download/sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child">
+              <a href="../download/runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child ancestor">
+          <a href="index.htm">Documentation</a>
+          <ul>
+            <li class="child">
+              <a href="visualization-technology/index.htm">Visualization Technology</a>
+            </li>
+            <li class="child">
+              <a href="faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child selected">
+              <a href="cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child">
+              <a href="cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child">
+              <a href="codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../contribute/index.htm">Contribute</a>
+          <ul>
+            <li class="child">
+              <a href="../contribute/codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="../contribute/noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="index.htm">Documentation</a>&nbsp;&nbsp;»&nbsp;&nbsp;Brief Python Parser
+      </div>
+      <h1>Brief Python Parser</h1>
+      <h2>Overview</h2>
+      <p>Brief python parser is a Python 2 extension module. It takes a file with a python code (or a character buffer), parses it and provides back what is found in the code: functions, classes,
+      global variables etc.</p>
+      <p>The parser is developed within the Codimension IDE project however could easily be used in any other project. The parser source code is located on GitHub and named <a href=
+      "https://github.com/SergeySatskiy/cdm-pythonparser">cdm-pythonparser</a>.</p>
+      <p>Codimension IDE uses the parser to show in a structured way a content of an arbitrary python code and in some other cases. For instance, the user can click on a '+' icon in front of a file
+      in a file manager and all the elements found in a file will be displayed. Another examples are lists of classes, global variables and functions in a project: these lists are built using the
+      parser.</p>
+      <h2>Usage</h2>
+      <p>Suppose there is the following file <code>~/my-file.py</code> with the following content:</p>
+      <pre><code class="python">#!/usr/bin/python
+import sys
+
+# global variable
+A = 154
+
+class C( BaseClass ):
+    " class docstring "
+    @decor
+    def f( arg ):
+        " func doc "
+        return 154
+</code></pre>
+      <p>Then the following python session may take place:</p>
+      <pre><code class="bash">$ python
+Python 2.7.9 (default, Mar 30 2015, 11:26:35)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-11)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt; import cdmbriefparser
+&gt;&gt;&gt; c = cdmbriefparser.getBriefModuleInfoFromFile( "my-file.py" )
+&gt;&gt;&gt; print c.niceStringify()
+Import[2:8:25]: 'sys'
+Global[5:1:48]: 'A'
+Class[7:1:7:7:63:7:21]: 'C'
+Base class: 'BaseClass'
+Docstring[8]: 'class docstring'
+    Function[10:5:10:9:122:10:17]: 'f'
+    Argument: 'arg'
+    Decorator[9:6:108]: 'decor'
+    Docstring[11]: 'func doc'
+&gt;&gt;&gt; c.imports[0].what
+[]
+&gt;&gt;&gt; c.imports[0].name
+'sys'
+&gt;&gt;&gt;
+</code></pre>
+      <p>See the <code>cdmbriefparser.py</code> file for the members which are supplied along with all the recognized items.</p>
+      <h2>Comparison to the Standard pyclbr Module</h2>
+      <p>The table below shows the comparison between the standard <code>pyclbr</code> module and the <code>cdmbriefparser</code> module.</p>
+      <div class="CDMTable">
+        <table>
+          <thead>
+            <tr>
+              <th align="center">feature</th>
+              <th align="center">pyclbr</th>
+              <th align="center">cdmbriefparser</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left">Extracting coding string</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Extracting module docstring</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Extracting global variables</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Extracting imports</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Extracting top level functions</td>
+              <td align="center">Y</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Extracting nested functions</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Extracting functions arguments</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Extracting functions docstrings</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Extracting functions decorators</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Extracting classes</td>
+              <td align="center">Y</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Extracting base classes</td>
+              <td align="center">Y</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Extracting class attributes</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Extracting class instance attributes</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Extracting class methods</td>
+              <td align="center">Y</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Extracting class methods arguments</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Extracting nested classes</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Extracting classes docstrings</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Extracting class methods docstrings</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Extracting classes decorators</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Extracting decorators arguments</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Keeping the hierarchy of the classes/functions of the arbitrary depth</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Ability to work with partially syntactically correct files</td>
+              <td align="center">Y (silent)</td>
+              <td align="center">Y (error messages are provided)</td>
+            </tr>
+            <tr>
+              <td align="left">Ability to parse python code from a file</td>
+              <td align="center">Y</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Ability to parse python code from memory</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr>
+              <td align="left">Extracting classes and functions with the same names</td>
+              <td align="center">N</td>
+              <td align="center">Y</td>
+            </tr>
+            <tr class="alt">
+              <td align="left">Supported python version</td>
+              <td align="center">ANY</td>
+              <td align="center">Up to 2.7 (series 3 has not been tested)</td>
+            </tr>
+            <tr>
+              <td align="left">Time to process 11365 python files (python 2.7 distribution and some third party packages).</td>
+              <td align="center">2 min 37 sec</td>
+              <td align="center">24 sec</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Installation</h2>
+      <p>The parser package is build for a few platforms. Please refer to the instructions located on the <a href="../download/linuxdownload.html">Linux Download</a> page. The page describes how to
+      install all the packages Codimension IDE needs but if you need the brief parser only please follow the steps for one package: cdmpyparser-x.x.x</p>
+      <h2>Building From Git Clone</h2>
+      <p>Building from git clone provides you the most up to date code with a risk of instability. Please use it on your own risk.</p>
+      <pre><code class="bash">$ cd
+$ git clone https://github.com/SergeySatskiy/cdm-pythonparser.git
+$ cd ~/cdm-pythonparser
+$ make
+$ make localinstall
+$ make check
+</code></pre>
+      <h2>Links</h2>
+      <ul>
+        <li>Avalable <a href="https://github.com/SergeySatskiy/cdm-pythonparser/releases">releases</a> including previous ones (if so).<br>
+          The list includes packages for some platforms and the corresponding source code archives.
+        </li>
+        <li>Latest source <a href="https://github.com/SergeySatskiy/cdm-pythonparser/archive/master.zip">zip archive</a> (may include unstable changes)
+        </li>
+        <li>
+          <a href="https://github.com/SergeySatskiy/cdm-pythonparser/issues">Bug tracking</a> system
+        </li>
+        <li>Browse the <a href="https://github.com/SergeySatskiy/cdm-pythonparser">cdm-pythonparser source code</a> on GitHub
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

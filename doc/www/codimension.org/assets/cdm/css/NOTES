@@ -5,3 +5,9 @@ The original flexslider.css is adjusted:
 - some styles were modified to look nicer within the overall design of the main
   page
 
+slimbox2.css
+-----------
+The original slimbox2.css is adjusted:
+- with the paths to images. Basically '../images/slimbox/' was added in front
+  of all the paths
+

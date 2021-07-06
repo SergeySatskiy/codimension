@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - Codimension IDE Architecture</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/text.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/github.css">
+
+  <script type="text/javascript" src="../assets/cdm/js/jquery.min.js"></script>
+  <script type="text/javascript" src="../assets/cdm/js/highlight.pack.js"></script>
+  <script>
+  hljs.initHighlightingOnLoad();
+  </script>
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../index.htm"><img src="../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+        <!--
+          <form id="topsearch" action="search-results.html" method="get">
+          <input type="text" name="search" id="q" placeholder="Search">
+          <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+          </form>
+        -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../index.htm">Home</a>
+        </li>
+        <li class="child">
+          <a href="../about/index.htm">About</a>
+          <ul>
+            <li class="child">
+              <a href="../about/features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="../about/screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="../about/team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../download/index.htm">Download</a>
+          <ul>
+            <li class="child">
+              <a href="../download/linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="../download/sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child">
+              <a href="../download/runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child ancestor">
+          <a href="index.htm">Documentation</a>
+          <ul>
+            <li class="child">
+              <a href="visualization-technology/index.htm">Visualization Technology</a>
+            </li>
+            <li class="child">
+              <a href="faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child">
+              <a href="cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child">
+              <a href="cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child selected">
+              <a href="codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../contribute/index.htm">Contribute</a>
+          <ul>
+            <li class="child">
+              <a href="../contribute/codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="../contribute/noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="index.htm">Documentation</a>&nbsp;&nbsp;»&nbsp;&nbsp;Codimension IDE Architecture
+      </div>
+      <h1>Codimension IDE Architecture</h1>
+      <h2>Overview</h2>
+      <p>Note: this article covers the IDE version 3.0.0</p>
+      <p>From the very beginning the idea was to use as many third party components as possible. This idea came from the fact that very limited resources - both in terms of time and a number of
+      developers - are available for the project.</p>
+      <p>Thus the only three components were developed within the project while all the others were used nearly as they were (in some cases patching was required). The diagram below shows in blue the
+      parts developed within the Codimension IDE project.</p><img class="centered" src='../assets/cdm/images/architecture/idearchitecture.png' title=''>
+      <p style="text-align:center">Figure 1. IDE Architecture</p>
+      <p>The items in green on the diagram are third party binaries. The items in yellow are third party components written in Python.</p>
+      <p>Let's discuss the role of each component in more details.</p>
+      <h2>Brief Python parser</h2>
+      <p>The parser is developed within the Codimension project. The parser can get a Python code buffer or a a Python file, parse it and tell what was found in the code. The collected information is
+      quite comprehensive. The parser collects pretty much all identifiable elements - classes and nested classes, functions and nested functions, imports, global variables, docstring, decorators
+      etc.</p>
+      <p>In order to achieve the best possible performance the parser is written in C/C++ and the functionality is provided via a Python 2 extension module. More information about the brief parser
+      can be found <a href="cdmpyparser.html">here</a>.</p>
+      <p>The IDE uses the brief parser to provide structural information about a file or a currently edited buffer. For example, the screenshot below shows a few cases when the parser is
+      used.</p><img class="centered" width="960px" src='../assets/cdm/images/architecture/briefparser.png' title=''>
+      <p style="text-align:center">Figure 2. Brief Python Parser in Action</p>
+      <p>The project tab on the left shows the <code>src/analysis/notused.py</code> disk file content - a tree of elements is expanded when the <code>+</code> icon in front of a file is clicked.</p>
+      <p>The file outline tab on the right shows the currently edited buffer content - similarly to the project tab a tree of elements is expanded when <code>+</code> is clicked.</p>
+      <p>The text editor on the screenshot above has a dialogue with a list of resolved imports (it comes up when <code>Ctrl+I</code> is pressed). The source of information for the dialogue is the
+      brief parser as well.</p>
+      <p>There some other places where the parser is used, to name a few:</p>
+      <ul>
+        <li>Lists of classes, functions, and global variables in the project</li>
+        <li>A generated dependency diagram for a module or all the Python files in a directory</li>
+        <li>Analysis of what classes, functions or global variables are defined but not used</li>
+        <li>etc.</li>
+      </ul>
+      <h2>Flow parser</h2>
+      <p>The control flow parser is developed within the Codimension project. The parser can get a Python code buffer or a a Python file, parse it and provide a hierarchical representation of the
+      code suitable for generating a flowchart diagram. The representation is based on fragments and each fragment tells where a certain recognized element starts and where it ends.</p>
+      <p>Similarly to the brief Python parser the control flow parser is written in C/C++ to achieve the best performance. The functionality is provided via a Python 2 extension module. More
+      information about the control flow parser can be found <a href="cdmflowparser.html">here</a>.</p>
+      <p>The IDE uses the control flow parser to draw a flowchart diagram for the current tab as shown on the screenshot below</p><img class="centered" width="960px" src=
+      '../assets/cdm/images/architecture/cfparser.png' title=''>
+      <p style="text-align:center">Figure 3. Control Flow Python Parser in Action</p>
+      <p>The data collected by the control flow parser also lets to link the flowchart elements to the source code. For example, when the user double clicks on an element, the IDE extracts the line
+      number in the source code that corresponds to the element, moves the focus to the text editor and moves the cursor to the appropriate line.</p>
+      <h2>PyQt and QT Library</h2>
+      <p>The <a href="https://www.qt.io/">QT library</a> is used for drawing the IDE user interface. The bindings to Python are implemented within the <a href=
+      "https://riverbankcomputing.com/software/pyqt/intro">PyQt project</a>. Together they speed up the UI development considerably. There is an extensive documentation in the net of how to use QT
+      and in the vast majority of cases the examples given for C++ could be converted to Python straight forward.</p>
+      <h2>QScintilla and Scintilla</h2>
+      <p>The <a href="http://www.scintilla.org/">Scintilla</a> project is an open source editing component and there Python bindings for it implemented within the <a href=
+      "https://riverbankcomputing.com/software/qscintilla/intro">QScintilla</a> project. Codimension uses QScintilla as the base for its main text editing component.</p>
+      <h2>graphviz</h2>
+      <p>Codimension uses the <a href="http://www.graphviz.org/">graphviz</a> package to provide a layout for a few interactive diagrams.</p><img class="centered" width="960px" src=
+      '../assets/cdm/images/architecture/dependencies.png' title=''>
+      <p style="text-align:center">Figure 4. Dependencies Diagram</p>
+      <p>The layout of the dependencies diagram shown on the screenshot above is done by the graphviz package. The IDE prepared a textual description for the diagram above and invoked graphviz. The
+      collected output had the layout of the diagram so it was used to create a graphics scene with some interactive features. For example, the diagram supports double clicking on the items.</p>
+      <h2>filemagic</h2>
+      <p>The <a href="http://filemagic.readthedocs.io/en/latest/">filemagic</a> package is used to detect a file type. In front of each file in the project and file system browsers there are small
+      icons specific for each file. In order to display an icon properly the filemagic package is invoked. Another example where a file type matters is a text search functionality. It makes no sense
+      to search within binary files so they are excluded.</p>
+      <p>Essentially filemagic is a wrapper around <code>libmagic</code>, the library behind Unix <code>file</code> command.</p>
+      <h2>pyflakes</h2>
+      <p>The <a href="https://github.com/pyflakes/pyflakes">pyflakes</a> package is used to quickly detect popular mistakes in the source code.</p><img class="centered" width="960px" src=
+      '../assets/cdm/images/architecture/pyflakes.png' title=''>
+      <p style="text-align:center">Figure 5. pyflakes in Action</p>
+      <p>Pyflakes does not detect all the problems in the code but works very fast. The pyflakes speed let to integrate the feature in a smooth way: a pause in typing the code is caught and pyflakes
+      is invoked. The detected problems - if so - are highlighted as red dots on a text editor margin. When a mouse cursor hovers the dots a message is shown as a tooltip.</p>
+      <p>Sometimes files have more lines than a sceen can show. It is also possible that the problems are in lines which are currently not visible. So to give an immediate visual indication of the
+      code state in terms of detected problems, there is one more UI element on the IDE status bar at the bottom. The figure above shows a hoverable and clickable red exclamation sign icon. If there
+      are no detected problems then the icon is switched to a green one.</p>
+      <h2>gprof2dot</h2>
+      <p>Profiling results could be displayed in various ways and one of the most visually attractive is a graphics one. The <a href="https://github.com/jrfonseca/gprof2dot">gprof2dot</a> project
+      offers a nice way of representing the results as shown on a figure below.</p><img class="centered" width="960px" src='../assets/cdm/images/architecture/gprof2dot.png' title=''>
+      <p style="text-align:center">Figure 6. gprof2dot</p>
+      <p>gprof2dot works together with graphvis and with some additional code the generated diagram becomes an interactive one. Each box on the diagram is clickable - the corresponding source code
+      will be opened and the cursor will be moved to the appropriate line.</p>
+      <h2>pylint</h2>
+      <p><a href="https://www.pylint.org/">pylint</a> is rather a standard de facto in checking Python files. pylint is slower than pyflakes but does a more comprehensive analysis of the code. The
+      IDE integrates pylint in a few places however the most popular is probably checking the current editing buffer. To do that <code>Ctrl+L</code> is to be pressed and the results will appear on
+      the pylint tab at the bottom.</p>
+      <h2>pymetrics</h2>
+      <p>Sometimes the code metrics need to be collected. This is when the <a href="https://sourceforge.net/projects/pymetrics/">pymetrics</a> project helps. Similarly to pylint the IDE integrates
+      pymetrics in a few places however the most popular is collecting metrics for the current editing buffer. To do that <code>Ctrl+K</code> is to be pressed and the results will appear on the
+      pymetrics tab at the bottom.</p>
+      <p>Two ways of the results representation are available: a tree-like structure and a table representation. The information which is usually of the most interest is the McCabe complexity
+      value.</p>
+      <h2>yapsi</h2>
+      <p>The <a href="https://github.com/tibonihoo/yapsy">yapsi</a> package helps to implement the plugins subsystem of the IDE. There is some code on top of it to provide the system wide and user
+      specific plugins support and conflicts resolution.</p>
+      <h2>rope</h2>
+      <p>The <a href="https://github.com/python-rope/rope">rope</a> library provides various facilities to support important IDE features like:</p>
+      <ul>
+        <li>jumping to a symbol definition</li>
+        <li>finding the symbol usage</li>
+        <li>code completion</li>
+        <li>etc</li>
+      </ul>
+      <p>Note: the most up to date versions use jedi library instead.</p>
+      <h2>diff2html</h2>
+      <p>The <a href="https://gitlab.com/mcepl/diff2html/tree/master">diff2html</a> script helps to represent the difference between two versions of the same file in a visually convenient way. In
+      particular the script is used for:</p>
+      <ul>
+        <li>showing the difference before running pythontidy and after it</li>
+        <li>showing the difference between two revisions of a file in the SVN plugin</li>
+      </ul>
+      <h2>Codimension IDE</h2>
+      <p>The IDE integrates all the parts described above and more other things which are not mentioned. The smaller items were not included into this article because of the only reason: to avoid
+      loosing the whole picture behind too many details. Nevertheless Codimension would not be possible without any of the part it relies on.</p>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

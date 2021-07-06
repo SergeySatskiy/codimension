@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - Features</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/text.css">
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../index.htm"><img src="../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+          <!--
+            <form id="topsearch" action="search-results.html" method="get">
+            <input type="text" name="search" id="q" placeholder="Search">
+            <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+            </form>
+          -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../index.htm">Home</a>
+        </li>
+        <li class="child ancestor">
+          <a href="index.htm">About</a>
+          <ul>
+            <li class="child selected">
+              <a href="features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../download/index.htm">Download</a>
+          <ul>
+            <li class="child">
+              <a href="../download/linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="../download/sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child">
+              <a href="../download/runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../documentation/index.htm">Documentation</a>
+          <ul>
+            <li class="child">
+              <a href="../documentation/visualization-technology/index.htm">Visualization Technology</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../contribute/index.htm">Contribute</a>
+          <ul>
+            <li class="child">
+              <a href="../contribute/codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="../contribute/noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="index.htm">About</a>&nbsp;&nbsp;»&nbsp;&nbsp;Features
+      </div>
+      <h1>Features</h1>
+      <p align="justify">Codimension offers many features which can be found in any modern Python IDE.
+      On top of it Codimension adds graphics related features which make the IDE unique.</p>
+      <p>The list below provides Codimension's major features:</p>
+      <h2>Graphics pane</h2>
+      <ul>
+        <li>Generation of the flowchart diagrams for Python 3 code</li>
+        <li>Automatic updates of the flowchart diagrams while the code is typed</li>
+        <li>Exporting flowchart diagrams as PDF, PNG and SVG files</li>
+        <li>Custom colors for the flowchart diagram items</li>
+        <li>Custom titles for the flowchart diagram items</li>
+        <li>Hiding/showing docstrings, except blocks, comments and decorators</li>
+        <li>Multiple smart zoom levels:
+          <ul>
+            <li>Everything is shown</li>
+            <li>Everything is shown without a content</li>
+            <li>Only scopes and if statements are shown</li>
+            <li>Only classes and functions are shown</li>
+            <li>AST</li>
+            <li>Disassembly</li>
+            <li>Binary</li>
+          </ul>
+        </li>
+        <li>Control flow scope navigation bar</li>
+      </ul>
+      <h2>General</h2>
+      <ul>
+        <li>Ability to work with standalone files and with projects</li>
+        <li>Automatic watching of the project directories for deleted / created files and nested directories</li>
+        <li>Text editor syntax highlight (<a href="https://github.com/andreikop/qutepart">qpart</a> editor component is used)
+        </li>
+        <li>Hierarchical python files content browser with quick jumps to the code</li>
+        <li>Hierarchical classes / functions / globals browsers with filtering and quick jump to the code</li>
+        <li>File outline tab</li>
+        <li>Opening file imports using a hot key; jumping to a definition of a certain imported item</li>
+        <li>Search for a name (class, function, global variable) in the project</li>
+        <li>Search for a file in the project</li>
+        <li>Pixmaps viewer</li>
+        <li>Detecting files changed outside of the IDE</li>
+        <li>Code completer</li>
+        <li>Jump to the definition of the current identifier</li>
+        <li>Finding occurrences of the current identifier</li>
+        <li>Debugger</li>
+        <li>Calltips</li>
+        <li>Plugin support</li>
+      </ul>
+      <p>Note: the code completion, usage, occurences etc are relying on the <a href="https://github.com/davidhalter/jedi">jedi</a> library.</p>
+      <h2>Analysis</h2>
+      <ul>
+        <li>Unused classes, functions and global variables analysis</li>
+        <li>Graphics representation of profiling results (side effect: shows a call graph)</li>
+        <li>Imports diagram for a file, a directory (recursively) or for a whole project with jumps to the code</li>
+        <li>pyflakes integration</li>
+        <li>pylint integration</li>
+        <li>Automatic cyclomatic complexity calculation</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

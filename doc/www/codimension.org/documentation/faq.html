@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - FAQ</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/text.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/github.css">
+  <script type="text/javascript" src="../assets/cdm/js/jquery.min.js"></script>
+
+  <script type="text/javascript" src="../assets/cdm/js/cmsplugin_toc.js"></script>
+  <script type="text/javascript" src="../assets/cdm/js/highlight.pack.js"></script>
+  <script>
+  hljs.initHighlightingOnLoad();
+  </script>
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../index.htm"><img src="../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+        <!--
+          <form id="topsearch" action="search-results.html" method="get">
+          <input type="text" name="search" id="q" placeholder="Search">
+          <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+          </form>
+        -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../index.htm">Home</a>
+        </li>
+        <li class="child">
+          <a href="../about/index.htm">About</a>
+          <ul>
+            <li class="child">
+              <a href="../about/features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="../about/screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="../about/team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../download/index.htm">Download</a>
+          <ul>
+            <li class="child">
+              <a href="../download/linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="../download/sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child">
+              <a href="../download/runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child ancestor">
+          <a href="index.htm">Documentation</a>
+          <ul>
+            <li class="child">
+              <a href="visualization-technology/index.htm">Visualization Technology</a>
+            </li>
+            <li class="child selected">
+              <a href="faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child">
+              <a href="cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child">
+              <a href="cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child">
+              <a href="codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../contribute/index.htm">Contribute</a>
+          <ul>
+            <li class="child">
+              <a href="../contribute/codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="../contribute/noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="index.htm">Documentation</a>&nbsp;&nbsp;»&nbsp;&nbsp;FAQ
+      </div>
+      <h1>Frequently Asked Questions</h1>
+      <div id="toc" class="inline" data-bullets="False">
+        <h2>Codimension FAQ</h2>
+      </div>
+      <h2 id="What_is_Codimension?">What is Codimension?</h2>
+      <p align="justify">Codimension is a free experimental Python 3 IDE licensed under GPL v3, written mostly in Python with a couple of custom modules written in C/C++.</p>
+      <p align="justify">It has most of the traditional IDE features however the main focus of Codimension is on graphics representation of the code control flow. Flowcharts are generated so fast
+      that the process is integrated into a smooth update of the diagram while someone is typing the code. The IDE detects pauses in typing and triggers the flowchart updated.</p>
+      <p align="justify">Codimension studies how the graphics representation of the code can be integrated with the traditional textual representation without sacrificing any of them. Codimension
+      also seeks how the text editing features can be implemented on the graphics view and what new features could be introduced for graphics.</p>
+      <h2 id="Why_is_it_called_codimension?">Why is it called Codimension?</h2>
+      <p align="justify">There are three concepts in this name: 'co', 'code', and 'dimension'. The concept 'code' appears for the obvious reason that Codimension is used with code. The concept
+      'dimension' has to do with the idea that Codimension adds a new dimension to the process of working with python code - specifically, interactive graphical representations of the control flow.
+      The concept 'co' means that Codimension's textual and graphical representations are linked and inter-operate. (It is just a coincidence that 'codimension' is also a mathematical term.)</p>
+      <p align="justify">Another way to justify the IDE name is that 'Codimension' just sounds cool.</p>
+      <h2 id="Why_another_IDE?">Why another IDE? Why not to extend an existing one?</h2>
+      <p align="justify">Well, that was the first thought, but analysis of existing open source IDE plugin interfaces revealed that they are not really suitable to implement a graphical
+      representation of the program control flow. Sometimes the plugin interface documentation was not clear either. To make the things worse none of the existing python code parsers provided all the
+      required information and had to be rewritten. Sometimes the user interface decisions were argueable. So bearing all this in mind, it was decided to start Codimension as a separate project.</p>
+      <h2 id="What_are_the_supported_platforms?">What are the supported platforms?</h2>
+      <p align="justify">Codimension was developed on Linux and it is pip installable on Linux. See the <a href="../download/index.htm">Download</a> page for the details.</p>
+      <h2 id="Can_I_run_Codimension_on_Windows?">Can I run Codimension on Windows?</h2>
+      <p align="justify">Codimension has never been tried on Windows. While it is theoretically possible to make it Windows compatible no efforts were made for this and there no plans to do so at the
+      time of writing.</p>
+      <h2 id="Can_I_run_Codimension_on_MAC?">Can I run Codimension on MAC?</h2>
+      <p align="justify">Codimension has never been tried on MAC. There are no nearest future plans to port it on MAC.</p>
+      <p align="justify">The modern MAC OS however has unix under the hood and thus there must be no big deal in porting Codimension onto MAC OS. All the Codimension source code is available (see the
+      <a href="../download/sourcedownload.html">Source download</a> page) so you can give it a try on MAC OS.</p>
+      <p align="justify">If you believe you did the work of porting Codimension on MAC OS properly and you wish to share the packages with the others then please let us know so we can share a link or
+      provide the packages to download from this site.</p>
+      <h2 id="How_to_create_my_own_color_scheme?">How to create my own color scheme?</h2>
+      <p align="justify">At the moment there is no documentation of how to do it and there is no UI support. Generally the color scheme is split into a few pieces:</p>
+      <ul>
+        <li>the application CSS</li>
+        <li>general settings (<code>JSON</code> format is used)</li>
+        <li>control flow view settings (<code>JSON</code> format is used)</li>
+        <li>text editor syntax highlight</li>
+      </ul>The first three items are stored in <code>~/.codimension3/skins/your-skin-name/</code> directory and can be changed simply by editing the files. The last item depends on the text editor
+      component <a href="https://github.com/andreikop/qutepart">qutepart</a> and the questions could be directed to the authors of the component.
+      <p align="justify">If you need more information, please contact <a href="mailto:sergey.satskiy@gmail.com">Sergey Satskiy</a>.</p>
+      <h2 id="How_to_submit_a_bug?">How to submit a bug?</h2>
+      <p align="justify">Please see the details at the <a href="../contribute/noncodingcontribute.html#bug_submit">non-code contributing</a> page ('Submitting a bug' section).</p>
+      <h2 id="How_to_request_a_feature?">How to request a feature?</h2>
+      <p align="justify">Please see the details at the <a href="../contribute/noncodingcontribute.html#ideas">non-code contributing</a> page ('Your ideas' section).</p>
+      <h2 id="Can_this_techology_implemented_for_my_favorite_language?">Can this techology be implemented for my favorite language?</h2>
+      <p align="justify">Most certainly!</p>
+      <p align="justify">Python was chosen as a popular language which has many of the modern programming languages concepts covered. Yet Python is syntactically simple enough to make it feasible to
+      develop an IDE and parsers within an Open Source project by one developer. Basically it is a matter of a parser for your favorite language to have the diagrams generated in a very similar
+      way.</p>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - Python Code Visualization: Slide 39</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../../assets/cdm/css/text.css">
+  <link rel="stylesheet" type="text/css" href="../../assets/cdm/css/github.css">
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../../index.htm"><img src="../../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+        <!--
+          <form id="topsearch" action="search-results.html" method="get">
+          <input type="text" name="search" id="q" placeholder="Search">
+          <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+          </form>
+        -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../../index.htm">Home</a>
+        </li>
+        <li class="child">
+          <a href="../../about/index.htm">About</a>
+          <ul>
+            <li class="child">
+              <a href="../../about/features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="../../about/screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="../../about/team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../../download/index.htm">Download</a>
+          <ul>
+            <li class="child">
+              <a href="../../download/linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="../../download/sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child">
+              <a href="../../download/runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child ancestor">
+          <a href="../index.htm">Documentation</a>
+          <ul>
+            <li class="child">
+              <a href="index.htm">Visualization Technology</a>
+            </li>
+            <li class="child">
+              <a href="../faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="../cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="../pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child">
+              <a href="../cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child">
+              <a href="../cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child">
+              <a href="../codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../../contribute/index.htm">Contribute</a>
+          <ul>
+            <li class="child">
+              <a href="../../contribute/codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="../../contribute/noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="../index.htm">Documentation</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="index.htm">Visualization
+        Technology</a>&nbsp;&nbsp;»&nbsp;&nbsp;Python Code Visualization: Slide 39
+      </div>
+      <p><br></p>
+      <div style="text-align:center">
+        <ul class="pagination">
+          <li>
+            <a href="slide-38.html">&lt;</a>
+          </li>
+          <li>
+            <a href="" class="active not-active-link">39</a>
+          </li>
+          <li>
+            <a href="slide-40.html">&gt;</a>
+          </li>
+        </ul>
+      </div><img class="centered" src='../../assets/cdm/visualization/img38.png' title=''>
+      <p align="justify">The rendering stage is about the sizes of the graphics primitives. Basically what this stage does is it visits every allocated cell and sets the sizes appropriately.</p>
+      <p align="justify">Naturally each cell in a virtual canvas has two sets of sizes: minimum required width and height and the actual - calculated during rendering process - width and height.
+      Let's talk about the cell heights first. The analysis is done on per row basis. In the code example the assignment statement takes just one line while the height of its side comment allocated
+      in the same row requires two lines i.e. more pixels vertically. So the minimum required sizes differ for the items in the same row. The rendering algorithm will walk all the items in the row
+      and pick the maximum height required. That value will be assigned as the actual height of each cell in the row. By the way, all the calculations are done basing on the font which was selected
+      for drawing the diagram and other settings like a text or a cell padding.</p>
+      <p align="justify">Slightly more complicated story is with the cell width. From this prospective there are two types of rows: those which cell widths affect the other row cell widths and those
+      which do not. A good example of a dependent row region is an if-else portion of a diagram. A below-branch of an if statement could of an arbitrary complexity so the width of the suite could
+      vary while on the other hand a connector for the right-branch needs to be drawn properly i.e. considering the below-branch suite width. Therefore for an independent row rendering is primitive:
+      the actual width of a cell is assigned as the minimum required. For the dependent row regions the rendering procedure needs to walk all the rows for each column and calculate the actual
+      required width as a maximum of the minimum required ones - quite similar to what is done for a row in terms of its height. Then the calculated width is assigned to all the cells in the
+      column.</p>
+      <p align="justify">Obviously the calculations are done recursively for all the virtual canvases. The outcome of the rendering is that the sizes of all the graphics primitives are calculated and
+      the scene is ready for drawing.</p>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

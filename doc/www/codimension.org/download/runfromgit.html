@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - Run From Git</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/text.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/github.css">
+
+  <script type="text/javascript" src="../assets/cdm/js/jquery.min.js"></script>
+  <script type="text/javascript" src="../assets/cdm/js/highlight.pack.js"></script>
+  <script>
+  hljs.initHighlightingOnLoad();
+  </script>
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../index.htm"><img src="../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+        <!--
+          <form id="topsearch" action="search-results.html" method="get">
+          <input type="text" name="search" id="q" placeholder="Search">
+          <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+          </form>
+        -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../index.htm">Home</a>
+        </li>
+        <li class="child">
+          <a href="../about/index.htm">About</a>
+          <ul>
+            <li class="child">
+              <a href="../about/features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="../about/screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="../about/team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child ancestor">
+          <a href="index.htm">Download</a>
+          <ul>
+            <li class="child">
+              <a href="linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child selected">
+              <a href="runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../documentation/index.htm">Documentation</a>
+          <ul>
+            <li class="child">
+              <a href="../documentation/visualization-technology/index.htm">Visualization Technology</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../contribute/index.htm">Contribute</a>
+          <ul>
+            <li class="child">
+              <a href="../contribute/codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="../contribute/noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="index.htm">Download</a>&nbsp;&nbsp;»&nbsp;&nbsp;Run From Git
+      </div>
+      <h1>Building and Running Codimension from Sources</h1>
+      <h2>Introduction</h2>
+      <p>The existing Codimension codebase is split between tree repositories:</p>
+      <ul>
+        <li>Brief Python parser <a href="https://github.com/SergeySatskiy/cdm-pythonparser">cdm-pythonparser</a> written mostly in C. The code is compiled into a Python extension module.
+        </li>
+        <li>Control flow Python parser <a href="https://github.com/SergeySatskiy/cdm-flowparser">cdm-flowparser</a> written mostly in C++. The code is compiled into a Python extension module.
+        </li>
+        <li>
+          <a href="https://github.com/SergeySatskiy/codimension">Codimension IDE</a> written mostly in Python
+        </li>
+      </ul>
+      <p>To run Codimension from source you need to get the source code of all three components, build two Python extension modules (C/C++ compiler required), install them and then run the IDE. The
+      instructions below describe the whole process with the following assumptions:</p>
+      <ul>
+        <li>you have a Linux box</li>
+        <li>module installation is done in a virtual environment to avoid the root privileges requirement</li>
+        <li>all the steps are performed in your home directory</li>
+        <li>some dependencies are not described (like gcc availability) and you are able to resolve them on your own</li>
+      </ul>
+      <h2>Prerequisites</h2>
+      <p>Make sure you have a gcc compiler installed.</p>
+      <p>Make sure you have your Python version development package installed. The modules use the python header files. For example, on Ubuntu you would need the <code>python-dev</code> package
+      installed.</p><br>
+      <h2>Virtual Environment</h2>
+      <p>Create a Python 3 virtual environment, e.g. (for Ubuntu 17.10):</p>
+      <pre><code class="bash">$ cd
+$ virtualenv -p python3 venvp3
+$ source ~/venvp3/bin/activate
+(venvp3) $ python --version
+Python 3.6.3
+</code></pre>
+      <p>The Python version should be 3.5.x or 3.6.x. (The 3.4.x version should work as well but it was not tested extensively.)</p>
+      <p>On some systems the wheel package needs to be installed first:</p>
+      <pre><code class="bash">(venvp3) $ pip install wheel
+</code></pre><br>
+      <h2>Control Flow Parser</h2>
+      <p>Clone the latest code from GitHub, build the module and install it in the virtual environment:</p>
+      <pre><code class="bash">(venvp3) $ cd
+(venvp3) $ git clone https://github.com/SergeySatskiy/cdm-flowparser.git
+(venvp3) $ cd cdm-flowparser
+(venvp3) $ python setup.py develop
+(venvp3) $ make check
+</code></pre>
+      <p>The last <code>make check</code> command will run the unit tests and all of them must pass.</p><br>
+      <h2>Brief Python Parser</h2>
+      <p>Clone the latest code from GitHub, build the module and install it in the virtual environment:</p>
+      <pre><code class="bash">(venvp3) $ cd
+(venvp3) $ git clone https://github.com/SergeySatskiy/cdm-pythonparser.git
+(venvp3) $ cd cdm-pythonparser
+(venvp3) $ python setup.py develop
+(venvp3) $ make check
+</code></pre>
+      <p>The last <code>make check</code> command will run the unit tests and all of them must pass.</p><br>
+      <h2>Codimension IDE</h2>
+      <p>By some reasons a few dependencies are failed to be installed during the typical <code>python setup.py develop</code> however they work just fine if <code>pip</code> is used. So, first
+      install them explicitly:</p>
+      <pre><code class="bash">(venvp3) $ pip install PyQt5
+(venvp3) $ pip install cdmgcplugin
+</code></pre>
+      <p>Now clone the latest code from GitHub and install it in the virtual environment:</p>
+      <pre><code class="bash">(venvp3) $ cd
+(venvp3) $ git clone https://github.com/SergeySatskiy/codimension.git
+(venvp3) $ cd codimension
+(venvp3) $ python setup.py develop
+</code></pre>
+      <p>Run codimension:</p>
+      <pre><code class="bash">(venvp3) $ codimension &
+</code></pre><br>
+      <h2>Optional steps</h2>
+      <p>Install (if needed) and select a monospace font. Many developers find Ubuntu Mono font very suitable. To make the font available for Codimension follow the steps below:</p>
+      <ul>
+        <li>Download the font from here: <a href="http://font.ubuntu.com/">http://font.ubuntu.com/</a>
+        </li>
+        <li>Create the local user font directory:</li>
+        <pre><code class="bash">$ mkdir ~/.fonts</code></pre>
+        <li>Copy the downloaded .ttf files to the <code>~/.fonts</code> directory</li>
+        <li>Restart Codimension</li>
+        <li>Select the font from the main menu: Options --&gt; Text mono font family --&gt; Ubuntu Mono</li>
+        <li>Adjust the font size in the editor: press Ctrl + mouse wheel</li>
+      </ul><br>
+      <h2>Contacts</h2>
+      <p>If you have any questions about running Codimension from a git clone please direct them to <a href="mailto:sergey.satskiy@gmail.com">Sergey Satskiy</a>.</p>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

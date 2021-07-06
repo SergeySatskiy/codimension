@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - Python Code Visualization: Slide 34</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../../assets/cdm/css/text.css">
+  <link rel="stylesheet" type="text/css" href="../../assets/cdm/css/github.css">
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../../index.htm"><img src="../../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+        <!--
+          <form id="topsearch" action="search-results.html" method="get">
+          <input type="text" name="search" id="q" placeholder="Search">
+          <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+          </form>
+        -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../../index.htm">Home</a>
+        </li>
+        <li class="child">
+          <a href="../../about/index.htm">About</a>
+          <ul>
+            <li class="child">
+              <a href="../../about/features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="../../about/screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="../../about/team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../../download/index.htm">Download</a>
+          <ul>
+            <li class="child">
+              <a href="../../download/linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="../../download/sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child">
+              <a href="../../download/runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child ancestor">
+          <a href="../index.htm">Documentation</a>
+          <ul>
+            <li class="child">
+              <a href="index.htm">Visualization Technology</a>
+            </li>
+            <li class="child">
+              <a href="../faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="../cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="../pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child">
+              <a href="../cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child">
+              <a href="../cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child">
+              <a href="../codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../../contribute/index.htm">Contribute</a>
+          <ul>
+            <li class="child">
+              <a href="../../contribute/codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="../../contribute/noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="../index.htm">Documentation</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="index.htm">Visualization
+        Technology</a>&nbsp;&nbsp;»&nbsp;&nbsp;Python Code Visualization: Slide 34
+      </div>
+      <p><br></p>
+      <div style="text-align:center">
+        <ul class="pagination">
+          <li>
+            <a href="slide-33.html">&lt;</a>
+          </li>
+          <li>
+            <a href="" class="active not-active-link">34</a>
+          </li>
+          <li>
+            <a href="slide-35.html">&gt;</a>
+          </li>
+        </ul>
+      </div><img class="centered" src='../../assets/cdm/visualization/img33.png' title=''>
+      <p align="justify">The first stage on the way from text to graphics is to parse the Python code and to collect everything what is there in a form of data structures which could be used for
+      generating graphics. I definitely wanted to use something which has already been developed. It turned out that there is a function in the Python interpreter dynamic library which can help. It's
+      a C function which provides a syntax tree.</p>
+      <p align="justify">While working on this part I wrote a simple utility which prints the data structure produced by the Python interpreter function. Here is an example of a very simple Python
+      file and the produced data structure. Generally it looks nice: there are line numbers and column numbers, the node types correspond to the formal Python grammar specification. However there are
+      some problems too.</p>
+      <p align="justify">The sample code has a few comments - the syntax tree lost them. The encoding line number and column number are wrong. Even the encoding name is wrong: the file says it is
+      <code>latin-1</code> but the syntax tree reports <code>iso-8859-1</code>. It turned out that the Python interpreter code has a normalization procedure for the encoding spec. There are some
+      problems with multiline string literals as well - the line numbers are not supplied. All these surprises had to be considered in the parser module. On the other hand all the text parsing
+      complexity is gone, all I had to do is to walk the syntax tree and build data structures convenient for generating graphics.</p>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

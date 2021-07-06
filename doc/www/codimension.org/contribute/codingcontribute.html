@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codimension Python IDE - Coding Contribution</title>
+  <meta name="Author" content="Sergey Satskiy">
+  <meta name="description" content="Codimension is a Python IDE with a focus on graphics representation of the control flow">
+  <meta name="keywords" content="codimension,python,ide,flowchart,analysis,linux,open source,free software,libre software,libre,freedom,diagram,flowchart,software,download,platform,ubuntu,fedora,debian,documentation,screenshots,home,homepage">
+  <link rel="apple-touch-icon" sizes="144x144" href="../assets/cdm/images/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="../assets/cdm/images/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="../assets/cdm/images/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="57x57" href="../assets/cdm/images/apple-touch-icon-57x57.png">
+  <link rel="shortcut icon" type="image/png" href="../assets/cdm/images/cdm-logo-64x64.png">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/text.css">
+  <link rel="stylesheet" type="text/css" href="../assets/cdm/css/github.css">
+</head>
+<body id="page-" class="">
+  <div class="header">
+    <div id="cleartop">
+      <div id="logo">
+        <a href="../index.htm"><img src="../assets/cdm/images/cdm-label.svg" height="64" alt="Codimension"></a>
+      </div>
+      <div id="header-right">
+        <ul id="topdrops">
+          <h2 style="border-bottom: 1px solid #ddd; font-size: 140%; font-weight: normal; margin: 1.5ex 0 0.5ex;">English</h2>
+        </ul>
+        <!--
+          <form id="topsearch" action="search-results.html" method="get">
+          <input type="text" name="search" id="q" placeholder="Search">
+          <button type="submit"><img src="/assets/cdm/images/search.svg" alt="Search"/></button>
+          </form>
+        -->
+      </div>
+    </div>
+    <div class="nav">
+      <ul id="menu">
+        <li class="child">
+          <a href="../index.htm">Home</a>
+        </li>
+        <li class="child">
+          <a href="../about/index.htm">About</a>
+          <ul>
+            <li class="child">
+              <a href="../about/features.html">Features</a>
+            </li>
+            <li class="child">
+              <a href="../about/screenshots.html">Screenshots</a>
+            </li>
+            <li class="child">
+              <a href="../about/team.html">Team</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../download/index.htm">Download</a>
+          <ul>
+            <li class="child">
+              <a href="../download/linuxdownload.html">Linux and Mac Download and Installation</a>
+            </li>
+            <li class="child">
+              <a href="../download/sourcedownload.html">Download Source Code</a>
+            </li>
+            <li class="child">
+              <a href="../download/runfromgit.html">Building and Running from Source</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../documentation/index.htm">Documentation</a>
+          <ul>
+            <li class="child">
+              <a href="../documentation/visualization-technology/index.htm">Visualization Technology</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/faq.html">FAQ</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cheatsheet.html">Key Bindings & Cheatsheet</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/pluginstutorial.html">Plugins Tutorial</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cdmpyparser.html">Brief Python Parser</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/cdmflowparser.html">Control Flow Parser</a>
+            </li>
+            <li class="child">
+              <a href="../documentation/codimension-ide-architecture.html">Architecture</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child ancestor">
+          <a href="index.htm">Contribute</a>
+          <ul>
+            <li class="child selected">
+              <a href="codingcontribute.html">Via Working with Code</a>
+            </li>
+            <li class="child">
+              <a href="noncodingcontribute.html">Non-Coding</a>
+            </li>
+          </ul>
+        </li>
+        <li class="child">
+          <a href="../supportus.html">Support Us</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div class="breadcrumbs">
+        <a href="../index.htm">Home</a>&nbsp;&nbsp;»&nbsp;&nbsp;<a href="index.htm">Contribute</a>&nbsp;&nbsp;»&nbsp;&nbsp;Coding Contribution
+      </div>
+      <h1>Contribute via Working with Code</h1>
+      <h2>Introduction</h2>
+      <p>The existing Codimension codebase is split between tree repositories:</p>
+      <ul>
+        <li>Brief Python parser <a href="https://github.com/SergeySatskiy/cdm-pythonparser">cdm-pythonparser</a> written mostly in C. The code is compiled into a Python extension module.
+        </li>
+        <li>Control flow Python parser <a href="https://github.com/SergeySatskiy/cdm-flowparser">cdm-flowparser</a> written mostly in C++. The code is compiled into a Python extension module.
+        </li>
+        <li>
+          <a href="https://github.com/SergeySatskiy/codimension">Codimension IDE</a> written mostly in Python 2
+        </li>
+      </ul>
+      <p>C/C++ were used to achieve the best possible performance of the parsers and their speed enabled implemention of smooth updates of the flowcharts and some other IDE views via catching pauses
+      in typing. The parsers tend not to be changed very often so it is not a big deal to re-compile them after every change.</p>
+      <p>The IDE is written in Python 2. Python simplifies development and provides a very short cycle change-and-try. Thus it stimulates experiments in trying to achieve the best results.</p>
+      <p>If you dicided to be involved and it is not a new feature then you most probably will work with one of the mentioned repositories. Nevertheless what you can help with is not limited by these
+      repositories. Some other opportunities are highlighted below.</p>
+      <p>If your choice is make some kind of changes (code or graphics) then probably the most convenient start for you would be to make Codimension running from the git clone. How to do that is
+      described <a href="../download/runfromgit.html">here</a>. This will allow you a quick way to make the changes and check them righ away.</p>
+      <h2>IDE Core</h2>
+      <p>You can develop a new feature or fix a bug. Most probably it would require Python coding skills. When you do this part of development it is preferably to use a similar coding style that is
+      used for the existing code. There is no formal coding style document so please just have a look a few files in the project tree.</p>
+      <p>If you do not know what to start with you can pick one of the existing bugs or feature requests from the <a href="https://github.com/SergeySatskiy/codimension/issues">bug tracking</a> system
+      on github.</p>
+      <h2>Plugins</h2>
+      <p>You can implement the new functionality you want completely independent of the core IDE codebase using the plugins interface. How to create a plugin is decribed in the <a href=
+      "../documentation/pluginstutorial.html">plugins tutorial</a>. The tutorial covers not only a plugin interface description but also discusses a completed simple plugin which collects garbage in
+      the IDE.</p>
+      <h2>Other Language Parser</h2>
+      <p>If you want to have your language supported on the graphics pane then you might want to develop a parser for that language. The parser should be a Python 2 extension module which basically
+      provides a function call with a textual buffer as an argument and returns back a hierarchical data structure with what is inside the buffer. The data structure should mimic the one created for
+      Python.</p>
+      <p>Most probably such an extension module needs to be written in a compilable language like C/C++. Your module needs to work fast to enable a smooth user experience of updating the flowchart
+      diagrams while you are typing the code.</p>
+      <h2>Porting</h2>
+      <p>If there are no packages for your operating system or for your Linux distribution or you think you can do packaging better and you are willing to share your results, then we would be more
+      than happy to provide the packages through this web site.</p>
+      <h2>Making Codimension Available in Mainstream</h2>
+      <p>One more thing which needs to be covered is to make the project available on the main stream Linux distributions. If you can cover this for your favorite distribution that would be
+      great!</p>
+      <h2>Contacts</h2>
+      <p>If you have any questions about contributing in the project please direct them to <a href="mailto:sergey.satskiy@gmail.com">Sergey Satskiy</a>.</p>
+    </div>
+  </div>
+  <div class="footer">
+    <table width="100%">
+      <tr>
+        <td>
+          Codimension is Free and Open Source Software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3.0</a>
+        </td>
+        <td align="right">
+          <a href="../sitemap.html">Sitemap</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

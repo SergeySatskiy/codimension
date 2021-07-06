@@ -1,0 +1,8 @@
+slimbox2.js
+-----------
+The original js was extended with the custom options
+
+cmsplugin_toc.js
+----------------
+The anchor character for a section when hovered has been removed
+
