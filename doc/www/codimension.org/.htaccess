@@ -13,4 +13,7 @@ AddOutputFilterByType DEFLATE application/x-javascript
 AddOutputFilterByType DEFLATE image/svg+xml
 AddOutputFilterByType DEFLATE image/x-icon
 
+ErrorDocument 404 errors/notfound.html
+ErrorDocument 401 errors/unauthorized.html
+ErrorDocument 403 errors/forbidden.html
 
