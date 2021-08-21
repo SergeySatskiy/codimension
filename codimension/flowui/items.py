@@ -22,13 +22,12 @@
 # pylint: disable=C0305
 
 from ui.qt import Qt, QPointF, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
-from .auxitems import Connector, BadgeItem, SVGItem, DecorBadgeItem
+from .auxitems import Connector, BadgeItem, DecorBadgeItem
 from .cml import CMLVersion, CMLsw
 from .colormixin import ColorMixin
 from .iconmixin import IconMixin
 from .cellelement import CellElement
 from .textmixin import TextMixin
-from .routines import getDocComment
 from .abovebadges import AboveBadgesDivider, AboveBadgesSpacer
 
 

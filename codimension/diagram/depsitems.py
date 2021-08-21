@@ -19,11 +19,12 @@
 
 """Dependency diagram grphics items"""
 
+import os
 from ui.qt import Qt, QPointF, QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from flowui.cellelement import CellElement
 from flowui.textmixin import TextMixin
-from flowui.auxitems import BadgeItem
-
+from flowui.auxitems import BadgeItem, Connector
+from flowui.abovebadges import AboveBadgesSpacer
 
 class SelfModule(CellElement, TextMixin, QGraphicsRectItem):
 
@@ -36,7 +37,7 @@ class SelfModule(CellElement, TextMixin, QGraphicsRectItem):
         self.kind = CellElement.DEPS_SELF_MODULE
         self.fileName = fileName
 
-        self.needConnector = needConnector
+        self.__needConnector = needConnector
         self.connector = None
 
         # To make double click delivered
@@ -48,18 +49,19 @@ class SelfModule(CellElement, TextMixin, QGraphicsRectItem):
         text = os.path.basename(self.fileName).split('.')[0]
         self.setupText(self, customText=text)
 
-        vPadding = 2 * (settings.vCellPadding + settings.vTextPadding)
+        vPadding = 2 * (settings.vDepsCellPadding + settings.vDepsTextPadding)
         self.minHeight = self.textRect.height() + vPadding
-        hPadding = 2 * (settings.hCellPadding + settings.hTextPadding)
+        hPadding = 2 * (settings.hDepsCellPadding + settings.hDepsTextPadding)
         self.minWidth = max(self.textRect.width() + hPadding,
                             settings.minWidth)
 
         # Add badges
         self.aboveBadges.append(BadgeItem(self, 'doc'))
+        self.aboveBadges.append(AboveBadgesSpacer(settings.badgeToBadgeHSpacing))
         self.aboveBadges.append(BadgeItem(self, 'path'))
 
         self.minHeight += self.aboveBadges.height + settings.badgeToScopeVPadding
-        self.minWidth = max(self.aboveBadges.width + 2 * settings.hCellPadding,
+        self.minWidth = max(self.aboveBadges.width + 2 * settings.hDepsCellPadding,
                             self.minWidth)
 
         self.height = self.minHeight
@@ -74,11 +76,13 @@ class SelfModule(CellElement, TextMixin, QGraphicsRectItem):
         # Add the connector as a separate scene item to make the selection
         # working properly
         settings = self.canvas.settings
-        self.connector = Connector(self.canvas, baseX + settings.mainLine,
-                                   baseY,
-                                   baseX + settings.mainLine,
-                                   baseY + self.height)
-        scene.addItem(self.connector)
+        if self.__needConnector:
+            self.connector = Connector(self.canvas,
+                                       baseX + self.width - settings.hDepsCellPadding,
+                                       baseY + self.height / 2.0,
+                                       baseX + self.width,
+                                       baseY + self.height / 2.0)
+        # scene.addItem(self.connector)
 
         # Draw comment badges
         self.aboveBadges.draw(scene, settings, baseX, baseY, self.minWidth)
@@ -88,13 +92,13 @@ class SelfModule(CellElement, TextMixin, QGraphicsRectItem):
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
-        xPos = baseX + settings.hCellPadding
-        yPos = baseY + settings.vCellPadding
+        xPos = baseX + settings.hDepsCellPadding
+        yPos = baseY + settings.vDepsCellPadding
         penWidth = settings.selectPenWidth - 1
         self.setRect(
             xPos - penWidth, yPos - penWidth + takenByBadges,
-            self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
-            self.minHeight - 2 * settings.vCellPadding + 2 * penWidth - takenByBadges)
+            self.minWidth - 2 * settings.hDepsCellPadding + 2 * penWidth,
+            self.minHeight - 2 * settings.vDepsCellPadding + 2 * penWidth - takenByBadges)
         scene.addItem(self)
 
     def paint(self, painter, option, widget):
@@ -103,32 +107,32 @@ class SelfModule(CellElement, TextMixin, QGraphicsRectItem):
         del widget      # unused argument
 
         settings = self.canvas.settings
-        painter.setPen(self.getPainterPen(self.isSelected(), self.borderColor))
-        painter.setBrush(QBrush(self.bgColor))
+        painter.setPen(self.getPainterPen(self.isSelected(), settings.selfBorderColor))
+        painter.setBrush(QBrush(settings.selfBGColor))
 
-        rectWidth = self.minWidth - 2 * settings.hCellPadding
-        rectHeight = self.minHeight - 2 * settings.vCellPadding
+        rectWidth = self.minWidth - 2 * settings.hDepsCellPadding
+        rectHeight = self.minHeight - 2 * settings.vDepsCellPadding
 
-        yPos = self.baseY + settings.vCellPadding
+        yPos = self.baseY + settings.vDepsCellPadding
         if self.aboveBadges.hasAny():
             badgeShift = self.aboveBadges.height + settings.badgeToScopeVPadding
             yPos += badgeShift
             rectHeight -= badgeShift
 
-        painter.drawRect(self.baseX + settings.hCellPadding,
+        painter.drawRect(self.baseX + settings.hDepsCellPadding,
                          yPos, rectWidth, rectHeight)
 
         # Draw the text in the rectangle
-        pen = QPen(self.fgColor)
+        pen = QPen(settings.selfFGColor)
         painter.setFont(settings.monoFont)
         painter.setPen(pen)
 
-        textWidth = self.textRect.width() + 2 * settings.hTextPadding
+        textWidth = self.textRect.width() + 2 * settings.hDepsTextPadding
         textShift = (rectWidth - textWidth) / 2
         painter.drawText(
-            self.baseX + settings.hCellPadding +
-            settings.hTextPadding + textShift,
-            yPos + settings.vTextPadding,
+            self.baseX + settings.hDepsCellPadding +
+            settings.hDepsTextPadding + textShift,
+            yPos + settings.vDepsTextPadding,
             self.textRect.width(), self.textRect.height(),
             Qt.AlignLeft, self.text)
 

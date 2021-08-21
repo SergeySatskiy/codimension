@@ -17,29 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Control flow UI graphics scene and a view"""
+"""Dependencies UI graphics scene and a view"""
 
 from ui.qt import (Qt, QRectF, QPoint, QPainter, QGraphicsView, QApplication,
                    QGraphicsScene)
 from utils.settings import Settings
-from .flowuicontextmenus import CFSceneContextMenuMixin
-from .flowuimouse import CFSceneMouseMixin
-from .flowuikeyboard import CFSceneKeyboardMixin
 
 
 
-class CFGraphicsScene(QGraphicsScene,
-                      CFSceneContextMenuMixin,
-                      CFSceneMouseMixin,
-                      CFSceneKeyboardMixin):
+class DepsGraphicsScene(QGraphicsScene):
 
     """Reimplemented graphics scene"""
 
     def __init__(self, navBar, parent=None):
         QGraphicsScene.__init__(self, parent)
-        CFSceneContextMenuMixin.__init__(self)
-        CFSceneMouseMixin.__init__(self)
-        CFSceneKeyboardMixin.__init__(self)
         self.__navBar = navBar
         self.selectionChanged.connect(self.selChanged)
 
@@ -90,29 +81,20 @@ class CFGraphicsScene(QGraphicsScene,
                     if item.getSelectTooltip() in tooltips:
                         item.setSelected(True)
 
-    def getDocItemByAnchor(self, anchor):
-        """Provides the graphics item for the given anchor if so"""
-        for item in self.items():
-            if item.isCMLDoc():
-                if item.cmlRef.anchor == anchor:
-                    return item
-        return None
-
     def terminate(self):
         """Called when a tab is closed"""
         self.selectionChanged.disconnect(self.selChanged)
         self.clear()
-        self.terminateMenus()
 
 
 
-class CFGraphicsView(QGraphicsView):
+class DepsGraphicsView(QGraphicsView):
 
     """Central widget"""
 
     def __init__(self, navBar, parent):
-        super(CFGraphicsView, self).__init__(parent)
-        self.scene = CFGraphicsScene(navBar, parent)
+        super(DepsGraphicsView, self).__init__(parent)
+        self.scene = DepsGraphicsScene(navBar, parent)
         self.setScene(self.scene)
 
         self.__parentWidget = parent
@@ -148,71 +130,6 @@ class CFGraphicsView(QGraphicsView):
         bottomRight = self.mapToScene(QPoint(self.viewport().width(),
                                              self.viewport().height()))
         return QRectF(topLeft, bottomRight)
-
-    def scrollTo(self, item, makeFirstOnScreen=False):
-        """Scrolls the view to the item"""
-        if item is None:
-            return
-
-        # When there is a change on the diagram, e.g. when a font was changed,
-        # when a smart zoom was changed or a display mode was changed then
-        # the sync between the views is done basing on what is the first
-        # visible item. So the vertical scroll is required to make the item of
-        # interest first on the screen
-
-        visibleRect = self.getVisibleRect()
-        itemRect = item.boundingRect()
-        if not makeFirstOnScreen:
-            if visibleRect.contains(itemRect):
-                # The item is fully visible
-                return
-
-            # The item is fully visible vertically
-            if itemRect.topLeft().y() >= visibleRect.topLeft().y() and \
-               itemRect.bottomLeft().y() <= visibleRect.bottomLeft().y():
-                self.__hScrollToItem(item)
-                return
-
-        # The item top left is visible
-        if visibleRect.contains(itemRect.topLeft()):
-            # So far scroll the view vertically anyway
-            val = float(itemRect.topLeft().y() - 15.0)
-            self.verticalScrollBar().setValue(val)
-            self.__hScrollToItem(item)
-            return
-
-        # Here: the top left is not visible, so the vertical scrolling is
-        # required
-        val = float(itemRect.topLeft().y() - 15.0)
-        self.verticalScrollBar().setValue(val)
-        self.__hScrollToItem(item)
-
-    def __hScrollToItem(self, item):
-        """Sets the horizontal scrolling for the item"""
-        if item is None:
-            return
-
-        # There are a few cases here:
-        # - the item does not fit the screen width
-        # - the item fits the screen width and would be visible if the
-        #   scroll is set to 0
-        # - the item fits the screen width and would not be visible if the
-        #   scroll is set to 0
-
-        visibleRect = self.getVisibleRect()
-        itemRect = item.boundingRect()
-
-        if itemRect.width() > visibleRect.width():
-            # Does not fit the screen
-            val = float(itemRect.topLeft().x()) - 15.0
-            self.horizontalScrollBar().setValue(val)
-        else:
-            if itemRect.topRight().x() < visibleRect.width():
-                # Fits the screen if the scroll is 0
-                self.horizontalScrollBar().setValue(0)
-            else:
-                val = float(itemRect.topLeft().x()) - 15.0
-                self.horizontalScrollBar().setValue(val)
 
     def terminate(self):
         """Called when a tab is closed"""

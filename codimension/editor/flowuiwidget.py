@@ -28,10 +28,11 @@ from ui.qt import (Qt, QSize, QTimer, QDir, QUrl, QSizeF, QPainter, QImage,
                    QToolBar, QWidget, QPrinter, QApplication, QHBoxLayout,
                    QLabel, QVBoxLayout, QFileDialog, QActionGroup, QAction,
                    QDialog, QMenu, QToolButton, QMessageBox, QSvgGenerator,
-                   QStackedWidget, QApplication)
+                   QStackedWidget)
 from ui.spacers import ToolBarExpandingSpacer, ToolBarVSpacer
 from cdmcfparser import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas, formatFlow
+from diagram.depsvcanvas import DepsVirtualCanvas
 from flowui.cflowsettings import getCflowSettings
 from flowui.cml import CMLVersion
 from utils.pixmapcache import getIcon
@@ -40,8 +41,10 @@ from utils.fileutils import isPythonMime
 from utils.settings import Settings
 from utils.diskvaluesrelay import (getFilePosition, getCollapsedGroups,
                                    setCollapsedGroups)
+from diagram.depsdiagram import collectImportResolutions
 from .flowuinavbar import ControlFlowNavigationBar
 from .flowuisceneview import CFGraphicsView
+from .depssceneview import DepsGraphicsView
 from .astview import ASTView
 from .disasmview import DisassemblyView
 from .binview import BinView
@@ -484,7 +487,7 @@ class FlowUIWidget(QWidget):
         # index 0: control flow
         self.smartViews.addWidget(CFGraphicsView(self.__navBar, self))
         # index 1: dependencies
-        self.smartViews.addWidget(QWidget(self))
+        self.smartViews.addWidget(DepsGraphicsView(self.__navBar, self))
         # index 2: AST
         astView = ASTView(self.__navBar, self)
         astView.sigGotoLine.connect(self.__gotoLine)
@@ -644,6 +647,44 @@ class FlowUIWidget(QWidget):
 
     def __processFS(self):
         """Processes the file system view"""
+        fileName = self.__parentWidget.getFileName()
+        if not fileName:
+            fileName = self.__parentWidget.getShortName()
+
+        deps = collectImportResolutions(self.__editor.text, fileName)
+        print(deps)
+
+        self.scene().clear()
+
+        smartZoomLevel = Settings()['smartZoom']
+        self.cflowSettings = getCflowSettings(self)
+        self.cflowSettings.itemID = 0
+        self.cflowSettings = tweakSmartSettings(self.cflowSettings,
+                                                smartZoomLevel)
+
+        try:
+            fileName = self.__parentWidget.getFileName()
+            if not fileName:
+                fileName = self.__parentWidget.getShortName()
+
+            # Top level canvas has no adress and no parent canvas
+            self.__canvas = DepsVirtualCanvas(self.cflowSettings, None, None, None)
+            lStart = timer()
+            self.__canvas.layoutTopLevel(fileName, deps)
+            lEnd = timer()
+            width, height = self.__canvas.render()
+            rEnd = timer()
+            self.scene().setSceneRect(0, 0, width, height)
+            self.__canvas.draw(self.scene(), 0, 0)
+            dEnd = timer()
+            if self.isDebugMode():
+                logging.info('Redrawing is done. Size: %d x %d', width, height)
+                logging.info('Layout timing: %f', lEnd - lStart)
+                logging.info('Render timing: %f', rEnd - lEnd)
+                logging.info('Draw timing: %f', dEnd - rEnd)
+        except Exception as exc:
+            logging.error(str(exc))
+            raise
 
     def __cleanupCanvas(self):
         """Cleans up the canvas"""

@@ -399,7 +399,17 @@ _DEFAULT_CFLOW_SETTINGS = {
     'vDocLinkPadding': 3,   # in pixels (top and bottom)
     'docLinkBGColor': QColor(219, 230, 246, 255),
     'docLinkFGColor': QColor(0, 0, 0, 255),
-    'docLinkBorderColor': QColor(150, 150, 150, 255)}
+    'docLinkBorderColor': QColor(150, 150, 150, 255),
+
+    # Dependencies settings
+    'hDepsCellPadding': 8,
+    'vDepsCellPadding': 6,
+    'hDepsTextPadding': 20,
+    'vDepsTextPadding': 20,
+    'selfBorderColor': QColor(0, 0, 0, 255),
+    'selfBGColor': QColor(247, 215, 74, 255),
+    'selfFGColor': QColor(0, 0, 0, 255)
+}
 
 
 class Skin:

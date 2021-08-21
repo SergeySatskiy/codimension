@@ -76,5 +76,3 @@ def collectImportResolutions(content, fileName):
 
     return depClasses
 
-
-
