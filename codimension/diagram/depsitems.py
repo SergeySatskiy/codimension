@@ -25,6 +25,7 @@ from flowui.cellelement import CellElement
 from flowui.textmixin import TextMixin
 from flowui.auxitems import BadgeItem, Connector
 from flowui.abovebadges import AboveBadgesSpacer
+from utils.globals import GlobalData
 
 class SelfModule(CellElement, TextMixin, QGraphicsRectItem):
 
@@ -136,4 +137,9 @@ class SelfModule(CellElement, TextMixin, QGraphicsRectItem):
             self.textRect.width(), self.textRect.height(),
             Qt.AlignLeft, self.text)
 
+    def mouseDoubleClickEvent(self, event):
+        if event.buttons() != Qt.LeftButton:
+            return
+        GlobalData().mainWindow.raise_()
+        GlobalData().mainWindow.activateWindow()
 
