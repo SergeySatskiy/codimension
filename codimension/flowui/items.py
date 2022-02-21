@@ -871,7 +871,6 @@ class DecoratorCell(CellElement,
 
         self.aboveBadges.append(DecorBadgeItem(self))
         self.aboveBadges.append(AboveBadgesSpacer(s.badgeGroupSpacing))
-        self.aboveBadges.append(AboveBadgesDivider())
         self.appendCommentBadges()
 
         self.setupText(self)

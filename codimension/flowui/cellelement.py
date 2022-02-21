@@ -152,7 +152,8 @@ class CellElement:
             dividerAdded = False
             leadingDoc = getDocComment(self.ref.leadingCMLComments)
             if leadingDoc:
-                self.aboveBadges.append(AboveBadgesDivider())
+                if self.kind != self.DECORATOR:
+                    self.aboveBadges.append(AboveBadgesDivider())
                 dividerAdded = True
                 self.aboveBadges.append(DocLinkBadgeItem(self))
             if self.ref.leadingComment:
@@ -160,7 +161,8 @@ class CellElement:
                     self.aboveBadges.append(
                         AboveBadgesSpacer(settings.badgeToBadgeHSpacing))
                 else:
-                    self.aboveBadges.append(AboveBadgesDivider())
+                    if self.kind != self.DECORATOR:
+                        self.aboveBadges.append(AboveBadgesDivider())
                     dividerAdded = True
                 self.aboveBadges.append(CommentBadgeItem(self, False))
             if self.ref.sideComment:
@@ -168,7 +170,8 @@ class CellElement:
                     self.aboveBadges.append(
                         AboveBadgesSpacer(settings.badgeToBadgeHSpacing))
                 else:
-                    self.aboveBadges.append(AboveBadgesDivider())
+                    if self.kind != self.DECORATOR:
+                        self.aboveBadges.append(AboveBadgesDivider())
                     dividerAdded = True
                 self.aboveBadges.append(CommentBadgeItem(self, True))
 
