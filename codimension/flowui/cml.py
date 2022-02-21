@@ -664,10 +664,9 @@ class CMLVersion:
                         warnings += CMLVersion.validateCMLList(
                             nestedItem.decorators[0].leadingCMLComments, True,
                             scopeGroupStack, validGroups, allGroupId)
-                    else:
-                        warnings += CMLVersion.validateCMLList(
-                            nestedItem.leadingCMLComments, True,
-                            scopeGroupStack, validGroups, allGroupId)
+                    warnings += CMLVersion.validateCMLList(
+                        nestedItem.leadingCMLComments, True,
+                        scopeGroupStack, validGroups, allGroupId)
                 elif hasattr(nestedItem, "leadingCMLComments"):
                     warnings += CMLVersion.validateCMLList(
                         nestedItem.leadingCMLComments, True, scopeGroupStack,
