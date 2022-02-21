@@ -218,6 +218,7 @@ class FlowUIWidget(QWidget):
         self.__displayProps = (self.cflowSettings.hidedocstrings,
                                self.cflowSettings.hidecomments,
                                self.cflowSettings.hideexcepts,
+                               self.cflowSettings.hidedecors,
                                Settings()['smartZoom'])
         self.__disasmLevel = Settings()['disasmLevel']
         self.__binLevel = Settings()['disasmLevel']
@@ -702,6 +703,7 @@ class FlowUIWidget(QWidget):
             self.__displayProps = (self.cflowSettings.hidedocstrings,
                                    self.cflowSettings.hidecomments,
                                    self.cflowSettings.hideexcepts,
+                                   self.cflowSettings.hidedecors,
                                    smartZoomLevel)
         self.cflowSettings.itemID = 0
         self.cflowSettings = tweakSmartSettings(self.cflowSettings,
@@ -1181,7 +1183,8 @@ class FlowUIWidget(QWidget):
             return self.__displayProps[0] != settings['hidedocstrings'] or \
                 self.__displayProps[1] != settings['hidecomments'] or \
                 self.__displayProps[2] != settings['hideexcepts'] or \
-                self.__displayProps[3] != settings['smartZoom']
+                self.__displayProps[3] != settings['hidedecors'] or \
+                self.__displayProps[4] != settings['smartZoom']
         if currentSmartZoom == SMART_ZOOM_DISASM:
             return self.__disasmLevel != Settings()['disasmLevel']
         if currentSmartZoom == SMART_ZOOM_BIN:
