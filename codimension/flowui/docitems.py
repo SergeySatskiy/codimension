@@ -90,26 +90,21 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         title = self.cmlRef.getTitle()
         self.setupText(self, customText=title, customReplacement='')
 
+        contentWidth = self.iconItem.iconWidth()
+        contentHeight = self.iconItem.iconHeight()
         if self.text:
-            self.minWidth = self.textRect.width() + settings.hDocLinkPadding
-            self.minHeight = self.textRect.height()
-        else:
-            self.minWidth = 0
-            self.minHeight = self.iconItem.iconHeight()
-            if settings.hidecomments:
-                if title:
-                    self.iconItem.setToolTip(self.iconItem.toolTip() +
-                                             '<hr/><pre>' + escape(title) +
-                                             '</pre>')
+            contentWidth += self.textRect.width() + settings.hDocLinkPadding
+            contentHeight = max(self.textRect.height(), contentHeight)
 
-        self.minHeight += 2 * (settings.vCellPadding + \
-                          settings.vDocLinkPadding)
-        self.minWidth += 2 * (settings.hCellPadding + \
-                         settings.hDocLinkPadding) + \
-                         self.iconItem.iconWidth()
+        self.boxWidth = 2 * settings.hDocLinkPadding + contentWidth
+        self.minWidth = self.boxWidth + 2 * settings.hCellPadding
+        self.minHeight = 2 * (settings.vCellPadding +
+                              settings.vDocLinkPadding) + contentHeight
 
         self.height = self.minHeight
         self.width = self.minWidth
+
+        print(f'Render for: {self.text} height: {self.height} width: {self.width}')
         return (self.width, self.height)
 
     def adjustWidth(self):
@@ -120,21 +115,21 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         The width of this cell will take whatever is needed considering
         the comment shift to the left.
         """
+        print(f'adjust width 1 for: {self.text}')
         if self.kind == CellElement.ABOVE_DOC:
             return
 
+        print(f'ADJUSTMENT was: {self.width}')
         cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
-        if cellToTheLeft.kind != CellElement.CONNECTOR:
-            # Not implemented yet
-            return
-
+        settings = self.canvas.settings
         spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
-        boxWidth = self.minWidth
-        if spareWidth >= boxWidth:
+        cellWidth = self.boxWidth + 2 * settings.hCellPadding
+        if spareWidth >= cellWidth:
             self.minWidth = 0
         else:
-            self.minWidth = boxWidth - spareWidth
+            self.minWidth = cellWidth - spareWidth
         self.width = self.minWidth
+        print(f'ADJUSTMENT became: {self.width}')
 
     def draw(self, scene, baseX, baseY):
         """Draws the cell"""
@@ -144,22 +139,32 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         self._setupConnector()
         scene.addItem(self.connector)
 
+        settings = self.canvas.settings
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        if cellToTheLeft.kind != CellElement.CONNECTOR:
+            self._leftEdge = self.baseX
+        else:
+            self._leftEdge = \
+                cellToTheLeft.baseX + \
+                settings.mainLine + settings.hCellPadding
+
         # Bottom adjustment
         yShift = self.height - self.minHeight
         baseY = self.baseY + yShift
 
         settings = self.canvas.settings
         penWidth = settings.selectPenWidth - 1
-        self.setRect(baseX + settings.hCellPadding - penWidth,
+        self.setRect(self._leftEdge + settings.hCellPadding - penWidth,
                      baseY + settings.vCellPadding - penWidth,
-                     self.minWidth - 2 * settings.hCellPadding + 2 * penWidth,
+                     self.boxWidth + 2 * penWidth,
                      self.minHeight - 2 * settings.vCellPadding + 2 * penWidth)
         scene.addItem(self)
 
         self.iconItem.setPos(
-            baseX + settings.hCellPadding + settings.hDocLinkPadding,
+            self._leftEdge + settings.hCellPadding + settings.hDocLinkPadding,
             baseY + self.minHeight / 2 - self.iconItem.iconHeight() / 2)
         scene.addItem(self.iconItem)
+        return
 
     def paint(self, painter, option, widget):
         """Draws the independent comment"""
@@ -177,9 +182,9 @@ class DocCellBase(CommentCellBase, ColorMixin, IconMixin, QGraphicsRectItem):
         yShift = self.height - self.minHeight
         baseY = self.baseY + yShift
 
-        painter.drawRoundedRect(self.baseX + settings.hCellPadding,
+        painter.drawRoundedRect(self._leftEdge + settings.hCellPadding,
                                 baseY + settings.vCellPadding,
-                                rectWidth, rectHeight, 0, 0)
+                                self.boxWidth, rectHeight, 0, 0)
 
         if self.text:
             # Draw the text in the rectangle
