@@ -65,6 +65,9 @@ SMART_ZOOM_FS = 4           # File system dependencies view
 SMART_ZOOM_MIN = SMART_ZOOM_BIN
 SMART_ZOOM_MAX = SMART_ZOOM_FS
 
+# TODO: Till FS zoom is implemented
+SMART_ZOOM_MAX = SMART_ZOOM_CLASS_FUNC
+
 
 class SmartZoomStaticProps:
 
@@ -516,25 +519,25 @@ class FlowUIWidget(QWidget):
 
             smartZoomLevel = Settings()['smartZoom']
             if ZOOM_PROPS[smartZoomLevel].isControlFlow:
-                print('Populating control flow')
+                # print('Populating control flow')
                 self.__processControlFlow()
-                print('Populated')
+                # print('Populated')
             elif smartZoomLevel == SMART_ZOOM_BIN:
-                print('Populating BIN')
+                # print('Populating BIN')
                 self.__processBin()
-                print('Populated')
+                # print('Populated')
             elif smartZoomLevel == SMART_ZOOM_DISASM:
-                print('Populating disasm')
+                # print('Populating disasm')
                 self.__processDisasm()
-                print('Populated')
+                # print('Populated')
             elif smartZoomLevel == SMART_ZOOM_AST:
-                print('Populating AsT')
+                # print('Populating AsT')
                 self.__processAST()
-                print('Populated')
+                # print('Populated')
             elif smartZoomLevel == SMART_ZOOM_FS:
-                print('Populating FS')
+                # print('Populating FS')
                 self.__processFS()
-                print('Populated')
+                # print('Populated')
 
             self.__markViewClean()
 
