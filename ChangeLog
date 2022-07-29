@@ -1,3 +1,13 @@
+2022 Jul 29 Sergey Satskiy <sergey.satskiy@tuta.io>
+
+* Version 4.10.0
+* Python 3.9 support
+* A few fixes in graphics rendering
+* Better graphics for decorators
+* New smart zoom levels: AST, disassembly and binary
+* Bug fixes
+* Bumping up the parser versions to those which support python 3.9
+
 2020 Aug 06 Sergey Satskiy <sergey.satskiy@tuta.io>
 
 * Version 4.9.1
