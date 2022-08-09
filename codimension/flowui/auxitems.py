@@ -24,11 +24,11 @@
 # pylint: disable=R0913
 
 
-from sys import maxsize
 from html import escape
 from ui.qt import (QPen, QBrush, QPainterPath, Qt, QGraphicsSvgItem,
                    QGraphicsSimpleTextItem, QGraphicsRectItem,
                    QGraphicsPathItem, QGraphicsLineItem, QGraphicsItem)
+from utils.limits import MAXINT_32
 from .cellelement import CellElement
 from .colormixin import ColorMixin
 from .routines import getDocComment, getDoclinkIconAndTooltip
@@ -162,8 +162,8 @@ class BadgeItemBase(CellElement):
         self.text = text
         self.icon = icon
         self.iconItem = None
-        self.textRect = s.badgeFontMetrics.boundingRect(0, 0, maxsize,
-                                                        maxsize, 0, text)
+        self.textRect = s.badgeFontMetrics.boundingRect(0, 0, MAXINT_32,
+                                                        MAXINT_32, 0, text)
 
         self.minWidth = self.textRect.width() + 2 * s.badgeHSpacing
         self.height = self.textRect.height() + 2 * s.badgeVSpacing

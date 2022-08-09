@@ -24,9 +24,9 @@
 # pylint: disable=W0702
 # pylint: disable=R0913
 
-from sys import maxsize
 from html import escape
 from ui.qt import Qt, QPen, QBrush, QGraphicsRectItem, QGraphicsItem, QPointF, QColor
+from utils.limits import MAXINT_32
 from .auxitems import (BadgeItem, Connector, HSpacerCell, VSpacerCell,
                        SpacerCell, DocstringBadgeItem, CommentBadgeItem,
                        ExceptBadgeItem, ScopeDecorBadgeItem, DocLinkBadgeItem)
@@ -551,7 +551,7 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
                             self.ref.docstring.end)
         if self.subKind == self.DECLARATION:
             if self.kind == CellElement.FILE_SCOPE:
-                dist = maxsize
+                dist = MAXINT_32
                 if self.ref.encodingLine:
                     dist = min(dist, distance(absPos,
                                               self.ref.encodingLine.begin,
@@ -564,7 +564,7 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
             # Not a file scope
             return distance(absPos, self.ref.body.begin,
                             self.ref.body.end)
-        return maxsize
+        return MAXINT_32
 
     def getLineDistance(self, line):
         """Provides a distance between the line and the item"""
@@ -573,7 +573,7 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
                             self.ref.docstring.endLine)
         if self.subKind == self.DECLARATION:
             if self.kind == CellElement.FILE_SCOPE:
-                dist = maxsize
+                dist = MAXINT_32
                 if self.ref.encodingLine:
                     dist = min(dist, distance(line,
                                               self.ref.encodingLine.beginLine,
@@ -586,12 +586,12 @@ class ScopeCellElement(CellElement, TextMixin, ColorMixin, QGraphicsRectItem):
             # Not a file scope
             return distance(line, self.ref.body.beginLine,
                             self.ref.body.endLine)
-        return maxsize
+        return MAXINT_32
 
     def getFirstLine(self):
         """Provides the first line"""
         if self.isDocstring():
-            line = maxsize
+            line = MAXINT_32
             if self.ref.docstring.leadingCMLComments:
                 line = CMLVersion.getFirstLine(self.ref.leadingCMLComments)
             if self.ref.docstring.leadingComment:

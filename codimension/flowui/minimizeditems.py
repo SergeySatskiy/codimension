@@ -21,9 +21,9 @@
 
 # pylint: disable=C0305
 
-from sys import maxsize
 from html import escape
 from ui.qt import Qt, QBrush, QGraphicsRectItem, QGraphicsItem, QPainterPath, QPen
+from utils.limits import MAXINT_32
 from .auxitems import Connector, SVGItem
 from .colormixin import ColorMixin
 from .cellelement import CellElement
@@ -81,8 +81,8 @@ class MinimizedIndependentCommentCell(CellElement, QGraphicsRectItem):
         """Renders the cell"""
         s = self.canvas.settings
         self.text = '#'
-        self.textRect = s.badgeFontMetrics.boundingRect(0, 0, maxsize,
-                                                        maxsize, 0, self.text)
+        self.textRect = s.badgeFontMetrics.boundingRect(0, 0, MAXINT_32,
+                                                        MAXINT_32, 0, self.text)
         self.badgeWidth = self.textRect.width() + 2 * s.badgeHSpacing
         self.badgeHeight = self.textRect.height() + 2 * s.badgeVSpacing
         self.badgeWidth = max(self.badgeWidth, self.badgeHeight)
@@ -200,8 +200,8 @@ class MinimizedIndependentDocCell(CellElement, ColorMixin, QGraphicsRectItem):
     def render(self):
         """Renders the cell"""
         s = self.canvas.settings
-        self.textRect = s.badgeFontMetrics.boundingRect(0, 0, maxsize,
-                                                        maxsize, 0, '#')
+        self.textRect = s.badgeFontMetrics.boundingRect(0, 0, MAXINT_32,
+                                                        MAXINT_32, 0, '#')
         self.badgeWidth = self.textRect.width() + 2 * s.badgeHSpacing
         self.badgeHeight = self.textRect.height() + 2 * s.badgeVSpacing
         self.badgeWidth = max(self.badgeWidth, self.badgeHeight)

@@ -19,13 +19,13 @@
 
 """custom colors dialog"""
 
-from sys import maxsize
 from ui.qt import (QDialog, QVBoxLayout, QGridLayout, QLabel, QDialogButtonBox,
                    Qt, QGraphicsRectItem, QPen, QBrush, QGraphicsScene,
                    QGraphicsView, QTimer)
 from ui.colorbutton import ColorButton
 from flowui.cflowsettings import getCflowSettings
 from utils.pixmapcache import getIcon
+from utils.limits import MAXINT_32
 
 
 class CustomColorsDialog(QDialog):
@@ -136,7 +136,7 @@ class SampleBlock(QGraphicsRectItem):
         self.__viewHeight = height
 
         self.__textRect = self.__settings.monoFontMetrics.boundingRect(
-            0, 0, maxsize, maxsize, 0, 'Sample')
+            0, 0, MAXINT_32, MAXINT_32, 0, 'Sample')
 
 
         vPadding = 2 * settings.vTextPadding

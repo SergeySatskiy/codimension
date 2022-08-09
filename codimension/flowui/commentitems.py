@@ -22,9 +22,9 @@
 # pylint: disable=C0305
 # pylint: disable=R0902
 
-from sys import maxsize
 from ui.qt import (Qt, QPen, QBrush, QPainterPath, QGraphicsPathItem,
                    QGraphicsItem, QStyleOptionGraphicsItem, QStyle)
+from utils.limits import MAXINT_32
 from .auxitems import Connector
 from .cellelement import CellElement
 from .routines import distance, getCommentBoxPath
@@ -44,7 +44,7 @@ class CommentCellBase(CellElement, TextMixin):
 
     def _copyToClipboard(self, parts):
         """Copies the item to a clipboard"""
-        commonLeadingSpaces = maxsize
+        commonLeadingSpaces = MAXINT_32
         for part in parts:
             commonLeadingSpaces = min(commonLeadingSpaces, part.beginPos - 1)
 
@@ -557,7 +557,7 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
 
     def getDistance(self, absPos):
         """Provides a distance between the absPos and the item"""
-        retval = maxsize
+        retval = MAXINT_32
         for part in self.ref.sideComment.parts:
             # +1 is for finishing \n character
             dist = distance(absPos, part.begin, part.end + 1)
@@ -568,7 +568,7 @@ class SideCommentCell(CommentCellBase, QGraphicsPathItem):
 
     def getLineDistance(self, line):
         """Provides a distance between the line and the item"""
-        retval = maxsize
+        retval = MAXINT_32
         for part in self.ref.sideComment.parts:
             dist = distance(line, part.beginLine, part.endLine)
             if dist == 0:

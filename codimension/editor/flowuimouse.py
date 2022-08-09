@@ -21,11 +21,11 @@
 
 # pylint: disable=W0702
 
-from sys import maxsize
 from flowui.scopeitems import ScopeCellElement
 from flowui.cellelement import CellElement, kindToString
 from flowui.auxitems import RubberBandItem
 from ui.qt import Qt, QTransform, QRect, QSize, QGraphicsScene
+from utils.limits import MAXINT_32
 
 
 # The default mouse behavior of the QT library is sometimes inconsistent.
@@ -427,14 +427,14 @@ class CFSceneMouseMixin:
         """
         del pos     # unused argument
         candidates = []
-        distance = maxsize
+        distance = MAXINT_32
 
         for item in self.items():
             if item.isProxyItem():
                 continue
 
             dist = item.getLineDistance(line)
-            if dist == maxsize:
+            if dist == MAXINT_32:
                 continue    # Not really an option
             if dist < distance:
                 distance = dist
@@ -444,7 +444,7 @@ class CFSceneMouseMixin:
 
         count = len(candidates)
         if count == 0:
-            return None, maxsize
+            return None, MAXINT_32
         if count == 1:
             return self.__getLogicalItem(candidates[0]), distance
 
@@ -458,7 +458,7 @@ class CFSceneMouseMixin:
         # This is a zero line distance, so a candidate should be the one with
         # the shortest position distance
         candidate = None
-        distance = maxsize
+        distance = MAXINT_32
         for item in candidates:
             dist = item.getDistance(absPos)
             if dist == 0:

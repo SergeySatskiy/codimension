@@ -19,11 +19,11 @@
 
 """Control flow UI widget: handling keyboard events"""
 
-from sys import maxsize
 from ui.qt import Qt, QGraphicsScene
 from flowui.cellelement import CellElement
 from flowui.scopeitems import ScopeCellElement
 from utils.settings import Settings
+from utils.limits import MAXINT_32
 
 
 CTRL_SHIFT = int(Qt.ShiftModifier | Qt.ControlModifier)
@@ -81,9 +81,9 @@ class CFSceneKeyboardMixin:
         firstLine = visibleRect.y()
 
         candidateAfter = None
-        candidateAfterDistance = maxsize
+        candidateAfterDistance = MAXINT_32
         candidateBefore = None
-        candidateBeforeDistance = maxsize * -1
+        candidateBeforeDistance = MAXINT_32 * -1
         for item in self.items():
             if not isinstance(item, CellElement):
                 continue

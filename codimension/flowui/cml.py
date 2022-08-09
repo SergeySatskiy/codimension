@@ -19,11 +19,11 @@
 
 """CML utilities"""
 
-from sys import maxsize
 from cdmcfparser import (IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT,
                          TRY_FRAGMENT, CONTROL_FLOW_FRAGMENT, CLASS_FRAGMENT,
                          FUNCTION_FRAGMENT, CML_COMMENT_FRAGMENT)
 from utils.colorfont import buildColor, cssLikeColor
+from utils.limits import MAXINT_32
 
 
 def escapeCMLTextValue(src):
@@ -767,7 +767,7 @@ class CMLVersion:
     def getFirstLine(comments):
         """Provides the first line of the comment"""
         # The list may contain raw comments and high level comments
-        line = maxsize
+        line = MAXINT_32
         if comments:
             if hasattr(comments[0], "ref"):
                 # High level CML comment

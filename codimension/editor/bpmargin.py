@@ -23,7 +23,6 @@
 import os.path
 import logging
 import math
-from sys import maxsize
 from qutepart.margins import MarginBase
 import qutepart
 from ui.qt import QWidget, QPainter, QModelIndex, QToolTip
@@ -32,6 +31,7 @@ from utils.pixmapcache import getPixmap
 from utils.fileutils import isPythonMime
 from utils.globals import GlobalData
 from utils.settings import Settings
+from utils.limits import MAXINT_32
 from debugger.bputils import getBreakpointLines
 from debugger.breakpoint import Breakpoint
 
@@ -440,8 +440,8 @@ class CDMBreakpointMargin(QWidget):
         elif lineNo > breakableLines[-1]:
             candidateLine = breakableLines[-1]
         else:
-            lowerDistance = maxsize
-            upperDistance = maxsize
+            lowerDistance = MAXINT_32
+            upperDistance = MAXINT_32
 
             for breakableLine in breakableLines:
                 if breakableLine < lineNo:

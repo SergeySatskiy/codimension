@@ -21,10 +21,10 @@
 
 # pylint: disable=C0305
 
-from sys import maxsize
 from ui.qt import QMimeData, Qt, QApplication, QPen
 from utils.globals import GlobalData
 from utils.config import DEFAULT_ENCODING
+from utils.limits import MAXINT_32
 from .cml import CMLVersion
 from .routines import distance, getDocComment
 from .abovebadges import AboveBadges, AboveBadgesDivider, AboveBadgesSpacer
@@ -196,7 +196,7 @@ class CellElement:
     def getBoundingRect(self, text):
         """Provides the bounding rectangle for a monospaced font"""
         return self.canvas.settings.monoFontMetrics.boundingRect(
-            0, 0, maxsize, maxsize, 0, text)
+            0, 0, MAXINT_32, MAXINT_32, 0, text)
 
     def getTooltip(self):
         """Provides the tooltip"""
@@ -351,7 +351,7 @@ class CellElement:
 
     def getFirstLine(self):
         """Provides the first line"""
-        line = maxsize
+        line = MAXINT_32
         if hasattr(self.ref, "leadingCMLComments"):
             if self.ref.leadingCMLComments:
                 line = CMLVersion.getFirstLine(self.ref.leadingCMLComments)
