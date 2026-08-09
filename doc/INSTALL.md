@@ -57,5 +57,5 @@ python -m pip install 'wrapt>=1.14' --no-deps
 
 ## Далі
 
-- Індекс документації: [uk/README.md](uk/README.md)
-- Огляд змін форку: [../FORK.md](../FORK.md)
+- Користувацька довідка IDE: [user/index.md](user/index.md)
+- Репозиторій: https://github.com/sesquicadaver/codimension

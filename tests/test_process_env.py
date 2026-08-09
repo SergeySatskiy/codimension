@@ -318,7 +318,7 @@ def test_ensure_ide_once(tmp_path, monkeypatch):
     assert site in env.value("PYTHONPATH", "")
 
 
-def test_ensure_offers_install_for_adaptivefc_style_venv(tmp_path, monkeypatch):
+def test_ensure_offers_install_for_project_venv_without_tool(tmp_path, monkeypatch):
     """Project venv without mypy → ensure prompts (not silent start)."""
     from unittest.mock import MagicMock
 
@@ -327,11 +327,12 @@ def test_ensure_offers_install_for_adaptivefc_style_venv(tmp_path, monkeypatch):
     from cdmplugins import process_env as pe
     from cdmplugins import tool_host as th
 
-    project_py = "/home/sesquicadaver/Projects/AdaptiveFC/.venv/bin/python"
-    if not os.path.isfile(project_py):
-        import pytest
-
-        pytest.skip("AdaptiveFC project venv not present on this machine")
+    # Synthetic project venv python (no host-specific absolute paths).
+    project_py = str(tmp_path / "proj" / "bin" / "python")
+    os.makedirs(os.path.dirname(project_py), exist_ok=True)
+    with open(project_py, "w", encoding="utf-8") as handle:
+        handle.write("#!/bin/sh\nexit 1\n")
+    os.chmod(project_py, 0o755)
 
     # Pollute like a mis-launched IDE: PYTHONPATH includes Codimension tools.
     ide_site = os.path.join(
@@ -344,14 +345,14 @@ def test_ensure_offers_install_for_adaptivefc_style_venv(tmp_path, monkeypatch):
     if os.path.isdir(ide_site):
         monkeypatch.setenv("PYTHONPATH", ide_site)
 
-    # Real clean probe against AdaptiveFC python.
-    assert pe.python_module_available(project_py, "mypy") is False
+    monkeypatch.setattr(pe, "python_module_available", lambda *_a, **_k: False)
+    monkeypatch.setattr(th, "python_module_available", lambda *_a, **_k: False)
 
     analysis = AnalysisEnvironment(
         python_path=project_py,
         source_kind="configured",
         site_packages_roots=(),
-        project_id="adaptivefc-test",
+        project_id="project-venv-missing-tool",
     )
     monkeypatch.setattr(
         "utils.venvbootstrap.buildAnalysisEnvironment",

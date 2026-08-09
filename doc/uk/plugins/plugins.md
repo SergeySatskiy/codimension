@@ -62,10 +62,6 @@ Codimension і як написати простий плагін, викорис
 Драйвери Ruff, Bandit і Mypy використовують базовий клас `LintDriverBase`
 (`cdmplugins/lintdriverbase.py`).
 
-**Плани розробки:** [plugins-implementation-plan.md](../../plugins/plugins-implementation-plan.md)
-(фази 0–5 виконано), [git-github-plugin-plan.md](../../plugins/git-github-plugin-plan.md)
-(Git MVP, 2026-07).
-
 ### Ім'я, версія, стан
 
 Ім'я та версія плагіну зберігаються у файлі опису (`.cdmp`), який ініціює

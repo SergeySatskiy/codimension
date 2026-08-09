@@ -1,17 +1,18 @@
-# Codimension Documentation (English)
+# Codimension Documentation (English) — contributor index
 
-> **Language / Мова:** English | [Українська](../uk/README.md)
+> **Language / Мова:** English | [Українська](../uk/README.md)  
+> **In-app user guide:** [../user/index.md](../user/index.md)
 
 **Active repository:** https://github.com/sesquicadaver/codimension  
 **Version:** 4.11.0 | **Python (CI):** 3.10–3.13 | **Install:** from this repository ([INSTALL.md](INSTALL.md))
 
-This index lists **English** documentation. Ukrainian translations live under [doc/uk/](../uk/README.md). Legacy paths under `doc/<topic>/` remain for backward compatibility.
+This index is for **contributors**. The IDE Help menu opens only [user/index.md](../user/index.md).
 
 The `doc/www/` directory is a local archive mirror of the old site and is not maintained.
 
 ---
 
-## Quick start
+## Quick start (development)
 
 | Document | Contents |
 | -------- | -------- |
@@ -26,7 +27,7 @@ The `doc/www/` directory is a local archive mirror of the old site and is not ma
 
 ---
 
-## Plugins & CI
+## Plugins & CI (development artifacts)
 
 | Document | Contents |
 | -------- | -------- |

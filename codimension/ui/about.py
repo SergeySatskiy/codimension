@@ -50,7 +50,7 @@ class AboutDialog(QDialog):
         versionLabel = QLabel(
             "<b>Codimension IDE version " + version_with_channel() + "<br>"
             "CML version " + str(CMLVersion.VERSION) + "</b><p>Copyright (c) Sergey Satskiy 2010-2025</p>"
-            "<p>Modified version. See FORK.md.</p>"
+            "<p>Modified fork — see the project on GitHub.</p>"
         )
         versionLabel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         versionLabel.setFixedHeight(versionLabel.minimumSizeHint().height())

@@ -8,7 +8,7 @@
 ## Встановлення для користувачів
 
 Єдиний підтримуваний спосіб — клонування репозиторію та `pip install -e .` у venv.  
-Див. [doc/INSTALL.md](doc/INSTALL.md).
+Див. [doc/INSTALL.md](doc/INSTALL.md). Help у IDE: [doc/user/index.md](doc/user/index.md).
 
 `pip install codimension` з PyPI встановлює **застарілу upstream-версію (2020)**, не цей форк.
 

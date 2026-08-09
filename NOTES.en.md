@@ -9,6 +9,7 @@
 
 The only supported method is cloning the repository and running `pip install -e .` in a venv.  
 See [doc/en/INSTALL.md](doc/en/INSTALL.md) (Ukrainian: [doc/INSTALL.md](doc/INSTALL.md)).
+IDE Help: [doc/user/index.md](doc/user/index.md).
 
 `pip install codimension` from PyPI installs the **outdated upstream version (2020)**, not this fork.
 

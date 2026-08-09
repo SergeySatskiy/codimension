@@ -1,5 +1,8 @@
 2026 Aug 09
 
+* Docs: Help fail-closed to ``doc/user/index.md``; shared
+  ``package_docs_filter`` for wheel data; remove repo-root
+  ``codimension.cdm3``; drop host-specific path hardcode from process-env tests
 * Options: surface Enable AI / AI settings as top-level items (not a nested
   submenu); replace dead ``codimension.org`` links with GitHub fork/upstream
 * AI: Options → AI (Enable + AI settings…) and editor context menu AI

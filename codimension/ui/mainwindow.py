@@ -1342,13 +1342,14 @@ class CodimensionMainWindow(
         self.em.currentWidget().getEditor().onTagHelp()
 
     def _onEmbeddedHelp(self):
-        """Triggered when ebedded Codimension help is requested"""
-        # File name to get the embedded help
-        exeDir = os.path.dirname(os.path.realpath(sys.argv[0]))
-        docPath = os.path.dirname(exeDir) + os.path.sep + "doc" + os.path.sep
-        startMD = docPath + "index.md"
-        if not os.path.exists(startMD):
-            logging.error("Documentation is not found.  Expected here: %s", startMD)
+        """Triggered when embedded Codimension help is requested."""
+        from utils.embedded_docs import resolve_product_help_index
+
+        startMD = resolve_product_help_index()
+        if not startMD:
+            logging.error(
+                "Product documentation is not found (expected doc/user/index.md next to the package)."
+            )
         else:
             self.em.openMarkdownFullView(startMD, True)
 

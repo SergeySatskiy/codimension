@@ -64,6 +64,9 @@ target/
 # Codimension IDE rope project dir
 .ropeproject
 
+# Do not keep a project file for this repository itself
+/codimension.cdm3
+
 # symbolic link
 src/thirdparty
 gitsync.sh

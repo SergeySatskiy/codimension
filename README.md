@@ -48,7 +48,7 @@ python -m pip install --upgrade pip
 python -m pip install .
 # або з кореня репо (venv + PYTHONPATH):
 ./scripts/run_codimension.sh
-# ./scripts/run_codimension.sh ./codimension.cdm3
+# optional: ./scripts/run_codimension.sh /path/to/project.cdm3
 ```
 
 Плагіни аналізаторів (Ruff, Mypy, Pytest, …):

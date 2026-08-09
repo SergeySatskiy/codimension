@@ -5,18 +5,27 @@
 **Активний репозиторій:** https://github.com/sesquicadaver/codimension  
 **Версія:** 4.11.0 | **Python (CI):** 3.10–3.13 | **Встановлення:** з цього репозиторію ([INSTALL.md](INSTALL.md))
 
-Документація доступна **двома мовами**. Політика та структура: [BILINGUAL.md](BILINGUAL.md).
+## Продуктова довідка (Help у IDE)
+
+**Help → Documentation** відкриває:
+
+- **[user/index.md](user/index.md)**
+
+Установлений пакет містить лише користувацьку довідку з `doc/user/` та
+пов’язані топіки функцій IDE. Індекси для контриб’юторів:
 
 | Мова | Індекс |
 | ---- | ------ |
 | Українська | [uk/README.md](uk/README.md) |
 | English | [en/README.md](en/README.md) |
 
+Політика двомовності: [BILINGUAL.md](BILINGUAL.md).
+
 Каталог `doc/www/` — архівне дзеркало старого сайту (не оновлюється).
 
 ---
 
-## Швидкий старт
+## Швидкий старт (розробка)
 
 | Документ | Зміст |
 | -------- | ----- |
@@ -30,7 +39,7 @@
 
 ---
 
-## Плагіни та CI
+## Плагіни та CI (розробка)
 
 | English | Українська |
 | ------- | ---------- |
@@ -80,3 +89,4 @@
 2. Відповідний розділ у `doc/uk/` **та** `doc/en/` (або канонічний `doc/<topic>/`)
 3. [plugins/living-specification.md](plugins/living-specification.md) та [en/plugins/living-specification.md](en/plugins/living-specification.md)
 4. [../TODO_FIXME.md](../TODO_FIXME.md) та [../TODO_FIXME.en.md](../TODO_FIXME.en.md)
+5. Продуктовий TOC [user/index.md](user/index.md), якщо змінюється користувацька довідка

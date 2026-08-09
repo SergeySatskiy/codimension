@@ -96,8 +96,25 @@ def getDataFiles():
     return result
 
 
+def _load_product_package_doc_filter():
+    """Load shared filter without importing the installed package (setup-time)."""
+    import importlib.util
+
+    filter_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'codimension', 'utils', 'package_docs_filter.py')
+    spec = importlib.util.spec_from_file_location(
+        'codimension_package_docs_filter', filter_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError('Cannot load package_docs_filter from ' + filter_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.is_product_package_doc
+
+
 def getPackageData():
     """Provides the data files"""
+    is_product_package_doc = _load_product_package_doc_filter()
     extensions = ['.png', '.svg', '.svgz', '.json', '.css', '.md', '.jar',
                   'README', 'COPYING', '.cdmp']
     package_data = [('codimension.pixmaps',
@@ -106,6 +123,8 @@ def getPackageData():
                      'codimension/skins/'),
                     ('doc',
                      'doc/'),
+                    ('doc.user',
+                     'doc/user'),
                     ('doc.md',
                      'doc/md'),
                     ('doc.cml',
@@ -167,7 +186,8 @@ def getPackageData():
         for fName in os.listdir(item[1]):
             for ext in extensions:
                 if fName.endswith(ext):
-                    matchFiles.append(fName)
+                    if is_product_package_doc(package, fName):
+                        matchFiles.append(fName)
                     break
         if matchFiles:
             result[package] = matchFiles
@@ -197,7 +217,8 @@ def getPackages():
             'codimension.plugins.vcssupport',
             'codimension.pixmaps',
             'codimension.skins',
-            'doc', 'doc.cml', 'doc.plugins', 'doc.technology', 'doc.md',
+            'doc', 'doc.user', 'doc.cml', 'doc.plugins', 'doc.technology',
+            'doc.md',
             'doc.smartzoom', 'doc.grouping', 'doc.deadcode',
             'doc.complexity', 'doc.pyflakes', 'doc.disassembling',
             'doc.colorschemes', 'doc.editorsettings',
